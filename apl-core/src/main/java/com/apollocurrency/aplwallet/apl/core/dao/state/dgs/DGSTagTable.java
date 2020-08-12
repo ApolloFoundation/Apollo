@@ -48,8 +48,11 @@ public class DGSTagTable extends EntityDbTable<DGSTag> {
     public void save(Connection con, DGSTag tag) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO tag (tag, in_stock_count, total_count, height, latest) "
-                + "KEY (tag, height) VALUES (?, ?, ?, ?, TRUE)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO tag (tag, in_stock_count, total_count, height, latest) "
+                + "VALUES (?, ?, ?, ?, TRUE) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "tag = VALUES(tag), in_stock_count = VALUES(in_stock_count), total_count = VALUES(total_count), "
+                + "height = VALUES(height), latest = TRUE")
         ) {
             int i = 0;
             pstmt.setString(++i, tag.getTag());

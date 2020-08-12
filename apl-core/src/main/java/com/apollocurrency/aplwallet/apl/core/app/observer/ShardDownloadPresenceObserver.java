@@ -47,13 +47,15 @@ public class ShardDownloadPresenceObserver {
     private final ShardImporter shardImporter;
     private final BlockchainConfigUpdater blockchainConfigUpdater;
     private final GenesisImporter genesisImporter;
-    private final FullTextSearchService fullTextSearchService;
+    //private final FullTextSearchService fullTextSearchService;
 
     @Inject
     public ShardDownloadPresenceObserver(DatabaseManager databaseManager, BlockchainProcessor blockchainProcessor,
                                          Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry,
                                          ShardImporter shardImporter, BlockchainConfigUpdater blockchainConfigUpdater,
-                                         GenesisImporter genesisImporter, FullTextSearchService fullTextSearchService) {
+                                         GenesisImporter genesisImporter//,
+                                         //FullTextSearchService fullTextSearchService
+    ) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchainProcessor is NULL");
         this.derivedTablesRegistry = Objects.requireNonNull(derivedTablesRegistry, "derivedTablesRegistry is NULL");
@@ -61,7 +63,7 @@ public class ShardDownloadPresenceObserver {
         this.shardImporter = Objects.requireNonNull(shardImporter, "shardImporter is NULL");
         this.blockchainConfigUpdater = Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
         this.genesisImporter = Objects.requireNonNull(genesisImporter, "genesisImporter is NULL");
-        this.fullTextSearchService = Objects.requireNonNull(fullTextSearchService, "fullTextSearchService is NULL");
+        //this.fullTextSearchService = Objects.requireNonNull(fullTextSearchService, "fullTextSearchService is NULL");
     }
 
     /**
@@ -106,7 +108,7 @@ public class ShardDownloadPresenceObserver {
      */
     private void createLuceneSearchIndexes(Connection con) throws SQLException {
         for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
-            fullTextSearchService.createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
+            //fullTextSearchService.createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
         }
     }
 

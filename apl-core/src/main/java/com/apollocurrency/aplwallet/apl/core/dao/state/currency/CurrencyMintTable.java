@@ -41,8 +41,10 @@ public class CurrencyMintTable extends VersionedDeletableEntityDbTable<CurrencyM
     public void save(Connection con, CurrencyMint currencyMint) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_mint (currency_id, account_id, counter, height, latest, deleted) "
-                + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO currency_mint (currency_id, account_id, counter, height, latest, deleted) "
+                + "VALUES (?, ?, ?, ?, TRUE, FALSE) "
+                + "ON DUPLICATE KEY UPDATE currency_id = VALUES(currency_id), account_id = VALUES(account_id), counter = VALUES(counter), "
+                + "height = VALUES(height), latest = TRUE, deleted = FALSE")
         ) {
             int i = 0;
             pstmt.setLong(++i, currencyMint.getCurrencyId());

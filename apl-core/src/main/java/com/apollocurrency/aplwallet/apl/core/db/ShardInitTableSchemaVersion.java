@@ -15,7 +15,7 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                     "DB_ID BIGINT not null, " +
                     "ID BIGINT not null, " +
                     "VERSION INTEGER not null, " +
-                    "\"TIMESTAMP\" INTEGER not null, " +
+                    "`TIMESTAMP` INTEGER not null, " +
                     "PREVIOUS_BLOCK_ID BIGINT, " +
                     "TOTAL_AMOUNT BIGINT not null, " +
                     "TOTAL_FEE BIGINT not null, " +
@@ -30,7 +30,7 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                     "PAYLOAD_HASH binary(32) not null, " +
                     "GENERATOR_ID BIGINT not null, " +
                     "TIMEOUT INTEGER default 0 not null" +
-                    ")");
+                    ") ENGINE=ROCKSDB;");
             case 2:
                 apply("CREATE TABLE IF NOT EXISTS TRANSACTION (" +
                     "db_id BIGINT not null, " +
@@ -63,12 +63,12 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                     "has_encrypttoself_message BOOLEAN NOT NULL DEFAULT FALSE, " +
                     "has_prunable_message BOOLEAN NOT NULL DEFAULT FALSE, " +
                     "has_prunable_encrypted_message BOOLEAN NOT NULL DEFAULT FALSE, " +
-                    "has_prunable_attachment BOOLEAN NOT NULL DEFAULT FALSE)");
+                    "has_prunable_attachment BOOLEAN NOT NULL DEFAULT FALSE) ENGINE=ROCKSDB;");
 
             case 3:
-                apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, \"VALUE\" VARCHAR(250))");
+                apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, `VALUE` VARCHAR(250)) ENGINE=ROCKSDB;");
             case 4:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS option_name_value_idx ON option(name, \"VALUE\")");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS option_name_value_idx ON option(name, `VALUE`)");
             case 5:
                 return 5;
             case 24:

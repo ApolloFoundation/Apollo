@@ -51,7 +51,13 @@ public class AccountCurrencyTable extends VersionedDeletableEntityDbTable<Accoun
     @Override
     public void save(Connection con, AccountCurrency accountCurrency) throws SQLException {
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_currency " + "(account_id, currency_id, units, unconfirmed_units, height, latest, deleted) " + "KEY (account_id, currency_id, height) VALUES (?, ?, ?, ?, ?, TRUE, FALSE)")
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            final PreparedStatement pstmt = con.prepareStatement("INSERT INTO account_currency "
+                + "(account_id, currency_id, units, unconfirmed_units, height, latest, deleted) "
+                + "VALUES (?, ?, ?, ?, ?, TRUE, FALSE) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "account_id = VALUES(account_id), currency_id = VALUES(currency_id), units = VALUES(units), "
+                + "unconfirmed_units = VALUES(unconfirmed_units), height = VALUES(height), latest = TRUE, deleted = FALSE")
         ) {
             int i = 0;
             pstmt.setLong(++i, accountCurrency.getAccountId());

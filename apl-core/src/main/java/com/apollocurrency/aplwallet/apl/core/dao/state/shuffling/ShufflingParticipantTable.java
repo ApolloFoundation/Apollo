@@ -47,10 +47,14 @@ public class ShufflingParticipantTable  extends VersionedDeletableEntityDbTable<
     public void save(Connection con, ShufflingParticipant participant) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling_participant (shuffling_id, "
-                + "account_id, next_account_id, participant_index, state, blame_data, key_seeds, data_transaction_full_hash, data_hash, height, latest, deleted) "
-                + "KEY (shuffling_id, account_id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO shuffling_participant (shuffling_id, "
+                + "account_id, next_account_id, participant_index, `state`, blame_data, key_seeds, data_transaction_full_hash, data_hash, height, latest, deleted) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "shuffling_id = VALUES(shuffling_id), account_id = VALUES(account_id), next_account_id = VALUES(next_account_id), "
+                + "participant_index = VALUES(participant_index), `state` = VALUES(`state`), blame_data = VALUES(blame_data), "
+                + "key_seeds = VALUES(key_seeds), data_transaction_full_hash = VALUES(data_transaction_full_hash), "
+                + "data_hash = VALUES(data_hash), height = VALUES(height), latest = TRUE, deleted = FALSE")
         ) {
             int i = 0;
             pstmt.setLong(++i, participant.getShufflingId());
@@ -58,8 +62,8 @@ public class ShufflingParticipantTable  extends VersionedDeletableEntityDbTable<
             DbUtils.setLongZeroToNull(pstmt, ++i, participant.getNextAccountId());
             pstmt.setInt(++i, participant.getIndex());
             pstmt.setByte(++i, participant.getState().getCode());
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, participant.getBlameData());
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, participant.getKeySeeds());
+            DbUtils.set2dByteArray(pstmt, ++i, participant.getBlameData());
+            DbUtils.set2dByteArray(pstmt, ++i, participant.getKeySeeds());
             DbUtils.setBytes(pstmt, ++i, participant.getDataTransactionFullHash());
             DbUtils.setBytes(pstmt, ++i, participant.getDataHash());
             pstmt.setInt(++i, participant.getHeight());

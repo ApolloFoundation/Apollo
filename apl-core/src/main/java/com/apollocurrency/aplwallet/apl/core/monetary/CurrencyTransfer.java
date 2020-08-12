@@ -203,7 +203,7 @@ public final class CurrencyTransfer {
 
     private void save(Connection con) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO currency_transfer (id, currency_id, "
-            + "sender_id, recipient_id, units, timestamp, height) "
+            + "sender_id, recipient_id, units, `timestamp`, height) "
             + "VALUES (?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, this.id);

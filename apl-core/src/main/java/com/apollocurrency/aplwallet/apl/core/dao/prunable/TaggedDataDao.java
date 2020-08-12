@@ -140,9 +140,14 @@ public class TaggedDataDao extends PrunableDbTable<TaggedData> {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO tagged_data (id, account_id, name, description, tags, parsed_tags, "
-                + "type, channel, data, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO tagged_data (id, account_id, `name`, description, tags, parsed_tags, "
+                + "`type`, channel, `data`, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) "
+                + "ON DUPLICATE KEY UPDATE id = VALUES(id), account_id = VALUES(account_id), `name` = VALUES(`name`), "
+                + "description = VALUES(description), tags = VALUES(tags), parsed_tags = VALUES(parsed_tags), "
+                + "`type` = VALUES(`type`), channel = VALUES(channel), `data` = VALUES(`data`), is_text = VALUES(is_text), "
+                + "filename = VALUES(filename), block_timestamp = VALUES(block_timestamp), "
+                + "transaction_timestamp = VALUES(transaction_timestamp), height = VALUES(height), latest = TRUE")
         ) {
             int i = 0;
             pstmt.setLong(++i, taggedData.getId());

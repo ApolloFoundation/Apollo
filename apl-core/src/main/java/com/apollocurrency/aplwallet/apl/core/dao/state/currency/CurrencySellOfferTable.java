@@ -40,9 +40,15 @@ public class CurrencySellOfferTable extends VersionedDeletableEntityDbTable<Curr
     public void save(Connection con, CurrencySellOffer sellOffer) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, currency_id, account_id, "
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + table + " (id, currency_id, account_id, "
                 + "rate, unit_limit, supply, expiration_height, creation_height, transaction_index, transaction_height, height, latest, deleted) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "id = VALUES(id), currency_id = VALUES(currency_id), account_id = VALUES(account_id), "
+                + "rate = VALUES(rate), unit_limit = VALUES(unit_limit), supply = VALUES(supply), "
+                + "expiration_height = VALUES(expiration_height), creation_height = VALUES(creation_height), "
+                + "transaction_index = VALUES(transaction_index), transaction_height = VALUES(transaction_height), "
+                + "height = VALUES(height), latest = TRUE , deleted = FALSE")
         ) {
             int i = 0;
             pstmt.setLong(++i, sellOffer.getId());

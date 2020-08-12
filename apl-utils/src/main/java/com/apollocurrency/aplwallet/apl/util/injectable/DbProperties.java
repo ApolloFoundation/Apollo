@@ -4,16 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
+import lombok.Builder;
+import lombok.Data;
+import lombok.ToString;
+
 import javax.enterprise.inject.Vetoed;
 import java.util.Optional;
 import java.util.UUID;
 
 @Vetoed
-public final class DbProperties implements Cloneable {
+@ToString
+@Builder
+@Data
+public class DbProperties implements Cloneable {
     public static final String DB_EXTENSION = "mv.db";
     public static final String DB_EXTENSION_WITH_DOT = "." + DbProperties.DB_EXTENSION;
 
-    private long maxCacheSize;
     private String dbUrl;
     private String dbType;
     private String dbDir;
@@ -28,122 +34,15 @@ public final class DbProperties implements Cloneable {
     private int maxMemoryRows;
     private Long dbIdentity = null;
 
-    public long getMaxCacheSize() {
-        return maxCacheSize;
-    }
+    private String databaseName;
+    private String databaseHost;
+    private Integer databasePort;
 
-    public String getDbUrl() {
-        return dbUrl;
-    }
-
-    public String getDbType() {
-        return dbType;
-    }
-
-    public String getDbDir() {
-        return dbDir;
-    }
-
-    public String getDbFileName() {
-        return dbFileName;
-    }
-
-    public String getDbParams() {
-        return dbParams;
-    }
-
-    public String getDbUsername() {
-        return dbUsername;
-    }
-
-    public String getDbPassword() {
-        return dbPassword;
-    }
-
-    public int getMaxConnections() {
-        return maxConnections;
-    }
-
-    public int getLoginTimeout() {
-        return loginTimeout;
-    }
-
-    public int getDefaultLockTimeout() {
-        return defaultLockTimeout;
-    }
-
-    public int getMaxMemoryRows() {
-        return maxMemoryRows;
-    }
 
     public Optional<Long> getDbIdentity() {
         return Optional.ofNullable(dbIdentity);
     }
 
-    public DbProperties maxCacheSize(int maxCacheSize) {
-        this.maxCacheSize = maxCacheSize;
-        return this;
-    }
-
-    public DbProperties dbUrl(String dbUrl) {
-        this.dbUrl = dbUrl;
-        return this;
-    }
-
-    public DbProperties dbFileName(String dbFileName) {
-        this.dbFileName = dbFileName;
-        return this;
-    }
-
-    public DbProperties dbType(String dbType) {
-        this.dbType = dbType;
-        return this;
-    }
-
-    public DbProperties dbDir(String dbDir) {
-        this.dbDir = dbDir;
-        return this;
-    }
-
-    public DbProperties dbParams(String dbParams) {
-        this.dbParams = dbParams;
-        return this;
-    }
-
-    public DbProperties dbUsername(String dbUsername) {
-        this.dbUsername = dbUsername;
-        return this;
-    }
-
-    public DbProperties dbPassword(String dbPassword) {
-        this.dbPassword = dbPassword;
-        return this;
-    }
-
-    public DbProperties maxConnections(int maxConnections) {
-        this.maxConnections = maxConnections;
-        return this;
-    }
-
-    public DbProperties chainId(UUID chainId) {
-        this.chainId = chainId;
-        return this;
-    }
-
-    public DbProperties loginTimeout(int loginTimeout) {
-        this.loginTimeout = loginTimeout;
-        return this;
-    }
-
-    public DbProperties defaultLockTimeout(int defaultLockTimeout) {
-        this.defaultLockTimeout = defaultLockTimeout;
-        return this;
-    }
-
-    public DbProperties maxMemoryRows(int maxMemoryRows) {
-        this.maxMemoryRows = maxMemoryRows;
-        return this;
-    }
 
     public DbProperties dbIdentity(long shardIdOrTempId) {
         if (shardIdOrTempId == 0) {
@@ -159,29 +58,5 @@ public final class DbProperties implements Cloneable {
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public String toString() {
-        return "DbProperties{" +
-            "maxCacheSize=" + maxCacheSize +
-            ", dbUrl='" + dbUrl + '\'' +
-            ", dbType='" + dbType + '\'' +
-            ", dbDir='" + dbDir + '\'' +
-            ", dbFileName='" + dbFileName + '\'' +
-            ", dbParams='" + dbParams + '\'' +
-            ", dbUsername='" + dbUsername + '\'' +
-            ", dbPassword='" + dbPassword + '\'' +
-            ", chainId=" + chainId +
-            ", maxConnections=" + maxConnections +
-            ", loginTimeout=" + loginTimeout +
-            ", defaultLockTimeout=" + defaultLockTimeout +
-            ", maxMemoryRows=" + maxMemoryRows +
-            ", dbIdentity=" + dbIdentity +
-            '}';
-    }
-
-    public UUID getChainId() {
-        return chainId;
     }
 }

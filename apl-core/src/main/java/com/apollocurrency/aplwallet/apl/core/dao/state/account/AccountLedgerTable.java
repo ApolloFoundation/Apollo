@@ -102,7 +102,7 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
      */
     private void save(Connection con, LedgerEntry ledgerEntry) throws SQLException {
         try (final PreparedStatement stmt = con.prepareStatement("INSERT INTO account_ledger " +
-            "(account_id, event_type, event_id, holding_type, holding_id, change, balance, block_id, height, timestamp) " +
+            "(account_id, event_type, event_id, holding_type, holding_id, `change`, balance, block_id, height, `timestamp`) " +
             "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             stmt.setLong(++i, ledgerEntry.getAccountId());

@@ -89,7 +89,7 @@ public class BlockDeleteHelper extends AbstractHelper {
 //                        sqlInsertString.append("delete from BLOCK WHERE DB_ID >= ? AND DB_ID < ? LIMIT ?");
                         sqlInsertString.append("delete from BLOCK WHERE DB_ID = ?");
                     } else if (ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-                        sqlInsertString.append("delete from transaction WHERE db_id = ?");
+                        sqlInsertString.append("DELETE TX, US from transaction AS TX LEFT JOIN update_status AS US ON TX.id = US.transaction_id WHERE TX.db_id = ?");
                     }
                     // precompile sql
                     if (preparedInsertStatement == null) {
@@ -153,11 +153,11 @@ public class BlockDeleteHelper extends AbstractHelper {
             sqlToExecuteWithPaging = "select * from transaction where DB_ID > ? AND DB_ID < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound =
-                "select DB_ID + 1 as DB_ID from transaction where block_timestamp < (SELECT \"TIMESTAMP\" from BLOCK where HEIGHT = ?) order by block_timestamp desc, transaction_index desc limit 1";
+                "select DB_ID + 1 as DB_ID from transaction where block_timestamp < (SELECT `TIMESTAMP` from BLOCK where HEIGHT = ?) order by block_timestamp desc, transaction_index desc limit 1";
             log.trace(sqlSelectUpperBound);
             sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
             log.trace(sqlSelectBottomBound);
-            sqlDeleteFromBottomBound = "DELETE from TRANSACTION WHERE  DB_ID > ? AND DB_ID < ?";
+            sqlDeleteFromBottomBound = "DELETE TX, US from transaction AS TX LEFT JOIN update_status AS US ON TX.id = US.transaction_id WHERE TX.DB_ID > ? AND TX.DB_ID < ?";
             log.trace(sqlDeleteFromBottomBound);
         } else {
             throw new IllegalAccessException("Unsupported table. 'Block' is expected. Pls use another Helper class");

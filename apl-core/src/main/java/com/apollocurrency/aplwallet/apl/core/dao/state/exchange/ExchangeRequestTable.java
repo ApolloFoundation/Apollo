@@ -38,7 +38,7 @@ public class ExchangeRequestTable extends EntityDbTable<ExchangeRequest> {
     @Override
     public void save(Connection con, ExchangeRequest exchangeRequest) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO exchange_request (id, account_id, currency_id, "
-            + "units, rate, is_buy, timestamp, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
+            + "units, rate, is_buy, `timestamp`, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, exchangeRequest.getId());
             pstmt.setLong(++i, exchangeRequest.getAccountId());

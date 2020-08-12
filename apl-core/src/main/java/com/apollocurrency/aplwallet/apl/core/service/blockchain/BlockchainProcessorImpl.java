@@ -171,7 +171,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final BlockchainProcessorState blockchainProcessorState;
     private final AccountControlPhasingService accountControlPhasingService; // lazy initialization only !
     private final BlockchainConfigUpdater blockchainConfigUpdater;
-    private final FullTextSearchService fullTextSearchProvider;
+//    private final FullTextSearchService fullTextSearchProvider;
     private final TaskDispatchManager taskDispatchManager;
     private final BlockValidator validator;
     private final AccountService accountService;
@@ -200,7 +200,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    Blockchain blockchain,
                                    PeersService peersService,
                                    TransactionProcessor transactionProcessor,
-                                   FullTextSearchService fullTextSearchProvider,
+//                                   FullTextSearchService fullTextSearchProvider,
                                    GeneratorService generatorService,
                                    BlockParser blockParser) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
@@ -235,7 +235,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.blockchain = blockchain;
         this.peersService = peersService;
         this.transactionProcessor = transactionProcessor;
-        this.fullTextSearchProvider = fullTextSearchProvider;
+//        this.fullTextSearchProvider = fullTextSearchProvider;
         this.blockchainProcessorState = new BlockchainProcessorState();
         this.generatorService = generatorService;
         this.blockParser = blockParser;
@@ -270,7 +270,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             .task(() -> {
                 checkResumeDownloadDecideShardImport(); // continue blockchain automatically or try import genesis / shard data
                 if (blockchain.getShardInitialBlock() != null) { // prevent NPE on empty node
-                    trimService.init(blockchain.getHeight(), blockchain.getShardInitialBlock().getHeight()); // try to perform all not performed trims
+//                    trimService.init(blockchain.getHeight(), blockchain.getShardInitialBlock().getHeight()); // try to perform all not performed trims
                 } else {
                     trimService.resetTrim();
                 }
@@ -1266,7 +1266,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (height == shardInitialHeight) {
                     trimService.resetTrim(height + trimService.getMaxRollback());
                     aplAppStatus.durableTaskUpdate(scanTaskId, 0.5, "Dropping all full text search indexes");
-                    fullTextSearchProvider.dropAll(con);
+//                    fullTextSearchProvider.dropAll(con);
                     aplAppStatus.durableTaskUpdate(scanTaskId, 3.5, "Full text indexes dropped successfully");
                 }
                 Collection<DerivedTableInterface> derivedTables = dbTables.getDerivedTables();
@@ -1395,7 +1395,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     for (DerivedTableInterface table : derivedTables) {
                         aplAppStatus.durableTaskUpdate(scanTaskId,
                             "Create full text search index for table " + table.toString(), percentsPerTableIndex);
-                        fullTextSearchProvider.createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
+//                        fullTextSearchProvider.createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
                     }
                 }
 

@@ -22,9 +22,8 @@ import java.util.Set;
 
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-public class FullTextSearchServiceImpl implements FullTextSearchService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(FullTextSearchServiceImpl.class);
+public class FullTextSearchServiceImpl  {
+/*    private static final Logger LOG = LoggerFactory.getLogger(FullTextSearchServiceImpl.class);
     private FullTextSearchEngine ftl;
     private Set<String> indexTables;
     private String schemaName;
@@ -40,14 +39,14 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         this.schemaName = schemaName;
     }
 
-    /**
+    *//**
      * Drop the fulltext index for a table
      *
      * @param conn   SQL connection
      * @param schema Schema name
      * @param table  Table name
      * @throws SQLException Unable to drop fulltext index
-     */
+     *//*
     public void dropIndex(Connection conn, String schema, String table) throws SQLException {
         String upperSchema = schema.toUpperCase();
         String upperTable = table.toUpperCase();
@@ -76,12 +75,12 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         }
     }
 
-    /**
+    *//**
      * Initialize the fulltext support for a new database
      * <p>
      * This method should be called from AplDbVersion when performing the database version update
      * that enables fulltext search support
-     */
+     *//*
     public void init() {
         try {
             ftl.init();
@@ -171,12 +170,12 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         }
     }
 
-    /**
+    *//**
      * Drop all fulltext indexes
      *
      * @param conn SQL connection
      * @throws SQLException Unable to drop fulltext indexes
-     */
+     *//*
     public void dropAll(Connection conn) throws SQLException {
         //
         // Drop existing triggers
@@ -274,7 +273,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
     }
 
 
-    /**
+    *//**
      * Creates a new index for table to support fulltext search.
      * Note that a schema is always PUBLIC.
      *
@@ -282,7 +281,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
      * @param table                 name of table for indexing
      * @param fullTextSearchColumns list of columns for indexing separated by comma
      * @throws SQLException when unable to create index
-     */
+     *//*
     @Override
     public final void createSearchIndex(
         final Connection con,
@@ -322,5 +321,5 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                 throw new SQLException("Unable to create Lucene search index for table " + tableName, exc);
             }
         }
-    }
+    }*/
 }

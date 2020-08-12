@@ -45,11 +45,15 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
             @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO shuffling (id, holding_id, holding_type, "
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO shuffling (id, holding_id, holding_type, "
                 + "issuer_id, amount, participant_count, blocks_remaining, stage, assignee_account_id, "
                 + "recipient_public_keys, registrant_count, height, latest, deleted) "
-                + "KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE) "
+                + "ON DUPLICATE KEY UPDATE id = VALUES(id), holding_id = VALUES(holding_id), holding_type = VALUES(holding_type), "
+                + "issuer_id = VALUES(issuer_id), amount = VALUES(amount), participant_count = VALUES(participant_count), "
+                + "blocks_remaining = VALUES(blocks_remaining), stage = VALUES(stage), assignee_account_id = VALUES(assignee_account_id), "
+                + "recipient_public_keys = VALUES(recipient_public_keys), registrant_count = VALUES(registrant_count), "
+                + "height = VALUES(height), latest = TRUE, deleted = FALSE")
         ) {
             int i = 0;
             pstmt.setLong(++i, shuffling.getId());
@@ -61,7 +65,7 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
             DbUtils.setShortZeroToNull(pstmt, ++i, shuffling.getBlocksRemaining());
             pstmt.setByte(++i, shuffling.getStage().getCode());
             DbUtils.setLongZeroToNull(pstmt, ++i, shuffling.getAssigneeAccountId());
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, shuffling.getRecipientPublicKeys());
+            DbUtils.set2dByteArray(pstmt, ++i, shuffling.getRecipientPublicKeys());
             pstmt.setByte(++i, shuffling.getRegistrantCount());
             pstmt.setInt(++i, shuffling.getHeight());
             pstmt.executeUpdate();

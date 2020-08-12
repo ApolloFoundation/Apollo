@@ -34,11 +34,9 @@ import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
-import org.h2.jdbc.JdbcSQLException;
 import org.jdbi.v3.core.ConnectionException;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
-import org.jdbi.v3.core.h2.H2DatabasePlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
 
@@ -48,7 +46,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -62,8 +59,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class DataSourceWrapper implements DataSource {
     private static final Logger log = getLogger(DataSourceWrapper.class);
     private static final String DB_INITIALIZATION_ERROR_TEXT = "DatabaseManager was not initialized!";
-    private static final String MV_STORE = "MV_STORE";
-    private static final String MVCC = "MVCC";
     private static Pattern patternExtractShardNumber = Pattern.compile("shard-\\d+");
     //    private JdbcConnectionPool dataSource;
 //    private volatile int maxActiveConnections;
@@ -81,16 +76,9 @@ public class DataSourceWrapper implements DataSource {
     private volatile boolean shutdown = false;
 
     public DataSourceWrapper(DbProperties dbProperties) {
-        long maxCacheSize = dbProperties.getMaxCacheSize();
-        if (maxCacheSize == 0) {
-            maxCacheSize = Math.min(256, Math.max(16, (Runtime.getRuntime().maxMemory() / (1024 * 1024) - 128) / 2)) * 1024;
-        }
-
         //Even though dbUrl is no longer coming from apl-blockchain.properties,
         //DbMigrationExecutor in afterMigration triggers the further creation of DataSourceWrapper
         String dbUrlTemp = dbProperties.getDbUrl();
-        final String dbParams = dbProperties.getDbParams();
-        validateDbParams(dbParams);
 
         if (StringUtils.isBlank(dbUrlTemp)) {
             String dbFileName = dbProperties.getDbFileName();
@@ -98,25 +86,20 @@ public class DataSourceWrapper implements DataSource {
             if (m.find()) { // if found
                 shardId = m.group(); // store shard id
             }
+            //dbUrlTemp = "jdbc:mariadb://localhost:3306/apollo_new?user=root&password=12";
             dbUrlTemp = String.format(
-                "jdbc:%s:file:%s/%s;%s",
+                "jdbc:%s://%s:%d/%s?user=%s&password=%s",
                 dbProperties.getDbType(),
-                dbProperties.getDbDir(),
-                dbFileName,
-                dbProperties.getDbParams()
+                dbProperties.getDatabaseHost(),
+                dbProperties.getDatabasePort(),
+                dbProperties.getDatabaseName(),
+                dbProperties.getDbUsername(),
+                dbProperties.getDbPassword()
             );
-        } else {
-            validateDbParams(dbUrlTemp);
         }
 
-        if (!dbUrlTemp.contains(MV_STORE + "=")) {
-            dbUrlTemp += ";" + MV_STORE + "=TRUE";
-        }
-        if (!dbUrlTemp.contains("CACHE_SIZE=")) {
-            dbUrlTemp += ";CACHE_SIZE=" + maxCacheSize;
-        }
         this.dbUrl = dbUrlTemp;
-        dbProperties.dbUrl(dbUrlTemp);
+        dbProperties.setDbUrl(dbUrlTemp);
         this.dbUsername = dbProperties.getDbUsername();
         this.dbPassword = dbProperties.getDbPassword();
         this.maxConnections = dbProperties.getMaxConnections();
@@ -182,31 +165,6 @@ public class DataSourceWrapper implements DataSource {
         return jmxBean;
     }
 
-    private void validateDbParams(String dbParams) {
-        if (Objects.nonNull(dbParams)) {
-            if (dbParams.contains(MVCC)) {
-                final String message = String.format(
-                    "%s is not supported in the dbParams or dbUrl properties.",
-                    MVCC
-                );
-                log.error(message);
-                throw new IllegalArgumentException(
-                    message
-                );
-            }
-            if (dbParams.contains(MV_STORE + "=FALSE")) {
-                final String message = String.format(
-                    "%s should always be TRUE.",
-                    MV_STORE
-                );
-                log.error(message);
-                throw new IllegalArgumentException(
-                    message
-                );
-            }
-        }
-    }
-
     /**
      * Constructor creates internal DataSource.
      *
@@ -246,8 +204,10 @@ public class DataSourceWrapper implements DataSource {
         log.debug("Attempting to create DataSource by path = {}...", dbUrl);
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
-            stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
-            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
+//            stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
+//            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
+            stmt.executeUpdate("set global rocksdb_max_row_locks=1073741824");
+            stmt.executeUpdate("set session rocksdb_max_row_locks=1073741824");
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -259,7 +219,7 @@ public class DataSourceWrapper implements DataSource {
         log.debug("Attempting to create Jdbi instance...");
         Jdbi jdbi = Jdbi.create(dataSource);
         jdbi.installPlugin(new SqlObjectPlugin());
-        jdbi.installPlugin(new H2DatabasePlugin());
+//        jdbi.installPlugin(new H2DatabasePlugin());
         jdbi.registerArgument(new BigIntegerArgumentFactory());
         jdbi.registerArgument(new DexCurrenciesFactory());
         jdbi.registerArgument(new OrderTypeFactory());
@@ -298,14 +258,12 @@ public class DataSourceWrapper implements DataSource {
         try {
             Connection con = dataSource.getConnection();
             Statement stmt = con.createStatement();
-            stmt.execute("SHUTDOWN COMPACT");
+//            stmt.execute("SHUTDOWN");
             shutdown = true;
             initialized = false;
             dataSource.close();
 //            dataSource.dispose();
             log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
-        } catch (JdbcSQLException e) {
-            log.info(e.toString());
         } catch (SQLException e) {
             log.info(e.toString(), e);
         }

@@ -41,9 +41,11 @@ public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
     public void save(Connection con, PublicKey publicKey) throws SQLException {
         publicKey.setHeight(blockchain.getHeight());
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + table
                 + " (account_id, public_key, height, latest) "
-                + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")
+                + "VALUES (?, ?, ?, TRUE) "
+                + "ON DUPLICATE KEY UPDATE account_id = VALUES(account_id), public_key = VALUES(public_key), "
+                + "height = VALUES(height), latest = TRUE")
         ) {
             int i = 0;
             pstmt.setLong(++i, publicKey.getAccountId());

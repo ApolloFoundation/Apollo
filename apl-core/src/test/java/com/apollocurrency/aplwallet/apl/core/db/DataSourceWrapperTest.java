@@ -28,13 +28,14 @@ class DataSourceWrapperTest {
         final String user = "usr";
         final String pass = "pass";
         final String dbParams = "AUTO_SERVER=TRUE;TRACE_LEVEL_FILE=1";
-        final DbProperties dbProperties = new DbProperties()
+        final DbProperties dbProperties = DbProperties.builder()
             .dbPassword(pass)
             .dbUsername(user)
             .dbDir(dbDir)
             .dbFileName(dbFileName)
             .dbParams(dbParams)
-            .dbType(dbType);
+            .dbType(dbType)
+            .build();
 
         //WHEN
         final DataSourceWrapper dataSourceWrapperActual = new DataSourceWrapper(dbProperties);
@@ -58,7 +59,7 @@ class DataSourceWrapperTest {
     void shouldNotConstructDataSourceWrapperBecauseOfIncorrectDbUrl(String dbParams) {
         //GIVEN
         final String url = "jdbc:h2:file:C:/db/2f2b61/apl-blockchain;AUTO_SERVER=TRUE;" + dbParams;
-        final DbProperties dbProperties = new DbProperties().dbUrl(url);
+        final DbProperties dbProperties = DbProperties.builder().dbUrl(url).build();
 
         //WHEN
         final Executable executable = () -> new DataSourceWrapper(dbProperties);
@@ -71,7 +72,7 @@ class DataSourceWrapperTest {
     @ValueSource(strings = {"MVCC=TRUE", "MV_STORE=FALSE", "MVCC=TRUE;MV_STORE=FALSE"})
     void shouldNotConstructDataSourceWrapperBecauseOfIncorrectDbParams(String dbParams) {
         //GIVEN
-        final DbProperties dbProperties = new DbProperties().dbParams(dbParams);
+        final DbProperties dbProperties = DbProperties.builder().dbParams(dbParams).build();
 
         //WHEN
         final Executable executable = () -> new DataSourceWrapper(dbProperties);

@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public class DbTestData {
     private static final Random random = new Random();
-    private static final DbProperties DB_PROPERTIES = new DbProperties()
+    private static final DbProperties DB_PROPERTIES = DbProperties.builder()
         .dbPassword("sa")
         .dbUsername("sa")
         .maxConnections(10)
@@ -22,7 +22,8 @@ public class DbTestData {
         .dbParams("")
         .loginTimeout(10)
         .maxMemoryRows(100000)
-        .defaultLockTimeout(10 * 1000);
+        .defaultLockTimeout(10 * 1000)
+        .build();
 
     public static DbProperties getInMemDbProps() {
         return getDbUrlProps("jdbc:h2:mem:tempDb" + random.nextLong() + ";MV_STORE=TRUE;CACHE_SIZE=16000");
@@ -30,15 +31,15 @@ public class DbTestData {
 
     private static DbProperties getDbUrlProps(String url) {
         DbProperties dbProperties = DB_PROPERTIES.deepCopy();
-        dbProperties.dbUrl(url);
+        dbProperties.setDbUrl(url);
         return dbProperties;
     }
 
     public static DbProperties getDbFileProperties(String fileName) {
         DbProperties dbProperties = getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0;MV_STORE=TRUE;CACHE_SIZE=16000;AUTO_SERVER=TRUE", fileName));
         Path filePath = Paths.get(fileName).toAbsolutePath();
-        dbProperties.dbDir(filePath.getParent().toString());
-        dbProperties.dbFileName(filePath.getFileName().toString());
+        dbProperties.setDbDir(filePath.getParent().toString());
+        dbProperties.setDbFileName(filePath.getFileName().toString());
         return dbProperties;
     }
 
@@ -46,8 +47,8 @@ public class DbTestData {
     public static DbProperties getDbFileProperties(Path dbPath) {
         dbPath = dbPath.toAbsolutePath().toAbsolutePath();
         DbProperties dbProperties = getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0;MV_STORE=TRUE;CACHE_SIZE=16000;AUTO_SERVER=TRUE", dbPath));
-        dbProperties.dbDir(dbPath.getParent().toString());
-        dbProperties.dbFileName(dbPath.getFileName().toString());
+        dbProperties.setDbDir(dbPath.getParent().toString());
+        dbProperties.setDbFileName(dbPath.getFileName().toString());
         return dbProperties;
     }
 }

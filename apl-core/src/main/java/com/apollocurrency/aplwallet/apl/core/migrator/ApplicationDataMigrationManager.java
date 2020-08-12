@@ -21,7 +21,7 @@ import java.nio.file.Path;
  */
 public class ApplicationDataMigrationManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ApplicationDataMigrationManager.class);
+/*    private static final Logger LOG = LoggerFactory.getLogger(ApplicationDataMigrationManager.class);
 
     @Inject
     private VaultKeystoreMigrationExecutor vaultKeystoreMigrationExecutor;
@@ -84,5 +84,5 @@ public class ApplicationDataMigrationManager {
 
     public void setPublicKeyMigrator(PublicKeyMigrator publicKeyMigrator) {
         this.publicKeyMigrator = publicKeyMigrator;
-    }
+    }*/
 }

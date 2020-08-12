@@ -55,7 +55,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         this();
         if (!tableWithColumns.isEmpty()) {
             this.tableWithColumns = tableWithColumns;
-            createFtl();
+            //createFtl();
         }
     }
 
@@ -113,7 +113,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         }
     }
 
-    private void createFtl() {
+/*    private void createFtl() {
         try {
             this.indexDir = Files.createTempDirectory("indexDir");
             this.luceneFullTextSearchEngine = new LuceneFullTextSearchEngine(mock(NtpTime.class), indexDir);
@@ -121,7 +121,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         } catch (IOException e) {
             throw new RuntimeException("Unable to init ftl", e);
         }
-    }
+    }*/
 
     private void initFtl() {
         ftl.init();

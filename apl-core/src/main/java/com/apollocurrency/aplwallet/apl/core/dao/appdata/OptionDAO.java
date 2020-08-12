@@ -30,7 +30,7 @@ public class OptionDAO {
     public String get(String optionName) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection()) {
-            PreparedStatement stmt = con.prepareStatement("SELECT * FROM option WHERE name = ?");
+            PreparedStatement stmt = con.prepareStatement("SELECT * FROM option WHERE `name` = ?");
             stmt.setString(1, optionName);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -47,7 +47,7 @@ public class OptionDAO {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!exist(optionName)) {
             try (Connection con = dataSource.getConnection()) {
-                PreparedStatement stmt = con.prepareStatement("INSERT INTO option (name, \"VALUE\") VALUES (?, ?)");
+                PreparedStatement stmt = con.prepareStatement("INSERT INTO option (`name`, `VALUE`) VALUES (?, ?)");
                 stmt.setString(1, optionName);
                 stmt.setString(2, optionValue);
                 stmt.execute();
@@ -56,7 +56,7 @@ public class OptionDAO {
             }
         } else {
             try (Connection con = dataSource.getConnection()) {
-                PreparedStatement stmt = con.prepareStatement("UPDATE option set value = ? WHERE name = ?");
+                PreparedStatement stmt = con.prepareStatement("UPDATE option set `value` = ? WHERE `name` = ?");
                 stmt.setString(1, optionValue);
                 stmt.setString(2, optionName);
                 stmt.execute();
@@ -71,7 +71,7 @@ public class OptionDAO {
         if (get(optionName) != null) {
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             try (Connection con = dataSource.getConnection()) {
-                PreparedStatement stmt = con.prepareStatement("DELETE FROM option WHERE name = ?");
+                PreparedStatement stmt = con.prepareStatement("DELETE FROM option WHERE `name` = ?");
                 stmt.setString(1, optionName);
                 int deletedRows = stmt.executeUpdate();
                 return deletedRows == 1;
@@ -96,7 +96,7 @@ public class OptionDAO {
     public boolean exist(String optionKey) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection()) {
-            PreparedStatement stmt = con.prepareStatement("SELECT count(*) FROM option WHERE name = ?");
+            PreparedStatement stmt = con.prepareStatement("SELECT count(*) FROM option WHERE `name` = ?");
             stmt.setString(1, optionKey);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {

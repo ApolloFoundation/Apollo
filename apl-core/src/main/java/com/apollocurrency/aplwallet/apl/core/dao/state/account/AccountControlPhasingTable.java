@@ -46,10 +46,15 @@ public class AccountControlPhasingTable extends VersionedDeletableEntityDbTable<
     public void save(Connection con, AccountControlPhasing phasingOnly) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement(
-                "MERGE INTO account_control_phasing " +
+                "INSERT INTO account_control_phasing " +
                     "(account_id, whitelist, voting_model, quorum, min_balance, holding_id, min_balance_model, "
-                    + "max_fees, min_duration, max_duration, height, latest, deleted) KEY (account_id, height) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+                    + "max_fees, min_duration, max_duration, height, latest, deleted) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE) "
+                    + "ON DUPLICATE KEY UPDATE account_id = VALUES(account_id), whitelist = VALUES(whitelist), "
+                    + "voting_model = VALUES(voting_model), quorum = VALUES(quorum), min_balance = VALUES(min_balance), "
+                    + "holding_id = VALUES(holding_id), min_balance_model = VALUES(min_balance_model), "
+                    + "max_fees = VALUES(max_fees), min_duration = VALUES(min_duration), max_duration = VALUES(max_duration), "
+                    + "height = VALUES(height), latest = TRUE, deleted = FALSE")
         ) {
             int i = 0;
             pstmt.setLong(++i, phasingOnly.getAccountId());

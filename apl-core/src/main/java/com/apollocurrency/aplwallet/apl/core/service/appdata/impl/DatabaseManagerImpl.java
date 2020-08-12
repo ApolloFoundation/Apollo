@@ -278,10 +278,10 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         waitAvailability();
         long start = System.currentTimeMillis();
         log.debug("Create new SHARD '{}'", temporaryDatabaseName);
-        DbProperties shardDbProperties = baseDbProperties.deepCopy()
-            .dbFileName(temporaryDatabaseName)
-            .dbUrl(null) // nullify dbUrl intentionally!;
-            .dbIdentity(TEMP_DB_IDENTITY);
+        DbProperties shardDbProperties = baseDbProperties.deepCopy();
+        shardDbProperties.setDbFileName(temporaryDatabaseName);
+        shardDbProperties.setDbUrl(null); // nullify dbUrl intentionally!;
+        shardDbProperties.setDbIdentity(TEMP_DB_IDENTITY);
 
         TransactionalDataSource temporaryDataSource = new TransactionalDataSource(shardDbProperties, propertiesHolder);
         temporaryDataSource.init(new AplDbVersion());

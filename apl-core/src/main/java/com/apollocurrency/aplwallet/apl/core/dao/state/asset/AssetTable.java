@@ -42,10 +42,13 @@ public class AssetTable extends VersionedDeletableEntityDbTable<Asset> {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO asset "
-                + "(id, account_id, name, description, initial_quantity, quantity, decimals, height, latest, deleted) "
-                + "KEY(id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset "
+                + "(id, account_id, `name`, description, initial_quantity, quantity, decimals, height, latest, deleted) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE) "
+                + "ON DUPLICATE KEY UPDATE id = VALUES(id), account_id = VALUES(account_id), `name` = VALUES(`name`), "
+                + "description = VALUES(description), initial_quantity = VALUES(initial_quantity),"
+                + "quantity = VALUES(quantity), decimals = VALUES(decimals), height = VALUES(height), "
+                + "latest = TRUE , deleted = FALSE ")
         ) {
             int i = 0;
             pstmt.setLong(++i, asset.getId());

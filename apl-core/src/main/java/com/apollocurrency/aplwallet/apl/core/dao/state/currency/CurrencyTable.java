@@ -15,6 +15,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Locale;
+import java.util.Objects;
 
 public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> {
 
@@ -39,18 +41,29 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> {
 
     @Override
     public void save(Connection con, Currency currency) throws SQLException {
+        Objects.requireNonNull(currency);
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency (id, account_id, name, code, "
-                + "description, type, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_atm, "
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO currency (id, account_id, `name`, name_lower, code, "
+                + "description, `type`, initial_supply, reserve_supply, max_supply, creation_height, issuance_height, min_reserve_per_unit_atm, "
                 + "min_difficulty, max_difficulty, ruleset, algorithm, decimals, height, latest, deleted) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE) "
+                + "ON DUPLICATE KEY UPDATE id = VALUES(id), account_id = VALUES(account_id), `name` = VALUES(`name`), name_lower = VALUES(name_lower), "
+                + "code = VALUES(code), description = VALUES(description), `type` = VALUES(`type`), initial_supply = VALUES(initial_supply), "
+                + "reserve_supply = VALUES(reserve_supply), max_supply = VALUES(max_supply), creation_height = VALUES(creation_height), "
+                + "issuance_height = VALUES(issuance_height), min_reserve_per_unit_atm = VALUES(min_reserve_per_unit_atm), "
+                + "min_difficulty = VALUES(min_difficulty), max_difficulty = VALUES(max_difficulty), ruleset = VALUES(ruleset), "
+                + "algorithm = VALUES(algorithm), decimals = VALUES(decimals), height = VALUES(height), latest = TRUE, deleted = FALSE")
         ) {
+            final String name = currency.getName();
+            Objects.requireNonNull(name);
+
             int i = 0;
             pstmt.setLong(++i, currency.getId());
             pstmt.setLong(++i, currency.getAccountId());
-            pstmt.setString(++i, currency.getName());
+            pstmt.setString(++i, name);
+            pstmt.setString(++i, name.toLowerCase(Locale.US));
             pstmt.setString(++i, currency.getCode());
             pstmt.setString(++i, currency.getDescription());
             pstmt.setInt(++i, currency.getType());

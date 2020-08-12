@@ -55,8 +55,10 @@ public class TaggedDataTimestampDao extends EntityDbTable<TaggedDataTimestamp> {
             @DatabaseSpecificDml(DmlMarker.MERGE)
             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
             PreparedStatement pstmt = con.prepareStatement(
-                "MERGE INTO tagged_data_timestamp (id, timestamp, height, latest) "
-                    + "KEY (id, height) VALUES (?, ?, ?, TRUE)")
+                "INSERT INTO tagged_data_timestamp (id, `timestamp`, height, latest) "
+                    + "VALUES (?, ?, ?, TRUE) "
+                    + "ON DUPLICATE KEY UPDATE "
+                    + "id = VALUES(id) , `timestamp` = VALUES(`timestamp`), height = VALUES(height), latest = TRUE")
         ) {
             int i = 0;
             pstmt.setLong(++i, dataTimestamp.getId());

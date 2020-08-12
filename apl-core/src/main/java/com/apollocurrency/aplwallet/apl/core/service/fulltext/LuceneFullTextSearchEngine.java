@@ -27,7 +27,6 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.h2.tools.SimpleResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,27 +45,27 @@ import java.util.stream.Stream;
 
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
-    private static final Logger LOG = LoggerFactory.getLogger(LuceneFullTextSearchEngine.class);
-    /**
+public class LuceneFullTextSearchEngine  {
+/*    private static final Logger LOG = LoggerFactory.getLogger(LuceneFullTextSearchEngine.class);
+    *//**
      * Lucene index reader (thread-safe)
-     */
+     *//*
     private static DirectoryReader indexReader;
-    /**
+    *//**
      * Lucene index searcher (thread-safe)
-     */
+     *//*
     private static IndexSearcher indexSearcher;
-    /**
+    *//**
      * Lucene index writer (thread-safe)
-     */
+     *//*
     private static IndexWriter indexWriter;
-    /**
+    *//**
      * Index lock
-     */
+     *//*
     private final ReadWriteUpdateLock indexLock = new ReadWriteUpdateLock();
-    /**
+    *//**
      * Lucene analyzer (thread-safe)
-     */
+     *//*
     private final Analyzer analyzer = new StandardAnalyzer();
     private NtpTime ntpTime;
     private Path indexDirPath;
@@ -85,9 +84,9 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         }
     }
 
-    /**
+    *//**
      * {@inheritDoc}
-     */
+     *//*
     @Override
     public void indexRow(Object[] row, TableData tableData) throws SQLException {
         indexLock.readLock().lock();
@@ -118,9 +117,9 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         }
     }
 
-    /**
+    *//**
      * {@inheritDoc}
-     */
+     *//*
     @Override
     public void commitRow(Object[] oldRow, Object[] newRow, TableData tableData) throws SQLException {
         if (oldRow != null) {
@@ -148,9 +147,9 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         }
     }
 
-    /**
+    *//**
      * {@inheritDoc}
-     */
+     *//*
     @Override
     public void init() throws IOException {
         boolean obtainedUpdateLock = false;
@@ -186,9 +185,9 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         }
     }
 
-    /**
+    *//**
      * {@inheritDoc}
-     */
+     *//*
     @Override
     public void commitIndex() throws SQLException {
         indexLock.writeLock().lock();
@@ -208,11 +207,11 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         }
     }
 
-    /**
+    *//**
      * Remove the Lucene index files
      *
      * @throws SQLException I/O error occurred
-     */
+     *//*
     @Override
     public void clearIndex() throws SQLException {
         indexLock.writeLock().lock();
@@ -239,9 +238,9 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         }
     }
 
-    /**
+    *//**
      * {@inheritDoc}
-     */
+     *//*
     @Override
     public ResultSet search(String schema, String table, String queryText, int limit, int offset)
         throws SQLException {
@@ -294,9 +293,9 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         return result;
     }
 
-    /**
+    *//**
      * {@inheritDoc}
-     */
+     *//*
     @Override
     public void shutdown() {
         indexLock.writeLock().lock();
@@ -313,5 +312,5 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         } finally {
             indexLock.writeLock().unlock();
         }
-    }
+    }*/
 }

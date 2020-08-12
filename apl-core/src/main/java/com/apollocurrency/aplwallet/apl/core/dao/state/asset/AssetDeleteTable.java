@@ -38,7 +38,7 @@ public class AssetDeleteTable extends EntityDbTable<AssetDelete> {
     @Override
     public void save(Connection con, AssetDelete assetDelete) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_delete (id, asset_id, "
-            + "account_id, quantity, timestamp, height) "
+            + "account_id, quantity, `timestamp`, height) "
             + "VALUES (?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, assetDelete.getId());

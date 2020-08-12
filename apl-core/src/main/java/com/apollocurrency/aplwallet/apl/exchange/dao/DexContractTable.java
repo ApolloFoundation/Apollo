@@ -62,9 +62,16 @@ public class DexContractTable extends EntityDbTable<ExchangeContract> {
 
     @Override
     public void save(Connection con, ExchangeContract entity) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO dex_contract (id, offer_id, counter_offer_id, " +
-            "sender, recipient, secret_hash, encrypted_secret, transfer_tx_id, counter_transfer_tx_id, deadline_to_reply, status, height, latest) " +
-            "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_contract (id, offer_id, counter_offer_id, " +
+            "sender, recipient, secret_hash, encrypted_secret, transfer_tx_id, counter_transfer_tx_id, deadline_to_reply, status, height, latest) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) "
+            + "ON DUPLICATE KEY UPDATE "
+            + "id = VALUES(id), offer_id = VALUES(offer_id), counter_offer_id = VALUES(counter_offer_id), "
+            + "sender = VALUES(sender), recipient = VALUES(recipient), secret_hash = VALUES(secret_hash), "
+            + "encrypted_secret = VALUES(encrypted_secret), transfer_tx_id = VALUES(transfer_tx_id), "
+            + "counter_transfer_tx_id = VALUES(counter_transfer_tx_id), deadline_to_reply = VALUES(deadline_to_reply), "
+            + "status = VALUES(status), height = VALUES(height), latest = TRUE")
+        ) {
             int i = 0;
             pstmt.setLong(++i, entity.getId());
             pstmt.setLong(++i, entity.getOrderId());

@@ -44,7 +44,7 @@ public final class AssetTransferTable extends EntityDbTable<AssetTransfer> {
     @Override
     public void save(Connection con, AssetTransfer assetTransfer) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_transfer (id, asset_id, "
-            + "sender_id, recipient_id, quantity, timestamp, height) "
+            + "sender_id, recipient_id, quantity, `timestamp`, height) "
             + "VALUES (?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, assetTransfer.getId());

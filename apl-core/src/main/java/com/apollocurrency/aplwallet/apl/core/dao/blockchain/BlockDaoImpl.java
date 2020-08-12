@@ -514,7 +514,7 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public void saveBlock(Connection con, Block block) {
         try {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, timestamp, previous_block_id, "
+            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, `timestamp`, previous_block_id, "
                 + "total_amount, total_fee, payload_length, previous_block_hash, next_block_id, cumulative_difficulty, "
                 + "base_target, height, generation_signature, block_signature, payload_hash, generator_id, timeout) "
                 + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
@@ -616,8 +616,8 @@ public class BlockDaoImpl implements BlockDao {
              PreparedStatement pstmtBlockSelect = con.prepareStatement("SELECT db_id, id FROM block WHERE timestamp >= "
                  + "IFNULL ((SELECT timestamp FROM block WHERE id = ?), " + Integer.MAX_VALUE + ") ORDER BY timestamp DESC");
              PreparedStatement pstmtBlockDelete = con.prepareStatement("DELETE FROM block WHERE db_id = ?");
-             PreparedStatement pstmtTransactionDelete = con.prepareStatement("DELETE FROM transaction WHERE db_id = ?");
-             PreparedStatement pstmtTransactionSelect = con.prepareStatement("SELECT db_id FROM transaction WHERE block_id = ?")
+             PreparedStatement pstmtTransactionDelete = con.prepareStatement("DELETE TX, US from transaction AS TX LEFT JOIN update_status AS US ON TX.id = US.transaction_id WHERE TX.db_id = ?");
+             PreparedStatement pstmtTransactionSelect = con.prepareStatement("SELECT db_id FROM transaction WHERE block_id = ?");
         ) {
             try {
                 pstmtBlockSelect.setLong(1, blockId);

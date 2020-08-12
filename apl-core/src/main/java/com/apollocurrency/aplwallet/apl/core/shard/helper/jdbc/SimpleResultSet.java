@@ -10,7 +10,11 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc;
 
 import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
-import org.h2.value.DataType;
+import lombok.SneakyThrows;
+import org.mariadb.jdbc.UrlParser;
+import org.mariadb.jdbc.internal.ColumnType;
+import org.mariadb.jdbc.internal.com.read.resultset.ColumnDefinition;
+import org.mariadb.jdbc.internal.util.exceptions.ExceptionFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -70,6 +74,7 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
      * addRow.
      */
     public SimpleResultSet() {
+        super();
         rows = new ArrayList<>(4);
     }
 
@@ -138,9 +143,9 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
      * @param precision the precision
      * @param scale     the scale
      */
+    @SneakyThrows
     public void addColumn(String name, int sqlType, int precision, int scale) {
-        int valueType = DataType.convertSQLTypeToValueType(sqlType);
-        addColumn(name, sqlType, DataType.getDataType(valueType).name,
+        addColumn(name, sqlType, getColumnClassName(findColumn(name)),
             precision, scale);
     }
 
@@ -531,7 +536,7 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
         if (o != null && !(o instanceof Boolean)) {
             o = Boolean.valueOf(o.toString());
         }
-        return o == null ? false : ((Boolean) o).booleanValue();
+        return o != null && ((Boolean) o).booleanValue();
     }
 
     /**
@@ -634,7 +639,7 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
     @Override
     public Clob getClob(int columnIndex) throws SQLException {
         Clob c = (Clob) get(columnIndex);
-        return c == null ? null : c;
+        return c;
     }
 
     /**
@@ -1986,9 +1991,19 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
      * @return the class name
      */
     @Override
-    public String getColumnClassName(int columnIndex) throws SQLException {
-        int type = DataType.getValueTypeFromResultSet(this, columnIndex);
-        return DataType.getTypeClassName(type, true);
+    public String getColumnClassName(int column) throws SQLException {
+        ColumnDefinition ci = this.getColumnInformation(column);
+        ColumnType type = ci.getColumnType();
+        return ColumnType.getClassName(type, (int) ci.getLength(), ci.isSigned(), ci.isBinary(), UrlParser.parse("jdbc:mariadb://localhost:3306/apollo_new").getOptions());
+    }
+
+    private ColumnDefinition getColumnInformation(int column) throws SQLException {
+        if (column >= 1 && column <= this.columns.size()) {
+            Column currentColumn = this.columns.get(column - 1);
+            return ColumnDefinition.create(currentColumn.name, ColumnType.toServer(currentColumn.sqlType));
+        } else {
+            throw ExceptionFactory.INSTANCE.create("No such column");
+        }
     }
 
     /**

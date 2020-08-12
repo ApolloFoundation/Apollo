@@ -34,8 +34,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 @Vetoed
-public final class LuceneReindex extends AbstractAPIRequestHandler {
-    private final FullTextSearchService fullTextSearchProvider = CDI.current().select(FullTextSearchService.class).get();
+public final class LuceneReindex  {
+   /* private final FullTextSearchService fullTextSearchProvider = CDI.current().select(FullTextSearchService.class).get();
 
     public LuceneReindex() {
         super(new APITag[]{APITag.DEBUG});
@@ -71,6 +71,6 @@ public final class LuceneReindex extends AbstractAPIRequestHandler {
     @Override
     protected boolean requireBlockchain() {
         return false;
-    }
+    }*/
 
 }

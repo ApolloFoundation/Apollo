@@ -75,7 +75,7 @@ public final class Shuffling extends DerivedEntity {
         this.blocksRemaining = rs.getShort("blocks_remaining");
         this.stage = ShufflingStage.get(rs.getByte("stage"));
         this.assigneeAccountId = rs.getLong("assignee_account_id");
-        this.recipientPublicKeys = DbUtils.getArray(rs, "recipient_public_keys", byte[][].class, Convert.EMPTY_BYTES);
+        this.recipientPublicKeys = DbUtils.get2dByteArray(rs, "recipient_public_keys", Convert.EMPTY_BYTES);
         this.registrantCount = rs.getByte("registrant_count");
     }
 

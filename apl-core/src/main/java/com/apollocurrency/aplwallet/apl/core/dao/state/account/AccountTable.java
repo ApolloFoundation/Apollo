@@ -70,10 +70,15 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     @Override
     public void save(Connection con, Account account) throws SQLException {
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, "
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            final PreparedStatement pstmt = con.prepareStatement("INSERT INTO account (id, "
                 + "balance, unconfirmed_balance, forged_balance, "
                 + "active_lessee_id, has_control_phasing, height, latest, deleted) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, FALSE) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "id = VALUES(id), balance = VALUES(balance), unconfirmed_balance = VALUES(unconfirmed_balance), "
+                + "forged_balance = VALUES(forged_balance), active_lessee_id = VALUES(active_lessee_id), "
+                + "has_control_phasing = VALUES(has_control_phasing), height = VALUES(height), latest = TRUE, deleted = FALSE")
         ) {
             int i = 0;
             pstmt.setLong(++i, account.getId());

@@ -53,9 +53,13 @@ public class DGSGoodsTable extends EntityDbTable<DGSGoods> {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO goods (id, seller_id, name, "
-                + "description, tags, parsed_tags, timestamp, quantity, price, delisted, has_image, height, latest) KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO goods (id, seller_id, `name`, "
+                + "description, tags, parsed_tags, `timestamp`, quantity, price, delisted, has_image, height, latest) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) "
+                + "ON DUPLICATE KEY UPDATE id = VALUES(id), seller_id = VALUES(seller_id), `name` = VALUES(`name`), "
+                + "description = VALUES(description), tags = VALUES(tags), parsed_tags = VALUES(parsed_tags), "
+                + "`timestamp` = VALUES(`timestamp`), quantity = VALUES(quantity), price = VALUES(price), "
+                + "delisted = VALUES(delisted), has_image = VALUES(has_image), height = VALUES(height), latest = TRUE")
         ) {
             int i = 0;
             pstmt.setLong(++i, goods.getId());

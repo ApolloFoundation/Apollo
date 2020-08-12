@@ -2,6 +2,10 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <properties>
+    <!--    move to BOM -->
+    <mariadb-java-client.version>2.6.1</mariadb-java-client.version>
+  </properties>
 
   <parent>
     <groupId>com.apollocurrency</groupId>
@@ -275,9 +279,11 @@
       <groupId>com.googlecode.log4jdbc</groupId>
       <artifactId>log4jdbc</artifactId>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/org.mariadb.jdbc/mariadb-java-client -->
     <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
+      <groupId>org.mariadb.jdbc</groupId>
+      <artifactId>mariadb-java-client</artifactId>
+      <version>${mariadb-java-client.version}</version>
     </dependency>
     <dependency>
       <groupId>com.zaxxer</groupId>

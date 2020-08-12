@@ -74,7 +74,7 @@ public class UpdaterCoreTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        doReturn(new TransactionalDataSource(new DbProperties(), propertiesHolder)).when(updaterMediator).getDataSource();
+        doReturn(new TransactionalDataSource(DbProperties.builder().build(), propertiesHolder)).when(updaterMediator).getDataSource();
         attachment = UpdateAttachment.getAttachment(
             OS.current(),
             Arch.current(),

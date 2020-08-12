@@ -51,10 +51,17 @@ public class DGSPurchaseTable extends EntityDbTable<DGSPurchase> {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO purchase (id, buyer_id, goods_id, seller_id, "
-                + "quantity, price, deadline, note, nonce, timestamp, pending, goods, goods_nonce, goods_is_text, refund_note, "
-                + "refund_nonce, has_feedback_notes, has_public_feedbacks, discount, refund, height, latest) KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase (id, buyer_id, goods_id, seller_id, "
+                + "quantity, price, deadline, note, nonce, `timestamp`, pending, goods, goods_nonce, goods_is_text, refund_note, "
+                + "refund_nonce, has_feedback_notes, has_public_feedbacks, discount, refund, height, latest) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) "
+                + "ON DUPLICATE KEY UPDATE id = VALUES(id), buyer_id = VALUES(buyer_id), goods_id = VALUES(goods_id), "
+                + "seller_id = VALUES(seller_id), quantity = VALUES(quantity), price = VALUES(price), deadline = VALUES(deadline), "
+                + "note = VALUES(note), nonce = VALUES(nonce), `timestamp` = VALUES(`timestamp`), pending = VALUES(pending), "
+                + "goods = VALUES(goods), goods_nonce = VALUES(goods_nonce), goods_is_text = VALUES(goods_is_text), "
+                + "refund_note = VALUES(refund_note), refund_nonce = VALUES(refund_nonce), has_feedback_notes = VALUES(has_feedback_notes), "
+                + "has_public_feedbacks = VALUES(has_public_feedbacks), discount = VALUES(discount), refund = VALUES(refund), "
+                + "height = VALUES(height), latest = TRUE")
         ) {
             int i = 0;
             pstmt.setLong(++i, purchase.getId());

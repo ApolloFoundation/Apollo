@@ -34,8 +34,7 @@ public class DbConfig {
 //            dbFileName = propertiesHolder.getStringProperty("apl.dbName");
 //        }
         DirProvider dp = RuntimeEnvironment.getInstance().getDirProvider();
-        DbProperties dbProperties = new DbProperties()
-            .maxCacheSize(propertiesHolder.getIntProperty("apl.dbCacheKB"))
+        return DbProperties.builder()
             .dbType(propertiesHolder.getStringProperty("apl.dbType"))
             .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "./unit-test-db") // for unit tests
             .dbFileName(dbFileName)
@@ -46,8 +45,10 @@ public class DbConfig {
             .maxConnections(propertiesHolder.getIntProperty("apl.maxDbConnections"))
             .loginTimeout(propertiesHolder.getIntProperty("apl.dbLoginTimeout"))
             .defaultLockTimeout(propertiesHolder.getIntProperty("apl.dbDefaultLockTimeout") * 1000)
-            .maxMemoryRows(propertiesHolder.getIntProperty("apl.dbMaxMemoryRows")
-            );
-        return dbProperties;
+            .maxMemoryRows(propertiesHolder.getIntProperty("apl.dbMaxMemoryRows"))
+            .databaseName(propertiesHolder.getStringProperty("apl.databaseName"))
+            .databaseHost(propertiesHolder.getStringProperty("apl.databaseHost"))
+            .databasePort(propertiesHolder.getIntProperty("apl.databasePort"))
+            .build();
     }
 }

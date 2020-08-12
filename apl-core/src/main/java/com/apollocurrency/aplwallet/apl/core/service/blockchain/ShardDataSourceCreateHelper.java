@@ -82,13 +82,12 @@ public class ShardDataSourceCreateHelper {
         log.debug("Create new SHARD '{}'", shardName);
 //        logStackTrace("Dump stack on DS creation...", Thread.currentThread().getStackTrace());
         DbProperties shardDbProperties = null;
-        shardDbProperties = databaseManager.getBaseDbProperties().deepCopy()
-            .dbFileName(shardName) // change file name
-            .maxCacheSize(MAX_CACHE_SIZE)
-            .maxConnections(MAX_CONNECTIONS)
-            .maxMemoryRows(MAX_MEMORY_ROWS)
-            .dbUrl(null)  // nullify dbUrl intentionally!;
-            .dbIdentity(shardId); // put shard related info
+        shardDbProperties = databaseManager.getBaseDbProperties().deepCopy();
+        shardDbProperties.setDbFileName(shardName); // change file name
+        shardDbProperties.setMaxConnections(MAX_CONNECTIONS);
+        shardDbProperties.setMaxMemoryRows(MAX_MEMORY_ROWS);
+        shardDbProperties.setDbUrl(null);  // nullify dbUrl intentionally!;
+        shardDbProperties.setDbIdentity(shardId); // put shard related info
         shardDb = new TransactionalDataSource(shardDbProperties, databaseManager.getPropertiesHolder());
         return this;
     }

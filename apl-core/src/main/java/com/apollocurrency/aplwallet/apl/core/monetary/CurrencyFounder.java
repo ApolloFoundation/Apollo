@@ -165,8 +165,10 @@ public class CurrencyFounder {
     private void save(Connection con) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_founder (currency_id, account_id, amount, height, latest, deleted) "
-                + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO currency_founder (currency_id, account_id, amount, height, latest, deleted) "
+                + "VALUES (?, ?, ?, ?, TRUE, FALSE) "
+                + "ON DUPLICATE KEY UPDATE currency_id = VALUES(currency_id), account_id = VALUES(account_id), amount = VALUES(amount), "
+                + "height = VALUES(height), latest = TRUE, deleted = FALSE")
         ) {
             int i = 0;
             pstmt.setLong(++i, this.getCurrencyId());

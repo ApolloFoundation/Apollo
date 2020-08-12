@@ -57,7 +57,7 @@ public class ShufflingDataTable extends PrunableDbTable<ShufflingData> {
             int i = 0;
             pstmt.setLong(++i, shufflingData.getShufflingId());
             pstmt.setLong(++i, shufflingData.getAccountId());
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, shufflingData.getData());
+            DbUtils.set2dByteArray(pstmt, ++i, shufflingData.getData());
             pstmt.setInt(++i, shufflingData.getTransactionTimestamp());
             pstmt.setInt(++i, shufflingData.getHeight());
             pstmt.executeUpdate();

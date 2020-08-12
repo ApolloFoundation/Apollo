@@ -46,7 +46,7 @@ public class ExchangeTable extends EntityDbTable<Exchange> {
     @Override
     public void save(Connection con, Exchange exchange) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO exchange (transaction_id, currency_id, block_id, "
-            + "offer_id, seller_id, buyer_id, units, rate, timestamp, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            + "offer_id, seller_id, buyer_id, units, rate, `timestamp`, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, exchange.getTransactionId());
             pstmt.setLong(++i, exchange.getCurrencyId());

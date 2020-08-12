@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
-import org.h2.api.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,18 +22,18 @@ import java.util.List;
  * WARNING!!! Trigger instances will be created while construction of DatabaseManager, so that -> do NOT inject DatabaseManager directly into field
  */
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-public class FullTextTrigger implements Trigger, TransactionCallback {
-    private static final Logger LOG = LoggerFactory.getLogger(FullTextTrigger.class);
-    /**
+public class FullTextTrigger  {
+  /*  private static final Logger LOG = LoggerFactory.getLogger(FullTextTrigger.class);
+    *//**
      * Pending table updates
      * We collect index row updates and then commit or rollback it when db transaction was finished or rollbacked
-     */
+     *//*
     private final List<TableUpdate> tableUpdates = new ArrayList<>();
     private DatabaseManager databaseManager;
-    /**
+    *//**
      * Trigger cannot have constructor, so these values will be initialized in
      * {@link FullTextTrigger#init(Connection, String, String, String, boolean, int)} method
-     */
+     *//*
     private FullTextSearchEngine ftl;
     private TableData tableData;
 
@@ -43,7 +42,7 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
         return DbUtils.getTableData(connection, tableName, schema);
     }
 
-    /**
+    *//**
      * Initialize the trigger (Trigger interface)
      *
      * @param conn    Database connection
@@ -53,39 +52,39 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
      * @param before  TRUE if trigger is called before database operation
      * @param type    Trigger type
      * @throws SQLException A SQL error occurred
-     */
+     *//*
     @Override
     public void init(Connection conn, String schema, String trigger, String table, boolean before, int type)
         throws SQLException {
         this.tableData = readTableData(conn, schema, table);
     }
 
-    /**
+    *//**
      * Close the trigger (Trigger interface)
      *
      * @throws SQLException A SQL error occurred
-     */
+     *//*
     @Override
     public void close() throws SQLException {
     }
 
-    /**
+    *//**
      * Remove the trigger (Trigger interface)
      *
      * @throws SQLException A SQL error occurred
-     */
+     *//*
     @Override
     public void remove() throws SQLException {
     }
 
-    /**
+    *//**
      * Trigger has fired (Trigger interface)
      *
      * @param conn   Database connection
      * @param oldRow The old row or null
      * @param newRow The new row or null
      * @throws SQLException A SQL error occurred
-     */
+     *//*
     @Override
     public void fire(Connection conn, Object[] oldRow, Object[] newRow) throws SQLException {
         //
@@ -128,9 +127,9 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
         return ftl;
     }
 
-    /**
+    *//**
      * Commit the table changes for the current transaction (TransactionCallback interface)
-     */
+     *//*
     @Override
     public void commit() {
         Thread thread = Thread.currentThread();
@@ -163,14 +162,14 @@ public class FullTextTrigger implements Trigger, TransactionCallback {
         }
     }
 
-    /**
+    *//**
      * Discard the table changes for the current transaction (TransactionCallback interface)
-     */
+     *//*
     @Override
     public void rollback() {
         Thread thread = Thread.currentThread();
         synchronized (tableUpdates) {
             tableUpdates.removeIf(update -> update.getThread() == thread);
         }
-    }
+    }*/
 }
