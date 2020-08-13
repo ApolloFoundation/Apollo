@@ -28,7 +28,7 @@ public class BlockSerializer {
         json.put("stringId", block.getStringId());
         json.put("timestamp", block.getTimestamp());
         json.put("previousBlock", Long.toUnsignedString(block.getPreviousBlockId()));
-        json.put("totalAmountATM", block.getTotalFeeATM());
+        json.put("totalAmountATM", block.getTotalAmountATM());
         json.put("totalFeeATM", block.getTotalFeeATM());
         json.put("payloadLength", block.getPayloadLength());
         json.put("payloadHash", Convert.toHexString(block.getPayloadHash()));
