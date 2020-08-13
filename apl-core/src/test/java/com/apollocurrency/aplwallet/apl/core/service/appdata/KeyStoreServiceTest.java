@@ -77,7 +77,6 @@ public class KeyStoreServiceTest {
     private byte[] nonce = new byte[16];
     private Path tempDirectory;
     private VaultKeyStoreServiceImpl keyStore;
-    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
 
     private byte[] generateSecretBytes() {
         byte secretBytes[] = new byte[32];
