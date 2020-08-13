@@ -6,6 +6,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
@@ -36,9 +37,13 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountS
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BalancesPublicKeysTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
@@ -109,7 +114,8 @@ class GenesisImporterTest {
     private Chain chain = Mockito.mock(Chain.class);
     private AplAppStatus aplAppStatus = mock(AplAppStatus.class);
     private GenesisImporterProducer genesisImporterProducer = mock(GenesisImporterProducer.class);
-    private PropertiesHolder envConfig = mock(PropertiesHolder.class);
+    private PropertiesHolder envConfig = new PropertiesHolder();
+    TransactionTestData td = new TransactionTestData();
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -117,6 +123,8 @@ class GenesisImporterTest {
         AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
         FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
         ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class,
+        TransactionRowMapper.class,
+        TransactionBuilder.class,
         TransactionDaoImpl.class, BlockchainImpl.class,
         BlockDaoImpl.class, TransactionIndexDao.class, DaoConfig.class, ApplicationJsonFactory.class)
         .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
@@ -131,6 +139,8 @@ class GenesisImporterTest {
         .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
         .addBeans(MockBean.of(aplAppStatus, AplAppStatus.class))
         .addBeans(MockBean.of(genesisImporterProducer, GenesisImporterProducer.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(envConfig, PropertiesHolder.class))
         .addBeans(MockBean.of(mock(GlobalSync.class), GlobalSync.class, GlobalSyncImpl.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
@@ -429,7 +439,7 @@ class GenesisImporterTest {
     void loadGenesisAccountsIncorrectKey() {
         doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
         doReturn("conf/data/genesisAccounts-testnet-MISSING-BALANCES.json").when(chain).getGenesisLocation();
-        doReturn(10).when(propertiesHolder).getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
+        propertiesHolder.init(getGenesisAccountTotalProperties("10", "10"));
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
@@ -459,6 +469,7 @@ class GenesisImporterTest {
         final JsonParser jsonParser = mock(JsonParser.class);
         when(jsonFactory.createParser(any(InputStream.class))).thenReturn(jsonParser);
         when(jsonParser.isClosed()).thenReturn(true);
+        propertiesHolder.init(getGenesisAccountTotalProperties("10", "10"));
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,

@@ -10,12 +10,14 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.ARBITRARY_MESSAGE;
 
 public class Chat {
     private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
@@ -43,11 +45,11 @@ public class Chat {
                     + DbUtils.limitsClause(from, to)
             );
             int i = 0;
-            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getType());
-            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getSubtype());
+            stmt.setByte(++i, ARBITRARY_MESSAGE.getType());
+            stmt.setByte(++i, ARBITRARY_MESSAGE.getSubtype());
             stmt.setLong(++i, accountId);
-            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getType());
-            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getSubtype());
+            stmt.setByte(++i, ARBITRARY_MESSAGE.getType());
+            stmt.setByte(++i, ARBITRARY_MESSAGE.getSubtype());
             stmt.setLong(++i, accountId);
             DbUtils.setLimits(++i, stmt, from, to);
             return new DbIterator<>(con, stmt, (conection, rs) -> {
@@ -61,10 +63,9 @@ public class Chat {
         }
     }
 
-    public static DbIterator<? extends Transaction> getChatHistory(long account1, long account2, int from, int to) {
-        Connection con = null;
-        try {
-            con = lookupDataSource().getConnection();
+    public static List<? extends Transaction> getChatHistory(long account1, long account2, int from, int to) {
+
+        try (Connection con = lookupDataSource().getConnection()) {
             PreparedStatement stmt = con.prepareStatement(
                 "SELECT * from transaction "
                     + "where type = ? and subtype = ? and ((sender_id =? and recipient_id = ?) or  (sender_id =? and recipient_id = ?)) " +
@@ -72,8 +73,8 @@ public class Chat {
                     + DbUtils.limitsClause(from, to)
             );
             int i = 0;
-            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getType());
-            stmt.setByte(++i, Messaging.ARBITRARY_MESSAGE.getSubtype());
+            stmt.setByte(++i, ARBITRARY_MESSAGE.getType());
+            stmt.setByte(++i, ARBITRARY_MESSAGE.getSubtype());
             stmt.setLong(++i, account1);
             stmt.setLong(++i, account2);
             stmt.setLong(++i, account2);
@@ -81,7 +82,6 @@ public class Chat {
             DbUtils.setLimits(++i, stmt, from, to);
             return blockchain.getTransactions(con, stmt);
         } catch (SQLException e) {
-            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }

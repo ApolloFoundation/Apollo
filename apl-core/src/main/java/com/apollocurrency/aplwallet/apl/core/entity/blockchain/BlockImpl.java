@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -40,6 +41,9 @@ import java.util.Objects;
 
 //TODO Refactoring this class to make pojo.
 public final class BlockImpl implements Block {
+
+    private static Blockchain blockchain;
+    private static TransactionSerializer transactionSerializer;
 
     private final int version;
     private final int timestamp;
@@ -360,7 +364,7 @@ public final class BlockImpl implements Block {
         for (Transaction transaction : this.blockTransactions) {
             transaction.setBlock(this);
             transaction.setIndex(index++);
-            ((TransactionImpl) transaction).bytes();
+            transaction.bytes();
             transaction.getAppendages();
         }
     }

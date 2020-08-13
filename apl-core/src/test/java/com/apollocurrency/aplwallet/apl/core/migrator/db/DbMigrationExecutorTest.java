@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.migrator.db;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
@@ -25,8 +26,12 @@ import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageSer
 import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -72,10 +77,13 @@ public class DbMigrationExecutorTest {
     private Path targetDbDir = createTempDir();
     private Path targetDbPath = targetDbDir.resolve(Constants.APPLICATION_DIR_NAME);
     private DbProperties targetDbProperties = DbTestData.getDbFileProperties(targetDbPath.toAbsolutePath().toString());
+    TransactionTestData td = new TransactionTestData();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(H2DbInfoExtractor.class, PropertyProducer.class,
         TransactionalDataSource.class, DatabaseManagerImpl.class, TransactionDaoImpl.class, JdbiHandleFactory.class,
         GlobalSyncImpl.class,
+        TransactionRowMapper.class,
+        TransactionBuilder.class,
         BlockDaoImpl.class, DerivedDbTablesRegistryImpl.class, BlockchainConfig.class,
         FullTextConfigImpl.class)
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
@@ -86,6 +94,8 @@ public class DbMigrationExecutorTest {
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .build();
     @Inject
     private H2DbInfoExtractor h2DbInfoExtractor;

@@ -3,8 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.ShufflingTransaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -27,8 +26,8 @@ public final class ShufflingVerificationAttachment extends AbstractShufflingAtta
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return ShufflingTransaction.SHUFFLING_VERIFICATION;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.SHUFFLING_VERIFICATION;
     }
 
 }

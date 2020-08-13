@@ -3,11 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -55,8 +54,8 @@ public class DexOrderAttachment extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return DEX.DEX_ORDER_TRANSACTION;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.DEX_ORDER;
     }
 
     @Override

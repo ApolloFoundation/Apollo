@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.app.EncryptedSecretBytesDetails;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.SecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.VaultKeyStoreServiceImpl;
@@ -38,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -64,9 +66,12 @@ public class KeyStoreServiceTest {
     private static final String SECRET_BYTES_1 = "44a2868161a651682bdf938b16c485f359443a2c53bd3e752046edef20d11567";
     private static final String SECRET_BYTES_2 = "146c55cbdc5f33390d207d6d08030c3dd4012c3f775ed700937a893786393dbf";
     private NtpTime time = mock(NtpTime.class);
+    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
         .addBeans(MockBean.of(time, NtpTime.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .build();
     private byte[] secretBytes = generateSecretBytes();
     private byte[] nonce = new byte[16];
@@ -86,6 +91,8 @@ public class KeyStoreServiceTest {
         tempDirectory = Files.createTempDirectory("keystore-test");
         keyStore = new VaultKeyStoreServiceImpl(tempDirectory, 0, time);
         Files.write(tempDirectory.resolve("---" + ACCOUNT1), encryptedKeyJSON.getBytes());
+        doReturn("APL").when(blockchainConfig).getAccountPrefix();
+        Convert2.init(blockchainConfig);
     }
 
     @AfterEach
@@ -133,8 +140,6 @@ public class KeyStoreServiceTest {
     @Test
     @Execution(ExecutionMode.SAME_THREAD)
     public void testGetKey() throws Exception {
-
-
         VaultKeyStoreServiceImpl keyStoreSpy = spy(keyStore);
 
         long accountId = Convert.parseAccountId(ACCOUNT1);

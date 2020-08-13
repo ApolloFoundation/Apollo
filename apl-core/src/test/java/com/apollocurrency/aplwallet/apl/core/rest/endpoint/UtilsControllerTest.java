@@ -226,7 +226,7 @@ class UtilsControllerTest {
         Error error = mapper.readValue(respondJson, new TypeReference<>() {
         });
         assertNotNull(error.getErrorDescription());
-        assertEquals(1000, error.getNewErrorCode());
+        assertEquals(100, error.getNewErrorCode());
     }
 
     @Test
@@ -244,7 +244,7 @@ class UtilsControllerTest {
 
         assertEquals(200, response.getStatus());
         assertNotNull(error.getErrorDescription());
-        assertEquals(1000, error.getNewErrorCode());
+        assertEquals(100, error.getNewErrorCode());
     }
 
     @Test

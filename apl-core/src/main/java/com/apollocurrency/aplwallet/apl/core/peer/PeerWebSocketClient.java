@@ -22,7 +22,7 @@ import java.util.concurrent.TimeoutException;
 public class PeerWebSocketClient extends PeerWebSocket {
 
     private static WebSocketClient client = null;
-    private Monitor startMonitor = new Monitor();
+    private final Monitor startMonitor = new Monitor();
     private Session session = null;
 
     public PeerWebSocketClient(Peer2PeerTransport peer) {
@@ -115,4 +115,10 @@ public class PeerWebSocketClient extends PeerWebSocket {
         return session != null && session.isOpen();
     }
 
+    @Override
+    public String toString() {
+        return "PeerWebSocketClient{" +
+            "session=" + session +
+            "} " + super.toString();
+    }
 }

@@ -82,7 +82,6 @@
     </encoder>
   </appender>
 
-
   <appender name="tp-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${LOGDIR}/tp.log</file>
     <immediateFlush>true</immediateFlush>
@@ -99,8 +98,6 @@
       <pattern>%d [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
     </encoder>
   </appender>
-
-
 
   <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable" level="trace" additivity="false">
     <appender-ref ref="tp-file"/>
@@ -119,9 +116,15 @@
   <logger name="org.eclipse.jetty" level="off" additivity="false"/>
   <logger name="javax.servlet.level" level="off" additivity="false"/>
   <logger name="com.apollocurrency.aplwallet.apl.core.http.APIProxyServlet" level="info" additivity="false"/>
-      <logger name="com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl" level="trace" additivity="false">
-        <appender-ref ref="account-file"/>
-      </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl" level="trace"
+          additivity="false">
+    <appender-ref ref="account-file"/>
+  </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.core.transaction" level="DEBUG"/>
+  <logger name="com.apollocurrency.aplwallet.apl.core.signature" level="DEBUG"/>
+  <logger name="com.apollocurrency.aplwallet.apl.core.rest.v2" level="TRACE"/>
+  <logger name="com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl" level="DEBUG"/>
+
   <!--    <logger name="com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling" level="trace" additivity="false">-->
   <!--        <appender-ref ref="shuffling-file"/>-->
   <!--    </logger>-->
@@ -129,15 +132,15 @@
       <logger name="com.apollocurrency.aplwallet.apl.core.service.state.PollService" level="trace" additivity="false">
           <appender-ref ref="poll-file"/>
       </logger>
--->
-<!--
-      <logger name="com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl" level="trace" additivity="false">
-        <appender-ref ref="account-file"/>
-      </logger>
-      <logger name="com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyExchangeOfferFacadeImpl" level="trace" additivity="false">
-        <appender-ref ref="account-file"/>
-      </logger>
--->
+  -->
+  <!--
+        <logger name="com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl" level="trace" additivity="false">
+          <appender-ref ref="account-file"/>
+        </logger>
+        <logger name="com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyExchangeOfferFacadeImpl" level="trace" additivity="false">
+          <appender-ref ref="account-file"/>
+        </logger>
+  -->
   <logger name="jdbc" level="off" additivity="false"/>
   <logger name="jdbc.connection" level="info" additivity="false"/>
   <logger name="jdbc.sqltiming" level="info" additivity="false"/>

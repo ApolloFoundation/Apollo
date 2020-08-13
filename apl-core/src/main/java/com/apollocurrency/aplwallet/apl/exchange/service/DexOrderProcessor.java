@@ -375,7 +375,7 @@ public class DexOrderProcessor {
         //TODO move it to some util
         CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
         createTransactionRequest.setBroadcast(false);
-        Transaction contractTx = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
+        Transaction contractTx = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(createTransactionRequest);
         if (contractTx == null) {
             throw new AplException.ExecutiveProcessException("Creating contract wasn't finish. Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId() + ", " + contract.getContractStatus());
         }
@@ -578,7 +578,7 @@ public class DexOrderProcessor {
                 CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
                 createTransactionRequest.setBroadcast(false);
 
-                Transaction contractTx = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
+                Transaction contractTx = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(createTransactionRequest);
 
                 if (contractTx == null) {
                     throw new AplException.ExecutiveProcessException("Creating contract wasn't finish. (Step-2) Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId());
@@ -599,7 +599,7 @@ public class DexOrderProcessor {
         CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
         createTransactionRequest.setBroadcast(false);
 
-        Transaction contractTx = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
+        Transaction contractTx = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(createTransactionRequest);
 
         if (contractTx == null) {
             throw new AplException.ExecutiveProcessException("Creating contract wasn't finish. (Step-2) Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId());

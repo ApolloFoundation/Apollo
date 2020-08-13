@@ -27,6 +27,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.limiter.TimeLimiterService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -143,6 +146,7 @@ public class PeersService {
     private final PeerHttpServer peerHttpServer;
     private final TaskDispatchManager taskDispatchManager;
     private final AccountService accountService;
+    private final TransactionSerializer serializer;
     List<String> wellKnownPeers;
     Set<String> knownBlacklistedPeers;
     boolean shutdown = false;
@@ -159,6 +163,7 @@ public class PeersService {
     public PeersService(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, Blockchain blockchain,
                         TimeService timeService, TaskDispatchManager taskDispatchManager, PeerHttpServer peerHttpServer,
                         TimeLimiterService timeLimiterService, AccountService accountService,
+                        TransactionSerializer serializer,
                         BlockSerializer blockSerializer) {
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
@@ -171,6 +176,7 @@ public class PeersService {
         this.blockSerializer = blockSerializer;
 
         isLightClient = propertiesHolder.isLightClient();
+        this.serializer = serializer;
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -712,7 +718,7 @@ public class PeersService {
             JSONObject request = new JSONObject();
             JSONArray transactionsData = new JSONArray();
             for (int i = nextBatchStart; i < nextBatchStart + sendTransactionsBatchSize && i < transactions.size(); i++) {
-                transactionsData.add(transactions.get(i).getJSONObject());
+                transactionsData.add(serializer.toJson(transactions.get(i)));
             }
             request.put("requestType", "processTransactions");
             request.put("transactions", transactionsData);

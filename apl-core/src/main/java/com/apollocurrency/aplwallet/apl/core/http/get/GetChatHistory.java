@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Chat;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -18,6 +17,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public class GetChatHistory extends AbstractAPIRequestHandler {
@@ -33,11 +33,10 @@ public class GetChatHistory extends AbstractAPIRequestHandler {
         int lastIndex = HttpParameterParserUtil.getLastIndex(request);
         JSONObject response = new JSONObject();
         JSONArray chatJsonArray = new JSONArray();
-        try (DbIterator<? extends Transaction> iter = Chat.getChatHistory(account1, account2, firstIndex, lastIndex)) {
-            while (iter.hasNext()) {
-                chatJsonArray.add(JSONData.transaction(false, iter.next()));
-            }
-        }
+        List<? extends Transaction> chatHistory = Chat.getChatHistory(account1, account2, firstIndex, lastIndex);
+        chatHistory.forEach(e-> {
+            chatJsonArray.add(JSONData.transaction(false, e));
+        });
         response.put("chatHistory", chatJsonArray);
         return response;
     }

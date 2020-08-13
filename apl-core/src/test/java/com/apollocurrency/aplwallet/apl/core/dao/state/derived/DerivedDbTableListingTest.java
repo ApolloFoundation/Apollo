@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyBasedFileConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
@@ -65,13 +66,22 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
+import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -129,6 +139,7 @@ class DerivedDbTableListingTest {
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private PeersService peersService = mock(PeersService.class);
     private GeneratorService generatorService = mock(GeneratorService.class);
+    TransactionTestData td = new TransactionTestData();
     private BlockSerializer blockSerializer = mock(BlockSerializer.class);
 
     @WeldSetup
@@ -139,6 +150,11 @@ class DerivedDbTableListingTest {
         TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
         GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
         ReferencedTransactionDaoImpl.class,
+        AppendixApplierRegistry.class,
+        AppendixValidatorRegistry.class,
+        TransactionRowMapper.class,
+        TransactionSerializerImpl.class,
+        TransactionBuilder.class,
         TaggedDataTable.class,
         PropertyBasedFileConfig.class,
         DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
@@ -161,6 +177,7 @@ class DerivedDbTableListingTest {
         .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
+        .addBeans(MockBean.of(mock(CurrencyService.class), CurrencyService.class))
         .addBeans(MockBean.of(keyStore, KeyStoreService.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
@@ -168,9 +185,12 @@ class DerivedDbTableListingTest {
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class))
+        .addBeans(MockBean.of(mock(TransactionVersionValidator.class), TransactionVersionValidator.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(peersService, PeersService.class))
         .addBeans(MockBean.of(generatorService, GeneratorService.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(blockSerializer, BlockSerializer.class))
         .build();
     private HeightConfig config = mock(HeightConfig.class);

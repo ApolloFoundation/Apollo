@@ -30,16 +30,22 @@ import java.util.stream.Stream;
 
 public class ChainsConfigLoaderTest {
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES1 = Arrays.asList(
-        new BlockchainProperties(0, 255, 160, 60, 67, 53, 30000000000L),
-        new BlockchainProperties(2000, 300, 160, 2, 4, 1, 30000000000L, new ConsensusSettings(ConsensusSettings.Type.POS,
+        new BlockchainProperties(0, 255, 160, 1, 60, 67, 53, 30000000000L),
+        new BlockchainProperties(2000, 300, 160, 2, 4, 1, 30000000000L,
+            new ConsensusSettings(ConsensusSettings.Type.POS,
             new AdaptiveForgingSettings(true, 60, 0))),
-        new BlockchainProperties(42300, 300, 160, 2, 4, 1, 30000000000L, new ShardingSettings(true), new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0))),
-        new BlockchainProperties(100000, 300, 160, 2, 4, 1, 30000000000L, new ShardingSettings(true, 1_000_000),
+        new BlockchainProperties(42300, 300, 160, 2, 4, 1, 30000000000L,
+            new ShardingSettings(true),
             new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0))),
-        new BlockchainProperties(100100, 300, 160, 5, 7, 2, 30000000000L, new ShardingSettings(true, "SHA-512"))
+        new BlockchainProperties(100000, 300, 160, 1, 2, 4, 1, 30000000000L,
+            new ShardingSettings(true, 1_000_000),
+            new ConsensusSettings(new AdaptiveForgingSettings(true, 10, 0)),
+            new TransactionFeeSettings( Map.of((short)0x0000, (short)0, (short)0x0001, (short)0, (short)0x0101,(short)0))),
+        new BlockchainProperties(100100, 300, 160, 5, 7, 2, 30000000000L,
+            new ShardingSettings(true, "SHA-512"))
     );
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES2 = Collections.singletonList(
-        new BlockchainProperties(0, 2000, 160, 2, 3, 1, (long) 1e8)
+        new BlockchainProperties(0, 2000, 160, 10, 2, 3, 1, (long) 1e8)
     );
     private static final String CONFIG_NAME = "test-chains.json";
     private static final String OLD_CONFIG_NAME = "old-chains.json";
@@ -60,7 +66,7 @@ public class ChainsConfigLoaderTest {
         "Batman's chain", "BTM",
         "BTM", "I am batman!", "conf/data/batman-genesis.json", BLOCKCHAIN_PROPERTIES2);
     private static final Chain CHAIN3 = new Chain(chainId2, false, Arrays.asList("51.15.1.1",
-        "51.15.0.0"), Collections.emptyList(), Collections.emptyList(), "1", "2", "3", "4", "5", "6", BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150));
+        "51.15.0.0"), Collections.emptyList(), Collections.emptyList(), "1", "2", "3", "4", "5", "6", BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150, 150));
     private Path tempRootPath;
 
 
@@ -91,10 +97,9 @@ public class ChainsConfigLoaderTest {
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(CONFIG_NAME);
         Map<UUID, Chain> loadedChains = chainsConfigLoader.load();
         Assertions.assertEquals(2, loadedChains.size());
-        Map<UUID, Chain> expectedChains = Arrays.stream(new Chain[]{CHAIN1, CHAIN2}).collect(Collectors.toMap(Chain::getChainId,
-            Function.identity()));
+        Map<UUID, Chain> expectedChains = Map.of(CHAIN1.getChainId(), CHAIN1, CHAIN2.getChainId(), CHAIN2);
         Assertions.assertNotNull(loadedChains);
-        Assertions.assertEquals(expectedChains, loadedChains);
+        Assertions.assertEquals(expectedChains.entrySet(), loadedChains.entrySet());
     }
 
     @Test

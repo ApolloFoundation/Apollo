@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
@@ -31,6 +32,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegist
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -67,9 +71,10 @@ import static org.mockito.Mockito.mock;
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
 public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
-    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
-    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
+    TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    TransactionTestData ttd = new TransactionTestData();
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -80,7 +85,9 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
         PhasingPollVoterTable.class,
         PhasingPollLinkedTransactionTable.class,
         PhasingVoteTable.class,
+        TransactionBuilder.class,
         FullTextConfigImpl.class,
+        TransactionRowMapper.class,
         DerivedDbTablesRegistryImpl.class,
         BlockDaoImpl.class, TransactionDaoImpl.class)
         .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
@@ -94,6 +101,8 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(ttd.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .build();
     @Inject
     Blockchain blockchain;
@@ -101,7 +110,6 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     PhasingPollTable table;
 
     PhasingTestData ptd;
-    TransactionTestData ttd;
 
     public PhasingPollTableTest() {
         super(PhasingPoll.class);
@@ -111,7 +119,6 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     @Override
     public void setUp() {
         ptd = new PhasingTestData();
-        ttd = new TransactionTestData();
         super.setUp();
     }
 
@@ -235,13 +242,13 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
     @Test
     void testGetByHoldingId() throws SQLException {
-        List<Transaction> transactions = CollectionUtil.toList(table.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100, ptd.POLL_5.getHeight()));
+        List<Transaction> transactions = table.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100, ptd.POLL_5.getHeight());
         assertEquals(List.of(ttd.TRANSACTION_13), transactions);
     }
 
     @Test
     void testGetByHoldingIdNotExist() throws SQLException {
-        List<Transaction> transactions = CollectionUtil.toList(table.getHoldingPhasedTransactions(ptd.POLL_4.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ACCOUNT, 0, false, 0, 100, ptd.POLL_5.getHeight()));
+        List<Transaction> transactions = table.getHoldingPhasedTransactions(ptd.POLL_4.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ACCOUNT, 0, false, 0, 100, ptd.POLL_5.getHeight());
         assertTrue(transactions.isEmpty());
     }
 
@@ -268,19 +275,19 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
     @Test
     void testGetAccountPhasedTransactionsWithPaginationSkipFirstAtLastBlockHeight() throws SQLException {
-        List<Transaction> transactions = CollectionUtil.toList(table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, ptd.POLL_5.getHeight() - 1));
+        List<Transaction> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, ptd.POLL_5.getHeight() - 1);
         assertTrue(transactions.isEmpty());
     }
 
     @Test
     void testGetAccountPhasedTransactionsWithPaginationSkipFirstAtGenesisBlockHeight() throws SQLException {
-        List<Transaction> transactions = CollectionUtil.toList(table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, 0));
+        List<Transaction> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, 0);
         assertEquals(List.of(ttd.TRANSACTION_12, ttd.TRANSACTION_11), transactions);
     }
 
     @Test
     void testGetAllAccountPhasedTransactionsWithPagination() throws SQLException {
-        List<Transaction> transactions = CollectionUtil.toList(table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 0, 100, 0));
+        List<Transaction> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 0, 100, 0);
         assertEquals(List.of(ttd.TRANSACTION_13, ttd.TRANSACTION_12, ttd.TRANSACTION_11), transactions);
     }
 

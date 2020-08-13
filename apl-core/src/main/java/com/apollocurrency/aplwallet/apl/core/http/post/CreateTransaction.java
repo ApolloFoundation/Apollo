@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -32,6 +33,10 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateT
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -40,6 +45,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -69,8 +76,11 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         "ecBlockId", "ecBlockHeight"};
     protected TimeService timeService = CDI.current().select(TimeService.class).get();
     private TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
+    private TransactionSigner signer = CDI.current().select(TransactionSigner.class).get();
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
+    private TransactionTypeFactory transactionTypeFactory = CDI.current().select(TransactionTypeFactory.class).get();
+    private TransactionBuilder txBuilder = CDI.current().select(TransactionBuilder.class).get();
 
     public CreateTransaction(APITag[] apiTags, String... parameters) {
         super(apiTags, addCommonParameters(parameters));
@@ -118,7 +128,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
 //do not eat exception here, it is used for error message displaying on UI
-        Transaction transaction = createTransaction(createTransactionRequest);
+        Transaction transaction = createTransactionAndBroadcastIfRequired(createTransactionRequest);
 
         JSONObject transactionJSON = JSONData.unconfirmedTransaction(transaction);
         response.put("transactionJSON", transactionJSON);
@@ -129,7 +139,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         if (createTransactionRequest.getKeySeed() != null) {
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transactionJSON.get("fullHash"));
-            response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
+            response.put("transactionBytes", Convert.toHexString(transaction.getCopyTxBytes()));
             response.put("signatureHash", transactionJSON.get("signatureHash"));
         }
         if (createTransactionRequest.isBroadcast()) {
@@ -141,11 +151,15 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         return new TransactionResponse(transaction, response);
     }
 
-    public Transaction createTransaction(CreateTransactionRequest txRequest) throws AplException.ValidationException, ParameterException {
+    public Transaction createTransactionAndBroadcastIfRequired(CreateTransactionRequest txRequest) throws AplException.ValidationException, ParameterException {
         EncryptedMessageAppendix encryptedMessage = null;
         PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
-
-        if (txRequest.getAttachment().getTransactionType().canHaveRecipient() && txRequest.getRecipientId() != 0) {
+        TransactionType type = transactionTypeFactory.findTransactionTypeBySpec(txRequest.getAttachment().getTransactionTypeSpec());
+        if (type == null) {
+            throw new AplException.NotValidException("Unable to find transaction type for attachment: " + txRequest.getAttachment().getTransactionTypeSpec());
+        }
+        txRequest.getAttachment().bindTransactionType(type);
+        if (type.canHaveRecipient() && txRequest.getRecipientId() != 0) {
             if (txRequest.isEncryptedMessageIsPrunable()) {
                 prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) txRequest.getAppendix();
             } else {
@@ -189,9 +203,9 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         int timestamp = timeService.getEpochTime();
         Transaction transaction;
         try {
-            Transaction.Builder builder = Transaction.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
+            Transaction.Builder builder = txBuilder.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
                 deadline, txRequest.getAttachment(), timestamp).referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
-            if (txRequest.getAttachment().getTransactionType().canHaveRecipient()) {
+            if (type.canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());
             }
             builder.appendix(encryptedMessage);
@@ -204,10 +218,15 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
             if (txRequest.getEcBlockId() != 0) {
                 builder.ecBlockId(txRequest.getEcBlockId());
                 builder.ecBlockHeight(txRequest.getEcBlockHeight());
+            } else {
+                EcBlockData ecBlock = blockchain.getECBlock(timestamp);
+                builder.ecBlockData(ecBlock);
             }
-            transaction = builder.build(txRequest.getKeySeed());
+            transaction = builder.build();
+
             if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
                 int effectiveHeight = blockchain.getHeight();
+                @TransactionFee(FeeMarker.CALCULATOR)
                 long minFee = feeCalculator.getMinimumFeeATM(transaction, effectiveHeight);
                 txRequest.setFeeATM(Math.max(minFee, txRequest.getFeeATM()));
                 transaction.setFeeATM(txRequest.getFeeATM());
@@ -220,6 +239,8 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
             } catch (ArithmeticException e) {
                 throw new AplException.NotValidException(NOT_ENOUGH_APL);
             }
+
+            signer.sign(transaction, txRequest.getKeySeed());
 
             if (txRequest.isBroadcast()) {
                 lookupTransactionProcessor().broadcast(transaction);

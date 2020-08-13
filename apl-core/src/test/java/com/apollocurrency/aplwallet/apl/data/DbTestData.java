@@ -22,7 +22,7 @@ public class DbTestData {
         .dbParams("")
         .loginTimeout(10)
         .maxMemoryRows(100000)
-        .defaultLockTimeout(10 * 1000);
+        .defaultLockTimeout(10);
 
     public static DbProperties getInMemDbProps() {
         return getDbUrlProps("jdbc:h2:mem:tempDb" + random.nextLong() + ";MV_STORE=TRUE;CACHE_SIZE=16000");

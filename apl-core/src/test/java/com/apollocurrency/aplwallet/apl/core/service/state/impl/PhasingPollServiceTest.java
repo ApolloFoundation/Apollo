@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
@@ -45,8 +46,14 @@ import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
@@ -94,12 +101,17 @@ public class PhasingPollServiceTest {
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    private TransactionTestData ttd = new TransactionTestData();
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
         PhasingPollServiceImpl.class,
         GlobalSyncImpl.class,
+        TransactionRowMapper.class,
+        TransactionBuilder.class,
+        AppendixApplierRegistry.class,
+        AppendixValidatorRegistry.class,
         PhasingPollResultTable.class,
         PhasingPollTable.class,
         PhasingPollVoterTable.class,
@@ -125,6 +137,9 @@ public class PhasingPollServiceTest {
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(ttd.getTransactionTypeFactory(), TransactionTypeFactory.class))
+        .addBeans(MockBean.of(mock(CurrencyService.class), CurrencyService.class))
         .build();
     @Inject
     PhasingPollServiceImpl service;
@@ -134,7 +149,6 @@ public class PhasingPollServiceTest {
     Blockchain blockchain;
 
     PhasingTestData ptd;
-    TransactionTestData ttd;
     BlockTestData btd;
     @Inject
     BlockchainConfig blockchainConfig;
@@ -143,10 +157,9 @@ public class PhasingPollServiceTest {
     @BeforeEach
     void setUp() {
         ptd = new PhasingTestData();
-        ttd = new TransactionTestData();
         btd = new BlockTestData();
 
-        blockchainConfig.setCurrentConfig(new HeightConfig(new BlockchainProperties(1, 1, 1, 1, 1, 1, 1L)));
+        blockchainConfig.setCurrentConfig(new HeightConfig(new BlockchainProperties(1, 1, 1, 1, 1, 1, 1, 1L)));
     }
 
     @Test
@@ -264,7 +277,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetVoterPhasedTransactions() {
-        List<Transaction> voterTransactions = CollectionUtil.toList(service.getVoterPhasedTransactions(ptd.POLL_4_VOTER_0_ID, 0, 100));
+        List<Transaction> voterTransactions = service.getVoterPhasedTransactions(ptd.POLL_4_VOTER_0_ID, 0, 100);
 
         assertEquals(Arrays.asList(ttd.TRANSACTION_11), voterTransactions);
     }
@@ -273,14 +286,14 @@ public class PhasingPollServiceTest {
     void testGetVoterPhasedTransactionsWnenBlockchainHeightIsHigherThanPollFinishHeight() {
         BlockTestData blockTestData = new BlockTestData();
         blockchain.setLastBlock(blockTestData.LAST_BLOCK);
-        List<Transaction> voterTransactions = CollectionUtil.toList(service.getVoterPhasedTransactions(ptd.POLL_1_VOTER_0_ID, 0, 100));
+        List<Transaction> voterTransactions = service.getVoterPhasedTransactions(ptd.POLL_1_VOTER_0_ID, 0, 100);
 
         assertEquals(0, voterTransactions.size());
     }
 
     @Test
     void testGetVoterPhasedTransactionForNonExistentVoter() {
-        List<Transaction> voterTransactions = CollectionUtil.toList(service.getVoterPhasedTransactions(ptd.POLL_1_VOTER_0_ID + 1, 0, 100));
+        List<Transaction> voterTransactions = service.getVoterPhasedTransactions(ptd.POLL_1_VOTER_0_ID + 1, 0, 100);
 
         assertEquals(0, voterTransactions.size());
     }
@@ -399,14 +412,14 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetApproved() {
-        List<PhasingPollResult> phasingPollResults = CollectionUtil.toList(service.getApproved(ptd.RESULT_1.getHeight()));
+        List<PhasingPollResult> phasingPollResults = service.getApproved(ptd.RESULT_1.getHeight());
 
         assertEquals(Arrays.asList(ptd.RESULT_1), phasingPollResults);
     }
 
     @Test
     void testGetApprovedForNotApprovedPollResult() {
-        List<PhasingPollResult> phasingPollResults = CollectionUtil.toList(service.getApproved(ptd.RESULT_3.getHeight()));
+        List<PhasingPollResult> phasingPollResults = service.getApproved(ptd.RESULT_3.getHeight());
 
         assertEquals(Collections.emptyList(), phasingPollResults);
     }
@@ -434,7 +447,7 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetAccountPhasedTransactions() {
-        List<Transaction> accountTransactions = CollectionUtil.toList(service.getAccountPhasedTransactions(ttd.TRANSACTION_9.getSenderId(), 0, 100));
+        List<Transaction> accountTransactions = service.getAccountPhasedTransactions(ttd.TRANSACTION_9.getSenderId(), 0, 100);
         assertEquals(accountTransactions, List.of(ttd.TRANSACTION_13, ttd.TRANSACTION_12, ttd.TRANSACTION_11));
     }
 
@@ -443,7 +456,7 @@ public class PhasingPollServiceTest {
         Block block = mock(Block.class);
         doReturn(Integer.MAX_VALUE).when(block).getHeight();
         blockchain.setLastBlock(block);
-        List<Transaction> accountTransactions = CollectionUtil.toList(service.getAccountPhasedTransactions(ttd.TRANSACTION_9.getSenderId(), 0, 100));
+        List<Transaction> accountTransactions = service.getAccountPhasedTransactions(ttd.TRANSACTION_9.getSenderId(), 0, 100);
         assertTrue(accountTransactions.isEmpty());
     }
 
@@ -461,13 +474,13 @@ public class PhasingPollServiceTest {
     @Test
     void testGetByHoldingId() throws SQLException {
         blockchain.setLastBlock(btd.BLOCK_12);
-        List<Transaction> transactions = CollectionUtil.toList(service.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100));
+        List<Transaction> transactions = service.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100);
         assertEquals(List.of(ttd.TRANSACTION_13), transactions);
     }
 
     @Test
     void testGetByHoldingIdNotExist() throws SQLException {
-        List<Transaction> transactions = CollectionUtil.toList(service.getHoldingPhasedTransactions(ptd.POLL_4.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ACCOUNT, 0, false, 0, 100));
+        List<Transaction> transactions = service.getHoldingPhasedTransactions(ptd.POLL_4.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ACCOUNT, 0, false, 0, 100);
         assertTrue(transactions.isEmpty());
     }
 

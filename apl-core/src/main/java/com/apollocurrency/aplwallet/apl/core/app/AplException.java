@@ -70,6 +70,18 @@ public abstract class AplException extends Exception {
 
     }
 
+    public static class SignatureVerificationException extends ValidationException {
+
+        public SignatureVerificationException(String message) {
+            super(message);
+        }
+
+        public SignatureVerificationException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+    }
+
     public static class NotCurrentlyValidException extends ValidationException {
 
         public NotCurrentlyValidException(String message) {
