@@ -67,6 +67,7 @@ public class BlockParserImpl implements BlockParser {
                 payloadLength, payloadHash, generatorPublicKey,
                 generationSignature, blockSignature, previousBlockHash, timeout, blockTransactions, baseTarget);
             if (!block.checkSignature()) {
+                log.debug("Invalid block signature id={} height={}", block.getStringId(), block.getHeight());
                 throw new AplException.NotValidException("Invalid block signature");
             }
             return block;
