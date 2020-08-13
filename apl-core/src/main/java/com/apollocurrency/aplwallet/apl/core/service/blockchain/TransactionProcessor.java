@@ -67,6 +67,8 @@ public interface TransactionProcessor {
 
     void processWaitingTransactions();
 
+    int getWaitingTransactionsCacheSize();
+
     boolean isWaitingTransactionsCacheFull();
 
     void processPeerTransactions(JSONArray transactionsData) throws AplException.NotValidException;

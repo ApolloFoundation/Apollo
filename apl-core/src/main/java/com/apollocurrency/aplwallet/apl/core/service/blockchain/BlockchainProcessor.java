@@ -41,6 +41,8 @@ public interface BlockchainProcessor {
 
     List<Transaction> getExpectedTransactions(Filter<Transaction> filter);
 
+    boolean isTrimming();
+
     boolean isScanning();
 
     boolean isDownloading();
