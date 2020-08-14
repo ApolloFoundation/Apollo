@@ -120,8 +120,10 @@ public class TransactionCreator {
         int timestamp = txRequest.getTimestamp() != 0 ? txRequest.getTimestamp() : timeService.getEpochTime();
         Transaction transaction;
         try {
-            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
-                deadline, txRequest.getAttachment(), timestamp).referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(txRequest.getPublicKey(),
+                        txRequest.getAmountATM(), txRequest.getFeeATM(),
+                        deadline, txRequest.getAttachment(), timestamp)
+                .referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
             if (transactionType.canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());
             }
