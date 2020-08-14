@@ -901,7 +901,7 @@ public class AplDbVersion extends DbVersion {
             case 351:
                 apply("ALTER TABLE account ADD COLUMN IF NOT EXISTS addr_scope TINYINT NOT NULL DEFAULT 0");
             case 352:
-                apply("ALTER TABLE transaction ALTER COLUMN signature VARBINARY NULL DEFAULT NULL");
+                apply("ALTER TABLE transaction MODIFY signature BLOB NULL DEFAULT NULL");
             case 353:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS dex_offer_id_height_idx ON dex_offer (id, height)");
             case 354:

@@ -22,7 +22,9 @@ import java.util.Set;
 @Slf4j
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-public class FullTextSearchServiceImpl implements FullTextSearchService {
+public class FullTextSearchServiceImpl
+//    implements FullTextSearchService
+{
 /*
     private FullTextSearchEngine ftl;
     private Set<String> indexTables;
