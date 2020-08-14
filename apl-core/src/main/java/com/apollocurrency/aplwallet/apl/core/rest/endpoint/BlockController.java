@@ -148,6 +148,9 @@ public class BlockController {
         if (blockData == null) {
             return response.error(ApiErrors.UNKNOWN_VALUE, "block", blockData).build();
         }
+        if (includeTransactions) {
+            blockchain.getOrLoadTransactions(blockData);
+        }
         blockConverter.setAddTransactions(includeTransactions);
         blockConverter.setAddPhasedTransactions(includeExecutedPhased);
         BlockDTO dto = blockConverter.convert(blockData);
