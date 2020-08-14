@@ -9,9 +9,12 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.StringKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSTag;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,9 +35,11 @@ public class DGSTagTable extends EntityDbTable<DGSTag> {
     };
     private static final DGSTagMapper MAPPER = new DGSTagMapper(KEY_FACTORY);
 
-
-    public DGSTagTable() {
-        super(TABLE_NAME, KEY_FACTORY, true, null, false);
+    @Inject
+    public DGSTagTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                       DatabaseManager databaseManager) {
+        super(TABLE_NAME, KEY_FACTORY, true, null,
+            derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override

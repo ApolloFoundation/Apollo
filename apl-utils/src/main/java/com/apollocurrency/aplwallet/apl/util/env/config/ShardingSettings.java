@@ -24,7 +24,8 @@ public class ShardingSettings {
     public ShardingSettings(
         boolean enabled,
         int frequency,
-        String digestAlgorithm /* it is not used in json configs actually */) {
+        String digestAlgorithm /* it is not used in json configs actually */)
+    {
         this.enabled = enabled;
         if (frequency > 0) {
             this.frequency = frequency;

@@ -81,16 +81,6 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public DbIterator<T> search(String query, DbClause dbClause, int from, int to) {
-        return table.search(query, dbClause, from, to);
-    }
-
-    @Override
-    public DbIterator<T> search(String query, DbClause dbClause, int from, int to, String sort) {
-        return table.search(query, dbClause, from, to, sort);
-    }
-
-    @Override
     public String defaultSort() {
         return table.defaultSort();
     }

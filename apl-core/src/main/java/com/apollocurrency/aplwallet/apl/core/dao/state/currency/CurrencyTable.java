@@ -4,10 +4,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.currency;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -18,7 +29,9 @@ import java.sql.SQLException;
 import java.util.Locale;
 import java.util.Objects;
 
-public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> {
+@Singleton
+@DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
+public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> implements SearchableTableInterface<Currency> {
 
     public static final LongKeyFactory<Currency> currencyDbKeyFactory = new LongKeyFactory<>("id") {
         @Override
@@ -30,8 +43,12 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> {
         }
     };
 
-    public CurrencyTable() {
-        super("currency", currencyDbKeyFactory);
+    @Inject
+    public CurrencyTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                         DatabaseManager databaseManager,
+                         FullTextConfig fullTextConfig) {
+        super("currency", currencyDbKeyFactory, "code,name,description",
+            derivedDbTablesRegistry, databaseManager, fullTextConfig);
     }
 
     @Override
@@ -82,5 +99,35 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> {
             pstmt.executeUpdate();
         }
     }
+
+    @Override
+    public final DbIterator<Currency> search(String query, DbClause dbClause, int from, int to) {
+        return search(query, dbClause, from, to, " ORDER BY ft.score DESC ");
+    }
+
+    @Override
+    public final DbIterator<Currency> search(String query, DbClause dbClause, int from, int to, String sort) {
+        Connection con = null;
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try {
+            con = dataSource.getConnection();
+            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
+            PreparedStatement pstmt = con.prepareStatement("SELECT " + table + ".*, ft.score FROM " + table +
+                ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
+                + " WHERE " + table + ".db_id = ft.keys[1] "
+                + (multiversion ? " AND " + table + ".latest = TRUE " : " ")
+                + " AND " + dbClause.getClause() + sort
+                + DbUtils.limitsClause(from, to));
+            int i = 0;
+            pstmt.setString(++i, query);
+            i = dbClause.set(pstmt, ++i);
+            i = DbUtils.setLimits(i, pstmt, from, to);
+            return getManyBy(con, pstmt, true);
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
 
 }

@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.config.UtilComponentConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDao;
@@ -69,6 +70,9 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -147,11 +151,14 @@ class ShardMigrationExecutorTest {
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
     private Zip zip = new UtilComponentConfig().zip();
     private GeneratorService generatorService = mock(GeneratorService.class);
+    private TransactionTestData td = new TransactionTestData();
 
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
         BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class,
         PropertyProducer.class,
+        TransactionRowMapper.class,
+        TransactionBuilder.class,
         GlobalSyncImpl.class, BlockIndexDao.class, ShardHashCalculatorImpl.class,
         DerivedDbTablesRegistryImpl.class, ShardEngineImpl.class, ShardRecoveryDao.class,
         ShardRecoveryDaoJdbcImpl.class, ShardDao.class, ShardRecoveryDao.class,
@@ -186,6 +193,8 @@ class ShardMigrationExecutorTest {
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(zip, Zip.class))
         .addBeans(MockBean.of(generatorService, GeneratorService.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .build();
     @Inject
     private ShardEngine shardEngine;

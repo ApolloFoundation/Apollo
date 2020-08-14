@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
@@ -37,16 +36,20 @@ import com.apollocurrency.aplwallet.apl.core.entity.appdata.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -83,6 +86,7 @@ public class BlockchainImpl implements Blockchain {
     private final ShardDao shardDao;
     private final ShardRecoveryDao shardRecoveryDao;
     private final IteratorToStreamConverter<Block> blockConverter = new IteratorToStreamConverter<>();
+    private final PrunableLoadingService prunableService;
 
     private final AtomicReference<Block> lastBlock;
     private final AtomicReference<Block> shardInitialBlock;
@@ -90,7 +94,7 @@ public class BlockchainImpl implements Blockchain {
     @Inject
     public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, TimeService timeService,
                           PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexService blockIndexService,
-                          DatabaseManager databaseManager, ShardDao shardDao, ShardRecoveryDao shardRecoveryDao) {
+                          DatabaseManager databaseManager, ShardDao shardDao, ShardRecoveryDao shardRecoveryDao, PrunableLoadingService prunableService) {
         this.blockDao = blockDao;
         this.transactionDao = transactionDao;
         this.blockchainConfig = blockchainConfig;
@@ -101,6 +105,7 @@ public class BlockchainImpl implements Blockchain {
         this.databaseManager = databaseManager;
         this.shardDao = shardDao;
         this.shardRecoveryDao = shardRecoveryDao;
+        this.prunableService = prunableService;
         this.lastBlock = new AtomicReference<>();
         this.shardInitialBlock = new AtomicReference<>();
     }
@@ -167,11 +172,11 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Block> getBlocks(int from, int to, int timestamp) {
+    public List<Block> getBlocks(int from, int to, int timestamp) {
         int blockchainHeight = getHeight();
         int calculatedFrom = blockchainHeight - from;
         int calculatedTo = blockchainHeight - to;
-        return blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
+        return CollectionUtil.toList(blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp));
     }
 
     /**
@@ -235,8 +240,8 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp) {
-        return blockDao.getBlocksByAccount(null, accountId, from, to, timestamp);
+    public List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp) {
+        return CollectionUtil.toList(blockDao.getBlocksByAccount(null, accountId, from, to, timestamp));
     }
 
     @Transactional(readOnly = true)
@@ -288,7 +293,7 @@ public class BlockchainImpl implements Blockchain {
     public Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
         Block block = blockDao.loadBlock(con, rs);
         if (loadTransactions) {
-            List<Transaction> blockTransactions = transactionDao.findBlockTransactions(con, block.getId());
+            List<Transaction> blockTransactions = this.getOrLoadTransactions(block);
             block.setTransactions(blockTransactions);
         }
         return block;
@@ -298,7 +303,29 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public void saveBlock(Connection con, Block block) {
         blockDao.saveBlock(con, block);
-        transactionDao.saveTransactions(con, block.getOrLoadTransactions());
+        transactionDao.saveTransactions(con, this.getOrLoadTransactions(block));
+    }
+
+    public List<Transaction> getOrLoadTransactions(Block parentBlock) {
+        if (parentBlock.getTransactions() == null || parentBlock.getTransactions().size() == 0) {
+            List<Transaction> blockTransactions = this.getBlockTransactions(parentBlock.getId());
+            if (blockTransactions.size() > 0) {
+                List<Transaction> transactions = Collections.unmodifiableList(blockTransactions);
+                short index = 0;
+                for (Transaction transaction : transactions) {
+                    transaction.setBlock(parentBlock);
+                    transaction.setIndex(index++);
+                    ((TransactionImpl) transaction).bytes();
+                    transaction.getAppendages();
+                }
+                parentBlock.setTransactions(transactions);
+            } else {
+                parentBlock.setTransactions(Collections.emptyList());
+            }
+        } else if (parentBlock.getTransactions() == null) {
+            parentBlock.setTransactions(Collections.emptyList());
+        }
+        return parentBlock.getTransactions();
     }
 
     @Transactional
@@ -412,7 +439,7 @@ public class BlockchainImpl implements Blockchain {
                     blockDao.getBlocksAfter(fromBlockHeight, blockIdList, result, con, prevSize);
                     for (int i = prevSize; i < result.size(); i++) {
                         Block block = result.get(i);
-                        List<Transaction> blockTransactions = transactionDao.findBlockTransactions(con, block.getId());
+                        List<Transaction> blockTransactions = this.getOrLoadTransactions(block);
                         block.setTransactions(blockTransactions);
                     }
                     if (result.size() - 1 >= 0) {
@@ -517,7 +544,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public Transaction findTransaction(long transactionId, int height) {
         TransactionalDataSource datasource = getDatasourceWithShardingByTransactionId(transactionId);
-        return transactionDao.findTransaction(transactionId, height, datasource);
+        return loadPrunable(transactionDao.findTransaction(transactionId, height, datasource));
     }
 
     @Transactional(readOnly = true)
@@ -535,7 +562,8 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
         TransactionalDataSource dataSource = getDatasourceWithShardingByTransactionId(Convert.fullHashToId(fullHash));
-        return transactionDao.findTransactionByFullHash(fullHash, height, dataSource);
+
+        return loadPrunable(transactionDao.findTransactionByFullHash(fullHash, height, dataSource));
     }
 
     @Override
@@ -614,12 +642,6 @@ public class BlockchainImpl implements Blockchain {
             fullHash = Convert.toFullHash(transactionIndex.getTransactionId(), transactionIndex.getPartialTransactionHash());
         }
         return fullHash;
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
-        return transactionDao.loadTransaction(con, rs);
     }
 
     @Transactional(readOnly = true)
@@ -720,6 +742,13 @@ public class BlockchainImpl implements Blockchain {
         return transactionDao.findBlockTransactions(blockId, dataSource);
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public long getBlockTransactionCount(long blockId) {
+        TransactionalDataSource dataSource = getDataSourceWithSharding(blockId);
+        return transactionDao.getBlockTransactionsCount(blockId, dataSource);
+    }
+
     @Override
     public boolean isInitialized() {
         return getLastBlock() != null && getShardInitialBlock() != null;
@@ -739,7 +768,7 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
+    public List<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
         return transactionDao.getTransactions(type, subtype, from, to);
     }
 
@@ -751,7 +780,8 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
+    public List<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
+
         return transactionDao.getTransactions(con, pstmt);
     }
 
@@ -809,6 +839,18 @@ public class BlockchainImpl implements Blockchain {
     private TransactionalDataSource getDatasourceWithShardingByTransactionId(long transactionId) {
         Long shardId = transactionIndexDao.getShardIdByTransactionId(transactionId);
         return getShardDataSourceOrDefault(shardId);
+    }
+
+    private Transaction loadPrunable(Transaction transaction) {
+        if (transaction != null) {
+            prunableService.loadTransactionPrunables(transaction);
+        }
+        return transaction;
+    }
+
+    private List<Transaction> loadPrunables(List<Transaction> transactions) {
+        transactions.forEach(this::loadPrunable);
+        return transactions;
     }
 
 }

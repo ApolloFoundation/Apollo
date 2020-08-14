@@ -17,7 +17,7 @@ import java.util.Arrays;
 
 public class MessageAppendix extends AbstractAppendix {
 
-    private static final String appendixName = "Message";
+    static final String appendixName = "Message";
     private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, Constants.ONE_APL, 32) {
         @Override
         public int getSize(Transaction transaction, Appendix appendage) {
@@ -104,9 +104,7 @@ public class MessageAppendix extends AbstractAppendix {
 
     @Override
     public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        if (message.length > Constants.MAX_ARBITRARY_MESSAGE_LENGTH) {
-            throw new AplException.NotValidException("Invalid arbitrary message length: " + message.length);
-        }
+        throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
     }
 
     @Override

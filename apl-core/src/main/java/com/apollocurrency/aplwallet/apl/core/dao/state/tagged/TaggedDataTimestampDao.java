@@ -10,9 +10,12 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataTimestamp;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,8 +38,10 @@ public class TaggedDataTimestampDao extends EntityDbTable<TaggedDataTimestamp> {
     private static final String TABLE_NAME = "tagged_data_timestamp";
     private final TagDataTimestampMapper MAPPER = new TagDataTimestampMapper();
 
-    public TaggedDataTimestampDao() {
-        super(TABLE_NAME, timestampKeyFactory, true, null, false);
+    @Inject
+    public TaggedDataTimestampDao(DerivedTablesRegistry derivedDbTablesRegistry,
+                                  DatabaseManager databaseManager) {
+        super(TABLE_NAME, timestampKeyFactory, true, null, derivedDbTablesRegistry, databaseManager, null);
     }
 
     public DbKey newDbKey(TaggedDataTimestamp dataTimestamp) {

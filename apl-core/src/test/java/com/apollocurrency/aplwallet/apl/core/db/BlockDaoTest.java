@@ -4,19 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
-import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
@@ -24,11 +18,6 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
-import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -62,27 +51,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
 
 @Tag("slow")
-@EnableWeld
 class BlockDaoTest {
 
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("blockDaoTestDb").toAbsolutePath().toString()));
-    @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from()
-        .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
-        .addBeans(MockBean.of(mock(Blockchain.class), Blockchain.class, BlockchainImpl.class))
-        .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
-        .addBeans(MockBean.of(mock(PropertiesHolder.class), PropertiesHolder.class))
-        .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
-        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-        .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
-        .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
-        .build();
 
     private BlockDao blockDao;
     private TransactionDaoImpl transactionDao;
@@ -102,7 +78,7 @@ class BlockDaoTest {
         td = new BlockTestData();
         txd = new TransactionTestData();
         blockDao = new BlockDaoImpl(extension.getDatabaseManager());
-        transactionDao = new TransactionDaoImpl(extension.getDatabaseManager());
+        transactionDao = new TransactionDaoImpl(extension.getDatabaseManager(), txd.getTransactionTypeFactory(), new TransactionRowMapper(txd.getTransactionTypeFactory(), new TransactionBuilder(txd.getTransactionTypeFactory())));
     }
 
 

@@ -4,11 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.CriticalUpdateTransactiionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.ImportantUpdateTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.MinorUpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
@@ -43,6 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -71,6 +76,10 @@ public class UpdaterCoreTest {
     private UpdateTransactionVerifier transactionVerifier;
     @Mock
     private Event<UpdateEventData> startUpdateEvent;
+    @Mock
+    AccountService accountService;
+    @Mock
+    BlockchainConfig blockchainConfig;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -89,7 +98,8 @@ public class UpdaterCoreTest {
 
     @Test
     public void testInitNotUpdatedTransaction() throws Exception {
-        SimpleTransaction mockTransaction = new SimpleTransaction(0, Update.CRITICAL);
+        CriticalUpdateTransactiionType type = new CriticalUpdateTransactiionType(blockchainConfig, accountService);
+        SimpleTransaction mockTransaction = new SimpleTransaction(0, type);
         mockTransaction.setAttachment(attachment);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
@@ -109,7 +119,8 @@ public class UpdaterCoreTest {
 
     @Test
     public void testInitNotUpdatedMinorTransaction() throws Exception {
-        SimpleTransaction mockTransaction = new SimpleTransaction(0, Update.MINOR);
+        MinorUpdateTransactionType type = new MinorUpdateTransactionType(blockchainConfig, accountService);
+        SimpleTransaction mockTransaction = new SimpleTransaction(0, type);
         mockTransaction.setAttachment(attachment);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
@@ -143,7 +154,8 @@ public class UpdaterCoreTest {
 
     @Test
     public void testInitNotUpdatedNullUpdateData() throws Exception {
-        Transaction mockTransaction = new SimpleTransaction(1L, Update.MINOR);
+        MinorUpdateTransactionType type = new MinorUpdateTransactionType(blockchainConfig, accountService);
+        Transaction mockTransaction = new SimpleTransaction(1L, type);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), false);
         when(updaterService.getLast()).thenReturn(updateTransaction);
         UpdateInfo updateInfo = new UpdateInfo();
@@ -161,7 +173,8 @@ public class UpdaterCoreTest {
 
     @Test
     public void testInitUpdatedCriticalUpdateGreaterUpdateVersion() throws Exception {
-        SimpleTransaction mockTransaction = new SimpleTransaction(1L, Update.CRITICAL);
+        MinorUpdateTransactionType type = new MinorUpdateTransactionType(blockchainConfig, accountService);
+        SimpleTransaction mockTransaction = new SimpleTransaction(1L, type);
         mockTransaction.setAttachment(attachment);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
@@ -182,7 +195,8 @@ public class UpdaterCoreTest {
 
     @Test
     public void testInitUpdatedNonCriticalUpdateGreaterUpdateVersion() throws Exception {
-        SimpleTransaction mockTransaction = new SimpleTransaction(1L, Update.IMPORTANT);
+        MinorUpdateTransactionType type = new MinorUpdateTransactionType(blockchainConfig, accountService);
+        SimpleTransaction mockTransaction = new SimpleTransaction(1L, type);
         mockTransaction.setAttachment(attachment);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
@@ -200,7 +214,8 @@ public class UpdaterCoreTest {
 
     @Test
     public void testInitUpdatedAllUpdatesLesserOrEqualUpdateVersion() throws Exception {
-        SimpleTransaction mockTransaction = new SimpleTransaction(1L, Update.IMPORTANT);
+        ImportantUpdateTransactionType type = new ImportantUpdateTransactionType(blockchainConfig, accountService);
+        SimpleTransaction mockTransaction = new SimpleTransaction(1L, type);
         mockTransaction.setAttachment(attachment);
         UpdateTransaction updateTransaction = new UpdateTransaction(mockTransaction.getId(), true);
         when(updaterService.getLast()).thenReturn(updateTransaction);
@@ -220,7 +235,8 @@ public class UpdaterCoreTest {
     //    UpdaterCoreImpl startAvailableUpdate
     @Test
     public void testStartMinorUpdate() throws InterruptedException {
-        SimpleTransaction mockTransaction = new SimpleTransaction(3L, Update.MINOR);
+        MinorUpdateTransactionType type = new MinorUpdateTransactionType(blockchainConfig, accountService);
+        SimpleTransaction mockTransaction = new SimpleTransaction(3L, type);
         mockTransaction.setAttachment(attachment);
         UpdateData updateData = new UpdateData(attachment, mockTransaction.getId(), decryptedUrl);
         UpdateInfo updateInfo = new UpdateInfo();
@@ -245,8 +261,7 @@ public class UpdaterCoreTest {
         List<Transaction> transactions = new ArrayList<>();
         Random random = new Random();
         for (int i = 0; i < numberOfTransactions; i++) {
-            Transaction transaction = new SimpleTransaction(random.nextLong(), TransactionType.findTransactionType((byte) random.nextInt(8),
-                (byte) 0));
+            Transaction transaction = new SimpleTransaction(random.nextLong(), mock(TransactionType.class));
             transactions.add(transaction);
         }
         return transactions;

@@ -4,31 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.util.stream.Stream;
-
 import com.apollocurrency.aplwallet.api.dto.account.AccountControlPhasingDTO;
 import com.apollocurrency.aplwallet.api.response.AccountControlPhasingResponse;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingTestData;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -38,6 +26,23 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
+import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class AccountControlControllerTest extends AbstractEndpointTest {
@@ -71,7 +76,7 @@ class AccountControlControllerTest extends AbstractEndpointTest {
     void setUp() {
         super.setUp();
         endpoint = new AccountControlController(
-            accountControlPhasingService, blockchainConfig, txCreator, accountService, 100);
+            accountControlPhasingService, blockchainConfig, txCreator, accountService, new UnconfirmedTransactionConverter(mock(PrunableLoadingService.class)), 100);
         dispatcher.getRegistry().addSingletonResource(endpoint);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
         actd = new AccountControlPhasingTestData();

@@ -9,10 +9,13 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,8 +41,11 @@ public class AccountLeaseTable extends VersionedDeletableEntityDbTable<AccountLe
         }
     };
 
-    public AccountLeaseTable() {
-        super("account_lease", accountLeaseDbKeyFactory);
+    @Inject
+    public AccountLeaseTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                             DatabaseManager databaseManager) {
+        super("account_lease", accountLeaseDbKeyFactory, null,
+            derivedDbTablesRegistry, databaseManager, null);
     }
 
     public static DbKey newKey(long id) {

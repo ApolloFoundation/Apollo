@@ -10,6 +10,8 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -41,8 +43,10 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
      * Create the account ledger table
      */
     @Inject
-    public AccountLedgerTable(PropertiesHolder propertiesHolder) {
-        super("account_ledger");
+    public AccountLedgerTable(PropertiesHolder propertiesHolder,
+                              DerivedTablesRegistry derivedDbTablesRegistry,
+                              DatabaseManager databaseManager) {
+        super("account_ledger", derivedDbTablesRegistry, databaseManager, null);
         this.propertiesHolder = propertiesHolder;
         trimKeep = propertiesHolder.getIntProperty("apl.ledgerTrimKeep", 30000);
     }

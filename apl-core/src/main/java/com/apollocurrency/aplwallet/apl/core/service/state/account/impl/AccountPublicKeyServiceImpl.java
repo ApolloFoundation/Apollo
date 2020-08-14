@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.core.utils.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -226,6 +227,15 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
             publicKey.setHeight(height);
             putInCache(dbKey, publicKey);
             return true;
+        }
+        return Arrays.equals(publicKey.getPublicKey(), key);
+    }
+
+    @Override
+    public boolean verifyPublicKey(byte[] key) {
+        PublicKey publicKey = getPublicKey(AccountTable.newKey(AccountService.getId(key)));
+        if(publicKey == null || publicKey.getPublicKey() == null){
+            return false;
         }
         return Arrays.equals(publicKey.getPublicKey(), key);
     }

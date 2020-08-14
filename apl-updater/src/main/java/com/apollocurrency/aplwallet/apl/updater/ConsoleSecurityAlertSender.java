@@ -14,7 +14,7 @@ public class ConsoleSecurityAlertSender implements SecurityAlertSender {
 
     @Override
     public void send(Transaction invalidUpdateTransaction) {
-        LOG.info("Transaction: " + invalidUpdateTransaction.getJSONObject().toJSONString() + " is invalid");
+        LOG.info("Transaction: " + invalidUpdateTransaction.getId() + " is invalid");
     }
 
     @Override

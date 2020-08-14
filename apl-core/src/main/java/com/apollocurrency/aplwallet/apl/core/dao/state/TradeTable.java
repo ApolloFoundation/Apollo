@@ -26,6 +26,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.Trade;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -39,7 +41,7 @@ import java.util.List;
 
 @Singleton
 public class TradeTable extends EntityDbTable<Trade> {
-    private static final LinkKeyFactory<Trade> TRADE_DB_KEY_FACTORY = new LinkKeyFactory<>("ask_order_id", "bid_order_id") {
+    public static final LinkKeyFactory<Trade> TRADE_DB_KEY_FACTORY = new LinkKeyFactory<>("ask_order_id", "bid_order_id") {
         @Override
         public DbKey newKey(Trade trade) {
             if (trade.getDbKey() == null) {
@@ -50,8 +52,10 @@ public class TradeTable extends EntityDbTable<Trade> {
     };
 
     @Inject
-    public TradeTable() {
-        super("trade", TRADE_DB_KEY_FACTORY);
+    public TradeTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                      DatabaseManager databaseManager) {
+        super("trade", TRADE_DB_KEY_FACTORY, false, null,
+            derivedDbTablesRegistry, databaseManager, null);
     }
 
     public void save(final Connection con, final Trade trade) throws SQLException {

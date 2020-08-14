@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -11,8 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
@@ -40,7 +42,7 @@ public interface PhasingPollService {
 
     PhasingPollResult getResult(long id);
 
-    DbIterator<PhasingPollResult> getApproved(int height);
+    List<PhasingPollResult> getApproved(int height);
 
     List<Long> getApprovedTransactionIds(int height);
 
@@ -50,12 +52,12 @@ public interface PhasingPollService {
 
     List<Transaction> getFinishingTransactionsByTime(int startTime, int finishTime);
 
-    DbIterator<Transaction> getVoterPhasedTransactions(long voterId, int from, int to);
+    List<Transaction> getVoterPhasedTransactions(long voterId, int from, int to);
 
-    DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
+    List<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
                                                          long accountId, boolean withoutWhitelist, int from, int to);
 
-    DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to);
+    List<Transaction> getAccountPhasedTransactions(long accountId, int from, int to);
 
     int getAccountPhasedTransactionCount(long accountId);
 
@@ -71,7 +73,7 @@ public interface PhasingPollService {
 
     void countVotesAndRelease(Transaction transaction);
 
-    void tryCountVotes(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates);
+    void tryCountVotes(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates);
 
     long countVotes(PhasingPoll phasingPoll);
 
@@ -92,4 +94,8 @@ public interface PhasingPollService {
     boolean verifySecret(PhasingPoll poll, byte[] revealedSecret);
 
     boolean isTransactionPhased(long id);
+
+    void validate(PhasingParams phasingParams) throws AplException.ValidationException;
+
+    void checkApprovable(PhasingParams phasingParams) throws AplException.NotCurrentlyValidException;
 }

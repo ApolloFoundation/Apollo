@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -34,6 +33,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Deprecated
 @Slf4j
@@ -56,14 +56,12 @@ public final class GetBlocks extends AbstractAPIRequestHandler {
         JSONArray blocks = new JSONArray();
         Block lastBlock = lookupBlockchain().getLastBlock();
         if (lastBlock != null) {
-            try (DbIterator<? extends Block> iterator = lookupBlockchain().getBlocks(firstIndex, lastIndex, timestamp)) {
-                while (iterator.hasNext()) {
-                    Block block = iterator.next();
-                    if (block.getTimestamp() < timestamp) { // not needed after 'timestamp' is added as SQL param above
-                        break;
-                    }
-                    blocks.add(JSONData.block(block, includeTransactions, includeExecutedPhased));
+            List<Block> blockchainBlocks = lookupBlockchain().getBlocks(firstIndex, lastIndex, timestamp);
+            for (Block blockchainBlock : blockchainBlocks) {
+                if (blockchainBlock.getTimestamp() < timestamp) { // not needed after 'timestamp' is added as SQL param above
+                    break;
                 }
+                blocks.add(JSONData.block(blockchainBlock, includeTransactions, includeExecutedPhased));
             }
         } else {
             log.warn("Still no any blocks in db...");

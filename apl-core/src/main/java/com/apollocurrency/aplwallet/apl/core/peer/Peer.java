@@ -20,7 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
+import com.apollocurrency.aplwallet.api.p2p.respons.BaseP2PResponse;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.PeerResponseParser;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -106,13 +109,19 @@ public interface Peer extends Comparable<Peer> {
 
     String getBlacklistingCause();
 
+    @Deprecated
     JSONObject send(JSONStreamAware request, UUID chainId) throws PeerNotConnectedException;
 
-    public boolean isTrusted();
+    //todo add base response
+    void send(BaseP2PRequest request) throws PeerNotConnectedException;
 
-    public PeerTrustLevel getTrustLevel();
+    <T extends BaseP2PResponse> T send(BaseP2PRequest request, PeerResponseParser<T> parser) throws PeerNotConnectedException;
 
-    public long getServices();
+    boolean isTrusted();
+
+    PeerTrustLevel getTrustLevel();
+
+    long getServices();
 
     enum Service {
         HALLMARK(1),                    // Hallmarked node

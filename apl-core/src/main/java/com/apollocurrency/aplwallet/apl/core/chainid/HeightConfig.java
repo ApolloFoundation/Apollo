@@ -66,6 +66,18 @@ public class HeightConfig {
         return bp.getMaxNumberOfTransactions();
     }
 
+    public int getMaxArbitraryMessageLength() {
+        return bp.getMaxArbitraryMessageLength();
+    }
+
+    public int getMaxEncryptedMessageLength() {
+        return bp.getMaxEncryptedMessageLength();
+    }
+
+    public int getMaxNumberOfChildAccount() {
+        return bp.getMaxNumberOfChildAccounts();
+    }
+
     public int getBlockTime() {
         return bp.getBlockTime();
     }
@@ -108,6 +120,10 @@ public class HeightConfig {
 
     public int getShardingFrequency() {
         return bp.getShardingSettings().getFrequency();
+    }
+
+    public short getFeeRate(byte type, byte subType){
+        return bp.getTransactionFeeSettings().getRate(type, subType);
     }
 
     @Override

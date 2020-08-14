@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.app.EncryptedSecretBytesDetails;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.SecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.VaultKeyStoreServiceImpl;
@@ -13,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -37,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -63,9 +66,12 @@ public class KeyStoreServiceTest {
     private static final String SECRET_BYTES_1 = "44a2868161a651682bdf938b16c485f359443a2c53bd3e752046edef20d11567";
     private static final String SECRET_BYTES_2 = "146c55cbdc5f33390d207d6d08030c3dd4012c3f775ed700937a893786393dbf";
     private NtpTime time = mock(NtpTime.class);
+    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
         .addBeans(MockBean.of(time, NtpTime.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .build();
     private byte[] secretBytes = generateSecretBytes();
     private byte[] nonce = new byte[16];
@@ -85,6 +91,8 @@ public class KeyStoreServiceTest {
         tempDirectory = Files.createTempDirectory("keystore-test");
         keyStore = new VaultKeyStoreServiceImpl(tempDirectory, 0, time);
         Files.write(tempDirectory.resolve("---" + ACCOUNT1), encryptedKeyJSON.getBytes());
+        doReturn("APL").when(blockchainConfig).getAccountPrefix();
+        Convert2.init(blockchainConfig);
     }
 
     @AfterEach
@@ -113,7 +121,7 @@ public class KeyStoreServiceTest {
 
         assertEquals(2, FileUtils.countElementsOfDirectory(tempDirectory));
 
-        String rsAcc = Convert.defaultRsAccount(Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(Convert.parseHexString(SECRET_BYTES_2)))));
+        String rsAcc = Convert2.defaultRsAccount(Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(Convert.parseHexString(SECRET_BYTES_2)))));
 
         try (Stream<Path> paths = Files.list(tempDirectory)) {
             Path encryptedKeyPath = paths.filter(path -> path.getFileName().toString().endsWith(rsAcc)).findFirst().orElseThrow(() -> new RuntimeException("No encrypted key found for " + rsAcc + " account"));
@@ -132,15 +140,13 @@ public class KeyStoreServiceTest {
     @Test
     @Execution(ExecutionMode.SAME_THREAD)
     public void testGetKey() throws Exception {
-
-
         VaultKeyStoreServiceImpl keyStoreSpy = spy(keyStore);
 
         long accountId = Convert.parseAccountId(ACCOUNT1);
         SecretBytesDetails secretBytes = keyStoreSpy.getSecretBytesV0(PASSPHRASE, accountId);
         byte[] actualKey = secretBytes.getSecretBytes();
         assertEquals(KeyStoreService.Status.OK, secretBytes.getExtractStatus());
-        String rsAcc = Convert.defaultRsAccount(accountId);
+        String rsAcc = Convert2.defaultRsAccount(accountId);
 
         verify(keyStoreSpy, times(1)).findKeyStorePathWithLatestVersion(accountId);
 

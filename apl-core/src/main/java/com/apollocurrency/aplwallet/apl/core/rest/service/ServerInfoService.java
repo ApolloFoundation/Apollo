@@ -60,6 +60,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
@@ -77,7 +78,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupShufflingService;
 
 /**
  * @author alukin@gmail.com
@@ -115,6 +115,7 @@ public class ServerInfoService {
     private final CurrencyService currencyService;
     private final ShufflingService shufflingService;
     private final GeneratorService generatorService;
+    private final TransactionTypeFactory transactionTypeFactory;
 
     @Inject
     public ServerInfoService(BlockchainConfig blockchainConfig, Blockchain blockchain,
@@ -143,6 +144,7 @@ public class ServerInfoService {
                              CurrencyTransferService currencyTransferService,
                              CurrencyService currencyService,
                              ShufflingService shufflingService,
+                             TransactionTypeFactory transactionTypeFactory,
                              GeneratorService generatorService
     ) {
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
@@ -175,6 +177,7 @@ public class ServerInfoService {
         this.currencyService = Objects.requireNonNull( currencyService, "currencyService is NULL");
         this.shufflingService = Objects.requireNonNull( shufflingService, "shufflingService is NULL");
         this.generatorService = Objects.requireNonNull( generatorService, "generatorService is NULL");
+        this.transactionTypeFactory = Objects.requireNonNull(transactionTypeFactory, "Transaction type factory is NULL");
     }
 
     public ApolloX509Info getX509Info() {
@@ -263,7 +266,7 @@ public class ServerInfoService {
         }
         dto.genesisAccountId = Long.toUnsignedString(GenesisImporter.CREATOR_ID);
         dto.epochBeginning = GenesisImporter.EPOCH_BEGINNING;
-        dto.maxArbitraryMessageLength = Constants.MAX_ARBITRARY_MESSAGE_LENGTH;
+        dto.maxArbitraryMessageLength = blockchainConfig.getCurrentConfig().getMaxArbitraryMessageLength();
         dto.maxPrunableMessageLength = Constants.MAX_PRUNABLE_MESSAGE_LENGTH;
 
         dto.coinSymbol = blockchainConfig.getCoinSymbol();
@@ -280,7 +283,7 @@ public class ServerInfoService {
             for (int subtype = 0; ; subtype++) {
                 TransactionType transactionType;
                 try {
-                    transactionType = TransactionType.findTransactionType((byte) type, (byte) subtype);
+                    transactionType = transactionTypeFactory.findTransactionType((byte) type, (byte) subtype);
                 } catch (IllegalArgumentException ignore) {
                     continue;
                 }
@@ -379,7 +382,7 @@ public class ServerInfoService {
             dto.numberOfAccountLeases = accountLeaseService.getAccountLeaseCount();
             dto.numberOfActiveAccountLeases = accountService.getActiveLeaseCount();
             dto.numberOfShufflings = shufflingService.getShufflingCount();
-            dto.numberOfActiveShufflings = lookupShufflingService().getShufflingActiveCount();
+            dto.numberOfActiveShufflings = shufflingService.getShufflingActiveCount();
             dto.numberOfPhasingOnlyAccounts = accountControlPhasingService.getCount();
         }
         dto.numberOfPeers = peersService.getAllPeers().size();

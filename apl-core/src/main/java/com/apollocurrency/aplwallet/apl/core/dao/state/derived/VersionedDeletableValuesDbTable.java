@@ -23,7 +23,10 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
-import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,13 +34,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-public abstract class VersionedDeletableValuesDbTable<T extends VersionedDerivedEntity> extends ValuesDbTable<T> {
-    protected VersionedDeletableValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
-        super(table, dbKeyFactory, true);
-    }
+public abstract class VersionedDeletableValuesDbTable<T extends VersionedDeletableEntity> extends ValuesDbTable<T> {
 
-    public VersionedDeletableValuesDbTable(String table, boolean init, KeyFactory<T> dbKeyFactory) {
-        super(table, init, dbKeyFactory, true);
+    public VersionedDeletableValuesDbTable(String table, KeyFactory<T> dbKeyFactory,
+                                           DerivedTablesRegistry derivedDbTablesRegistry,
+                                           DatabaseManager databaseManager,
+                                           FullTextConfig fullTextConfig) {
+        super(table, dbKeyFactory, true, derivedDbTablesRegistry, databaseManager, fullTextConfig);
     }
 
     @Override

@@ -4,10 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.currency;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyMint;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -16,6 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Singleton
 public class CurrencyMintTable extends VersionedDeletableEntityDbTable<CurrencyMint> {
 
     public static final LinkKeyFactory<CurrencyMint> currencyMintDbKeyFactory = new LinkKeyFactory<>("currency_id", "account_id") {
@@ -28,8 +34,11 @@ public class CurrencyMintTable extends VersionedDeletableEntityDbTable<CurrencyM
         }
     };
 
-    public CurrencyMintTable() {
-        super("currency_mint", currencyMintDbKeyFactory);
+    @Inject
+    public CurrencyMintTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                             DatabaseManager databaseManager) {
+        super("currency_mint", currencyMintDbKeyFactory, null,
+            derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override

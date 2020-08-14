@@ -9,8 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataExtend;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtendAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
 
 import java.util.List;
 

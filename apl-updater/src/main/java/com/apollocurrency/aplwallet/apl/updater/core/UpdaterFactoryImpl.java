@@ -4,8 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.updater.core;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateData;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdateInfo;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterMediator;
@@ -28,17 +27,17 @@ public class UpdaterFactoryImpl implements UpdaterFactory {
 
     @Override
     public Updater getUpdater(UpdateData updateDataHolder) {
-        Level level = ((Update) updateDataHolder.getAttachment().getTransactionType()).getLevel();
-        switch (level) {
-            case CRITICAL:
+        TransactionTypes.TransactionTypeSpec txType = updateDataHolder.getAttachment().getTransactionTypeSpec();
+        switch (txType) {
+            case CRITICAL_UPDATE:
                 return new CriticalUpdater(updateDataHolder, updaterMediator, updaterService, 3, 200, updateInfo);
-            case IMPORTANT:
+            case IMPORTANT_UPDATE:
                 return new ImportantUpdater(updateDataHolder, updaterService, updaterMediator, UpdaterConstants.MIN_BLOCKS_DELAY,
                     UpdaterConstants.MAX_BLOCKS_DELAY, updateInfo);
-            case MINOR:
+            case MINOR_UPDATE:
                 return new MinorUpdater(updateDataHolder, updaterService, updaterMediator, updateInfo);
             default:
-                throw new IllegalArgumentException("Unable to construct updater for level: " + level);
+                throw new IllegalArgumentException("Unable to construct updater for : " + txType);
         }
     }
 }

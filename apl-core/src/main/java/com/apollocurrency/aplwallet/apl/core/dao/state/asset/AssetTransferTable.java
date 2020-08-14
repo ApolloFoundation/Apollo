@@ -11,7 +11,10 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,8 +35,11 @@ public final class AssetTransferTable extends EntityDbTable<AssetTransfer> {
 
     };
 
-    protected AssetTransferTable() {
-        super("asset_transfer", assetTransferDbKeyFactory);
+    @Inject
+    public AssetTransferTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                              DatabaseManager databaseManager) {
+        super("asset_transfer", assetTransferDbKeyFactory, false, null,
+            derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override

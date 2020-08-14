@@ -12,6 +12,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import lombok.extern.slf4j.Slf4j;
@@ -43,8 +45,9 @@ public class DexContractTable extends EntityDbTable<ExchangeContract> {
     private ExchangeContractMapper mapper = new ExchangeContractMapper();
 
     @Inject
-    public DexContractTable() {
-        super(TABLE_NAME, KEY_FACTORY, true, null, false);
+    public DexContractTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                            DatabaseManager databaseManager) {
+        super(TABLE_NAME, KEY_FACTORY, true, null, derivedDbTablesRegistry, databaseManager, null);
     }
 
     private static ExchangeContract getFirstOrNull(List<ExchangeContract> contracts) {

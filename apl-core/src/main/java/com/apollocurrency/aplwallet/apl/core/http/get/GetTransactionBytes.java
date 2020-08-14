@@ -70,7 +70,7 @@ public final class GetTransactionBytes extends AbstractAPIRequestHandler {
         } else {
             response.put("confirmations", blockchain.getHeight() - transaction.getHeight());
         }
-        response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
+        response.put("transactionBytes", Convert.toHexString(transaction.getCopyTxBytes()));
         response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
         JSONData.putPrunableAttachment(response, transaction);
         return response;

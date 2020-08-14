@@ -7,8 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.service.state.exchange;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
 
 import java.util.List;
 import java.util.stream.Stream;

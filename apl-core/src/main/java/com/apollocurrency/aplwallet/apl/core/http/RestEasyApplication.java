@@ -4,6 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.api.v2.AccountApi;
+import com.apollocurrency.aplwallet.api.v2.InfoApi;
+import com.apollocurrency.aplwallet.api.v2.OperationApi;
+import com.apollocurrency.aplwallet.api.v2.StateApi;
+import com.apollocurrency.aplwallet.api.v2.TransactionApi;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.AccountControlController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.AccountController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.BlockController;
@@ -66,8 +71,14 @@ public class RestEasyApplication extends Application {
         set.add(BlockController.class);
         set.add(AccountControlController.class);
 
+        //API V2
+        set.add(AccountApi.class);
+        set.add(InfoApi.class);
+        set.add(OperationApi.class);
+        set.add(StateApi.class);
+        set.add(TransactionApi.class);
+        //API V2 Services
 
-        //TODO: add all endpoints below
         //swagger openapi endpoint
         set.add(OpenApiResource.class);
         return set;

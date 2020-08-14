@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
@@ -17,7 +18,11 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
+import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -45,16 +50,21 @@ class CreateTransactionTest {
     private Blockchain blockchain = Mockito.mock(Blockchain.class);
     private TimeService timeService = Mockito.mock(TimeService.class);
     private DatabaseManager databaseManager = Mockito.mock(DatabaseManager.class);
+    TransactionTestData td = new TransactionTestData();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
         PropertiesHolder.class, DaoConfig.class, JdbiHandleFactory.class,
         TransactionDaoImpl.class, TransactionProcessor.class,
+        TransactionRowMapper.class,
+        TransactionBuilder.class,
         TransactionalDataSource.class)
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(databaseManager, DatabaseManager.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .build();
     private Block block = Mockito.mock(Block.class);
     private int lastBlockHeight = 1000;

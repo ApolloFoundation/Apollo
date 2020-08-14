@@ -19,7 +19,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.apollocurrency.aplwallet.apl.core.app.Generator;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.GenerateBlocksThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -303,7 +302,8 @@ public class GeneratorServiceImpl implements GeneratorService {
     }
 
     @Override
-    public boolean forge(Block lastBlock, int generationLimit, GeneratorMemoryEntity generator) throws BlockchainProcessor.BlockNotAcceptedException {
+    public boolean forge(Block lastBlock, int generationLimit, GeneratorMemoryEntity generator)
+        throws BlockchainProcessor.BlockNotAcceptedException {
         int timestamp = generator.getTimestamp(generationLimit);
         int[] timeoutAndVersion = getBlockTimeoutAndVersion(timestamp, generationLimit, lastBlock);
         if (timeoutAndVersion == null) {

@@ -8,6 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import lombok.extern.slf4j.Slf4j;
+import org.h2.api.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,9 +23,10 @@ import java.util.List;
 /**
  * WARNING!!! Trigger instances will be created while construction of DatabaseManager, so that -> do NOT inject DatabaseManager directly into field
  */
+@Slf4j
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-public class FullTextTrigger  {
-  /*  private static final Logger LOG = LoggerFactory.getLogger(FullTextTrigger.class);
+public class FullTextTrigger implements Trigger, TransactionCallback {
+/*
     *//**
      * Pending table updates
      * We collect index row updates and then commit or rollback it when db transaction was finished or rollbacked
@@ -96,7 +99,7 @@ public class FullTextTrigger  {
                 lookupFullTextSearchEngine().commitRow(oldRow, newRow, tableData);
                 ftl.commitIndex();
             } catch (SQLException exc) {
-                LOG.error("Unable to update the Lucene index", exc);
+                log.error("Unable to update the Lucene index", exc);
             }
             return;
         }
@@ -158,7 +161,7 @@ public class FullTextTrigger  {
                 lookupFullTextSearchEngine().commitIndex();
             }
         } catch (SQLException exc) {
-            LOG.error("Unable to update the Lucene index", exc);
+            log.error("Unable to update the Lucene index", exc);
         }
     }
 
@@ -171,5 +174,7 @@ public class FullTextTrigger  {
         synchronized (tableUpdates) {
             tableUpdates.removeIf(update -> update.getThread() == thread);
         }
-    }*/
+    }
+
+*/
 }

@@ -58,7 +58,7 @@ public class FundingMonitorInstance {
     private final String accountName;
 
     /**
-     * Fund account secret phrase
+     * Fund account key seed, !!! it's not a secret phrase
      */
     private final byte[] keySeed;
 

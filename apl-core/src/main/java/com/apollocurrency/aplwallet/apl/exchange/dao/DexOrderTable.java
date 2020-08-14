@@ -9,6 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
@@ -38,8 +40,9 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
     private DexOrderMapper dexOrderMapper = new DexOrderMapper();
 
     @Inject
-    public DexOrderTable() {
-        super(TABLE_NAME, keyFactory, true, null, false);
+    public DexOrderTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                         DatabaseManager databaseManager) {
+        super(TABLE_NAME, keyFactory, true, null, derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override

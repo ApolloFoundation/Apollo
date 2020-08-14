@@ -18,7 +18,7 @@ import java.util.List;
 
 
 /**
- * Temporal class to load certs from filesystem for {@link com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Transaction} transaction
+ * Temporal class to load certs from filesystem for {@link com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateV2TransactionType} transaction
  * Should be removed, when p2p message exchange protocol will be implemented
  * Moved from UpdaterV2 impl
  */

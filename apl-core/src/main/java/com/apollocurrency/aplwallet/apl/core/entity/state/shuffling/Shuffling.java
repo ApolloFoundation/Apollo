@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -32,7 +32,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public final class Shuffling extends DerivedEntity {
+public final class Shuffling extends VersionedDeletableEntity {
 
     private final long id;
     private final long holdingId;

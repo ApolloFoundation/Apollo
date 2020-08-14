@@ -103,6 +103,8 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         AccountDTO dto = new AccountDTO();
         dto.setAccount(Long.toUnsignedString(account.getId()));
         dto.setAccountRS(Convert2.rsAccount(account.getId()));
+        dto.setParent(Convert2.rsAccount(account.getParentId()));
+        dto.setAddressScope(account.getAddrScope().name());
         dto.set2FA(twoFactorAuthService.isEnabled(account.getId()));
         PublicKey pk = account.getPublicKey();
         if (pk != null) {

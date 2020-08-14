@@ -4,12 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
-import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
-import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataDao;
+import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.TradeTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountControlPhasingTable;
@@ -56,14 +55,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingPartic
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyBuyOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyExchangeOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyFounder;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyTransfer;
-import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
-import com.apollocurrency.aplwallet.apl.core.monetary.ExchangeRequest;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
@@ -113,7 +104,7 @@ public class TableRegistryInitializer {
     @Inject
     private PhasingApprovedResultTable phasingApprovedResultTable;
     @Inject
-    private TaggedDataDao taggedDataDao;
+    private TaggedDataTable taggedDataTable;
     @Inject
     private DGSPurchaseTable dgsPurchaseTable;
     @Inject
@@ -192,15 +183,5 @@ public class TableRegistryInitializer {
     @PostConstruct
     public void init() {
         transactionProcessor.init();
-
-        Currency.init();
-        CurrencyFounder.init();
-        CurrencyBuyOffer.init();
-        CurrencySellOffer.init();
-        CurrencyMint.init();
-        CurrencyTransfer.init();
-        Exchange.init();
-        ExchangeRequest.init();
-        CurrencyExchangeOffer.init();
     }
 }

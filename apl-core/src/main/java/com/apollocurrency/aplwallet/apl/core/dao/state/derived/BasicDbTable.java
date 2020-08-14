@@ -7,7 +7,11 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
-import org.slf4j.Logger;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,19 +22,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 /**
  * Provide rollback and trim multiversion implementations and hold common parameters such as multiversion and keyfactory
  */
-public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
-    private static final Logger LOG = getLogger(BasicDbTable.class);
+@Slf4j
+public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTable<T> {
 
     protected KeyFactory<T> keyFactory;
     protected boolean multiversion;
 
-    protected BasicDbTable(String table, KeyFactory<T> keyFactory, boolean multiversion, boolean init) {
-        super(table, init);
+    protected BasicDbTable(String table, KeyFactory<T> keyFactory, boolean multiversion,
+                           DerivedTablesRegistry derivedDbTablesRegistry,
+                           DatabaseManager databaseManager,
+                           FullTextConfig fullTextConfig) {
+        super(table, derivedDbTablesRegistry, databaseManager, fullTextConfig);
         this.keyFactory = keyFactory;
         this.multiversion = multiversion;
     }
@@ -53,7 +58,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
     }
 
     private int doMultiversionRollback(int height) {
-        LOG.trace("doMultiversionRollback(), height={}", height);
+        log.trace("doMultiversionRollback(), height={}", height);
         int deletedRecordsCount;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -63,7 +68,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
         String sql = "UPDATE " + table
             + " SET latest = TRUE " + (getDeletedSetStatementIfSupported(false)) + keyFactory.getPKClause() + " AND height ="
             + " (SELECT MAX(height) FROM " + table + keyFactory.getPKClause() + ")";
-        LOG.trace(sql);
+        log.trace(sql);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtSelectToDelete = con.prepareStatement("SELECT DISTINCT " + keyFactory.getPKColumns()
                  + " FROM " + table + " WHERE height > ?");
@@ -79,14 +84,14 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
             }
 
             if (dbKeys.size() > 0) {
-                LOG.trace("Rollback table {} found {} records to update to latest", table, dbKeys.size());
+                log.trace("Rollback table {} found {} records to update to latest", table, dbKeys.size());
             }
 
             pstmtDelete.setInt(1, height);
             deletedRecordsCount = pstmtDelete.executeUpdate();
 
             if (deletedRecordsCount > 0) {
-                LOG.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
+                log.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
             }
             if (supportDelete()) { // do not 'setLatest' for deleted entities ( if last entity below given height was deleted 'deleted=true')
                 try (PreparedStatement pstmtSelectDeletedCount = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height <= ? AND deleted = true GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT HEIGHT) % 2 = 0");
@@ -115,10 +120,10 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                 pstmtSetLatest.executeUpdate();
             }
         } catch (SQLException e) {
-            LOG.error("Error", e);
+            log.error("Error", e);
             throw new RuntimeException(e.toString(), e);
         }
-        LOG.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
+        log.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
         return deletedRecordsCount;
     }
 
@@ -175,7 +180,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
      *               </p>
      */
     private void doMultiversionTrim(final int height) {
-        LOG.trace("doMultiversionTrim(), height={}", height);
+        log.trace("doMultiversionTrim(), height={}", height);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -192,7 +197,7 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                      con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?");
                  PreparedStatement selectDbIdStatement =
                      con.prepareStatement("SELECT db_id, height " + getDeletedColumnIfSupported() + " FROM " + table + " " + keyFactory.getPKClause())) {
-                LOG.trace("Select {} time: {}", table, System.currentTimeMillis() - startSelectTime);
+                log.trace("Select {} time: {}", table, System.currentTimeMillis() - startSelectTime);
                 startDeleteTime = System.currentTimeMillis();
 
                 while (rs.next()) {
@@ -208,12 +213,12 @@ public abstract class BasicDbTable<T> extends DerivedDbTable<T> {
                     }
                 }
                 dataSource.commit(false);
-                LOG.trace("Delete time {} for table '{}': deleteStm=[{}], deleted=[{}]", System.currentTimeMillis() - startDeleteTime, table,
+                log.trace("Delete time {} for table '{}': deleteStm=[{}], deleted=[{}]", System.currentTimeMillis() - startDeleteTime, table,
                     deleteStm, deleted);
             }
             long trimTime = System.currentTimeMillis() - startTime;
             if (trimTime > 1000) {
-                LOG.debug("Trim for table {} took {} ms", table, trimTime);
+                log.debug("Trim for table {} took {} ms", table, trimTime);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

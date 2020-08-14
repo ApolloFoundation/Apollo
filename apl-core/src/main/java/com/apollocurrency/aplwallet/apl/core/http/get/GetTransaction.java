@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONStreamAware;
 
@@ -71,12 +71,12 @@ public final class GetTransaction extends AbstractAPIRequestHandler {
         }
         if (transaction == null) {
             transaction = lookupTransactionProcessor().getUnconfirmedTransaction(transactionId);
-            if (transaction == null || transaction.getType() == Payment.PRIVATE) {
+            if (transaction == null || transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
                 return UNKNOWN_TRANSACTION;
             }
             return JSONData.unconfirmedTransaction(transaction);
         } else {
-            if (transaction.getType() == Payment.PRIVATE) {
+            if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
                 return UNKNOWN_TRANSACTION;
             }
             return JSONData.transaction(transaction, includePhasingResult, false);

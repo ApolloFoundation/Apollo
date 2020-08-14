@@ -63,7 +63,7 @@ public final class ParseTransaction extends AbstractAPIRequestHandler {
             response.put("validate", false);
             JSONData.putException(response, e, "Invalid transaction");
         }
-        response.put("verify", transaction.verifySignature());
+        response.put("verify", validator.verifySignature(transaction));
         return response;
     }
 

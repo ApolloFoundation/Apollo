@@ -35,7 +35,7 @@ public class Messages {
     }
 
     public static String format(final String format) {
-        return String.format(getLocale(), format);
+        return format;
     }
 
 }

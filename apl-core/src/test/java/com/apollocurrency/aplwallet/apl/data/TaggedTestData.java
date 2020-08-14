@@ -2,9 +2,9 @@ package com.apollocurrency.aplwallet.apl.data;
 
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataExtendAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataTimestamp;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 
 public class TaggedTestData {

@@ -23,10 +23,11 @@ package com.apollocurrency.aplwallet.apl.core.utils;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Objects;
 
-
+@Slf4j
 public final class Convert2 {
 
     private static final String BLOCKCHAIN_IS_NULL_MSG = "Blockchain config is null";
@@ -64,7 +65,12 @@ public final class Convert2 {
 
     //avoid static initialization chain when call Constants.ACCOUNT_PREFIX in rsAccount method
     public static String defaultRsAccount(long accountId) {
-        return "APL-" + Crypto.rsEncode(accountId);
+        if (blockchainConfig == null) {
+            String error = "blockchainConfig should be initialized explicitly first, see Convert2.init(...)";
+            log.error(error);
+            throw new RuntimeException(error);
+        }
+        return blockchainConfig.getAccountPrefix() + "-" + Crypto.rsEncode(accountId);
     }
 
 

@@ -49,15 +49,17 @@ public class UpdaterDbRepository implements UpdaterRepository {
     @Override
     public UpdateTransaction getLast() {
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT * FROM update_status LEFT JOIN transaction on update_status.transaction_id = transaction.id")) {
+
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM update_status")) {
             ResultSet rs = statement.executeQuery();
             if (rs.next()) {
-                Transaction tr = updaterMediator.loadTransaction(connection, rs);
+                long txId = rs.getLong("transaction_id");
+                Transaction tr = updaterMediator.getTransaction(txId);
                 boolean updated = rs.getBoolean("updated");
                 checkInconsistency(rs);
                 return new UpdateTransaction(tr, tr.getId(), updated);
             }
-        } catch (SQLException | AplException.NotValidException e) {
+        } catch (SQLException  e) {
             LOG.debug("Unable to load update transaction", e);
             throw new RuntimeException(e.toString(), e);
         }

@@ -895,11 +895,19 @@ public class AplDbVersion extends DbVersion {
             case 348:
                 apply("ALTER TABLE alias_offer ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT FALSE");
             case 349:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS dex_offer_id_height_idx ON dex_offer (id, height)");
+                apply("ALTER TABLE account ADD COLUMN IF NOT EXISTS parent BIGINT NULL DEFAULT NULL");
             case 350:
-                apply("CREATE UNIQUE INDEX IF NOT EXISTS dex_contract_id_height_idx ON dex_contract (id, height)");
+                apply("ALTER TABLE account ADD COLUMN IF NOT EXISTS is_multi_sig BOOLEAN NOT NULL DEFAULT FALSE");
             case 351:
-                return 351;
+                apply("ALTER TABLE account ADD COLUMN IF NOT EXISTS addr_scope TINYINT NOT NULL DEFAULT 0");
+            case 352:
+                apply("ALTER TABLE transaction ALTER COLUMN signature VARBINARY NULL DEFAULT NULL");
+            case 353:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS dex_offer_id_height_idx ON dex_offer (id, height)");
+            case 354:
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS dex_contract_id_height_idx ON dex_contract (id, height)");
+            case 355:
+                return 355;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                     + ", probably trying to run older code on newer database");

@@ -8,6 +8,10 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -16,22 +20,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public abstract class VersionedDeletableEntityDbTable<T> extends EntityDbTable<T> {
-    protected VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory) {
-        super(table, dbKeyFactory, true, null);
-    }
+public abstract class VersionedDeletableEntityDbTable<T extends VersionedDerivedEntity> extends EntityDbTable<T> {
 
-    protected VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns) {
-        super(table, dbKeyFactory, true, fullTextSearchColumns);
-    }
-
-    public VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns, boolean init) {
-        super(table, dbKeyFactory, true, fullTextSearchColumns, init);
-    }
-
-    public VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean init) {
-        super(table, dbKeyFactory, true, null, init);
-
+    public VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns,
+                                           DerivedTablesRegistry derivedDbTablesRegistry,
+                                           DatabaseManager databaseManager,
+                                           FullTextConfig fullTextConfig) {
+        super(table, dbKeyFactory, true, fullTextSearchColumns, derivedDbTablesRegistry, databaseManager, fullTextConfig);
     }
 
     @Override

@@ -22,7 +22,7 @@ public class DbTestData {
         .dbParams("")
         .loginTimeout(10)
         .maxMemoryRows(100000)
-        .defaultLockTimeout(10 * 1000)
+        .defaultLockTimeout(10)
         .build();
 
     public static DbProperties getInMemDbProps() {

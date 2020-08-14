@@ -40,7 +40,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-public class AbstractEndpointTest {
+public abstract class AbstractEndpointTest {
     public static final int CURRENT_HEIGHT = 650000;
     public static final int CODE_2FA = 123456;
     public static final String PASSPHRASE = "123456";
