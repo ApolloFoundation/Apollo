@@ -28,6 +28,7 @@ public abstract class UpdateAttachment extends AbstractAttachment {
     final OS os;
     final Arch architecture;
     final DoubleByteArrayTuple url;
+    //todo APL-1670
     final Version version;
     final byte[] hash;
 

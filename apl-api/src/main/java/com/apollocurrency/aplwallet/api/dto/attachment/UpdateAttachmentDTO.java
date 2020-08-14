@@ -23,7 +23,7 @@ public class UpdateAttachmentDTO extends AppendixDTO {
     public String architecture;
     public DoubleByteArrayTupleDTO url;
     //todo APL-1670
-    public String version;
+    public String updateVersion;
     public String hash;
 
 }
