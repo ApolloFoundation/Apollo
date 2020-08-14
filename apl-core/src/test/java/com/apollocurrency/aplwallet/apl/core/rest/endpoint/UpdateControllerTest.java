@@ -117,11 +117,12 @@ class UpdateControllerTest extends AbstractEndpointTest {
             return "";
         }).when(req).getParameter(anyString());
 
-        MockHttpResponse response = sendPostRequest("/updates", "secretPhrase=" + SECRET + "&manifestUrl=https://test.com&level=CRITICAL&platformSpec=WINDOWS-X86_32,NoOS-ARM" +
-            "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
+        MockHttpResponse response = sendPostRequest("/updates", "secretPhrase=" + SECRET + "&manifestUrl=https://test11.com&level=CRITICAL&platformSpec=WINDOWS-X86_32,NoOS-ARM" +
+            "&version=1.23.4&cn=https://cn345.com&serialNumber=1&signature=111100ff");
         String json = response.getContentAsString();
+//        System.out.println("json = \n" + json);
 
-        JSONAssert.assertEquals("{\"timestamp\": 0, \"attachment\" : {\"level\": 0, \"manifestUrl\":\"https://test.com\", \"platforms\": [{\"platform\": 1, \"architecture\": 0},{\"platform\": -1, \"architecture\": 3}]}, \"type\" : 8, \"subtype\": 3}", json, JSONCompareMode.LENIENT);
+        JSONAssert.assertEquals("{\"timestamp\": 0, \"attachment\" : {\"level\": 0, \"manifestUrl\":\"https://test11.com\", \"platforms\": [{\"platform\": 1, \"architecture\": 0},{\"platform\": -1, \"architecture\": 3}]}, \"type\" : 8, \"subtype\": 3}", json, JSONCompareMode.LENIENT);
         verify(processor).broadcast(any(Transaction.class));
     }
 
@@ -146,11 +147,12 @@ class UpdateControllerTest extends AbstractEndpointTest {
             return "";
         }).when(req).getParameter(anyString());
 
-        MockHttpResponse response = sendPostRequest("/updates", "passphrase=" + SECRET + "&account=" + ACCOUNT_ID_WITH_SECRET + "&manifestUrl=https://test.com&level=CRITICAL&platformSpec=WINDOWS-X86_64,NoOS-ARM64" +
-            "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
+        MockHttpResponse response = sendPostRequest("/updates", "passphrase=" + SECRET + "&account=" + ACCOUNT_ID_WITH_SECRET + "&manifestUrl=https://test11.com&level=CRITICAL&platformSpec=WINDOWS-X86_64,NoOS-ARM64" +
+            "&version=1.23.4&cn=https://cn345.com&serialNumber=1&signature=111100ff");
         String json = response.getContentAsString();
+//        System.out.println("json = \n" + json);
 
-        JSONAssert.assertEquals("{\"timestamp\": 0, \"attachment\" : {\"level\": 0, \"manifestUrl\":\"https://test.com\", \"platforms\": [{\"platform\": 1, \"architecture\": 1},{\"platform\": -1, \"architecture\": 2}]}, \"type\" : 8, \"subtype\": 3}", json, JSONCompareMode.LENIENT);
+        JSONAssert.assertEquals("{\"requestProcessingTime\":0,\"type\":8,\"subtype\":3,\"phased\":false,\"timestamp\":0,\"deadline\":1440,\"senderPublicKey\":\"176457a70121bc34fa14d03d1e7b012b122db01b5c5cd7f7eb1ffd83298dad2c\",\"amountATM\":\"0\",\"feeATM\":\"100000000\",\"attachment\":{\"serialNumber\":\"1\",\"level\":0,\"signature\":\"111100ff\",\"version.UpdateV2\":1,\"manifestUrl\":\"https://test11.com\",\"cn\":\"https://cn345.com\",\"version\":\"1.23.4\",\"platforms\":[{\"platform\":-1,\"architecture\":2},{\"platform\":1,\"architecture\":1}]},\"sender\":\"1080826614482663334\",\"senderRS\":\"APL-FXX8-4KC2-YPXB-2YYZX\",\"height\":2147483647,\"version\":1,\"ecBlockId\":\"121\",\"ecBlockHeight\":100000}", json, JSONCompareMode.LENIENT);
         verify(processor).broadcast(any(Transaction.class));
     }
 
@@ -159,9 +161,10 @@ class UpdateControllerTest extends AbstractEndpointTest {
         Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * Constants.ONE_APL, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
 
-        MockHttpResponse response = sendPostRequest("/updates", "manifestUrl=https://test.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,NoOS-ARM" +
-            "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
+        MockHttpResponse response = sendPostRequest("/updates", "manifestUrl=https://test11.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,NoOS-ARM" +
+            "&version=1.23.4&cn=https://cn345.com&serialNumber=1&signature=111100ff");
         String json = response.getContentAsString();
+//        System.out.println("json = \n" + json);
 
         JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified.\"}", json, JSONCompareMode.LENIENT);
         verify(processor, never()).broadcast(any(Transaction.class));

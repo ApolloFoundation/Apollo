@@ -91,7 +91,7 @@ public class GenerateBlocksThread implements Runnable {
                                     log.debug("Pop off: {} will pop off last block {}", generator.toString(), lastBlock.getStringId());
                                     List<Block> poppedOffBlock = lookupBlockchainProcessor().popOffToCommonBlock(previousBlock);
                                     for (Block block : poppedOffBlock) {
-                                        transactionProcessor.processLater(block.getOrLoadTransactions());
+                                        transactionProcessor.processLater(blockchain.getOrLoadTransactions(block));
                                     }
                                     lastBlock = previousBlock;
                                     lastBlockId = previousBlock.getId();

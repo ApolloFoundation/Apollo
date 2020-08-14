@@ -21,6 +21,7 @@ package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -50,6 +51,8 @@ public abstract class PeerRequestHandler {
     private TransactionProcessor transactionProcessor;
     @Inject
     private PeersService peers;
+    @Inject
+    private BlockSerializer blockSerializer;
 
     public PeerRequestHandler() {
         mapper.registerModule(new JsonOrgModule());
@@ -84,6 +87,13 @@ public abstract class PeerRequestHandler {
             transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
         }
         return transactionProcessor;
+    }
+
+    protected BlockSerializer lookupBlockSerializer() {
+        if (blockSerializer == null) {
+            blockSerializer = CDI.current().select(BlockSerializer.class).get();
+        }
+        return blockSerializer;
     }
 
 }

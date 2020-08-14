@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHan
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
-import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataDao;
+import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactoryProducer;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
@@ -66,9 +66,9 @@ class FullTextSearchServiceTest {
         BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
         TaggedDataServiceImpl.class,
         GlobalSyncImpl.class,
-        TaggedDataDao.class,
         TransactionRowMapper.class,
         TransactionBuilder.class,
+        TaggedDataTable.class,
         DataTagDao.class,
         KeyFactoryProducer.class,
         TaggedDataTimestampDao.class,

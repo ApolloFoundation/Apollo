@@ -4,14 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
-import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -56,8 +58,13 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
 
     @Inject
     public UnconfirmedTransactionTable(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory,
-                                       PropertiesHolder propertiesHolder, TransactionBuilder transactionBuilder, TransactionSerializer transactionSerializer) {
-        super("unconfirmed_transaction", transactionKeyFactory, false);
+                                       PropertiesHolder propertiesHolder,
+                                       TransactionBuilder transactionBuilder,
+                                       TransactionSerializer transactionSerializer,
+                                       DerivedTablesRegistry derivedDbTablesRegistry,
+                                       DatabaseManager databaseManager) {
+        super("unconfirmed_transaction", transactionKeyFactory, false, null,
+            derivedDbTablesRegistry, databaseManager, null);
         this.transactionKeyFactory = transactionKeyFactory;
         this.transactionBuilder = transactionBuilder;
         this.transactionSerializer = transactionSerializer;

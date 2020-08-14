@@ -24,6 +24,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletabl
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -48,8 +50,10 @@ public class AliasTable extends VersionedDeletableEntityDbTable<Alias> {
     };
 
     @Inject
-    public AliasTable() {
-        super("alias", aliasDbKeyFactory, false);
+    public AliasTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                      DatabaseManager databaseManager) {
+        super("alias", aliasDbKeyFactory, null,
+            derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override

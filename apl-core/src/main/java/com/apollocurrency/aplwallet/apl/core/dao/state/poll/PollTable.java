@@ -32,6 +32,9 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -63,8 +66,11 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
     };
 
     @Inject
-    public PollTable() {
-        super("poll", POLL_LONG_KEY_FACTORY, "name,description");
+    public PollTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                     DatabaseManager databaseManager,
+                     FullTextConfig fullTextConfig) {
+        super("poll", POLL_LONG_KEY_FACTORY, false, "name,description",
+            derivedDbTablesRegistry, databaseManager, fullTextConfig);
     }
 
     @Override

@@ -507,6 +507,11 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     @Override
+    public int getWaitingTransactionsCacheSize(){
+        return unconfirmedTransactionTable.getWaitingTransactionsCacheSize();
+    }
+
+    @Override
     public boolean isWaitingTransactionsCacheFull() {
         return unconfirmedTransactionTable.isWaitingTransactionsCacheFull();
     }

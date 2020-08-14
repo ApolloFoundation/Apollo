@@ -53,7 +53,7 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         dto.setGeneratorPublicKey(Convert.toHexString(model.getGeneratorPublicKey()));
         dto.setTimestamp(model.getTimestamp());
         dto.setTimeout(model.getTimeout());
-        dto.setNumberOfTransactions(model.getOrLoadTransactions().size());
+        dto.setNumberOfTransactions(blockchain.getBlockTransactionCount(model.getId()));
         dto.setTotalFeeATM(String.valueOf(model.getTotalFeeATM()));
         dto.setPayloadLength(model.getPayloadLength());
         dto.setVersion(model.getVersion());
@@ -71,7 +71,7 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         dto.setBlockSignature(Convert.toHexString(model.getBlockSignature()));
         dto.setTransactions(Collections.emptyList());
         dto.setTotalAmountATM(String.valueOf(
-            model.getOrLoadTransactions().stream().mapToLong(Transaction::getAmountATM).sum()));
+            blockchain.getOrLoadTransactions(model).stream().mapToLong(Transaction::getAmountATM).sum()));
         if (this.isAddTransactions) {
             this.addTransactions(dto, model);
         }

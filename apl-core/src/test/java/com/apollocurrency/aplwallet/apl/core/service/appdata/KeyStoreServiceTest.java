@@ -66,15 +66,17 @@ public class KeyStoreServiceTest {
     private static final String SECRET_BYTES_1 = "44a2868161a651682bdf938b16c485f359443a2c53bd3e752046edef20d11567";
     private static final String SECRET_BYTES_2 = "146c55cbdc5f33390d207d6d08030c3dd4012c3f775ed700937a893786393dbf";
     private NtpTime time = mock(NtpTime.class);
+    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
         .addBeans(MockBean.of(time, NtpTime.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .build();
     private byte[] secretBytes = generateSecretBytes();
     private byte[] nonce = new byte[16];
     private Path tempDirectory;
     private VaultKeyStoreServiceImpl keyStore;
-    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
 
     private byte[] generateSecretBytes() {
         byte secretBytes[] = new byte[32];
@@ -138,8 +140,6 @@ public class KeyStoreServiceTest {
     @Test
     @Execution(ExecutionMode.SAME_THREAD)
     public void testGetKey() throws Exception {
-
-
         VaultKeyStoreServiceImpl keyStoreSpy = spy(keyStore);
 
         long accountId = Convert.parseAccountId(ACCOUNT1);

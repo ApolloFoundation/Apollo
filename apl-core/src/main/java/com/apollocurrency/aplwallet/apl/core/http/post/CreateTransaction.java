@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
@@ -217,6 +218,9 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
             if (txRequest.getEcBlockId() != 0) {
                 builder.ecBlockId(txRequest.getEcBlockId());
                 builder.ecBlockHeight(txRequest.getEcBlockHeight());
+            } else {
+                EcBlockData ecBlock = blockchain.getECBlock(timestamp);
+                builder.ecBlockData(ecBlock);
             }
             transaction = builder.build();
 
