@@ -19,7 +19,6 @@ import java.util.Objects;
 @Slf4j
 class SigData implements Signature {
     private final byte[] signature;
-    private final SignatureParser parser = new SigData.Parser();
     private boolean verified = false;
 
     public SigData(byte[] signature) {
@@ -52,17 +51,28 @@ class SigData implements Signature {
 
     @Override
     public JSONObject getJsonObject() {
-        return parser.getJsonObject(this);
+        return SignatureParser.getJsonObject(this);
     }
 
     static class Parser implements SignatureParser {
         private static final int PARSER_VERSION = 1;
 
         /**
-         * Parse the byte array and build the multisig object
+         * Parse the byte array and build the sig object
+         *
+         * @param bytes input data array
+         * @return the sig object
+         */
+        @Override
+        public Signature parse(byte[] bytes) {
+            return parse(ByteBuffer.wrap(bytes));
+        }
+
+        /**
+         * Parse the byte array and build the sig object
          *
          * @param buffer input data array
-         * @return the multisig object
+         * @return the sig object
          */
         @Override
         public Signature parse(ByteBuffer buffer) {
@@ -93,17 +103,5 @@ class SigData implements Signature {
             return buffer.array();
         }
 
-        @Override
-        public JSONObject getJsonObject(Signature signature) {
-            JSONObject json = new JSONObject();
-            json.put(SIGNATURE_FIELD_NAME, Convert.toHexString(signature.bytes()));
-            return json;
-        }
-
-        @Override
-        public Signature parse(JSONObject json) {
-            byte[] signature = Convert.parseHexString((String) json.get(SIGNATURE_FIELD_NAME));
-            return new SigData(signature);
-        }
     }
 }

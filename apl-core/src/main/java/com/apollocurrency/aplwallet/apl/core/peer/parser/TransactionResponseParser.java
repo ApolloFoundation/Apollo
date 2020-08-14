@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.peer.parser;
 import com.apollocurrency.aplwallet.apl.core.peer.respons.Transaction;
 import org.json.simple.JSONObject;
 
-public class TransactionResponseParser implements PeerResponseParser<Transaction> {
+public class TransactionResponseParser implements ReqRespParser<Transaction> {
 
 
     @Override

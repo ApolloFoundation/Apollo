@@ -5,16 +5,16 @@
 package com.apollocurrency.aplwallet.apl.core.signature;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
-import static com.apollocurrency.aplwallet.apl.core.signature.MultiSigData.Parser.SIGNATURES_FIELD_NAME;
+import static com.apollocurrency.aplwallet.apl.core.signature.SignatureParser.SIGNATURE_FIELD_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -72,30 +72,24 @@ class MultiSigDataTest extends AbstractSigData {
     @Test
     void getJsonObject() {
         //GIVEN
-        Set<MultiSig.KeyId> keyIdSet = Set.of(
-            MultiSigData.createKey(PUBLIC_KEY1),
-            MultiSigData.createKey(PUBLIC_KEY2)
-        );
+
         //WHEN
         JSONObject jsonObject = multiSigData.getJsonObject();
 
         //THEN
-        assertArrayEquals(ZERO4BYTES, Convert.parseHexString((String) jsonObject.get("payload")));
-        assertEquals(2, Integer.parseInt((String) jsonObject.get("participantCount")));
-        assertTrue(jsonObject.get(SIGNATURES_FIELD_NAME) instanceof JSONArray);
+        assertNotNull(jsonObject.get(SIGNATURE_FIELD_NAME));
+        byte[] bytes = Convert.parseHexString((String) (jsonObject.get(SIGNATURE_FIELD_NAME)));
+        MultiSigData multiSig = (MultiSigData) new MultiSigData.Parser().parse(bytes);
 
-        JSONArray signatures = (JSONArray) jsonObject.get(SIGNATURES_FIELD_NAME);
-        assertEquals(2, signatures.size());
-        assertNotNull(((JSONObject) signatures.get(0)).get("keyId"));
+        assertArrayEquals(ZERO4BYTES, multiSig.getPayload());
+        assertEquals(2, multiSig.getActualParticipantCount());
+        assertEquals(2, multiSig.getPublicKeyIdSet().size());
 
-        byte[] key1 = Convert.parseHexString((String) ((JSONObject) signatures.get(0)).get("keyId"));
-        byte[] key2 = Convert.parseHexString((String) ((JSONObject) signatures.get(1)).get("keyId"));
+        for (MultiSig.KeyId keyId : multiSigData.getPublicKeyIdSet()) {
+            assertTrue(multiSig.signaturesMap().containsKey(keyId));
+            assertTrue(Arrays.equals(multiSig.signaturesMap().get(keyId), multiSigData.signaturesMap().get(keyId)));
+        }
 
-        assertTrue(keyIdSet.contains(MultiSigData.createKey(key1)));
-        assertTrue(keyIdSet.contains(MultiSigData.createKey(key2)));
-
-        assertNotNull(((JSONObject) signatures.get(0)).get("signature"));
-        assertNotNull(((JSONObject) signatures.get(1)).get("signature"));
     }
 
     @Test
@@ -249,21 +243,6 @@ class MultiSigDataTest extends AbstractSigData {
         assertEquals(4 + 4 + 2 + 2 * (8 + 64), parser.calcDataSize(2));
 
         checkData(sigData);
-    }
-
-    @Test
-    void testJsonParser() {
-        //GIVEN
-        JSONObject jsonObject = multiSigData.getJsonObject();
-
-        MultiSigData.Parser parser = new MultiSigData.Parser();
-        //WHEN
-        Signature sigData = parser.parse(jsonObject);
-
-
-        //THEN
-        checkData(sigData);
-        assertNotNull(parser.getJsonString(multiSigData));
     }
 
     private void checkData(Signature sigData) {

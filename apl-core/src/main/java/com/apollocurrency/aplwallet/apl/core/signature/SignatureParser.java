@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.signature;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -13,6 +14,7 @@ import java.nio.ByteBuffer;
  */
 public interface SignatureParser {
     String SIGNATURE_FIELD_NAME = "signature";
+
     /**
      * Parse the byte array and build the signature object
      *
@@ -21,17 +23,11 @@ public interface SignatureParser {
      */
     Signature parse(ByteBuffer buffer);
 
+    Signature parse(byte[] bytes);
+
     int calcDataSize(int count);
 
     byte[] bytes(Signature signature);
-
-    /**
-     * Parse the JSON object and build the signature object
-     *
-     * @param json input JSONObject
-     * @return the signature object
-     */
-    Signature parse(JSONObject json);
 
     /**
      * Return the json representation of the signature object
@@ -39,10 +35,10 @@ public interface SignatureParser {
      * @param signature
      * @return
      */
-    JSONObject getJsonObject(Signature signature);
-
-    default String getJsonString(Signature signature) {
-        return getJsonObject(signature).toJSONString();
+    static JSONObject getJsonObject(Signature signature) {
+        JSONObject json = new JSONObject();
+        json.put(SIGNATURE_FIELD_NAME, Convert.toHexString(signature.bytes()));
+        return json;
     }
 
 }

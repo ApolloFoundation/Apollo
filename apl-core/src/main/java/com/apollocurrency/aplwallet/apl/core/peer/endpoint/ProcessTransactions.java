@@ -20,19 +20,32 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.api.p2p.request.ProcessTransactionsRequest;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.GetTransactionsRequestParser;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
+
+import javax.inject.Inject;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class ProcessTransactions extends PeerRequestHandler {
     private static final Logger LOG = getLogger(ProcessTransactions.class);
 
-    public ProcessTransactions() {
+    private final GetTransactionsRequestParser responseParser = new GetTransactionsRequestParser();
+    private final TransactionDTOConverter dtoConverter;
+
+    @Inject
+    public ProcessTransactions(TransactionDTOConverter dtoConverter) {
+        this.dtoConverter = dtoConverter;
     }
 
 
@@ -40,7 +53,13 @@ public final class ProcessTransactions extends PeerRequestHandler {
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
 
         try {
-            lookupTransactionProcessor().processPeerTransactions(request);
+            ProcessTransactionsRequest transactionsResponse = responseParser.parse(request);
+            List<Transaction> transactions = transactionsResponse.transactions
+                .stream()
+                .map(dtoConverter)
+                .collect(Collectors.toList());
+
+            lookupTransactionProcessor().processPeerTransactions(transactions);
             return JSON.emptyJSON;
         } catch (AplException.ValidationException | RuntimeException e) {
             //LOG.debug("Failed to parse peer transactions: " + request.toJSONString());
