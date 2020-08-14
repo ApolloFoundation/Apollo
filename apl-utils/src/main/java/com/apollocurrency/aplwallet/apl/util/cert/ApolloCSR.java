@@ -1,6 +1,8 @@
 package com.apollocurrency.aplwallet.apl.util.cert;
 
+import io.firstbridge.cryptolib.CryptoFactory;
 import io.firstbridge.cryptolib.CryptoNotValidException;
+import io.firstbridge.cryptolib.KeyGenerator;
 import io.firstbridge.cryptolib.KeyWriter;
 import io.firstbridge.cryptolib.csr.CertificateRequestData;
 import io.firstbridge.cryptolib.impl.KeyWriterImpl;
@@ -33,6 +35,7 @@ public class ApolloCSR extends CertBase {
     private BigInteger apolloID;
     private AuthorityID apolloAuthID = new AuthorityID();
     private KeyWriter kw = new KeyWriterImpl();
+    CryptoFactory factory = CryptoFactory.createDefault();
 
     public ApolloCSR() {
         apolloID = new BigInteger(128, new SecureRandom());
@@ -258,7 +261,7 @@ public class ApolloCSR extends CertBase {
                 newKeyPair();
             }
             KeyPair kp = new KeyPair(pubKey, pvtKey);
-            KeyGenerator kg = new KeyGenerator(FBCryptoParams.createDefault());
+            KeyGenerator kg = factory.getKeyGenereator();
             PKCS10CertificationRequest cr = kg.createX509CertificateRequest(kp, certData, false, challengePassword);
             pem = kw.getCertificateRequestPEM(cr);
         } catch (IOException ex) {
@@ -287,7 +290,7 @@ public class ApolloCSR extends CertBase {
                 newKeyPair();
             }
             KeyPair kp = new KeyPair(pubKey, pvtKey);
-            KeyGenerator kg = new KeyGenerator(FBCryptoParams.createDefault());
+            KeyGenerator kg = factory.getKeyGenereator();
             X509Certificate cert = kg.createSerlfSignedX509v3(kp, certData);
             pem = kw.getX509CertificatePEM(cert);
         } catch (CryptoNotValidException | IOException ex) {
@@ -311,7 +314,7 @@ public class ApolloCSR extends CertBase {
     }
 
     private void newKeyPair() {
-        KeyGenerator kg = new KeyGenerator(FBCryptoParams.createDefault());
+        KeyGenerator kg = factory.getKeyGenereator();
         KeyPair kp = kg.generateKeys();
         pubKey = kp.getPublic();
         pvtKey = kp.getPrivate();

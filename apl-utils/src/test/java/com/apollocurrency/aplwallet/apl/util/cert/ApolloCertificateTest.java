@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.util.cert;
 
-import io.firstbridge.cryptolib.FBCryptoParams;
+import io.firstbridge.cryptolib.CryptoParams;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -16,10 +16,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * @author alukin@gmail.com
  */
-
 public class ApolloCertificateTest {
 
-    private static final FBCryptoParams params = FBCryptoParams.createDefault();
+    private static final CryptoParams params = CryptoParams.createDefault();
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(ApolloCertificateTest.class);
     static ApolloCertificate acert;
 
