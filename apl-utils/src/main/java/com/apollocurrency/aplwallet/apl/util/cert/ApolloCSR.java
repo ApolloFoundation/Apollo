@@ -1,10 +1,8 @@
 package com.apollocurrency.aplwallet.apl.util.cert;
 
 import io.firstbridge.cryptolib.CryptoNotValidException;
-import io.firstbridge.cryptolib.FBCryptoParams;
 import io.firstbridge.cryptolib.KeyWriter;
 import io.firstbridge.cryptolib.csr.CertificateRequestData;
-import io.firstbridge.cryptolib.csr.KeyGenerator;
 import io.firstbridge.cryptolib.impl.KeyWriterImpl;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.openssl.PEMParser;
@@ -35,6 +33,7 @@ public class ApolloCSR extends CertBase {
     private BigInteger apolloID;
     private AuthorityID apolloAuthID = new AuthorityID();
     private KeyWriter kw = new KeyWriterImpl();
+
     public ApolloCSR() {
         apolloID = new BigInteger(128, new SecureRandom());
     }
@@ -55,7 +54,7 @@ public class ApolloCSR extends CertBase {
     public static ApolloCSR fromPKCS10(PKCS10CertificationRequest cr) {
         ApolloCSR res = new ApolloCSR();
         try {
-            CertAttributes va = new CertAttributes();
+            CertAttributes va  = new CertAttributes();
             va.setSubject(cr.getSubject());
             va.setAttributes(cr.getAttributes());
             res.setCN(va.getCn());
@@ -301,10 +300,10 @@ public class ApolloCSR extends CertBase {
     public String toString() {
         String res = "X.509 Certificate:\n";
         res += "CN=" + getCN() + "\n"
-            + "ApolloID=" + getApolloID().toString(16) + "\n";
+                + "ApolloID=" + getApolloID().toString(16) + "\n";
         res += "emailAddress=" + getEmial() + "\n";
         res += "Country=" + getCountry() + " State/Province=" + getState()
-            + " City=" + getCity();
+                + " City=" + getCity();
         res += "Organization=" + getOrg() + " Org. Unit=" + getOrgUnit() + "\n";
         res += "IP address=" + getIP() + "\n";
         res += "DNS names=" + getDNSNames() + "\n";
