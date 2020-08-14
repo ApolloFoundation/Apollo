@@ -56,7 +56,6 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
 
     @Override
     public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        this.transactionType = transaction.getType();
         transactionType().validateAttachment(transaction);
     }
 
