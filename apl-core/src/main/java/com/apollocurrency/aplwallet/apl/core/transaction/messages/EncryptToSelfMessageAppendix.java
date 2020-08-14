@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 
 public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppendix {
 
-    private static final String appendixName = "EncryptToSelfMessage";
+    static final String appendixName = "EncryptToSelfMessage";
 
     public EncryptToSelfMessageAppendix(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
@@ -31,7 +31,7 @@ public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppend
             return null;
         }
         if (((JSONObject) attachmentData.get("encryptToSelfMessage")).get("data") == null) {
-            return new UnencryptedEncryptToSelfMessageAppendix(attachmentData);
+            throw new RuntimeException("Unencrypted message to self is not supported");
         }
         return new EncryptToSelfMessageAppendix(attachmentData);
     }

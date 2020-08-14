@@ -5,11 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
 public class BlockchainProcessorState {
     private volatile Peer lastBlockchainFeeder;
     private volatile int lastBlockchainFeederHeight;

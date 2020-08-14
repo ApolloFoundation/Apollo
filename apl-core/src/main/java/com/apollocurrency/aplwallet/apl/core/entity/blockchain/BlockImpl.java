@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -42,6 +43,7 @@ import java.util.Objects;
 public final class BlockImpl implements Block {
 
     private static Blockchain blockchain;
+    private static TransactionSerializer transactionSerializer;
 
     private final int version;
     private final int timestamp;
@@ -219,25 +221,13 @@ public final class BlockImpl implements Block {
     }
 
     @Override
-    public List<Transaction> getOrLoadTransactions() {
-        if (this.blockTransactions == null) {
-            List<Transaction> transactions = Collections.unmodifiableList(lookupBlockchain().getBlockTransactions(getId()));
-            for (Transaction transaction : transactions) {
-                transaction.setBlock(this);
-            }
-            this.blockTransactions = transactions;
-        }
-        return this.blockTransactions;
-    }
-
-    @Override
     public List<Transaction> getTransactions() {
         return this.blockTransactions;
     }
 
     @Override
     public void setTransactions(List<Transaction> transactions) {
-        this.blockTransactions = transactions;
+        this.blockTransactions = Objects.requireNonNull(transactions, "transaction List should not be NULL");
     }
 
     @Override
@@ -245,9 +235,17 @@ public final class BlockImpl implements Block {
         return baseTarget;
     }
 
+    public void setBaseTarget(long baseTarget) {
+        this.baseTarget = baseTarget;
+    }
+
     @Override
     public BigInteger getCumulativeDifficulty() {
         return cumulativeDifficulty;
+    }
+
+    public void setCumulativeDifficulty(BigInteger cumulativeDifficulty) {
+        this.cumulativeDifficulty = cumulativeDifficulty;
     }
 
     @Override
@@ -265,6 +263,10 @@ public final class BlockImpl implements Block {
             throw new IllegalStateException("Block height not yet set");
         }
         return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
     }
 
     @Override
@@ -314,30 +316,6 @@ public final class BlockImpl implements Block {
     }
 
     @Override
-    public JSONObject getJSONObject() {
-        JSONObject json = new JSONObject();
-        json.put("version", version);
-        json.put("stringId", stringId);
-        json.put("timestamp", timestamp);
-        json.put("previousBlock", Long.toUnsignedString(previousBlockId));
-        json.put("totalAmountATM", totalAmountATM);
-        json.put("totalFeeATM", totalFeeATM);
-        json.put("payloadLength", payloadLength);
-        json.put("payloadHash", Convert.toHexString(payloadHash));
-        json.put("generatorId", Long.toUnsignedString(generatorId));
-        json.put("generatorPublicKey", Convert.toHexString(getGeneratorPublicKey()));
-        json.put("generationSignature", Convert.toHexString(generationSignature));
-        json.put("previousBlockHash", Convert.toHexString(previousBlockHash));
-        json.put("blockSignature", Convert.toHexString(blockSignature));
-        json.put("timeout", timeout);
-
-        JSONArray transactionsData = new JSONArray();
-        getOrLoadTransactions().forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
-        json.put("transactions", transactionsData);
-        return json;
-    }
-
-    @Override
     public byte[] getBytes() {
         return Arrays.copyOf(bytes(), bytes.length);
     }
@@ -352,7 +330,7 @@ public final class BlockImpl implements Block {
             buffer.putInt(version);
             buffer.putInt(timestamp);
             buffer.putLong(previousBlockId);
-            buffer.putInt(getOrLoadTransactions().size());
+            buffer.putInt(blockTransactions != null ? blockTransactions.size() : /*getOrLoadTransactions().size()*/ 0);
             buffer.putLong(totalAmountATM);
             buffer.putLong(totalFeeATM);
             buffer.putInt(payloadLength);
@@ -380,109 +358,16 @@ public final class BlockImpl implements Block {
         return hasValidSignature;
     }
 
-    @Override
-    public void setPrevious(Block block, HeightConfig config, Shard lastShard) {
-        Objects.requireNonNull(config, "HeightConfig is NULL");
-        if (block != null) {
-            if (block.getId() != getPreviousBlockId()) {
-                // shouldn't happen as previous id is already verified, but just in case
-                throw new IllegalStateException("Previous block id doesn't match");
-            }
-            this.height = block.getHeight() + 1;
-            this.calculateBaseTarget(block, config, lastShard);
-        } else {
-            this.height = 0;
-        }
+    public void assignTransactionsIndex() {
+        // important !!! assign transaction index value
         short index = 0;
-        for (Transaction transaction : getOrLoadTransactions()) {
+        for (Transaction transaction : this.blockTransactions) {
             transaction.setBlock(this);
             transaction.setIndex(index++);
-        }
-    }
-
-    public void loadTransactions() {
-        for (Transaction transaction : getOrLoadTransactions()) {
-            ((TransactionImpl) transaction).bytes();
+            transaction.bytes();
             transaction.getAppendages();
         }
     }
-
-    private void calculateBaseTarget(Block previousBlock, HeightConfig config, Shard lastShard) {
-        long prevBaseTarget = previousBlock.getBaseTarget();
-        int blockchainHeight = previousBlock.getHeight();
-        if (blockchainHeight > 2 && blockchainHeight % 2 == 0) {
-            int blocktimeAverage = getBlockTimeAverage(previousBlock, lastShard);
-            int blockTime = config.getBlockTime();
-            if (blocktimeAverage > blockTime) {
-                int maxBlocktimeLimit = config.getMaxBlockTimeLimit();
-                baseTarget = (prevBaseTarget * Math.min(blocktimeAverage, maxBlocktimeLimit)) / blockTime;
-            } else {
-                int minBlocktimeLimit = config.getMinBlockTimeLimit();
-                baseTarget = prevBaseTarget - prevBaseTarget * Constants.BASE_TARGET_GAMMA
-                    * (blockTime - Math.max(blocktimeAverage, minBlocktimeLimit)) / (100 * blockTime);
-            }
-            long maxBaseTarget = config.getMaxBaseTarget();
-            if (baseTarget < 0 || baseTarget > maxBaseTarget) {
-                baseTarget = maxBaseTarget;
-            }
-            long minBaseTarget = config.getMinBaseTarget();
-            if (baseTarget < minBaseTarget) {
-                baseTarget = config.getMinBaseTarget();
-            }
-        } else {
-            baseTarget = prevBaseTarget;
-        }
-        cumulativeDifficulty = previousBlock.getCumulativeDifficulty().add(Convert.two64.divide(BigInteger.valueOf(baseTarget)));
-    }
-
-    private int getBlockTimeAverage(Block previousBlock, Shard lastShard) {
-        int blockchainHeight = previousBlock.getHeight();
-        Block shardInitialBlock = lookupBlockchain().getShardInitialBlock();
-        int lastBlockTimestamp = getPrevTimestamp(shardInitialBlock.getHeight(), blockchainHeight - 2, lastShard);
-        if (version != Block.LEGACY_BLOCK_VERSION) {
-            int intermediateTimestamp = getPrevTimestamp(shardInitialBlock.getHeight(), blockchainHeight - 1, lastShard);
-            int intermediateTimeout = getPrevTimeout(shardInitialBlock.getHeight(), blockchainHeight - 1, lastShard);
-            int thisBlockActualTime = this.timestamp - previousBlock.getTimestamp() - this.timeout;
-            int previousBlockTime = previousBlock.getTimestamp() - previousBlock.getTimeout() - intermediateTimestamp;
-            int secondAvgBlockTime = intermediateTimestamp
-                - intermediateTimeout - lastBlockTimestamp;
-            return (thisBlockActualTime + previousBlockTime + secondAvgBlockTime) / 3;
-        } else {
-            return (this.timestamp - lastBlockTimestamp) / 3;
-        }
-    }
-
-    private int getPrevTimestamp(int shardInitialHeight, int blockHeight, Shard lastShard) {
-        int diff = shardInitialHeight - blockHeight;
-        if (diff > 2) {
-            throw new IllegalArgumentException("Unable to retrieve block timestamp for height " + blockHeight + " current shard height " + shardInitialHeight);
-        }
-        if (diff > 0) {
-            int[] blockTimestamps = lastShard.getBlockTimestamps();
-            return blockTimestamps[diff - 1];
-        }
-        return lookupBlockchain().getBlockAtHeight(blockHeight).getTimestamp();
-    }
-
-    private int getPrevTimeout(int shardInitialHeight, int blockHeight, Shard lastShard) {
-        int diff = shardInitialHeight - blockHeight;
-        if (diff > 2) {
-            throw new IllegalArgumentException("Unable to retrieve block timeout for height " + blockHeight + " current shard height " + shardInitialHeight);
-        }
-        if (diff > 0) {
-            int[] blockTimeouts = lastShard.getBlockTimeouts();
-            return blockTimeouts[diff - 1];
-        }
-        return lookupBlockchain().getBlockAtHeight(blockHeight).getTimeout();
-    }
-
-    private Blockchain lookupBlockchain() {
-        if (blockchain == null) {
-            blockchain = CDI.current().select(Blockchain.class).get();
-        }
-        return blockchain;
-    }
-
 
     @Override
     public String toString() {

@@ -3,12 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -151,8 +150,8 @@ public final class MessagingPollCreation extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return Messaging.POLL_CREATION;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.POLL_CREATION;
     }
 
     public String getPollName() {

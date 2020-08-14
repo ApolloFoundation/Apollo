@@ -31,7 +31,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -77,6 +79,8 @@ class TransactionProcessorTest {
     private GlobalSync globalSync = mock(GlobalSync.class);
     private TaskDispatchManager taskDispatchManager = mock(TaskDispatchManager.class);
     private AccountPublicKeyService accountPublicKeyService = mock(AccountPublicKeyService.class);
+    private TransactionBuilder transactionBuilder = mock(TransactionBuilder.class);
+    private PrunableLoadingService prunableLoadingService = mock(PrunableLoadingService.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
@@ -110,7 +114,7 @@ class TransactionProcessorTest {
         td = new TransactionTestData();
         service = new TransactionProcessorImpl(propertiesHolder, transactionValidator, transactionApplier,
             listEvent, unconfirmedTransactionTable, databaseManager, accountService,
-            globalSync, timeService, ntpTimeConfig.time(), blockchainConfig, taskDispatchManager, peersService, blockchain);
+            globalSync, timeService, ntpTimeConfig.time(), blockchainConfig, taskDispatchManager, peersService, blockchain, transactionBuilder, prunableLoadingService);
     }
 
     @Test
@@ -126,8 +130,9 @@ class TransactionProcessorTest {
         doReturn(100).when(transaction).getFullSize();
         doReturn(expirationTimestamp).when(transaction).getTimestamp();
         doReturn(expirationTimestamp).when(transaction).getExpiration();
-        doReturn((byte)1).when(transaction).getVersion();
-        doReturn(true).when(transaction).verifySignature();
+        doReturn((byte) 1).when(transaction).getVersion();
+        doReturn(true).when(transactionValidator).verifySignature(transaction);
+
         doReturn(false).when(transaction).isUnconfirmedDuplicate(any(Map.class));
 
         doReturn(false).when(blockchain).hasTransaction(-9128485677221760321L);
@@ -152,7 +157,7 @@ class TransactionProcessorTest {
         verify(blockchain, times(2)).hasTransaction(anyLong());
         verify(transactionValidator).validate(any(Transaction.class));
         verify(databaseManager).getDataSource();
-        verify(transaction).verifySignature();
+
         verify(transactionApplier).applyUnconfirmed(transaction);
         verify(unconfirmedTransactionTable).insert(any(UnconfirmedTransaction.class));
     }
@@ -169,8 +174,9 @@ class TransactionProcessorTest {
         doReturn(100).when(transaction).getFullSize();
         doReturn(expirationTimestamp).when(transaction).getTimestamp();
         doReturn(expirationTimestamp).when(transaction).getExpiration();
-        doReturn((byte)1).when(transaction).getVersion();
-        doReturn(true).when(transaction).verifySignature();
+        doReturn((byte) 1).when(transaction).getVersion();
+        doReturn(true).when(transactionValidator).verifySignature(transaction);
+
         doReturn(false).when(transaction).isUnconfirmedDuplicate(any(Map.class));
         UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, expirationTimestamp);
 
@@ -193,7 +199,7 @@ class TransactionProcessorTest {
         verify(globalSync).writeUnlock();
         verify(blockchain).hasTransaction(anyLong());
         verify(databaseManager).getDataSource();
-        verify(transaction).verifySignature();
+
         verify(transactionApplier).applyUnconfirmed(transaction);
         verify(unconfirmedTransactionTable).insert(any(UnconfirmedTransaction.class));
     }

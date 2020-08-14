@@ -24,8 +24,10 @@ import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,24 +36,17 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public abstract class ValuesDbTable<T extends DerivedEntity> extends BasicDbTable<T> {
-    private static final Logger log = LoggerFactory.getLogger(ValuesDbTable.class);
 
-
-    public ValuesDbTable(String table, KeyFactory<T> dbKeyFactory) {
-        this(table, dbKeyFactory, false);
-    }
-
-    public ValuesDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion) {
-        super(table, dbKeyFactory, multiversion, true);
-    }
-
-    public ValuesDbTable(String table, boolean init, KeyFactory<T> dbKeyFactory, boolean multiversion) {
-        super(table, dbKeyFactory, multiversion, init);
+    public ValuesDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion,
+                         DerivedTablesRegistry derivedDbTablesRegistry,
+                         DatabaseManager databaseManager,
+                         FullTextConfig fullTextConfig) {
+        super(table, dbKeyFactory, multiversion, derivedDbTablesRegistry, databaseManager, fullTextConfig);
     }
 
     public final List<T> get(DbKey dbKey) {
-        List<T> values;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM " + table + keyFactory.getPKClause()

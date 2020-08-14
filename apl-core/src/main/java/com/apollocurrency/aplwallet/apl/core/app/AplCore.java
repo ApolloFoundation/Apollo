@@ -43,6 +43,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry
 import com.apollocurrency.aplwallet.apl.core.service.state.TableRegistryInitializer;
 import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TxInitializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.IDexMatcherInterface;
@@ -204,7 +205,7 @@ public final class AplCore {
                 aplAppStatus.durableTaskFinished(upnpTid, false, "UPnP init done");
             }
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 1.0, "API initialization");
-
+            TxInitializer txInitializer = CDI.current().select(TxInitializer.class).get();
             //try to start API as early as possible
             apiServer = CDI.current().select(API.class).get();
             apiServer.start();

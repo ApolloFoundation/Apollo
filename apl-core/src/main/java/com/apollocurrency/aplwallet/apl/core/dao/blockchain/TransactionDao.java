@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
+import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
@@ -37,6 +37,8 @@ public interface TransactionDao {
 
     List<Transaction> findBlockTransactions(long blockId, TransactionalDataSource dataSource);
 
+    long getBlockTransactionsCount(long blockId, TransactionalDataSource dataSource);
+
     List<Transaction> findBlockTransactions(Connection con, long blockId);
 
     List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp);
@@ -63,7 +65,7 @@ public interface TransactionDao {
                                     boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
                                     int height, int prunableExpiration);
 
-    DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to);
+    List<Transaction> getTransactions(byte type, byte subtype, int from, int to);
 
     List<Transaction> getTransactions(int fromDbId, int toDbId);
 
@@ -71,6 +73,17 @@ public interface TransactionDao {
 
     int getTransactionCount(long accountId, byte type, byte subtype);
 
-    DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
+    List<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
 
+    int getTransactionsCount(List<Long> accounts, byte type, byte subtype,
+                             int startTime, int endTime,
+                             int fromHeight, int toHeight,
+                             String sortOrder,
+                             int from, int to);
+
+    List<TxReceipt> getTransactions(List<Long> accounts, byte type, byte subtype,
+                                    int startTime, int endTime,
+                                    int fromHeight, int toHeight,
+                                    String sortOrder,
+                                    int from, int to);
 }

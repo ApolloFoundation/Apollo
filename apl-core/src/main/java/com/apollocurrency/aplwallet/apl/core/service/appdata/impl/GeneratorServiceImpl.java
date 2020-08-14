@@ -302,7 +302,8 @@ public class GeneratorServiceImpl implements GeneratorService {
     }
 
     @Override
-    public boolean forge(Block lastBlock, int generationLimit, GeneratorMemoryEntity generator) throws BlockchainProcessor.BlockNotAcceptedException {
+    public boolean forge(Block lastBlock, int generationLimit, GeneratorMemoryEntity generator)
+        throws BlockchainProcessor.BlockNotAcceptedException {
         int timestamp = generator.getTimestamp(generationLimit);
         int[] timeoutAndVersion = getBlockTimeoutAndVersion(timestamp, generationLimit, lastBlock);
         if (timeoutAndVersion == null) {

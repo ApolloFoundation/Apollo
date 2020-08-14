@@ -20,8 +20,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
 
 @Slf4j
 @Singleton
@@ -134,6 +134,16 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
         }
     }
 
+    @Override
+    public boolean isBlockDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, Set<AccountControlType> senderAccountControls, AccountControlPhasing accountControlPhasing) {
+        return
+            senderAccountControls.contains(AccountControlType.PHASING_ONLY)
+                && (accountControlPhasing != null && accountControlPhasing.getMaxFees() != 0)
+                && transaction.getType().getSpec() != SET_PHASING_ONLY
+                && TransactionType.isDuplicate(SET_PHASING_ONLY,
+                Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
+    }
+
     private void checkTransactionByPhasing(Transaction transaction, AccountControlPhasing phasingOnly) throws AplException.AccountControlException {
         if (phasingOnly.getMaxFees() > 0 && Math.addExact(transaction.getFeeATM(),
             phasingPollService.getSenderPhasedTransactionFees(transaction.getSenderId())) > phasingOnly.getMaxFees()) {
@@ -141,11 +151,11 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
                 String.format("Maximum total fees limit of %f %s exceeded",
                     ((double) phasingOnly.getMaxFees()) / Constants.ONE_APL, blockchainConfig.getCoinSymbol()));
         }
-        if (transaction.getType() == Messaging.PHASING_VOTE_CASTING) {
+        if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PHASING_VOTE_CASTING) {
             return;
         }
         try {
-            phasingOnly.getPhasingParams().checkApprovable();
+            phasingPollService.checkApprovable(phasingOnly.getPhasingParams());
         } catch (AplException.NotCurrentlyValidException e) {
             //LOG.debug("Account control no longer valid: " + e.getMessage());
             return;
@@ -170,29 +180,15 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
      * @deprecated see method with longer parameters list below
      */
     @Override
-    public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isBlockDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         Account senderAccount = accountService.getAccount(transaction.getSenderId());
         Set<AccountControlType> senderAccountControls = senderAccount.getControls();
         AccountControlPhasing accountControlPhasing = this.get(transaction.getSenderId());
         return
             senderAccountControls.contains(AccountControlType.PHASING_ONLY)
                 && (accountControlPhasing != null && accountControlPhasing.getMaxFees() != 0)
-                && transaction.getType() != SET_PHASING_ONLY
+                && transaction.getType().getSpec() != SET_PHASING_ONLY
                 && TransactionType.isDuplicate(SET_PHASING_ONLY,
                 Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
     }
-
-    @Override
-    public boolean isBlockDuplicate(Transaction transaction,
-                                    Map<TransactionType, Map<String, Integer>> duplicates,
-                                    Set<AccountControlType> senderAccountControls,
-                                    AccountControlPhasing accountControlPhasing) {
-        return
-            senderAccountControls.contains(AccountControlType.PHASING_ONLY)
-                && (accountControlPhasing != null && accountControlPhasing.getMaxFees() != 0)
-                && transaction.getType() != SET_PHASING_ONLY
-                && TransactionType.isDuplicate(SET_PHASING_ONLY,
-                Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
-    }
-
 }

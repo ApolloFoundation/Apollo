@@ -266,7 +266,7 @@ class BlockControllerTest extends AbstractEndpointTest {
 //        dto.setGeneratorPublicKey(Convert.toHexString(model.getGeneratorPublicKey())); // fails
         dto.setTimestamp(model.getTimestamp());
         dto.setTimeout(model.getTimeout());
-        dto.setNumberOfTransactions(model.getOrLoadTransactions().size());
+        dto.setNumberOfTransactions(blockchain.getBlockTransactionCount(model.getId()));
         dto.setTotalFeeATM(String.valueOf(model.getTotalFeeATM()));
         dto.setPayloadLength(model.getPayloadLength());
         dto.setVersion(model.getVersion());
@@ -288,7 +288,7 @@ class BlockControllerTest extends AbstractEndpointTest {
             dto.setTransactions(Collections.emptyList());
         }
         dto.setTotalAmountATM(String.valueOf(
-            model.getOrLoadTransactions().stream().mapToLong(Transaction::getAmountATM).sum()));
+            blockchain.getOrLoadTransactions(model).stream().mapToLong(Transaction::getAmountATM).sum()));
         return dto;
     }
 

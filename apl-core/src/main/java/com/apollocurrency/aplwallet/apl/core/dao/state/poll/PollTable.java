@@ -31,7 +31,10 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -63,8 +66,11 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
     };
 
     @Inject
-    public PollTable() {
-        super("poll", POLL_LONG_KEY_FACTORY, "name,description");
+    public PollTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                     DatabaseManager databaseManager,
+                     FullTextConfig fullTextConfig) {
+        super("poll", POLL_LONG_KEY_FACTORY, false, "name,description",
+            derivedDbTablesRegistry, databaseManager, fullTextConfig);
     }
 
     @Override
@@ -156,8 +162,8 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
                     + DbUtils.limitsClause(from, to))) {
                 int i = 0;
                 pstmt.setLong(++i, accountId);
-                pstmt.setByte(++i, Messaging.VOTE_CASTING.getType());
-                pstmt.setByte(++i, Messaging.VOTE_CASTING.getSubtype());
+                pstmt.setByte(++i, TransactionTypes.TransactionTypeSpec.VOTE_CASTING.getType());
+                pstmt.setByte(++i, TransactionTypes.TransactionTypeSpec.VOTE_CASTING.getSubtype());
                 DbUtils.setLimits(++i, pstmt, from, to);
                 List<Long> ids = new ArrayList<>();
                 try (ResultSet rs = pstmt.executeQuery()) {

@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
@@ -42,8 +41,8 @@ public class BlockApplier {
         int height = block.getHeight();
         if (height > 3) {
             long[] backFees = new long[3];
-            for (Transaction transaction : block.getOrLoadTransactions()) {
-                long[] fees = ((TransactionImpl) transaction).getBackFees();
+            for (Transaction transaction : blockchain.getOrLoadTransactions(block)) {
+                long[] fees = transaction.getBackFees();
                 for (int i = 0; i < fees.length; i++) {
                     backFees[i] += fees[i];
                 }

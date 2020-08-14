@@ -4,16 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.exchange;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.ExchangeRequest;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Singleton
 public class ExchangeRequestTable extends EntityDbTable<ExchangeRequest> {
 
     public static final LongKeyFactory<ExchangeRequest> exchangeRequestDbKeyFactory = new LongKeyFactory<>("id") {
@@ -26,8 +32,11 @@ public class ExchangeRequestTable extends EntityDbTable<ExchangeRequest> {
         }
     };
 
-    public ExchangeRequestTable() {
-        super("exchange_request", exchangeRequestDbKeyFactory);
+    @Inject
+    public ExchangeRequestTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                                DatabaseManager databaseManager) {
+        super("exchange_request", exchangeRequestDbKeyFactory, false, null,
+            derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override

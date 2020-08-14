@@ -13,12 +13,17 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.AvailableOffe
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
@@ -41,6 +46,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
@@ -61,12 +67,13 @@ class CurrencyExchangeOfferFacadeTest {
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    private DatabaseManager databaseManager = mock(DatabaseManager.class);
     private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, CurrencyBuyOfferTable.class, CurrencyBuyOfferServiceImpl.class
+        CurrencyBuyOfferTable.class, CurrencyBuyOfferServiceImpl.class
     )
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
@@ -74,6 +81,10 @@ class CurrencyExchangeOfferFacadeTest {
         .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
         .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
         .addBeans(MockBean.of(blockChainInfoService, BlockChainInfoService.class))
+        .addBeans(MockBean.of(Mockito.mock(TimeService.class), TimeService.class, TimeServiceImpl.class))
+        .addBeans(MockBean.of(Mockito.mock(PropertiesHolder.class), PropertiesHolder.class))
+        .addBeans(MockBean.of(Mockito.mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
+        .addBeans(MockBean.of(databaseManager, DatabaseManager.class))
         .build();
 
     @Mock

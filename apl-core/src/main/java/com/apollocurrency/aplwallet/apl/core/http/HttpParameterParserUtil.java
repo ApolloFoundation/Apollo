@@ -49,7 +49,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
-import com.apollocurrency.aplwallet.apl.core.tagged.model.TaggedDataUploadAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -57,9 +57,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptToSelfMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.UnencryptedPrunableEncryptedMessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -145,6 +143,7 @@ public final class HttpParameterParserUtil {
     private static CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
     private static CurrencyService currencyService;
     private static ShufflingService shufflingService;
+    private static TransactionBuilder transactionBuilder;
 
     private HttpParameterParserUtil() {
     } // never
@@ -506,7 +505,7 @@ public final class HttpParameterParserUtil {
         if (encryptedData != null) {
             return new EncryptToSelfMessageAppendix(encryptedData, isText, compress);
         } else {
-            return new UnencryptedEncryptToSelfMessageAppendix(plainMessageBytes, isText, compress);
+            throw new ParameterException(JSONResponses.error("Unable to locate 'encryptToSelfMessage' or keyseed for encryption"));
         }
     }
 
@@ -823,7 +822,7 @@ public final class HttpParameterParserUtil {
         if (transactionJSON != null) {
             try {
                 JSONObject json = (JSONObject) JSONValue.parseWithException(transactionJSON);
-                return Transaction.newTransactionBuilder(json);
+                return lookupTransactionBuilder().newTransactionBuilder(json);
             } catch (AplException.ValidationException | RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
@@ -834,7 +833,7 @@ public final class HttpParameterParserUtil {
             try {
                 byte[] bytes = Convert.parseHexString(transactionBytes);
                 JSONObject prunableAttachments = prunableAttachmentJSON == null ? null : (JSONObject) JSONValue.parseWithException(prunableAttachmentJSON);
-                return Transaction.newTransactionBuilder(bytes, prunableAttachments);
+                return lookupTransactionBuilder().newTransactionBuilder(bytes, prunableAttachments);
             } catch (AplException.ValidationException | RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
@@ -944,11 +943,7 @@ public final class HttpParameterParserUtil {
                 return new EncryptedMessageAppendix(encryptedData, isText, compress);
             }
         } else {
-            if (prunable) {
-                return new UnencryptedPrunableEncryptedMessageAppendix(plainMessageBytes, isText, compress, recipientPublicKey);
-            } else {
-                return new UnencryptedEncryptedMessageAppendix(plainMessageBytes, isText, compress, recipientPublicKey);
-            }
+            throw new ParameterException(JSONResponses.error("Unencrypted message appendices are not supported"));
         }
     }
 
@@ -1224,6 +1219,13 @@ public final class HttpParameterParserUtil {
             shufflingService = CDI.current().select(ShufflingService.class).get();
         }
         return shufflingService;
+    }
+
+    private static TransactionBuilder lookupTransactionBuilder() {
+        if (transactionBuilder == null) {
+            transactionBuilder = CDI.current().select(TransactionBuilder.class).get();
+        }
+        return transactionBuilder;
     }
 
     public static class PrivateTransactionsAPIData {

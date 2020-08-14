@@ -12,6 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.PhasingPollServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
@@ -46,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class DexServiceTest {
@@ -104,9 +108,10 @@ class DexServiceTest {
 
     @BeforeEach
     void setUp() {
+        TransactionSerializer serializer = new TransactionSerializerImpl(mock(PrunableLoadingService.class));
         dexService = new DexService(ethWalletService, dexOrderDao, dexOrderTable, transactionProcessor, dexSmartContractService, secureStorageService,
             dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService,
-            approvedResultTable, mandatoryTransactionDao, accountService, blockchainConfig, cache, dexConfig);
+            approvedResultTable, mandatoryTransactionDao, serializer, accountService, blockchainConfig, cache, dexConfig);
     }
 
     @Test

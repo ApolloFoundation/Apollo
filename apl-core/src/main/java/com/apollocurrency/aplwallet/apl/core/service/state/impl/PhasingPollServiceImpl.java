@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollLinkedTransactionTable;
@@ -18,21 +19,31 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollLinkedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollVoter;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingCreator;
+import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplier;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
@@ -61,12 +72,14 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     private final Blockchain blockchain;
     private final AccountService accountService;
     private AccountControlPhasingService accountControlPhasingService; // lazy initalization only!
+    private final CurrencyService currencyService;
+    private final AppendixApplierRegistry appendixApplierRegistry;
 
     @Inject
     public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable,
                                   PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable,
                                   PhasingVoteTable phasingVoteTable, Blockchain blockchain, Event<Transaction> event,
-                                  AccountService accountService) {
+                                  AccountService accountService, CurrencyService currencyService, AppendixApplierRegistry appendixApplierRegistry) {
         this.resultTable = resultTable;
         this.phasingPollTable = phasingPollTable;
         this.voterTable = voterTable;
@@ -75,6 +88,8 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         this.blockchain = blockchain;
         this.event = Objects.requireNonNull(event);
         this.accountService = Objects.requireNonNull(accountService, "accountService is null");
+        this.currencyService = currencyService;
+        this.appendixApplierRegistry = appendixApplierRegistry;
     }
 
     private AccountControlPhasingService lookupAccountControlPhasingService() {
@@ -90,9 +105,9 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public DbIterator<PhasingPollResult> getApproved(int height) {
-        return resultTable.getManyBy(new DbClause.IntClause("height", height).and(new DbClause.BooleanClause("approved", true)),
-            0, -1, " ORDER BY db_id ASC ");
+    public List<PhasingPollResult> getApproved(int height) {
+        return CollectionUtil.toList(resultTable.getManyBy(new DbClause.IntClause("height", height).and(new DbClause.BooleanClause("approved", true)),
+            0, -1, " ORDER BY db_id ASC "));
     }
 
     @Override
@@ -135,16 +150,16 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public DbIterator<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) {
+    public List<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) {
         try {
-            return voterTable.getVoterPhasedTransactions(voterId, from, to);
+            return voterTable.getVoterPhasedTransactions(voterId, from, to, blockchain.getHeight());
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
 
     @Override
-    public DbIterator<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
+    public List<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
                                                                 long accountId, boolean withoutWhitelist, int from, int to) {
         try {
             return phasingPollTable.getHoldingPhasedTransactions(holdingId, votingModel, accountId, withoutWhitelist, from, to, blockchain.getHeight());
@@ -154,7 +169,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public DbIterator<Transaction> getAccountPhasedTransactions(long accountId, int from, int to) {
+    public List<Transaction> getAccountPhasedTransactions(long accountId, int from, int to) {
         try {
             return phasingPollTable.getAccountPhasedTransactions(accountId, from, to, blockchain.getHeight());
         } catch (SQLException e) {
@@ -236,7 +251,12 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         Account recipientAccount = transaction.getRecipientId() == 0 ? null : accountService.getAccount(transaction.getRecipientId());
         transaction.getAppendages().forEach(appendage -> {
             if (appendage.isPhasable()) {
-                appendage.apply(transaction, senderAccount, recipientAccount);
+                AppendixApplier<AbstractAppendix> applier = appendixApplierRegistry.getFor(appendage);
+                if (applier == null) {
+                    appendage.apply(transaction, senderAccount, recipientAccount);
+                } else {
+                    applier.apply(transaction, appendage, senderAccount, recipientAccount);
+                }
             }
         });
         event.select(TxEventType.literal(TxEventType.RELEASE_PHASED_TRANSACTION)).fire(transaction);
@@ -265,7 +285,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
             try {
                 release(transaction);
             } catch (RuntimeException e) {
-                log.error("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
+                log.error("Failed to release phased transaction " + transaction.getId(), e);
                 reject(transaction);
             }
         } else {
@@ -274,7 +294,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     }
 
     @Override
-    public void tryCountVotes(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public void tryCountVotes(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         PhasingPoll poll = getPoll(transaction.getId());
         long result = countVotes(poll);
         if (result >= poll.getQuorum()) {
@@ -288,7 +308,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
                     finish(poll, result);
                     log.debug("Early finish of transaction " + transaction.getStringId() + " at height " + blockchain.getHeight());
                 } catch (RuntimeException e) {
-                    log.error("Failed to release phased transaction " + transaction.getJSONObject().toJSONString(), e);
+                    log.error("Failed to release phased transaction " + transaction.getId(), e);
                 }
             } else {
                 log.debug("At height " + blockchain.getHeight() + " phased transaction " + transaction.getStringId()
@@ -391,4 +411,104 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         }
     }
 
+    @Override
+    public void validate(PhasingParams phasingParams) throws AplException.ValidationException {
+        long[] whitelist = phasingParams.getWhitelist();
+        if (whitelist.length > Constants.MAX_PHASING_WHITELIST_SIZE) {
+            throw new AplException.NotValidException("Whitelist is too big");
+        }
+        VoteWeighting voteWeighting = phasingParams.getVoteWeighting();
+
+        long previousAccountId = 0;
+        for (long accountId : whitelist) {
+            if (accountId == 0) {
+                throw new AplException.NotValidException("Invalid accountId 0 in whitelist");
+            }
+            if (previousAccountId != 0 && accountId < previousAccountId) {
+                throw new AplException.NotValidException("Whitelist not sorted " + Arrays.toString(whitelist));
+            }
+            if (accountId == previousAccountId) {
+                throw new AplException.NotValidException("Duplicate accountId " + Long.toUnsignedString(accountId) + " in whitelist");
+            }
+            previousAccountId = accountId;
+        }
+        long quorum = phasingParams.getQuorum();
+        if (quorum <= 0 && voteWeighting.getVotingModel() != VoteWeighting.VotingModel.NONE) {
+            throw new AplException.NotValidException("quorum <= 0");
+        }
+
+        if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.NONE) {
+            if (quorum != 0) {
+                throw new AplException.NotValidException("Quorum must be 0 for no-voting phased transaction");
+            }
+            if (whitelist.length != 0) {
+                throw new AplException.NotValidException("No whitelist needed for no-voting phased transaction");
+            }
+        }
+
+        if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.ACCOUNT && whitelist.length > 0 && quorum > whitelist.length) {
+            throw new AplException.NotValidException("Quorum of " + quorum + " cannot be achieved in by-account voting with whitelist of length "
+                + whitelist.length);
+        }
+
+        voteWeighting.validate();
+        AssetService assetService = CDI.current().select(AssetService.class).get();
+
+        if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.CURRENCY) {
+            Currency currency = currencyService.getCurrency(voteWeighting.getHoldingId());
+            if (currency == null) {
+                throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
+            }
+            if (quorum > currency.getMaxSupply()) {
+                throw new AplException.NotCurrentlyValidException("Quorum of " + quorum
+                    + " exceeds max currency supply " + currency.getMaxSupply());
+            }
+            if (voteWeighting.getMinBalance() > currency.getMaxSupply()) {
+                throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
+                    + " exceeds max currency supply " + currency.getMaxSupply());
+            }
+        } else if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.ASSET) {
+            Asset asset = assetService.getAsset(voteWeighting.getHoldingId());
+            if (quorum > asset.getInitialQuantityATU()) {
+                throw new AplException.NotCurrentlyValidException("Quorum of " + quorum
+                    + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
+            }
+            if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
+                throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
+                    + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
+            }
+        } else if (voteWeighting.getMinBalance() > 0) {
+            if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
+                Asset asset = assetService.getAsset(voteWeighting.getHoldingId());
+                if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
+                    throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
+                        + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
+                }
+            } else if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
+                Currency currency = currencyService.getCurrency(voteWeighting.getHoldingId());
+                if (currency == null) {
+                    throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
+                }
+                if (voteWeighting.getMinBalance() > currency.getMaxSupply()) {
+                    throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
+                        + " exceeds max currency supply " + currency.getMaxSupply());
+                }
+            }
+        }
+
+    }
+
+    @Override
+    public void checkApprovable(PhasingParams phasingParams) throws AplException.NotCurrentlyValidException {
+
+        VoteWeighting voteWeighting = phasingParams.getVoteWeighting();
+        if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.CURRENCY
+            && currencyService.getCurrency(voteWeighting.getHoldingId()) == null) {
+            throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
+        }
+        if (voteWeighting.getMinBalance() > 0 && voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY
+            && currencyService.getCurrency(voteWeighting.getHoldingId()) == null) {
+            throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
+        }
+    }
 }

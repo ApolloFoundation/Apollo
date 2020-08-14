@@ -62,12 +62,14 @@
       {
         "height": 10,
         "blockTime": 10,
-        "maxBalance": 30000000000
+        "maxBalance": 30000000000,
+        "maxNumberOfChildAccounts": 1
       },
       {
         "height": 15,
         "blockTime": 15,
         "maxBalance": 30000000000,
+        "maxNumberOfChildAccounts": 1,
         "shardingSettings": {
           "enabled": true,
           "frequency": 15
@@ -77,6 +79,7 @@
         "height": 20,
         "blockTime": 20,
         "maxBalance": 30000000000,
+        "maxNumberOfChildAccounts": 2,
         "shardingSettings": {
           "enabled": false,
           "frequency": 20
@@ -86,6 +89,7 @@
         "height": 30,
         "blockTime": 30,
         "maxBalance": 30000000000,
+        "maxNumberOfChildAccounts": 3,
         "shardingSettings": {
           "enabled": true,
           "frequency": 30
@@ -95,6 +99,7 @@
         "height": 40,
         "blockTime": 40,
         "maxBalance": 30000000000,
+        "maxNumberOfChildAccounts": 4,
         "shardingSettings": {
           "enabled": true,
           "frequency": 40

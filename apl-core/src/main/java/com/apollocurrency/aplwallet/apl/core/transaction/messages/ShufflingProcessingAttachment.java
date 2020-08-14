@@ -3,9 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.ShufflingTransaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.shuffling.ShufflingProcessingTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.json.simple.JSONArray;
@@ -53,7 +52,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     }
 
     public static ShufflingProcessingAttachment parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(ShufflingTransaction.SHUFFLING_PROCESSING.getName(), attachmentData)) {
+        if (!Appendix.hasAppendix(ShufflingProcessingTransactionType.NAME, attachmentData)) {
             return null;
         }
         return new ShufflingProcessingAttachment(attachmentData);
@@ -83,6 +82,10 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
         buffer.put(getHash());
     }
 
+    public void setData(byte[][] data) {
+        this.data = data;
+    }
+
     @Override
     public void putMyJSON(JSONObject attachment) {
         super.putMyJSON(attachment);
@@ -97,8 +100,8 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return ShufflingTransaction.SHUFFLING_PROCESSING;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.SHUFFLING_PROCESSING;
     }
 
     @Override
@@ -121,20 +124,8 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
-        if (data == null && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            data = lookupShufflingService().getData(getShufflingId(), transaction.getSenderId());
-        }
-    }
-
-    @Override
     public boolean hasPrunableData() {
         return data != null;
-    }
-
-    @Override
-    public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        lookupShufflingService().restoreData(getShufflingId(), transaction.getSenderId(), getData(), transaction.getTimestamp(), height);
     }
 
 }
