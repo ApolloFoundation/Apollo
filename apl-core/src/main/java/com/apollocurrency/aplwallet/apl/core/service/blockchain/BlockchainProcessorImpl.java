@@ -47,7 +47,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockchainProcessorState;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
@@ -1418,7 +1417,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                         }
                                         validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
                                         for (Transaction transaction : blockchain.getOrLoadTransactions(currentBlock)) {
-                                            byte[] transactionBytes = ((TransactionImpl) transaction).bytes();
+                                            byte[] transactionBytes = transaction.bytes();
                                             if (!Arrays.equals(transactionBytes, transactionBuilder.newTransactionBuilder(transactionBytes).build().bytes())) {
                                                 throw new AplException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
                                                     + transactionSerializer.toJson(transaction).toJSONString());
