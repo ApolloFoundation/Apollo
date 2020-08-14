@@ -43,15 +43,16 @@ public class ShardObserver {
     }
 
     public void onTrimDoneAsync(@ObservesAsync @TrimEvent TrimData trimData) {
-//        lastTrimHeight = trimData.getTrimHeight(); // new code
-        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight()); // original code
+        lastTrimHeight = trimData.getTrimHeight(); // new code
+//        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight()); // original code
     }
 
     public void onTrimDone(@Observes @TrimEvent TrimData trimData) {
-//        lastTrimHeight = trimData.getTrimHeight(); // new code
-        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight()); // original code
+        lastTrimHeight = trimData.getTrimHeight(); // new code
+//        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight()); // original code
     }
 
+/*
     public CompletableFuture<MigrateState> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
         CompletableFuture<MigrateState> completableFuture = null;
         boolean isShardingOff = propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
@@ -78,15 +79,50 @@ public class ShardObserver {
         }
         return completableFuture;
     }
+*/
 
-/*
 // NEW CODE GOES HERE...
     public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         int blockHeight = block.getHeight();
-        if (blockHeight % SHARD_MIN_STEP_BLOCKS == 0) {
+        HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
+        boolean isShardingEnabled = isShardingEnabled(currentConfig);
+        boolean isTimeForShard = isTimeForShard(lastTrimHeight, blockHeight/*, currentConfig*/);
+        log.debug("onBlockPushed: blockHeight={}, currentConfig={}, isShardingEnabled={}, isTimeForShard={}",
+            blockHeight, currentConfig, isShardingEnabled, isTimeForShard);
+        if (isShardingEnabled &&
+//            blockHeight % SHARD_MIN_STEP_BLOCKS == 0) {
+            isTimeForShard) {
             tryCreateShardAsync(lastTrimHeight, blockHeight);
+        } else {
+            log.debug("Sharding is disabled by config ? = {}, isTimeForShard ? ={}", isShardingEnabled, isTimeForShard);
         }
     }
+
+
+    public CompletableFuture<MigrateState> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
+        CompletableFuture<MigrateState> completableFuture = null;
+//        HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
+
+//        if (isShardingEnabled(currentConfig)) {
+
+//            if (isTimeForShard(lastTrimBlockHeight, blockchainHeight/*, currentConfig*/)) {
+                completableFuture = shardService.tryCreateShardAsync(lastTrimBlockHeight, blockchainHeight);
+//            } else {
+//                log.debug("No attempt to create new shard at height '{}' (because lastTrimHeight={}), ({})",
+//                    blockchainHeight, lastTrimBlockHeight, blockchainConfig.isJustUpdated());
+//            }
+/*
+            // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
+            if (blockchainConfig.isJustUpdated()) {
+                blockchainConfig.resetJustUpdated(); // reset flag
+            }
+*/
+//        } else {
+//            log.debug("Sharding is disabled by config");
+//        }
+        return completableFuture;
+    }
+
 
     private boolean isShardingEnabled(HeightConfig currentConfig) {
         boolean isShardingOff = propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
@@ -107,8 +143,9 @@ public class ShardObserver {
         return lastShardHeight;
     }
 
-    private int getShardingFrequency(HeightConfig currentConfig) {
-        int shardingFrequency;
+    private HeightConfig getShardingFrequency(/*HeightConfig currentConfig, */int lastTrimBlockHeight, int blockchainHeight) {
+        int shardingFrequency = 0;
+/*
         if (!blockchainConfig.isJustUpdated()) {
             // config didn't change from previous trim scheduling
             shardingFrequency = currentConfig.getShardingFrequency();
@@ -120,10 +157,23 @@ public class ShardObserver {
                 ? blockchainConfig.getPreviousConfig().get().getShardingFrequency() // previous config
                 : currentConfig.getShardingFrequency(); // fall back
         }
-        return shardingFrequency;
+*/
+        int heightToShard = blockchainHeight - this.propertiesHolder.MAX_ROLLBACK();
+//        HeightConfig configAtTrimHeight = blockchainConfig.getConfigAtHeight(lastTrimBlockHeight);
+        HeightConfig configAtTrimHeight = blockchainConfig.getConfigAtHeight(heightToShard);
+        log.debug("Check shard conditions: ? [{}],  lastTrimBlockHeight = {}, blockchainHeight = {}"
+                + ", configAtTrimHeight = {}",
+            (lastTrimBlockHeight != 0
+                && configAtTrimHeight != null
+                && configAtTrimHeight.isShardingEnabled()
+                /*&& lastTrimBlockHeight % configAtTrimHeight.getShardingFrequency() == 0*/),
+            lastTrimBlockHeight, blockchainHeight, configAtTrimHeight
+        );
+//        shardingFrequency = configAtTrimHeight.getShardingFrequency();
+//        return shardingFrequency;
+        return configAtTrimHeight;
     }
 
-*/
 /**
      * Well, it is subject of discussion yet what parameter should trigger
      * sharding At the moment sharding is bound to trims and we do not count on
@@ -133,27 +183,29 @@ public class ShardObserver {
      * @param blockchainHeight
      * @param currentConfig
      * @return
-     *//*
+     */
 
-    private boolean isTimeForShard(int lastTrimBlockHeight, int blockchainHeight, HeightConfig currentConfig) {
+    private boolean isTimeForShard(int lastTrimBlockHeight, int blockchainHeight/*, HeightConfig currentConfig*/) {
 
-        int shardingFrequency = getShardingFrequency(currentConfig);
-        //Q. can we create shard if we late for entire shard frequecny?
-        //Q. how much blocks we could be late? (frequiency - 2) is OK?
+        HeightConfig configNearShardHeight = getShardingFrequency(lastTrimBlockHeight, blockchainHeight);
+        //Q. can we create shard if we late for entire shard frequency?
+        //Q. how much blocks we could be late? (frequency - 2) is OK?
         //Q. Do we count on some other parameters like lastTrimBlockHeight?
         long lastShardHeight = getLastShardHeight();
+        int shardingFrequency = configNearShardHeight.getShardingFrequency();
         long howLateWeCanBe = shardingFrequency - 2;
         long nextShardHeight = lastShardHeight + shardingFrequency;
-        long howLateWeAre = blockchainHeight - Constants.MAX_AUTO_ROLLBACK * 2 - nextShardHeight;
+        int howLateWeAre = blockchainHeight - this.propertiesHolder.MAX_ROLLBACK();
+//        long howLateWeAre = blockchainHeight - Constants.MAX_AUTO_ROLLBACK * 2 - nextShardHeight;
         boolean res = false;
 
         if (howLateWeAre >= 0) {
             if (howLateWeAre > howLateWeCanBe) {
-                log.warn("We have missed shard for {} blocks! lastTrimHeitght: {} blockchainHeight: {}",
+                log.warn("We have missed shard for {} blocks! lastTrimHeight: {} blockchainHeight: {}",
                     howLateWeAre, lastTrimBlockHeight, blockchainHeight);
             } else {
                 res = true;
-                log.debug("Time for sharding is OK. lastTrimHeitght: {} blockchainHeight: {}",
+                log.debug("Time for sharding is OK. lastTrimHeight: {} blockchainHeight: {}",
                     lastTrimBlockHeight, blockchainHeight);
             }
         } else {
@@ -167,28 +219,5 @@ public class ShardObserver {
 
         return res;
     }
-
-    public CompletableFuture<MigrateState> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
-        CompletableFuture<MigrateState> completableFuture = null;
-        HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
-
-        if (isShardingEnabled(currentConfig)) {
-
-            if (isTimeForShard(lastTrimBlockHeight, blockchainHeight, currentConfig)) {
-                completableFuture = shardService.tryCreateShardAsync(lastTrimBlockHeight, blockchainHeight);
-            } else {
-                log.debug("No attempt to create new shard at height '{}' (because lastTrimHeight={}), ({})",
-                    blockchainHeight, lastTrimBlockHeight, blockchainConfig.isJustUpdated());
-            }
-            // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
-            if (blockchainConfig.isJustUpdated()) {
-                blockchainConfig.resetJustUpdated(); // reset flag
-            }
-        } else {
-            log.debug("Sharding is disabled by config");
-        }
-        return completableFuture;
-    }
-*/
 
 }
