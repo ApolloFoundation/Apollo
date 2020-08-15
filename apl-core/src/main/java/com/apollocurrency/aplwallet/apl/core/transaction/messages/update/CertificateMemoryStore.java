@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.util.cert.ApolloCertificate;
-import io.firstbridge.cryptolib.FBCryptoFactory;
+import io.firstbridge.cryptolib.CryptoFactory;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
@@ -21,6 +21,7 @@ import java.util.Objects;
 @Slf4j
 @Singleton
 public class CertificateMemoryStore {
+
     private CertificateLoader loader;
     private Map<BigInteger, ApolloCertificate> certificates = new HashMap<>();
     private final URL caCertUrl;
@@ -42,7 +43,7 @@ public class CertificateMemoryStore {
         }
         X509Certificate rootCert = null;
         try {
-            rootCert = FBCryptoFactory.createDefault().getKeyReader().readX509CertPEMorDER(caCertUrl.openStream());
+            rootCert = CryptoFactory.createDefault().getKeyReader().readX509CertPEMorDER(caCertUrl.openStream());
         } catch (Exception e) {
             log.debug("Error readX509 CertPEMorDER", e);
         }
