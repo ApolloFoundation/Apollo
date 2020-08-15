@@ -37,12 +37,12 @@ public class InfoApi  {
 
     @GET
     @Path("/health")
-
+    
     @Produces({ "application/json" })
     @Operation(summary = "Gets node health", description = "", tags={ "info" })
-    @ApiResponses(value = {
+    @ApiResponses(value = { 
         @ApiResponse(responseCode = "200", description = "successful operation", content = @Content(schema = @Schema(implementation = HealthResponse.class))),
-
+        
         @ApiResponse(responseCode = "500", description = "Server error - internal server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class))) })
     public Response getHealthInfo(@Context SecurityContext securityContext)
     throws NotFoundException {

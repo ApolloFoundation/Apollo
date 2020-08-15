@@ -60,10 +60,6 @@ public class CryptoTest extends TestsCommons {
 
     }
 
-    <<<<<<< HEAD
-    =======
-
->>>>>>> develop
     /**
      * Test of getKeySeed method, of class Crypto.
      */
@@ -129,6 +125,9 @@ public class CryptoTest extends TestsCommons {
          << << << < HEAD
 
 
+
+
+
         
         byte[] keySeed = Crypto.getKeySeed(secretPhraseA);
         byte[] expResult = Convert.parseHexString("b0f12497c84af1ac2603f97d1fb804fc308e241d522fa5d21e900facbb92d66e");
@@ -150,6 +149,9 @@ public class CryptoTest extends TestsCommons {
     @Test
     public void testSign_byteArr_String() throws IOException {
          << << << < HEAD
+
+
+
 
 
         
@@ -174,6 +176,9 @@ public class CryptoTest extends TestsCommons {
     @Test
     public void testSign_byteArr_byteArr() throws IOException {
          << << << < HEAD
+
+
+
 
 
         
@@ -245,6 +250,9 @@ public class CryptoTest extends TestsCommons {
          << << << < HEAD
 
 
+
+
+
         
         byte[] key = Crypto.getSharedKey(myPrivateKey, theirPublicKey);
          == == ==
@@ -266,6 +274,9 @@ public class CryptoTest extends TestsCommons {
         byte[] myPrivateKey = Crypto.getPrivateKey(secretPhraseA);
         byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
          << << << < HEAD
+
+
+
 
 
         
@@ -332,6 +343,9 @@ public class CryptoTest extends TestsCommons {
     @Test
     public void testElGamalDecrypt() throws CryptoNotValidException {
          << << << < HEAD
+
+
+
 
 
         
