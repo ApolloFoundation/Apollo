@@ -21,6 +21,7 @@ import java.util.Objects;
 @Slf4j
 @Singleton
 public class CertificateMemoryStore {
+
     private CertificateLoader loader;
     private Map<BigInteger, ApolloCertificate> certificates = new HashMap<>();
     private final URL caCertUrl;
