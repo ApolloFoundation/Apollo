@@ -60,10 +60,15 @@ public class CryptoTest extends TestsCommons {
 
     }
 
+    <<<<<<< HEAD
+    =======
+
+>>>>>>> develop
     /**
      * Test of getKeySeed method, of class Crypto.
      */
     @Test
+
     public void testGetKeySeed_String_byteArrArr() throws IOException {
         byte[] result = Crypto.getKeySeed(secretPhraseA, nonce1, nonce2);
         byte[] expResult = Convert.parseHexString("b1702f2262274290d1428b04f2e55e5af3af413575c7659ac02ee5633c504c6f");
@@ -121,11 +126,22 @@ public class CryptoTest extends TestsCommons {
      */
     @Test
     public void testGetPrivateKey_String() throws IOException {
+         << << << < HEAD
+
+
+        
         byte[] keySeed = Crypto.getKeySeed(secretPhraseA);
         byte[] expResult = Convert.parseHexString("b0f12497c84af1ac2603f97d1fb804fc308e241d522fa5d21e900facbb92d66e");
         byte[] result = Crypto.getPrivateKey(keySeed);
         assertArrayEquals(expResult, result);
         writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR + OUT_FILE_PRIVKEY_S);
+         == == ==
+                = byte[] keySeed = Crypto.getKeySeed(secretPhraseA);
+        byte[] expResult = Convert.parseHexString("b0f12497c84af1ac2603f97d1fb804fc308e241d522fa5d21e900facbb92d66e");
+        byte[] result = Crypto.getPrivateKey(keySeed);
+        assertArrayEquals(expResult, result);
+        writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR + OUT_FILE_PRIVKEY_S);
+         >>> >>> > develop
     }
 
     /**
@@ -133,11 +149,22 @@ public class CryptoTest extends TestsCommons {
      */
     @Test
     public void testSign_byteArr_String() throws IOException {
+         << << << < HEAD
+
+
+        
         byte[] message = plain_data;
         byte[] expResult = Convert.parseHexString("f565212c53a668006fbdb12c512e51f7add8118e6573d5c7261e9f58944e5c0b0ae76275210b795915a3017852fe8bca1a3cd2d2b02b32a51e0e03b18e6335f8");
         byte[] result = Crypto.sign(message, secretPhraseA);
         assertArrayEquals(expResult, result);
         writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR + OUT_FILE_SIGN_S);
+         == == ==
+                = byte[] message = plain_data;
+        byte[] expResult = Convert.parseHexString("f565212c53a668006fbdb12c512e51f7add8118e6573d5c7261e9f58944e5c0b0ae76275210b795915a3017852fe8bca1a3cd2d2b02b32a51e0e03b18e6335f8");
+        byte[] result = Crypto.sign(message, secretPhraseA);
+        assertArrayEquals(expResult, result);
+        writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR + OUT_FILE_SIGN_S);
+         >>> >>> > develop
 
     }
 
@@ -146,11 +173,22 @@ public class CryptoTest extends TestsCommons {
      */
     @Test
     public void testSign_byteArr_byteArr() throws IOException {
+         << << << < HEAD
+
+
+        
         byte[] message = plain_data;
         byte[] expResult = Convert.parseHexString("f565212c53a668006fbdb12c512e51f7add8118e6573d5c7261e9f58944e5c0b0ae76275210b795915a3017852fe8bca1a3cd2d2b02b32a51e0e03b18e6335f8");
         byte[] result = Crypto.sign(message, Crypto.getKeySeed(secretPhraseA));
         assertArrayEquals(expResult, result);
         writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR + OUT_FILE_SIGN_B);
+         == == ==
+                = byte[] message = plain_data;
+        byte[] expResult = Convert.parseHexString("f565212c53a668006fbdb12c512e51f7add8118e6573d5c7261e9f58944e5c0b0ae76275210b795915a3017852fe8bca1a3cd2d2b02b32a51e0e03b18e6335f8");
+        byte[] result = Crypto.sign(message, Crypto.getKeySeed(secretPhraseA));
+        assertArrayEquals(expResult, result);
+        writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR + OUT_FILE_SIGN_B);
+         >>> >>> > develop
     }
 
     /**
@@ -204,7 +242,14 @@ public class CryptoTest extends TestsCommons {
         byte[] plaintext = plain_data;
         byte[] myPrivateKey = Crypto.getPrivateKey(secretPhraseA);
         byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
+         << << << < HEAD
+
+
+        
         byte[] key = Crypto.getSharedKey(myPrivateKey, theirPublicKey);
+         == == ==
+                = byte[] key = Crypto.getSharedKey(myPrivateKey, theirPublicKey);
+         >>> >>> > develop
         byte[] expResult = plaintext;
         byte[] result_enc = Crypto.aesEncrypt(plaintext, key);
         byte[] result = Crypto.aesDecrypt(result_enc, key);
@@ -220,7 +265,14 @@ public class CryptoTest extends TestsCommons {
         byte[] plaintext = plain_data;
         byte[] myPrivateKey = Crypto.getPrivateKey(secretPhraseA);
         byte[] theirPublicKey = Crypto.getPublicKey(secretPhraseB);
+         << << << < HEAD
+
+
+        
         byte[] key = Crypto.getSharedKey(myPrivateKey, theirPublicKey);
+         == == ==
+                = byte[] key = Crypto.getSharedKey(myPrivateKey, theirPublicKey);
+         >>> >>> > develop
         byte[] expResult = plaintext;
         byte[] result_enc = Crypto.aesGCMEncrypt(plaintext, key);
         byte[] result = Crypto.aesGCMDecrypt(result_enc, key);
@@ -279,11 +331,21 @@ public class CryptoTest extends TestsCommons {
      */
     @Test
     public void testElGamalDecrypt() throws CryptoNotValidException {
+         << << << < HEAD
 
+
+        
         CryptoParams params = CryptoParams.createDefault();
         AsymElGamalImpl instanceOfAlice = new AsymElGamalImpl(params);
 
         ElGamalKeyPair keyPair = instanceOfAlice.generateOwnKeys();
+         == == ==
+                = FBCryptoParams params = FBCryptoParams.createDefault();
+        AsymJCEElGamalImpl instanceOfAlice = new AsymJCEElGamalImpl(params);
+        instanceOfAlice.setCurveParameters();
+
+        FBElGamalKeyPair keyPair = instanceOfAlice.generateOwnKeys();
+         >>> >>> > develop
 
         String cryptogram = Crypto.elGamalEncrypt(secretPhraseA, keyPair);
         String decrypted = Crypto.elGamalDecrypt(cryptogram, keyPair);
