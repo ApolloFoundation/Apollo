@@ -203,8 +203,10 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         int timestamp = timeService.getEpochTime();
         Transaction transaction;
         try {
-            Transaction.Builder builder = txBuilder.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
-                deadline, txRequest.getAttachment(), timestamp).referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
+            Transaction.Builder builder = txBuilder.newTransactionBuilder(txRequest.getPublicKey(),
+                        txRequest.getAmountATM(), txRequest.getFeeATM(),
+                        deadline, txRequest.getAttachment(), timestamp)
+                .referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
             if (type.canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());
             }
