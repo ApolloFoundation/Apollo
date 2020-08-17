@@ -28,7 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
-import java.nio.ByteBuffer;
 
 @Slf4j
 public class TransactionDTOConverter implements Converter<TransactionDTO, Transaction> {
@@ -47,8 +46,7 @@ public class TransactionDTOConverter implements Converter<TransactionDTO, Transa
             byte version = txDto.getVersion() == null ? 0 : txDto.getVersion();
 
             SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
-            ByteBuffer signatureBuffer = ByteBuffer.wrap(Convert.parseHexString(txDto.getSignature()));
-            Signature signature = signatureParser.parse(signatureBuffer);
+            Signature signature = signatureParser.parse(Convert.parseHexString(txDto.getSignature()));
 
             int ecBlockHeight = 0;
             long ecBlockId = 0;
@@ -61,7 +59,6 @@ public class TransactionDTOConverter implements Converter<TransactionDTO, Transa
             if (transactionType == null) {
                 throw new AplException.NotValidException("Invalid transaction type: " + txDto.getType() + ", " + txDto.getSubtype());
             }
-
 
             JSONObject attachmentData = null;
             if (CollectionUtil.isEmpty(txDto.getAttachment())) {
