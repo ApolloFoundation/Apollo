@@ -44,18 +44,26 @@ class BlockchainConfigAndHeightConfigTest {
         assertNotNull(loadedChains.get(UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6")));
         doReturn(5000).when(holder).getIntProperty("apl.maxPrunableLifetime");
         doReturn(5000).when(holder).getIntProperty("apl.minPrunableLifetime");
+        prepareAndInitComponents();
     }
 
     @ParameterizedTest
     @MethodSource("provideTrimHeightAndFrequency")
     void test_atHeight_AllCorrectConfigsWithFrequency(int trimHeight, int shardFrequency) {
-        prepareAndInitComponents();
         HeightConfig  result = blockchainConfig.getConfigAtHeight(trimHeight);  // checked method
         log.trace("result = {}", result);
         assertNotNull(result);
         assertTrue(result.isShardingEnabled(), "got = " + result.isShardingEnabled());
         assertEquals(shardFrequency, result.getShardingFrequency(),
             String.format("expected = %d , got = %d", shardFrequency, result.getShardingFrequency()));
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideHeightAndMaxNumberOfChileAccounts")
+    void test_atHeight_AllConfigsWithNumberOfChildAccounts(int height, int childNumber) {
+        HeightConfig  result = blockchainConfig.getConfigAtHeight(height);  // checked method
+        assertNotNull(result);
+        assertEquals(childNumber, result.getMaxNumberOfChildAccount());
     }
 
     /**
@@ -90,7 +98,6 @@ class BlockchainConfigAndHeightConfigTest {
     @ParameterizedTest
     @MethodSource("provideDisabledResponseForTrimHeightAndFrequency")
     void test_AtHeight_INCorrect_ConfigsWithFrequency(int trimHeight, int shardFrequency) {
-        prepareAndInitComponents();
         HeightConfig result = blockchainConfig.getConfigAtHeight(trimHeight);  // checked method
         log.trace("result = {}", result);
         assertNotNull(result);
@@ -116,12 +123,36 @@ class BlockchainConfigAndHeightConfigTest {
         );
     }
 
+    /**
+     * Height and number of the child accounts are supplied into unit test method
+     * @return height + frequency value for test
+     */
+    static Stream<Arguments> provideHeightAndMaxNumberOfChileAccounts() {
+        // the second arg is the maxNumberOfChildAccount property value
+        return Stream.of(
+            arguments(2, 0), // property is omitted
+            arguments(5, 0),
+            arguments(6, 0),
+            arguments(9, 0),
+            arguments(15, 1),// property is specified
+            arguments(16, 1),
+            arguments(19, 1),
+            arguments(23, 2),
+            arguments(30, 3),
+            arguments(31, 3),
+            arguments(39, 3),
+            arguments(40, 4),
+            arguments(50, 4),
+            arguments(1025, 4),
+            arguments(Integer.MAX_VALUE, 4)
+        );
+    }
+
     private void prepareAndInitComponents() {
         chain = loadedChains.get(UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6"));
         assertNotNull(chain);
         assertNotNull(chain.getBlockchainProperties());
         blockchainConfig = new BlockchainConfig(chain, holder);
     }
-
 
 }

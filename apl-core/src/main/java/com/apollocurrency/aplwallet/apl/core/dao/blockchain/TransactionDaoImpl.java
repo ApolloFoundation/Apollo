@@ -20,21 +20,25 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
+import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
-import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -54,16 +58,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT;
+
 @Slf4j
 @Singleton
 public class TransactionDaoImpl implements TransactionDao {
-    private static final TransactionRowMapper MAPPER = new TransactionRowMapper();
+    private final TransactionRowMapper mapper;
     private final DatabaseManager databaseManager;
+    private final TransactionTypeFactory typeFactory;
 
     @Inject
-    public TransactionDaoImpl(DatabaseManager databaseManager) {
+    public TransactionDaoImpl(DatabaseManager databaseManager, TransactionTypeFactory factory, TransactionRowMapper transactionRowMapper) {
         Objects.requireNonNull(databaseManager);
         this.databaseManager = databaseManager;
+        this.typeFactory = factory;
+        this.mapper = transactionRowMapper;
     }
 
     @Override
@@ -185,7 +194,7 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     public Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException {
-        return MAPPER.mapWithException(rs, null);
+        return mapper.mapWithException(rs, null);
     }
 
 
@@ -259,7 +268,7 @@ public class TransactionDaoImpl implements TransactionDao {
                     long id = rs.getLong("id");
                     byte type = rs.getByte("type");
                     byte subtype = rs.getByte("subtype");
-                    TransactionType transactionType = TransactionType.findTransactionType(type, subtype);
+                    TransactionType transactionType = typeFactory.findTransactionType(type, subtype);
                     result.add(new PrunableTransaction(id, transactionType,
                         rs.getBoolean("prunable_attachment"),
                         rs.getBoolean("prunable_plain_message"),
@@ -293,16 +302,12 @@ public class TransactionDaoImpl implements TransactionDao {
                     DbUtils.setBytes(pstmt, ++i, transaction.referencedTransactionFullHash());
                     pstmt.setInt(++i, transaction.getHeight());
                     pstmt.setLong(++i, transaction.getBlockId());
-                    pstmt.setBytes(++i, transaction.getSignature());
+                    pstmt.setBytes(++i, transaction.getSignature().bytes());
                     pstmt.setInt(++i, transaction.getTimestamp());
-                    pstmt.setByte(++i, transaction.getType().getType());
-                    pstmt.setByte(++i, transaction.getType().getSubtype());
+                    pstmt.setByte(++i, transaction.getType().getSpec().getType());
+                    pstmt.setByte(++i, transaction.getType().getSpec().getSubtype());
                     pstmt.setLong(++i, transaction.getSenderId());
-                    if (!transaction.shouldSavePublicKey()) {
-                        pstmt.setNull(++i, Types.BINARY);
-                    } else {
-                        pstmt.setBytes(++i, transaction.getSenderPublicKey());
-                    }
+                    pstmt.setBytes(++i, transaction.getSenderPublicKey());
                     int bytesLength = 0;
                     for (Appendix appendage : transaction.getAppendages()) {
                         bytesLength += appendage.getSize();
@@ -373,23 +378,6 @@ public class TransactionDaoImpl implements TransactionDao {
         return 0L;
     }
 
-
-/*
-    @Override
-    public DbIterator<Transaction> getAllTransactions() {
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction ORDER BY db_id ASC");
-            return getTransactions(con, pstmt);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-*/
-
     @Override
     public synchronized List<Transaction> getTransactions(
         TransactionalDataSource dataSource,
@@ -404,19 +392,16 @@ public class TransactionDaoImpl implements TransactionDao {
         createTransactionSelectSqlWithOrder(buf, "transaction.*", type, subtype,
             blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height);
         buf.append(DbUtils.limitsClause(from, to)); // append 'limit offset' clause
-        Connection con = null;
-        try {
-            con = dataSource.getConnection();
+        try (Connection con = dataSource.getConnection()) {
             String sql = buf.toString();
             log.trace("getTx sql = {}\naccountId={}, from={}, to={}", sql, accountId, from, to);
             PreparedStatement pstmt = con.prepareStatement(sql);
             int i = setStatement(pstmt, accountId, numberOfConfirmations, type, subtype, blockTimestamp,
                 withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
             DbUtils.setLimits(++i, pstmt, from, to); // // append 'limit offset' clauese values
-            return CollectionUtil.toList(getTransactions(con, pstmt));
+            return getTransactions(con, pstmt);
         } catch (SQLException e) {
             log.error("ERROR on DataSource = {}", dataSource.getDbIdentity());
-            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -429,7 +414,7 @@ public class TransactionDaoImpl implements TransactionDao {
         if (blockTimestamp > 0) {
             buf.append("AND block_timestamp >= ? ");
         }
-        if (!includePrivate && TransactionType.findTransactionType(type, subtype) == Payment.PRIVATE) {
+        if (!includePrivate && type == PRIVATE_PAYMENT.getType() && subtype == PRIVATE_PAYMENT.getSubtype()) {
             throw new RuntimeException("None of private transactions should be retrieved!");
         }
         if (type >= 0) {
@@ -545,8 +530,8 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         if (!includePrivate) {
-            pstmt.setByte(++i, Payment.PRIVATE.getType());
-            pstmt.setByte(++i, Payment.PRIVATE.getSubtype());
+            pstmt.setByte(++i, PRIVATE_PAYMENT.getType());
+            pstmt.setByte(++i, PRIVATE_PAYMENT.getSubtype());
         }
         if (height < Integer.MAX_VALUE) {
             pstmt.setInt(++i, height);
@@ -566,8 +551,8 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         if (!includePrivate) {
-            pstmt.setByte(++i, Payment.PRIVATE.getType());
-            pstmt.setByte(++i, Payment.PRIVATE.getSubtype());
+            pstmt.setByte(++i, PRIVATE_PAYMENT.getType());
+            pstmt.setByte(++i, PRIVATE_PAYMENT.getSubtype());
         }
         if (height < Integer.MAX_VALUE) {
             pstmt.setInt(++i, height);
@@ -579,7 +564,7 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public synchronized DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
+    public synchronized List<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
         StringBuilder sqlQuery = new StringBuilder("SELECT * FROM transaction WHERE (type <> ? OR subtype <> ?) ");
         if (type >= 0) {
             sqlQuery.append("AND type = ? ");
@@ -589,14 +574,13 @@ public class TransactionDaoImpl implements TransactionDao {
         }
         sqlQuery.append("ORDER BY block_timestamp DESC, transaction_index DESC ");
         sqlQuery.append(DbUtils.limitsClause(from, to));
-        Connection con = null;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement statement = con.prepareStatement(sqlQuery.toString());
+
+        try (Connection con = dataSource.getConnection();
+            PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
             int i = 0;
-            statement.setByte(++i, Payment.PRIVATE.getType());
-            statement.setByte(++i, Payment.PRIVATE.getSubtype());
+            statement.setByte(++i, PRIVATE_PAYMENT.getType());
+            statement.setByte(++i, PRIVATE_PAYMENT.getSubtype());
             if (type >= 0) {
                 statement.setByte(++i, type);
                 if (subtype >= 0) {
@@ -606,7 +590,6 @@ public class TransactionDaoImpl implements TransactionDao {
             DbUtils.setLimits(++i, statement, from, to);
             return getTransactions(con, statement);
         } catch (SQLException e) {
-            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }
@@ -655,8 +638,8 @@ public class TransactionDaoImpl implements TransactionDao {
         try (Connection con = dataSource.getConnection();
              PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
             int i = 0;
-            statement.setByte(++i, Payment.PRIVATE.getType());
-            statement.setByte(++i, Payment.PRIVATE.getSubtype());
+            statement.setByte(++i, PRIVATE_PAYMENT.getType());
+            statement.setByte(++i, PRIVATE_PAYMENT.getSubtype());
             statement.setLong(++i, accountId);
             statement.setLong(++i, accountId);
             if (type >= 0) {
@@ -675,8 +658,17 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
-        return new DbIterator<>(con, pstmt, this::loadTransaction);
+    public List<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
+        try {
+            ResultSet rs = pstmt.executeQuery();
+            ArrayList<Transaction> list = new ArrayList<>();
+            while (rs.next()) {
+                list.add(loadTransaction(con, rs));
+            }
+            return list;
+        } catch (SQLException | AplException.NotValidException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     @Override
@@ -689,5 +681,202 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         }
         return transactions;
+    }
+
+    @Override
+    public synchronized int getTransactionsCount(List<Long> accounts, byte type, byte subtype,
+                                                 int startTime, int endTime,
+                                                 int fromHeight, int toHeight,
+                                                 String sortOrder,
+                                                 int from, int to) {
+        StringBuilder sqlQuery = new StringBuilder("SELECT COUNT(*) FROM transaction tx ");
+        sqlQuery.append("WHERE 1=1 ");
+
+        createSelectTransactionQuery(sqlQuery, type, subtype, startTime, endTime, fromHeight, toHeight);
+
+        addAccountsFilter(sqlQuery, accounts);
+
+        log.trace("getTransactionsCount sql=[{}]", sqlQuery.toString());
+
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
+            int i = setSelectTransactionQueryParams(statement, type, subtype, startTime, endTime, fromHeight, toHeight);
+            ResultSet rs = statement.executeQuery();
+            rs.next();
+            return rs.getInt(1);
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public synchronized List<TxReceipt> getTransactions(List<Long> accounts, byte type, byte subtype,
+                                                        int startTime, int endTime,
+                                                        int fromHeight, int toHeight,
+                                                        String sortOrder,
+                                                        int from, int to) {
+        List<TxReceipt> result = new ArrayList<>();
+        StringBuilder sqlQuery = new StringBuilder("SELECT version, type, subtype, id, sender_id, recipient_id, " +
+            "signature, timestamp, amount, fee, height, block_id, block_timestamp, transaction_index, " +
+            "attachment_bytes, has_message " +
+            "FROM transaction ");
+        sqlQuery.append("WHERE 1=1 ");
+        createSelectTransactionQuery(sqlQuery, type, subtype, startTime, endTime, fromHeight, toHeight);
+
+        addAccountsFilter(sqlQuery, accounts);
+
+        sqlQuery.append("ORDER BY block_timestamp " + sortOrder + ", transaction_index " + sortOrder + " ");
+
+        sqlQuery.append(DbUtils.limitsClause(from, to));
+
+        log.trace("getTransactions sql=[{}]", sqlQuery.toString());
+
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement statement = con.prepareStatement(sqlQuery.toString())) {
+            int i = setSelectTransactionQueryParams(statement, type, subtype, startTime, endTime, fromHeight, toHeight);
+            DbUtils.setLimits(++i, statement, from, to);
+
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    TxReceipt receipt = parseTxReceipt(rs);
+                    result.add(receipt);
+                }
+            }
+            return result;
+        } catch (SQLException | AplException.NotValidException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    private TxReceipt parseTxReceipt(ResultSet rs) throws AplException.NotValidException {
+        try {
+            byte type = rs.getByte("type");
+            byte subtype = rs.getByte("subtype");
+            int timestamp = rs.getInt("timestamp");
+            long amountATM = rs.getLong("amount");
+            long feeATM = rs.getLong("fee");
+            byte version = rs.getByte("version");
+
+            SignatureParser parser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
+            ByteBuffer signatureBuffer = ByteBuffer.wrap(rs.getBytes("signature"));
+            Signature signature = parser.parse(signatureBuffer);
+
+            long blockId = rs.getLong("block_id");
+            int height = rs.getInt("height");
+            long id = rs.getLong("id");
+            long senderId = rs.getLong("sender_id");
+            long recipientId = rs.getLong("recipient_id");
+            byte[] attachmentBytes = rs.getBytes("attachment_bytes");
+            int blockTimestamp = rs.getInt("block_timestamp");
+            ByteBuffer buffer = null;
+            if (attachmentBytes != null) {
+                buffer = ByteBuffer.wrap(attachmentBytes);
+                buffer.order(ByteOrder.LITTLE_ENDIAN);
+            }
+
+            short transactionIndex = rs.getShort("transaction_index");
+            TransactionType transactionType = typeFactory.findTransactionType(type, subtype);
+            if (transactionType == null) {
+                throw new AplException.NotValidException("Wrong transaction type/subtype value, type=" + type + " subtype=" + subtype);
+            }
+            String payload = null;
+            transactionType.parseAttachment(buffer);
+            if (rs.getBoolean("has_message")) {
+                payload = Convert.toString(new MessageAppendix(buffer).getMessage());
+            }
+
+            TxReceipt transaction = new TxReceipt();
+            transaction.setTransaction(Long.toUnsignedString(id));
+            transaction.setSender(Convert.defaultRsAccount(senderId));
+            transaction.setRecipient(recipientId != 0 ? Convert.defaultRsAccount(recipientId) : "0");
+            transaction.setAmount(Long.toUnsignedString(amountATM));
+            transaction.setFee(Long.toUnsignedString(feeATM));
+            transaction.setTimestamp((long) timestamp);
+            transaction.setHeight((long) height);
+            transaction.setBlock(Long.toUnsignedString(blockId));
+            transaction.setBlockTimestamp((long) blockTimestamp);
+            transaction.setIndex((int) transactionIndex);
+            transaction.setSignature(signature.getJsonString());
+            transaction.setPayload(payload);
+            return transaction;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    private StringBuilder createSelectTransactionQuery(StringBuilder buf, byte type, byte subtype,
+                                                       int startTime, int endTime,
+                                                       int fromHeight, int toHeight) {
+        if (type >= 0) {
+            buf.append("AND type = ? ");
+            if (subtype >= 0) {
+                buf.append("AND subtype = ? ");
+            }
+        }
+        if (startTime > 0) {
+            buf.append("AND block_timestamp >= ? ");
+        }
+        if (endTime > 0) {
+            buf.append("AND block_timestamp <= ? ");
+        }
+        if (fromHeight > 0) {
+            buf.append("AND height >= ? ");
+        }
+        if (toHeight > 0) {
+            buf.append("AND height <= ? ");
+        }
+        return buf;
+    }
+
+    private StringBuilder addAccountsFilter(StringBuilder buf, List<Long> accounts) {
+        if (accounts != null && !accounts.isEmpty()) {
+            if (accounts.size() > 1) {
+                StringBuilder accBuf = new StringBuilder("[");
+                boolean first = true;
+                for (Long accountId : accounts) {
+                    if (accountId != 0) {
+                        if (!first) {
+                            accBuf.append(",");
+                        } else {
+                            first = false;
+                        }
+                        accBuf.append(accountId);
+                    }
+                }
+                accBuf.append("]");
+                buf.append("AND ( sender_id IN ").append(accBuf).append(" OR recipient_id IN ").append(accBuf).append(")");
+            } else {
+                buf.append("AND sender_id=").append(accounts.get(0)).append(" OR recipient_id=").append(accounts.get(0));
+            }
+        }
+        return buf;
+    }
+
+    private int setSelectTransactionQueryParams(PreparedStatement pstmt, byte type, byte subtype,
+                                                int startTime, int endTime,
+                                                int fromHeight, int toHeight) throws SQLException {
+        int i = 0;
+        if (type >= 0) {
+            pstmt.setByte(++i, type);
+            if (subtype >= 0) {
+                pstmt.setByte(++i, subtype);
+            }
+        }
+        if (startTime > 0) {
+            pstmt.setInt(++i, startTime);
+        }
+        if (endTime > 0) {
+            pstmt.setInt(++i, endTime);
+        }
+        if (fromHeight > 0) {
+            pstmt.setInt(++i, fromHeight);
+        }
+        if (toHeight > 0) {
+            pstmt.setInt(++i, toHeight);
+        }
+        return i;
     }
 }

@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
@@ -12,10 +14,13 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -28,11 +33,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
@@ -40,28 +47,50 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
 
     private final LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory;
     private int maxUnconfirmedTransactions;
-    private final Map<DbKey, UnconfirmedTransaction> transactionCache = new ConcurrentHashMap<>();
+    private final Map<DbKey, UnconfirmedTransaction> transactionCache = new HashMap<>();
     private final PriorityBlockingQueue<UnconfirmedTransaction> waitingTransactions;
-    private final Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates = new ConcurrentHashMap<>();
+    private final Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates = new HashMap<>();
     private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final TransactionBuilder transactionBuilder;
+    private final TransactionSerializer transactionSerializer;
+    private final IteratorToStreamConverter<UnconfirmedTransaction> streamConverter;
 
     @Inject
     public UnconfirmedTransactionTable(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory,
                                        PropertiesHolder propertiesHolder,
+                                       TransactionBuilder transactionBuilder,
+                                       TransactionSerializer transactionSerializer,
                                        DerivedTablesRegistry derivedDbTablesRegistry,
                                        DatabaseManager databaseManager) {
         super("unconfirmed_transaction", transactionKeyFactory, false, null,
             derivedDbTablesRegistry, databaseManager, null);
         this.transactionKeyFactory = transactionKeyFactory;
+        this.transactionBuilder = transactionBuilder;
+        this.transactionSerializer = transactionSerializer;
         int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
         this.maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
         this.waitingTransactions = createWaitingTransactionsQueue();
+        this.streamConverter = new IteratorToStreamConverter<>();
     }
 
     @Override
     public UnconfirmedTransaction load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        return new UnconfirmedTransaction(rs);
+        try {
+            byte[] transactionBytes = rs.getBytes("transaction_bytes");
+            JSONObject prunableAttachments = null;
+            String prunableJSON = rs.getString("prunable_json");
+            if (prunableJSON != null) {
+                prunableAttachments = (JSONObject) JSONValue.parse(prunableJSON);
+            }
+            Transaction tx = transactionBuilder.newTransactionBuilder(transactionBytes, prunableAttachments).build();
+            tx.setHeight(rs.getInt("transaction_height"));
+            long arrivalTimestamp = rs.getLong("arrival_timestamp");
+            long feePerByte = rs.getLong("fee_per_byte");
+            return new UnconfirmedTransaction(tx, arrivalTimestamp, feePerByte);
+        } catch (AplException.ValidationException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     @Override
@@ -74,8 +103,8 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
             pstmt.setInt(++i, unconfirmedTransaction.getHeight());
             pstmt.setLong(++i, unconfirmedTransaction.getFeePerByte());
             pstmt.setInt(++i, unconfirmedTransaction.getExpiration());
-            pstmt.setBytes(++i, unconfirmedTransaction.getBytes());
-            JSONObject prunableJSON = unconfirmedTransaction.getPrunableAttachmentJSON();
+            pstmt.setBytes(++i, unconfirmedTransaction.getCopyTxBytes());
+            JSONObject prunableJSON = transactionSerializer.getPrunableAttachmentJSON(unconfirmedTransaction);
             if (prunableJSON != null) {
                 pstmt.setString(++i, prunableJSON.toJSONString());
             } else {
@@ -141,7 +170,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
                 if (this.size() > maxUnconfirmedTransactions) {
                     UnconfirmedTransaction removed = remove();
                     log.debug("Dropped unconfirmed transaction above max size={}, {}",
-                        maxUnconfirmedTransactions, removed.getJSONObject().toJSONString());
+                        maxUnconfirmedTransactions, removed.getId());
                 }
                 return true;
             }
@@ -171,6 +200,10 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
         }
     }
 
+    public Stream<UnconfirmedTransaction> getAllUnconfirmedTransactions() {
+        return streamConverter.convert(this.getAll(0, -1));
+    }
+
     public List<Long> getAllUnconfirmedTransactionIds() {
         List<Long> result = new ArrayList<>();
         try (Connection con = databaseManager.getDataSource().getConnection();
@@ -197,6 +230,10 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
         return waitingTransactions.size();
     }
 
+    public boolean isWaitingTransactionsCacheFull() {
+        return waitingTransactions.size() >= maxUnconfirmedTransactions;
+    }
+
     public Collection<UnconfirmedTransaction> getWaitingTransactionsUnmodifiedCollection() {
         return Collections.unmodifiableCollection(waitingTransactions);
     }
@@ -205,7 +242,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
         return txToBroadcastWhenConfirmed;
     }
 
-    public Map<TransactionType, Map<String, Integer>> getUnconfirmedDuplicates() {
+    public Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> getUnconfirmedDuplicates() {
         return unconfirmedDuplicates;
     }
 

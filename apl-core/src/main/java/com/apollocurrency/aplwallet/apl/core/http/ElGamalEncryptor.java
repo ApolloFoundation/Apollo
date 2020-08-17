@@ -1,4 +1,3 @@
-
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
@@ -32,11 +31,11 @@ public class ElGamalEncryptor {
     @PostConstruct
     public final void init() {
         taskDispatchManager.newBackgroundDispatcher("KeyGenerator")
-            .schedule(Task.builder()
-                .name("KeyGenerationTask")
-                .delay(15 * 60 * 1000) // 15 min
-                .task(this::generateKeys)
-                .build());
+                .schedule(Task.builder()
+                        .name("KeyGenerationTask")
+                        .delay(15 * 60 * 1000) // 15 min
+                        .task(this::generateKeys)
+                        .build());
     }
 
     private synchronized void generateKeys() {

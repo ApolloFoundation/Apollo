@@ -4,22 +4,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.NonNull;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class BlockSerializer {
 
     private final Blockchain blockchain;
+    private final TransactionSerializer transactionSerializer;
 
     @Inject
-    public BlockSerializer(Blockchain blockchain) {
+    public BlockSerializer(@NonNull Blockchain blockchain, @NonNull TransactionSerializer transactionSerializer) {
         this.blockchain = blockchain;
+        this.transactionSerializer = transactionSerializer;
     }
 
     public JSONObject getJSONObject(Block block) {
@@ -28,7 +32,7 @@ public class BlockSerializer {
         json.put("stringId", block.getStringId());
         json.put("timestamp", block.getTimestamp());
         json.put("previousBlock", Long.toUnsignedString(block.getPreviousBlockId()));
-        json.put("totalAmountATM", block.getTotalFeeATM());
+        json.put("totalAmountATM", block.getTotalAmountATM());
         json.put("totalFeeATM", block.getTotalFeeATM());
         json.put("payloadLength", block.getPayloadLength());
         json.put("payloadHash", Convert.toHexString(block.getPayloadHash()));
@@ -40,7 +44,9 @@ public class BlockSerializer {
         json.put("timeout", block.getTimeout());
 
         JSONArray transactionsData = new JSONArray();
-        this.blockchain.getOrLoadTransactions(block).forEach(transaction -> transactionsData.add(transaction.getJSONObject()));
+        this.blockchain.getOrLoadTransactions(block)
+            .forEach(transaction -> transactionsData.add(transactionSerializer.toJson(transaction)));
+
         json.put("transactions", transactionsData);
         return json;
     }

@@ -4,8 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.transaction.AccountControl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
@@ -46,8 +45,8 @@ public final class SetPhasingOnly extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return AccountControl.SET_PHASING_ONLY;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
     }
 
     @Override

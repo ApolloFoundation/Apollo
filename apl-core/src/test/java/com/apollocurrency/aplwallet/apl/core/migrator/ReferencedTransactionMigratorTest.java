@@ -5,15 +5,22 @@
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -38,36 +45,43 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
 
 @Tag("slow")
 @EnableWeld
-public class ReferencedTransactionMigratorTest {
+class ReferencedTransactionMigratorTest {
     @RegisterExtension
     DbExtension dbExtension = new DbExtension();
+    TransactionTestData td = new TransactionTestData();
 
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(ReferencedTransactionDaoImpl.class,
-        BlockchainConfig.class, FullTextConfigImpl.class,
-        DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
-        ChainsConfigHolder.class)
+    WeldInitiator weld = WeldInitiator.from(
+        ChainsConfigHolder.class, BlockchainConfig.class, FullTextConfigImpl.class,
+        TransactionRowMapper.class,
+        TransactionBuilder.class,
+        DerivedDbTablesRegistryImpl.class,
+        ReferencedTransactionDaoImpl.class)
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
-        .addBeans(MockBean.of(Mockito.mock(TimeServiceImpl.class), TimeServiceImpl.class))
+        .addBeans(MockBean.of(Mockito.mock(TimeService.class), TimeService.class, TimeServiceImpl.class))
+        .addBeans(MockBean.of(Mockito.mock(PropertiesHolder.class), PropertiesHolder.class))
+        .addBeans(MockBean.of(Mockito.mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .build();
+
     @Inject
     ReferencedTransactionDaoImpl referencedTransactionDao;
 
     private ReferencedTransactionMigrator migrator;
-    private TransactionTestData td;
 
     @BeforeEach
     void setUp() {
         migrator = new ReferencedTransactionMigrator(dbExtension.getDatabaseManager());
-        td = new TransactionTestData();
     }
 
     @Test
-    public void testMigrate() throws SQLException {
+    void testMigrate() throws SQLException {
 
         try (Connection connection = dbExtension.getDatabaseManager().getDataSource().getConnection();
              Statement stmt = connection.createStatement()) {

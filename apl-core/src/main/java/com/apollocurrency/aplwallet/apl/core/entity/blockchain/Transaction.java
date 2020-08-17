@@ -23,10 +23,10 @@ package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -36,34 +36,15 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import org.json.simple.JSONObject;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public interface Transaction {
 
-    static Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment, int timestamp) {
-        return new TransactionImpl.BuilderImpl((byte) 1, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment) attachment, timestamp);
-    }
-
-    static Transaction.Builder newTransactionBuilder(byte[] transactionBytes) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionBytes);
-    }
-
-    static Transaction.Builder newTransactionBuilder(JSONObject transactionJSON) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionJSON);
-    }
-
-    static Transaction.Builder newTransactionBuilder(byte[] transactionBytes, JSONObject prunableAttachments) throws AplException.NotValidException {
-        return TransactionImpl.newTransactionBuilder(transactionBytes, prunableAttachments);
-    }
-
-    boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates);
-
-    void sign(byte[] keySeed) throws AplException.NotValidException;
+    boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates);
 
     long getId();
 
@@ -73,9 +54,11 @@ public interface Transaction {
 
     long getSenderId();
 
-    byte[] getSenderPublicKey();
+    boolean hasValidSignature();
 
-    boolean shouldSavePublicKey();
+    void withValidSignature();
+
+    byte[] getSenderPublicKey();
 
     long getRecipientId();
 
@@ -113,13 +96,13 @@ public interface Transaction {
         return new long[]{};
     }
 
-    ;
-
     String getReferencedTransactionFullHash();
 
     byte[] referencedTransactionFullHash();
 
-    byte[] getSignature();
+    void sign(Signature signature);
+
+    Signature getSignature();
 
     String getFullHashString();
 
@@ -129,15 +112,14 @@ public interface Transaction {
 
     Attachment getAttachment();
 
-    boolean verifySignature();
+    default byte[] getCopyTxBytes() {
+        byte[] txBytes = bytes();
+        return Arrays.copyOf(txBytes, txBytes.length);
+    }
 
-    byte[] getBytes();
+    byte[] bytes();
 
     byte[] getUnsignedBytes();
-
-    JSONObject getJSONObject();
-
-    JSONObject getPrunableAttachmentJSON();
 
     byte getVersion();
 
@@ -165,22 +147,22 @@ public interface Transaction {
 
     List<AbstractAppendix> getAppendages();
 
-    List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable);
-
-    List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable);
-
     int getECBlockHeight();
 
     long getECBlockId();
 
+    boolean ofType(TransactionTypes.TransactionTypeSpec spec);
+
+    boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec);
+
     /**
      * @deprecated see method with longer parameters list below
      */
-    default boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+    default boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         return false;
     }
 
-    default boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates,
+    default boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                                           boolean atAcceptanceHeight,
                                           Set<AccountControlType> senderAccountControls,
                                           AccountControlPhasing accountControlPhasing) {
@@ -196,6 +178,8 @@ public interface Transaction {
         }
 
         Builder referencedTransactionFullHash(String referencedTransactionFullHash);
+
+        Builder referencedTransactionFullHash(byte[] referencedTransactionFullHash);
 
         Builder appendix(MessageAppendix message);
 
@@ -215,13 +199,16 @@ public interface Transaction {
 
         Builder ecBlockHeight(int height);
 
+        Builder ecBlockData(EcBlockData ecBlockData);
+
         Builder dbId(long dbId);
 
         Builder ecBlockId(long blockId);
 
+        Builder signature(Signature signature);
+
         Transaction build() throws AplException.NotValidException;
 
-        Transaction build(byte[] keySeed) throws AplException.NotValidException;
-
+        TransactionImpl.BuilderImpl blockId(long blockId);
     }
 }

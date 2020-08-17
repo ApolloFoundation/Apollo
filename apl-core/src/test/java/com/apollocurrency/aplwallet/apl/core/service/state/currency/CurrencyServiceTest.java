@@ -36,6 +36,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.Currenc
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TransactionValidationHelper;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSCurrencyIssuanceTransactionType;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencyTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -50,6 +52,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.stream.Stream;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -57,8 +61,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-
-import java.util.stream.Stream;
 
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
@@ -112,12 +114,15 @@ class CurrencyServiceTest {
     @Mock
     private CurrencyBuyOfferService buyOfferService;
 
+    @Mock
+    TransactionValidationHelper transactionValidationHelper;
+
     @BeforeEach
     void setUp() {
         td = new CurrencyTestData();
         service = new CurrencyServiceImpl(currencySupplyTable, currencyTable, blockChainInfoService,
             accountService, accountCurrencyService, currencyExchangeOfferFacade, currencyFounderService,
-            exchangeService, currencyTransferService, shufflingService, blockchainConfig);
+            exchangeService, currencyTransferService, shufflingService, blockchainConfig, transactionValidationHelper);
     }
 
     @Test
@@ -226,12 +231,15 @@ class CurrencyServiceTest {
     @Test
     void validate() throws Exception {
         //GIVEN
-        Transaction tr = mock(Transaction.class);
+        Transaction tx = mock(Transaction.class);
+        doReturn(new MSCurrencyIssuanceTransactionType(blockchainConfig, accountService, mock(CurrencyService.class), accountCurrencyService)).when(tx).getType();
+        MonetarySystemCurrencyIssuance attachment = new MonetarySystemCurrencyIssuance("ff", "CC", "Test currency", (byte) 1, 1000, 0, 1000, 0, 0, 0, 0, (byte) 0, (byte) 0, (byte) 2);
+        doReturn(attachment).when(tx).getAttachment();
         doReturn(config).when(blockchainConfig).getCurrentConfig();
         doReturn(10L).when(config).getMaxBalanceATM();
 
         //WHEN
-        service.validate(td.CURRENCY_3, td.CURRENCY_3.getType(), tr);
+        service.validate(td.CURRENCY_3, td.CURRENCY_3.getType(), tx);
     }
 
     @Test

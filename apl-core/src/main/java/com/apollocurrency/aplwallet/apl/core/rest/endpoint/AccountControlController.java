@@ -79,7 +79,7 @@ public class AccountControlController {
     private BlockchainConfig blockchainConfig;
     private AccountControlPhasingService accountControlPhasingService;
     private AccountControlPhasingConverter accountControlPhasingConverter = new AccountControlPhasingConverter();
-    private UnconfirmedTransactionConverter unconfirmedTransactionConverter = new UnconfirmedTransactionConverter();
+    private UnconfirmedTransactionConverter unconfirmedTransactionConverter;
     private TransactionCreator txCreator;
     private AccountService accountService;
 
@@ -91,10 +91,12 @@ public class AccountControlController {
         BlockchainConfig blockchainConfig,
         TransactionCreator txCreator,
         AccountService accountService,
+        UnconfirmedTransactionConverter unconfirmedTransactionConverter,
         @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords) {
         this.accountControlPhasingService = accountControlPhasingService;
         this.blockchainConfig = blockchainConfig;
         this.txCreator = txCreator;
+        this.unconfirmedTransactionConverter = unconfirmedTransactionConverter;
         this.accountService = accountService;
         maxAPIFetchRecords = maxAPIrecords;
     }
@@ -305,7 +307,7 @@ public class AccountControlController {
         log.trace("setPhasingOnlyControl transaction = {}", transaction);
         UnconfirmedTransactionDTO txDto = unconfirmedTransactionConverter.convert(transaction);
         log.trace("DONE setPhasingOnlyControl txDto = {}", txDto);
-        // Returned DTO needs additional check on UI, because PROBABLY JSON is not quite correct
+        // TODO Returned DTO needs additional check on UI, because PROBABLY JSON is not quite correct
         // see 'LeaseBalanceResponse' as more correct response reference
         return response.bind(txDto).build();
     }
@@ -435,7 +437,7 @@ public class AccountControlController {
         leaseBalanceResponse.setUnsignedTransactionBytes(Convert.toHexString(transaction.getUnsignedBytes()));
         leaseBalanceResponse.setTransaction(transaction.getStringId());
         leaseBalanceResponse.setFullHash(transaction.getFullHashString());
-        leaseBalanceResponse.setTransactionBytes(Convert.toHexString(transaction.getBytes()));
+        leaseBalanceResponse.setTransactionBytes(Convert.toHexString(transaction.getCopyTxBytes()));
         leaseBalanceResponse.setBroadcasted(txRequest.isBroadcast());
 
         log.trace("DONE leaseBalance, response = {}", leaseBalanceResponse);

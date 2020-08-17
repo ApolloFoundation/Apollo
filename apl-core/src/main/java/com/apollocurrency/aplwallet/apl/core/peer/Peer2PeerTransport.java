@@ -372,4 +372,14 @@ public class Peer2PeerTransport {
         inboundWebSocket = pws;
     }
 
+    @Override
+    public String toString() {
+        return "Peer2PeerTransport{" +
+            "peerReference=" + peerReference.get() +
+            ", useWebSocket=" + useWebSocket +
+            ", downloadedVolume=" + downloadedVolume +
+            ", uploadedVolume=" + uploadedVolume +
+            ", lastActivity=" + lastActivity +
+            '}';
+    }
 }

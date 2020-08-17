@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
@@ -8,6 +9,11 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
@@ -16,6 +22,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Data;
 
@@ -30,23 +38,32 @@ public class TransactionCreator {
     private final FeeCalculator feeCalculator;
     private final Blockchain blockchain;
     private final TransactionProcessor processor;
+    private final TransactionTypeFactory typeFactory;
+    private final TransactionBuilder transactionBuilder;
+    private final TransactionSigner signer;
 
     @Inject
-    public TransactionCreator(TransactionValidator validator, PropertiesHolder propertiesHolder, TimeService timeService, FeeCalculator feeCalculator, Blockchain blockchain, TransactionProcessor processor) {
+    public TransactionCreator(TransactionValidator validator, PropertiesHolder propertiesHolder, TimeService timeService, FeeCalculator feeCalculator, Blockchain blockchain, TransactionProcessor processor, TransactionTypeFactory typeFactory, TransactionBuilder transactionBuilder, TransactionSigner signer) {
         this.validator = validator;
         this.propertiesHolder = propertiesHolder;
         this.timeService = timeService;
         this.feeCalculator = feeCalculator;
         this.blockchain = blockchain;
         this.processor = processor;
+        this.typeFactory = typeFactory;
+        this.transactionBuilder = transactionBuilder;
+        this.signer = signer;
     }
 
     public TransactionCreationData createTransaction(CreateTransactionRequest txRequest) {
+        int version = txRequest.getVersion() != null ? txRequest.getVersion() : 1;
+
         TransactionCreationData tcd = new TransactionCreationData();
         EncryptedMessageAppendix encryptedMessage = null;
         PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
-
-        if (txRequest.getAttachment().getTransactionType().canHaveRecipient() && txRequest.getRecipientId() != 0) {
+        TransactionTypes.TransactionTypeSpec typeSpec = txRequest.getAttachment().getTransactionTypeSpec();
+        TransactionType transactionType = typeFactory.findTransactionType(typeSpec.getType(), typeSpec.getSubtype());
+        if (transactionType.canHaveRecipient() && txRequest.getRecipientId() != 0) {
             if (txRequest.isEncryptedMessageIsPrunable()) {
                 prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) txRequest.getAppendix();
             } else {
@@ -61,14 +78,20 @@ public class TransactionCreator {
         if (txRequest.getRecipientPublicKey() != null) {
             publicKeyAnnouncement = new PublicKeyAnnouncementAppendix(Convert.parseHexString(txRequest.getRecipientPublicKey()));
         }
+        if (txRequest.getKeySeed() == null && txRequest.getSecretPhrase() != null) {
+            txRequest.setKeySeed(Crypto.getKeySeed(txRequest.getSecretPhrase()));
+        }
+
         if (txRequest.getKeySeed() != null) {
             txRequest.setPublicKey(Crypto.getPublicKey(txRequest.getKeySeed()));
         }
 
-        if (txRequest.getKeySeed() == null && txRequest.getPublicKey() == null) {
+        if (txRequest.getKeySeed() == null && txRequest.getPublicKey() == null && txRequest.getCredential() == null) {
             tcd.setErrorType(TransactionCreationData.ErrorType.MISSING_SECRET_PHRASE);
             return tcd;
-        } else if (txRequest.getDeadlineValue() == null) {
+        }
+
+        if (txRequest.getDeadlineValue() == null) {
             tcd.setErrorType(TransactionCreationData.ErrorType.MISSING_DEADLINE);
             return tcd;
         }
@@ -97,9 +120,11 @@ public class TransactionCreator {
         int timestamp = txRequest.getTimestamp() != 0 ? txRequest.getTimestamp() : timeService.getEpochTime();
         Transaction transaction;
         try {
-            Transaction.Builder builder = Transaction.newTransactionBuilder(txRequest.getPublicKey(), txRequest.getAmountATM(), txRequest.getFeeATM(),
-                deadline, txRequest.getAttachment(), timestamp).referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
-            if (txRequest.getAttachment().getTransactionType().canHaveRecipient()) {
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(txRequest.getPublicKey(),
+                        txRequest.getAmountATM(), txRequest.getFeeATM(),
+                        deadline, txRequest.getAttachment(), timestamp)
+                .referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
+            if (transactionType.canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());
             }
             builder.appendix(encryptedMessage);
@@ -112,10 +137,15 @@ public class TransactionCreator {
             if (txRequest.getEcBlockId() != 0) {
                 builder.ecBlockId(txRequest.getEcBlockId());
                 builder.ecBlockHeight(txRequest.getEcBlockHeight());
+            } else {
+                EcBlockData ecBlock = blockchain.getECBlock(timestamp);
+                builder.ecBlockData(ecBlock);
             }
-            transaction = builder.build(txRequest.getKeySeed());
+            //build transaction, this transaction is UNSIGNED
+            transaction = builder.build();
             if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
                 int effectiveHeight = blockchain.getHeight();
+                @TransactionFee(FeeMarker.CALCULATOR)
                 long minFee = feeCalculator.getMinimumFeeATM(transaction, effectiveHeight);
                 txRequest.setFeeATM(Math.max(minFee, txRequest.getFeeATM()));
                 transaction.setFeeATM(txRequest.getFeeATM());
@@ -129,6 +159,17 @@ public class TransactionCreator {
             } catch (ArithmeticException e) {
                 tcd.setErrorType(TransactionCreationData.ErrorType.NOT_ENOUGH_APL);
                 return tcd;
+            }
+
+            //Sign transaction
+            if (version < 2) { //tx v1
+                if (txRequest.getKeySeed() != null) {
+                    signer.sign(transaction, txRequest.getKeySeed());
+                }
+            } else {//tx v2
+                if (txRequest.getCredential() != null) {
+                    signer.sign(transaction, txRequest.getCredential());
+                }
             }
 
             if (txRequest.isBroadcast()) {
@@ -186,7 +227,9 @@ public class TransactionCreator {
         }
 
         public enum ErrorType {
-            INCORRECT_DEADLINE, MISSING_DEADLINE, MISSING_SECRET_PHRASE, INCORRECT_EC_BLOCK, FEATURE_NOT_AVAILABLE, NOT_ENOUGH_APL, INSUFFICIENT_BALANCE_ON_APPLY_UNCONFIRMED, VALIDATION_FAILED
+            INCORRECT_DEADLINE, MISSING_DEADLINE, MISSING_SECRET_PHRASE,
+            INCORRECT_EC_BLOCK, FEATURE_NOT_AVAILABLE, NOT_ENOUGH_APL,
+            INSUFFICIENT_BALANCE_ON_APPLY_UNCONFIRMED, VALIDATION_FAILED
         }
     }
 }

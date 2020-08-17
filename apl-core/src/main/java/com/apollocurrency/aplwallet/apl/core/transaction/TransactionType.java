@@ -23,470 +23,36 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
-import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
-import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPropertyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountAssetServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountCurrencyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountInfoServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountLeaseServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPropertyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.impl.AssetServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
-import lombok.Setter;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
+import lombok.Getter;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+@Getter
 public abstract class TransactionType {
+    private final BlockchainConfig blockchainConfig;
+    private final AccountService accountService;
 
-    public static final byte TYPE_PAYMENT = 0;
-    public static final byte TYPE_MESSAGING = 1;
-    public static final byte TYPE_COLORED_COINS = 2;
-    public static final byte TYPE_DIGITAL_GOODS = 3;
-    public static final byte TYPE_ACCOUNT_CONTROL = 4;
-    public static final byte TYPE_MONETARY_SYSTEM = 5;
-    public static final byte TYPE_DATA = 6;
-    public static final byte TYPE_SHUFFLING = 7;
-    public static final byte TYPE_UPDATE = 8;
-    public static final byte TYPE_DEX = 9;
-
-    public static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
-    public static final byte SUBTYPE_PAYMENT_PRIVATE_PAYMENT = 1;
-
-    public static final byte SUBTYPE_MESSAGING_ARBITRARY_MESSAGE = 0;
-    public static final byte SUBTYPE_MESSAGING_ALIAS_ASSIGNMENT = 1;
-    public static final byte SUBTYPE_MESSAGING_POLL_CREATION = 2;
-    public static final byte SUBTYPE_MESSAGING_VOTE_CASTING = 3;
-    public static final byte SUBTYPE_MESSAGING_HUB_ANNOUNCEMENT = 4;
-    public static final byte SUBTYPE_MESSAGING_ACCOUNT_INFO = 5;
-    public static final byte SUBTYPE_MESSAGING_ALIAS_SELL = 6;
-    public static final byte SUBTYPE_MESSAGING_ALIAS_BUY = 7;
-    public static final byte SUBTYPE_MESSAGING_ALIAS_DELETE = 8;
-    public static final byte SUBTYPE_MESSAGING_PHASING_VOTE_CASTING = 9;
-    public static final byte SUBTYPE_MESSAGING_ACCOUNT_PROPERTY = 10;
-    public static final byte SUBTYPE_MESSAGING_ACCOUNT_PROPERTY_DELETE = 11;
-
-    public static final byte SUBTYPE_COLORED_COINS_ASSET_ISSUANCE = 0;
-    public static final byte SUBTYPE_COLORED_COINS_ASSET_TRANSFER = 1;
-    public static final byte SUBTYPE_COLORED_COINS_ASK_ORDER_PLACEMENT = 2;
-    public static final byte SUBTYPE_COLORED_COINS_BID_ORDER_PLACEMENT = 3;
-    public static final byte SUBTYPE_COLORED_COINS_ASK_ORDER_CANCELLATION = 4;
-    public static final byte SUBTYPE_COLORED_COINS_BID_ORDER_CANCELLATION = 5;
-    public static final byte SUBTYPE_COLORED_COINS_DIVIDEND_PAYMENT = 6;
-    public static final byte SUBTYPE_COLORED_COINS_ASSET_DELETE = 7;
-
-    public static final byte SUBTYPE_DIGITAL_GOODS_LISTING = 0;
-    public static final byte SUBTYPE_DIGITAL_GOODS_DELISTING = 1;
-    public static final byte SUBTYPE_DIGITAL_GOODS_PRICE_CHANGE = 2;
-    public static final byte SUBTYPE_DIGITAL_GOODS_QUANTITY_CHANGE = 3;
-    public static final byte SUBTYPE_DIGITAL_GOODS_PURCHASE = 4;
-    public static final byte SUBTYPE_DIGITAL_GOODS_DELIVERY = 5;
-    public static final byte SUBTYPE_DIGITAL_GOODS_FEEDBACK = 6;
-    public static final byte SUBTYPE_DIGITAL_GOODS_REFUND = 7;
-
-    public static final byte SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING = 0;
-    public static final byte SUBTYPE_ACCOUNT_CONTROL_PHASING_ONLY = 1;
-
-    public static final byte SUBTYPE_DATA_TAGGED_DATA_UPLOAD = 0;
-    public static final byte SUBTYPE_DATA_TAGGED_DATA_EXTEND = 1;
-
-    public static final byte SUBTYPE_UPDATE_CRITICAL = 0;
-    public static final byte SUBTYPE_UPDATE_IMPORTANT = 1;
-    public static final byte SUBTYPE_UPDATE_MINOR = 2;
-    public static final byte SUBTYPE_UPDATE_V2 = 3;
-
-    public static final byte SUBTYPE_DEX_ORDER = 0;
-    public static final byte SUBTYPE_DEX_ORDER_CANCEL = 1;
-    public static final byte SUBTYPE_DEX_CONTRACT = 2;
-    public static final byte SUBTYPE_DEX_TRANSFER_MONEY = 3;
-    public static final byte SUBTYPE_DEX_CLOSE_ORDER = 4;
-
-
-    public static BlockchainConfig blockchainConfig;
-    public static TimeService timeService;
-    protected static Blockchain blockchain;
-    private static PhasingPollService phasingPollService;
-    private static volatile AliasService ALIAS_SERVICE;
-
-    @Setter
-    private static AccountService accountService;
-    private static AccountCurrencyService accountCurrencyService;
-    private static AccountLeaseService accountLeaseService;
-    private static AccountAssetService accountAssetService;
-    private static AccountPropertyService accountPropertyService;
-    private static AccountInfoService accountInfoService;
-    private static UpdateV2Transaction updateV2TransactionType;
-    private static AccountControlPhasingService accountControlPhasingService;
-    private static AssetService assetService;
-    private static AssetDividendService assetDividendService;
-    private static PollService pollService;
-    private static AssetTransferService assetTransferService;
-    private static CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
-    private static ExchangeRequestService exchangeRequestService;
-    private static CurrencyTransferService currencyTransferService;
-    private static CurrencyMintService currencyMintService;
-    private static CurrencyService currencyService;
-    private static MonetaryCurrencyMintingService monetaryCurrencyMintingService;
-    private static ShufflingService shufflingService;
-
-    public TransactionType() {
+    public TransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
+        this.blockchainConfig = blockchainConfig;
+        this.accountService = accountService;
     }
 
-    public static synchronized AccountService lookupAccountService() {
-        if (accountService == null) {
-            accountService = CDI.current().select(AccountServiceImpl.class).get();
-        }
-        return accountService;
-    }
-
-    // Should be removed when TransactionType hierarchy will be refactored
-    public static synchronized UpdateV2Transaction updateV2Transaction() {
-        if (updateV2TransactionType == null) {
-            updateV2TransactionType = CDI.current().select(UpdateV2Transaction.class).get();
-        }
-        return updateV2TransactionType;
-    }
-
-    public static synchronized AccountCurrencyService lookupAccountCurrencyService() {
-        if (accountCurrencyService == null) {
-            accountCurrencyService = CDI.current().select(AccountCurrencyServiceImpl.class).get();
-        }
-        return accountCurrencyService;
-    }
-
-    public static synchronized AccountLeaseService lookupAccountLeaseService() {
-        if (accountLeaseService == null) {
-            accountLeaseService = CDI.current().select(AccountLeaseServiceImpl.class).get();
-        }
-        return accountLeaseService;
-    }
-
-    public static synchronized AccountAssetService lookupAccountAssetService() {
-        if (accountAssetService == null) {
-            accountAssetService = CDI.current().select(AccountAssetServiceImpl.class).get();
-        }
-        return accountAssetService;
-    }
-
-    public static synchronized AccountPropertyService lookupAccountPropertyService() {
-        if (accountPropertyService == null) {
-            accountPropertyService = CDI.current().select(AccountPropertyServiceImpl.class).get();
-        }
-        return accountPropertyService;
-    }
-
-    public static synchronized AccountInfoService lookupAccountInfoService() {
-        if (accountInfoService == null) {
-            accountInfoService = CDI.current().select(AccountInfoServiceImpl.class).get();
-        }
-        return accountInfoService;
-    }
-
-    public static synchronized Blockchain lookupBlockchain() {
-        if (blockchain == null) {
-            blockchain = CDI.current().select(Blockchain.class).get();
-        }
-        return blockchain;
-    }
-
-    public static synchronized TimeService lookupTimeService() {
-        if (timeService == null) {
-            timeService = CDI.current().select(TimeService.class).get();
-        }
-        return timeService;
-    }
-
-    public static synchronized BlockchainConfig lookupBlockchainConfig() {
-        if (blockchainConfig == null) {
-            blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        }
-        return blockchainConfig;
-    }
-
-    public static synchronized PhasingPollService lookupPhasingPollService() {
-        if (phasingPollService == null) {
-            phasingPollService = CDI.current().select(PhasingPollService.class).get();
-        }
-        return phasingPollService;
-    }
-
-    /**
-     * Looks up AliasService lazily using SafeDCLFactory
-     * adjusted to a static field.
-     *
-     * @return AliasService
-     */
-    protected static synchronized AliasService lookupAliasService() {
-        if (ALIAS_SERVICE == null) {
-            synchronized (Messaging.class) {
-                if (ALIAS_SERVICE == null) {
-                    ALIAS_SERVICE = CDI.current().select(AliasService.class).get();
-                }
-            }
-        }
-        return ALIAS_SERVICE;
-    }
-
-    public static synchronized AccountControlPhasingService lookupAccountControlPhasingService() {
-        if (accountControlPhasingService == null) {
-            accountControlPhasingService = CDI.current().select(AccountControlPhasingService.class).get();
-        }
-        return accountControlPhasingService;
-    }
-
-    public static synchronized AssetService lookupAssetService() {
-        if (assetService == null) {
-            assetService = CDI.current().select(AssetServiceImpl.class).get();
-        }
-        return assetService;
-    }
-
-    public static synchronized AssetDividendService lookupAssetDividendService() {
-        if (assetDividendService == null) {
-            assetDividendService = CDI.current().select(AssetDividendService.class).get();
-        }
-        return assetDividendService;
-    }
-
-    public static synchronized PollService lookupPollService() {
-        if (pollService == null) {
-            pollService = CDI.current().select(PollService.class).get();
-        }
-        return pollService;
-    }
-
-    public static synchronized AssetTransferService lookupAssetTransferService() {
-        if (assetTransferService == null) {
-            assetTransferService = CDI.current().select(AssetTransferService.class).get();
-        }
-        return assetTransferService;
-    }
-
-
-    public static synchronized CurrencyExchangeOfferFacade lookupCurrencyExchangeOfferFacade() {
-        if (currencyExchangeOfferFacade == null) {
-            currencyExchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
-        }
-        return currencyExchangeOfferFacade;
-    }
-
-    public static synchronized ExchangeRequestService lookupExchangeRequestService() {
-        if (exchangeRequestService == null) {
-            exchangeRequestService = CDI.current().select(ExchangeRequestService.class).get();
-        }
-        return exchangeRequestService;
-    }
-
-    public static synchronized CurrencyTransferService lookupCurrencyTransferService() {
-        if (currencyTransferService == null) {
-            currencyTransferService = CDI.current().select(CurrencyTransferService.class).get();
-        }
-        return currencyTransferService;
-    }
-
-    public static synchronized CurrencyMintService lookupCurrencyMintService() {
-        if (currencyMintService == null) {
-            currencyMintService = CDI.current().select(CurrencyMintService.class).get();
-        }
-        return currencyMintService;
-    }
-
-    public static synchronized CurrencyService lookupCurrencyService() {
-        if (currencyService == null) {
-            currencyService = CDI.current().select(CurrencyService.class).get();
-        }
-        return currencyService;
-    }
-
-    public static synchronized MonetaryCurrencyMintingService lookupMonetaryCurrencyMintingService() {
-        if (monetaryCurrencyMintingService == null) {
-            monetaryCurrencyMintingService = CDI.current().select(MonetaryCurrencyMintingService.class).get();
-        }
-        return monetaryCurrencyMintingService;
-    }
-
-    public static synchronized ShufflingService lookupShufflingService() {
-        if (shufflingService == null) {
-            shufflingService = CDI.current().select(ShufflingService.class).get();
-        }
-        return shufflingService;
-    }
-
-    public static TransactionType findTransactionType(byte type, byte subtype) {
-        switch (type) {
-            case TYPE_PAYMENT:
-                switch (subtype) {
-                    case SUBTYPE_PAYMENT_ORDINARY_PAYMENT:
-                        return Payment.ORDINARY;
-                    case SUBTYPE_PAYMENT_PRIVATE_PAYMENT:
-                        return Payment.PRIVATE;
-                    default:
-                        return null;
-                }
-            case TYPE_MESSAGING:
-                switch (subtype) {
-                    case SUBTYPE_MESSAGING_ARBITRARY_MESSAGE:
-                        return Messaging.ARBITRARY_MESSAGE;
-                    case SUBTYPE_MESSAGING_ALIAS_ASSIGNMENT:
-                        return Messaging.ALIAS_ASSIGNMENT;
-                    case SUBTYPE_MESSAGING_POLL_CREATION:
-                        return Messaging.POLL_CREATION;
-                    case SUBTYPE_MESSAGING_VOTE_CASTING:
-                        return Messaging.VOTE_CASTING;
-                    case SUBTYPE_MESSAGING_HUB_ANNOUNCEMENT:
-                        throw new IllegalArgumentException("Hub Announcement no longer supported");
-                    case SUBTYPE_MESSAGING_ACCOUNT_INFO:
-                        return Messaging.ACCOUNT_INFO;
-                    case SUBTYPE_MESSAGING_ALIAS_SELL:
-                        return Messaging.ALIAS_SELL;
-                    case SUBTYPE_MESSAGING_ALIAS_BUY:
-                        return Messaging.ALIAS_BUY;
-                    case SUBTYPE_MESSAGING_ALIAS_DELETE:
-                        return Messaging.ALIAS_DELETE;
-                    case SUBTYPE_MESSAGING_PHASING_VOTE_CASTING:
-                        return Messaging.PHASING_VOTE_CASTING;
-                    case SUBTYPE_MESSAGING_ACCOUNT_PROPERTY:
-                        return Messaging.ACCOUNT_PROPERTY;
-                    case SUBTYPE_MESSAGING_ACCOUNT_PROPERTY_DELETE:
-                        return Messaging.ACCOUNT_PROPERTY_DELETE;
-                    default:
-                        return null;
-                }
-            case TYPE_COLORED_COINS:
-                switch (subtype) {
-                    case SUBTYPE_COLORED_COINS_ASSET_ISSUANCE:
-                        return ColoredCoins.ASSET_ISSUANCE;
-                    case SUBTYPE_COLORED_COINS_ASSET_TRANSFER:
-                        return ColoredCoins.ASSET_TRANSFER;
-                    case SUBTYPE_COLORED_COINS_ASK_ORDER_PLACEMENT:
-                        return ColoredCoins.ASK_ORDER_PLACEMENT;
-                    case SUBTYPE_COLORED_COINS_BID_ORDER_PLACEMENT:
-                        return ColoredCoins.BID_ORDER_PLACEMENT;
-                    case SUBTYPE_COLORED_COINS_ASK_ORDER_CANCELLATION:
-                        return ColoredCoins.ASK_ORDER_CANCELLATION;
-                    case SUBTYPE_COLORED_COINS_BID_ORDER_CANCELLATION:
-                        return ColoredCoins.BID_ORDER_CANCELLATION;
-                    case SUBTYPE_COLORED_COINS_DIVIDEND_PAYMENT:
-                        return ColoredCoins.DIVIDEND_PAYMENT;
-                    case SUBTYPE_COLORED_COINS_ASSET_DELETE:
-                        return ColoredCoins.ASSET_DELETE;
-                    default:
-                        return null;
-                }
-            case TYPE_DIGITAL_GOODS:
-                switch (subtype) {
-                    case SUBTYPE_DIGITAL_GOODS_LISTING:
-                        return DigitalGoods.LISTING;
-                    case SUBTYPE_DIGITAL_GOODS_DELISTING:
-                        return DigitalGoods.DELISTING;
-                    case SUBTYPE_DIGITAL_GOODS_PRICE_CHANGE:
-                        return DigitalGoods.PRICE_CHANGE;
-                    case SUBTYPE_DIGITAL_GOODS_QUANTITY_CHANGE:
-                        return DigitalGoods.QUANTITY_CHANGE;
-                    case SUBTYPE_DIGITAL_GOODS_PURCHASE:
-                        return DigitalGoods.PURCHASE;
-                    case SUBTYPE_DIGITAL_GOODS_DELIVERY:
-                        return DigitalGoods.DELIVERY;
-                    case SUBTYPE_DIGITAL_GOODS_FEEDBACK:
-                        return DigitalGoods.FEEDBACK;
-                    case SUBTYPE_DIGITAL_GOODS_REFUND:
-                        return DigitalGoods.REFUND;
-                    default:
-                        return null;
-                }
-            case TYPE_ACCOUNT_CONTROL:
-                switch (subtype) {
-                    case SUBTYPE_ACCOUNT_CONTROL_EFFECTIVE_BALANCE_LEASING:
-                        return AccountControl.EFFECTIVE_BALANCE_LEASING;
-                    case SUBTYPE_ACCOUNT_CONTROL_PHASING_ONLY:
-                        return AccountControl.SET_PHASING_ONLY;
-                    default:
-                        return null;
-                }
-            case TYPE_MONETARY_SYSTEM:
-                return MonetarySystem.findTransactionType(subtype);
-            case TYPE_DATA:
-                switch (subtype) {
-                    case SUBTYPE_DATA_TAGGED_DATA_UPLOAD:
-                        return Data.TAGGED_DATA_UPLOAD;
-                    case SUBTYPE_DATA_TAGGED_DATA_EXTEND:
-                        return Data.TAGGED_DATA_EXTEND;
-                    default:
-                        return null;
-                }
-            case TYPE_SHUFFLING:
-                return ShufflingTransaction.findTransactionType(subtype);
-            case TYPE_UPDATE:
-                switch (subtype) {
-                    case SUBTYPE_UPDATE_CRITICAL:
-                        return Update.CRITICAL;
-                    case SUBTYPE_UPDATE_IMPORTANT:
-                        return Update.IMPORTANT;
-                    case SUBTYPE_UPDATE_MINOR:
-                        return Update.MINOR;
-                    case SUBTYPE_UPDATE_V2:
-                        return updateV2Transaction();
-                    default:
-                        return null;
-                }
-            case TYPE_DEX:
-                switch (subtype) {
-                    case SUBTYPE_DEX_ORDER:
-                        return DEX.DEX_ORDER_TRANSACTION;
-                    case SUBTYPE_DEX_ORDER_CANCEL:
-                        return DEX.DEX_CANCEL_ORDER_TRANSACTION;
-                    case SUBTYPE_DEX_CONTRACT:
-                        return DEX.DEX_CONTRACT_TRANSACTION;
-                    case SUBTYPE_DEX_TRANSFER_MONEY:
-                        return DEX.DEX_TRANSFER_MONEY_TRANSACTION;
-                    case SUBTYPE_DEX_CLOSE_ORDER:
-                        return DEX.DEX_CLOSE_ORDER;
-                    default:
-                        return null;
-                }
-
-            default:
-                return null;
-        }
-    }
-
-    public static boolean isDuplicate(TransactionType uniqueType, String key, Map<TransactionType, Map<String, Integer>> duplicates, boolean exclusive) {
+    public static boolean isDuplicate(TransactionTypes.TransactionTypeSpec uniqueType, String key, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, boolean exclusive) {
         return isDuplicate(uniqueType, key, duplicates, exclusive ? 0 : Integer.MAX_VALUE);
     }
 
-    public static boolean isDuplicate(TransactionType uniqueType, String key, Map<TransactionType, Map<String, Integer>> duplicates, int maxCount) {
+    public static boolean isDuplicate(TransactionTypes.TransactionTypeSpec uniqueType, String key, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, int maxCount) {
         Map<String, Integer> typeDuplicates = duplicates.get(uniqueType);
         if (typeDuplicates == null) {
             typeDuplicates = new HashMap<>();
@@ -507,9 +73,7 @@ public abstract class TransactionType {
         return true;
     }
 
-    public abstract byte getType();
-
-    public abstract byte getSubtype();
+    public abstract TransactionTypes.TransactionTypeSpec getSpec();
 
     public abstract LedgerEvent getLedgerEvent();
 
@@ -520,17 +84,18 @@ public abstract class TransactionType {
     public abstract void validateAttachment(Transaction transaction) throws AplException.ValidationException;
 
     // return false if double spending
+    @TransactionFee(FeeMarker.UNCONFIRMED_BALANCE)
     public final boolean applyUnconfirmed(Transaction transaction, Account senderAccount) {
         long amountATM = transaction.getAmountATM();
         long feeATM = transaction.getFeeATM();
         if (transaction.referencedTransactionFullHash() != null) {
-            feeATM = Math.addExact(feeATM, lookupBlockchainConfig().getUnconfirmedPoolDepositAtm());
+            feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
         }
         long totalAmountATM = Math.addExact(amountATM, feeATM);
         if (senderAccount.getUnconfirmedBalanceATM() < totalAmountATM) {
             return false;
         }
-        lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -amountATM, -feeATM);
+        accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -amountATM, -feeATM);
         if (!applyAttachmentUnconfirmed(transaction, senderAccount)) {
             accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), amountATM, feeATM);
             return false;
@@ -540,13 +105,13 @@ public abstract class TransactionType {
 
     public abstract boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount);
 
-    public void apply(TransactionImpl transaction, Account senderAccount, Account recipientAccount) {
+    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         long amount = transaction.getAmountATM();
         long transactionId = transaction.getId();
         if (!transaction.attachmentIsPhased()) {
-            lookupAccountService().addToBalanceATM(senderAccount, getLedgerEvent(), transactionId, -amount, -transaction.getFeeATM());
+            accountService.addToBalanceATM(senderAccount, getLedgerEvent(), transactionId, -amount, -transaction.getFeeATM());
         } else {
-            lookupAccountService().addToBalanceATM(senderAccount, getLedgerEvent(), transactionId, -amount);
+            accountService.addToBalanceATM(senderAccount, getLedgerEvent(), transactionId, -amount);
         }
         if (recipientAccount != null) {
             //refresh balance in case a debit account is equal to a credit one
@@ -560,28 +125,30 @@ public abstract class TransactionType {
 
     public abstract void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount);
 
+    @TransactionFee(FeeMarker.UNDO_UNCONFIRMED_BALANCE)
     public final void undoUnconfirmed(Transaction transaction, Account senderAccount) {
         undoAttachmentUnconfirmed(transaction, senderAccount);
-        lookupAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(),
+        accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(),
             transaction.getAmountATM(), transaction.getFeeATM());
         if (transaction.referencedTransactionFullHash() != null) {
             accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), 0,
-                lookupBlockchainConfig().getUnconfirmedPoolDepositAtm());
+                blockchainConfig.getUnconfirmedPoolDepositAtm());
         }
     }
 
+    @TransactionFee(FeeMarker.UNDO_UNCONFIRMED_BALANCE)
     public abstract void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount);
 
-    public boolean isDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         return false;
     }
 
     // isBlockDuplicate and isDuplicate share the same duplicates map, but isBlockDuplicate check is done first
-    public boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isBlockDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         return false;
     }
 
-    public boolean isUnconfirmedDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates) {
+    public boolean isUnconfirmedDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
         return false;
     }
 
@@ -605,10 +172,12 @@ public abstract class TransactionType {
         return true;
     }
 
+    @TransactionFee(FeeMarker.BASE_FEE)
     public Fee getBaselineFee(Transaction transaction) {
         return Fee.DEFAULT_FEE;
     }
 
+    @TransactionFee(FeeMarker.FEE)
     public Fee getNextFee(Transaction transaction) {
         return getBaselineFee(transaction);
     }
@@ -621,6 +190,7 @@ public abstract class TransactionType {
         return Integer.MAX_VALUE;
     }
 
+    @TransactionFee(FeeMarker.FEE)
     public long[] getBackFees(Transaction transaction) {
         return Convert.EMPTY_LONG;
     }
@@ -629,7 +199,7 @@ public abstract class TransactionType {
 
     @Override
     public final String toString() {
-        return getName() + " type: " + getType() + ", subtype: " + getSubtype();
+        return getName() + " " + getSpec();
     }
 
 }

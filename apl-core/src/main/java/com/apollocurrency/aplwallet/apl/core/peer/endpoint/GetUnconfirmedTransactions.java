@@ -22,15 +22,18 @@ package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
 import java.util.List;
 import java.util.SortedSet;
 
 public final class GetUnconfirmedTransactions extends PeerRequestHandler {
+    private TransactionSerializer transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
 
     public GetUnconfirmedTransactions() {
     }
@@ -50,7 +53,7 @@ public final class GetUnconfirmedTransactions extends PeerRequestHandler {
             if (transactionsData.size() >= 100) {
                 break;
             }
-            transactionsData.add(transaction.getJSONObject());
+            transactionsData.add(transactionSerializer.toJson(transaction));
         }
         JSONObject response = new JSONObject();
         response.put("unconfirmedTransactions", transactionsData);

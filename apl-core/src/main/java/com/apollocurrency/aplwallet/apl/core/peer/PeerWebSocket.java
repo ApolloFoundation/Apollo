@@ -243,4 +243,13 @@ public class PeerWebSocket extends WebSocketAdapter {
     public Peer2PeerTransport getTransport() {
         return peerReference.get();
     }
+
+    @Override
+    public String toString() {
+        return "PeerWebSocket{" +
+            "peerReference=" + peerReference.get() +
+            ", version=" + version +
+            ", lastActivityTime=" + lastActivityTime +
+            "} " + super.toString();
+    }
 }
