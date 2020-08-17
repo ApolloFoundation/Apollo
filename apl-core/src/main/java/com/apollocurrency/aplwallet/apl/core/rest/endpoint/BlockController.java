@@ -152,6 +152,10 @@ public class BlockController {
         blockConverter.setAddTransactions(includeTransactions);
         blockConverter.setAddPhasedTransactions(includeExecutedPhased);
         BlockDTO dto = blockConverter.convert(blockData);
+        if (!includeTransactions) {
+            long count = blockchain.getBlockTransactionCount(blockData.getId());
+            dto.setNumberOfTransactions(count);
+        }
         log.trace("getBlock result: {}", dto);
         return response.bind(dto).build();
     }
