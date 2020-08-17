@@ -122,6 +122,7 @@ public class GeneratorServiceImpl implements GeneratorService {
 
     @Override
     public GeneratorMemoryEntity stopForging(byte[] keySeed) {
+        long start = System.currentTimeMillis();
         GeneratorMemoryEntity generator = generators.remove(Convert.getId(Crypto.getPublicKey(keySeed)));
         if (generator != null && generateBlocksThread != null) {
             globalSync.updateLock();
@@ -130,13 +131,14 @@ public class GeneratorServiceImpl implements GeneratorService {
             } finally {
                 globalSync.updateUnlock();
             }
-            log.debug(generator + " stopped");
+            log.debug(generator + " stopped ({} ms)", (System.currentTimeMillis() - start));
         }
         return generator;
     }
 
     @Override
     public int stopForging() {
+        long start = System.currentTimeMillis();
         int count = generators.size();
         Iterator<GeneratorMemoryEntity> iter = generators.values().iterator();
         while (iter.hasNext()) {
@@ -152,6 +154,7 @@ public class GeneratorServiceImpl implements GeneratorService {
         } finally {
             globalSync.updateUnlock();
         }
+        log.debug("stopped forging ({} ms)", (System.currentTimeMillis() - start));
         return count;
     }
 
@@ -303,6 +306,7 @@ public class GeneratorServiceImpl implements GeneratorService {
     @Override
     public boolean forge(Block lastBlock, int generationLimit, GeneratorMemoryEntity generator)
         throws BlockchainProcessor.BlockNotAcceptedException {
+        long startLog = System.currentTimeMillis();
         int timestamp = generator.getTimestamp(generationLimit);
         int[] timeoutAndVersion = getBlockTimeoutAndVersion(timestamp, generationLimit, lastBlock);
         if (timeoutAndVersion == null) {
@@ -320,6 +324,7 @@ public class GeneratorServiceImpl implements GeneratorService {
             try {
                 lookupBlockchainProcessor().generateBlock(generator.getKeySeed(), timestamp + timeout, timeout, timeoutAndVersion[1]);
                 setDelay(propertiesHolder.FORGING_DELAY());
+                log.debug(generator + " stopped forge loop in ({} ms)", (System.currentTimeMillis() - startLog));
                 return true;
             } catch (BlockchainProcessor.TransactionNotAcceptedException e) {
                 // the bad transaction has been expunged, try again

@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -61,7 +62,8 @@ public class GenerateBlocksThread implements Runnable {
 
     @Override
     public void run() {
-        log.trace("run - generateBlocksThread");
+        long start = System.currentTimeMillis();
+        log.trace("run - generateBlocksThread ({})", start);
         if (suspendForging) {
             log.trace("run - suspendForging = {}", suspendForging);
             return;
@@ -79,7 +81,7 @@ public class GenerateBlocksThread implements Runnable {
                     final int generationLimit = timeService.getEpochTime() - delayTime;
                     if (lastBlock.getId() != lastBlockId || sortedForgers == null) {
                         lastBlockId = lastBlock.getId();
-                        log.trace("run - lastBlockId = {}", lastBlockId);
+                        log.trace("run - lastBlockId = {} ({} ms)", lastBlockId, (System.currentTimeMillis() - start) );
                         Map<Long, GeneratorMemoryEntity> generatorsMap = generatorService.getGeneratorsMap();
                         if (lastBlock.getTimestamp() > timeService.getEpochTime() - 600) {
                             log.trace("run - getTimestamp = {} > {}", lastBlock.getTimestamp(), timeService.getEpochTime() - 600);
@@ -112,7 +114,7 @@ public class GenerateBlocksThread implements Runnable {
                         Collections.sort(forgers);
                         sortedForgers = Collections.unmodifiableList(forgers);
                         logged = false;
-                        log.trace("run - set logged = {}", logged);
+                        log.trace("run - set logged = {} ({} ms)", logged, (System.currentTimeMillis() - start));
                     }
                     if (!logged) {
                         for (GeneratorMemoryEntity generator : sortedForgers) {
@@ -135,11 +137,12 @@ public class GenerateBlocksThread implements Runnable {
                         }
                     }
                 } finally {
-                    log.trace("Release generation lock");
                     globalSync.updateUnlock();
+                    log.trace("Release generation lock  ({} ms)", (System.currentTimeMillis() - start));
                 }
             } catch (Exception e) {
-                log.info("Error in block generation thread", e);
+                log.error("Error in block generation thread = {}", (System.currentTimeMillis() - start), e);
+                log.trace("Stack trace = {}", ThreadUtils.getStackTrace(e));
             }
         } catch (Throwable t) {
             log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
