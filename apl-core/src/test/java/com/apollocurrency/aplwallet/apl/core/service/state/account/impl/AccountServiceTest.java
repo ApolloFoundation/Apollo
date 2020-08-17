@@ -97,7 +97,7 @@ class AccountServiceTest {
         Account account = accountService.getAccount(accountId, height);
         assertNull(account);
 
-        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).loadPublicKeyFromDb(dbKey, height);
+        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).loadPublicKeyFromDb(accountId, height);
         account = accountService.getAccount(accountId, height);
         assertEquals(newAccount, account);
         assertEquals(testData.PUBLIC_KEY1, account.getPublicKey());
@@ -111,7 +111,7 @@ class AccountServiceTest {
         Account account = accountService.getAccount(accountId);
         assertNull(account);
 
-        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).getPublicKey(dbKey);
+        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).getPublicKey(accountId);
         account = accountService.getAccount(accountId);
         assertEquals(testData.PUBLIC_KEY1, account.getPublicKey());
     }
@@ -139,7 +139,7 @@ class AccountServiceTest {
         Account newAccount = new Account(((LongKey) dbKey).getId(), dbKey);
         Account account = accountService.addOrGetAccount(accountId);
         assertEquals(newAccount, account);
-        verify(accountPublicKeyService).insertNewPublicKey(dbKey);
+        verify(accountPublicKeyService).insertNewPublicKey(accountId);
     }
 
     @Test
@@ -184,7 +184,7 @@ class AccountServiceTest {
         doReturn(blockchainHeight).when(blockChainInfoService).getHeight();
         assertEquals(0, accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock));
 
-        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).getPublicKey(AccountTable.newKey(testData.ACC_0.getId()));
+        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).getPublicKey(testData.ACC_0.getId());
         doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
         doReturn(lessorsBalance).when(accountService).getLessorsGuaranteedBalanceATM(testData.ACC_0, height);
         doReturn(guaranteedBalance).when(accountService).getGuaranteedBalanceATM(testData.ACC_0, 1440, height);

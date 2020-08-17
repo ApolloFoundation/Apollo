@@ -191,10 +191,9 @@ class BlockControllerTest extends AbstractEndpointTest {
         doReturn(btd.BLOCK_13).when(blockchain).getLastBlock();
         FirstLastIndexParser.FirstLastIndex index = new FirstLastIndexParser.FirstLastIndex(0, 99);
         doReturn(index).when(indexParser).adjustIndexes(0, -1);
-        Stream<Block> blockStream = Stream.of( btd.BLOCK_1, btd.BLOCK_2, btd.BLOCK_3, btd.BLOCK_4, btd.BLOCK_5, btd.BLOCK_6, btd.BLOCK_10 );
         List<Block> blockList = List.of( btd.BLOCK_1, btd.BLOCK_2, btd.BLOCK_3, btd.BLOCK_4, btd.BLOCK_5, btd.BLOCK_6, btd.BLOCK_10 );
         Stream<Block> blockStream3 = Stream.of( btd.BLOCK_1, btd.BLOCK_2, btd.BLOCK_3, btd.BLOCK_4, btd.BLOCK_5, btd.BLOCK_6, btd.BLOCK_10 );
-        doReturn(blockStream).when(blockchain).getBlocksStream(0, 99, -1); // fix
+        doReturn(blockList).when(blockchain).getBlocksFromShards(0, 99, -1); // fix
 
         List<BlockDTO> blockDTOList = createDtoList(blockStream3);
         doReturn(blockDTOList).when(blockConverter).convert(blockList);
@@ -210,7 +209,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         assertEquals(blockList.size(), blockDTOList.size());
         //verify
         verify(blockConverter, times(1)).convert(blockList);
-        verify(blockchain, times(1)).getBlocksStream(0, 99, -1);
+        verify(blockchain, times(1)).getBlocksFromShards(0, 99, -1);
     }
 
     @Test

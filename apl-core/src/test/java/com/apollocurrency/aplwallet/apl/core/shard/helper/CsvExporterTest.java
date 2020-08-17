@@ -70,6 +70,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.TaggedDataServiceImpl;
@@ -245,6 +246,7 @@ class CsvExporterTest {
         .addBeans(MockBean.of(generatorService, GeneratorService.class))
         .addBeans(MockBean.of(mock(TransactionVersionValidator.class), TransactionVersionValidator.class))
         .addBeans(MockBean.of(blockSerializer, BlockSerializer.class))
+        .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
         .build();
 
     private HeightConfig config = Mockito.mock(HeightConfig.class);
@@ -316,7 +318,7 @@ class CsvExporterTest {
 //        PhasingOnly.get(-4013722529644937202L); // works OK!
         AccountAssetTable accountAssetTable = new AccountAssetTable(derivedTablesRegistry, extension.getDatabaseManager());
         accountAssetTable.init();
-        PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain, derivedTablesRegistry, extension.getDatabaseManager());
+        PublicKeyTable publicKeyTable = new PublicKeyTable(derivedTablesRegistry, extension.getDatabaseManager());
         publicKeyTable.init();
         DexContractTable dexContractTable = new DexContractTable(derivedTablesRegistry, extension.getDatabaseManager());
         registry.registerDerivedTable(dexContractTable);

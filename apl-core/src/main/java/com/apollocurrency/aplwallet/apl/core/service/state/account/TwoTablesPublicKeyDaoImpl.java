@@ -1,0 +1,91 @@
+/*
+ *  Copyright © 2018-2020 Apollo Foundation
+ */
+
+package com.apollocurrency.aplwallet.apl.core.service.state.account;
+
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+import java.util.List;
+
+@Singleton
+public class TwoTablesPublicKeyDaoImpl implements PublicKeyDao{
+    private final EntityDbTableInterface<PublicKey> publicKeyTable;
+    private final EntityDbTableInterface<PublicKey> genesisPublicKeyTable;
+
+    @Inject
+    public TwoTablesPublicKeyDaoImpl(@Named("publicKeyTable") EntityDbTableInterface<PublicKey> publicKeyTable,
+                                     @Named("genesisPublicKeyTable") EntityDbTableInterface<PublicKey> genesisPublicKeyTable) {
+        this.publicKeyTable = publicKeyTable;
+        this.genesisPublicKeyTable = genesisPublicKeyTable;
+    }
+
+
+    @Override
+    public PublicKey get(long id) {
+        DbKey dbKey = AccountTable.newKey(id);
+        PublicKey publicKey = publicKeyTable.get(dbKey);
+        if (publicKey == null) {
+            publicKey = genesisPublicKeyTable.get(dbKey);
+        }
+        return publicKey;
+    }
+
+    @Override
+    public PublicKey getNewKey(long id) {
+        return publicKeyTable.get(AccountTable.newKey(id));
+    }
+
+    @Override
+    public void insertGenesis(PublicKey publicKey) {
+        genesisPublicKeyTable.insert(publicKey);
+    }
+
+    @Override
+    public void insert(PublicKey publicKey) {
+        publicKeyTable.insert(publicKey);
+    }
+
+    @Override
+    public void truncate() {
+        publicKeyTable.truncate();
+        genesisPublicKeyTable.truncate();
+    }
+
+    @Override
+    public List<PublicKey> getAllGenesis(int from, int to) {
+        return CollectionUtil.toList(genesisPublicKeyTable.getAll(from, to));
+    }
+
+    @Override
+    public PublicKey getByHeight(long id, int height) {
+        return publicKeyTable.get(AccountTable.newKey(id), height);
+    }
+
+    @Override
+    public PublicKey getGenesisByHeight(long id, int height) {
+        return genesisPublicKeyTable.get(AccountTable.newKey(id), height);
+    }
+
+    @Override
+    public List<PublicKey> getAll(int from, int to) {
+        return CollectionUtil.toList(publicKeyTable.getAll(from, to));
+    }
+
+    @Override
+    public int genesisKeyCount() {
+        return genesisPublicKeyTable.getCount();
+    }
+
+    @Override
+    public int newPublicKeyCount() {
+        return publicKeyTable.getCount();
+    }
+}

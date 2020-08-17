@@ -7,16 +7,14 @@ package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
-import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.core.utils.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -29,12 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.PostConstruct;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.Arrays;
 import java.util.List;
-
-import static com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil.toList;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -43,23 +38,20 @@ import static com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil.toList;
 @Singleton
 public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
-    private final EntityDbTableInterface<PublicKey> publicKeyTable;
-    private final EntityDbTableInterface<PublicKey> genesisPublicKeyTable;
     private final InMemoryCacheManager cacheManager;
     @Getter
     private final boolean cacheEnabled;
     private final BlockChainInfoService blockChainInfoService;
     @Getter
-    private Cache<DbKey, PublicKey> publicKeyCache;
+    private Cache<Long, PublicKey> publicKeyCache;
+    private final PublicKeyDao publicKeyDao;
 
     @Inject
-    public AccountPublicKeyServiceImpl(@Named("publicKeyTable") EntityDbTableInterface<PublicKey> publicKeyTable,
-                                       @Named("genesisPublicKeyTable") EntityDbTableInterface<PublicKey> genesisPublicKeyTable,
+    public AccountPublicKeyServiceImpl(
                                        PropertiesHolder propertiesHolder,
                                        InMemoryCacheManager cacheManager,
-                                       BlockChainInfoService blockChainInfoService) {
-        this.publicKeyTable = publicKeyTable;
-        this.genesisPublicKeyTable = genesisPublicKeyTable;
+                                       BlockChainInfoService blockChainInfoService, PublicKeyDao publicKeyDao) {
+        this.publicKeyDao = publicKeyDao;
         this.cacheManager = cacheManager;
         this.cacheEnabled = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache");
         this.blockChainInfoService = blockChainInfoService;
@@ -109,18 +101,17 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public int getPublicKeysCount() {
-        return publicKeyTable.getCount();
+        return publicKeyDao.newPublicKeyCount();
     }
 
     @Override
     public int getGenesisPublicKeysCount() {
-        return genesisPublicKeyTable.getCount();
+        return publicKeyDao.genesisKeyCount();
     }
 
     @Override
     public byte[] getPublicKeyByteArray(long id) {
-        DbKey dbKey = AccountTable.newKey(id);
-        PublicKey publicKey = getPublicKey(dbKey);
+        PublicKey publicKey = getPublicKey(id);
         if (publicKey == null || publicKey.getPublicKey() == null) {
             return null;
         }
@@ -129,39 +120,26 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public PublicKey getPublicKey(long accountId) {
-        DbKey dbKey = AccountTable.newKey(accountId);
-        return getPublicKey(dbKey);
-    }
-
-    @Override
-    public PublicKey getPublicKey(DbKey dbKey) {
-        PublicKey publicKey = getFromCache(dbKey);
+        PublicKey publicKey = getFromCache(accountId);
         if (publicKey == null) {
-            publicKey = publicKeyTable.get(dbKey);
-            if (publicKey == null) {
-                publicKey = genesisPublicKeyTable.get(dbKey);
-            }
+            publicKey = publicKeyDao.get(accountId);
             if (publicKey != null) {
-                putInCache(dbKey, publicKey);
+                putInCache(accountId, publicKey);
             }
         }
         return publicKey;
     }
 
     @Override
-    public PublicKey loadPublicKeyFromDb(DbKey dbKey) {
-        PublicKey publicKey = publicKeyTable.get(dbKey, false);
-        if (publicKey == null) {
-            publicKey = genesisPublicKeyTable.get(dbKey, false);
-        }
-        return publicKey;
+    public PublicKey loadPublicKeyFromDb(long accountId) {
+        return publicKeyDao.get(accountId);
     }
 
     @Override
-    public PublicKey loadPublicKeyFromDb(DbKey dbKey, int height) {
-        PublicKey publicKey = getPublicKey(dbKey, height);
+    public PublicKey loadPublicKeyFromDb(long id, int height) {
+        PublicKey publicKey = getPublicKey(id, height);
         if (publicKey == null) {
-            publicKey = getGenesisPublicKey(dbKey, height);
+            publicKey = getGenesisPublicKey(id, height);
         }
         return publicKey;
     }
@@ -170,26 +148,29 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
      * Gets GenesisPublicKey without checking doesNotExceed and checkAvailable
      * because GenesisPublicKeys are unchangeable.
      *
-     * @param dbKey
+     * @param id
      * @param height
      * @return
      */
-    private PublicKey getGenesisPublicKey(DbKey dbKey, int height) {
-        return genesisPublicKeyTable.get(dbKey, height);
+    private PublicKey getGenesisPublicKey(long id, int height) {
+        return publicKeyDao.getByHeight(id, height);
     }
 
-    private PublicKey getPublicKey(DbKey dbKey, int height) {
+    private PublicKey getPublicKey(long id, int height) {
         if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
-            return publicKeyTable.get(dbKey);
+            return publicKeyDao.getNewKey(id);
         }
-        blockChainInfoService.checkAvailable(height, publicKeyTable.isMultiversion());
-        return publicKeyTable.get(dbKey, height);
+        blockChainInfoService.checkAvailable(height, true);
+        return publicKeyDao.getByHeight(id, height);
     }
 
     @Override
     public List<PublicKey> loadPublicKeyList(int from, int to, boolean isGenesis) {
-        EntityDbTableInterface<PublicKey> table = isGenesis ? genesisPublicKeyTable : publicKeyTable;
-        return toList(table.getAll(from, to));
+        if (isGenesis) {
+            return publicKeyDao.getAllGenesis(from, to);
+        } else {
+            return publicKeyDao.getAll(from, to);
+        }
     }
 
     @Override
@@ -212,20 +193,19 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public boolean setOrVerifyPublicKey(long accountId, byte[] key) {
-        DbKey dbKey = AccountTable.newKey(accountId);
-        return setOrVerifyPublicKey(dbKey, key, blockChainInfoService.getHeight());
+        return setOrVerifyPublicKey(accountId, key, blockChainInfoService.getHeight());
     }
 
     @Override
-    public boolean setOrVerifyPublicKey(DbKey dbKey, byte[] key, int height) {
-        PublicKey publicKey = getPublicKey(dbKey);
+    public boolean setOrVerifyPublicKey(long id, byte[] key, int height) {
+        PublicKey publicKey = getPublicKey(id);
         if (publicKey == null) {
-            publicKey = new PublicKey(((LongKey) dbKey).getId(), null, blockChainInfoService.getHeight());
+            publicKey = new PublicKey(id, null, blockChainInfoService.getHeight());
         }
         if (publicKey.getPublicKey() == null) {
             publicKey.setPublicKey(key);
             publicKey.setHeight(height);
-            putInCache(dbKey, publicKey);
+            putInCache(id, publicKey);
             return true;
         }
         return Arrays.equals(publicKey.getPublicKey(), key);
@@ -233,7 +213,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public boolean verifyPublicKey(byte[] key) {
-        PublicKey publicKey = getPublicKey(AccountTable.newKey(AccountService.getId(key)));
+        PublicKey publicKey = getPublicKey(AccountService.getId(key));
         if(publicKey == null || publicKey.getPublicKey() == null){
             return false;
         }
@@ -247,7 +227,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public void apply(Account account, byte[] key, boolean isGenesis) {
-        PublicKey publicKey = getPublicKey(account.getDbKey());
+        PublicKey publicKey = getPublicKey(account.getId());
         if (publicKey == null) {
             publicKey = new PublicKey(account.getId(), null, blockChainInfoService.getHeight());
         }
@@ -257,7 +237,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         } else if (!Arrays.equals(publicKey.getPublicKey(), key)) {
             throw new IllegalStateException("Public key mismatch");
         } else if (publicKey.getHeight() >= blockChainInfoService.getHeight() - 1) {
-            PublicKey dbPublicKey = loadPublicKeyFromDb(account.getDbKey());
+            PublicKey dbPublicKey = loadPublicKeyFromDb(account.getId());
             if (dbPublicKey == null || dbPublicKey.getPublicKey() == null) {
                 insertPublicKey(publicKey, isGenesis);
             }
@@ -266,25 +246,25 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     @Override
-    public PublicKey insertNewPublicKey(DbKey dbKey) {
-        PublicKey publicKey = new PublicKey(((LongKey) dbKey).getId(), null, blockChainInfoService.getHeight());
-        publicKeyTable.insert(publicKey);
+    public PublicKey insertNewPublicKey(long accountId) {
+        PublicKey publicKey = new PublicKey(accountId, null, blockChainInfoService.getHeight());
+        publicKeyDao.insert(publicKey);
         return publicKey;
     }
 
     @Override
-    public PublicKey insertGenesisPublicKey(DbKey dbKey) {
-        PublicKey publicKey = new PublicKey(((LongKey) dbKey).getId(), null, blockChainInfoService.getHeight());
-        genesisPublicKeyTable.insert(publicKey);
+    public PublicKey insertGenesisPublicKey(long accountId) {
+        PublicKey publicKey = new PublicKey(accountId, null, blockChainInfoService.getHeight());
+        publicKeyDao.insertGenesis(publicKey);
         return publicKey;
     }
 
     @Override
     public PublicKey insertPublicKey(PublicKey publicKey, boolean isGenesis) {
         if (isGenesis) {
-            genesisPublicKeyTable.insert(publicKey);
+            publicKeyDao.insertGenesis(publicKey);
         } else {
-            publicKeyTable.insert(publicKey);
+            publicKeyDao.insert(publicKey);
         }
         return publicKey;
     }
@@ -294,8 +274,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     }
 
     public void cleanUpPublicKeys() {
-        publicKeyTable.truncate();
-        genesisPublicKeyTable.truncate();
+        publicKeyDao.truncate();
     }
 
     private boolean isCacheEnabled() {
@@ -316,30 +295,30 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         }
     }
 
-    private PublicKey getFromCache(DbKey key) {
+    private PublicKey getFromCache(long accountId) {
         if (isCacheEnabled()) {
-            PublicKey pkey = publicKeyCache.getIfPresent(key);
-            log.trace("--cache-- get dbKey={}, from cache pkey={}", key, pkey);
+            PublicKey pkey = publicKeyCache.getIfPresent(accountId);
+            log.trace("--cache-- get dbKey={}, from cache pkey={}", accountId, pkey);
             return pkey;
         } else {
             return null;
         }
     }
 
-    private void refreshInCache(DbKey dbKey) {
+    private void refreshInCache(long id) {
         if (isCacheEnabled()) {
-            PublicKey publicKey = loadPublicKeyFromDb(dbKey);
+            PublicKey publicKey = loadPublicKeyFromDb(id);
             if (publicKey != null) {
-                log.trace("--cache-- refresh dbKey={} height={}", dbKey, publicKey.getHeight());
-                publicKeyCache.put(dbKey, publicKey);
+                log.trace("--cache-- refresh dbKey={} height={}", id, publicKey.getHeight());
+                publicKeyCache.put(id, publicKey);
             }
         }
     }
 
-    private void putInCache(DbKey key, PublicKey value) {
+    private void putInCache(long id, PublicKey value) {
         if (isCacheEnabled()) {
-            log.trace("--cache-- put  dbKey={} height={}", key, value.getHeight());
-            publicKeyCache.put(key, value);
+            log.trace("--cache-- put  dbKey={} height={}", id, value.getHeight());
+            publicKeyCache.put(id, value);
         }
     }
 }
