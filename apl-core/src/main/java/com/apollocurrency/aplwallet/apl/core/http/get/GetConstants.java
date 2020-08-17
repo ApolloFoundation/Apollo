@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -131,6 +132,12 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                             if (subtype == 0) {
                                 break outer;
                             } else {
+                                try {
+                                    TransactionTypes.find(type, subtype);
+                                    //There is the specification but doesn't exist an TransactionType instance of the given type and subtype, ex. type=1, subtype=4
+                                    continue;
+                                } catch (IllegalArgumentException ignored) {
+                                }
                                 break;
                             }
                         }
