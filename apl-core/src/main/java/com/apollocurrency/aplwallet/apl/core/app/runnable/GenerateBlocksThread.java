@@ -141,7 +141,7 @@ public class GenerateBlocksThread implements Runnable {
                     log.trace("Release generation lock  ({} ms)", (System.currentTimeMillis() - start));
                 }
             } catch (Exception e) {
-                log.error("Error in block generation thread = {}", (System.currentTimeMillis() - start), e);
+                log.error("Error in block generation thread ({} ms)", (System.currentTimeMillis() - start), e);
                 log.trace("Stack trace = {}", ThreadUtils.getStackTrace(e));
             }
         } catch (Throwable t) {
