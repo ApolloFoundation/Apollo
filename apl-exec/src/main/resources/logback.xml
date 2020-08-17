@@ -54,6 +54,20 @@
     </encoder>
   </appender>
 -->
+  <appender name="generator-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOGDIR}/apl-generator.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <!-- rollover daily -->
+      <fileNamePattern>${LOGDIR}/apl-generator-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
+      <maxHistory>30</maxHistory>
+      <maxFileSize>100MB</maxFileSize>
+      <totalSizeCap>3GB</totalSizeCap>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+    </encoder>
+  </appender>
+
   <appender name="account-file" class="ch.qos.logback.core.FileAppender">
     <file>account.log</file>
     <append>true</append>
@@ -108,6 +122,16 @@
   <logger name="com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable" level="trace" additivity="false">
     <appender-ref ref="tp-file"/>
   </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.core.service.appdata.impl.GeneratorServiceImpl" level="trace" additivity="false">
+    <appender-ref ref="generator-file"/>
+  </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.GenerateBlocksThread" level="trace" additivity="false">
+    <appender-ref ref="generator-file"/>
+  </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl" level="trace" additivity="false">
+    <appender-ref ref="generator-file"/>
+  </logger>
+
 
   <logger name="com.apollocurrency.aplwallet" level="INFO"/>
   <!--<logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE"/>-->

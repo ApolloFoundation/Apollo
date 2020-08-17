@@ -4,13 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import javax.enterprise.inject.spi.CDI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
@@ -22,6 +15,13 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.enterprise.inject.spi.CDI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 public class GenerateBlocksThread implements Runnable {
@@ -69,6 +69,7 @@ public class GenerateBlocksThread implements Runnable {
         try {
             try {
                 globalSync.updateLock();
+                log.trace("Acquire generation lock");
                 try {
                     Block lastBlock = blockchain.getLastBlock();
                     if (lastBlock == null || lastBlock.getHeight() < blockchainConfig.getLastKnownBlock()) {
@@ -134,6 +135,7 @@ public class GenerateBlocksThread implements Runnable {
                         }
                     }
                 } finally {
+                    log.trace("Release generation lock");
                     globalSync.updateUnlock();
                 }
             } catch (Exception e) {
