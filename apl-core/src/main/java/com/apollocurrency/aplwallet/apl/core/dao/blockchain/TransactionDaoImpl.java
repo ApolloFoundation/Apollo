@@ -221,7 +221,7 @@ public class TransactionDaoImpl implements TransactionDao {
             pstmt.setLong(1, blockId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    rs.getLong("transactionCount");
+                    transactionCount = rs.getLong("transactionCount");
                 }
                 return transactionCount;
             } catch (SQLException e) {
