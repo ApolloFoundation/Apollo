@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * @author silaev-firstbridge on 1/31/2020
@@ -92,8 +91,8 @@ public class BlockChainInfoServiceImpl implements BlockChainInfoService {
     }
 
     @Override
-    public Stream<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp) {
-        return blockchain.getBlocksByAccountStream(accountId, from, to, timestamp);
+    public List<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp) {
+        return blockchain.getBlocksByAccountFromShards(accountId, from, to, timestamp);
     }
 
     @Override
