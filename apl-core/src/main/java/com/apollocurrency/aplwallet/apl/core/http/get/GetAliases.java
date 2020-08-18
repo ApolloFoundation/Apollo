@@ -52,13 +52,8 @@ public final class GetAliases extends AbstractAPIRequestHandler {
 
         JSONArray aliases = new JSONArray();
 
-        //proven by shouldTestFilteringIterator test
-        final int maxSize = lastIndex - firstIndex + 1;
-        aliasService.getAliasesByOwner(accountId, 0, -1)
-            .filter(alias -> alias.getTimestamp() >= timestamp)
+        aliasService.getAliasesByOwner(accountId,timestamp, firstIndex, lastIndex).stream()
             .map(JSONData::alias)
-            .skip(firstIndex)
-            .limit(maxSize)
             .forEach(aliases::add);
 
         JSONObject response = new JSONObject();
