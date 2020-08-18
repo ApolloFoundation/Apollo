@@ -1,0 +1,110 @@
+[
+  {
+    "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
+    "active": true,
+    "wellKnownPeers": [
+      "51.15.250.32",
+      "51.15.130.37"
+    ],
+    "name": "Apollo experimental testnet",
+    "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
+    "symbol": "Apollo",
+    "prefix": "APL",
+    "project": "Apollo",
+    "genesisLocation": "conf/data/genesisAccounts-testnet.json",
+    "featuresHeightRequirement": {
+      "dexReopenPendingOrdersHeight": 3000,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000
+    },
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "blockTime": 1,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 53,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 1,
+        "blockTime": 1,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": false,
+          "frequency": 1
+        }
+      },
+      {
+        "height": 200,
+        "blockTime": 2,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 20
+        }
+      },
+      {
+        "height": 600,
+        "blockTime": 6,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "frequency": 30
+        }
+      },
+      {
+        "height": 1000,
+        "blockTime": 10,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 500
+        }
+      },
+      {
+        "height": 2000,
+        "blockTime": 20,
+        "maxBalance": 30000000000,
+        "maxNumberOfChildAccounts": 1
+      },
+      {
+        "height": 3000,
+        "blockTime": 30,
+        "maxBalance": 30000000000,
+        "maxNumberOfChildAccounts": 1,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 300
+        }
+      },
+      {
+        "height": 4000,
+        "blockTime": 40,
+        "maxBalance": 30000000000,
+        "maxNumberOfChildAccounts": 2,
+        "shardingSettings": {
+          "enabled": false,
+          "frequency": 400
+        }
+      },
+      {
+        "height": 5000,
+        "blockTime": 50,
+        "maxBalance": 30000000000,
+        "maxNumberOfChildAccounts": 3,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 100
+        }
+      },
+      {
+        "height": 6000,
+        "blockTime": 60,
+        "maxBalance": 30000000000,
+        "maxNumberOfChildAccounts": 4,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 1000
+        }
+      }
+    ]
+  }
+]
