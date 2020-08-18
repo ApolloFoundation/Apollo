@@ -5,8 +5,8 @@ package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
 public class UnixConfigDirProvider extends DefaultConfigDirProvider {
 
-    public UnixConfigDirProvider(String applicationName, boolean isService, int netIdx, String uuid_or_part) {
-        super(applicationName, isService, netIdx, uuid_or_part);
+    public UnixConfigDirProvider(String applicationName, boolean isService, int netIdx, String uuidOrPart) {
+        super(applicationName, isService, netIdx, uuidOrPart);
     }
 
     @Override

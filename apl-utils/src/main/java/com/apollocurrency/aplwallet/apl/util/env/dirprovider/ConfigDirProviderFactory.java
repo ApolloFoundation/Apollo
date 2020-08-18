@@ -25,11 +25,11 @@ public class ConfigDirProviderFactory {
     private static String uuid_or_part;
     private static UUID uuid;
 
-    public static void setup(boolean isServiceP, String applicationNameP, int netIdxP, String uuid_or_partP) {
+    public static void setup(boolean isServiceP, String applicationNameP, int netIdxP, String uuidOrPartP) {
         isService = isServiceP;
         applicationName = applicationNameP;
         netIdx = netIdxP;
-        uuid_or_part = uuid_or_partP;
+        uuid_or_part = uuidOrPartP;
     }
 
     public static ConfigDirProvider createConfigDirProvider() {
