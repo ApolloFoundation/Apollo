@@ -101,12 +101,12 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public int getPublicKeysCount() {
-        return publicKeyDao.newPublicKeyCount();
+        return publicKeyDao.count();
     }
 
     @Override
     public int getGenesisPublicKeysCount() {
-        return publicKeyDao.genesisKeyCount();
+        return publicKeyDao.genesisCount();
     }
 
     @Override
@@ -122,7 +122,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
     public PublicKey getPublicKey(long accountId) {
         PublicKey publicKey = getFromCache(accountId);
         if (publicKey == null) {
-            publicKey = publicKeyDao.get(accountId);
+            publicKey = publicKeyDao.searchAll(accountId);
             if (publicKey != null) {
                 putInCache(accountId, publicKey);
             }
@@ -132,7 +132,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public PublicKey loadPublicKeyFromDb(long accountId) {
-        return publicKeyDao.get(accountId);
+        return publicKeyDao.searchAll(accountId);
     }
 
     @Override
@@ -158,7 +158,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     private PublicKey getPublicKey(long id, int height) {
         if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
-            return publicKeyDao.getNewKey(id);
+            return publicKeyDao.get(id);
         }
         blockChainInfoService.checkAvailable(height, true);
         return publicKeyDao.getByHeight(id, height);

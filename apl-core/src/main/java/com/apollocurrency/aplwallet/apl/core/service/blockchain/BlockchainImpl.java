@@ -234,7 +234,7 @@ public class BlockchainImpl implements Blockchain {
         if (block == null) {
             return null;
         }
-        PublicKey publicKey = publicKeyDao.get(block.getGeneratorId());
+        PublicKey publicKey = publicKeyDao.searchAll(block.getGeneratorId());
         block.setGeneratorPublicKey(publicKey.getPublicKey());
         return block;
     }

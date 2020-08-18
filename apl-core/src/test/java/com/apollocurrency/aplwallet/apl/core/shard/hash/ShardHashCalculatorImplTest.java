@@ -77,7 +77,7 @@ public class ShardHashCalculatorImplTest {
     private final PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
 
     {
-        doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).get(anyLong());
+        doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).searchAll(anyLong());
     }
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class,

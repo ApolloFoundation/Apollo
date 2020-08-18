@@ -10,9 +10,9 @@ import java.util.List;
 
 public interface PublicKeyDao {
 
-    PublicKey get(long id);
+    PublicKey searchAll(long id);
 
-    PublicKey getNewKey(long id);
+    PublicKey get(long id);
 
     void insertGenesis(PublicKey publicKey);
 
@@ -28,7 +28,7 @@ public interface PublicKeyDao {
 
     List<PublicKey> getAll(int from, int to);
 
-    int genesisKeyCount();
+    int genesisCount();
 
-    int newPublicKeyCount();
+    int count();
 }

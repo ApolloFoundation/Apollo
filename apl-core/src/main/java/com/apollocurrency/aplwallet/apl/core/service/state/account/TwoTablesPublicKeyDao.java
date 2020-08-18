@@ -16,20 +16,20 @@ import javax.inject.Singleton;
 import java.util.List;
 
 @Singleton
-public class TwoTablesPublicKeyDaoImpl implements PublicKeyDao{
+public class TwoTablesPublicKeyDao implements PublicKeyDao{
     private final EntityDbTableInterface<PublicKey> publicKeyTable;
     private final EntityDbTableInterface<PublicKey> genesisPublicKeyTable;
 
     @Inject
-    public TwoTablesPublicKeyDaoImpl(@Named("publicKeyTable") EntityDbTableInterface<PublicKey> publicKeyTable,
-                                     @Named("genesisPublicKeyTable") EntityDbTableInterface<PublicKey> genesisPublicKeyTable) {
+    public TwoTablesPublicKeyDao(@Named("publicKeyTable") EntityDbTableInterface<PublicKey> publicKeyTable,
+                                 @Named("genesisPublicKeyTable") EntityDbTableInterface<PublicKey> genesisPublicKeyTable) {
         this.publicKeyTable = publicKeyTable;
         this.genesisPublicKeyTable = genesisPublicKeyTable;
     }
 
 
     @Override
-    public PublicKey get(long id) {
+    public PublicKey searchAll(long id) {
         DbKey dbKey = AccountTable.newKey(id);
         PublicKey publicKey = publicKeyTable.get(dbKey);
         if (publicKey == null) {
@@ -39,7 +39,7 @@ public class TwoTablesPublicKeyDaoImpl implements PublicKeyDao{
     }
 
     @Override
-    public PublicKey getNewKey(long id) {
+    public PublicKey get(long id) {
         return publicKeyTable.get(AccountTable.newKey(id));
     }
 
@@ -60,11 +60,6 @@ public class TwoTablesPublicKeyDaoImpl implements PublicKeyDao{
     }
 
     @Override
-    public List<PublicKey> getAllGenesis(int from, int to) {
-        return CollectionUtil.toList(genesisPublicKeyTable.getAll(from, to));
-    }
-
-    @Override
     public PublicKey getByHeight(long id, int height) {
         return publicKeyTable.get(AccountTable.newKey(id), height);
     }
@@ -80,12 +75,17 @@ public class TwoTablesPublicKeyDaoImpl implements PublicKeyDao{
     }
 
     @Override
-    public int genesisKeyCount() {
+    public List<PublicKey> getAllGenesis(int from, int to) {
+        return CollectionUtil.toList(genesisPublicKeyTable.getAll(from, to));
+    }
+
+    @Override
+    public int genesisCount() {
         return genesisPublicKeyTable.getCount();
     }
 
     @Override
-    public int newPublicKeyCount() {
+    public int count() {
         return publicKeyTable.getCount();
     }
 }

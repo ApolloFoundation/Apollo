@@ -673,7 +673,7 @@ class ShardEngineTest {
 
 
     private void initPublicKeyDao() {
-        doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).get(anyLong());
+        doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).searchAll(anyLong());
     }
 
     @Test

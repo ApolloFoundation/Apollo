@@ -49,8 +49,8 @@ class AccountPublicKeyServiceTest {
     void getCount() {
         int publicCount = 200000;
         int genesisCount = 300000;
-        doReturn(publicCount).when(publicKeyDao).newPublicKeyCount();
-        doReturn(genesisCount).when(publicKeyDao).genesisKeyCount();
+        doReturn(publicCount).when(publicKeyDao).count();
+        doReturn(genesisCount).when(publicKeyDao).genesisCount();
         assertEquals(publicCount + genesisCount, accountPublicKeyService.getCount());
     }
 
@@ -61,11 +61,11 @@ class AccountPublicKeyServiceTest {
         assertNull(accountPublicKeyService.getPublicKeyByteArray(accountId));
 
         PublicKey expectedPublicKey = new PublicKey(accountId, null, 1000);
-        doReturn(expectedPublicKey).when(publicKeyDao).get(anyLong());
+        doReturn(expectedPublicKey).when(publicKeyDao).searchAll(anyLong());
         assertNull(accountPublicKeyService.getPublicKeyByteArray(accountId));
 
         expectedPublicKey = new PublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes(), 1000);
-        doReturn(expectedPublicKey).when(publicKeyDao).get(anyLong());
+        doReturn(expectedPublicKey).when(publicKeyDao).searchAll(anyLong());
         assertEquals(expectedPublicKey.getPublicKey(), accountPublicKeyService.getPublicKeyByteArray(accountId));
     }
 
@@ -73,13 +73,13 @@ class AccountPublicKeyServiceTest {
     void setOrVerify() {
         long accountId = 2728325718715804811L;
         PublicKey expectedPublicKey = new PublicKey(accountId, null, 1000);
-        doReturn(expectedPublicKey).when(publicKeyDao).get(anyLong());
+        doReturn(expectedPublicKey).when(publicKeyDao).searchAll(anyLong());
         //set new key
         assertTrue(accountPublicKeyService.setOrVerifyPublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes()));
 
         //verify
         expectedPublicKey = new PublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes(), 1000);
-        doReturn(expectedPublicKey).when(publicKeyDao).get(anyLong());
+        doReturn(expectedPublicKey).when(publicKeyDao).searchAll(anyLong());
         //true, the same keys
         assertTrue(accountPublicKeyService.setOrVerifyPublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes()));
         //false, different keys
@@ -90,7 +90,7 @@ class AccountPublicKeyServiceTest {
     void testApply_newKey() {
         long accountId = 2728325718715804811L;
         PublicKey expectedPublicKey = new PublicKey(accountId, null, 1000);
-        doReturn(expectedPublicKey).when(publicKeyDao).get(anyLong());
+        doReturn(expectedPublicKey).when(publicKeyDao).searchAll(anyLong());
         //publickKey == null
         accountPublicKeyService.apply(testData.ACC_1, testData.PUBLIC_KEY_STR.getBytes(), false);
         verify(publicKeyDao, times(1)).insert(any(PublicKey.class));
@@ -104,13 +104,13 @@ class AccountPublicKeyServiceTest {
 
         //check public keys
         expectedPublicKey = new PublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes(), 1000);
-        doReturn(expectedPublicKey).when(publicKeyDao).get(anyLong());
+        doReturn(expectedPublicKey).when(publicKeyDao).searchAll(anyLong());
         //key mismatch
         assertThrows(IllegalStateException.class, () -> accountPublicKeyService.apply(testData.ACC_1, testData.PUBLIC_KEY_STR2.getBytes(), false));
         //key match
         expectedPublicKey.setHeight(998);
         accountPublicKeyService.apply(testData.ACC_1, testData.PUBLIC_KEY_STR.getBytes(), false);
-        verify(publicKeyDao, times(3)).get(anyLong());
+        verify(publicKeyDao, times(3)).searchAll(anyLong());
         assertEquals(expectedPublicKey, testData.ACC_1.getPublicKey());
     }
 

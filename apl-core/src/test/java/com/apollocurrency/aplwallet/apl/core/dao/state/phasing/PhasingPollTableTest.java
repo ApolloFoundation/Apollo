@@ -125,7 +125,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     @Override
     public void setUp() {
         ptd = new PhasingTestData();
-        doReturn(new PublicKey(1L, new byte[32], 1)).when(publicKeyDao).get(anyLong());
+        doReturn(new PublicKey(1L, new byte[32], 1)).when(publicKeyDao).searchAll(anyLong());
         super.setUp();
     }
 
