@@ -113,24 +113,24 @@
     </encoder>
   </appender>
 
-  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable" level="trace" additivity="false">
-    <appender-ref ref="tp-file"/>
-  </logger>
-  <logger name="com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl" level="trace" additivity="false">
-    <appender-ref ref="tp-file"/>
-  </logger>
-  <logger name="com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable" level="trace" additivity="false">
-    <appender-ref ref="tp-file"/>
-  </logger>
-  <logger name="com.apollocurrency.aplwallet.apl.core.service.appdata.impl.GeneratorServiceImpl" level="trace" additivity="false">
-    <appender-ref ref="generator-file"/>
-  </logger>
-  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.GenerateBlocksThread" level="trace" additivity="false">
-    <appender-ref ref="generator-file"/>
-  </logger>
-  <logger name="com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl" level="trace" additivity="false">
-    <appender-ref ref="generator-file"/>
-  </logger>
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable" level="trace" additivity="false">-->
+<!--    <appender-ref ref="tp-file"/>-->
+<!--  </logger>-->
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl" level="trace" additivity="false">-->
+<!--    <appender-ref ref="tp-file"/>-->
+<!--  </logger>-->
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable" level="trace" additivity="false">-->
+<!--    <appender-ref ref="tp-file"/>-->
+<!--  </logger>-->
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.service.appdata.impl.GeneratorServiceImpl" level="trace" additivity="false">-->
+<!--    <appender-ref ref="generator-file"/>-->
+<!--  </logger>-->
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.GenerateBlocksThread" level="trace" additivity="false">-->
+<!--    <appender-ref ref="generator-file"/>-->
+<!--  </logger>-->
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl" level="trace" additivity="false">-->
+<!--    <appender-ref ref="generator-file"/>-->
+<!--  </logger>-->
 
 
   <logger name="com.apollocurrency.aplwallet" level="INFO"/>
@@ -140,10 +140,10 @@
   <logger name="org.eclipse.jetty" level="off" additivity="false"/>
   <logger name="javax.servlet.level" level="off" additivity="false"/>
   <logger name="com.apollocurrency.aplwallet.apl.core.http.APIProxyServlet" level="info" additivity="false"/>
-  <logger name="com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl" level="trace"
-          additivity="false">
-    <appender-ref ref="account-file"/>
-  </logger>
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl" level="trace"-->
+<!--          additivity="false">-->
+<!--    <appender-ref ref="account-file"/>-->
+<!--  </logger>-->
   <logger name="com.apollocurrency.aplwallet.apl.core.transaction" level="DEBUG"/>
   <logger name="com.apollocurrency.aplwallet.apl.core.signature" level="DEBUG"/>
   <logger name="com.apollocurrency.aplwallet.apl.core.rest.v2" level="TRACE"/>
