@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account;
 
-import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
@@ -33,29 +32,21 @@ public interface AccountPublicKeyService {
     PublicKey getPublicKey(long accountId);
 
     /**
-     * Returns the public key from cache, or load from the data base if necessary.
-     *
-     * @param dbKey the key to getting an entity from the cache
-     * @return public key or null
-     */
-    PublicKey getPublicKey(DbKey dbKey);
-
-    /**
      * Load public key from the data base
      *
-     * @param dbKey the primary key to load entity from the data base
+     * @param accountId id of account for which new public key should be loaded
      * @return public key or null
      */
-    PublicKey loadPublicKeyFromDb(DbKey dbKey);
+    PublicKey loadPublicKeyFromDb(long accountId);
 
     /**
      * Load public key for specified height from the database
      *
-     * @param dbKey  the primary key to load entity
+     * @param accountId id of account for which new public key should be loaded
      * @param height block height
      * @return public key or null
      */
-    PublicKey loadPublicKeyFromDb(DbKey dbKey, int height);
+    PublicKey loadPublicKeyFromDb(long accountId, int height);
 
     /**
      *
@@ -72,11 +63,11 @@ public interface AccountPublicKeyService {
      */
     boolean verifyPublicKey(byte[] key);
 
-    boolean setOrVerifyPublicKey(DbKey dbKey, byte[] key, int height);
+    boolean setOrVerifyPublicKey(long accountId, byte[] key, int height);
 
-    PublicKey insertNewPublicKey(DbKey dbKey);
+    PublicKey insertNewPublicKey(long accountId);
 
-    PublicKey insertGenesisPublicKey(DbKey dbKey);
+    PublicKey insertGenesisPublicKey(long accountId);
 
     byte[] getPublicKeyByteArray(long id);
 

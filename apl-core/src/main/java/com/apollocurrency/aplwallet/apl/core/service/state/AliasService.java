@@ -26,18 +26,18 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.alias.AliasOffer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
 
-import java.util.stream.Stream;
+import java.util.List;
 
 public interface AliasService {
     int getCount();
 
     int getAccountAliasCount(long accountId);
 
-    Stream<Alias> getAliasesByOwner(long accountId, int from, int to);
+    List<Alias> getAliasesByOwner(long accountId, int fromTimestamp, int from, int to);
 
     Alias getAliasByName(String aliasName);
 
-    Stream<Alias> getAliasesByNamePattern(String aliasName, int from, int to);
+    List<Alias> getAliasesByNamePattern(String aliasName, int from, int to);
 
     Alias getAliasById(long id);
 

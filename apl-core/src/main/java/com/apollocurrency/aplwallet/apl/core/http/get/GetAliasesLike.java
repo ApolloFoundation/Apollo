@@ -61,6 +61,7 @@ public final class GetAliasesLike extends AbstractAPIRequestHandler {
         final JSONArray aliasJSON = new JSONArray();
 
         aliasService.getAliasesByNamePattern(prefix, firstIndex, lastIndex)
+            .stream()
             .map(JSONData::alias)
             .forEach(aliasJSON::add);
 

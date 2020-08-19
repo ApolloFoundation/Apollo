@@ -8,6 +8,7 @@ import com.beust.jcommander.Parameter;
  * @author alukin@gmail.com
  */
 public class CmdLineArgs {
+
     public static int DEFAULT_DEBUG_LEVEL = 2;
 
     @Parameter(names = {"--debug", "-d"}, description = "Debug level [0-4] from ERROR to TRACE")
@@ -50,12 +51,14 @@ public class CmdLineArgs {
     @Parameter(names = {"--start-mint", "-m"}, help = true, description = "Start currency minting worker")
     public boolean startMint;
     @Parameter(names = {"--net", "-n"}, help = true, description = "Connect to net [0-4]. 0 means mainnet, 1 - 1st testnet and so on")
-    public int netIdx = 0;
+    public int netIdx = -1;
+    @Parameter(names = {"--chain", "-C"}, help = true, description = "Connect to net with given chainID. UUID of chain id may be specified partially, 6 symbos min. Configs must be present.")
+    public String chainId = "";
     @Parameter(names = {"--testnet"}, help = true, description = "Connect to testent 1. Has higher priority then --net")
     public boolean isTestnet = false;
     //---
     @Parameter(names = {"--disable-weld-concurrent-deployment"},
-        description = "If use it, Weld doesn't use ConcurrentDeployer and ConcurrentValidator to build the container. Default value is true.")
+            description = "If use it, Weld doesn't use ConcurrentDeployer and ConcurrentValidator to build the container. Default value is true.")
     public boolean disableWeldConcurrentDeployment = false;
 
     public boolean isResourceIgnored() {

@@ -144,14 +144,20 @@ public class TransactionBuilder {
         if (prunableAttachments != null) {
             ShufflingProcessingAttachment shufflingProcessing = ShufflingProcessingAttachment.parse(prunableAttachments);
             if (shufflingProcessing != null) {
+                TransactionType transactionType = factory.findTransactionTypeBySpec(shufflingProcessing.getTransactionTypeSpec());
                 builder.appendix(shufflingProcessing);
+                shufflingProcessing.bindTransactionType(transactionType);
             }
             TaggedDataUploadAttachment taggedDataUploadAttachment = TaggedDataUploadAttachment.parse(prunableAttachments);
             if (taggedDataUploadAttachment != null) {
+                TransactionType transactionType = factory.findTransactionTypeBySpec(taggedDataUploadAttachment.getTransactionTypeSpec());
+                taggedDataUploadAttachment.bindTransactionType(transactionType);
                 builder.appendix(taggedDataUploadAttachment);
             }
             TaggedDataExtendAttachment taggedDataExtendAttachment = TaggedDataExtendAttachment.parse(prunableAttachments);
             if (taggedDataExtendAttachment != null) {
+                TransactionType transactionType = factory.findTransactionTypeBySpec(taggedDataExtendAttachment.getTransactionTypeSpec());
+                taggedDataExtendAttachment.bindTransactionType(transactionType);
                 builder.appendix(taggedDataExtendAttachment);
             }
             PrunablePlainMessageAppendix prunablePlainMessage = PrunablePlainMessageAppendix.parse(prunableAttachments);
