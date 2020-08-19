@@ -23,8 +23,8 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflerService;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.DocumentSigner;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
@@ -481,8 +481,12 @@ public class ShufflerServiceImpl implements ShufflerService {
         //TODO Use TransactionVersionValidator#getActualVersion()
         int version = 1;
         try {
-            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(version, Crypto.getPublicKey(Crypto.getKeySeed(shuffler.getSecretBytes())), 0, 0,
-                (short) 1440, attachment, blockchain.getLastBlockTimestamp());
+            int timestamp = blockchain.getLastBlockTimestamp();
+            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(version,
+                Crypto.getPublicKey(Crypto.getKeySeed(shuffler.getSecretBytes())),
+                0, 0,
+                (short) 1440, attachment, timestamp)
+                .ecBlockData(blockchain.getECBlock(timestamp));
 
             Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
@@ -494,7 +498,6 @@ public class ShufflerServiceImpl implements ShufflerService {
                 )
             );
             transaction.sign(signature);
-            //transaction.sign(Crypto.getKeySeed(shuffler.getSecretBytes()));
             shuffler.setFailedTransaction(null);
             shuffler.setFailureCause(null);
             Account participantAccount = accountService.getAccount(shuffler.getAccountId());

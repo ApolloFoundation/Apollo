@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageSer
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
@@ -78,6 +79,7 @@ public class DGSTagTableTest extends EntityDbTableTest<DGSTag> {
         BlockDaoImpl.class, TransactionDaoImpl.class,
         GenesisPublicKeyTable.class)
         .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
+        .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
         .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))

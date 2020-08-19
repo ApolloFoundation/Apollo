@@ -26,7 +26,7 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
     @Inject
     public PropertyStorageServiceImpl(ConfigDirProvider configDirProvider) {
         this.configDirProvider = configDirProvider;
-        this.realConfigDir = configDirProvider.getConfigDirectory();
+        this.realConfigDir = configDirProvider.getConfigLocation() + "/" + configDirProvider.getConfigName();
     }
 
     @PostConstruct
@@ -65,9 +65,9 @@ public class PropertyStorageServiceImpl implements PropertyStorageService {
     }
 
     private void validateAndCreateIfNotExist(boolean isCreate) {
-        String[] configDirList = new String[]{configDirProvider.getConfigDirectory(), configDirProvider.getInstallationConfigDirectory()};
+        String[] configDirList = new String[]{configDirProvider.getConfigLocation(), configDirProvider.getInstallationConfigLocation()};
         for (String configDir : configDirList) {
-            File folder = new File(configDir);
+            File folder = new File(configDir + "/" + configDirProvider.getConfigName());
             if (!folder.exists()) {
                 if (isCreate) {
                     boolean result = folder.mkdirs();

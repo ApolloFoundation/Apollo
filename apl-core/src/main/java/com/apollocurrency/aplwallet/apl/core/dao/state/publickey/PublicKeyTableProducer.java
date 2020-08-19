@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInte
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -46,17 +45,15 @@ public class PublicKeyTableProducer {
 
     @Inject
     public PublicKeyTableProducer(PropertiesHolder propertiesHolder,
-                                  Blockchain blockchain,
                                   InMemoryCacheManager cacheManager,
                                   TaskDispatchManager taskManager,
                                   DerivedTablesRegistry derivedDbTablesRegistry,
                                   DatabaseManager databaseManager) {
-        Objects.requireNonNull(blockchain, "Block chain is NULL.");
         this.cacheManager = Objects.requireNonNull(cacheManager, "Cache manager is NULL");
         Objects.requireNonNull(derivedDbTablesRegistry);
         Objects.requireNonNull(databaseManager);
-        this.publicKeyTable = new PublicKeyTable(blockchain, derivedDbTablesRegistry, databaseManager);
-        this.genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain, derivedDbTablesRegistry, databaseManager);
+        this.publicKeyTable = new PublicKeyTable(derivedDbTablesRegistry, databaseManager);
+        this.genesisPublicKeyTable = new GenesisPublicKeyTable(derivedDbTablesRegistry, databaseManager);
         this.taskManager = taskManager;
         this.cacheEnabled = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache");
     }

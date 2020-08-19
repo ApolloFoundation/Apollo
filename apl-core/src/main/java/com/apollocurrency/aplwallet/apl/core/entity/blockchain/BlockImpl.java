@@ -20,17 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -173,6 +167,9 @@ public final class BlockImpl implements Block {
 
     @Override
     public byte[] getGeneratorPublicKey() {
+        if (generatorPublicKey == null) {
+            throw new IllegalStateException("Generator's public key was not set");
+        }
         return generatorPublicKey;
     }
 

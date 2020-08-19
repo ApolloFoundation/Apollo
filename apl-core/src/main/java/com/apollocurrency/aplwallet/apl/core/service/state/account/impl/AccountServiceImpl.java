@@ -94,7 +94,7 @@ public class AccountServiceImpl implements AccountService {
         DbKey dbKey = AccountTable.newKey(id);
         Account account = accountTable.get(dbKey);
         if (account == null) {
-            PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey);
+            PublicKey publicKey = accountPublicKeyService.getPublicKey(id);
             if (publicKey != null) {
                 account = new Account(id, dbKey);
                 account.setPublicKey(publicKey);
@@ -108,7 +108,7 @@ public class AccountServiceImpl implements AccountService {
         DbKey dbKey = AccountTable.newKey(id);
         Account account = getAccount(dbKey, height);
         if (account == null) {
-            PublicKey publicKey = accountPublicKeyService.loadPublicKeyFromDb(dbKey, height);
+            PublicKey publicKey = accountPublicKeyService.loadPublicKeyFromDb(id, height);
             if (publicKey != null) {
                 account = new Account(id, height);
                 account.setPublicKey(publicKey);
@@ -148,7 +148,7 @@ public class AccountServiceImpl implements AccountService {
             return null;
         }
         if (account.getPublicKey() == null) {
-            account.setPublicKey(accountPublicKeyService.getPublicKey(AccountTable.newKey(account)));
+            account.setPublicKey(accountPublicKeyService.getPublicKey(accountId));
         }
         if (account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null
             || Arrays.equals(account.getPublicKey().getPublicKey(), publicKey)) {
@@ -182,12 +182,12 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountTable.get(dbKey);
         if (account == null) {
             account = new Account(id, dbKey);
-            PublicKey publicKey = accountPublicKeyService.getPublicKey(dbKey);
+            PublicKey publicKey = accountPublicKeyService.getPublicKey(id);
             if (publicKey == null) {
                 if (isGenesis) {
-                    publicKey = accountPublicKeyService.insertGenesisPublicKey(dbKey);
+                    publicKey = accountPublicKeyService.insertGenesisPublicKey(id);
                 } else {
-                    publicKey = accountPublicKeyService.insertNewPublicKey(dbKey);
+                    publicKey = accountPublicKeyService.insertNewPublicKey(id);
                 }
             }
             account.setPublicKey(publicKey);
@@ -226,7 +226,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<Block> getAccountBlocks(long accountId, int from, int to, int timestamp) {
-        return blockChainInfoService.getBlocksByAccountStream(accountId, from, to, timestamp).collect(Collectors.toList());
+        return blockChainInfoService.getBlocksByAccountStream(accountId, from, to, timestamp);
     }
 
     /**
@@ -243,7 +243,7 @@ public class AccountServiceImpl implements AccountService {
             return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / Constants.ONE_APL;
         }
         if (account.getPublicKey() == null) {
-            account.setPublicKey(accountPublicKeyService.getPublicKey(AccountTable.newKey(account.getId())));
+            account.setPublicKey(accountPublicKeyService.getPublicKey(account.getId()));
         }
         if (account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null || height - account.getPublicKey().getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
             if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {

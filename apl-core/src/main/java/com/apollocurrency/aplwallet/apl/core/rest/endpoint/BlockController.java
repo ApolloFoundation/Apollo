@@ -44,8 +44,6 @@ import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @NoArgsConstructor
 @Slf4j
@@ -148,9 +146,16 @@ public class BlockController {
         if (blockData == null) {
             return response.error(ApiErrors.UNKNOWN_VALUE, "block", blockData).build();
         }
+        if (includeTransactions) {
+            blockchain.getOrLoadTransactions(blockData);
+        }
         blockConverter.setAddTransactions(includeTransactions);
         blockConverter.setAddPhasedTransactions(includeExecutedPhased);
         BlockDTO dto = blockConverter.convert(blockData);
+        if (!includeTransactions) {
+            long count = blockchain.getBlockTransactionCount(blockData.getId());
+            dto.setNumberOfTransactions(count);
+        }
         log.trace("getBlock result: {}", dto);
         return response.bind(dto).build();
     }
@@ -286,8 +291,7 @@ public class BlockController {
             indexBeanParam.adjustIndexes(maxAPIFetchRecords);
             blockConverter.setAddTransactions(includeTransactions);
             blockConverter.setAddPhasedTransactions(includeExecutedPhased);
-            Stream<Block> steam = blockchain.getBlocksStream(indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex(), timestamp);
-            List<Block> result = steam.collect(Collectors.toList());
+            List<Block> result = blockchain.getBlocksFromShards(indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex(), timestamp);
             log.trace("getBlocks result [{}]: \t indexBeanParam={}, timestamp={}, includeTransactions={}, includeExecutedPhased={}",
                 result.size(), indexBeanParam, timestamp, includeTransactions, includeExecutedPhased);
             blockDataList = blockConverter.convert(result);

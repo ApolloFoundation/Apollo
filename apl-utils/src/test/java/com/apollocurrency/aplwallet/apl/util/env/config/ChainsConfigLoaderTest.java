@@ -1,7 +1,6 @@
 /*
  *  Copyright © 2018-2019 Apollo Foundation
  */
-
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -17,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ChainsConfigLoaderTest {
+
     private static final List<BlockchainProperties> BLOCKCHAIN_PROPERTIES1 = Arrays.asList(
         new BlockchainProperties(0, 255, 160, 1, 60, 67, 53, 30000000000L),
         new BlockchainProperties(2000, 300, 160, 2, 4, 1, 30000000000L,
@@ -68,7 +69,6 @@ public class ChainsConfigLoaderTest {
     private static final Chain CHAIN3 = new Chain(chainId2, false, Arrays.asList("51.15.1.1",
         "51.15.0.0"), Collections.emptyList(), Collections.emptyList(), "1", "2", "3", "4", "5", "6", BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150, 150));
     private Path tempRootPath;
-
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -179,13 +179,21 @@ public class ChainsConfigLoaderTest {
     @Test
     void testLoadConfigUsingConfigDirProvider() throws IOException {
         ConfigDirProvider configDirProvider = Mockito.mock(ConfigDirProvider.class);
-        File installationFolder = Files.createTempDirectory(tempRootPath, "installation").toFile();
-        File userConfigFolder = Files.createTempDirectory(tempRootPath, "user").toFile();
-        File sysConfigDir = Files.createTempDirectory(tempRootPath, "sys").toFile();
-        Mockito.doReturn(installationFolder.getPath()).when(configDirProvider).getInstallationConfigDirectory();
-        Mockito.doReturn(sysConfigDir.getPath()).when(configDirProvider).getSysConfigDirectory();
-        Mockito.doReturn(userConfigFolder.getPath()).when(configDirProvider).getUserConfigDirectory();
-        Mockito.doReturn("conf").when(configDirProvider).getConfigDirectoryName();
+
+        File installationLocation = Files.createTempDirectory(tempRootPath, "installation").toFile();
+        File userConfigLocation = Files.createTempDirectory(tempRootPath, "user").toFile();
+        File sysConfigLocation = Files.createTempDirectory(tempRootPath, "sys").toFile();
+
+        Files.createDirectory(Paths.get(installationLocation.getAbsolutePath(), "conf"));
+        Files.createDirectory(Paths.get(userConfigLocation.getAbsolutePath(), "conf"));
+        Files.createDirectory(Paths.get(sysConfigLocation.getAbsolutePath(), "conf"));
+
+
+        Mockito.doReturn(installationLocation.getPath()).when(configDirProvider).getInstallationConfigLocation();
+        Mockito.doReturn(sysConfigLocation.getPath()).when(configDirProvider).getSysConfigLocation();
+        Mockito.doReturn(userConfigLocation.getPath()).when(configDirProvider).getUserConfigLocation();
+        Mockito.doReturn("conf").when(configDirProvider).getConfigName();
+
         Chain chain1 = CHAIN1.copy();
         chain1.setChainId(UUID.randomUUID());
         Chain chain2 = CHAIN1.copy();
@@ -203,9 +211,10 @@ public class ChainsConfigLoaderTest {
         List<Chain> chainsToWriteToInstallationDir = Arrays.asList(chain5, chain4);
         List<Chain> chainsToWriteToSysConfigDir = Arrays.asList(chain1, chain2);
 
-        Path userConfigFile = userConfigFolder.toPath().resolve(CONFIG_NAME);
-        Path sysConfigFile = sysConfigDir.toPath().resolve(CONFIG_NAME);
-        Path installationConfigFile = installationFolder.toPath().resolve(CONFIG_NAME);
+        Path userConfigFile = userConfigLocation.toPath().resolve(configDirProvider.getConfigName()).resolve(CONFIG_NAME);
+        Path sysConfigFile = sysConfigLocation.toPath().resolve(configDirProvider.getConfigName()).resolve(CONFIG_NAME);
+        Path installationConfigFile = installationLocation.toPath().resolve(configDirProvider.getConfigName()).resolve(CONFIG_NAME);
+
         JSON.getMapper().writerWithDefaultPrettyPrinter().writeValue(userConfigFile.toFile(), chainsToWriteToUserConfigDir);
         JSON.getMapper().writerWithDefaultPrettyPrinter().writeValue(sysConfigFile.toFile(), chainsToWriteToSysConfigDir);
         JSON.getMapper().writerWithDefaultPrettyPrinter().writeValue(installationConfigFile.toFile(), chainsToWriteToInstallationDir);

@@ -6,17 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
@@ -30,14 +25,12 @@ import java.util.Map;
 
 @Singleton
 public class MSCurrencyMintingTransactionType extends MonetarySystemTransactionType {
-    private final CurrencyMintService currencyMintService;
     private final MonetaryCurrencyMintingService monetaryCurrencyMintingService;
 
 
     @Inject
-    public MSCurrencyMintingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, CurrencyMintService currencyMintService, MonetaryCurrencyMintingService monetaryCurrencyMintingService) {
+    public MSCurrencyMintingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, MonetaryCurrencyMintingService monetaryCurrencyMintingService) {
         super(blockchainConfig, accountService, currencyService);
-        this.currencyMintService = currencyMintService;
         this.monetaryCurrencyMintingService = monetaryCurrencyMintingService;
     }
 
@@ -80,7 +73,7 @@ public class MSCurrencyMintingTransactionType extends MonetarySystemTransactionT
         if (!currencyService.isActive(currency)) {
             throw new AplException.NotCurrentlyValidException("Currency not currently active " + attachment.getJSONObject());
         }
-        long counter = currencyMintService.getCounter(attachment.getCurrencyId(), transaction.getSenderId());
+        long counter = currencyService.getMintCounter(attachment.getCurrencyId(), transaction.getSenderId());
         if (attachment.getCounter() <= counter) {
             throw new AplException.NotCurrentlyValidException(String.format("Counter %d has to be bigger than %d", attachment.getCounter(), counter));
         }
@@ -101,7 +94,7 @@ public class MSCurrencyMintingTransactionType extends MonetarySystemTransactionT
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         MonetarySystemCurrencyMinting attachment = (MonetarySystemCurrencyMinting) transaction.getAttachment();
-        currencyMintService.mintCurrency(getLedgerEvent(), transaction.getId(), senderAccount, attachment);
+        currencyService.mintCurrency(getLedgerEvent(), transaction.getId(), senderAccount, attachment);
     }
 
     @Override

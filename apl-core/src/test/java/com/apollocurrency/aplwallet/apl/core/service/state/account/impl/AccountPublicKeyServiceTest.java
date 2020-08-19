@@ -4,11 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
-import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.GenesisPublicKeyTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -21,19 +20,18 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class AccountPublicKeyServiceTest {
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    private PublicKeyTable publicKeyTable = mock(PublicKeyTable.class);
-    private GenesisPublicKeyTable genesisPublicKeyTable = mock(GenesisPublicKeyTable.class);
     private InMemoryCacheManager cacheManager = mock(InMemoryCacheManager.class);
     private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
+    private PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
 
     private AccountPublicKeyService accountPublicKeyService;
     private AccountTestData testData;
@@ -42,19 +40,17 @@ class AccountPublicKeyServiceTest {
     void setUp() {
         testData = new AccountTestData();
         accountPublicKeyService = spy(new AccountPublicKeyServiceImpl(
-            publicKeyTable,
-            genesisPublicKeyTable,
             propertiesHolder,
             cacheManager,
-            blockChainInfoService));
+            blockChainInfoService, publicKeyDao));
     }
 
     @Test
     void getCount() {
         int publicCount = 200000;
         int genesisCount = 300000;
-        doReturn(publicCount).when(publicKeyTable).getCount();
-        doReturn(genesisCount).when(genesisPublicKeyTable).getCount();
+        doReturn(publicCount).when(publicKeyDao).count();
+        doReturn(genesisCount).when(publicKeyDao).genesisCount();
         assertEquals(publicCount + genesisCount, accountPublicKeyService.getCount());
     }
 
@@ -65,11 +61,11 @@ class AccountPublicKeyServiceTest {
         assertNull(accountPublicKeyService.getPublicKeyByteArray(accountId));
 
         PublicKey expectedPublicKey = new PublicKey(accountId, null, 1000);
-        doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
+        doReturn(expectedPublicKey).when(publicKeyDao).searchAll(anyLong());
         assertNull(accountPublicKeyService.getPublicKeyByteArray(accountId));
 
         expectedPublicKey = new PublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes(), 1000);
-        doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
+        doReturn(expectedPublicKey).when(publicKeyDao).searchAll(anyLong());
         assertEquals(expectedPublicKey.getPublicKey(), accountPublicKeyService.getPublicKeyByteArray(accountId));
     }
 
@@ -77,13 +73,13 @@ class AccountPublicKeyServiceTest {
     void setOrVerify() {
         long accountId = 2728325718715804811L;
         PublicKey expectedPublicKey = new PublicKey(accountId, null, 1000);
-        doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
+        doReturn(expectedPublicKey).when(publicKeyDao).searchAll(anyLong());
         //set new key
         assertTrue(accountPublicKeyService.setOrVerifyPublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes()));
 
         //verify
         expectedPublicKey = new PublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes(), 1000);
-        doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
+        doReturn(expectedPublicKey).when(publicKeyDao).searchAll(anyLong());
         //true, the same keys
         assertTrue(accountPublicKeyService.setOrVerifyPublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes()));
         //false, different keys
@@ -94,11 +90,10 @@ class AccountPublicKeyServiceTest {
     void testApply_newKey() {
         long accountId = 2728325718715804811L;
         PublicKey expectedPublicKey = new PublicKey(accountId, null, 1000);
-        doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
+        doReturn(expectedPublicKey).when(publicKeyDao).searchAll(anyLong());
         //publickKey == null
         accountPublicKeyService.apply(testData.ACC_1, testData.PUBLIC_KEY_STR.getBytes(), false);
-        verify(publicKeyTable, times(1)).insert(any(PublicKey.class));
-        verify(genesisPublicKeyTable, never()).insert(any(PublicKey.class));
+        verify(publicKeyDao, times(1)).insert(any(PublicKey.class));
         assertEquals(expectedPublicKey, testData.ACC_1.getPublicKey());
     }
 
@@ -109,13 +104,13 @@ class AccountPublicKeyServiceTest {
 
         //check public keys
         expectedPublicKey = new PublicKey(accountId, testData.PUBLIC_KEY_STR.getBytes(), 1000);
-        doReturn(expectedPublicKey).when(genesisPublicKeyTable).get(any());
+        doReturn(expectedPublicKey).when(publicKeyDao).searchAll(anyLong());
         //key mismatch
         assertThrows(IllegalStateException.class, () -> accountPublicKeyService.apply(testData.ACC_1, testData.PUBLIC_KEY_STR2.getBytes(), false));
         //key match
+        expectedPublicKey.setHeight(998);
         accountPublicKeyService.apply(testData.ACC_1, testData.PUBLIC_KEY_STR.getBytes(), false);
-        verify(publicKeyTable, times(1)).insert(any(PublicKey.class));
-        verify(genesisPublicKeyTable, never()).insert(any(PublicKey.class));
+        verify(publicKeyDao, times(3)).searchAll(anyLong());
         assertEquals(expectedPublicKey, testData.ACC_1.getPublicKey());
     }
 
