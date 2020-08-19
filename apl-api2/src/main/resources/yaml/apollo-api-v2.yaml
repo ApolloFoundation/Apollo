@@ -511,7 +511,7 @@ paths:
   /@@info/blockchain:
     get:
       tags:
-        - state
+        - info
       summary: Get blockchain object
       description: Return details information about the blockchain
       operationId: getBlockchainInfo

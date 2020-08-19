@@ -54,15 +54,16 @@ public class InfoApiServiceImpl implements InfoApiService {
         blockchainState.setChainid(blockchainConfig.getChain().getChainId().toString());
         blockchainState.setGenesisAccount(Long.toUnsignedString(GenesisImporter.CREATOR_ID));
         blockchainState.setTicker(blockchainConfig.getAccountPrefix());
-        blockchainState.setConsensus("Apollo");
+        blockchainState.setConsensus("Apollo POS");
         blockchainState.setMining("Pre-mining");
         Account account = accountService.getAccount(GenesisImporter.CREATOR_ID);
-        blockchainState.setTotalSupply(account.getBalanceATM());
+        blockchainState.setTotalSupply(Math.abs(account.getBalanceATM()));
         blockchainState.setBurning(0L);
 
         return builder.bind(blockchainState).build();
     }
 
+    @Override
     public Response getHealthInfo(SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         HealthResponse response = new HealthResponse();
