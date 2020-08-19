@@ -8,15 +8,19 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyBuyOfferTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyMintTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -36,9 +40,12 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.Currenc
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TransactionValidationHelper;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSCurrencyIssuanceTransactionType;
+import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
+import com.apollocurrency.aplwallet.apl.data.CurrencyMintTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencyTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -113,6 +120,10 @@ class CurrencyServiceTest {
     private IteratorToStreamConverter<CurrencyTransfer> iteratorToStreamConverter;
     @Mock
     private CurrencyBuyOfferService buyOfferService;
+    @Mock
+    private MonetaryCurrencyMintingService monetaryCurrencyMintingService;
+    @Mock
+    CurrencyMintTable currencyMintTable;
 
     @Mock
     TransactionValidationHelper transactionValidationHelper;
@@ -120,7 +131,7 @@ class CurrencyServiceTest {
     @BeforeEach
     void setUp() {
         td = new CurrencyTestData();
-        service = new CurrencyServiceImpl(currencySupplyTable, currencyTable, blockChainInfoService,
+        service = new CurrencyServiceImpl(currencySupplyTable, currencyTable, currencyMintTable, monetaryCurrencyMintingService, blockChainInfoService,
             accountService, accountCurrencyService, currencyExchangeOfferFacade, currencyFounderService,
             exchangeService, currencyTransferService, shufflingService, blockchainConfig, transactionValidationHelper);
     }
@@ -253,5 +264,65 @@ class CurrencyServiceTest {
 
         //WHEN
         service.validateCurrencyNaming(td.CURRENCY_3.getAccountId(), issuance);
+    }
+
+
+    @Test
+    void mintCurrency() {
+       AccountTestData accountTestData = new AccountTestData();
+        CurrencyMintTestData currencyMintTestData = new CurrencyMintTestData();
+        //GIVEN
+        MonetarySystemCurrencyMinting attachment = mock(MonetarySystemCurrencyMinting.class);
+        doReturn(100L).when(attachment).getCounter();
+        doReturn(td.CURRENCY_3.getId()).when(attachment).getCurrencyId();
+        doReturn(td.CURRENCY_3.getMinReservePerUnitATM()).when(attachment).getUnits();
+        Account account = mock(Account.class);
+        doReturn(accountTestData.ACC_4.getId()).when(account).getId();
+        doReturn(currencyMintTestData.CURRENCY_MINT_3).when(currencyMintTable).get(any(DbKey.class));
+        td.CURRENCY_3.setType(20);
+        doReturn(td.CURRENCY_3).when(currencyTable).get(new LongKey(td.CURRENCY_3.getId()));
+        doReturn(true).when(monetaryCurrencyMintingService).meetsTarget(
+            anyLong(), any(Currency.class), any(MonetarySystemCurrencyMinting.class));
+        LedgerEvent ledgerEvent = mock(LedgerEvent.class);
+
+        //WHEN
+        service.mintCurrency(ledgerEvent, currencyMintTestData.CURRENCY_MINT_4.getCurrencyId(), account, attachment);
+
+        //THEN
+        verify(currencyMintTable).get(any(DbKey.class));
+        verify(currencyMintTable).insert((any(CurrencyMint.class)));
+        verify(currencySupplyTable).insert(any(CurrencySupply.class));
+    }
+
+    @Test
+    void getCounter() {
+        //GIVEN
+        CurrencyMintTestData currencyMintTestData = new CurrencyMintTestData();
+        doReturn(currencyMintTestData.CURRENCY_MINT_4).when(currencyMintTable).get(any(DbKey.class));
+        //WHEN
+        long result = service.getMintCounter(currencyMintTestData.CURRENCY_MINT_4.getCurrencyId(), currencyMintTestData.CURRENCY_MINT_4.getAccountId());
+        assertEquals(currencyMintTestData.CURRENCY_MINT_4.getCounter(), result);
+        //THEN
+        verify(currencyMintTable).get(any(DbKey.class));
+    }
+
+    @Test
+    void deleteCurrency() {
+        blockTestData = new BlockTestData();
+        CurrencyMintTestData currencyMintTestData = new CurrencyMintTestData();
+        //GIVEN
+        DbIterator<CurrencyMint> dbIt = mock(DbIterator.class);
+        doReturn(true).doReturn(true).doReturn(false).when(dbIt).hasNext();
+        doReturn(currencyMintTestData.CURRENCY_MINT_3).doReturn(currencyMintTestData.CURRENCY_MINT_2).when(dbIt).next();
+        doReturn(dbIt).when(currencyMintTable).getManyBy(any(DbClause.LongClause.class), anyInt(), anyInt());
+        doReturn(blockTestData.BLOCK_10.getHeight()).when(blockChainInfoService).getHeight();
+        Currency currency = mock(Currency.class);
+        doReturn(100L).when(currency).getId();
+
+        //WHEN
+        ((CurrencyServiceImpl) service).deleteMintingCurrency(currency);
+
+        //THEN
+        verify(currencyMintTable).getManyBy(any(DbClause.LongClause.class), anyInt(), anyInt());
     }
 }

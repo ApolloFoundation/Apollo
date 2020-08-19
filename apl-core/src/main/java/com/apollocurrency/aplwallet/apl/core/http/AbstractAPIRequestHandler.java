@@ -51,7 +51,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyFounderService;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
@@ -124,7 +123,6 @@ public abstract class AbstractAPIRequestHandler {
     private CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
     private ExchangeRequestService exchangeRequestService;
     private CurrencyTransferService currencyTransferService;
-    private CurrencyMintService currencyMintService;
     private CurrencyFounderService currencyFounderService;
     private CurrencyService currencyService;
     private MonetaryCurrencyMintingService monetaryCurrencyMintingService;
@@ -288,13 +286,6 @@ public abstract class AbstractAPIRequestHandler {
             currencyTransferService = CDI.current().select(CurrencyTransferService.class).get();
         }
         return currencyTransferService;
-    }
-
-    public CurrencyMintService lookupCurrencyMintService() {
-        if (currencyMintService == null) {
-            currencyMintService = CDI.current().select(CurrencyMintService.class).get();
-        }
-        return currencyMintService;
     }
 
     public CurrencyFounderService lookupCurrencyFounderService() {

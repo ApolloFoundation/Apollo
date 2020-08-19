@@ -52,14 +52,14 @@ public final class GetMintingTarget extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
-        Currency currency = HttpParameterParserUtil.getCurrency(req);
+        Currency currency = HttpParameterParserUtil.getCurrencyWithSupply(req);
         JSONObject json = new JSONObject();
         json.put("currency", Long.toUnsignedString(currency.getId()));
         long units = HttpParameterParserUtil.getLong(req, "units", 1, currency.getMaxSupply() - currency.getReserveSupply(), true);
         BigInteger numericTarget = lookupMonetaryCurrencyMintingService().getNumericTarget(currency, units);
         json.put("difficulty", String.valueOf(BigInteger.ZERO.equals(numericTarget) ? -1 : BigInteger.valueOf(2).pow(256).subtract(BigInteger.ONE).divide(numericTarget)));
         json.put("targetBytes", Convert.toHexString(lookupMonetaryCurrencyMintingService().getTarget(numericTarget)));
-        json.put("counter", lookupCurrencyMintService().getCounter(
+        json.put("counter", lookupCurrencyService().getMintCounter(
             currency.getId(), HttpParameterParserUtil.getAccountId(req, true)));
         return json;
     }
