@@ -389,6 +389,7 @@ public final class HttpParameterParserUtil {
     public static Currency getCurrency(HttpServletRequest req) throws ParameterException {
         return getCurrency(req, true);
     }
+
     public static Currency getCurrencyWithSupply(HttpServletRequest req) throws ParameterException {
         Currency currency = getCurrency(req);
         CurrencyService currencyService = lookupCurrencyService();

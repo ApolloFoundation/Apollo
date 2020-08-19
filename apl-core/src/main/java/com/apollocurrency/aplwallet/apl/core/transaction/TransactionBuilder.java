@@ -172,7 +172,12 @@ public class TransactionBuilder {
         return builder;
     }
 
+    /**
+     * Use com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter
+     */
+    @Deprecated
     public TransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws AplException.NotValidException {
+
         try {
             byte type = ((Long) transactionData.get("type")).byteValue();
             byte subtype = ((Long) transactionData.get("subtype")).byteValue();
@@ -184,15 +189,11 @@ public class TransactionBuilder {
             String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");
             Long versionValue = (Long) transactionData.get("version");
             byte version = versionValue == null ? 0 : versionValue.byteValue();
+
             SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
-            JSONObject sigJsonObject;
-            if (version < 2) {
-                sigJsonObject = new JSONObject();
-                sigJsonObject.put(SignatureParser.SIGNATURE_FIELD_NAME, transactionData.get("signature"));
-            } else {
-                sigJsonObject = (JSONObject) transactionData.get("signature");
-            }
-            Signature signature = signatureParser.parse(sigJsonObject);
+            ByteBuffer signatureBuffer = ByteBuffer.wrap(Convert.parseHexString((String) transactionData.get("signature")));
+            Signature signature = signatureParser.parse(signatureBuffer);
+
             JSONObject attachmentData = (JSONObject) transactionData.get("attachment");
             int ecBlockHeight = 0;
             long ecBlockId = 0;

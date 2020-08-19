@@ -43,7 +43,7 @@ public interface AccountPublicKeyService {
      * Load public key for specified height from the database
      *
      * @param accountId id of account for which new public key should be loaded
-     * @param height block height
+     * @param height    block height
      * @return public key or null
      */
     PublicKey loadPublicKeyFromDb(long accountId, int height);

@@ -65,20 +65,20 @@ public class FileUtils {
         }
         try {
             Files.walkFileTree(directory, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Files.delete(file);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                    if (!dir.equals(directory)) {
-                        Files.delete(dir);
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Files.delete(file);
+                        return FileVisitResult.CONTINUE;
                     }
-                    return super.postVisitDirectory(dir, exc);
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        if (!dir.equals(directory)) {
+                            Files.delete(dir);
+                        }
+                        return super.postVisitDirectory(dir, exc);
+                    }
                 }
-            }
             );
         } catch (IOException e) {
             log.error("Unable to delete dir {}", directory);

@@ -58,7 +58,7 @@ public class CmdLineArgs {
     public boolean isTestnet = false;
     //---
     @Parameter(names = {"--disable-weld-concurrent-deployment"},
-            description = "If use it, Weld doesn't use ConcurrentDeployer and ConcurrentValidator to build the container. Default value is true.")
+        description = "If use it, Weld doesn't use ConcurrentDeployer and ConcurrentValidator to build the container. Default value is true.")
     public boolean disableWeldConcurrentDeployment = false;
 
     public boolean isResourceIgnored() {

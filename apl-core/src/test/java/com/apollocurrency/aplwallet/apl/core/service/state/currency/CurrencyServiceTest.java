@@ -269,7 +269,7 @@ class CurrencyServiceTest {
 
     @Test
     void mintCurrency() {
-       AccountTestData accountTestData = new AccountTestData();
+        AccountTestData accountTestData = new AccountTestData();
         CurrencyMintTestData currencyMintTestData = new CurrencyMintTestData();
         //GIVEN
         MonetarySystemCurrencyMinting attachment = mock(MonetarySystemCurrencyMinting.class);

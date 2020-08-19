@@ -204,8 +204,8 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         Transaction transaction;
         try {
             Transaction.Builder builder = txBuilder.newTransactionBuilder(txRequest.getPublicKey(),
-                        txRequest.getAmountATM(), txRequest.getFeeATM(),
-                        deadline, txRequest.getAttachment(), timestamp)
+                txRequest.getAmountATM(), txRequest.getFeeATM(),
+                deadline, txRequest.getAttachment(), timestamp)
                 .referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
             if (type.canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());

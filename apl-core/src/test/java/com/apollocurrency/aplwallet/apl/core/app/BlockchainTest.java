@@ -107,9 +107,11 @@ class BlockchainTest {
     TimeService timeService = mock(TimeService.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     TransactionTestData td = new TransactionTestData();
+
     {
         initPublicKeyDao();
     }
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(TransactionDaoImpl.class, BlockchainImpl.class, BlockDaoImpl.class,
         TransactionIndexDao.class, DaoConfig.class, JdbiTransactionalInterceptor.class,

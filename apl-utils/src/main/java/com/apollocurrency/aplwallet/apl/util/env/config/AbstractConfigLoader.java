@@ -82,7 +82,7 @@ public abstract class AbstractConfigLoader<T> implements ConfigLoader<T> {
         }
     }
 
-//TODO: load from zip
+    //TODO: load from zip
     private void loadFromDirectories() {
         List<String> searchDirs = new ArrayList<>();
         if (!StringUtils.isBlank(configDir)) { //load just from confDir

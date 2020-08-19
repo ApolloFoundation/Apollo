@@ -29,7 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
-import com.apollocurrency.aplwallet.apl.core.peer.parser.PeerResponseParser;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.ReqRespParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -504,13 +504,14 @@ public final class PeerImpl implements Peer {
     }
 
     @Override
-    public BaseP2PResponse send(BaseP2PRequest request, PeerResponseParser parser) throws PeerNotConnectedException {
+    public <BaseP2PResponse> BaseP2PResponse send(BaseP2PRequest request, ReqRespParser<BaseP2PResponse> parser) throws PeerNotConnectedException {
         if (getState() != PeerState.CONNECTED) {
             LOG.debug("send() called before handshake(). Handshacking to: {}", getHostWithPort());
             throw new PeerNotConnectedException("send() called before handshake(). Handshacking");
         } else {
             try {
-                return parser.parse(sendJSON(mapper.writeValueAsString(request)));
+                JSONObject response = sendJSON(mapper.writeValueAsString(request));
+                return parser.parse(response);
             } catch (JsonProcessingException e) {
                 LOG.debug("Can not deserialize request");
                 return null;

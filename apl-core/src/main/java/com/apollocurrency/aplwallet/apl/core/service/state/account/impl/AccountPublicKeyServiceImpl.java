@@ -48,9 +48,9 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Inject
     public AccountPublicKeyServiceImpl(
-                                       PropertiesHolder propertiesHolder,
-                                       InMemoryCacheManager cacheManager,
-                                       BlockChainInfoService blockChainInfoService, PublicKeyDao publicKeyDao) {
+        PropertiesHolder propertiesHolder,
+        InMemoryCacheManager cacheManager,
+        BlockChainInfoService blockChainInfoService, PublicKeyDao publicKeyDao) {
         this.publicKeyDao = publicKeyDao;
         this.cacheManager = cacheManager;
         this.cacheEnabled = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache");

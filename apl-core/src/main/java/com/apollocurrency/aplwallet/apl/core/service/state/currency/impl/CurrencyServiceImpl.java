@@ -461,8 +461,8 @@ public class CurrencyServiceImpl implements CurrencyService {
                 currencyMint = new CurrencyMint(attachment.getCurrencyId(),
                     account.getId(), attachment.getCounter(), blockChainInfoService.getHeight());
             } else {
-                currencyMint.setHeight( blockChainInfoService.getHeight() );// important assign
-                currencyMint.setCounter( attachment.getCounter() );
+                currencyMint.setHeight(blockChainInfoService.getHeight());// important assign
+                currencyMint.setCounter(attachment.getCounter());
             }
             currencyMintTable.insert(currencyMint);
             long units = Math.min(attachment.getUnits(),

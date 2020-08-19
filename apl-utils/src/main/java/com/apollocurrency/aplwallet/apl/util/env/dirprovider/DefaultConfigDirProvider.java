@@ -42,11 +42,11 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
      * Constructs config dir provider
      *
      * @param applicationName name of application's parameter dir
-     * @param isService service mode or user mode
-     * @param netIdx index of network. 0 means main net, 1,2,3 - testnets 1,2,3.
-     * If index is <0, it should not be used, UUID or partial UUID should be
-     * used instead @param uuid UUID of chain or few first symbols @param uuid
-     * @param uuidOrPart UUID that is chainID or few first bytes in hex
+     * @param isService       service mode or user mode
+     * @param netIdx          index of network. 0 means main net, 1,2,3 - testnets 1,2,3.
+     *                        If index is <0, it should not be used, UUID or partial UUID should be
+     *                        used instead @param uuid UUID of chain or few first symbols @param uuid
+     * @param uuidOrPart      UUID that is chainID or few first bytes in hex
      */
     public DefaultConfigDirProvider(String applicationName, boolean isService, int netIdx, String uuidOrPart) {
         if (applicationName == null || applicationName.trim().isEmpty()) {

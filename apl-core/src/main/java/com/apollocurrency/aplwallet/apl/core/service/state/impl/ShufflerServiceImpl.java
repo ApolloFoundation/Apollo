@@ -486,7 +486,7 @@ public class ShufflerServiceImpl implements ShufflerService {
                 Crypto.getPublicKey(Crypto.getKeySeed(shuffler.getSecretBytes())),
                 0, 0,
                 (short) 1440, attachment, timestamp)
-            .ecBlockData(blockchain.getECBlock(timestamp));
+                .ecBlockData(blockchain.getECBlock(timestamp));
 
             Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));

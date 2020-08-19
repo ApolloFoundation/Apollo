@@ -91,7 +91,7 @@ class DataTagDaoTest {
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-        .addBeans(MockBean.of(mock(PublicKeyDao .class), PublicKeyDao.class))
+        .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))

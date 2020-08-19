@@ -180,8 +180,8 @@ public class BlockchainImpl implements Blockchain {
     /**
      * Retrieve records from correct shard AND main database.
      *
-     * @param from height index
-     * @param to height index
+     * @param from      height index
+     * @param to        height index
      * @param timestamp optional block timestamp
      * @return composed block's stream
      */

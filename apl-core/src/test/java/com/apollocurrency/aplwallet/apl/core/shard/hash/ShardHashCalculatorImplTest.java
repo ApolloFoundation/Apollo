@@ -79,11 +79,12 @@ public class ShardHashCalculatorImplTest {
     {
         doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).searchAll(anyLong());
     }
+
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class,
         BlockImpl.class, BlockDaoImpl.class,
         DerivedDbTablesRegistryImpl.class, TimeServiceImpl.class, GlobalSyncImpl.class, TransactionDaoImpl.class,
-        DaoConfig.class,         TransactionRowMapper.class, TransactionBuilder.class)
+        DaoConfig.class, TransactionRowMapper.class, TransactionBuilder.class)
         .addBeans(
             MockBean.of(blockchainConfig, BlockchainConfig.class),
             MockBean.of(propertiesHolder, PropertiesHolder.class),

@@ -26,7 +26,7 @@ public final class MonetarySystemReserveIncrease extends AbstractAttachment impl
     public MonetarySystemReserveIncrease(JSONObject attachmentData) {
         super(attachmentData);
         this.currencyId = Convert.parseUnsignedLong((String) attachmentData.get("currency"));
-        this.amountPerUnitATM = attachmentData.containsKey("amountPerUnitATM") ? Convert.parseLong(attachmentData.get("amountPerUnitATM")) : Convert.parseLong(attachmentData.get("amountPerUnitNQT"));
+        this.amountPerUnitATM = Convert.parseLong(attachmentData.get("amountPerUnitATM"));
     }
 
     public MonetarySystemReserveIncrease(long currencyId, long amountPerUnitATM) {

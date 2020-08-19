@@ -64,7 +64,7 @@ public final class MonetarySystemCurrencyIssuance extends AbstractAttachment {
         this.reserveSupply = Convert.parseLong(attachmentData.get("reserveSupply"));
         this.maxSupply = Convert.parseLong(attachmentData.get("maxSupply"));
         this.issuanceHeight = ((Long) attachmentData.get("issuanceHeight")).intValue();
-        this.minReservePerUnitATM = attachmentData.containsKey("minReservePerUnitATM") ? Convert.parseLong(attachmentData.get("minReservePerUnitATM")) : Convert.parseLong(attachmentData.get("minReservePerUnitNQT"));
+        this.minReservePerUnitATM = Convert.parseLong(attachmentData.get("minReservePerUnitATM"));
         this.minDifficulty = ((Long) attachmentData.get("minDifficulty")).intValue();
         this.maxDifficulty = ((Long) attachmentData.get("maxDifficulty")).intValue();
         this.ruleset = ((Long) attachmentData.get("ruleset")).byteValue();
