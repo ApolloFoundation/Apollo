@@ -121,8 +121,8 @@ public class TransactionCreator {
         Transaction transaction;
         try {
             Transaction.Builder builder = transactionBuilder.newTransactionBuilder(txRequest.getPublicKey(),
-                        txRequest.getAmountATM(), txRequest.getFeeATM(),
-                        deadline, txRequest.getAttachment(), timestamp)
+                txRequest.getAmountATM(), txRequest.getFeeATM(),
+                deadline, txRequest.getAttachment(), timestamp)
                 .referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
             if (transactionType.canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());

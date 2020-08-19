@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
-import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;

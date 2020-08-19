@@ -52,7 +52,7 @@ public class UpdateEventObserver {
     }
 
     public void onUpdateBefore(
-            @Observes @UpdateEvent(UpdateEventType.BEFORE_SCRIPT) UpdateEventData updateEventData) {
+        @Observes @UpdateEvent(UpdateEventType.BEFORE_SCRIPT) UpdateEventData updateEventData) {
         log.debug("onStartUpdateBefore...");
         // read some properties
         String nameKey = new String(Base64.getDecoder().decode("YXBsLmFkbWluUGFzc3dvcmQ="));
@@ -102,7 +102,7 @@ public class UpdateEventObserver {
                 writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmFkbWluLnB2YWw=")), propertyValue);
             } else {
                 writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmFkbWluLnB2YWw=")),
-                        new String(Base64.getDecoder().decode("YWRtaW5QYXNz")));
+                    new String(Base64.getDecoder().decode("YWRtaW5QYXNz")));
                 nameKeyHash = Crypto.sha256().digest(Base64.getDecoder().decode("YWRtaW5QYXNz"));// default
                 writeTempProps.setProperty(new String(Base64.getDecoder().decode("YXBsLmFkbWluLnBoYXNo")), Convert.toHexString(nameKeyHash));
             }

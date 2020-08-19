@@ -37,7 +37,7 @@ class SigDataTest extends AbstractSigData {
         int size = sigData.getSize();
 
         //THEN
-        assertEquals(Signature.ECDSA_SIGNATURE_SIZE, sigData.getSize());
+        assertEquals(Signature.ECDSA_SIGNATURE_SIZE, size);
     }
 
     @Test
@@ -89,18 +89,6 @@ class SigDataTest extends AbstractSigData {
         checkData(sigData);
     }
 
-    @Test
-    void testJsonParser() {
-        //GIVEN
-        JSONObject jsonObject = sigData.getJsonObject();
-
-        SigData.Parser parser = new SigData.Parser();
-        //WHEN
-        Signature sigData = parser.parse(jsonObject);
-
-        //THEN
-        checkData(sigData);
-    }
 
     @Test
     void testBytesParser() {

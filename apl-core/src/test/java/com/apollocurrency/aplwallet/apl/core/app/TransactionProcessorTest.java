@@ -32,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -81,6 +82,7 @@ class TransactionProcessorTest {
     private AccountPublicKeyService accountPublicKeyService = mock(AccountPublicKeyService.class);
     private TransactionBuilder transactionBuilder = mock(TransactionBuilder.class);
     private PrunableLoadingService prunableLoadingService = mock(PrunableLoadingService.class);
+    private TransactionTypeFactory transactionTypeFactory = mock(TransactionTypeFactory.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
@@ -102,6 +104,7 @@ class TransactionProcessorTest {
         .addBeans(MockBean.of(globalSync, GlobalSync.class))
         .addBeans(MockBean.of(taskDispatchManager, TaskDispatchManager.class))
         .addBeans(MockBean.of(accountPublicKeyService, AccountPublicKeyService.class))
+        .addBeans(MockBean.of(transactionTypeFactory, TransactionTypeFactory.class))
         .build();
 
     private TransactionProcessor service;
@@ -114,7 +117,8 @@ class TransactionProcessorTest {
         td = new TransactionTestData();
         service = new TransactionProcessorImpl(propertiesHolder, transactionValidator, transactionApplier,
             listEvent, unconfirmedTransactionTable, databaseManager, accountService,
-            globalSync, timeService, ntpTimeConfig.time(), blockchainConfig, taskDispatchManager, peersService, blockchain, transactionBuilder, prunableLoadingService);
+            globalSync, timeService, ntpTimeConfig.time(), blockchainConfig, taskDispatchManager, peersService, blockchain, transactionBuilder, prunableLoadingService,
+            transactionTypeFactory);
     }
 
     @Test

@@ -16,7 +16,7 @@ import javax.inject.Singleton;
 import java.util.List;
 
 @Singleton
-public class TwoTablesPublicKeyDao implements PublicKeyDao{
+public class TwoTablesPublicKeyDao implements PublicKeyDao {
     private final EntityDbTableInterface<PublicKey> publicKeyTable;
     private final EntityDbTableInterface<PublicKey> genesisPublicKeyTable;
 

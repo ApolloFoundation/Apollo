@@ -81,7 +81,7 @@ public class GenerateBlocksThread implements Runnable {
                     final int generationLimit = timeService.getEpochTime() - delayTime;
                     if (lastBlock.getId() != lastBlockId || sortedForgers == null) {
                         lastBlockId = lastBlock.getId();
-                        log.trace("run - lastBlockId = {} ({} ms)", lastBlockId, (System.currentTimeMillis() - start) );
+                        log.trace("run - lastBlockId = {} ({} ms)", lastBlockId, (System.currentTimeMillis() - start));
                         Map<Long, GeneratorMemoryEntity> generatorsMap = generatorService.getGeneratorsMap();
                         if (lastBlock.getTimestamp() > timeService.getEpochTime() - 600) {
                             log.trace("run - getTimestamp = {} > {}", lastBlock.getTimestamp(), timeService.getEpochTime() - 600);

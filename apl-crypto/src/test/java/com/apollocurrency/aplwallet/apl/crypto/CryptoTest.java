@@ -9,12 +9,14 @@ import io.firstbridge.cryptolib.CryptoParams;
 import io.firstbridge.cryptolib.ElGamalCrypto;
 import io.firstbridge.cryptolib.ElGamalKeyPair;
 import io.firstbridge.cryptolib.impl.ecc.ElGamalCryptoImpl;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 /**
  * Tests of crypto routines that creates test verctors for JS implementation
@@ -124,21 +126,19 @@ public class CryptoTest extends TestsCommons {
      */
     @Test
     public void testGetPrivateKey_String() throws IOException {
-
-        byte[] keySeed = Crypto.getKeySeed(secretPhraseA);
+        byte[] keySeed =   Crypto.getKeySeed(secretPhraseA);
         byte[] expResult = Convert.parseHexString("b0f12497c84af1ac2603f97d1fb804fc308e241d522fa5d21e900facbb92d66e");
         byte[] result = Crypto.getPrivateKey(keySeed);
-        assertArrayEquals(expResult, result);
-        writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR + OUT_FILE_PRIVKEY_S);
-
+           assertArrayEquals(expResult, result);
+           writeToFile(ByteBuffer.wrap(result), TST_OUT_DIR+OUT_FILE_PRIVKEY_S);
     }
+
 
     /**
      * Test of sign method, of class Crypto.
      */
     @Test
     public void testSign_byteArr_String() throws IOException {
-
         byte[] message = plain_data;
         byte[] expResult = Convert.parseHexString("f565212c53a668006fbdb12c512e51f7add8118e6573d5c7261e9f58944e5c0b0ae76275210b795915a3017852fe8bca1a3cd2d2b02b32a51e0e03b18e6335f8");
         byte[] result = Crypto.sign(message, secretPhraseA);

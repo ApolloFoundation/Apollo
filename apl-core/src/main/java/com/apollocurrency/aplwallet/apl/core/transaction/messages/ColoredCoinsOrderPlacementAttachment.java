@@ -27,8 +27,8 @@ public abstract class ColoredCoinsOrderPlacementAttachment extends AbstractAttac
     public ColoredCoinsOrderPlacementAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
-        this.quantityATU = attachmentData.containsKey("quantityATU") ? Convert.parseLong(attachmentData.get("quantityATU")) : Convert.parseLong(attachmentData.get("quantityQNT"));
-        this.priceATM = attachmentData.containsKey("priceATM") ? Convert.parseLong(attachmentData.get("priceATM")) : Convert.parseLong(attachmentData.get("priceNQT"));
+        this.quantityATU = Convert.parseLong(attachmentData.get("quantityATU"));
+        this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
     }
 
     public ColoredCoinsOrderPlacementAttachment(long assetId, long quantityATU, long priceATM) {

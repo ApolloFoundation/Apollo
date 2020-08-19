@@ -43,7 +43,7 @@ public class DigitalGoodsDelivery extends AbstractAttachment {
         super(attachmentData);
         this.purchaseId = Convert.parseUnsignedLong((String) attachmentData.get("purchase"));
         this.goods = new EncryptedData(Convert.parseHexString((String) attachmentData.get("goodsData")), Convert.parseHexString((String) attachmentData.get("goodsNonce")));
-        this.discountATM = attachmentData.containsKey("discountATM") ? Convert.parseLong(attachmentData.get("discountATM")) : Convert.parseLong(attachmentData.get("discountNQT"));
+        this.discountATM = Convert.parseLong(attachmentData.get("discountATM"));
         this.goodsIsText = Boolean.TRUE.equals(attachmentData.get("goodsIsText"));
     }
 

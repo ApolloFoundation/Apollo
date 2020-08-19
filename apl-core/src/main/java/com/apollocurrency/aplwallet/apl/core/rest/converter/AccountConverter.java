@@ -58,7 +58,7 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         this.twoFactorAuthService = twoFactorAuthService;
         this.blockchain = blockchain;
         this.accountCurrencyConverter = accountCurrencyConverter;
-        this. currencyService = currencyService;
+        this.currencyService = currencyService;
     }
 
     private static void addAccountInfo(AccountDTO o, AccountInfo model) {
@@ -103,8 +103,10 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         AccountDTO dto = new AccountDTO();
         dto.setAccount(Long.toUnsignedString(account.getId()));
         dto.setAccountRS(Convert2.rsAccount(account.getId()));
-        dto.setParent(Convert2.rsAccount(account.getParentId()));
-        dto.setAddressScope(account.getAddrScope().name());
+        if (account.getParentId() != 0) {
+            dto.setParent(Convert2.rsAccount(account.getParentId()));
+            dto.setAddressScope(account.getAddrScope().name());
+        }
         dto.set2FA(twoFactorAuthService.isEnabled(account.getId()));
         PublicKey pk = account.getPublicKey();
         if (pk != null) {

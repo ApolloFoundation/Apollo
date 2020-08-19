@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.currency;
 
-import java.util.stream.Stream;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -13,6 +11,8 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTrans
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
+
+import java.util.stream.Stream;
 
 public interface CurrencyService {
     DbIterator<Currency> getAllCurrencies(int from, int to);

@@ -5,24 +5,28 @@
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.api.p2p.request.GetUnconfirmedTransactionsRequest;
+import com.apollocurrency.aplwallet.api.p2p.respons.GetUnconfirmedTransactionsResponse;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.GetUnconfirmedTransactionsResponseParser;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Class makes lookup of BlockchainProcessor
@@ -35,15 +39,18 @@ public class ProcessTransactionsThread implements Runnable {
     private final UnconfirmedTransactionTable unconfirmedTransactionTable;
     private final BlockchainConfig blockchainConfig;
     private final PeersService peers;
+    private final TransactionDTOConverter dtoConverter;
 
     public ProcessTransactionsThread(TransactionProcessor transactionProcessor,
                                      UnconfirmedTransactionTable unconfirmedTransactionTable,
                                      BlockchainConfig blockchainConfig,
-                                     PeersService peers) {
+                                     PeersService peers,
+                                     TransactionTypeFactory transactionTypeFactory) {
         this.transactionProcessor = Objects.requireNonNull(transactionProcessor);
         this.unconfirmedTransactionTable = Objects.requireNonNull(unconfirmedTransactionTable);
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
         this.peers = Objects.requireNonNull(peers);
+        this.dtoConverter = new TransactionDTOConverter(transactionTypeFactory);
         log.info("Created 'ProcessTransactionsThread' instance");
     }
 
@@ -67,19 +74,19 @@ public class ProcessTransactionsThread implements Runnable {
 
                 request.setExclude(exclude);
 
-                JSONObject response = peer.send(JSON.getMapper().convertValue(request, JSONObject.class), blockchainConfig.getChain().getChainId());
-                if (response == null) {
+                GetUnconfirmedTransactionsResponse response = peer.send(request, new GetUnconfirmedTransactionsResponseParser());
+
+                if (CollectionUtil.isEmpty(response.unconfirmedTransactions)) {
                     return;
                 }
-                JSONArray transactionsData = (JSONArray) response.get("unconfirmedTransactions");
-                if (transactionsData == null || transactionsData.size() == 0) {
-                    return;
-                }
+
                 try {
-                    //TODO Refactoring processPeerTransactions. https://firstb.atlassian.net/browse/APL-1632
-                    // Divide processing and parse transactions. Make method "processPeerTransactions"
-                    // works with List<Transaction> instead of JSONArray
-                    transactionProcessor.processPeerTransactions(transactionsData);
+                    List<Transaction> transactions = response.unconfirmedTransactions
+                        .stream()
+                        .map(dtoConverter)
+                        .collect(Collectors.toList());
+
+                    transactionProcessor.processPeerTransactions(transactions);
                 } catch (AplException.NotValidException | RuntimeException e) {
                     peer.blacklist(e);
                 }

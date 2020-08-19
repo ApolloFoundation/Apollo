@@ -7,18 +7,30 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 import com.apollocurrency.aplwallet.api.dto.account.PhasingParamsDTO;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 
-public class PhasingParamsConverter implements Converter<PhasingParams, PhasingParamsDTO> {
+import java.util.ArrayList;
+import java.util.List;
 
-    private VoteWeightingConverter voteWeightingConverter = new VoteWeightingConverter();
+public class PhasingParamsConverter implements Converter<PhasingParams, PhasingParamsDTO> {
 
     @Override
     public PhasingParamsDTO apply(PhasingParams model) {
         PhasingParamsDTO dto = new PhasingParamsDTO();
         dto.setQuorum(model.getQuorum());
-        dto.setWhitelist( model.getWhitelist() != null ? model.getWhitelist()  : new long[]{});
-        dto.setVoteWeighting(model.getVoteWeighting() != null ?
-            voteWeightingConverter.apply(model.getVoteWeighting()) : null);
-        return null;
+        List<String> whiteListIds = new ArrayList<>();
+        if (model.getWhitelist() != null) {
+            for (long id : model.getWhitelist()) {
+                whiteListIds.add(Long.toUnsignedString(id));
+            }
+        }
+        dto.setWhitelist(whiteListIds);
+
+        if (model.getVoteWeighting() != null) {
+            dto.setPhasingMinBalance(model.getVoteWeighting().getMinBalance());
+            dto.setPhasingMinBalanceModel(model.getVoteWeighting().getMinBalanceModel().getCode());
+            dto.setPhasingHolding(Long.toUnsignedString(model.getVoteWeighting().getHoldingId()));
+            dto.setPhasingVotingModel(model.getVoteWeighting().getVotingModel().getCode());
+        }
+        return dto;
     }
 
 }
