@@ -78,7 +78,7 @@ public class AplElGamalCrypto {
 
             BigInteger restored = BigInteger.ZERO;
 
-            restored = instanceOfAlice.decryptAsymmetric(pKey, cryptogram1);
+            restored = instanceOfAlice.decrypt(pKey, cryptogram1);
             String keyStr = normalizeByLen(restored.toString(16), 64);// cut the vector restored.toString(16);
 
             byte[] IVC = null;
@@ -110,7 +110,7 @@ public class AplElGamalCrypto {
 
         ElGamalEncryptedMessage encryptedAesKey = null;
         try {
-            encryptedAesKey = instanceOfAlice.encryptAsymmetric(
+            encryptedAesKey = instanceOfAlice.encrypt(
                     publicKey.getAffineXCoord().toBigInteger(), publicKey.getAffineYCoord().toBigInteger(), new BigInteger(1, randomAesKey));
         } catch (CryptoNotValidException e) {
             LOG.trace(e.getMessage());
