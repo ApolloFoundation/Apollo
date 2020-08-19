@@ -19,12 +19,13 @@
  */
 package com.apollocurrency.aplwallet.apl.crypto;
 
+import io.firstbridge.cryptolib.CryptoConfig;
 import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.CryptoParams;
 import io.firstbridge.cryptolib.ElGamalCrypto;
 import io.firstbridge.cryptolib.ElGamalKeyPair;
 import io.firstbridge.cryptolib.dataformat.ElGamalEncryptedMessage;
-import io.firstbridge.cryptolib.impl.ecc.AsymElGamalImpl;
+import io.firstbridge.cryptolib.impl.ecc.ElGamalCryptoImpl;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.AESEngine;
@@ -387,8 +388,8 @@ public final class Crypto {
     public static ElGamalKeyPair getElGamalKeyPair() {
 
         try {
-            CryptoParams params = CryptoParams.createDefault();
-            ElGamalCrypto instanceOfAlice = new AsymElGamalImpl(params);
+            CryptoParams params = CryptoConfig.createDefaultParams();
+            ElGamalCrypto instanceOfAlice = new ElGamalCryptoImpl(params);
             return instanceOfAlice.generateOwnKeys();
         } catch (CryptoNotValidException ex) {
             LOG.debug(ex.getLocalizedMessage());
@@ -410,8 +411,8 @@ public final class Crypto {
             String aesKey = cryptogramm.substring(cryptogrammDivider, (cryptogramm.length() - sha256length));
             String IVCiphered = cryptogramm.substring(0, cryptogrammDivider);
 
-            CryptoParams params = CryptoParams.createDefault();
-            ElGamalCrypto instanceOfAlice = new AsymElGamalImpl(params);
+            CryptoParams params = CryptoConfig.createDefaultParams();
+            ElGamalCrypto instanceOfAlice = new ElGamalCryptoImpl(params);
 
             ElGamalEncryptedMessage cryptogram1 = new ElGamalEncryptedMessage();
             String M2 = aesKey.substring(262);
@@ -422,7 +423,7 @@ public final class Crypto {
 
             //TODO:  this must be changed:  either put in interface of hide
             org.bouncycastle.math.ec.ECPoint _M1
-                    = ((AsymElGamalImpl) instanceOfAlice).extrapolateECPoint(
+                    = ((ElGamalCryptoImpl) instanceOfAlice).extrapolateECPoint(
                             new BigInteger(M1_X, 16),
                             new BigInteger(M1_Y, 16));
 
@@ -453,8 +454,8 @@ public final class Crypto {
 
     public static String elGamalEncrypt(String plainText, ElGamalKeyPair keyPair) {
 
-        CryptoParams params = CryptoParams.createDefault();
-        ElGamalCrypto instanceOfAlice = new AsymElGamalImpl(params);
+        CryptoParams params = CryptoConfig.createDefaultParams();
+        ElGamalCrypto instanceOfAlice = new ElGamalCryptoImpl(params);
         org.bouncycastle.math.ec.ECPoint publicKey = keyPair.getPublicKey();
         // generating random 32-byte key
 

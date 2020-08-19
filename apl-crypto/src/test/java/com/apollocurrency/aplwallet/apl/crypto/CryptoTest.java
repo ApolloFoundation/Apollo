@@ -3,10 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.crypto;
 
+import io.firstbridge.cryptolib.CryptoConfig;
 import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.CryptoParams;
+import io.firstbridge.cryptolib.ElGamalCrypto;
 import io.firstbridge.cryptolib.ElGamalKeyPair;
-import io.firstbridge.cryptolib.impl.ecc.AsymElGamalImpl;
+import io.firstbridge.cryptolib.impl.ecc.ElGamalCryptoImpl;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -279,11 +281,12 @@ public class CryptoTest extends TestsCommons {
 
     /**
      * Test of elGamalDecrypt method, of class Crypto.
+     * @throws io.firstbridge.cryptolib.CryptoNotValidException
      */
     @Test
     public void testElGamalDecrypt() throws CryptoNotValidException {
-        CryptoParams params = CryptoParams.createDefault();
-        AsymElGamalImpl instanceOfAlice = new AsymElGamalImpl(params);
+        CryptoParams params = CryptoConfig.createDefaultParams();
+        ElGamalCrypto instanceOfAlice = new ElGamalCryptoImpl(params);
 
         ElGamalKeyPair keyPair = instanceOfAlice.generateOwnKeys();
         String cryptogram = Crypto.elGamalEncrypt(secretPhraseA, keyPair);

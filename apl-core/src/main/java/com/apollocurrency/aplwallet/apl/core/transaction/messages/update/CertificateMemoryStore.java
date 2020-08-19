@@ -43,7 +43,7 @@ public class CertificateMemoryStore {
         }
         X509Certificate rootCert = null;
         try {
-            rootCert = CryptoFactory.createDefault().getKeyReader().readX509CertPEMorDER(caCertUrl.openStream());
+            rootCert = CryptoFactory.newInstance().getKeyReader().readX509CertPEMorDER(caCertUrl.openStream());
         } catch (Exception e) {
             log.debug("Error readX509 CertPEMorDER", e);
         }

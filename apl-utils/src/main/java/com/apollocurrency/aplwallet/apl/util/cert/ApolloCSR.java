@@ -5,6 +5,7 @@ import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.KeyGenerator;
 import io.firstbridge.cryptolib.KeyWriter;
 import io.firstbridge.cryptolib.csr.CertificateRequestData;
+import io.firstbridge.cryptolib.csr.X509CertOperations;
 import io.firstbridge.cryptolib.impl.KeyWriterImpl;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.openssl.PEMParser;
@@ -30,15 +31,15 @@ public class ApolloCSR extends CertBase {
 
     private static final Logger log = LoggerFactory.getLogger(ApolloCSR.class);
     private final CertificateRequestData certData = new CertificateRequestData(CertificateRequestData.CSRType.HOST);
-    private boolean allowCertSign = false;
     private String challengePassword = "";
     private BigInteger apolloID;
-    private AuthorityID apolloAuthID = new AuthorityID();
-    private KeyWriter kw = new KeyWriterImpl();
-    CryptoFactory factory = CryptoFactory.createDefault();
-
+    private AuthorityID apolloAuthID;
+    private final KeyWriter kw;
+    
     public ApolloCSR() {
         apolloID = new BigInteger(128, new SecureRandom());
+        apolloAuthID = new AuthorityID();
+        kw = factory.getKeyWriter();
     }
 
     public static ApolloCSR loadCSR(String path) {
@@ -261,8 +262,8 @@ public class ApolloCSR extends CertBase {
                 newKeyPair();
             }
             KeyPair kp = new KeyPair(pubKey, pvtKey);
-            KeyGenerator kg = factory.getKeyGenereator();
-            PKCS10CertificationRequest cr = kg.createX509CertificateRequest(kp, certData, false, challengePassword);
+            X509CertOperations certOps = factory.getX509CertOperations();
+            PKCS10CertificationRequest cr = certOps.createX509CertificateRequest(kp, certData, false, challengePassword);
             pem = kw.getCertificateRequestPEM(cr);
         } catch (IOException ex) {
             log.error("Can not generate PKSC10 CSR", ex);
@@ -290,8 +291,8 @@ public class ApolloCSR extends CertBase {
                 newKeyPair();
             }
             KeyPair kp = new KeyPair(pubKey, pvtKey);
-            KeyGenerator kg = factory.getKeyGenereator();
-            X509Certificate cert = kg.createSerlfSignedX509v3(kp, certData);
+            X509CertOperations certOps = factory.getX509CertOperations();            
+            X509Certificate cert = certOps.createSelfSignedX509v3(kp, certData);
             pem = kw.getX509CertificatePEM(cert);
         } catch (CryptoNotValidException | IOException ex) {
             log.error("Can not generate self-signed PEM", ex);
@@ -314,7 +315,7 @@ public class ApolloCSR extends CertBase {
     }
 
     private void newKeyPair() {
-        KeyGenerator kg = factory.getKeyGenereator();
+        KeyGenerator kg = factory.getKeyGenerator();
         KeyPair kp = kg.generateKeys();
         pubKey = kp.getPublic();
         pvtKey = kp.getPrivate();

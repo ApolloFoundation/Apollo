@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.util.cert;
 
+import io.firstbridge.cryptolib.CryptoConfig;
 import io.firstbridge.cryptolib.CryptoParams;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class ApolloCertificateTest {
 
-    private static final CryptoParams params = CryptoParams.createDefault();
+    private static final CryptoParams params = CryptoConfig.createDefaultParams();
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(ApolloCertificateTest.class);
     static ApolloCertificate acert;
 
