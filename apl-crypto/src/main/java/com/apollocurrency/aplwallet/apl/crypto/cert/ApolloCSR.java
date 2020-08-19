@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.util.cert;
+package com.apollocurrency.aplwallet.apl.crypto.cert;
 
 import io.firstbridge.cryptolib.CryptoFactory;
 import io.firstbridge.cryptolib.CryptoNotValidException;

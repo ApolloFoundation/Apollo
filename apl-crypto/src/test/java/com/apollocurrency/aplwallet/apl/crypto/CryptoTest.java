@@ -280,7 +280,7 @@ public class CryptoTest extends TestsCommons {
     }
 
     /**
-     * Test of elGamalDecrypt method, of class Crypto.
+     * Test of decrypt method, of class Crypto.
      * @throws io.firstbridge.cryptolib.CryptoNotValidException
      */
     @Test
@@ -289,8 +289,8 @@ public class CryptoTest extends TestsCommons {
         ElGamalCrypto instanceOfAlice = new ElGamalCryptoImpl(params);
 
         ElGamalKeyPair keyPair = instanceOfAlice.generateOwnKeys();
-        String cryptogram = Crypto.elGamalEncrypt(secretPhraseA, keyPair);
-        String decrypted = Crypto.elGamalDecrypt(cryptogram, keyPair);
+        String cryptogram = AplElGamalCrypto.encrypt(secretPhraseA, keyPair);
+        String decrypted = AplElGamalCrypto.decrypt(cryptogram, keyPair);
 
         assertEquals(secretPhraseA, decrypted);
 

@@ -1,8 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 
 import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.util.cert.ApolloCertificate;
+import com.apollocurrency.aplwallet.apl.crypto.cert.ApolloCertificate;
 import io.firstbridge.cryptolib.CryptoFactory;
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
@@ -44,7 +45,7 @@ public class CertificateMemoryStore {
         X509Certificate rootCert = null;
         try {
             rootCert = CryptoFactory.newInstance().getKeyReader().readX509CertPEMorDER(caCertUrl.openStream());
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.debug("Error readX509 CertPEMorDER", e);
         }
         if (all != null) {

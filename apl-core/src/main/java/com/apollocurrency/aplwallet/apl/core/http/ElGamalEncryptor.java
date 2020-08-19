@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.crypto.AplElGamalCrypto;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import io.firstbridge.cryptolib.ElGamalKeyPair;
@@ -60,7 +61,7 @@ public class ElGamalEncryptor {
     }
 
     public synchronized String elGamalDecrypt(String cryptogramm) {
-        return Crypto.elGamalDecrypt(cryptogramm, elGamalKeyPair);
+        return AplElGamalCrypto.decrypt(cryptogramm, elGamalKeyPair);
     }
 
 }

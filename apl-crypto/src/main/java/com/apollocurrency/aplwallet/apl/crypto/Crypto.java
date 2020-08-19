@@ -49,7 +49,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class Crypto {
 
     private static final Logger LOG = getLogger(Crypto.class);
-
+//TODO: check on all OS and set to true
     private static final boolean useStrongSecureRandom = false;//Apl.getBooleanProperty("apl.useStrongSecureRandom");
 
     private static final ThreadLocal<SecureRandom> secureRandom = ThreadLocal.withInitial(() -> {
@@ -63,28 +63,10 @@ public final class Crypto {
         }
     });
 
-//    private static FBElGamalEncryptedMessage encryptAsymmetric(ECFieldElement affineXCoord, ECFieldElement affineYCoord, String plainText) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-//    }
     private Crypto() {
     } //never
 
-    private static String normalizeByLen(String in, int length) {
-        String rx = "";
-        int xlen = in.length();
-        if (length == xlen) {
-            return in;
-        }
-        if (length > xlen) {
-            for (int i = 0; i < length - xlen; i++) {
-                rx += "0";
-            }
-            rx += in;
-            return rx;
-        } else { // length < xlen // cut the vector
-            return in.substring(xlen - length, length + 1);
-        }
-    }
+
 
     public static SecureRandom getSecureRandom() {
         return secureRandom.get();
@@ -397,108 +379,6 @@ public final class Crypto {
 
         return null;
 
-    }
-
-    public static String elGamalDecrypt(String cryptogramm, ElGamalKeyPair keyPair) {
-        try {
-            if (cryptogramm.length() < 450) {
-                return cryptogramm;
-            }
-            int sha256length = 64;
-            int elGamalCryptogrammLength = 393;
-            String sha256hash = cryptogramm.substring(cryptogramm.length() - sha256length);
-            int cryptogrammDivider = cryptogramm.length() - (sha256length + elGamalCryptogrammLength);
-            String aesKey = cryptogramm.substring(cryptogrammDivider, (cryptogramm.length() - sha256length));
-            String IVCiphered = cryptogramm.substring(0, cryptogrammDivider);
-
-            CryptoParams params = CryptoConfig.createDefaultParams();
-            ElGamalCrypto instanceOfAlice = new ElGamalCryptoImpl(params);
-
-            ElGamalEncryptedMessage cryptogram1 = new ElGamalEncryptedMessage();
-            String M2 = aesKey.substring(262);
-            cryptogram1.setM2(new BigInteger(M2, 16));
-
-            String M1_X = aesKey.substring(0, 131);
-            String M1_Y = aesKey.substring(131, 262);
-
-            //TODO:  this must be changed:  either put in interface of hide
-            org.bouncycastle.math.ec.ECPoint _M1
-                    = ((ElGamalCryptoImpl) instanceOfAlice).extrapolateECPoint(
-                            new BigInteger(M1_X, 16),
-                            new BigInteger(M1_Y, 16));
-
-            // setting M1 to the instance of cryptogram
-            cryptogram1.setM1(_M1);
-            BigInteger pKey = keyPair.getPrivateKey();
-
-            BigInteger restored = BigInteger.ZERO;
-
-            restored = instanceOfAlice.decryptAsymmetric(pKey, cryptogram1);
-            String keyStr = normalizeByLen(restored.toString(16), 64);// cut the vector restored.toString(16);
-
-            byte[] IVC = null;
-            byte[] key = null;
-            IVC = Convert.parseHexString(IVCiphered);
-            key = Convert.parseHexString(keyStr);
-
-            byte[] plain = aesGCMDecrypt(IVC, key);
-            //TODO:
-            // Add passphrase encryption verification bolow
-
-            return new String(plain);
-        } catch (Exception e) {
-            LOG.trace(e.getMessage());
-            return cryptogramm;
-        }
-    }
-
-    public static String elGamalEncrypt(String plainText, ElGamalKeyPair keyPair) {
-
-        CryptoParams params = CryptoConfig.createDefaultParams();
-        ElGamalCrypto instanceOfAlice = new ElGamalCryptoImpl(params);
-        org.bouncycastle.math.ec.ECPoint publicKey = keyPair.getPublicKey();
-        // generating random 32-byte key
-
-        SecureRandom random = getSecureRandom();
-        byte[] randomAesKey = new byte[CryptoConstants.AES_KEY_BYTES];
-        random.nextBytes(randomAesKey);
-
-        ElGamalEncryptedMessage encryptedAesKey = null;
-        try {
-            encryptedAesKey = instanceOfAlice.encryptAsymmetric(
-                    publicKey.getAffineXCoord().toBigInteger(), publicKey.getAffineYCoord().toBigInteger(), new BigInteger(1, randomAesKey));
-        } catch (CryptoNotValidException e) {
-            LOG.trace(e.getMessage());
-            return null;
-        }
-
-        // encrypt plaintext with one-time key
-        byte[] plainTextData = plainText.getBytes();
-        byte[] encryptedPassPhrase = aesGCMEncrypt(plainTextData, randomAesKey);
-
-        BigInteger m1x = encryptedAesKey.getM1().getAffineXCoord().toBigInteger();
-        BigInteger m1y = encryptedAesKey.getM1().getAffineYCoord().toBigInteger();
-
-        // cryptogram comes first
-        String cryptogram = Convert.toHexString(encryptedPassPhrase);
-        // m1.x follows
-        cryptogram += normalizeByLen(m1x.toString(CryptoConstants.HEX_RADIX), CryptoConstants.ELGAMAL_DISTANCE);
-        cryptogram += normalizeByLen(m1y.toString(CryptoConstants.HEX_RADIX), CryptoConstants.ELGAMAL_DISTANCE);
-        cryptogram += normalizeByLen(encryptedAesKey.getM2().toString(CryptoConstants.HEX_RADIX), CryptoConstants.ELGAMAL_DISTANCE);
-
-        MessageDigest digest = null;
-
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            LOG.trace(e.getMessage());
-            return null;
-        }
-
-        byte[] hash = digest.digest(plainText.getBytes());
-
-        cryptogram += normalizeByLen(Convert.toHexString(hash), CryptoConstants.SHA256_DIGEST_CHARACTERS);
-        return cryptogram;
     }
 
 }
