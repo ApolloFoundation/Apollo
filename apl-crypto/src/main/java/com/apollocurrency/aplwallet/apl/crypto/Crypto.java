@@ -24,7 +24,6 @@ import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.CryptoParams;
 import io.firstbridge.cryptolib.ElGamalCrypto;
 import io.firstbridge.cryptolib.ElGamalKeyPair;
-import io.firstbridge.cryptolib.dataformat.ElGamalEncryptedMessage;
 import io.firstbridge.cryptolib.impl.ecc.ElGamalCryptoImpl;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -38,7 +37,6 @@ import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.bouncycastle.jcajce.provider.digest.RIPEMD160;
 import org.slf4j.Logger;
 
-import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
