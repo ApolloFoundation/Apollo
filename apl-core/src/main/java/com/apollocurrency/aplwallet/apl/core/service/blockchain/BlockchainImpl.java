@@ -854,7 +854,8 @@ public class BlockchainImpl implements Blockchain {
         return transaction;
     }
 
-    private List<Transaction> loadPrunables(List<Transaction> transactions) {
+    @Override
+    public List<Transaction> loadPrunables(List<Transaction> transactions) {
         transactions.forEach(this::loadPrunable);
         return transactions;
     }

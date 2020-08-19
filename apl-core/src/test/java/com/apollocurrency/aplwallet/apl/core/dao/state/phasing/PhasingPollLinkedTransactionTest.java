@@ -14,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.ValuesDbTableTest;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollLinkedTransaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -140,14 +139,14 @@ public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingP
 
     @Test
     void testGetLinkedPhasedTransactions() throws SQLException {
-        List<Transaction> transactions = table.getLinkedPhasedTransactions(ptd.LINKED_TRANSACTION_1_HASH);
+        List<Long> transactions = table.getLinkedPhasedTransactionIds(ptd.LINKED_TRANSACTION_1_HASH);
 
-        assertEquals(List.of(ttd.TRANSACTION_12), transactions);
+        assertEquals(List.of(ttd.TRANSACTION_12.getId()), transactions);
     }
 
     @Test
     void testGetLinkedPhasedTransactionsForNonLinkedTransaction() throws SQLException {
-        List<Transaction> transactions = table.getLinkedPhasedTransactions(ttd.TRANSACTION_12.getFullHash());
+        List<Long> transactions = table.getLinkedPhasedTransactionIds(ttd.TRANSACTION_12.getFullHash());
 
         assertTrue(transactions.isEmpty(), "Linked transactions should not exist for transaction #12");
     }
