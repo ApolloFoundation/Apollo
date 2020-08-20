@@ -76,14 +76,14 @@ public class ProcessTransactionsThread implements Runnable {
 
                 GetUnconfirmedTransactionsResponse response = peer.send(request, new GetUnconfirmedTransactionsResponseParser());
 
-                if (CollectionUtil.isEmpty(response.unconfirmedTransactions)) {
+                if (response == null || CollectionUtil.isEmpty(response.unconfirmedTransactions)) {
                     return;
                 }
 
                 try {
                     List<Transaction> transactions = response.unconfirmedTransactions
                         .stream()
-                        .map(dtoConverter)
+                        .map(dtoConverter::convert)
                         .collect(Collectors.toList());
 
                     transactionProcessor.processPeerTransactions(transactions);

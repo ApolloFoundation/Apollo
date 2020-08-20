@@ -363,7 +363,7 @@ public class GetMoreBlocksThread implements Runnable {
             }
 
             if (response == null) {
-                log.debug("null reaponse from peer {} while getNeBlockIdst", peer.getHostWithPort());
+                log.debug("null response from peer {} while getNeBlockIdst", peer.getHostWithPort());
                 return Collections.emptyList();
             }
             List<String> nextBlockIds = response.getNextBlockIds();

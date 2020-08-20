@@ -11,6 +11,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * @author al
@@ -34,7 +35,7 @@ public final class ShufflingRecipientsAttachment extends AbstractShufflingAttach
 
     public ShufflingRecipientsAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        JSONArray jsonArray = (JSONArray) attachmentData.get("recipientPublicKeys");
+        List<?> jsonArray = (List<?>) attachmentData.get("recipientPublicKeys");
         this.recipientPublicKeys = new byte[jsonArray.size()][];
         for (int i = 0; i < this.recipientPublicKeys.length; i++) {
             this.recipientPublicKeys[i] = Convert.parseHexString((String) jsonArray.get(i));

@@ -17,6 +17,7 @@ import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
+import java.util.Map;
 
 public class PrunableEncryptedMessageAppendix extends AbstractAppendix implements Prunable {
 
@@ -50,7 +51,7 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
     public PrunableEncryptedMessageAppendix(JSONObject attachmentJSON) {
         super(attachmentJSON);
         String hashString = Convert.emptyToNull((String) attachmentJSON.get("encryptedMessageHash"));
-        JSONObject encryptedMessageJSON = (JSONObject) attachmentJSON.get("encryptedMessage");
+        Map<?,?> encryptedMessageJSON = (Map<?,?>) attachmentJSON.get("encryptedMessage");
         if (hashString != null && encryptedMessageJSON == null) {
             this.hash = Convert.parseHexString(hashString);
             this.encryptedData = null;
@@ -77,7 +78,7 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
         if (!Appendix.hasAppendix(APPENDIX_NAME, attachmentData)) {
             return null;
         }
-        JSONObject encryptedMessageJSON = (JSONObject) attachmentData.get("encryptedMessage");
+        Map<?,?> encryptedMessageJSON = (Map<?,?>) attachmentData.get("encryptedMessage");
         if (encryptedMessageJSON != null && encryptedMessageJSON.get("data") == null) {
             throw new RuntimeException("Unencrypted prunable message is not supported");
         }

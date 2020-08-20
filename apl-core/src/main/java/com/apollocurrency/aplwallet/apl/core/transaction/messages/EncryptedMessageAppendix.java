@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 public class EncryptedMessageAppendix extends AbstractEncryptedMessageAppendix {
 
@@ -20,7 +21,7 @@ public class EncryptedMessageAppendix extends AbstractEncryptedMessageAppendix {
     }
 
     public EncryptedMessageAppendix(JSONObject attachmentData) {
-        super(attachmentData, (JSONObject) attachmentData.get("encryptedMessage"));
+        super(attachmentData, (Map<?,?>) attachmentData.get("encryptedMessage"));
     }
 
     public EncryptedMessageAppendix(EncryptedData encryptedData, boolean isText, boolean isCompressed) {
@@ -31,7 +32,7 @@ public class EncryptedMessageAppendix extends AbstractEncryptedMessageAppendix {
         if (!Appendix.hasAppendix(appendixName, attachmentData)) {
             return null;
         }
-        if (((JSONObject) attachmentData.get("encryptedMessage")).get("data") == null) {
+        if (((Map<?,?>) attachmentData.get("encryptedMessage")).get("data") == null) {
             throw new RuntimeException("Unencrypted message is not supported");
         }
         return new EncryptedMessageAppendix(attachmentData);
