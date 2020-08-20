@@ -21,9 +21,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoSe
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupBlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 
 import javax.inject.Inject;
 import java.util.LinkedList;
@@ -155,7 +155,7 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
                         dto.setCurrentHeightFrom(accountLease.getCurrentLeasingHeightFrom());
                         dto.setCurrentHeightTo(accountLease.getCurrentLeasingHeightTo());
                         if (includeEffectiveBalance) {
-                            dto.setEffectiveBalanceAPL(accountService.getGuaranteedBalanceATM(lessor) / Constants.ONE_APL);
+                            dto.setEffectiveBalanceAPL(accountService.getGuaranteedBalanceATM(lessor) / lookupBlockchainConfig().getOneAPL());
                         }
                     }
                     if (accountLease.getNextLesseeId() != 0) {

@@ -21,7 +21,7 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendi
 public class PrunablePlainMessageAppendix extends AbstractAppendix implements Prunable {
 
     private static final String appendixName = "PrunablePlainMessage";
-    private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL / 10) {
+    private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(blockchainConfig.getOneAPL() / 10) {
         @Override
         public int getSize(Transaction transaction, Appendix appendix) {
             return appendix.getFullSize();

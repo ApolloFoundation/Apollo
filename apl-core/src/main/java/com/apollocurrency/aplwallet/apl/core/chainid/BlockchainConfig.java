@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -43,6 +42,8 @@ public class BlockchainConfig {
     private Chain chain;
     private Map<Integer, HeightConfig> heightConfigMap = new LinkedHashMap<>(0);
     private volatile boolean isJustUpdated = false;
+    private int decimals;
+    private long oneAPL;
 
     public BlockchainConfig() {
     }
@@ -92,11 +93,14 @@ public class BlockchainConfig {
         this.minPrunableLifetime = minPrunableLifetime > 0 ? minPrunableLifetime : DEFAULT_MIN_PRUNABLE_LIFETIME;
         this.shufflingProcessingDeadline = (short) 100;
         this.lastKnownBlock = 0;
-        this.unconfirmedPoolDepositAtm = 100 * Constants.ONE_APL;
-        this.shufflingDepositAtm = 1000 * Constants.ONE_APL;
         this.guaranteedBalanceConfirmations = 1440;
         this.enablePruning = maxPrunableLifetime >= 0;
         this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, this.minPrunableLifetime) : Integer.MAX_VALUE;
+        this.oneAPL = this.chain.getOneAPL();
+        this.decimals = this.chain.getDecimals();
+        
+        this.unconfirmedPoolDepositAtm = 100 * this.oneAPL;
+        this.shufflingDepositAtm = 1000 * this.oneAPL;
     }
 
     void updateChain(Chain chain, PropertiesHolder holder) {
@@ -155,6 +159,16 @@ public class BlockchainConfig {
 
     public int getMaxPrunableLifetime() {
         return maxPrunableLifetime;
+    }
+    
+    public int getDecimals()
+    {
+        return this.decimals;
+    }
+        
+    public long getOneAPL()
+    {
+        return this.oneAPL;
     }
 
     public Integer getDexPendingOrdersReopeningHeight() {

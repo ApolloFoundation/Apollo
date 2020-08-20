@@ -24,9 +24,9 @@ import java.util.Map;
  */
 class MonetarySystemCurrIssuance extends MonetarySystem {
 
-    private final Fee FIVE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(40 * Constants.ONE_APL);
-    private final Fee FOUR_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(1000 * Constants.ONE_APL);
-    private final Fee THREE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(25000 * Constants.ONE_APL);
+    private final Fee FIVE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(40 * blockchainConfig.getOneAPL());
+    private final Fee FOUR_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(1000 * blockchainConfig.getOneAPL());
+    private final Fee THREE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(25000 * blockchainConfig.getOneAPL());
 
     public MonetarySystemCurrIssuance() {
     }

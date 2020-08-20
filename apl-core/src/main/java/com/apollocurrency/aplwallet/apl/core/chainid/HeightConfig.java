@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
-import com.apollocurrency.aplwallet.apl.util.Constants;
+1import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.ConsensusSettings;
 
@@ -25,7 +25,7 @@ public class HeightConfig {
 
         this.bp = bp;
         this.maxPayloadLength = bp.getMaxNumberOfTransactions() * Constants.MIN_TRANSACTION_SIZE;
-        this.maxBalanceAtm = bp.getMaxBalance() * Constants.ONE_APL;
+        this.maxBalanceAtm = bp.getMaxBalance() * lookupBlockchainConfig().getOneAPL();
         this.initialBaseTarget = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(bp.getBlockTime() * bp.getMaxBalance())).longValue();
         this.maxBaseTarget = initialBaseTarget * 50;
         this.minBaseTarget = initialBaseTarget * 9 / 10;

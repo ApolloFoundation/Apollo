@@ -170,4 +170,5 @@ public interface Blockchain {
     boolean hasConfirmations(long id, int confirmations);
 
     boolean isExpired(Transaction tx);
+    
 }

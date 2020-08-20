@@ -225,7 +225,7 @@ public class MintWorker implements Runnable {
         JSONObject ecBlock = getECBlock();
         Attachment attachment = new MonetarySystemCurrencyMinting(nonce, currencyId, units, counter);
         int timestamp = ((Long) ecBlock.get("timestamp")).intValue();
-        Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(keySeed), 0, Constants.ONE_APL,
+        Transaction.Builder builder = Transaction.newTransactionBuilder(Crypto.getPublicKey(keySeed), 0, blockchainConfig.getOneAPL(),
             (short) 120, attachment, timestamp)
             .ecBlockHeight(((Long) ecBlock.get("ecBlockHeight")).intValue())
             .ecBlockId(Convert.parseUnsignedLong((String) ecBlock.get("ecBlockId")));

@@ -12,7 +12,8 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupBlockchainConfig;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,7 +37,7 @@ public class BlockApplier {
     @Inject
     @Setter
     private AccountPublicKeyService accountPublicKeyService;
-
+    
     public void apply(Block block) {
         long totalBackFees = 0;
         int height = block.getHeight();
@@ -66,14 +67,14 @@ public class BlockApplier {
                 } else {
                     previousGeneratorAccount = accountService.getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
                 }
-                log.trace("Back fees {} to forger at height {}", ((double) backFees[i]) / Constants.ONE_APL,
+                log.trace("Back fees {} to forger at height {}", ((double) backFees[i]) / lookupBlockchainConfig().getOneAPL(),
                     height - i - 1);
                 accountService.addToBalanceAndUnconfirmedBalanceATM(previousGeneratorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), backFees[i]);
                 accountService.addToForgedBalanceATM(previousGeneratorAccount, backFees[i]);
             }
         }
         if (totalBackFees != 0) {
-            log.trace("Fee reduced by {} at height {}", ((double) totalBackFees) / Constants.ONE_APL, height);
+            log.trace("Fee reduced by {} at height {}", ((double) totalBackFees) / lookupBlockchainConfig().getOneAPL(), height);
         }
         //fetch generatorAccount after a possible change in previousGeneratorAccount
         Account generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());

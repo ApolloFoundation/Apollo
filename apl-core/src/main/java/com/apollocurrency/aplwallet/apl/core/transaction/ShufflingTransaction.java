@@ -375,7 +375,7 @@ public abstract class ShufflingTransaction extends TransactionType {
 
     };
     private static final byte SUBTYPE_SHUFFLING_CANCELLATION = 5;
-    private final static Fee SHUFFLING_PROCESSING_FEE = new Fee.ConstantFee(10 * Constants.ONE_APL);
+    private final static Fee SHUFFLING_PROCESSING_FEE = new Fee.ConstantFee(10 * blockchainConfig.getOneAPL());
     public static final TransactionType SHUFFLING_PROCESSING = new ShufflingTransaction() {
 
         @Override
@@ -613,7 +613,7 @@ public abstract class ShufflingTransaction extends TransactionType {
             return false;
         }
     };
-    private final static Fee SHUFFLING_RECIPIENTS_FEE = new Fee.ConstantFee(11 * Constants.ONE_APL);
+    private final static Fee SHUFFLING_RECIPIENTS_FEE = new Fee.ConstantFee(11 * blockchainConfig.getOneAPL());
     public static final TransactionType SHUFFLING_RECIPIENTS = new ShufflingTransaction() {
 
         @Override

@@ -30,14 +30,14 @@ public class PhasingAppendix extends AbstractAppendix {
         long fee = 0;
         PhasingAppendix phasing = (PhasingAppendix) appendage;
         if (!phasing.params.getVoteWeighting().isBalanceIndependent()) {
-            fee += 20 * Constants.ONE_APL;
+            fee += 20 * blockchainConfig.getOneAPL();
         } else {
-            fee += Constants.ONE_APL;
+            fee += blockchainConfig.getOneAPL();
         }
         if (phasing.hashedSecret.length > 0) {
-            fee += (1 + (phasing.hashedSecret.length - 1) / 32) * Constants.ONE_APL;
+            fee += (1 + (phasing.hashedSecret.length - 1) / 32) * blockchainConfig.getOneAPL();
         }
-        fee += Constants.ONE_APL * phasing.linkedFullHashes.length;
+        fee += blockchainConfig.getOneAPL() * phasing.linkedFullHashes.length;
         return fee;
     };
     private final int finishHeight;

@@ -19,7 +19,7 @@ import java.nio.ByteBuffer;
 
 public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix {
 
-    private static final Fee ENCRYPTED_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
+    private static final Fee ENCRYPTED_MESSAGE_FEE = new Fee.SizeBasedFee(blockchainConfig.getOneAPL(), blockchainConfig.getOneAPL(), 32) {
         @Override
         public int getSize(Transaction transaction, Appendix appendage) {
             return ((AbstractEncryptedMessageAppendix) appendage).getEncryptedDataLength() - 16;

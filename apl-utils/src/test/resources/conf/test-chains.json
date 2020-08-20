@@ -2,6 +2,7 @@
   {
     "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
     "active": true,
+    "decimals": 8,
     "defaultPeers": [],
     "wellKnownPeers": [
       "51.15.250.32",
@@ -106,6 +107,7 @@
     "symbol": "BTM",
     "prefix": "BTM",
     "project": "I am batman!",
+    "decimals": 6,
     "genesisLocation": "conf/data/batman-genesis.json",
     "blockchainProperties": [
       {

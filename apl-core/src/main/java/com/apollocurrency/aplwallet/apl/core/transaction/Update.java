@@ -116,7 +116,7 @@ public abstract class Update extends TransactionType {
         }
     };
 
-    private final Fee UPDATE_FEE = new Fee.ConstantFee(Constants.ONE_APL);
+    private final Fee UPDATE_FEE = new Fee.ConstantFee(lookupBlockchainConfig().getOneAPL());
 
     protected Update() {
     }

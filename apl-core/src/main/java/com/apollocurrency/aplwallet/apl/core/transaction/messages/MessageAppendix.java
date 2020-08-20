@@ -18,7 +18,7 @@ import java.util.Arrays;
 public class MessageAppendix extends AbstractAppendix {
 
     private static final String appendixName = "Message";
-    private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, Constants.ONE_APL, 32) {
+    private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, blockchainConfig.getOneAPL(), 32) {
         @Override
         public int getSize(Transaction transaction, Appendix appendage) {
             return ((MessageAppendix) appendage).getMessage().length;

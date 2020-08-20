@@ -100,14 +100,14 @@ public abstract class Messaging extends TransactionType {
         }
     };
     public static final TransactionType POLL_CREATION = new Messaging() {
-        private final Fee POLL_OPTIONS_FEE = new Fee.SizeBasedFee(10 * Constants.ONE_APL, Constants.ONE_APL, 1) {
+        private final Fee POLL_OPTIONS_FEE = new Fee.SizeBasedFee(10 * lookupBlockchainConfig().getOneAPL(), lookupBlockchainConfig().getOneAPL(), 1) {
             @Override
             public int getSize(Transaction transaction, Appendix appendage) {
                 int numOptions = ((MessagingPollCreation) appendage).getPollOptions().length;
                 return numOptions <= 19 ? 0 : numOptions - 19;
             }
         };
-        private final Fee POLL_SIZE_FEE = new Fee.SizeBasedFee(0, 2 * Constants.ONE_APL, 32) {
+        private final Fee POLL_SIZE_FEE = new Fee.SizeBasedFee(0, 2 * lookupBlockchainConfig().getOneAPL(), 32) {
             @Override
             public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingPollCreation attachment = (MessagingPollCreation) appendage;
@@ -283,7 +283,7 @@ public abstract class Messaging extends TransactionType {
         }
     };
     public static final Messaging ACCOUNT_INFO = new Messaging() {
-        private final Fee ACCOUNT_INFO_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
+        private final Fee ACCOUNT_INFO_FEE = new Fee.SizeBasedFee(lookupBlockchainConfig().getOneAPL(), 2 * lookupBlockchainConfig().getOneAPL(), 32) {
             @Override
             public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingAccountInfo attachment = (MessagingAccountInfo) transaction.getAttachment();
@@ -351,7 +351,7 @@ public abstract class Messaging extends TransactionType {
         }
     };
     public static final Messaging ACCOUNT_PROPERTY = new Messaging() {
-        private final Fee ACCOUNT_PROPERTY_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
+        private final Fee ACCOUNT_PROPERTY_FEE = new Fee.SizeBasedFee(lookupBlockchainConfig().getOneAPL(), lookupBlockchainConfig().getOneAPL(), 32) {
             @Override
             public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingAccountProperty attachment = (MessagingAccountProperty) transaction.getAttachment();
@@ -487,7 +487,7 @@ public abstract class Messaging extends TransactionType {
     public static final TransactionType PHASING_VOTE_CASTING = new Messaging() {
         private final Fee PHASING_VOTE_FEE = (transaction, appendage) -> {
             MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
-            return attachment.getTransactionFullHashes().size() * Constants.ONE_APL;
+            return attachment.getTransactionFullHashes().size() * lookupBlockchainConfig().getOneAPL();
         };
 
         @Override
@@ -608,7 +608,7 @@ public abstract class Messaging extends TransactionType {
     };
     private static volatile AliasService ALIAS_SERVICE;
     public static final TransactionType ALIAS_ASSIGNMENT = new Messaging() {
-        private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
+        private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * lookupBlockchainConfig().getOneAPL(), 2 * lookupBlockchainConfig().getOneAPL(), 32) {
             @Override
             public int getSize(Transaction transaction, Appendix appendage) {
                 MessagingAliasAssignment attachment = (MessagingAliasAssignment) transaction.getAttachment();

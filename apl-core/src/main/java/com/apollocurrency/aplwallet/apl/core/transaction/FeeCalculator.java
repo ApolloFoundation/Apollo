@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupBlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 
 import javax.inject.Singleton;
 
@@ -19,7 +19,7 @@ public class FeeCalculator {
             totalFee = Math.addExact(totalFee, fee.getFee(transaction, appendage));
         }
         if (transaction.getReferencedTransactionFullHash() != null) {
-            totalFee = Math.addExact(totalFee, Constants.ONE_APL);
+            totalFee = Math.addExact(totalFee, lookupBlockchainConfig().getOneAPL());
         }
         return totalFee;
     }

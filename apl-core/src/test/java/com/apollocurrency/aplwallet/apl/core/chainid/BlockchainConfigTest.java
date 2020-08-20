@@ -92,7 +92,7 @@ public class BlockchainConfigTest {
 
     @Test
     void testCreateBlockchainConfigFromEmptyChain() {
-        Chain emptyChain = new Chain(UUID.randomUUID(), new ArrayList<>(), "Empty", "Empty chain", "EMP", "EM", "EMP", "", List.of());
+        Chain emptyChain = new Chain(UUID.randomUUID(), new ArrayList<String>(), "Empty", "Empty chain", "EMP", "EM", "EMP", "", List.of());
         assertThrows(IllegalArgumentException.class, () -> blockchainConfig.updateChain(emptyChain));
     }
 

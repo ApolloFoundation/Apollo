@@ -66,14 +66,14 @@ public class AccountServiceImpl implements AccountService {
     private final BlockChainInfoService blockChainInfoService;
 
     @Inject
-    public AccountServiceImpl(AccountTable accountTable, BlockchainConfig blockchainConfig,
+    public AccountServiceImpl(AccountTable accountTable, BlockchainConfig f,
                               GlobalSync sync,
                               AccountPublicKeyService accountPublicKeyService,
                               Event<Account> accountEvent, Event<LedgerEntry> logLedgerEvent,
                               AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
                               BlockChainInfoService blockChainInfoService) {
         this.accountTable = accountTable;
-        this.blockchainConfig = blockchainConfig;
+        this.blockchainConfig = f;
         this.sync = sync;
         this.accountPublicKeyService = accountPublicKeyService;
         this.accountEvent = accountEvent;
@@ -234,7 +234,7 @@ public class AccountServiceImpl implements AccountService {
     public long getEffectiveBalanceAPL(Account account, int height, boolean lock) {
         if (height <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
             Account genesisAccount = getAccount(account.getId(), 0);
-            return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / Constants.ONE_APL;
+            return genesisAccount == null ? 0 : genesisAccount.getBalanceATM() / blockchainConfig.getOneAPL();
         }
         if (account.getPublicKey() == null) {
             account.setPublicKey(accountPublicKeyService.getPublicKey(AccountTable.newKey(account.getId())));
@@ -257,7 +257,7 @@ public class AccountServiceImpl implements AccountService {
             if (account.getActiveLesseeId() == 0) {
                 effectiveBalanceATM += getGuaranteedBalanceATM(account, blockchainConfig.getGuaranteedBalanceConfirmations(), height);
             }
-            return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / Constants.ONE_APL;
+            return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / blockchainConfig.getOneAPL();
         } finally {
             if (lock) {
                 sync.readUnlock();

@@ -28,7 +28,7 @@ import java.nio.ByteBuffer;
 @Slf4j
 public abstract class Data extends TransactionType {
 
-    private static final Fee TAGGED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL / 10) {
+    private static final Fee TAGGED_DATA_FEE = new Fee.SizeBasedFee(lookupBlockchainConfig().getOneAPL(), lookupBlockchainConfig().getOneAPL() / 10) {
         @Override
         public int getSize(Transaction transaction, Appendix appendix) {
             return appendix.getFullSize();

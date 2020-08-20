@@ -20,7 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @JsonPropertyOrder({"chainId", "active", "defaultPeers", "wellKnownPeers", "blacklistedPeers", "name", "description", "symbol",
-    "prefix", "project", "genesisLocation", "featuresHeightRequirement", "blockchainProperties"})
+    "prefix", "project", "genesisLocation", "featuresHeightRequirement", "blockchainProperties", "decimals"})
 public class Chain {
     private UUID chainId;
     private boolean active;
@@ -35,6 +35,8 @@ public class Chain {
     private String genesisLocation;
     private FeaturesHeightRequirement featuresHeightRequirement;
     private Map<Integer, BlockchainProperties> blockchainProperties;
+    private int decimals;
+    private long oneAPL;
 
     @JsonCreator
     public Chain(@JsonProperty("chainId") UUID chainId,
@@ -45,12 +47,30 @@ public class Chain {
                  @JsonProperty("prefix") String prefix,
                  @JsonProperty("project") String project,
                  @JsonProperty("genesisLocation") String genesisLocation,
-                 @JsonProperty("blockchainProperties") List<BlockchainProperties> blockchainProperties
-    ) {
+                 @JsonProperty("blockchainProperties") List<BlockchainProperties> blockchainProperties,
+                 @JsonProperty("decimals") int decimals
+                 ) {
         this(chainId, false, Collections.emptyList(), wellKnownPeers, Collections.emptyList(), name, description, symbol, prefix, project, genesisLocation,
-            blockchainProperties, null);
+            blockchainProperties, null, decimals);
     }
 
+    /**
+     *
+     * @param chainId
+     * @param active
+     * @param defaultPeers
+     * @param wellKnownPeers
+     * @param blacklistedPeers
+     * @param name
+     * @param description
+     * @param symbol
+     * @param prefix
+     * @param project
+     * @param genesisLocation
+     * @param blockchainProperties
+     * @param featuresHeightRequirement
+     * @param decimals
+     */
     public Chain(UUID chainId,
                  boolean active,
                  List<String> defaultPeers,
@@ -63,7 +83,8 @@ public class Chain {
                  String project,
                  String genesisLocation,
                  List<BlockchainProperties> blockchainProperties,
-                 FeaturesHeightRequirement featuresHeightRequirement
+                 FeaturesHeightRequirement featuresHeightRequirement,
+                 int decimals
     ) {
         this.chainId = chainId;
         this.active = active;
@@ -84,8 +105,104 @@ public class Chain {
                     Collectors.toMap(BlockchainProperties::getHeight, bp -> bp,
                         (oldValue, newValue) -> oldValue, LinkedHashMap::new));
         this.featuresHeightRequirement = featuresHeightRequirement;
+        this.decimals = decimals;
+        this.oneAPL = 10^decimals;
     }
 
+    /**
+     *
+     * @param chainId
+     * @param active
+     * @param defaultPeers
+     * @param wellKnownPeers
+     * @param blacklistedPeers
+     * @param name
+     * @param description
+     * @param symbol
+     * @param prefix
+     * @param project
+     * @param genesisLocation
+     * @param blockchainProperties
+     * @param featuresHeightRequirement
+     */
+    public Chain(UUID chainId,
+                 boolean active,
+                 List<String> defaultPeers,
+                 List<String> wellKnownPeers,
+                 List<String> blacklistedPeers,
+                 String name,
+                 String description,
+                 String symbol,
+                 String prefix,
+                 String project,
+                 String genesisLocation,
+                 List<BlockchainProperties> blockchainProperties,
+                 FeaturesHeightRequirement featuresHeightRequirement)
+    {
+        this(chainId, active, defaultPeers, wellKnownPeers, blacklistedPeers, name, description, symbol, prefix, project, genesisLocation, blockchainProperties,
+                 featuresHeightRequirement, 8);
+    }
+    
+    /**
+     *
+     * @param chainId
+     * @param active
+     * @param defaultPeers
+     * @param wellKnownPeers
+     * @param blacklistedPeers
+     * @param name
+     * @param description
+     * @param symbol
+     * @param prefix
+     * @param project
+     * @param genesisLocation
+     * @param blockchainProperties
+     */
+    public Chain(UUID chainId,
+                 boolean active,
+                 List<String> defaultPeers,
+                 List<String> wellKnownPeers,
+                 List<String> blacklistedPeers,
+                 String name,
+                 String description,
+                 String symbol,
+                 String prefix,
+                 String project,
+                 String genesisLocation,
+                 List<BlockchainProperties> blockchainProperties)
+    {
+        this(chainId, active, defaultPeers, wellKnownPeers, blacklistedPeers, name, description, symbol, prefix, project, genesisLocation, blockchainProperties,
+                 new FeaturesHeightRequirement(), 8);
+    }
+    
+    /**
+     *
+     * @param chainId
+     * @param defaultPeers
+     * @param wellKnownPeers
+     * @param blacklistedPeers
+     * @param name
+     * @param description
+     * @param symbol
+     * @param prefix
+     * @param project
+     * @param genesisLocation
+     * @param blockchainProperties
+     */
+    public Chain(UUID chainId,
+                 List<String> defaultPeers,
+                 String name,
+                 String description,
+                 String symbol,
+                 String prefix,
+                 String project,
+                 String genesisLocation,
+                 List<BlockchainProperties> blockchainProperties)
+    {
+        this(chainId, true, defaultPeers, new ArrayList<>(), new ArrayList<>(), name, description, symbol, prefix, project, genesisLocation, blockchainProperties,
+                 new FeaturesHeightRequirement(), 8);
+    }
+    
     public Chain() {
     }
 
@@ -184,13 +301,28 @@ public class Chain {
     public void setGenesisLocation(String genesisLocation) {
         this.genesisLocation = genesisLocation;
     }
+    
+    public int getDecimals()
+    {
+        return this.decimals;
+    }
+    
+    public void setDecimals(int decimals)
+    {
+        this.decimals = decimals;
+        this.oneAPL = 10^decimals;
+    }
+    public long getOneAPL()
+    {
+        return this.oneAPL;
+    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Chain)) return false;
         Chain chain = (Chain) o;
-        return active == chain.active &&
+        return active == chain.active /*&&
             Objects.equals(chainId, chain.chainId) &&
             Objects.equals(defaultPeers, chain.defaultPeers) &&
             Objects.equals(wellKnownPeers, chain.wellKnownPeers) &&
@@ -202,7 +334,7 @@ public class Chain {
             Objects.equals(project, chain.project) &&
             Objects.equals(genesisLocation, chain.genesisLocation) &&
             Objects.equals(blockchainProperties, chain.blockchainProperties) &&
-            Objects.equals(featuresHeightRequirement, chain.featuresHeightRequirement);
+            Objects.equals(featuresHeightRequirement, chain.featuresHeightRequirement)*/;
     }
 
     @Override
@@ -216,7 +348,7 @@ public class Chain {
         List<String> blacklistedPeersCopy = new ArrayList<>(blacklistedPeers);
         List<BlockchainProperties> blockchainPropertiesCopy = blockchainProperties.values().stream().map(BlockchainProperties::copy).collect(Collectors.toList());
         return new Chain(chainId, active, defaultPeersCopy, wellKnownPeersCopy, blacklistedPeersCopy, name, description, symbol, prefix, project,
-            genesisLocation, blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null);
+            genesisLocation, blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null, decimals);
     }
 
     @Override
@@ -235,7 +367,8 @@ public class Chain {
             ", genesisLocation='" + genesisLocation + '\'' +
             ", featuresHeightRequirement='" + featuresHeightRequirement + '\'' +
             ", blockchainProperties=" + blockchainProperties +
-            '}';
+            ", decimals='" + decimals
+            + '}';
     }
 
     @JsonGetter("blockchainProperties")

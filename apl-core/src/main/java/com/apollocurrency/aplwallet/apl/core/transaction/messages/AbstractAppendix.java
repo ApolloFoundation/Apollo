@@ -28,7 +28,7 @@ public abstract class AbstractAppendix implements Appendix {
 
     private static Blockchain blockchain;// = CDI.current().select(Blockchain.class).get();
     private static PhasingPollService phasingPollService;// = CDI.current().select(PhasingPollService.class).get();
-    private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
+    protected static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
     private static volatile TimeService timeService;// = CDI.current().select(TimeService.class).get();
     private static PrunableMessageService messageService;// = CDI.current().select(PrunableMessageService.class).get();
     private static ShufflingService shufflingService;

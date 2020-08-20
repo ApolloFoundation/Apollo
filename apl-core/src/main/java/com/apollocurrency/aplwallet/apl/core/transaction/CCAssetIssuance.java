@@ -21,13 +21,13 @@ import java.util.Map;
  */
 class CCAssetIssuance extends ColoredCoins {
 
-    private final Fee SINGLETON_ASSET_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
+    private final Fee SINGLETON_ASSET_FEE = new Fee.SizeBasedFee(blockchainConfig.getOneAPL(), blockchainConfig.getOneAPL(), 32) {
         public int getSize(Transaction transaction, Appendix appendage) {
             ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
             return attachment.getDescription().length();
         }
     };
-    private final Fee ASSET_ISSUANCE_FEE = (transaction, appendage) -> isSingletonIssuance(transaction) ? SINGLETON_ASSET_FEE.getFee(transaction, appendage) : 1000 * Constants.ONE_APL;
+    private final Fee ASSET_ISSUANCE_FEE = (transaction, appendage) -> isSingletonIssuance(transaction) ? SINGLETON_ASSET_FEE.getFee(transaction, appendage) : 1000 * blockchainConfig.getOneAPL();
 
     public CCAssetIssuance() {
     }

@@ -3,6 +3,7 @@
     "chainId": "ff3bfa13-3711-4f23-8f7b-4fccaa87c4c1",
     "isTestnet": true,
     "active": false,
+    "decimals": 8,
     "defaultPeers": [
       "51.15.1.1",
       "51.15.0.0"

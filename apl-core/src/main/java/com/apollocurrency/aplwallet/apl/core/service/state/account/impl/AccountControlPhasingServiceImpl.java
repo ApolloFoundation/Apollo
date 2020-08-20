@@ -139,7 +139,7 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
             phasingPollService.getSenderPhasedTransactionFees(transaction.getSenderId())) > phasingOnly.getMaxFees()) {
             throw new AplException.AccountControlException(
                 String.format("Maximum total fees limit of %f %s exceeded",
-                    ((double) phasingOnly.getMaxFees()) / Constants.ONE_APL, blockchainConfig.getCoinSymbol()));
+                    ((double) phasingOnly.getMaxFees()) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol()));
         }
         if (transaction.getType() == Messaging.PHASING_VOTE_CASTING) {
             return;

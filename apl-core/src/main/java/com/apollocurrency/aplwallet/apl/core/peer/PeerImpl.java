@@ -372,7 +372,7 @@ public final class PeerImpl implements Peer {
             hallmarkBalance = account == null ? 0 : account.getBalanceATM();
             hallmarkBalanceHeight = blockchain.getHeight();
         }
-        return (int) (adjustedWeight * (hallmarkBalance / Constants.ONE_APL) / blockchainConfig.getCurrentConfig().getMaxBalanceAPL());
+        return (int) (adjustedWeight * (hallmarkBalance / blockchainConfig.getOneAPL()) / blockchainConfig.getCurrentConfig().getMaxBalanceAPL());
     }
 
     @Override
