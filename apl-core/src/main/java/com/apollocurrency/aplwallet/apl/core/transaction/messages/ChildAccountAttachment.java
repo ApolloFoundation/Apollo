@@ -45,7 +45,7 @@ public class ChildAccountAttachment extends AbstractAttachment {
         this.addressScope = AddressScope.from(((Long) attachmentData.get("addressScope")).intValue());
         this.childCount = (short) (((Long) attachmentData.get("childCount")).intValue());
         childPublicKey = new LinkedList<>();
-        JSONArray keys = (JSONArray) attachmentData.get("childPublicKeys");
+        List<?> keys = (List<?>) attachmentData.get("childPublicKeys");
         for (Object publicKey : keys) {
             byte[] key = Convert.parseHexString(publicKey.toString());
             childPublicKey.add(key);
