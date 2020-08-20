@@ -152,7 +152,6 @@ public class ShardObserver {
         //Q. can we create shard if we late for entire shard frequency?
         //Q. how much blocks we could be late? (frequency - 2) is OK?
         //Q. Do we count on some other parameters like lastTrimBlockHeight?
-//        Optional<HeightConfig> configNearShardHeight = getTargetConfig(lastShardHeight, blockchainHeight);
         if (configNearShardHeight.isEmpty()) {
             log.trace("Sharding is not now. lastShardHeight = {} configNearShardHeight = {}", lastShardHeight, configNearShardHeight);
             return result;
@@ -217,7 +216,7 @@ public class ShardObserver {
 
     private Optional<HeightConfig> getTargetConfig(long lastShardHeight, int blockchainHeight) {
         int heightToShard = blockchainHeight - (this.propertiesHolder.MAX_ROLLBACK() + randomShardHeightDivergence);
-        if (/*lastShardHeight <= 0 || */heightToShard <= 0) {
+        if (heightToShard <= 0) {
             log.debug("getTargetConfig = {}, lastShardHeight = {}, blockchainHeight = {}", heightToShard, lastShardHeight, blockchainHeight);
             return Optional.empty();
         }
@@ -226,6 +225,17 @@ public class ShardObserver {
         if (!isConfigJustUpdated) {
             // config didn't change from previous trim scheduling
             configAtTrimHeight = blockchainConfig.getConfigAtHeight(heightToShard);
+            if (!configAtTrimHeight.isShardingEnabled()) {
+                // check if we has to finish sharding from previous config
+                Optional<HeightConfig> previousConfigByHeight = blockchainConfig.getPreviousConfigByHeight(blockchainHeight);
+                if (previousConfigByHeight.isPresent()) {
+                    HeightConfig previousHeight = previousConfigByHeight.get();
+                    if ((lastShardHeight + previousHeight.getShardingFrequency()) == heightToShard) {
+                        // take previous config for current (latest) sharding
+                        configAtTrimHeight = previousHeight;
+                    }
+                }
+            }
         } else {
             // config has changed from previous to new one, try to get previous config
             configAtTrimHeight = blockchainConfig.getPreviousConfig().isPresent()

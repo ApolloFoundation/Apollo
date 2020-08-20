@@ -25,6 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
 @EnableWeld
@@ -34,11 +35,13 @@ public class ShardObserverIntegrationTest {
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     HeightConfig heightConfig;
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    Random random = mock(Random.class);
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(ShardObserver.class)
         .addBeans(MockBean.of(shardService, ShardService.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(random, Random.class))
         .build();
     @Inject
     Event<TrimData> trimEvent;

@@ -72,7 +72,7 @@
         "maxNumberOfChildAccounts": 1,
         "shardingSettings": {
           "enabled": true,
-          "frequency": 300
+          "frequency": 250
         }
       },
       {
