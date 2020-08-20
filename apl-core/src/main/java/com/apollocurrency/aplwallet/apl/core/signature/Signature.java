@@ -14,7 +14,12 @@ public interface Signature {
 
     int getSize();
 
-    String getJsonString();
+    /**
+     * Returns signature byte array as a hex string
+     *
+     * @return hex string representation of signature
+     */
+    String getHexString();
 
     /**
      * Return true if signature is already verified.

@@ -56,7 +56,7 @@ class MultiSigData implements MultiSig {
     }
 
     @Override
-    public String getJsonString() {
+    public String getHexString() {
         return Convert.toHexString(bytes());
     }
 

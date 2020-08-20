@@ -41,7 +41,7 @@ class SigDataTest extends AbstractSigData {
     void getJsonString() {
         //GIVEN
         //WHEN
-        String jsonString = sigData.getJsonString();
+        String jsonString = sigData.getHexString();
 
         //THEN
         assertEquals(Convert.toHexString(sigData.bytes()), jsonString);
