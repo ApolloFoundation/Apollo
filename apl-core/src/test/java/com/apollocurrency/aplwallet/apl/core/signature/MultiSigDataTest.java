@@ -4,21 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.signature;
 
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
-import static com.apollocurrency.aplwallet.apl.core.signature.SignatureParser.SIGNATURE_FIELD_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -56,39 +51,6 @@ class MultiSigDataTest extends AbstractSigData {
 
         //THEN
         assertEquals(4 + 4 + 2 + 2 * (8 + 64), size);
-
-    }
-
-    @Test
-    void toJsonString() {
-        //GIVEN
-
-        //WHEN
-
-        //THEN
-        assertNotNull(multiSigData.getJsonString());
-    }
-
-    @Test
-    void getJsonObject() {
-        //GIVEN
-
-        //WHEN
-        JSONObject jsonObject = multiSigData.getJsonObject();
-
-        //THEN
-        assertNotNull(jsonObject.get(SIGNATURE_FIELD_NAME));
-        byte[] bytes = Convert.parseHexString((String) (jsonObject.get(SIGNATURE_FIELD_NAME)));
-        MultiSigData multiSig = (MultiSigData) new MultiSigData.Parser().parse(bytes);
-
-        assertArrayEquals(ZERO4BYTES, multiSig.getPayload());
-        assertEquals(2, multiSig.getActualParticipantCount());
-        assertEquals(2, multiSig.getPublicKeyIdSet().size());
-
-        for (MultiSig.KeyId keyId : multiSigData.getPublicKeyIdSet()) {
-            assertTrue(multiSig.signaturesMap().containsKey(keyId));
-            assertTrue(Arrays.equals(multiSig.signaturesMap().get(keyId), multiSigData.signaturesMap().get(keyId)));
-        }
 
     }
 

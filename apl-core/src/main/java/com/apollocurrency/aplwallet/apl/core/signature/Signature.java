@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.signature;
 
-import org.json.simple.JSONObject;
-
 /**
  * It's a simple interface for signature
  */
@@ -16,11 +14,7 @@ public interface Signature {
 
     int getSize();
 
-    default String getJsonString() {
-        return getJsonObject().toJSONString();
-    }
-
-    JSONObject getJsonObject();
+    String getJsonString();
 
     /**
      * Return true if signature is already verified.
