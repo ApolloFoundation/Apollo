@@ -28,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -82,7 +83,7 @@ class TransactionSignatureTest {
     void verifySignature() throws AplException.NotValidException {
         //GIVEN
         Signature signature = transaction.getSignature();
-        String sigJsonStr = signature.getJsonString();
+        String signatureHexString = signature.getHexString();
         String sigStr = Convert.toHexString(signature.bytes());
 
         //WHEN
@@ -91,6 +92,7 @@ class TransactionSignatureTest {
 
         //THEN
         assertNotNull(signature);
+        assertEquals(signatureHexString, sigStr);
         assertTrue(rc);
 
     }

@@ -11,6 +11,8 @@ import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Class for handling phasing parameters
@@ -39,12 +41,12 @@ public final class PhasingParams {
         voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }
 
-    public PhasingParams(JSONObject attachmentData) {
+    public PhasingParams(Map<?,?> attachmentData) {
         quorum = Convert.parseLong(attachmentData.get("phasingQuorum"));
         long minBalance = Convert.parseLong(attachmentData.get("phasingMinBalance"));
         byte votingModel = ((Long) attachmentData.get("phasingVotingModel")).byteValue();
         long holdingId = Convert.parseUnsignedLong((String) attachmentData.get("phasingHolding"));
-        JSONArray whitelistJson = (JSONArray) (attachmentData.get("phasingWhitelist"));
+        List<?> whitelistJson = (List<?>) (attachmentData.get("phasingWhitelist"));
         if (whitelistJson != null && whitelistJson.size() > 0) {
             whitelist = new long[whitelistJson.size()];
             for (int i = 0; i < whitelist.length; i++) {

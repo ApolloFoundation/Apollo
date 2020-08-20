@@ -105,7 +105,7 @@ public class PeerClient {
             return null;
         }
 
-        if (resp.errorCode == 0) {
+        if (resp != null && resp.errorCode == 0) {
             fc = resp.chunk;
         } else {
             fc = null;

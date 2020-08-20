@@ -5,16 +5,13 @@
 package com.apollocurrency.aplwallet.apl.core.signature;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
-import static com.apollocurrency.aplwallet.apl.core.signature.SignatureParser.SIGNATURE_FIELD_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -41,23 +38,10 @@ class SigDataTest extends AbstractSigData {
     }
 
     @Test
-    void getJsonObject() {
-        //GIVEN
-        //WHEN
-        JSONObject jsonObject = sigData.getJsonObject();
-
-        //THEN
-        assertNotNull(jsonObject.get(SIGNATURE_FIELD_NAME));
-        byte[] key1 = Convert.parseHexString((String) (jsonObject.get(SIGNATURE_FIELD_NAME)));
-        assertArrayEquals(SIGNATURE1, key1);
-
-    }
-
-    @Test
     void getJsonString() {
         //GIVEN
         //WHEN
-        String jsonString = sigData.getJsonString();
+        String jsonString = sigData.getHexString();
 
         //THEN
         assertEquals(Convert.toHexString(sigData.bytes()), jsonString);

@@ -60,9 +60,11 @@ public class TransactionDTOConverter implements Converter<TransactionDTO, Transa
                 throw new AplException.NotValidException("Invalid transaction type: " + txDto.getType() + ", " + txDto.getSubtype());
             }
 
-            JSONObject attachmentData = null;
-            if (CollectionUtil.isEmpty(txDto.getAttachment())) {
+            JSONObject attachmentData;
+            if (!CollectionUtil.isEmpty(txDto.getAttachment())) {
                 attachmentData = new JSONObject(txDto.getAttachment());
+            } else {
+                throw new AplException.NotValidException("Transaction dto {" + txDto + "} has no attachment");
             }
 
             //TODO APL-1663 Refactoring TransactionType. (make parseAttachment works with dto instead of json)
@@ -82,15 +84,13 @@ public class TransactionDTOConverter implements Converter<TransactionDTO, Transa
                 builder.recipientId(recipientId);
             }
 
-            if (attachmentData != null) {
-                builder.appendix(MessageAppendix.parse(attachmentData));
-                builder.appendix(EncryptedMessageAppendix.parse(attachmentData));
-                builder.appendix(PublicKeyAnnouncementAppendix.parse(attachmentData));
-                builder.appendix(EncryptToSelfMessageAppendix.parse(attachmentData));
-                builder.appendix(PhasingAppendixFactory.parse(attachmentData));
-                builder.appendix(PrunablePlainMessageAppendix.parse(attachmentData));
-                builder.appendix(PrunableEncryptedMessageAppendix.parse(attachmentData));
-            }
+            builder.appendix(MessageAppendix.parse(attachmentData));
+            builder.appendix(EncryptedMessageAppendix.parse(attachmentData));
+            builder.appendix(PublicKeyAnnouncementAppendix.parse(attachmentData));
+            builder.appendix(EncryptToSelfMessageAppendix.parse(attachmentData));
+            builder.appendix(PhasingAppendixFactory.parse(attachmentData));
+            builder.appendix(PrunablePlainMessageAppendix.parse(attachmentData));
+            builder.appendix(PrunableEncryptedMessageAppendix.parse(attachmentData));
             builder.signature(signature);
 
             return builder.build();

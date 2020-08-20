@@ -111,6 +111,11 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
             responseTime = System.currentTimeMillis() - startTime;
         }
 
+        if (response == null) {
+            log.debug("NULL GetNextBlocks response from peer: {}", peer.getAnnouncedAddress());
+            return null;
+        }
+
         if (response.getErrorCode() != 0) {
             log.debug("Failed to parse block(s): " + response.getCause());
             peer.blacklist(response.getCause());

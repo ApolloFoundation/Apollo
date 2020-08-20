@@ -13,6 +13,7 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author al
@@ -32,7 +33,7 @@ public final class ShufflingProcessingAttachment extends AbstractShufflingAttach
 
     public ShufflingProcessingAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        JSONArray jsonArray = (JSONArray) attachmentData.get("data");
+        List<?> jsonArray = (List<?>) attachmentData.get("data");
         if (jsonArray != null) {
             this.data = new byte[jsonArray.size()][];
             for (int i = 0; i < this.data.length; i++) {

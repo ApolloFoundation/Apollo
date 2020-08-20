@@ -798,7 +798,7 @@ public class TransactionDaoImpl implements TransactionDao {
             transaction.setBlock(Long.toUnsignedString(blockId));
             transaction.setBlockTimestamp((long) blockTimestamp);
             transaction.setIndex((int) transactionIndex);
-            transaction.setSignature(signature.getJsonString());
+            transaction.setSignature(signature.getHexString());
             transaction.setPayload(payload);
             return transaction;
 
