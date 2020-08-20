@@ -47,7 +47,7 @@
         "blockTime": 6,
         "maxBalance": 30000000000,
         "shardingSettings": {
-          "frequency": 30
+          "frequency": 40
         }
       },
       {
