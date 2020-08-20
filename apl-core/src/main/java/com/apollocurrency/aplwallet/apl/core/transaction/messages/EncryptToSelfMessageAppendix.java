@@ -4,11 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppendix {
 
@@ -19,7 +20,7 @@ public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppend
     }
 
     public EncryptToSelfMessageAppendix(JSONObject attachmentData) {
-        super(attachmentData, (JSONObject) attachmentData.get("encryptToSelfMessage"));
+        super(attachmentData, (Map<?,?>) attachmentData.get("encryptToSelfMessage"));
     }
 
     public EncryptToSelfMessageAppendix(EncryptedData encryptedData, boolean isText, boolean isCompressed) {
