@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.signature;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONObject;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -49,14 +48,7 @@ class SigData implements Signature {
         return Convert.toHexString(signature);
     }
 
-    @Override
-    public JSONObject getJsonObject() {
-        return SignatureParser.getJsonObject(this);
-    }
-
     static class Parser implements SignatureParser {
-        private static final int PARSER_VERSION = 1;
-
         /**
          * Parse the byte array and build the sig object
          *
