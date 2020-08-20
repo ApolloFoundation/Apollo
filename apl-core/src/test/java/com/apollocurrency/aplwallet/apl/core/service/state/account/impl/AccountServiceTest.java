@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -169,7 +168,7 @@ class AccountServiceTest {
         assertEquals(0L, accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock));
 
         doReturn(testData.ACC_0).when(accountService).getAccount(testData.ACC_0.getId(), 0);
-        assertEquals(testData.ACC_0.getBalanceATM() / Constants.ONE_APL
+        assertEquals(testData.ACC_0.getBalanceATM() / blockchainConfig.getOneAPL()
             , accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock));
     }
 
@@ -191,8 +190,8 @@ class AccountServiceTest {
         balance = accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock);
         assertEquals(0, balance);//the balance is less then MIN_FORGING_BALANCE_ATM
 
-        doReturn(lessorsBalance * Constants.ONE_APL).when(accountService).getLessorsGuaranteedBalanceATM(testData.ACC_0, height);
-        doReturn(guaranteedBalance * Constants.ONE_APL).when(accountService).getGuaranteedBalanceATM(testData.ACC_0, 1440, height);
+        doReturn(lessorsBalance * blockchainConfig.getOneAPL()).when(accountService).getLessorsGuaranteedBalanceATM(testData.ACC_0, height);
+        doReturn(guaranteedBalance * blockchainConfig.getOneAPL()).when(accountService).getGuaranteedBalanceATM(testData.ACC_0, 1440, height);
         balance = accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock);
         assertEquals(lessorsBalance + guaranteedBalance, balance);
     }

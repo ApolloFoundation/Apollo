@@ -32,7 +32,6 @@ import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.TrustAllSSLProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
@@ -231,7 +230,7 @@ public class MintWorker implements Runnable {
         JSONObject ecBlock = getECBlock();
         Attachment attachment = new MonetarySystemCurrencyMinting(nonce, currencyId, units, counter);
         int timestamp = ((Long) ecBlock.get("timestamp")).intValue();
-        Transaction.Builder builder = transactionBuilder.newTransactionBuilder(Crypto.getPublicKey(keySeed), 0, Constants.ONE_APL,
+        Transaction.Builder builder = transactionBuilder.newTransactionBuilder(Crypto.getPublicKey(keySeed), 0, blockchainConfig.getOneAPL(),
             (short) 120, attachment, timestamp)
             .ecBlockHeight(((Long) ecBlock.get("ecBlockHeight")).intValue())
             .ecBlockId(Convert.parseUnsignedLong((String) ecBlock.get("ecBlockId")));

@@ -173,7 +173,7 @@ public class TransactionValidator {
             long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchainHeight);
             if (feeATM < minimumFeeATM) {
                 throw new AplException.NotCurrentlyValidException(String.format("Transaction fee %f %s less than minimum fee %f %s at height %d",
-                    ((double) feeATM) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(), ((double) minimumFeeATM) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
+                    ((double) feeATM) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol(), ((double) minimumFeeATM) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
                     blockchainHeight));
             }
             long ecBlockId = transaction.getECBlockId();

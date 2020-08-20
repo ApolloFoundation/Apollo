@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
@@ -23,8 +24,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -46,24 +46,22 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERR
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_PHASING_WAS_FINISHED;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_TIME_IS_NOT_CORRECT;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
-import static com.apollocurrency.aplwallet.apl.util.Constants.ONE_APL;
 
 /**
  * @author Serhiy Lymar
  */
-
+@Slf4j
 @Singleton
 public class DexValidationServiceImpl implements IDexValidator {
-
-    private static final Logger log = LoggerFactory.getLogger(DexValidationServiceImpl.class);
-    private DexSmartContractService dexSmartContractService;
-    private EthereumWalletService ethereumWalletService;
-    private EthGasStationInfoDao ethGasStationInfoDao;
-    private AccountService accountService;
-    private TimeService timeService;
-    private PhasingPollService phasingPollService;
-    private Blockchain blockchain;
-    private DexConfig dexConfig;
+    private final DexSmartContractService dexSmartContractService;
+    private final EthereumWalletService ethereumWalletService;
+    private final EthGasStationInfoDao ethGasStationInfoDao;
+    private final AccountService accountService;
+    private final TimeService timeService;
+    private final PhasingPollService phasingPollService;
+    private final Blockchain blockchain;
+    private final DexConfig dexConfig;
+    private final BlockchainConfig blockchainConfig;
 
     @Inject
     DexValidationServiceImpl(DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, EthGasStationInfoDao ethGasStationInfoDao,
@@ -71,7 +69,8 @@ public class DexValidationServiceImpl implements IDexValidator {
                              TimeService timeService,
                              PhasingPollService phasingPollService,
                              Blockchain blockchain,
-                             DexConfig dexConfig
+                             DexConfig dexConfig,
+                             BlockchainConfig blockchainConfig
     ) {
         this.dexSmartContractService = Objects.requireNonNull(dexSmartContractService, "dexSmartContractService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "ethereumWalletService is null");
@@ -81,6 +80,7 @@ public class DexValidationServiceImpl implements IDexValidator {
         this.phasingPollService = Objects.requireNonNull(phasingPollService, "phasingPollService is null");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is null");
         this.dexConfig = dexConfig;
+        this.blockchainConfig = blockchainConfig;
     }
 
     Long getAplUnconfirmedBalance(Long hisAccountID) {
@@ -118,7 +118,7 @@ public class DexValidationServiceImpl implements IDexValidator {
 
     boolean checkAplCommisionPayingAbility(Long hisAplBalance) {
         // checking out whether there are commission available
-        Long fee = APL_COMMISSION * ONE_APL;
+        Long fee = APL_COMMISSION * blockchainConfig.getOneAPL();
         log.debug("fee: " + fee);
         return hisAplBalance >= fee;
     }

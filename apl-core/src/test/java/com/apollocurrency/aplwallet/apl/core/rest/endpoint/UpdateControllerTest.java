@@ -29,7 +29,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateV2Tr
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.env.Arch;
 import com.apollocurrency.aplwallet.apl.util.env.OS;
@@ -96,7 +95,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
             .register(ByteArrayConverterProvider.class)
             .register(LegacyParameterExceptionMapper.class)
             .register(PlatformSpecConverterProvider.class);
-        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, blockchain, keystoreService, elGamal), transactionCreator, converter);
+        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, blockchain, keystoreService, elGamal), transactionCreator, converter, blockchainConfig);
         dispatcher.getRegistry().addSingletonResource(updateController);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
     }
@@ -104,7 +103,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
     @Test
     void testSendUpdateSuccessful() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
         when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
-        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * Constants.ONE_APL, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
+        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * blockchainConfig.getOneAPL(), 10000 * blockchainConfig.getOneAPL(), 0, 0, CURRENT_HEIGHT);
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
         doReturn(sender).when(accountService).getAccount(Convert.parseHexString(PUBLIC_KEY_SECRET));
         EcBlockData ecBlockData = new EcBlockData(121, 100_000);
@@ -129,7 +128,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
     @Test
     void testSendUpdateSuccessful_usingVault() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
         when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
-        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * Constants.ONE_APL, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
+        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * blockchainConfig.getOneAPL(), 10000 * blockchainConfig.getOneAPL(), 0, 0, CURRENT_HEIGHT);
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
         ApolloFbWallet wallet = mock(ApolloFbWallet.class);
         doReturn(Convert.toHexString(Crypto.getKeySeed(Convert.toBytes(SECRET)))).when(wallet).getAplKeySecret();
@@ -158,7 +157,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
 
     @Test
     void testSendUpdate_missingSecretPhrase() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
-        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * Constants.ONE_APL, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
+        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * blockchainConfig.getOneAPL(), 10000 * blockchainConfig.getOneAPL(), 0, 0, CURRENT_HEIGHT);
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
 
         MockHttpResponse response = sendPostRequest("/updates", "manifestUrl=https://test11.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,NoOS-ARM" +
