@@ -76,7 +76,7 @@ public class ProcessTransactionsThread implements Runnable {
 
                 GetUnconfirmedTransactionsResponse response = peer.send(request, new GetUnconfirmedTransactionsResponseParser());
 
-                if (CollectionUtil.isEmpty(response.unconfirmedTransactions)) {
+                if (response == null || CollectionUtil.isEmpty(response.unconfirmedTransactions)) {
                     return;
                 }
 

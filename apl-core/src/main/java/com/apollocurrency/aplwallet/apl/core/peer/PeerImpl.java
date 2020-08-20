@@ -511,6 +511,12 @@ public final class PeerImpl implements Peer {
         } else {
             try {
                 JSONObject response = sendJSON(mapper.writeValueAsString(request));
+
+                if (response == null) {
+                    LOG.debug("Response is null.");
+                    return null;
+                }
+
                 return parser.parse(response);
             } catch (JsonProcessingException e) {
                 LOG.debug("Can not deserialize request");
