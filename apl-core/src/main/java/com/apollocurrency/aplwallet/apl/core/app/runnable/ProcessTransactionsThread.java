@@ -83,7 +83,7 @@ public class ProcessTransactionsThread implements Runnable {
                 try {
                     List<Transaction> transactions = response.unconfirmedTransactions
                         .stream()
-                        .map(dtoConverter)
+                        .map(dtoConverter::convert)
                         .collect(Collectors.toList());
 
                     transactionProcessor.processPeerTransactions(transactions);

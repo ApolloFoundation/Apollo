@@ -56,7 +56,7 @@ public final class ProcessTransactions extends PeerRequestHandler {
             ProcessTransactionsRequest transactionsResponse = responseParser.parse(request);
             List<Transaction> transactions = transactionsResponse.transactions
                 .stream()
-                .map(dtoConverter)
+                .map(dtoConverter::convert)
                 .collect(Collectors.toList());
 
             lookupTransactionProcessor().processPeerTransactions(transactions);
