@@ -27,11 +27,12 @@ public class FeeCalculator {
 
     @TransactionFee(FeeMarker.CALCULATOR)
     public long getMinimumFeeATM(Transaction transaction, int blockchainHeight) {
+        long oneAPL = blockchainConfig.getOneAPL();
         long totalFee = 0;
         short feeRate;
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             prunableService.loadPrunable(transaction, appendage, false);
-            Fee fee = appendage.getBaselineFee(transaction);
+            Fee fee = appendage.getBaselineFee(transaction, oneAPL);
             totalFee = Math.addExact(totalFee, fee.getFee(transaction, appendage));
         }
         if (transaction.getReferencedTransactionFullHash() != null) {

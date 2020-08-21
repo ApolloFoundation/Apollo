@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class FeeCalculatorTest {
@@ -51,6 +52,7 @@ class FeeCalculatorTest {
     void getMinimumFeeATM_withDefaultRate_100() {
         long fee;
         //GIVEN
+        when(blockchainConfig.getOneAPL()).thenReturn(100000000L);
         doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(CURRENT_HEIGHT);
         doReturn(FeeRate.DEFAULT_RATE).when(heightConfig).getFeeRate(td.TRANSACTION_1.getType().getSpec().getType(), td.TRANSACTION_1.getType().getSpec().getSubtype());
         //WHEN
@@ -63,7 +65,7 @@ class FeeCalculatorTest {
         //WHEN
         fee = feeCalculator.getMinimumFeeATM(td.TRANSACTION_2, CURRENT_HEIGHT);
         //THEN
-        assertEquals(200000000L, fee);
+        assertEquals(td.TRANSACTION_2.getFeeATM(), fee);
     }
 
     @Test
@@ -89,6 +91,7 @@ class FeeCalculatorTest {
     void getMinimumFeeATM_withRate_50() {
         long fee;
         //GIVEN
+        when(blockchainConfig.getOneAPL()).thenReturn(100000000L);
         doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(CURRENT_HEIGHT);
         doReturn((short)(FeeRate.DEFAULT_RATE/2)).when(heightConfig).getFeeRate(td.TRANSACTION_1.getType().getSpec().getType(), td.TRANSACTION_1.getType().getSpec().getSubtype());
         //WHEN
@@ -101,7 +104,7 @@ class FeeCalculatorTest {
         //WHEN
         fee = feeCalculator.getMinimumFeeATM(td.TRANSACTION_2, CURRENT_HEIGHT);
         //THEN
-        assertEquals(200000000L/2, fee);
+        assertEquals(td.TRANSACTION_2.getFeeATM() / 2, fee);
     }
 
 }

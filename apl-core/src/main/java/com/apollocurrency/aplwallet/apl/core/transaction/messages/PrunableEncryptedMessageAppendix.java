@@ -23,12 +23,6 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
 
     static final String APPENDIX_NAME = "PrunableEncryptedMessage";
 
-    private static final Fee PRUNABLE_ENCRYPTED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendix) {
-            return appendix.getFullSize();
-        }
-    };
     private final byte[] hash;
     private final boolean isText;
     private final boolean isCompressed;
@@ -86,8 +80,13 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
     }
 
     @Override
-    public final Fee getBaselineFee(Transaction transaction) {
-        return PRUNABLE_ENCRYPTED_DATA_FEE;
+    public Fee getBaselineFee(Transaction transaction, long oneAPL) {
+        return new Fee.SizeBasedFee(Constants.ONE_APL / 10) {
+            @Override
+            public int getSize(Transaction transaction, Appendix appendix) {
+                return appendix.getFullSize();
+            }
+        };
     }
 
     @Override

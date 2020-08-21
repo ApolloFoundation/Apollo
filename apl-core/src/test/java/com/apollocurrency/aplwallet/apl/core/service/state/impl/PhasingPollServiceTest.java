@@ -163,7 +163,7 @@ public class PhasingPollServiceTest {
 
         blockchainConfig.setCurrentConfig(new HeightConfig(
             new BlockchainProperties(1, 1, 1, 1, 1, 1, 1, 1L),
-            blockchainConfig.getOneAPL())
+            100000000L)
         );
     }
 

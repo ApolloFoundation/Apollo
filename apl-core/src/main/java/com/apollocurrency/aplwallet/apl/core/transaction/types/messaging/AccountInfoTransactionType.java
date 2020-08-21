@@ -32,7 +32,7 @@ public class AccountInfoTransactionType extends MessagingTransactionType {
         this.accountInfoService = accountInfoService;
     }
 
-    private final Fee ACCOUNT_INFO_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
+    private final Fee ACCOUNT_INFO_FEE = new Fee.SizeBasedFee(getBlockchainConfig().getOneAPL(), 2 * getBlockchainConfig().getOneAPL(), 32) {
         @Override
         public int getSize(Transaction transaction, Appendix appendage) {
             MessagingAccountInfo attachment = (MessagingAccountInfo) transaction.getAttachment();

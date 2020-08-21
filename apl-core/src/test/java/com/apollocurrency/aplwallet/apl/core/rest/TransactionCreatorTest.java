@@ -51,6 +51,7 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionCreatorTest {
+    public static final long TEST_LOCAL_ONE_APL = 100000000L;
     @Mock
     TransactionValidator validator;
     @Mock
@@ -81,7 +82,7 @@ class TransactionCreatorTest {
 
     @BeforeEach
     void setUp() {
-        sender = new Account(Convert.parseAccountId(accountRS), 1000 * blockchainConfig.getOneAPL(), 100 * blockchainConfig.getOneAPL(), 0L, 0L, 0);
+        sender = new Account(Convert.parseAccountId(accountRS), 1000 * TEST_LOCAL_ONE_APL, 100 * TEST_LOCAL_ONE_APL, 0L, 0L, 0);
         transactionType = new CustomTransactionType(blockchainConfig, accountService);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(transactionType));
         transactionBuilder = new TransactionBuilder(transactionTypeFactory);

@@ -104,8 +104,10 @@ class UpdateControllerTest extends AbstractEndpointTest {
 
     @Test
     void testSendUpdateSuccessful() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+        long ONE_APL = 100000000l;
+        when(blockchainConfig.getOneAPL()).thenReturn(ONE_APL);
         when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
-        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * blockchainConfig.getOneAPL(), 10000 * blockchainConfig.getOneAPL(), 0, 0, CURRENT_HEIGHT);
+        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * ONE_APL, 10000 * ONE_APL, 0, 0, CURRENT_HEIGHT);
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
         doReturn(sender).when(accountService).getAccount(Convert.parseHexString(PUBLIC_KEY_SECRET));
         EcBlockData ecBlockData = new EcBlockData(121, 100_000);
@@ -129,8 +131,10 @@ class UpdateControllerTest extends AbstractEndpointTest {
 
     @Test
     void testSendUpdateSuccessful_usingVault() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+        long ONE_APL = 100000000l;
+        when(blockchainConfig.getOneAPL()).thenReturn(ONE_APL);
         when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
-        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * blockchainConfig.getOneAPL(), 10000 * blockchainConfig.getOneAPL(), 0, 0, CURRENT_HEIGHT);
+        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * ONE_APL, 10000 * ONE_APL, 0, 0, CURRENT_HEIGHT);
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
         ApolloFbWallet wallet = mock(ApolloFbWallet.class);
         doReturn(Convert.toHexString(Crypto.getKeySeed(Convert.toBytes(SECRET)))).when(wallet).getAplKeySecret();

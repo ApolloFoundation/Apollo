@@ -7,7 +7,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -18,7 +17,7 @@ public class CandlestickTestUtil {
     }
 
     public static long apl(long atm) {
-        return atm * Constants.ONE_APL;
+        return atm * 100000000L;
     }
 
     public static SimpleTradingEntry fromRawData(String min, String max, String open, String close, String volumeFrom, String volumeTo, int timestamp) {

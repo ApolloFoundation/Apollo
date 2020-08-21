@@ -165,6 +165,7 @@ class AccountServiceTest {
     void getEffectiveBalanceAPLByGenesisAccount() {
         boolean lock = false;
         int height = EFFECTIVE_BALANCE_CONFIRMATIONS - 1;
+        when(blockchainConfig.getOneAPL()).thenReturn(100000000L);
         assertEquals(0L, accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock));
 
         doReturn(testData.ACC_0).when(accountService).getAccount(testData.ACC_0.getId(), 0);
@@ -180,6 +181,7 @@ class AccountServiceTest {
         long balance = 0;
         long lessorsBalance = 10000L;
         long guaranteedBalance = 50000L;
+        when(blockchainConfig.getOneAPL()).thenReturn(100000000L);
         doReturn(blockchainHeight).when(blockChainInfoService).getHeight();
         assertEquals(0, accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock));
 

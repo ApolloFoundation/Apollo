@@ -14,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ChildAccountAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
@@ -37,7 +36,7 @@ public abstract class ChildAccountTransactionType extends TransactionType {
         return getAccountService().getAccount(childPublicKey) != null;
     }
 
-    private static final Fee TX_FEE = new Fee.ConstantFee(Constants.ONE_APL);
+    private final Fee TX_FEE = new Fee.ConstantFee(getBlockchainConfig().getOneAPL());
 
 
     @Override

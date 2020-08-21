@@ -22,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRecipientsAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
@@ -38,7 +37,7 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 
 @Singleton
 public class ShufflingRecipientsTransactionType extends ShufflingTransactionType {
-    private final static Fee SHUFFLING_RECIPIENTS_FEE = new Fee.ConstantFee(11 * Constants.ONE_APL);
+    private final Fee SHUFFLING_RECIPIENTS_FEE = new Fee.ConstantFee(11 * getBlockchainConfig().getOneAPL());
     private final ShufflingService shufflingService;
 
     @Inject
@@ -46,7 +45,6 @@ public class ShufflingRecipientsTransactionType extends ShufflingTransactionType
         super(blockchainConfig, accountService);
         this.shufflingService = shufflingService;
     }
-
 
     @Override
     public TransactionTypes.TransactionTypeSpec getSpec() {

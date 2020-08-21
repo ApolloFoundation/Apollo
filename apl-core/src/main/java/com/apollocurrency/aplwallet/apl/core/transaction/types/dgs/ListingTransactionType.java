@@ -30,7 +30,7 @@ import java.util.Map;
 @Slf4j
 @Singleton
 public class ListingTransactionType extends DigitalGoodsTransactionType {
-    private final Fee DGS_LISTING_FEE = new Fee.SizeBasedFee(2 * Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
+    private final Fee DGS_LISTING_FEE = new Fee.SizeBasedFee(2 * getBlockchainConfig().getOneAPL(), 2 * getBlockchainConfig().getOneAPL(), 32) {
         @Override
         public int getSize(Transaction transaction, Appendix appendage) {
             DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();

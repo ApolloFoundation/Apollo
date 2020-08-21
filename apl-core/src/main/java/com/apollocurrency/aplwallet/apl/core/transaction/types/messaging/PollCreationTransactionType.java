@@ -35,14 +35,14 @@ public class PollCreationTransactionType extends MessagingTransactionType {
         this.transactionValidator = transactionValidator;
     }
 
-    private final Fee POLL_OPTIONS_FEE = new Fee.SizeBasedFee(10 * Constants.ONE_APL, Constants.ONE_APL, 1) {
+    private final Fee POLL_OPTIONS_FEE = new Fee.SizeBasedFee(10 * getBlockchainConfig().getOneAPL(), getBlockchainConfig().getOneAPL(), 1) {
         @Override
         public int getSize(Transaction transaction, Appendix appendage) {
             int numOptions = ((MessagingPollCreation) appendage).getPollOptions().length;
             return numOptions <= 19 ? 0 : numOptions - 19;
         }
     };
-    private final Fee POLL_SIZE_FEE = new Fee.SizeBasedFee(0, 2 * Constants.ONE_APL, 32) {
+    private final Fee POLL_SIZE_FEE = new Fee.SizeBasedFee(0, 2 * getBlockchainConfig().getOneAPL(), 32) {
         @Override
         public int getSize(Transaction transaction, Appendix appendage) {
             MessagingPollCreation attachment = (MessagingPollCreation) appendage;
