@@ -148,8 +148,18 @@ public class ShardObserverTest {
             arguments(4000, 5006, 0, false, true),
             arguments(4000, 5106, 5100, true, true),
             arguments(4000, 5137, 5100, true, false), // simulate that config has NOT been switched recently
-            arguments(5900, 6006, 6000, true, true)
-//            arguments(5900, 6006, 6000, true, false) // simulate that config has NOT been switched recently
+            arguments(5900, 6006, 6000, true, true),
+            arguments(5900, 6006, 6000, true, false), // simulate that config has NOT been switched recently
+            arguments(5800, 6006, 5900, true, false), // simulate LOST previous shard + that config has NOT been switched recently
+            arguments(5400, 6006, 5500, true, false),
+            arguments(5900, 6006, 6000, true, false), // simulate LOST previous shard + that config has NOT been switched recently
+            arguments(5900, 6006, 6000, true, true),
+            arguments(6000, 7005, 0, false, false),
+            arguments(6000, 7005, 0, false, true),
+            arguments(6000, 7006, 7000, true, true),
+            arguments(6000, 7016, 7000, true, true),
+            arguments(6000, 7916, 7000, true, true),
+            arguments(7000, 8007, 8000, true, true)
         );
     }
 
