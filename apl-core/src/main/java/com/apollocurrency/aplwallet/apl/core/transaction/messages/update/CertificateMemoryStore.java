@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 
 import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.crypto.cert.ApolloCertificate;
+import com.apollocurrency.apl.id.cert.ApolloCertificate;
 import io.firstbridge.cryptolib.CryptoFactory;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;

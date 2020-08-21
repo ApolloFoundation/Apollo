@@ -50,6 +50,8 @@
     <module>apl-bom</module>
     <module>apl-conf</module>
     <module>apl-exec</module>
+    <module>apl-id</module>
+    <module>apl-comm</module>
   </modules>
 
   <properties>
