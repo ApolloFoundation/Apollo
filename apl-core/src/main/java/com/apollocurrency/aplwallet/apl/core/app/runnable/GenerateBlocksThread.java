@@ -4,13 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import javax.enterprise.inject.spi.CDI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
@@ -20,8 +13,16 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.enterprise.inject.spi.CDI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 public class GenerateBlocksThread implements Runnable {
@@ -61,7 +62,8 @@ public class GenerateBlocksThread implements Runnable {
 
     @Override
     public void run() {
-        log.trace("run - generateBlocksThread");
+        long start = System.currentTimeMillis();
+        log.trace("run - generateBlocksThread ({})", start);
         if (suspendForging) {
             log.trace("run - suspendForging = {}", suspendForging);
             return;
@@ -69,6 +71,7 @@ public class GenerateBlocksThread implements Runnable {
         try {
             try {
                 globalSync.updateLock();
+                log.trace("Acquire generation lock");
                 try {
                     Block lastBlock = blockchain.getLastBlock();
                     if (lastBlock == null || lastBlock.getHeight() < blockchainConfig.getLastKnownBlock()) {
@@ -78,7 +81,7 @@ public class GenerateBlocksThread implements Runnable {
                     final int generationLimit = timeService.getEpochTime() - delayTime;
                     if (lastBlock.getId() != lastBlockId || sortedForgers == null) {
                         lastBlockId = lastBlock.getId();
-                        log.trace("run - lastBlockId = {}", lastBlockId);
+                        log.trace("run - lastBlockId = {} ({} ms)", lastBlockId, (System.currentTimeMillis() - start));
                         Map<Long, GeneratorMemoryEntity> generatorsMap = generatorService.getGeneratorsMap();
                         if (lastBlock.getTimestamp() > timeService.getEpochTime() - 600) {
                             log.trace("run - getTimestamp = {} > {}", lastBlock.getTimestamp(), timeService.getEpochTime() - 600);
@@ -111,7 +114,7 @@ public class GenerateBlocksThread implements Runnable {
                         Collections.sort(forgers);
                         sortedForgers = Collections.unmodifiableList(forgers);
                         logged = false;
-                        log.trace("run - set logged = {}", logged);
+                        log.trace("run - set logged = {} ({} ms)", logged, (System.currentTimeMillis() - start));
                     }
                     if (!logged) {
                         for (GeneratorMemoryEntity generator : sortedForgers) {
@@ -135,9 +138,11 @@ public class GenerateBlocksThread implements Runnable {
                     }
                 } finally {
                     globalSync.updateUnlock();
+                    log.trace("Release generation lock  ({} ms)", (System.currentTimeMillis() - start));
                 }
             } catch (Exception e) {
-                log.info("Error in block generation thread", e);
+                log.error("Error in block generation thread ({} ms)", (System.currentTimeMillis() - start), e);
+                log.trace("Stack trace = {}", ThreadUtils.getStackTrace(e));
             }
         } catch (Throwable t) {
             log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());

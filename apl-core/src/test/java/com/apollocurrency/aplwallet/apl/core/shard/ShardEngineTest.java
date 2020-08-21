@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -51,6 +52,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegist
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
@@ -118,6 +120,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -172,6 +175,7 @@ class ShardEngineTest {
     private CsvExporter csvExporter = spy(new CsvExporterImpl(extension.getDatabaseManager(), dataExportDirPath, translator));
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
 
+    private final PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
     @WeldSetup
     public WeldInitiator weldInitiator = WeldInitiator.from(weld)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -195,6 +199,7 @@ class ShardEngineTest {
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
         .build();
     @Inject
     private ShardEngine shardEngine;
@@ -570,6 +575,7 @@ class ShardEngineTest {
         );
         CommandParamInfo paramInfo = CommandParamInfo.builder().tableInfoList(tables).commitBatchSize(batchLimit).snapshotBlockHeight(snaphotBlockHeight).excludeInfo(excludeInfo).build();
         doThrow(IllegalStateException.class).when(csvExporter).exportBlock(snaphotBlockHeight);
+        initPublicKeyDao();
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
@@ -607,6 +613,8 @@ class ShardEngineTest {
         Path transactionPath = dataExportDirPath.resolve("transaction.csv");
         Files.createFile(transactionPath);
         Files.write(transactionPath, List.of("Str-0", "Str-1", "Str-2", "Str-3", "Str-4", "Str-5", "Str-6"));
+        initPublicKeyDao();
+
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
@@ -654,12 +662,18 @@ class ShardEngineTest {
         int batchLimit = 1;
         List<TableInfo> tables = List.of(new TableInfo("invalid_table"));
         CommandParamInfo paramInfo = CommandParamInfo.builder().tableInfoList(tables).commitBatchSize(batchLimit).snapshotBlockHeight(snaphotBlockHeight).build();
+        initPublicKeyDao();
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
         assertEquals(MigrateState.FAILED, state);
         verify(csvExporter, times(2)).getDataExportPath();
         verifyNoMoreInteractions(csvExporter);
+    }
+
+
+    private void initPublicKeyDao() {
+        doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).searchAll(anyLong());
     }
 
     @Test
@@ -671,6 +685,7 @@ class ShardEngineTest {
         List<TableInfo> tables = List.of(new TableInfo(GOODS_TABLE_NAME));
         DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
         CommandParamInfo paramInfo = CommandParamInfo.builder().tableInfoList(tables).commitBatchSize(batchLimit).snapshotBlockHeight(snaphotBlockHeight).build();
+        initPublicKeyDao();
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
@@ -699,6 +714,7 @@ class ShardEngineTest {
         Path txtFile = directory.resolve("old.txt");
         Files.createFile(txtFile);
         Path anotherCsvFile = Files.createFile(directory.resolve("another.csv"));
+        initPublicKeyDao();
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
 

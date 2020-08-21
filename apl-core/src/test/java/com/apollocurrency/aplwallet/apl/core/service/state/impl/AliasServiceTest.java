@@ -1,9 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
-import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.alias.AliasOfferTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.alias.AliasTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.AliasOffer;
@@ -16,9 +16,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -43,8 +48,7 @@ class AliasServiceTest {
         this.aliasService = spy(new AliasServiceImpl(
             aliasTable,
             offerTable,
-            blockchain,
-            mock(IteratorToStreamConverter.class)
+            blockchain
         ));
     }
 
@@ -77,12 +81,14 @@ class AliasServiceTest {
         final long accountId = 7821792282123976600L;
         final int from = 1;
         final int to = 2;
+        doReturn(mock(DbIterator.class)).when(aliasTable).getManyBy(any(DbClause.class), anyInt(), anyInt());
 
         //WHEN
-        aliasService.getAliasesByOwner(accountId, from, to);
+
+        List<Alias> aliases = aliasService.getAliasesByOwner(accountId, 0, from, to);
 
         //THEN
-        verify(aliasTable, times(1)).getManyBy(any(DbClause.LongClause.class), eq(from), eq(to));
+        assertEquals(List.of(), aliases);
     }
 
     @Test
@@ -103,13 +109,15 @@ class AliasServiceTest {
         final String aliasName = "AS1561618989348";
         final int from = 1;
         final int to = 2;
+        doReturn(mock(DbIterator.class)).when(aliasTable).getManyBy(any(DbClause.class), anyInt(), anyInt());
 
         //WHEN
-        aliasService.getAliasesByNamePattern(aliasName, from, to);
+        List<Alias> aliases = aliasService.getAliasesByNamePattern(aliasName, from, to);
 
         //THEN
         verify(aliasTable, times(1))
             .getManyBy(any(DbClause.LikeClause.class), eq(from), eq(to));
+        assertEquals(List.of(), aliases);
     }
 
     @Test

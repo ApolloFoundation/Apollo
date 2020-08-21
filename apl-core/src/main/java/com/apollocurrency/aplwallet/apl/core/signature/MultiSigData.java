@@ -6,8 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.signature;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -58,6 +56,11 @@ class MultiSigData implements MultiSig {
     }
 
     @Override
+    public String getHexString() {
+        return Convert.toHexString(bytes());
+    }
+
+    @Override
     public boolean isVerified() {
         return verified;
     }
@@ -70,11 +73,6 @@ class MultiSigData implements MultiSig {
     @Override
     public int getSize() {
         return parser.calcDataSize(this.getThresholdParticipantCount());
-    }
-
-    @Override
-    public JSONObject getJsonObject() {
-        return parser.getJsonObject(this);
     }
 
     @Override
@@ -180,18 +178,24 @@ class MultiSigData implements MultiSig {
     }
 
     static class Parser implements SignatureParser {
-        private static final int PARSER_VERSION = 2;
         private static final byte[] MAGIC_BYTES = new byte[]{0x4d, 0x53, 0x49, 0x47};//magic='MSIG'
         private static final int MAGIC_DATA_LENGTH = 4;
         private static final int PAYLOAD_LENGTH = 4;
         private static final byte[] PAYLOAD_RESERVED = new byte[PAYLOAD_LENGTH];
-        public static final String PAYLOAD_FIELD_NAME = "payload";
-        public static final String PARTICIPANT_COUNT_FIELD_NAME = "participantCount";
-        public static final String SIGNATURES_FIELD_NAME = "signatures";
-        public static final String KEY_ID_FIELD_NAME = "keyId";
 
         static {
             Arrays.fill(PAYLOAD_RESERVED, (byte) 0x0);
+        }
+
+        /**
+         * Parse the byte array and build the multisig object
+         *
+         * @param bytes input data array
+         * @return the multisig object
+         */
+        @Override
+        public Signature parse(byte[] bytes) {
+            return parse(ByteBuffer.wrap(bytes));
         }
 
         /**
@@ -255,42 +259,5 @@ class MultiSigData implements MultiSig {
             return buffer.array();
         }
 
-        @Override
-        public JSONObject getJsonObject(Signature signature) {
-            MultiSig multiSig = (MultiSig) signature;
-            JSONObject json = new JSONObject();
-            json.put(PAYLOAD_FIELD_NAME, Convert.toHexString(multiSig.getPayload()));
-            json.put(PARTICIPANT_COUNT_FIELD_NAME, String.valueOf(multiSig.getThresholdParticipantCount()));
-            JSONArray signatureArray = new JSONArray();
-            multiSig.signaturesMap().forEach((keyId, bytes) -> {
-                JSONObject item = new JSONObject();
-                item.put(KEY_ID_FIELD_NAME, Convert.toHexString(keyId.getKey()));
-                item.put(SIGNATURE_FIELD_NAME, Convert.toHexString(bytes));
-                signatureArray.add(item);
-            });
-            json.put("signatures", signatureArray);
-
-            return json;
-        }
-
-        /**
-         * Parse the JSON object and build the multisig object
-         *
-         * @param json input JSONObject
-         * @return the multisig object
-         */
-        @Override
-        public Signature parse(JSONObject json) {
-            byte[] payload = Convert.parseHexString((String) json.get(PAYLOAD_FIELD_NAME));
-            int participantCount = Integer.parseInt((String) json.get(PARTICIPANT_COUNT_FIELD_NAME));
-            MultiSigData multiSigData = new MultiSigData(participantCount, payload);
-            JSONArray signatures = (JSONArray) json.get(SIGNATURES_FIELD_NAME);
-            for (Object item : signatures) {
-                byte[] keyId = Convert.parseHexString((String) ((JSONObject) item).get(KEY_ID_FIELD_NAME));
-                byte[] sig = Convert.parseHexString((String) ((JSONObject) item).get(SIGNATURE_FIELD_NAME));
-                multiSigData.addSignature(keyId, sig);
-            }
-            return multiSigData;
-        }
     }
 }

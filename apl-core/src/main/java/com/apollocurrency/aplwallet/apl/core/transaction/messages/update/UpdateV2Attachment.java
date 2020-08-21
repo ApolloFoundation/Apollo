@@ -19,6 +19,7 @@ import org.json.simple.JSONObject;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -61,9 +62,9 @@ public class UpdateV2Attachment extends AbstractAttachment {
         super(attachmentData);
         this.manifestUrl = Convert.nullToEmpty((String) attachmentData.get("manifestUrl"));
         this.updateLevel = Level.from(((Long) Convert.parseLong(attachmentData.get("level"))).intValue());
-        JSONArray platforms = (JSONArray) attachmentData.get("platforms");
+        List<?> platforms = (List<?>) attachmentData.get("platforms");
         for (Object platformObj : platforms) {
-            JSONObject platformJsonObj = (JSONObject) platformObj;
+            Map<?,?> platformJsonObj = (Map<?,?>) platformObj;
             PlatformSpec platformSpec = new PlatformSpec(OS.from(((Long) platformJsonObj.get("platform")).intValue()), Arch.from(((Long) platformJsonObj.get("architecture")).intValue()));
             this.platforms.add(platformSpec);
         }

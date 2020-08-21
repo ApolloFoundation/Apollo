@@ -19,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl
 import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.TwoTablesPublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
@@ -69,6 +70,7 @@ class PrunableMessageServiceTest {
         PropertiesHolder.class,
         AccountPublicKeyServiceImpl.class,
         PublicKeyTableProducer.class,
+        TwoTablesPublicKeyDao.class,
         BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class
     )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))

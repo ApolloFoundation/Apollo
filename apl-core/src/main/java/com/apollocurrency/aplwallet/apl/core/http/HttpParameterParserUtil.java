@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
@@ -387,6 +388,14 @@ public final class HttpParameterParserUtil {
 
     public static Currency getCurrency(HttpServletRequest req) throws ParameterException {
         return getCurrency(req, true);
+    }
+
+    public static Currency getCurrencyWithSupply(HttpServletRequest req) throws ParameterException {
+        Currency currency = getCurrency(req);
+        CurrencyService currencyService = lookupCurrencyService();
+        CurrencySupply supply = currencyService.loadCurrencySupplyByCurrency(currency);
+        currency.setCurrencySupply(supply);
+        return currency;
     }
 
     public static Currency getCurrency(HttpServletRequest req, boolean isMandatory) throws ParameterException {

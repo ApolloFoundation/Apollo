@@ -1,7 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.currency;
 
-import java.util.stream.Stream;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -12,6 +10,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySuppl
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
+
+import java.util.stream.Stream;
 
 public interface CurrencyService {
     DbIterator<Currency> getAllCurrencies(int from, int to);
@@ -87,4 +88,8 @@ public interface CurrencyService {
 
     void validateCurrencyNaming(long issuerAccountId, MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException;
 
+    void mintCurrency(LedgerEvent event, long eventId, Account account,
+                      MonetarySystemCurrencyMinting attachment);
+
+    long getMintCounter(long currencyId, long accountId);
 }

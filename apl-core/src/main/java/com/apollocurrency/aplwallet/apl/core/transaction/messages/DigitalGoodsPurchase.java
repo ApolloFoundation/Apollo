@@ -31,7 +31,7 @@ public final class DigitalGoodsPurchase extends AbstractAttachment {
         super(attachmentData);
         this.goodsId = Convert.parseUnsignedLong((String) attachmentData.get("goods"));
         this.quantity = ((Long) attachmentData.get("quantity")).intValue();
-        this.priceATM = attachmentData.containsKey("priceATM") ? Convert.parseLong(attachmentData.get("priceATM")) : Convert.parseLong(attachmentData.get("priceNQT"));
+        this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
         this.deliveryDeadlineTimestamp = ((Long) attachmentData.get("deliveryDeadlineTimestamp")).intValue();
     }
 

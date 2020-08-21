@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.util.Collection;
 import java.util.List;
@@ -61,8 +60,6 @@ public interface TransactionProcessor {
 
     void broadcast(Transaction transaction) throws AplException.ValidationException;
 
-    void processPeerTransactions(JSONObject request) throws AplException.ValidationException;
-
     void processLater(Collection<Transaction> transactions);
 
     void processWaitingTransactions();
@@ -71,7 +68,7 @@ public interface TransactionProcessor {
 
     boolean isWaitingTransactionsCacheFull();
 
-    void processPeerTransactions(JSONArray transactionsData) throws AplException.NotValidException;
+    void processPeerTransactions(List<Transaction> transactions) throws AplException.NotValidException;
 
     void processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws AplException.ValidationException;
 

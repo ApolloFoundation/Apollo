@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix {
 
@@ -45,7 +46,7 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
         this.isCompressed = getVersion() != 2;
     }
 
-    public AbstractEncryptedMessageAppendix(JSONObject attachmentJSON, JSONObject encryptedMessageJSON) {
+    public AbstractEncryptedMessageAppendix(JSONObject attachmentJSON, Map<?,?> encryptedMessageJSON) {
         super(attachmentJSON);
         byte[] data = Convert.parseHexString((String) encryptedMessageJSON.get("data"));
         byte[] nonce = Convert.parseHexString((String) encryptedMessageJSON.get("nonce"));

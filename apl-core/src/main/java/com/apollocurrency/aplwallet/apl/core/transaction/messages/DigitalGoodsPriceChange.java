@@ -26,7 +26,7 @@ public final class DigitalGoodsPriceChange extends AbstractAttachment {
     public DigitalGoodsPriceChange(JSONObject attachmentData) {
         super(attachmentData);
         this.goodsId = Convert.parseUnsignedLong((String) attachmentData.get("goods"));
-        this.priceATM = attachmentData.containsKey("priceATM") ? Convert.parseLong(attachmentData.get("priceATM")) : Convert.parseLong(attachmentData.get("priceNQT"));
+        this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
     }
 
     public DigitalGoodsPriceChange(long goodsId, long priceATM) {

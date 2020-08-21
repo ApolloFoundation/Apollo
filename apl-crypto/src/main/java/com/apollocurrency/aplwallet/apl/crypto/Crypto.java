@@ -506,4 +506,3 @@ public final class Crypto {
     }
 
 }
-

@@ -21,9 +21,8 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
-import com.apollocurrency.aplwallet.api.p2p.respons.BaseP2PResponse;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
-import com.apollocurrency.aplwallet.apl.core.peer.parser.PeerResponseParser;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.ReqRespParser;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -115,7 +114,7 @@ public interface Peer extends Comparable<Peer> {
     //todo add base response
     void send(BaseP2PRequest request) throws PeerNotConnectedException;
 
-    <T extends BaseP2PResponse> T send(BaseP2PRequest request, PeerResponseParser<T> parser) throws PeerNotConnectedException;
+    <T> T send(BaseP2PRequest request, ReqRespParser<T> parser) throws PeerNotConnectedException;
 
     boolean isTrusted();
 

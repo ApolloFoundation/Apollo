@@ -45,7 +45,7 @@ public final class MessagingPhasingVoteCasting extends AbstractAttachment {
 
     public MessagingPhasingVoteCasting(JSONObject attachmentData) {
         super(attachmentData);
-        JSONArray hashes = (JSONArray) attachmentData.get("transactionFullHashes");
+        List<?> hashes = (List<?>) attachmentData.get("transactionFullHashes");
         transactionFullHashes = new ArrayList<>(hashes.size());
         hashes.forEach((hash) -> transactionFullHashes.add(Convert.parseHexString((String) hash)));
         String revealedSecret = Convert.emptyToNull((String) attachmentData.get("revealedSecret"));

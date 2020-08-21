@@ -522,8 +522,8 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
             int timestamp = blockchain.getLastBlockTimestamp();
             Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
                 monitoredAccount.getAmount(), 0, (short) 1440, Attachment.ORDINARY_PAYMENT, timestamp)
-                    .recipientId(monitoredAccount.getAccountId())
-                    .ecBlockData(blockchain.getECBlock(timestamp));
+                .recipientId(monitoredAccount.getAccountId())
+                .ecBlockData(blockchain.getECBlock(timestamp));
 
             Transaction transaction = builder.build();
             long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight());
@@ -581,8 +581,8 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
             int timestamp = blockchain.getLastBlockTimestamp();
             Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
                 0, 0, (short) 1440, attachment, timestamp)
-                    .recipientId(monitoredAccount.getAccountId())
-                    .ecBlockData(blockchain.getECBlock(timestamp));
+                .recipientId(monitoredAccount.getAccountId())
+                .ecBlockData(blockchain.getECBlock(timestamp));
 
             Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
@@ -634,8 +634,8 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
             int timestamp = blockchain.getLastBlockTimestamp();
             Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
                 0, 0, (short) 1440, attachment, timestamp)
-                    .recipientId(monitoredAccount.getAccountId())
-                    .ecBlockData(blockchain.getECBlock(timestamp));
+                .recipientId(monitoredAccount.getAccountId())
+                .ecBlockData(blockchain.getECBlock(timestamp));
 
             Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));

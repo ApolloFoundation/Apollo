@@ -5,16 +5,9 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -22,6 +15,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 public class PhasingAppendix extends AbstractAppendix {
 
@@ -76,7 +70,7 @@ public class PhasingAppendix extends AbstractAppendix {
 
         this.finishHeight = phasingFinishHeight != null ? phasingFinishHeight.intValue() : -1;
         params = new PhasingParams(attachmentData);
-        JSONArray linkedFullHashesJson = (JSONArray) attachmentData.get("phasingLinkedFullHashes");
+        List<?> linkedFullHashesJson = (List<?>) attachmentData.get("phasingLinkedFullHashes");
         if (linkedFullHashesJson != null && linkedFullHashesJson.size() > 0) {
             linkedFullHashes = new byte[linkedFullHashesJson.size()][];
             for (int i = 0; i < linkedFullHashes.length; i++) {

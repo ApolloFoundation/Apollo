@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -24,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageSer
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
@@ -54,6 +56,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -70,11 +74,17 @@ public class ShardHashCalculatorImplTest {
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     HeightConfig heightConfig = mock(HeightConfig.class);
     TransactionTestData ttd = new TransactionTestData();
+    private final PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
+
+    {
+        doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).searchAll(anyLong());
+    }
+
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class,
         BlockImpl.class, BlockDaoImpl.class,
         DerivedDbTablesRegistryImpl.class, TimeServiceImpl.class, GlobalSyncImpl.class, TransactionDaoImpl.class,
-        DaoConfig.class,         TransactionRowMapper.class, TransactionBuilder.class)
+        DaoConfig.class, TransactionRowMapper.class, TransactionBuilder.class)
         .addBeans(
             MockBean.of(blockchainConfig, BlockchainConfig.class),
             MockBean.of(propertiesHolder, PropertiesHolder.class),
@@ -91,6 +101,7 @@ public class ShardHashCalculatorImplTest {
         )
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(ttd.getTransactionTypeFactory(), TransactionTypeFactory.class))
+        .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
         .build();
 
     @Inject
