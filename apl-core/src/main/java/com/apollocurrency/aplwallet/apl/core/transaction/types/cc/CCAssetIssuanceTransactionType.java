@@ -107,7 +107,12 @@ public class CCAssetIssuanceTransactionType extends ColoredCoinsTransactionType 
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
-        if (attachment.getName().length() < Constants.MIN_ASSET_NAME_LENGTH || attachment.getName().length() > Constants.MAX_ASSET_NAME_LENGTH || attachment.getDescription().length() > Constants.MAX_ASSET_DESCRIPTION_LENGTH || attachment.getDecimals() < 0 || attachment.getDecimals() > 8 || attachment.getQuantityATU() <= 0 || attachment.getQuantityATU() > Constants.MAX_ASSET_QUANTITY_ATU) {
+        if (attachment.getName().length() < Constants.MIN_ASSET_NAME_LENGTH
+            || attachment.getName().length() > Constants.MAX_ASSET_NAME_LENGTH
+            || attachment.getDescription().length() > Constants.MAX_ASSET_DESCRIPTION_LENGTH
+            || attachment.getDecimals() < 0 || attachment.getDecimals() > getBlockchainConfig().getDecimals()
+            || attachment.getQuantityATU() <= 0
+            || attachment.getQuantityATU() > getBlockchainConfig().getInitialSupply() * getBlockchainConfig().getOneAPL()) {
             throw new AplException.NotValidException("Invalid asset issuance: " + attachment.getJSONObject());
         }
         String normalizedName = attachment.getName().toLowerCase();
@@ -120,7 +125,8 @@ public class CCAssetIssuanceTransactionType extends ColoredCoinsTransactionType 
 
     @Override
     public boolean isBlockDuplicate(final Transaction transaction, final Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        return !isSingletonIssuance(transaction) && isDuplicate(TransactionTypes.TransactionTypeSpec.CC_ASSET_ISSUANCE, getName(), duplicates, true);
+        return !isSingletonIssuance(transaction)
+            && isDuplicate(TransactionTypes.TransactionTypeSpec.CC_ASSET_ISSUANCE, getName(), duplicates, true);
     }
 
     @Override
@@ -135,7 +141,9 @@ public class CCAssetIssuanceTransactionType extends ColoredCoinsTransactionType 
 
     private boolean isSingletonIssuance(Transaction transaction) {
         ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
-        return attachment.getQuantityATU() == 1 && attachment.getDecimals() == 0 && attachment.getDescription().length() <= Constants.MAX_SINGLETON_ASSET_DESCRIPTION_LENGTH;
+        return attachment.getQuantityATU() == 1
+            && attachment.getDecimals() == 0
+            && attachment.getDescription().length() <= Constants.MAX_SINGLETON_ASSET_DESCRIPTION_LENGTH;
     }
 
 }

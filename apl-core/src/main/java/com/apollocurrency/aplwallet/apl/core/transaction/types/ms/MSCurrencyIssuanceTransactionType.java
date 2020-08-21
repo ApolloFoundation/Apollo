@@ -127,7 +127,14 @@ public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransaction
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
-        if (attachment.getMaxSupply() > Constants.MAX_CURRENCY_TOTAL_SUPPLY || attachment.getMaxSupply() <= 0 || attachment.getInitialSupply() < 0 || attachment.getInitialSupply() > attachment.getMaxSupply() || attachment.getReserveSupply() < 0 || attachment.getReserveSupply() > attachment.getMaxSupply() || attachment.getIssuanceHeight() < 0 || attachment.getMinReservePerUnitATM() < 0 || attachment.getDecimals() < 0 || attachment.getDecimals() > 8 || attachment.getRuleset() != 0) {
+        if (attachment.getMaxSupply() > getBlockchainConfig().getInitialSupply() * getBlockchainConfig().getOneAPL()
+            || attachment.getMaxSupply() <= 0 || attachment.getInitialSupply() < 0
+            || attachment.getInitialSupply() > attachment.getMaxSupply()
+            || attachment.getReserveSupply() < 0
+            || attachment.getReserveSupply() > attachment.getMaxSupply()
+            || attachment.getIssuanceHeight() < 0 || attachment.getMinReservePerUnitATM() < 0
+            || attachment.getDecimals() < 0 || attachment.getDecimals() > getBlockchainConfig().getDecimals()
+            || attachment.getRuleset() != 0) {
             throw new AplException.NotValidException("Invalid currency issuance: " + attachment.getJSONObject());
         }
         int t = 1;

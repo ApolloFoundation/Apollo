@@ -75,7 +75,7 @@ import static org.mockito.Mockito.when;
 
 @Disabled
 @ExtendWith(MockitoExtension.class)
-public class ChildAccountApplyTest {
+public class ChildAccountTransactionTypeApplyTest {
 
     public static final int ECBLOCK_HEIGHT = 100_000;
     public static final long ECBLOCK_ID = 121L;

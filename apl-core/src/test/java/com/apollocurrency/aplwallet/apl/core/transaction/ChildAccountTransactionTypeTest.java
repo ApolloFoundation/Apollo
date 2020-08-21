@@ -58,7 +58,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ChildAccountTest {
+public class ChildAccountTransactionTypeTest {
 
     public static final int ECBLOCK_HEIGHT = 100_000;
     public static final long ECBLOCK_ID = 121L;

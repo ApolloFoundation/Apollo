@@ -57,7 +57,7 @@ public class BlockchainConfig {
         }
         heightConfigMap = blockchainProperties.values()
             .stream()
-            .map(HeightConfig::new)
+            .map((BlockchainProperties bp) -> new HeightConfig(bp, getOneAPL()))
             .sorted(Comparator.comparing(HeightConfig::getHeight))
             .collect(Collectors.toMap(HeightConfig::getHeight, Function.identity(), (old, newv)-> newv, LinkedHashMap::new));
         currentConfig = heightConfigMap.get(0);
@@ -113,7 +113,7 @@ public class BlockchainConfig {
         return chain.getInitialSupply();
     }
 
-    public long getDecimals() {
+    public int getDecimals() {
         return chain.getDecimals();
     }
 

@@ -207,7 +207,7 @@ public class Chain {
         this.initialSupply = initialSupply;
     }
 
-    public long getDecimals() {
+    public int getDecimals() {
         return decimals;
     }
 

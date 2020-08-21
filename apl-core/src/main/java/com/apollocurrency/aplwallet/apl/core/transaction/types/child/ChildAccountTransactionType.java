@@ -23,12 +23,13 @@ import java.util.Map;
 /**
  * Create child account transaction.
  * Sender is a parent account. There is an list of child public keys in the attachment.
+ *
  * @author andrii.zinchenko@firstbridge.io
  */
 @Slf4j
-public abstract class ChildAccount extends TransactionType {
+public abstract class ChildAccountTransactionType extends TransactionType {
 
-    public ChildAccount(BlockchainConfig blockchainConfig, AccountService accountService) {
+    public ChildAccountTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
         super(blockchainConfig, accountService);
     }
 

@@ -263,7 +263,7 @@ public class AccountServiceImpl implements AccountService {
             if (account.getActiveLesseeId() == 0) {
                 effectiveBalanceATM += getGuaranteedBalanceATM(account, blockchainConfig.getGuaranteedBalanceConfirmations(), height);
             }
-            return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE_ATM ? 0 : effectiveBalanceATM / blockchainConfig.getOneAPL();
+            return effectiveBalanceATM < Constants.MIN_FORGING_BALANCE * blockchainConfig.getOneAPL() ? 0 : effectiveBalanceATM / blockchainConfig.getOneAPL();
         } finally {
             if (lock) {
                 sync.readUnlock();
