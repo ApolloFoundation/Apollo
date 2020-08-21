@@ -80,7 +80,8 @@ class UpdateControllerTest extends AbstractEndpointTest {
     KeyStoreService keystoreService = mock(KeyStoreService.class);
     @Mock
     BlockchainConfig blockchainConfig;
-    UpdateV2TransactionType v2Transaction = new UpdateV2TransactionType(blockchainConfig, accountService);
+
+    UpdateV2TransactionType v2Transaction;
 
     UpdateV2Attachment attachment = new UpdateV2Attachment("https://test.com", Level.CRITICAL, new Version("1.23.4"), "https://con.com", BigInteger.ONE, Convert.parseHexString("111100ff"), Set.of(new PlatformSpec(OS.WINDOWS, Arch.X86_64), new PlatformSpec(OS.NO_OS, Arch.ARM_64)));
 
@@ -88,6 +89,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
     @BeforeEach
     void setUp() {
         super.setUp();
+        v2Transaction = new UpdateV2TransactionType(blockchainConfig, accountService);
         UnconfirmedTransactionConverter converter = new UnconfirmedTransactionConverter(mock(PrunableLoadingService.class));
         CachedTransactionTypeFactory txTypeFactory = new CachedTransactionTypeFactory(List.of(v2Transaction));
         transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(mock(PrunableLoadingService.class), blockchainConfig), blockchain, processor, txTypeFactory, new TransactionBuilder(txTypeFactory), mock(TransactionSigner.class));

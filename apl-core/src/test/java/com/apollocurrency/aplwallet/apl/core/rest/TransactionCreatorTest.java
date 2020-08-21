@@ -72,15 +72,16 @@ class TransactionCreatorTest {
     BlockchainConfig blockchainConfig;
     @Mock
     AccountService accountService;
+    Account sender;
     TransactionCreator txCreator;
     private String accountRS = "APL-XR8C-K97J-QDZC-3YXHE";
-    Account sender = new Account(Convert.parseAccountId(accountRS), 1000 * blockchainConfig.getOneAPL(), 100 * blockchainConfig.getOneAPL(), 0L, 0L, 0);
     private String publicKey = "d52a07dc6fdf9f5c6b547ccb11444ce7bba73a99014eb9ac647b6971bee9263c";
     private String secretPhrase = "here we go again";
     private CustomTransactionType transactionType;
 
     @BeforeEach
     void setUp() {
+        sender = new Account(Convert.parseAccountId(accountRS), 1000 * blockchainConfig.getOneAPL(), 100 * blockchainConfig.getOneAPL(), 0L, 0L, 0);
         transactionType = new CustomTransactionType(blockchainConfig, accountService);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(transactionType));
         transactionBuilder = new TransactionBuilder(transactionTypeFactory);
