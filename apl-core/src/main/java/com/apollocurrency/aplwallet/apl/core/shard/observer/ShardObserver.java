@@ -175,7 +175,7 @@ public class ShardObserver {
             nextShardHeight = configHeight + shardingFrequency;
             howLateWeCanBe = nextShardHeight + randomShardHeightDivergence;
         }
-        int heightGoodToShard = blockchainHeight - (this.propertiesHolder.MAX_ROLLBACK()/* + randomShardHeightDivergence*/);
+        int heightGoodToShard = blockchainHeight - this.propertiesHolder.MAX_ROLLBACK();
 
 
         if (heightGoodToShard >= 0) {
@@ -184,7 +184,7 @@ public class ShardObserver {
                     heightGoodToShard, blockchainHeight);
             } else {
                 result.setTimeToDoNextShard(true);
-                result.setNextShardHeightValue(nextShardHeight);
+                result.setNextShardHeightValue(nextShardHeight - 1);
                 log.debug("Time for sharding is OK. blockchainHeight: {}", blockchainHeight);
             }
         } else {
