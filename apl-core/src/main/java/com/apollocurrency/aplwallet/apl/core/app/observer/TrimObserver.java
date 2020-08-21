@@ -198,6 +198,7 @@ public class TrimObserver {
                 boolean isShardingOnBlockHeight = block.getHeight() % shardingFrequency == 0;
                 // generate pseudo random for 'trim height divergence'
                 randomTrimHeightIncrease = generatePositiveIntBiggerThenZero(trimFrequency);
+/*
                 if (isShardingOnBlockHeight || isShardingOnTrimHeight) {
                     // prevent trim randomization on 'potentially dangerous heights'
                     randomTrimHeightIncrease = 0; // schedule that case in any conditions
@@ -208,6 +209,7 @@ public class TrimObserver {
                         isConfigJustUpdated, isShardingOnTrimHeight, isShardingOnBlockHeight);
                     return scheduleTrimHeight;
                 }
+*/
                 log.debug("Schedule next trim for rndIncrease={}, height/trimHeight = {} / {}, shardFreq={} ({}}), isShardingOnTrimHeight={}, isShardingOnBlockHeight={}",
                     randomTrimHeightIncrease, trimHeight, block.getHeight(), shardingFrequency, isConfigJustUpdated, isShardingOnTrimHeight, isShardingOnBlockHeight);
             }
