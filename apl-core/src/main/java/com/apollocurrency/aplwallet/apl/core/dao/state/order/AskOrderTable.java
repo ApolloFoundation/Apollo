@@ -24,6 +24,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -49,8 +51,9 @@ public class AskOrderTable extends OrderTable<AskOrder> {
     };
 
     @Inject
-    public AskOrderTable() {
-        super("ask_order", askOrderDbKeyFactory);
+    public AskOrderTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                         DatabaseManager databaseManager) {
+        super("ask_order", askOrderDbKeyFactory, derivedDbTablesRegistry, databaseManager);
     }
 
     @Override

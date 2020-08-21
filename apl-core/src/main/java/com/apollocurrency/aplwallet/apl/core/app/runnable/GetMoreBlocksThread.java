@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.parser.GetMilestoneBlockIdsRes
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlockIdsResponseParser;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksResponseParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
@@ -65,6 +66,7 @@ public class GetMoreBlocksThread implements Runnable {
     private final BlockchainProcessorState blockchainProcessorState;
     private final GetCumulativeDifficultyRequest getCumulativeDifficultyRequest;
     private final GetNextBlocksResponseParser getNextBlocksResponseParser;
+    private final BlockSerializer blockSerializer;
 
     private boolean peerHasMore;
     private List<Peer> connectedPublicPeers;
@@ -78,7 +80,8 @@ public class GetMoreBlocksThread implements Runnable {
                                GlobalSync globalSync, TimeService timeService, PrunableRestorationService prunableRestorationService,
                                ExecutorService networkService, PropertiesHolder propertiesHolder,
                                TransactionProcessor transactionProcessor,
-                               GetNextBlocksResponseParser getNextBlocksResponseParser) {
+                               GetNextBlocksResponseParser getNextBlocksResponseParser,
+                               BlockSerializer blockSerializer) {
         this.blockchainProcessor = blockchainProcessor;
         this.blockchainProcessorState = blockchainProcessorState;
 
@@ -93,6 +96,7 @@ public class GetMoreBlocksThread implements Runnable {
         this.defaultNumberOfForkConfirmations = propertiesHolder.getIntProperty("apl.numberOfForkConfirmations");
         this.getNextBlocksResponseParser = getNextBlocksResponseParser;
         this.getCumulativeDifficultyRequest = new GetCumulativeDifficultyRequest(blockchainConfig.getChain().getChainId());
+        this.blockSerializer = blockSerializer;
     }
 
     @Override
@@ -359,7 +363,7 @@ public class GetMoreBlocksThread implements Runnable {
             }
 
             if (response == null) {
-                log.debug("null reaponse from peer {} while getNeBlockIdst", peer.getHostWithPort());
+                log.debug("null response from peer {} while getNeBlockIdst", peer.getHostWithPort());
                 return Collections.emptyList();
             }
             List<String> nextBlockIds = response.getNextBlockIds();
@@ -574,7 +578,7 @@ public class GetMoreBlocksThread implements Runnable {
             List<Block> peerPoppedOffBlocks = blockchainProcessor.popOffToCommonBlock(commonBlock);
             pushedForkBlocks = 0;
             for (Block block : peerPoppedOffBlocks) {
-                transactionProcessor.processLater(block.getOrLoadTransactions());
+                transactionProcessor.processLater(blockchain.getOrLoadTransactions(block));
             }
         }
 
@@ -585,14 +589,14 @@ public class GetMoreBlocksThread implements Runnable {
                 try {
                     blockchainProcessor.pushBlock(block);
                 } catch (BlockchainProcessor.BlockNotAcceptedException e) {
-                    log.error("Popped off block no longer acceptable: " + block.getJSONObject().toJSONString(), e);
+                    log.error("Popped off block no longer acceptable: " + blockSerializer.getJSONObject(block).toJSONString(), e);
                     break;
                 }
             }
         } else {
             log.debug("Switched to peer's fork, peer addr: {}", peer.getHost());
             for (Block block : myPoppedOffBlocks) {
-                transactionProcessor.processLater(block.getOrLoadTransactions());
+                transactionProcessor.processLater(blockchain.getOrLoadTransactions(block));
             }
         }
 

@@ -23,8 +23,8 @@ package com.apollocurrency.aplwallet.apl.core.app.mint;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
@@ -76,12 +76,14 @@ public class MintWorker implements Runnable {
     private boolean done = false;
     private PropertiesHolder propertiesHolder;
     private BlockchainConfig blockchainConfig;
+    private TransactionBuilder transactionBuilder;
     private TransactionSigner transactionSigner;
 
-    public MintWorker(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, TransactionSigner transactionSigner) {
+    public MintWorker(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, TransactionBuilder transactionBuilder, TransactionSigner transactionSigner) {
         this.blockchainConfig = blockchainConfig;
         this.propertiesHolder = propertiesHolder;
         this.transactionSigner = transactionSigner;
+        this.transactionBuilder = transactionBuilder;
     }
 
     private static String getUrlParams(Map<String, String> params) {
@@ -229,12 +231,12 @@ public class MintWorker implements Runnable {
         JSONObject ecBlock = getECBlock();
         Attachment attachment = new MonetarySystemCurrencyMinting(nonce, currencyId, units, counter);
         int timestamp = ((Long) ecBlock.get("timestamp")).intValue();
-        Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(Crypto.getPublicKey(keySeed), 0, Constants.ONE_APL,
+        Transaction.Builder builder = transactionBuilder.newTransactionBuilder(Crypto.getPublicKey(keySeed), 0, Constants.ONE_APL,
             (short) 120, attachment, timestamp)
             .ecBlockHeight(((Long) ecBlock.get("ecBlockHeight")).intValue())
             .ecBlockId(Convert.parseUnsignedLong((String) ecBlock.get("ecBlockId")));
         try {
-            Transaction transaction = builder.build(keySeed);
+            Transaction transaction = builder.build();
             transactionSigner.sign(transaction, keySeed);
 
             Map<String, String> params = new HashMap<>();

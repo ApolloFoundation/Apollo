@@ -103,11 +103,17 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
         GetNextBlocksResponse response;
         long startTime = System.currentTimeMillis();
         try {
+            log.trace("Try to send GetNextBlock request: blockId={} to peer={}", request.getBlockId(), peer.getAnnouncedAddress());
             response = peer.send(request, getNextBlocksResponseParser);
         } catch (PeerNotConnectedException ex) {
             return null;
         } finally {
             responseTime = System.currentTimeMillis() - startTime;
+        }
+
+        if (response == null) {
+            log.debug("NULL GetNextBlocks response from peer: {}", peer.getAnnouncedAddress());
+            return null;
         }
 
         if (response.getErrorCode() != 0) {

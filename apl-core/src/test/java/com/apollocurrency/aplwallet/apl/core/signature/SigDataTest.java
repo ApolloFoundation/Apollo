@@ -5,16 +5,13 @@
 package com.apollocurrency.aplwallet.apl.core.signature;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
-import static com.apollocurrency.aplwallet.apl.core.signature.SignatureParser.SIGNATURE_FIELD_NAME;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -37,27 +34,14 @@ class SigDataTest extends AbstractSigData {
         int size = sigData.getSize();
 
         //THEN
-        assertEquals(Signature.ECDSA_SIGNATURE_SIZE, sigData.getSize());
-    }
-
-    @Test
-    void getJsonObject() {
-        //GIVEN
-        //WHEN
-        JSONObject jsonObject = sigData.getJsonObject();
-
-        //THEN
-        assertNotNull(jsonObject.get(SIGNATURE_FIELD_NAME));
-        byte[] key1 = Convert.parseHexString((String) (jsonObject.get(SIGNATURE_FIELD_NAME)));
-        assertArrayEquals(SIGNATURE1, key1);
-
+        assertEquals(Signature.ECDSA_SIGNATURE_SIZE, size);
     }
 
     @Test
     void getJsonString() {
         //GIVEN
         //WHEN
-        String jsonString = sigData.getJsonString();
+        String jsonString = sigData.getHexString();
 
         //THEN
         assertEquals(Convert.toHexString(sigData.bytes()), jsonString);
@@ -89,18 +73,6 @@ class SigDataTest extends AbstractSigData {
         checkData(sigData);
     }
 
-    @Test
-    void testJsonParser() {
-        //GIVEN
-        JSONObject jsonObject = sigData.getJsonObject();
-
-        SigData.Parser parser = new SigData.Parser();
-        //WHEN
-        Signature sigData = parser.parse(jsonObject);
-
-        //THEN
-        checkData(sigData);
-    }
 
     @Test
     void testBytesParser() {

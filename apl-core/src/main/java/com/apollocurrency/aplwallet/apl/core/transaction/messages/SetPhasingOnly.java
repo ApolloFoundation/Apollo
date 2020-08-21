@@ -4,12 +4,12 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.transaction.AccountControl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  * @author al
@@ -38,7 +38,7 @@ public final class SetPhasingOnly extends AbstractAttachment {
 
     public SetPhasingOnly(JSONObject attachmentData) {
         super(attachmentData);
-        JSONObject phasingControlParams = (JSONObject) attachmentData.get("phasingControlParams");
+        Map<?,?> phasingControlParams = (Map<?,?>) attachmentData.get("phasingControlParams");
         phasingParams = new PhasingParams(phasingControlParams);
         maxFees = Convert.parseLong(attachmentData.get("controlMaxFees"));
         minDuration = ((Long) attachmentData.get("controlMinDuration")).shortValue();
@@ -46,8 +46,8 @@ public final class SetPhasingOnly extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return AccountControl.SET_PHASING_ONLY;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
     }
 
     @Override

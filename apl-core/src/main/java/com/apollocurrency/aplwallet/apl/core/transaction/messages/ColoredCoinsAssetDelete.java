@@ -3,8 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
@@ -27,7 +26,7 @@ public final class ColoredCoinsAssetDelete extends AbstractAttachment {
     public ColoredCoinsAssetDelete(JSONObject attachmentData) {
         super(attachmentData);
         this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
-        this.quantityATU = attachmentData.containsKey("quantityATU") ? Convert.parseLong(attachmentData.get("quantityATU")) : Convert.parseLong(attachmentData.get("quantityQNT"));
+        this.quantityATU = Convert.parseLong(attachmentData.get("quantityATU"));
         ;
     }
 
@@ -54,8 +53,8 @@ public final class ColoredCoinsAssetDelete extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return ColoredCoins.ASSET_DELETE;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.CC_ASSET_DELETE;
     }
 
     public long getAssetId() {

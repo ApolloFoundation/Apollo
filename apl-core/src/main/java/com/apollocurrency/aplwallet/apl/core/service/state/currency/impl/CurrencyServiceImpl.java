@@ -4,13 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
-import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.CLAIMABLE;
-import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.MINTABLE;
-import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.RESERVABLE;
-
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
+import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyMintTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -22,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyFounder;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
@@ -32,18 +30,19 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurren
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyFounderService;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyMintService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TransactionValidationHelper;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
@@ -52,6 +51,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.CLAIMABLE;
+import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.MINTABLE;
+import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.RESERVABLE;
+
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 @Slf4j
 @Singleton
@@ -59,6 +62,8 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     private final CurrencySupplyTable currencySupplyTable;
     private final CurrencyTable currencyTable;
+    private final CurrencyMintTable currencyMintTable;
+    private final MonetaryCurrencyMintingService monetaryCurrencyMintingService;
     private final BlockChainInfoService blockChainInfoService;
     private final IteratorToStreamConverter<Currency> iteratorToStreamConverter;
     private final AccountService accountService;
@@ -68,13 +73,13 @@ public class CurrencyServiceImpl implements CurrencyService {
     private final ExchangeService exchangeService;
     private final CurrencyTransferService currencyTransferService;
     private final ShufflingService shufflingService;
-    private CurrencyMintService currencyMintService; // lazy init to break up circular dependency
     private final BlockchainConfig blockchainConfig;
+    private final TransactionValidationHelper validationHelper;
 
     @Inject
     public CurrencyServiceImpl(CurrencySupplyTable currencySupplyTable,
                                CurrencyTable currencyTable,
-                               BlockChainInfoService blockChainInfoService,
+                               CurrencyMintTable currencyMintTable, MonetaryCurrencyMintingService monetaryCurrencyMintingService, BlockChainInfoService blockChainInfoService,
                                AccountService accountService,
                                AccountCurrencyService accountCurrencyService,
                                CurrencyExchangeOfferFacade currencyExchangeOfferFacade,
@@ -82,10 +87,13 @@ public class CurrencyServiceImpl implements CurrencyService {
                                ExchangeService exchangeService,
                                CurrencyTransferService currencyTransferService,
                                ShufflingService shufflingService,
-                               BlockchainConfig blockchainConfig) {
+                               BlockchainConfig blockchainConfig, TransactionValidationHelper transactionValidationHelper) {
         this.currencySupplyTable = currencySupplyTable;
         this.currencyTable = currencyTable;
+        this.currencyMintTable = currencyMintTable;
+        this.monetaryCurrencyMintingService = monetaryCurrencyMintingService;
         this.blockChainInfoService = blockChainInfoService;
+        this.validationHelper = transactionValidationHelper;
         this.iteratorToStreamConverter = new IteratorToStreamConverter<>();
         this.accountService = accountService;
         this.accountCurrencyService = accountCurrencyService;
@@ -336,7 +344,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         }
         if (currency.is(MINTABLE)) {
             // lazy init to break up circular dependency
-            lookupCurrencyMintService().deleteCurrency(currency);
+            deleteMintingCurrency(currency);
         }
         accountCurrencyService.addToUnconfirmedCurrencyUnits(
             senderAccount, event, eventId, currency.getId(),
@@ -347,13 +355,6 @@ public class CurrencyServiceImpl implements CurrencyService {
         int height = blockChainInfoService.getHeight();
         currency.setHeight(height);
         currencyTable.deleteAtHeight(currency, height);
-    }
-
-    private CurrencyMintService lookupCurrencyMintService() {
-        if (this.currencyMintService == null) {
-            this.currencyMintService = CDI.current().select(CurrencyMintService.class).get();
-        }
-        return this.currencyMintService;
     }
 
     @Override
@@ -390,7 +391,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         boolean isActiveCurrency = currency != null && this.isActive(currency);
         for (CurrencyType currencyType : CurrencyType.values()) {
             if ((currencyType.getCode() & type) != 0) {
-                currencyType.validate(currency, transaction, validators, maxBalanceAtm, isActiveCurrency);
+                currencyType.validate(currency, transaction, validators, maxBalanceAtm, isActiveCurrency, validationHelper.getFinishValidationHeight(transaction, transaction.getAttachment()));
             } else {
                 currencyType.validateMissing(currency, transaction, validators);
             }
@@ -439,6 +440,65 @@ public class CurrencyServiceImpl implements CurrencyService {
             && !this.canBeDeletedBy(currency, issuerAccountId)) {
             throw new AplException.NotCurrentlyValidException("Currency code already used as name: " + code);
         }
+    }
+
+
+    @Override
+    public void mintCurrency(LedgerEvent event, long eventId, final Account account,
+                             final MonetarySystemCurrencyMinting attachment) {
+        CurrencyMint currencyMint = currencyMintTable.get(
+            CurrencyMintTable.currencyMintDbKeyFactory.newKey(attachment.getCurrencyId(), account.getId()));
+        if (currencyMint != null && attachment.getCounter() <= currencyMint.getCounter()) {
+            return;
+        }
+        Currency currency = getCurrency(attachment.getCurrencyId());
+        CurrencySupply currencySupply = loadCurrencySupplyByCurrency(currency); // load dependency
+        if (currencySupply != null) {
+            currency.setCurrencySupply(currencySupply);
+        }
+        if (monetaryCurrencyMintingService.meetsTarget(account.getId(), currency, attachment)) {
+            if (currencyMint == null) {
+                currencyMint = new CurrencyMint(attachment.getCurrencyId(),
+                    account.getId(), attachment.getCounter(), blockChainInfoService.getHeight());
+            } else {
+                currencyMint.setHeight(blockChainInfoService.getHeight());// important assign
+                currencyMint.setCounter(attachment.getCounter());
+            }
+            currencyMintTable.insert(currencyMint);
+            long units = Math.min(attachment.getUnits(),
+                currency.getMaxSupply()
+                    - (currency.getCurrencySupply() != null ? currency.getCurrencySupply().getCurrentSupply() : 0));
+            accountCurrencyService.addToCurrencyAndUnconfirmedCurrencyUnits(
+                account, event, eventId, currency.getId(), units);
+            increaseSupply(currency, units);
+        } else {
+            log.debug("Currency mint hash no longer meets target %s", attachment.getJSONObject().toJSONString());
+        }
+    }
+
+    @Override
+    public long getMintCounter(long currencyId, long accountId) {
+        CurrencyMint currencyMint = currencyMintTable.get(CurrencyMintTable.currencyMintDbKeyFactory.newKey(currencyId, accountId));
+        if (currencyMint != null) {
+            return currencyMint.getCounter();
+        } else {
+            return 0;
+        }
+    }
+
+    public void deleteMintingCurrency(Currency currency) {
+        List<CurrencyMint> currencyMints = new ArrayList<>();
+        try (DbIterator<CurrencyMint> mints = currencyMintTable.getManyBy(
+            new DbClause.LongClause("currency_id", currency.getId()), 0, -1)) {
+            while (mints.hasNext()) {
+                currencyMints.add(mints.next());
+            }
+        }
+        int currentHeight = blockChainInfoService.getHeight();
+        currencyMints.forEach(c -> {
+            c.setHeight(currentHeight); // important assign
+            currencyMintTable.deleteAtHeight(c, currentHeight);
+        });
     }
 
 }

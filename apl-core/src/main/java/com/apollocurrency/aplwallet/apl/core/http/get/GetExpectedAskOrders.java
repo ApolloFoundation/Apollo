@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
@@ -58,7 +58,7 @@ public final class GetExpectedAskOrders extends AbstractAPIRequestHandler {
         long assetId = HttpParameterParserUtil.getUnsignedLong(req, "asset", false);
         boolean sortByPrice = "true".equalsIgnoreCase(req.getParameter("sortByPrice"));
         Filter<Transaction> filter = transaction -> {
-            if (transaction.getType() != ColoredCoins.ASK_ORDER_PLACEMENT) {
+            if (transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.CC_ASK_ORDER_PLACEMENT) {
                 return false;
             }
             ColoredCoinsOrderPlacementAttachment attachment = (ColoredCoinsOrderPlacementAttachment) transaction.getAttachment();

@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
 
 import java.util.Map;
@@ -33,10 +33,10 @@ public interface AccountControlPhasingService {
 
     void checkTransaction(Transaction transaction) throws AplException.NotCurrentlyValidException;
 
-    boolean isBlockDuplicate(Transaction transaction, Map<TransactionType, Map<String, Integer>> duplicates);
-
     boolean isBlockDuplicate(Transaction transaction,
-                             Map<TransactionType, Map<String, Integer>> duplicates,
+                             Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                              Set<AccountControlType> senderAccountControls,
                              AccountControlPhasing accountControlPhasing);
+
+    boolean isBlockDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates);
 }

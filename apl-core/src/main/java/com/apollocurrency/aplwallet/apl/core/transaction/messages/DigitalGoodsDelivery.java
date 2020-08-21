@@ -3,12 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.DigitalGoods;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
@@ -44,7 +43,7 @@ public class DigitalGoodsDelivery extends AbstractAttachment {
         super(attachmentData);
         this.purchaseId = Convert.parseUnsignedLong((String) attachmentData.get("purchase"));
         this.goods = new EncryptedData(Convert.parseHexString((String) attachmentData.get("goodsData")), Convert.parseHexString((String) attachmentData.get("goodsNonce")));
-        this.discountATM = attachmentData.containsKey("discountATM") ? Convert.parseLong(attachmentData.get("discountATM")) : Convert.parseLong(attachmentData.get("discountNQT"));
+        this.discountATM = Convert.parseLong(attachmentData.get("discountATM"));
         this.goodsIsText = Boolean.TRUE.equals(attachmentData.get("goodsIsText"));
     }
 
@@ -79,8 +78,8 @@ public class DigitalGoodsDelivery extends AbstractAttachment {
     }
 
     @Override
-    public final TransactionType getTransactionType() {
-        return DigitalGoods.DELIVERY;
+    public final TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.DGS_DELIVERY;
     }
 
     public final long getPurchaseId() {

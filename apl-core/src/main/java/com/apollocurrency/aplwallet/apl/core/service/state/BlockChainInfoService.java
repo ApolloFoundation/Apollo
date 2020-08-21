@@ -4,10 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 
-import java.util.stream.Stream;
+import java.util.List;
 
 /**
  * @author silaev-firstbridge on 1/31/2020
@@ -26,9 +25,9 @@ public interface BlockChainInfoService {
     Block getLastBlock();
 
     @Deprecated
-    DbIterator<Block> getBlocks(long accountId, int from, int to, int timestamp);
+    List<Block> getBlocks(long accountId, int from, int to, int timestamp);
 
-    Stream<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp);
+    List<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp);
 
     int getLastBlockTimestamp();
 

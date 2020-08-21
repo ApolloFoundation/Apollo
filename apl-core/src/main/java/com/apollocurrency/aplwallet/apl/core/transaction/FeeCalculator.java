@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
@@ -16,11 +17,12 @@ import javax.inject.Singleton;
 @Slf4j
 @Singleton
 public class FeeCalculator {
-
+    private final PrunableLoadingService prunableService;
     private final BlockchainConfig blockchainConfig;
 
     @Inject
-    public FeeCalculator(BlockchainConfig blockchainConfig) {
+    public FeeCalculator(PrunableLoadingService prunableService, BlockchainConfig blockchainConfig) {
+        this.prunableService = prunableService;
         this.blockchainConfig = blockchainConfig;
     }
 
@@ -29,11 +31,8 @@ public class FeeCalculator {
         long totalFee = 0;
         short feeRate;
         for (AbstractAppendix appendage : transaction.getAppendages()) {
-            appendage.loadPrunable(transaction);
-            if (blockchainHeight < appendage.getBaselineFeeHeight()) {
-                return 0; // No need to validate fees before baseline block
-            }
-            Fee fee = blockchainHeight >= appendage.getNextFeeHeight() ? appendage.getNextFee(transaction) : appendage.getBaselineFee(transaction);
+            prunableService.loadPrunable(transaction, appendage, false);
+            Fee fee = appendage.getBaselineFee(transaction);
             totalFee = Math.addExact(totalFee, fee.getFee(transaction, appendage));
         }
         if (transaction.getReferencedTransactionFullHash() != null) {
@@ -45,10 +44,11 @@ public class FeeCalculator {
             log.error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }else {
-            feeRate = heightConfig.getFeeRate(transaction.getType().getType(), transaction.getType().getSubtype());
+            TransactionTypes.TransactionTypeSpec spec = transaction.getType().getSpec();
+            feeRate = heightConfig.getFeeRate(spec.getType(), spec.getSubtype());
             if(log.isTraceEnabled()){
                 log.trace("Calculate fee for tx type={} subtype={} at height={} totalFee={} * {} / 100 = {}",
-                    transaction.getType().getType(), transaction.getType().getSubtype(), blockchainHeight,
+                    spec.getType(), spec.getSubtype(), blockchainHeight,
                     totalFee, feeRate, totalFee * feeRate / FeeRate.RATE_DIVIDER);
             }
             totalFee = totalFee * feeRate / FeeRate.RATE_DIVIDER;

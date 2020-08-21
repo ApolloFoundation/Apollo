@@ -5,10 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TwoFactorAuthServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
+import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TwoFactorAuthServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
 import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
@@ -30,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -50,6 +52,7 @@ public class TwoFactorAuthServiceTest {
     @Test
     public void testEnable() {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        initConfigPrefix();
         doReturn(true).when(targetFileRepository).add(any(TwoFactorAuthEntity.class));
         TwoFactorAuthDetails twoFactorAuthDetails = service.enable(td.NEW_ENTITY.getAccount());
         TwoFactorAuthUtil.verifySecretCode(twoFactorAuthDetails, Convert2.defaultRsAccount(td.NEW_ENTITY.getAccount()));
@@ -70,7 +73,7 @@ public class TwoFactorAuthServiceTest {
     @Test
     public void testEnableNotConfirmed() {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
-
+        initConfigPrefix();
         doReturn(td.ENTITY2).when(targetFileRepository).get(td.ACC_2.getId());
 
         TwoFactorAuthDetails details = service.enable(td.ACC_2.getId());
@@ -216,5 +219,11 @@ public class TwoFactorAuthServiceTest {
         verify(targetFileRepository, times(1)).get(td.ACC_1.getId());
 
         assertEquals(Status2FA.ALREADY_CONFIRMED, status2FA);
+    }
+
+    private void initConfigPrefix() {
+        BlockchainConfig config = mock(BlockchainConfig.class);
+        doReturn("APL").when(config).getAccountPrefix();
+        Convert2.init(config);
     }
 }

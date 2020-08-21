@@ -38,6 +38,8 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -59,6 +61,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Vetoed
 public final class GetConstants extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(GetConstants.class);
+
 
     public GetConstants() {
         super(new APITag[]{APITag.INFO});
@@ -93,6 +96,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 Blockchain blockchain = CDI.current().select(Blockchain.class).get();
                 PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
                 BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+                TransactionTypeFactory transactionTypeFactory = CDI.current().select(TransactionTypeFactory.class).get();
                 if (blockchain.isInitialized()) {
                     response.put("genesisBlockId", Long.toUnsignedString(blockchain.getBlockIdAtHeight(0)));
                 }
@@ -120,7 +124,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                     for (int subtype = 0; ; subtype++) {
                         TransactionType transactionType;
                         try {
-                            transactionType = TransactionType.findTransactionType((byte) type, (byte) subtype);
+                            transactionType = transactionTypeFactory.findTransactionType((byte) type, (byte) subtype);
                         } catch (IllegalArgumentException ignore) {
                             continue;
                         }
@@ -128,6 +132,12 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                             if (subtype == 0) {
                                 break outer;
                             } else {
+                                try {
+                                    TransactionTypes.find(type, subtype);
+                                    //There is the specification but doesn't exist an TransactionType instance of the given type and subtype, ex. type=1, subtype=4
+                                    continue;
+                                } catch (IllegalArgumentException ignored) {
+                                }
                                 break;
                             }
                         }

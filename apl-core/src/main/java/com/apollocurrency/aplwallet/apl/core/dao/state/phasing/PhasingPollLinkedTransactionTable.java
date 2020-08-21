@@ -9,9 +9,9 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.ValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollLinkedTransaction;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import javax.inject.Inject;
@@ -22,7 +22,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Singleton
 public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPollLinkedTransaction> {
@@ -37,12 +36,11 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
         }
     };
     private static final PhasingPollLinkedTransactionMapper MAPPER = new PhasingPollLinkedTransactionMapper(KEY_FACTORY);
-    private final Blockchain blockchain;
 
     @Inject
-    public PhasingPollLinkedTransactionTable(Blockchain blockchain) {
-        super(TABLE_NAME, false, KEY_FACTORY, false);
-        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain is NULL");
+    public PhasingPollLinkedTransactionTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                                             DatabaseManager databaseManager) {
+        super(TABLE_NAME, KEY_FACTORY, false, derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override
@@ -67,17 +65,17 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
         }
     }
 
-    public List<Transaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) throws SQLException {
+    public List<Long> getLinkedPhasedTransactionIds(byte[] linkedTransactionFullHash) throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT transaction_id FROM phasing_poll_linked_transaction " +
                  "WHERE linked_transaction_id = ? AND linked_full_hash = ?")) {
             int i = 0;
             pstmt.setLong(++i, Convert.fullHashToId(linkedTransactionFullHash));
             pstmt.setBytes(++i, linkedTransactionFullHash);
-            List<Transaction> transactions = new ArrayList<>();
+            List<Long> transactions = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    transactions.add(blockchain.getTransaction(rs.getLong("transaction_id")));
+                    transactions.add(rs.getLong("transaction_id"));
                 }
             }
             return transactions;

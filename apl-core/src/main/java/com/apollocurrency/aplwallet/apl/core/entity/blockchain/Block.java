@@ -41,6 +41,8 @@ public interface Block {
 
     int getHeight();
 
+    void setHeight(int height);
+
     int getTimestamp();
 
     long getGeneratorId();
@@ -65,8 +67,6 @@ public interface Block {
 
     byte[] getPayloadHash();
 
-    List<Transaction> getOrLoadTransactions();
-
     List<Transaction> getTransactions();
 
     void setTransactions(List<Transaction> transactions);
@@ -77,23 +77,21 @@ public interface Block {
 
     long getBaseTarget();
 
+    void setBaseTarget(long baseTarget);
+
+    void setCumulativeDifficulty(BigInteger cumulativeDifficulty);
+
     BigInteger getCumulativeDifficulty();
 
     byte[] getBytes();
 
-//    boolean verifyBlockSignature();
-
     boolean checkSignature();
 
-//    boolean verifyGenerationSignature() throws BlockchainProcessor.BlockOutOfOrderException;
-
-    void setPrevious(Block block, HeightConfig config, Shard lastShard);
-
-    JSONObject getJSONObject();
+    /**
+     * Optional method
+     */
+    void assignTransactionsIndex();
 
     int getTimeout();
 
-    default String toJsonString() {
-        return getJSONObject().toJSONString();
-    }
 }

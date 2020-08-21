@@ -9,16 +9,11 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
-import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexTransferMoneyTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
@@ -26,13 +21,12 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
-import org.jboss.weld.junit.MockBean;
-import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
@@ -47,33 +41,25 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-
-@EnableWeld
+@ExtendWith(MockitoExtension.class)
 class DexTransferMoneyTransactionTest {
     DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(64, 100);
     ExchangeContract contract = new ExchangeContract(
         1L, 64L, 200L, 300L, 1000L, 2000L,
         ExchangeContractStatus.STEP_3, new byte[32], null, null,
         new byte[32], 7200, 1, false);
-    DexService dexService = mock(DexService.class);
     DexTransferMoneyTransaction transactionType;
-    private AccountService accountService = mock(AccountService.class);
-    @WeldSetup
-    WeldInitiator weld = WeldInitiator.from()
-        .addBeans(
-            MockBean.of(mock(DexConfig.class), DexConfig.class),
-            MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class),
-            MockBean.of(mock(BlockchainImpl.class), Blockchain.class, BlockchainImpl.class),
-            MockBean.of(mock(PhasingPollService.class), PhasingPollService.class),
-            MockBean.of(dexService, DexService.class),
-            MockBean.of(mock(TimeService.class), TimeService.class),
-            MockBean.of(accountService, AccountService.class, AccountServiceImpl.class)
-        ).build();
+
+    @Mock
+    BlockchainConfig blockchainConfig;
+    @Mock
+    AccountService accountService;
+    @Mock
+    DexService dexService = mock(DexService.class);
 
     @BeforeEach
     void setUp() {
-        transactionType = new DexTransferMoneyTransaction();
-        transactionType.lookupAccountService();
+        transactionType = new DexTransferMoneyTransaction(blockchainConfig, accountService, dexService);
     }
 
     @Test
@@ -175,12 +161,12 @@ class DexTransferMoneyTransactionTest {
         Account sender = mock(Account.class);
         Account recipient = mock(Account.class);
         doReturn(1000L).when(sender).getId();
-        doReturn(2000L).when(recipient).getId();
+//        doReturn(2000L).when(recipient).getId();
 
         transactionType.applyAttachment(tx, sender, recipient);
 
-        verify(transactionType.lookupAccountService()).addToBalanceATM(sender, LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
-        verify(transactionType.lookupAccountService()).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
+        verify(transactionType.getAccountService()).addToBalanceATM(sender, LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
+        verify(transactionType.getAccountService()).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
         verify(dexService).closeOrder(300);
     }
 
@@ -192,12 +178,12 @@ class DexTransferMoneyTransactionTest {
         Account sender = mock(Account.class);
         Account recipient = mock(Account.class);
         doReturn(2000L).when(sender).getId();
-        doReturn(1000L).when(recipient).getId();
+//        doReturn(1000L).when(recipient).getId();
 
         transactionType.applyAttachment(tx, sender, recipient);
 
-        verify(transactionType.lookupAccountService()).addToBalanceATM(sender, LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
-        verify(transactionType.lookupAccountService()).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
+        verify(transactionType.getAccountService()).addToBalanceATM(sender, LedgerEvent.DEX_TRANSFER_MONEY, 0, -100);
+        verify(transactionType.getAccountService()).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.DEX_TRANSFER_MONEY, 0, 100);
         verify(dexService).closeOrder(200);
     }
 
@@ -206,7 +192,7 @@ class DexTransferMoneyTransactionTest {
         Transaction tx = mock(Transaction.class);
         doReturn(attachment).when(tx).getAttachment();
 
-        Map<TransactionType, Map<String, Integer>> duplicates = new HashMap<>();
+        Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates = new HashMap<>();
 
         assertFalse(transactionType.isDuplicate(tx, duplicates)); // populate map
         assertTrue(transactionType.isDuplicate(tx, duplicates)); // now contract with id = 64 added to map and another tx, which refer to this contract will be rejected as duplicate

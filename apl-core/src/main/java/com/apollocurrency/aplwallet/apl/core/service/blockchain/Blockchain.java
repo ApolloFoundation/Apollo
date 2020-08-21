@@ -20,9 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -34,7 +32,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 public interface Blockchain {
 
@@ -75,22 +72,24 @@ public interface Blockchain {
     boolean hasBlockInShards(long blockId);
 
     @Deprecated
-    DbIterator<Block> getBlocks(int from, int to, int timestamp);
+    List<Block> getBlocks(int from, int to, int timestamp);
 
-    Stream<Block> getBlocksStream(int from, int to, int timestamp);
+    List<Block> getBlocksFromShards(int from, int to, int timestamp);
 
     Block findFirstBlock();
 
     @Deprecated
-    DbIterator<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp);
+    List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp);
 
-    Stream<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp);
+    List<Block> getBlocksByAccountFromShards(long accountId, int from, int to, int timestamp);
 
     Block findLastBlock();
 
     Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions);
 
     void saveBlock(Connection con, Block block);
+
+    List<Transaction> getOrLoadTransactions(Block parentBlock);
 
     void commit(Block block);
 
@@ -151,8 +150,6 @@ public interface Blockchain {
 
     byte[] getFullHash(long transactionId);
 
-    Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException;
-
     int getTransactionCount();
 
     Long getTransactionCount(TransactionalDataSource dataSource, int from, int to);
@@ -163,17 +160,19 @@ public interface Blockchain {
 
     List<Transaction> getBlockTransactions(long blockId);
 
+    long getBlockTransactionCount(long blockId);
+
     boolean isInitialized();
 
     boolean hasBlock(long blockId, int height);
 
     int getTransactionCount(long accountId, byte type, byte subtype);
 
-    DbIterator<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
+    List<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
 
     List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp);
 
-    DbIterator<Transaction> getTransactions(byte type, byte subtype, int from, int to);
+    List<Transaction> getTransactions(byte type, byte subtype, int from, int to);
 
     Set<Long> getBlockGenerators(int limit);
 
@@ -182,4 +181,6 @@ public interface Blockchain {
     boolean hasConfirmations(long id, int confirmations);
 
     boolean isExpired(Transaction tx);
+
+    List<Transaction> loadPrunables(List<Transaction> transactions);
 }

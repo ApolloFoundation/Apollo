@@ -3,11 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
@@ -39,7 +38,7 @@ public final class ColoredCoinsAssetIssuance extends AbstractAttachment {
         super(attachmentData);
         this.name = (String) attachmentData.get("name");
         this.description = Convert.nullToEmpty((String) attachmentData.get("description"));
-        this.quantityATU = attachmentData.containsKey("quantityATU") ? Convert.parseLong(attachmentData.get("quantityATU")) : Convert.parseLong(attachmentData.get("quantityQNT"));
+        this.quantityATU = Convert.parseLong(attachmentData.get("quantityATU"));
         this.decimals = ((Long) attachmentData.get("decimals")).byteValue();
     }
 
@@ -76,8 +75,8 @@ public final class ColoredCoinsAssetIssuance extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return ColoredCoins.ASSET_ISSUANCE;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.CC_ASSET_ISSUANCE;
     }
 
     public String getName() {

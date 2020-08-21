@@ -3,11 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
@@ -65,7 +64,7 @@ public final class MonetarySystemCurrencyIssuance extends AbstractAttachment {
         this.reserveSupply = Convert.parseLong(attachmentData.get("reserveSupply"));
         this.maxSupply = Convert.parseLong(attachmentData.get("maxSupply"));
         this.issuanceHeight = ((Long) attachmentData.get("issuanceHeight")).intValue();
-        this.minReservePerUnitATM = attachmentData.containsKey("minReservePerUnitATM") ? Convert.parseLong(attachmentData.get("minReservePerUnitATM")) : Convert.parseLong(attachmentData.get("minReservePerUnitNQT"));
+        this.minReservePerUnitATM = Convert.parseLong(attachmentData.get("minReservePerUnitATM"));
         this.minDifficulty = ((Long) attachmentData.get("minDifficulty")).intValue();
         this.maxDifficulty = ((Long) attachmentData.get("maxDifficulty")).intValue();
         this.ruleset = ((Long) attachmentData.get("ruleset")).byteValue();
@@ -138,8 +137,8 @@ public final class MonetarySystemCurrencyIssuance extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return MonetarySystem.CURRENCY_ISSUANCE;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.MS_CURRENCY_ISSUANCE;
     }
 
     public String getName() {

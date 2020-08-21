@@ -4,22 +4,23 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppendix {
 
-    private static final String appendixName = "EncryptToSelfMessage";
+    static final String appendixName = "EncryptToSelfMessage";
 
     public EncryptToSelfMessageAppendix(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
     }
 
     public EncryptToSelfMessageAppendix(JSONObject attachmentData) {
-        super(attachmentData, (JSONObject) attachmentData.get("encryptToSelfMessage"));
+        super(attachmentData, (Map<?,?>) attachmentData.get("encryptToSelfMessage"));
     }
 
     public EncryptToSelfMessageAppendix(EncryptedData encryptedData, boolean isText, boolean isCompressed) {
@@ -30,8 +31,8 @@ public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppend
         if (!Appendix.hasAppendix(appendixName, attachmentData)) {
             return null;
         }
-        if (((JSONObject) attachmentData.get("encryptToSelfMessage")).get("data") == null) {
-            return new UnencryptedEncryptToSelfMessageAppendix(attachmentData);
+        if (((Map<?,?>) attachmentData.get("encryptToSelfMessage")).get("data") == null) {
+            throw new RuntimeException("Unencrypted message to self is not supported");
         }
         return new EncryptToSelfMessageAppendix(attachmentData);
     }

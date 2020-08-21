@@ -89,7 +89,7 @@ public class TransactionSigner {
         );
 
         if (log.isTraceEnabled()) {
-            log.trace("#MULTI_SIG# sign signature={} transaction={}", transaction.getSignature().getJsonString(), transaction.getJSONObject().toJSONString());
+            log.trace("#MULTI_SIG# sign signature={} transaction={}", transaction.getSignature().getHexString(), transaction.getId());
         }
     }
 

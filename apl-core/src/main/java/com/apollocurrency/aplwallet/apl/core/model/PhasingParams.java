@@ -4,21 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.model;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.AplException.ValidationException;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Class for handling phasing parameters
@@ -47,12 +41,12 @@ public final class PhasingParams {
         voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }
 
-    public PhasingParams(JSONObject attachmentData) {
+    public PhasingParams(Map<?,?> attachmentData) {
         quorum = Convert.parseLong(attachmentData.get("phasingQuorum"));
         long minBalance = Convert.parseLong(attachmentData.get("phasingMinBalance"));
         byte votingModel = ((Long) attachmentData.get("phasingVotingModel")).byteValue();
         long holdingId = Convert.parseUnsignedLong((String) attachmentData.get("phasingHolding"));
-        JSONArray whitelistJson = (JSONArray) (attachmentData.get("phasingWhitelist"));
+        List<?> whitelistJson = (List<?>) (attachmentData.get("phasingWhitelist"));
         if (whitelistJson != null && whitelistJson.size() > 0) {
             whitelist = new long[whitelistJson.size()];
             for (int i = 0; i < whitelist.length; i++) {
@@ -102,102 +96,6 @@ public final class PhasingParams {
                 whitelistJson.add(Long.toUnsignedString(accountId));
             }
             json.put("phasingWhitelist", whitelistJson);
-        }
-    }
-
-    public void validate() throws ValidationException {
-        if (whitelist.length > Constants.MAX_PHASING_WHITELIST_SIZE) {
-            throw new AplException.NotValidException("Whitelist is too big");
-        }
-
-        long previousAccountId = 0;
-        for (long accountId : whitelist) {
-            if (accountId == 0) {
-                throw new AplException.NotValidException("Invalid accountId 0 in whitelist");
-            }
-            if (previousAccountId != 0 && accountId < previousAccountId) {
-                throw new AplException.NotValidException("Whitelist not sorted " + Arrays.toString(whitelist));
-            }
-            if (accountId == previousAccountId) {
-                throw new AplException.NotValidException("Duplicate accountId " + Long.toUnsignedString(accountId) + " in whitelist");
-            }
-            previousAccountId = accountId;
-        }
-
-        if (quorum <= 0 && voteWeighting.getVotingModel() != VoteWeighting.VotingModel.NONE) {
-            throw new AplException.NotValidException("quorum <= 0");
-        }
-
-        if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.NONE) {
-            if (quorum != 0) {
-                throw new AplException.NotValidException("Quorum must be 0 for no-voting phased transaction");
-            }
-            if (whitelist.length != 0) {
-                throw new AplException.NotValidException("No whitelist needed for no-voting phased transaction");
-            }
-        }
-
-        if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.ACCOUNT && whitelist.length > 0 && quorum > whitelist.length) {
-            throw new AplException.NotValidException("Quorum of " + quorum + " cannot be achieved in by-account voting with whitelist of length "
-                + whitelist.length);
-        }
-
-        voteWeighting.validate();
-        AssetService assetService = CDI.current().select(AssetService.class).get();
-
-        if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.CURRENCY) {
-            Currency currency = TransactionType.lookupCurrencyService().getCurrency(voteWeighting.getHoldingId());
-            if (currency == null) {
-                throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
-            }
-            if (quorum > currency.getMaxSupply()) {
-                throw new AplException.NotCurrentlyValidException("Quorum of " + quorum
-                    + " exceeds max currency supply " + currency.getMaxSupply());
-            }
-            if (voteWeighting.getMinBalance() > currency.getMaxSupply()) {
-                throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                    + " exceeds max currency supply " + currency.getMaxSupply());
-            }
-        } else if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.ASSET) {
-            Asset asset = assetService.getAsset(voteWeighting.getHoldingId());
-            if (quorum > asset.getInitialQuantityATU()) {
-                throw new AplException.NotCurrentlyValidException("Quorum of " + quorum
-                    + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
-            }
-            if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
-                throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                    + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
-            }
-        } else if (voteWeighting.getMinBalance() > 0) {
-            if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
-                Asset asset = assetService.getAsset(voteWeighting.getHoldingId());
-                if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
-                    throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                        + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
-                }
-            } else if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
-                Currency currency = TransactionType.lookupCurrencyService().getCurrency(voteWeighting.getHoldingId());
-                if (currency == null) {
-                    throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
-                }
-                if (voteWeighting.getMinBalance() > currency.getMaxSupply()) {
-                    throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                        + " exceeds max currency supply " + currency.getMaxSupply());
-                }
-            }
-        }
-
-    }
-
-    public void checkApprovable() throws AplException.NotCurrentlyValidException {
-
-        if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.CURRENCY
-            && TransactionType.lookupCurrencyService().getCurrency(voteWeighting.getHoldingId()) == null) {
-            throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
-        }
-        if (voteWeighting.getMinBalance() > 0 && voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY
-            && TransactionType.lookupCurrencyService().getCurrency(voteWeighting.getHoldingId()) == null) {
-            throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
         }
     }
 

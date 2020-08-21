@@ -3,11 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.DigitalGoods;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
@@ -43,7 +42,7 @@ public final class DigitalGoodsListing extends AbstractAttachment {
         this.description = (String) attachmentData.get("description");
         this.tags = (String) attachmentData.get("tags");
         this.quantity = ((Long) attachmentData.get("quantity")).intValue();
-        this.priceATM = attachmentData.containsKey("priceATM") ? Convert.parseLong(attachmentData.get("priceATM")) : Convert.parseLong(attachmentData.get("priceNQT"));
+        this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
     }
 
     public DigitalGoodsListing(String name, String description, String tags, int quantity, long priceATM) {
@@ -84,8 +83,8 @@ public final class DigitalGoodsListing extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return DigitalGoods.LISTING;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.DGS_LISTING;
     }
 
     public String getName() {

@@ -4,14 +4,14 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.transaction.ShufflingTransaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * @author al
@@ -35,7 +35,7 @@ public final class ShufflingRecipientsAttachment extends AbstractShufflingAttach
 
     public ShufflingRecipientsAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        JSONArray jsonArray = (JSONArray) attachmentData.get("recipientPublicKeys");
+        List<?> jsonArray = (List<?>) attachmentData.get("recipientPublicKeys");
         this.recipientPublicKeys = new byte[jsonArray.size()][];
         for (int i = 0; i < this.recipientPublicKeys.length; i++) {
             this.recipientPublicKeys[i] = Convert.parseHexString((String) jsonArray.get(i));
@@ -75,8 +75,8 @@ public final class ShufflingRecipientsAttachment extends AbstractShufflingAttach
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return ShufflingTransaction.SHUFFLING_RECIPIENTS;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.SHUFFLING_RECIPIENTS;
     }
 
     public byte[][] getRecipientPublicKeys() {

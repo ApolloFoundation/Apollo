@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.tagged;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
@@ -24,8 +25,12 @@ import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessa
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.TaggedTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -63,12 +68,16 @@ class TaggedDataTimestampDaoTest {
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
 
+    TransactionTestData ttd  = new TransactionTestData();
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
         GlobalSyncImpl.class,
         TaggedDataTimestampDao.class,
         FullTextConfigImpl.class,
+        TransactionRowMapper.class,
+        TransactionBuilder.class,
         DerivedDbTablesRegistryImpl.class,
         BlockDaoImpl.class, TransactionDaoImpl.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -80,19 +89,20 @@ class TaggedDataTimestampDaoTest {
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(ttd.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .build();
 
     @Inject
     TaggedDataTimestampDao dataTimestampDao;
     TaggedTestData tagtd;
-    TransactionTestData ttd;
 
 
     @BeforeEach
     void setUp() throws Exception {
-        ttd = new TransactionTestData();
         tagtd = new TaggedTestData();
     }
 

@@ -44,13 +44,7 @@ public interface Appendix {
 
     byte getVersion();
 
-    int getBaselineFeeHeight();
-
     Fee getBaselineFee(Transaction transaction);
-
-    int getNextFeeHeight();
-
-    Fee getNextFee(Transaction transaction);
 
     default boolean isPhasable() {
         return false;
@@ -63,12 +57,6 @@ public interface Appendix {
     void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException;
 
     void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException;
-
-    default void loadPrunable(Transaction transaction) {
-    }
-
-    default void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
-    }
 
     default String getAppendixName() {
         return null;

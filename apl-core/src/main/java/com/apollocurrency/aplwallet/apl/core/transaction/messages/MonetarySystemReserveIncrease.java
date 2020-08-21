@@ -3,8 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
@@ -27,7 +26,7 @@ public final class MonetarySystemReserveIncrease extends AbstractAttachment impl
     public MonetarySystemReserveIncrease(JSONObject attachmentData) {
         super(attachmentData);
         this.currencyId = Convert.parseUnsignedLong((String) attachmentData.get("currency"));
-        this.amountPerUnitATM = attachmentData.containsKey("amountPerUnitATM") ? Convert.parseLong(attachmentData.get("amountPerUnitATM")) : Convert.parseLong(attachmentData.get("amountPerUnitNQT"));
+        this.amountPerUnitATM = Convert.parseLong(attachmentData.get("amountPerUnitATM"));
     }
 
     public MonetarySystemReserveIncrease(long currencyId, long amountPerUnitATM) {
@@ -53,8 +52,8 @@ public final class MonetarySystemReserveIncrease extends AbstractAttachment impl
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return MonetarySystem.RESERVE_INCREASE;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.MS_RESERVE_INCREASE;
     }
 
     @Override

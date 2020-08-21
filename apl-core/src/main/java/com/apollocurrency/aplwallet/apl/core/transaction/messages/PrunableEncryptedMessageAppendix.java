@@ -17,10 +17,11 @@ import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
+import java.util.Map;
 
 public class PrunableEncryptedMessageAppendix extends AbstractAppendix implements Prunable {
 
-    private static final String appendixName = "PrunableEncryptedMessage";
+    static final String APPENDIX_NAME = "PrunableEncryptedMessage";
 
     private static final Fee PRUNABLE_ENCRYPTED_DATA_FEE = new Fee.SizeBasedFee(Constants.ONE_APL/10) {
         @Override
@@ -34,6 +35,10 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
     private EncryptedData encryptedData;
     private volatile PrunableMessage prunableMessage;
 
+    public void setPrunableMessage(PrunableMessage prunableMessage) {
+        this.prunableMessage = prunableMessage;
+    }
+
     public PrunableEncryptedMessageAppendix(ByteBuffer buffer) {
         super(buffer);
         this.hash = new byte[32];
@@ -46,7 +51,7 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
     public PrunableEncryptedMessageAppendix(JSONObject attachmentJSON) {
         super(attachmentJSON);
         String hashString = Convert.emptyToNull((String) attachmentJSON.get("encryptedMessageHash"));
-        JSONObject encryptedMessageJSON = (JSONObject) attachmentJSON.get("encryptedMessage");
+        Map<?,?> encryptedMessageJSON = (Map<?,?>) attachmentJSON.get("encryptedMessage");
         if (hashString != null && encryptedMessageJSON == null) {
             this.hash = Convert.parseHexString(hashString);
             this.encryptedData = null;
@@ -70,12 +75,12 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
     }
 
     public static PrunableEncryptedMessageAppendix parse(JSONObject attachmentData) {
-        if (!Appendix.hasAppendix(appendixName, attachmentData)) {
+        if (!Appendix.hasAppendix(APPENDIX_NAME, attachmentData)) {
             return null;
         }
-        JSONObject encryptedMessageJSON = (JSONObject) attachmentData.get("encryptedMessage");
+        Map<?,?> encryptedMessageJSON = (Map<?,?>) attachmentData.get("encryptedMessage");
         if (encryptedMessageJSON != null && encryptedMessageJSON.get("data") == null) {
-            return new UnencryptedPrunableEncryptedMessageAppendix(attachmentData);
+            throw new RuntimeException("Unencrypted prunable message is not supported");
         }
         return new PrunableEncryptedMessageAppendix(attachmentData);
     }
@@ -122,38 +127,17 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
 
     @Override
     public String getAppendixName() {
-        return appendixName;
+        return APPENDIX_NAME;
     }
 
     @Override
     public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        if (transaction.getEncryptedMessage() != null) {
-            throw new AplException.NotValidException("Cannot have both encrypted and prunable encrypted message attachments");
-        }
-        EncryptedData ed = getEncryptedData();
-        if (ed == null && lookupTimeService().getEpochTime() - transaction.getTimestamp() < lookupBlockchainConfig().getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Encrypted message has been pruned prematurely");
-        }
-        if (ed != null) {
-            if (ed.getData().length > Constants.MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH) {
-                throw new AplException.NotValidException(String.format("Message length %d exceeds max prunable encrypted message length %d",
-                    ed.getData().length, Constants.MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH));
-            }
-            if ((ed.getNonce().length != 32 && ed.getData().length > 0)
-                || (ed.getNonce().length != 0 && ed.getData().length == 0)) {
-                throw new AplException.NotValidException("Invalid nonce length " + ed.getNonce().length);
-            }
-        }
-        if (transaction.getRecipientId() == 0) {
-            throw new AplException.NotValidException("Encrypted messages cannot be attached to transactions with no recipient");
-        }
+        throw new UnsupportedOperationException("Validation is not supported, use separate class");
     }
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        if (lookupTimeService().getEpochTime() - transaction.getTimestamp() < lookupBlockchainConfig().getMaxPrunableLifetime()) {
-            lookupMessageService().add(transaction, this);
-        }
+        throw new UnsupportedOperationException("Apply is not supported, use separate class");
     }
 
     public final EncryptedData getEncryptedData() {
@@ -199,16 +183,6 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
     }
 
     @Override
-    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
-        if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            PrunableMessage prunableMessage = lookupMessageService().get(transaction.getId());
-            if (prunableMessage != null && prunableMessage.getEncryptedData() != null) {
-                this.prunableMessage = prunableMessage;
-            }
-        }
-    }
-
-    @Override
     public boolean isPhasable() {
         return false;
     }
@@ -216,11 +190,6 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
     @Override
     public final boolean hasPrunableData() {
         return (prunableMessage != null || encryptedData != null);
-    }
-
-    @Override
-    public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        lookupMessageService().add(transaction, this, blockTimestamp, height);
     }
 
 }

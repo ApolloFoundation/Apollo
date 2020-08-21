@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.api.p2p.respons.GetMilestoneBlockIdsResponse
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 
-public class GetMilestoneBlockIdsResponseParser implements PeerResponseParser<GetMilestoneBlockIdsResponse> {
+public class GetMilestoneBlockIdsResponseParser implements ReqRespParser<GetMilestoneBlockIdsResponse> {
     @Override
     public GetMilestoneBlockIdsResponse parse(JSONObject json) {
         return JSON.getMapper().convertValue(json, GetMilestoneBlockIdsResponse.class);

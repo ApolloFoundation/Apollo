@@ -3,15 +3,18 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.cache.NullCacheProducerForTests;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -21,9 +24,12 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardDataSourceC
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -45,7 +51,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.mockito.Mockito;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -58,8 +63,6 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_10_ID;
@@ -84,6 +87,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -93,29 +97,40 @@ import static org.mockito.Mockito.spy;
     //for better performance we will not recreate 3 datasources for each test method
 class BlockchainTest {
 
-
     private static final Path blockchainTestDbPath = createPath("blockchainTestDbPath");
     @RegisterExtension
     static DbExtension extension = new DbExtension(blockchainTestDbPath, "mainDb", "db/shard-main-data.sql");
     static DbPopulator shard1Populator;
     static DbPopulator shard2Populator;
-    BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
     TimeService timeService = mock(TimeService.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    TransactionTestData td = new TransactionTestData();
+
+    {
+        initPublicKeyDao();
+    }
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(TransactionDaoImpl.class, BlockchainImpl.class, BlockDaoImpl.class,
-        TransactionIndexDao.class, DaoConfig.class,
+        TransactionIndexDao.class, DaoConfig.class, JdbiTransactionalInterceptor.class,
+        TransactionRowMapper.class,
+        TransactionBuilder.class,
         BlockIndexServiceImpl.class, NullCacheProducerForTests.class)
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
         .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .build();
     @Inject
     private Blockchain blockchain;
@@ -160,6 +175,10 @@ class BlockchainTest {
     void setUp() {
         txd = new TransactionTestData();
         btd = new BlockTestData();
+    }
+
+    private void initPublicKeyDao() {
+        doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).searchAll(anyLong());
     }
 
     @Test
@@ -324,8 +343,8 @@ class BlockchainTest {
     void testGetBlocks() {
         blockchain.setLastBlock(btd.BLOCK_13);
 
-        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocks(
-            1, btd.BLOCK_13.getHeight() - btd.BLOCK_11.getHeight(), 0));
+        List<Block> blocks = blockchain.getBlocks(
+            1, btd.BLOCK_13.getHeight() - btd.BLOCK_11.getHeight(), 0);
 
         assertEquals(List.of(btd.BLOCK_12, btd.BLOCK_11), blocks);
 
@@ -333,16 +352,15 @@ class BlockchainTest {
 
     @Test
     void testGetAccountBlocks() {
-        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocksByAccount(btd.BLOCK_12.getGeneratorId(), 0, Integer.MAX_VALUE, 0));
+        List<Block> blocks = blockchain.getBlocksByAccount(btd.BLOCK_12.getGeneratorId(), 0, Integer.MAX_VALUE, 0);
 
         assertEquals(List.of(btd.BLOCK_13, btd.BLOCK_12), blocks);
     }
 
     @Test
     void testGetAccountBlocksAsStream() {
-        Stream<Block> blocks = blockchain.getBlocksByAccountStream(btd.BLOCK_12.getGeneratorId(), 0, 10, 0);
-        List<Block> result = blocks.collect(Collectors.toList());
-        assertEquals(List.of(btd.BLOCK_13, btd.BLOCK_12, btd.SHARD_2_BLOCK_3, btd.SHARD_2_BLOCK_2), result);
+        List<Block> blocks = blockchain.getBlocksByAccountFromShards(btd.BLOCK_12.getGeneratorId(), 0, 10, 0);
+        assertEquals(List.of(btd.BLOCK_13, btd.BLOCK_12, btd.SHARD_2_BLOCK_3, btd.SHARD_2_BLOCK_2), blocks);
     }
 
     @Test
@@ -457,11 +475,11 @@ class BlockchainTest {
             Block expectedBlock = expectedBlocks.get(i);
             Block actualBlock = blocks.get(i);
             assertEquals(expectedBlock, actualBlock);
-            List<Transaction> transactions = expectedBlock.getOrLoadTransactions();
+            List<Transaction> transactions = blockchain.getOrLoadTransactions(expectedBlock);
             if (transactions != null) {
-                assertEquals(transactions, actualBlock.getOrLoadTransactions());
+                assertEquals(transactions, blockchain.getOrLoadTransactions(actualBlock));
             } else {
-                assertNull(actualBlock.getOrLoadTransactions());
+                assertNull(blockchain.getOrLoadTransactions(actualBlock));
             }
         }
     }
@@ -627,7 +645,7 @@ class BlockchainTest {
         assertEquals(btd.BLOCK_11, lastBlock);
 
         blockchain.setLastBlock(btd.BLOCK_13);
-        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocks(0, Integer.MAX_VALUE, 0));
+        List<Block> blocks = blockchain.getBlocks(0, Integer.MAX_VALUE, 0);
         assertEquals(List.of(btd.BLOCK_11, btd.BLOCK_10), blocks);
     }
 
@@ -640,7 +658,7 @@ class BlockchainTest {
         assertEquals(btd.BLOCK_10, lastBlock);
 
         blockchain.setLastBlock(btd.BLOCK_13);
-        List<Block> blocks = CollectionUtil.toList(blockchain.getBlocks(0, Integer.MAX_VALUE, 0));
+        List<Block> blocks = blockchain.getBlocks(0, Integer.MAX_VALUE, 0);
         assertEquals(List.of(btd.BLOCK_10), blocks);
     }
 
@@ -874,20 +892,6 @@ class BlockchainTest {
         assertNull(fullHash);
     }
 
-    @Test
-    void testLoadTransaction() {
-        DbUtils.inTransaction(extension, (con) -> {
-            try (Statement stmt = con.createStatement()) {
-                try (ResultSet rs = stmt.executeQuery("select * from transaction where id = " + txd.TRANSACTION_14.getId())) {
-                    rs.next();
-                    Transaction tx = blockchain.loadTransaction(con, rs);
-                    assertEquals(txd.TRANSACTION_14, tx);
-                }
-            } catch (SQLException | AplException.NotValidException e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
 
     @Test
     void testGetTransactionCount() {
@@ -1077,7 +1081,7 @@ class BlockchainTest {
     void testGetBlockTransactions() {
         List<Transaction> blockTransactions = blockchain.getBlockTransactions(btd.BLOCK_7.getId());
 
-        assertEquals(btd.BLOCK_7.getOrLoadTransactions(), blockTransactions);
+        assertEquals(blockchain.getOrLoadTransactions(btd.BLOCK_7), blockTransactions);
     }
 
     @Test
@@ -1109,14 +1113,14 @@ class BlockchainTest {
 
     @Test
     void testGetPrivateTransactionsByType() {
-        List<Transaction> transactions = CollectionUtil.toList(blockchain.getTransactions((byte) 0, (byte) 1, 1, 3));
+        List<Transaction> transactions = blockchain.getTransactions((byte) 0, (byte) 1, 1, 3);
         // transactions exists but cannot be extracted
         assertEquals(List.of(), transactions);
     }
 
     @Test
     void testGetTransactionsByType() {
-        List<Transaction> transactions = CollectionUtil.toList(blockchain.getTransactions((byte) 8, (byte) 0, 1, 3));
+        List<Transaction> transactions = blockchain.getTransactions((byte) 8, (byte) 0, 1, 3);
 
         assertEquals(List.of(txd.TRANSACTION_11), transactions);
     }
@@ -1133,7 +1137,7 @@ class BlockchainTest {
         DbUtils.inTransaction(extension, (con) -> {
             try (PreparedStatement pstm = con.prepareStatement("select * from transaction where id = ?")) {
                 pstm.setLong(1, txd.TRANSACTION_10.getId());
-                List<Transaction> transactions = CollectionUtil.toList(blockchain.getTransactions(con, pstm));
+                List<Transaction> transactions = blockchain.getTransactions(con, pstm);
                 assertEquals(List.of(txd.TRANSACTION_10), transactions);
             } catch (SQLException e) {
                 throw new RuntimeException(e);

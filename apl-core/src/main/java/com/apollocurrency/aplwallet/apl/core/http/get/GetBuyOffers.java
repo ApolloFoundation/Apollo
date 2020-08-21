@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionType.lookupCurrencyExchangeOfferFacade;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -31,11 +30,13 @@ import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -43,6 +44,15 @@ public final class GetBuyOffers extends AbstractAPIRequestHandler {
 
     public GetBuyOffers() {
         super(new APITag[]{APITag.MS}, "currency", "account", "availableOnly", "firstIndex", "lastIndex");
+    }
+
+    private CurrencyExchangeOfferFacade exchangeOfferFacade;
+
+    public synchronized CurrencyExchangeOfferFacade lookupCurrencyExchangeFacade() {
+        if (exchangeOfferFacade == null) {
+            exchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
+        }
+        return exchangeOfferFacade;
     }
 
     @Override
@@ -65,13 +75,13 @@ public final class GetBuyOffers extends AbstractAPIRequestHandler {
         DbIterator<CurrencyBuyOffer> offers = null;
         try {
             if (accountId == 0) {
-                offers = lookupCurrencyExchangeOfferFacade().getCurrencyBuyOfferService()
+                offers = lookupCurrencyExchangeFacade().getCurrencyBuyOfferService()
                     .getCurrencyOffers(currencyId, availableOnly, firstIndex, lastIndex);
             } else if (currencyId == 0) {
-                offers = lookupCurrencyExchangeOfferFacade().getCurrencyBuyOfferService()
+                offers = lookupCurrencyExchangeFacade().getCurrencyBuyOfferService()
                     .getAccountOffers(accountId, availableOnly, firstIndex, lastIndex);
             } else {
-                CurrencyBuyOffer offer = lookupCurrencyExchangeOfferFacade().getCurrencyBuyOfferService()
+                CurrencyBuyOffer offer = lookupCurrencyExchangeFacade().getCurrencyBuyOfferService()
                     .getOffer(currencyId, accountId);
                 if (offer != null) {
                     offerData.add(JSONData.offer(offer));

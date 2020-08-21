@@ -10,8 +10,8 @@ import com.apollocurrency.aplwallet.api.v2.model.BaseResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ErrorResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionInfoResp;
-import com.apollocurrency.aplwallet.api.v2.model.TxRequest;
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
+import com.apollocurrency.aplwallet.api.v2.model.TxRequest;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TransactionInfoMapper;
@@ -19,9 +19,14 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
-import com.apollocurrency.aplwallet.apl.core.transaction.ChildAccount;
+import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,6 +69,13 @@ class TransactionApiServiceImplTest {
     BlockChainInfoService blockChainInfoService;
     @Mock
     TransactionProcessor transactionProcessor;
+    @Mock
+    PrunableLoadingService prunableLoadingService;
+    TransactionBuilder transactionBuilder;
+    @Mock
+    AccountService accountService;
+    @Mock
+    AccountPublicKeyService accountPublicKeyService;
 
     TxReceiptMapper txReceiptMapper;
     TransactionInfoMapper transactionInfoMapper;
@@ -71,10 +83,11 @@ class TransactionApiServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        transactionBuilder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService))));
         Convert2.init(blockchainConfig);
         txReceiptMapper = new TxReceiptMapper(blockChainInfoService);
-        transactionInfoMapper = new TransactionInfoMapper(blockchain);
-        transactionApiService = new TransactionApiServiceImpl(transactionProcessor, blockchain, txReceiptMapper, transactionInfoMapper);
+        transactionInfoMapper = new TransactionInfoMapper(blockchain, prunableLoadingService);
+        transactionApiService = new TransactionApiServiceImpl(transactionProcessor, blockchain, txReceiptMapper, transactionInfoMapper, transactionBuilder);
     }
 
     @Test
@@ -138,7 +151,8 @@ class TransactionApiServiceImplTest {
         Transaction transaction = mock(Transaction.class);
         Signature signature = spy(SignatureToolFactory.createSignature(Convert.parseHexString(TX_1_SIGNATURE)));
         doReturn(Convert.parseHexString(TX_1_SIGNATURE)).when(signature).bytes();
-        doReturn(ChildAccount.CREATE_CHILD).when(transaction).getType();
+        CreateChildTransactionType childTransactionType = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService);
+        doReturn(childTransactionType).when(transaction).getType();
         doReturn(signature).when(transaction).getSignature();
         doReturn(transaction).when(blockchain).getTransaction(txId);
         //WHEN
@@ -149,7 +163,7 @@ class TransactionApiServiceImplTest {
             fail("Unexpected flow.");
         }
         TransactionInfoResp receipt = (TransactionInfoResp) response.getEntity();
-        assertEquals(String.valueOf(ChildAccount.CREATE_CHILD.getType()), receipt.getType());
+        assertEquals(childTransactionType.getSpec().getType(), Long.parseLong(receipt.getType()));
         assertEquals(TX_1_SIGNATURE, receipt.getSignature());
     }
 

@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix {
 
@@ -45,7 +46,7 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
         this.isCompressed = getVersion() != 2;
     }
 
-    public AbstractEncryptedMessageAppendix(JSONObject attachmentJSON, JSONObject encryptedMessageJSON) {
+    public AbstractEncryptedMessageAppendix(JSONObject attachmentJSON, Map<?,?> encryptedMessageJSON) {
         super(attachmentJSON);
         byte[] data = Convert.parseHexString((String) encryptedMessageJSON.get("data"));
         byte[] nonce = Convert.parseHexString((String) encryptedMessageJSON.get("nonce"));
@@ -89,18 +90,7 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
 
     @Override
     public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        if (getEncryptedDataLength() > lookupBlockchainConfig().getCurrentConfig().getMaxEncryptedMessageLength()) {
-            throw new AplException.NotValidException("Max encrypted message length exceeded");
-        }
-        if (encryptedData != null) {
-            if ((encryptedData.getNonce().length != 32 && encryptedData.getData().length > 0)
-                || (encryptedData.getNonce().length != 0 && encryptedData.getData().length == 0)) {
-                throw new AplException.NotValidException("Invalid nonce length " + encryptedData.getNonce().length);
-            }
-        }
-        if ((getVersion() != 2 && !isCompressed) || (getVersion() == 2 && isCompressed)) {
-            throw new AplException.NotValidException("Version mismatch - version " + getVersion() + ", isCompressed " + isCompressed);
-        }
+        throw new UnsupportedOperationException("Validation for encrypted message appendix is not supported");
     }
 
     @Override

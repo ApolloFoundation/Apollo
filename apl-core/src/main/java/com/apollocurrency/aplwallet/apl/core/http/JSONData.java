@@ -27,10 +27,9 @@ import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.app.Token;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.FundingMonitorInstance;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
@@ -77,7 +76,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
@@ -97,7 +95,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferSe
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
@@ -107,6 +106,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -146,6 +146,8 @@ public final class JSONData {
     private static CurrencyService currencyService = CDI.current().select(CurrencyService.class).get();
     private static ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
     private static FundingMonitorService fundingMonitorService = CDI.current().select(FundingMonitorService.class).get();
+    private static PrunableLoadingService prunableLoadingService = CDI.current().select(PrunableLoadingService.class).get();
+    private static TransactionSerializer transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
 
     private JSONData() {
     } // never
@@ -568,7 +570,7 @@ public final class JSONData {
         json.put("timestamp", block.getTimestamp());
 
         json.put("timeout", block.getTimeout());
-        json.put("numberOfTransactions", block.getOrLoadTransactions().size());
+        json.put("numberOfTransactions", blockchain.getBlockTransactionCount(block.getId()));
         json.put("totalFeeATM", String.valueOf(block.getTotalFeeATM()));
         json.put("payloadLength", block.getPayloadLength());
         json.put("version", block.getVersion());
@@ -586,7 +588,7 @@ public final class JSONData {
         json.put("blockSignature", Convert.toHexString(block.getBlockSignature()));
         JSONArray transactions = new JSONArray();
         Long totalAmountATM = 0L;
-        for (Transaction transaction : block.getOrLoadTransactions()) {
+        for (Transaction transaction : blockchain.getOrLoadTransactions(block)) {
             JSONObject transactionJson = transaction(true, transaction);
             Long amountATM = Long.parseLong((String) transactionJson.get("amountATM"));
             totalAmountATM += amountATM;
@@ -598,8 +600,8 @@ public final class JSONData {
         json.put("transactions", transactions);
         if (includeExecutedPhased) {
             JSONArray phasedTransactions = new JSONArray();
-            try (DbIterator<PhasingPollResult> phasingPollResults = phasingPollService.getApproved(block.getHeight())) {
-                for (PhasingPollResult phasingPollResult : phasingPollResults) {
+            List<PhasingPollResult> approved = phasingPollService.getApproved(block.getHeight());
+                for (PhasingPollResult phasingPollResult : approved) {
                     long phasedTransactionId = phasingPollResult.getId();
                     if (includeTransactions) {
                         phasedTransactions.add(transaction(false, blockchain.getTransaction(phasedTransactionId)));
@@ -607,7 +609,6 @@ public final class JSONData {
                         phasedTransactions.add(Long.toUnsignedString(phasedTransactionId));
                     }
                 }
-            }
             json.put("executedPhasedTransactions", phasedTransactions);
         }
         return json;
@@ -1101,7 +1102,7 @@ public final class JSONData {
     public static JSONObject exchangeRequest(ExchangeRequest exchangeRequest, boolean includeCurrencyInfo) {
         JSONObject json = new JSONObject();
         json.put("transaction", Long.toUnsignedString(exchangeRequest.getId()));
-        json.put("subtype", exchangeRequest.isBuy() ? MonetarySystem.EXCHANGE_BUY.getSubtype() : MonetarySystem.EXCHANGE_SELL.getSubtype());
+        json.put("subtype", exchangeRequest.isBuy() ? TransactionTypes.TransactionTypeSpec.MS_EXCHANGE_BUY.getSubtype() :TransactionTypes.TransactionTypeSpec.MS_EXCHANGE_SELL);
         json.put("timestamp", exchangeRequest.getTimestamp());
         json.put("units", String.valueOf(exchangeRequest.getUnits()));
         json.put("rateATM", String.valueOf(exchangeRequest.getRate()));
@@ -1115,7 +1116,7 @@ public final class JSONData {
     public static JSONObject expectedExchangeRequest(Transaction transaction, boolean includeCurrencyInfo) {
         JSONObject json = new JSONObject();
         json.put("transaction", transaction.getStringId());
-        json.put("subtype", transaction.getType().getSubtype());
+        json.put("subtype", transaction.getType().getSpec().getSubtype());
         MonetarySystemExchangeAttachment attachment = (MonetarySystemExchangeAttachment) transaction.getAttachment();
         json.put("units", String.valueOf(attachment.getUnits()));
         json.put("rateATM", String.valueOf(attachment.getRateATM()));
@@ -1133,20 +1134,20 @@ public final class JSONData {
     static JSONObject unconfirmedTransaction(Transaction transaction, Filter<Appendix> filter, boolean isPrivate) {
 
         JSONObject json = new JSONObject();
-        json.put("type", transaction.getType().getType());
-        json.put("subtype", transaction.getType().getSubtype());
+        json.put("type", transaction.getType().getSpec().getType());
+        json.put("subtype", transaction.getType().getSpec().getSubtype());
         json.put("phased", transaction.getPhasing() != null);
         json.put("timestamp", transaction.getTimestamp());
         json.put("deadline", transaction.getDeadline());
         json.put("senderPublicKey", Convert.toHexString(transaction.getSenderPublicKey()));
         if (transaction.getRecipientId() != 0) {
-            if (transaction.getType().equals(Payment.PRIVATE) && isPrivate) {
+            if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT && isPrivate) {
                 putPrivateAccount(json, "recipient", transaction.getRecipientId());
             } else {
                 putAccount(json, "recipient", transaction.getRecipientId());
             }
         }
-        if (transaction.getType().equals(Payment.PRIVATE) && isPrivate) {
+        if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT && isPrivate) {
             Random random = new Random();
             json.put("amountATM", String.valueOf((long) 100_000_000 * (random.nextInt(10_000_000) + 1)));
         } else {
@@ -1158,24 +1159,24 @@ public final class JSONData {
             json.put("referencedTransactionFullHash", referencedTransactionFullHash);
         }
         if (transaction.getSignature() != null) {
-            if (transaction.getVersion() < 2) {
-                //json.put("signature", transaction.getSignature().getJsonObject().get(SignatureParser.SIGNATURE_FIELD_NAME));
-                json.putAll(transaction.getSignature().getJsonObject());
-            } else {
-                json.put("signature", transaction.getSignature().getJsonObject());
-            }
+            json.put("signature", Convert.toHexString(transaction.getSignature().bytes()));
             json.put("signatureHash", Convert.toHexString(Crypto.sha256().digest(transaction.getSignature().bytes())));
             json.put("fullHash", transaction.getFullHashString());
             json.put("transaction", transaction.getStringId());
         }
         JSONObject attachmentJSON = new JSONObject();
         if (filter == null) {
-            for (Appendix appendage : transaction.getAppendages(true)) {
+
+            for (Appendix appendage : transaction.getAppendages()) {
+                prunableLoadingService.loadPrunable(transaction, appendage, true);
                 attachmentJSON.putAll(appendage.getJSONObject());
             }
         } else {
-            for (Appendix appendage : transaction.getAppendages(filter, true)) {
-                attachmentJSON.putAll(appendage.getJSONObject());
+            for (Appendix appendage : transaction.getAppendages()) {
+                if (filter.test(appendage)) {
+                    prunableLoadingService.loadPrunable(transaction, appendage, true);
+                    attachmentJSON.putAll(appendage.getJSONObject());
+                }
             }
         }
         if (!attachmentJSON.isEmpty()) {
@@ -1186,7 +1187,7 @@ public final class JSONData {
             }
             json.put("attachment", attachmentJSON);
         }
-        if (transaction.getType().equals(Payment.PRIVATE) && isPrivate) {
+        if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT && isPrivate) {
             putPrivateAccount(json, "sender", transaction.getSenderId());
         } else {
             putAccount(json, "sender", transaction.getSenderId());
@@ -1350,7 +1351,7 @@ public final class JSONData {
     }
 
     public static void putPrunableAttachment(JSONObject json, Transaction transaction) {
-        JSONObject prunableAttachment = transaction.getPrunableAttachmentJSON();
+        JSONObject prunableAttachment = transactionSerializer.getPrunableAttachmentJSON(transaction);
         if (prunableAttachment != null) {
             json.put("prunableAttachmentJSON", prunableAttachment);
         }

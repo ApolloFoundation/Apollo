@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
-import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.alias.AliasOfferTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.alias.AliasTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
@@ -32,38 +31,18 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasAssignment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAliasSell;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 @Singleton
 public class AliasServiceImpl implements AliasService {
     private final AliasTable aliasTable;
     private final AliasOfferTable offerTable;
     private final Blockchain blockchain;
-    private final IteratorToStreamConverter<Alias> converter;
-
-    /**
-     * Constrictor for unit tests.
-     *
-     * @param aliasTable
-     * @param offerTable
-     * @param blockchain
-     * @param converter
-     */
-    public AliasServiceImpl(
-        final AliasTable aliasTable,
-        final AliasOfferTable offerTable,
-        final Blockchain blockchain,
-        final IteratorToStreamConverter<Alias> converter
-    ) {
-        this.aliasTable = aliasTable;
-        this.offerTable = offerTable;
-        this.blockchain = blockchain;
-        this.converter = converter;
-    }
 
     @Inject
     public AliasServiceImpl(
@@ -74,7 +53,6 @@ public class AliasServiceImpl implements AliasService {
         this.aliasTable = aliasTable;
         this.offerTable = offerTable;
         this.blockchain = blockchain;
-        this.converter = new IteratorToStreamConverter<>();
     }
 
     @Override
@@ -88,12 +66,12 @@ public class AliasServiceImpl implements AliasService {
     }
 
     @Override
-    public Stream<Alias> getAliasesByOwner(long accountId, int from, int to) {
+    public List<Alias> getAliasesByOwner(long accountId, int fromTimestamp, int from, int to) {
         final DbIterator<Alias> aliasIterator = aliasTable.getManyBy(
-            new DbClause.LongClause("account_id", accountId), from, to
+            new DbClause.LongClause("account_id", accountId).and(new DbClause.IntClause("timestamp", DbClause.Op.GTE, fromTimestamp)), from, to
         );
 
-        return converter.convert(aliasIterator);
+        return CollectionUtil.toList(aliasIterator);
     }
 
     @Override
@@ -104,14 +82,13 @@ public class AliasServiceImpl implements AliasService {
     }
 
     @Override
-    public Stream<Alias> getAliasesByNamePattern(String aliasName, int from, int to) {
+    public List<Alias> getAliasesByNamePattern(String aliasName, int from, int to) {
         verifyAliasName(aliasName);
 
         final DbIterator<Alias> aliasIterator = aliasTable.getManyBy(
             new DbClause.LikeClause("alias_name_lower", aliasName.toLowerCase()), from, to
         );
-
-        return converter.convert(aliasIterator);
+        return CollectionUtil.toList(aliasIterator);
     }
 
     @Override

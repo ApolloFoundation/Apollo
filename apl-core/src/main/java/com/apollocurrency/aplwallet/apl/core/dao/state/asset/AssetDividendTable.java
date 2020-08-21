@@ -10,7 +10,10 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,8 +37,11 @@ public final class AssetDividendTable extends EntityDbTable<AssetDividend> {
 
     };
 
-    protected AssetDividendTable() {
-        super("asset_dividend", dividendDbKeyFactory);
+    @Inject
+    public AssetDividendTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                              DatabaseManager databaseManager) {
+        super("asset_dividend", dividendDbKeyFactory, false, null,
+            derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override

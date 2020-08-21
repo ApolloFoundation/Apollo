@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.TwoFactorAuthFileSystemRepository;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.TwoFactorAuthRepositoryImpl;
@@ -35,6 +36,8 @@ import static com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData.MAX_2F
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 @Tag("slow")
@@ -54,11 +57,19 @@ public class TwoFactorAuthServiceIntegrationTest {
 
     @Test
     public void testEnable() {
+        initConfigPrefix();
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
         TwoFactorAuthDetails authDetails = service.enable(td.ACC_3.getId());
         TwoFactorAuthUtil.verifySecretCode(authDetails, Convert2.defaultRsAccount(td.ACC_3.getId()));
         assertFalse(service.isEnabled(td.ACC_3.getId()));
+    }
+
+
+    private void initConfigPrefix() {
+        BlockchainConfig config = mock(BlockchainConfig.class);
+        doReturn("APL").when(config).getAccountPrefix();
+        Convert2.init(config);
     }
 
     @Test
@@ -71,6 +82,7 @@ public class TwoFactorAuthServiceIntegrationTest {
 
     @Test
     public void testEnableNotConfirmed() {
+        initConfigPrefix();
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
         TwoFactorAuthDetails authDetails = service.enable(td.ACC_2.getId());
@@ -83,6 +95,7 @@ public class TwoFactorAuthServiceIntegrationTest {
 
     @Test
     public void testDisable() throws GeneralSecurityException {
+        initConfigPrefix();
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
         TwoFactorAuthService spy = spy(service);
@@ -109,6 +122,7 @@ public class TwoFactorAuthServiceIntegrationTest {
 
     @Test
     public void testIsEnabledFalseWhenAccountIsNotExists() {
+        initConfigPrefix();
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
         boolean enabled = service.isEnabled(td.newAccount.getId());
@@ -117,6 +131,7 @@ public class TwoFactorAuthServiceIntegrationTest {
 
     @Test
     public void testIsEnabledFalseWhenAccountIsNotConfirmed() {
+        initConfigPrefix();
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
         boolean enabled = service.isEnabled(td.ACC_2.getId());
@@ -133,6 +148,7 @@ public class TwoFactorAuthServiceIntegrationTest {
 
     @Test
     public void testTryAuthCodesNotEquals() {
+        initConfigPrefix();
         int fakeNumber = new Random().nextInt();
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
@@ -171,6 +187,7 @@ public class TwoFactorAuthServiceIntegrationTest {
 
     @Test
     public void testConfirmNotExists() throws GeneralSecurityException {
+        initConfigPrefix();
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         int currentCode = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(ACCOUNT3_2FA_SECRET_BASE32);
         service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
@@ -181,6 +198,7 @@ public class TwoFactorAuthServiceIntegrationTest {
 
     @Test
     public void testMoveData() throws GeneralSecurityException {
+        initConfigPrefix();
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
         int result = service.attemptMoveDataFromDatabase();

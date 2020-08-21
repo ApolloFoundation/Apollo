@@ -10,19 +10,22 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Objects;
 
 /**
  * @author al
  */
+@Singleton
 public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDbTableInterface<PublicKey> {
 
     private static final LongKeyFactory<PublicKey> KEY_FACTORY = new LongKeyFactory<>("account_id") {
@@ -34,11 +37,11 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
             return publicKey.getDbKey();
         }
     };
-    private final Blockchain blockchain;
 
-    public PublicKeyTable(Blockchain blockchain) {
-        super("public_key", KEY_FACTORY, true, null, true);
-        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
+    @Inject
+    public PublicKeyTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                          DatabaseManager databaseManager) {
+        super("public_key", KEY_FACTORY, true, null, derivedDbTablesRegistry, databaseManager, null);
     }
 
     public DbKey newKey(long id) {
@@ -52,7 +55,6 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
 
     @Override
     public void save(Connection con, PublicKey publicKey) throws SQLException {
-        publicKey.setHeight(blockchain.getHeight());
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (account_id, public_key, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")
         ) {

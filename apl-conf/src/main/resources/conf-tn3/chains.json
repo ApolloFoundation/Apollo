@@ -18,7 +18,8 @@
     "genesisLocation": "conf/data/genesisAccounts-testnet.json",
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 3000,
-      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000,
+      "transactionV2Height": 1
     },
     "blockchainProperties": [
       {
@@ -46,11 +47,11 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 10000
+          "frequency": 2000
         }
       },
       {
-        "height": 50000,
+        "height": 10000,
         "maxNumberOfTransactions": 255,
         "maxArbitraryMessageLength": 160,
         "maxNumberOfChildAccounts": 10,

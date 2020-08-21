@@ -20,13 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -35,19 +35,14 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.core.signature.Signature;
-import com.apollocurrency.aplwallet.apl.util.Filter;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.AccountControl.SET_PHASING_ONLY;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
 
+//TODO Rename DerivedEntity to be more universal
 public class UnconfirmedTransaction extends DerivedEntity implements Transaction {
 
     private final Transaction transaction;
@@ -55,29 +50,17 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
     private final long feePerByte;
 
     public UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp) {
-        super(null, null);
+        super(transaction.getDbId(), transaction.getHeight());
         this.transaction = transaction;
         this.arrivalTimestamp = arrivalTimestamp;
         this.feePerByte = transaction.getFeeATM() / transaction.getFullSize();
     }
 
-    public UnconfirmedTransaction(ResultSet rs) throws SQLException {
-        super(rs);
-        try {
-            byte[] transactionBytes = rs.getBytes("transaction_bytes");
-            JSONObject prunableAttachments = null;
-            String prunableJSON = rs.getString("prunable_json");
-            if (prunableJSON != null) {
-                prunableAttachments = (JSONObject) JSONValue.parse(prunableJSON);
-            }
-            Transaction.Builder builder = TransactionBuilder.newTransactionBuilder(transactionBytes, prunableAttachments);
-            this.transaction = builder.build();
-            this.transaction.setHeight(rs.getInt("transaction_height"));
-            this.arrivalTimestamp = rs.getLong("arrival_timestamp");
-            this.feePerByte = rs.getLong("fee_per_byte");
-        } catch (AplException.ValidationException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+    public UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp, long feePerByte) {
+        super(transaction.getDbId(), transaction.getHeight());
+        this.transaction = transaction;
+        this.arrivalTimestamp = arrivalTimestamp;
+        this.feePerByte = feePerByte;
     }
 
     public Transaction getTransaction() {
@@ -103,7 +86,7 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
     }
 
     @Override
-    public boolean isUnconfirmedDuplicate(Map<TransactionType, Map<String, Integer>> unconfirmedDuplicates) {
+    public boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates) {
         return transaction.isUnconfirmedDuplicate(unconfirmedDuplicates);
     }
 
@@ -128,14 +111,20 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
     }
 
     @Override
+    public boolean hasValidSignature() {
+        return transaction.hasValidSignature();
+    }
+
+    @Override
+    public void withValidSignature() {
+        transaction.withValidSignature();
+    }
+
+    @Override
     public byte[] getSenderPublicKey() {
         return transaction.getSenderPublicKey();
     }
 
-    @Override
-    public boolean shouldSavePublicKey() {
-        return transaction.shouldSavePublicKey();
-    }
 
     @Override
     public long getRecipientId() {
@@ -265,16 +254,6 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
     }
 
     @Override
-    public JSONObject getJSONObject() {
-        return transaction.getJSONObject();
-    }
-
-    @Override
-    public JSONObject getPrunableAttachmentJSON() {
-        return transaction.getPrunableAttachmentJSON();
-    }
-
-    @Override
     public byte getVersion() {
         return transaction.getVersion();
     }
@@ -338,16 +317,6 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
     }
 
     @Override
-    public List<AbstractAppendix> getAppendages(boolean includeExpiredPrunable) {
-        return transaction.getAppendages(includeExpiredPrunable);
-    }
-
-    @Override
-    public List<AbstractAppendix> getAppendages(Filter<Appendix> filter, boolean includeExpiredPrunable) {
-        return transaction.getAppendages(filter, includeExpiredPrunable);
-    }
-
-    @Override
     public int getECBlockHeight() {
         return transaction.getECBlockHeight();
     }
@@ -355,6 +324,16 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
     @Override
     public long getECBlockId() {
         return transaction.getECBlockId();
+    }
+
+    @Override
+    public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
+        return transaction.ofType(spec);
+    }
+
+    @Override
+    public boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec) {
+        return transaction.isNotOfType(spec);
     }
 
     @Override
@@ -368,7 +347,7 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
     /**
      * @deprecated see method with longer parameters list below
      */
-    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
+    public boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, boolean atAcceptanceHeight) {
         if (!transaction.attachmentIsPhased() && !atAcceptanceHeight) {
             // can happen for phased transactions having non-phasable attachment
             return false;
@@ -390,7 +369,7 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
         return transaction.getType().isDuplicate(this, duplicates);
     }
 
-    public boolean attachmentIsDuplicate(Map<TransactionType, Map<String, Integer>> duplicates,
+    public boolean attachmentIsDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                                          boolean atAcceptanceHeight,
                                          Set<AccountControlType> senderAccountControls,
                                          AccountControlPhasing accountControlPhasing) {
@@ -417,13 +396,13 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
     }
 
     private boolean isBlockDuplicate(Transaction transaction,
-                                    Map<TransactionType, Map<String, Integer>> duplicates,
+                                    Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                                     Set<AccountControlType> senderAccountControls,
                                      AccountControlPhasing accountControlPhasing) {
         return
             senderAccountControls.contains(AccountControlType.PHASING_ONLY)
                 && (accountControlPhasing != null && accountControlPhasing.getMaxFees() != 0)
-                && transaction.getType() != SET_PHASING_ONLY
+                && transaction.getType().getSpec() != SET_PHASING_ONLY
                 && TransactionType.isDuplicate(SET_PHASING_ONLY,
                 Long.toUnsignedString(transaction.getSenderId()), duplicates, true);
     }

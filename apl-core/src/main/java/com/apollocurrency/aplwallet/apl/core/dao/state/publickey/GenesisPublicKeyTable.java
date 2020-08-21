@@ -9,7 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -17,19 +18,18 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Objects;
 
 /**
  * @author al
  */
 //@Singleton
 public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
-    private final Blockchain blockchain;
 
     //@Inject
-    public GenesisPublicKeyTable(Blockchain blockchain) {
-        super("genesis_public_key", new PublicKeyDbFactory("account_id"), false, null, true);
-        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
+    public GenesisPublicKeyTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                                 DatabaseManager databaseManager) {
+        super("genesis_public_key", new PublicKeyDbFactory("account_id"), false, null,
+            derivedDbTablesRegistry, databaseManager, null);
     }
 
     @Override
@@ -39,7 +39,6 @@ public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
 
     @Override
     public void save(Connection con, PublicKey publicKey) throws SQLException {
-        publicKey.setHeight(blockchain.getHeight());
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table
                 + " (account_id, public_key, height, latest) "
