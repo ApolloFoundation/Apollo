@@ -24,14 +24,14 @@ import static org.mockito.Mockito.when;
 class FeeCalculatorTest {
     static final int CURRENT_HEIGHT = 100;
     TransactionTestData td = new TransactionTestData();
+    BlockchainConfig blockchainConfig = td.getBlockchainConfig();
 
-    FeeCalculator feeCalculator;
-    @Mock
-    BlockchainConfig blockchainConfig;
     @Mock
     HeightConfig heightConfig;
     @Mock
     PrunableLoadingService prunableLoadingService;
+
+    FeeCalculator feeCalculator;
 
     @BeforeEach
     void setUp() {
