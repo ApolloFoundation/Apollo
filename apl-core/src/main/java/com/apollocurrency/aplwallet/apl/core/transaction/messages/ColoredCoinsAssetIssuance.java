@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
  * @author al
@@ -43,7 +44,7 @@ public final class ColoredCoinsAssetIssuance extends AbstractAttachment {
     }
 
     public ColoredCoinsAssetIssuance(String name, String description, long quantityATU, byte decimals) {
-        this.name = name;
+        this.name = Objects.requireNonNull(name);
         this.description = Convert.nullToEmpty(description);
         this.quantityATU = quantityATU;
         this.decimals = decimals;

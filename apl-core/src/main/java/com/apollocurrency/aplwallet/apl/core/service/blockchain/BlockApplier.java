@@ -11,8 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -21,20 +19,19 @@ import javax.inject.Singleton;
 @Slf4j
 @Singleton
 public class BlockApplier {
-    @Inject
-    @Setter
-    private Blockchain blockchain;
-    @Inject
-    @Setter
-    private ShardDao shardDao;
+
+    private final Blockchain blockchain;
+    private final ShardDao shardDao;
+    private final AccountService accountService;
+    private final AccountPublicKeyService accountPublicKeyService;
 
     @Inject
-    @Setter
-    private AccountService accountService;
-
-    @Inject
-    @Setter
-    private AccountPublicKeyService accountPublicKeyService;
+    public BlockApplier(Blockchain blockchain, ShardDao shardDao, AccountService accountService, AccountPublicKeyService accountPublicKeyService) {
+        this.blockchain = blockchain;
+        this.shardDao = shardDao;
+        this.accountService = accountService;
+        this.accountPublicKeyService = accountPublicKeyService;
+    }
 
     public void apply(Block block) {
         long totalBackFees = 0;
@@ -65,14 +62,13 @@ public class BlockApplier {
                 } else {
                     previousGeneratorAccount = accountService.getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
                 }
-                log.trace("Back fees {} to forger at height {}", ((double) backFees[i]) / Constants.ONE_APL,
-                    height - i - 1);
+                log.trace("Back fees {} ATM to forger at height {}", backFees[i], height - i - 1);
                 accountService.addToBalanceAndUnconfirmedBalanceATM(previousGeneratorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), backFees[i]);
                 accountService.addToForgedBalanceATM(previousGeneratorAccount, backFees[i]);
             }
         }
         if (totalBackFees != 0) {
-            log.trace("Fee reduced by {} at height {}", ((double) totalBackFees) / Constants.ONE_APL, height);
+            log.trace("Fee reduced by {} ATM at height {}", totalBackFees, height);
         }
         //fetch generatorAccount after a possible change in previousGeneratorAccount
         Account generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());

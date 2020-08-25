@@ -33,14 +33,13 @@ public class AccountPropertyTransactionType extends MessagingTransactionType {
         this.accountPropertyService = accountPropertyService;
     }
 
-    private final Fee ACCOUNT_PROPERTY_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, Constants.ONE_APL, 32) {
+    private final Fee ACCOUNT_PROPERTY_FEE = new Fee.SizeBasedFee(getBlockchainConfig().getOneAPL(), getBlockchainConfig().getOneAPL(), 32) {
         @Override
         public int getSize(Transaction transaction, Appendix appendage) {
             MessagingAccountProperty attachment = (MessagingAccountProperty) transaction.getAttachment();
             return attachment.getValue().length();
         }
     };
-
 
     @Override
     public TransactionTypes.TransactionTypeSpec getSpec() {

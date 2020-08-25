@@ -16,6 +16,8 @@
     "symbol": "Apollo",
     "prefix": "APL",
     "project": "Apollo",
+    "initialSupply": 30000000000,
+    "decimals": 8,
     "genesisLocation": "conf/data/genesisAccounts-testnet.json",
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 1100000,

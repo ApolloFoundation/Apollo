@@ -487,14 +487,14 @@ public class ShufflingServiceImpl implements ShufflingService {
                 }
                 accountService.addToBalanceAndUnconfirmedBalanceATM(previousGeneratorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
                 accountService.addToForgedBalanceATM(previousGeneratorAccount, fee);
-                log.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double) fee) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
+                log.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double) fee) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol(),
                     block.getHeight() - i - 1);
             }
             fee = blockchainConfig.getShufflingDepositAtm() - 3 * fee;
             Account blockGeneratorAccount = accountService.getAccount(block.getGeneratorId());
             accountService.addToBalanceAndUnconfirmedBalanceATM(blockGeneratorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), fee);
             accountService.addToForgedBalanceATM(blockGeneratorAccount, fee);
-            log.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double) fee) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
+            log.debug("Shuffling penalty {} {} awarded to forger at height {}", ((double) fee) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol(),
                 block.getHeight());
         }
         setStage(shuffling, ShufflingStage.CANCELLED, blamedAccountId, (short) 0);

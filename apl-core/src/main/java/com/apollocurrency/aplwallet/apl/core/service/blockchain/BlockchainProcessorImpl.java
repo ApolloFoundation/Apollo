@@ -1240,7 +1240,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             pushBlock(block);
             blockEvent.select(literal(BlockEventType.BLOCK_GENERATED)).fire(block);
             log.debug("Account " + Long.toUnsignedString(block.getGeneratorId()) + " generated block " + block.getStringId()
-                + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float) block.getTotalFeeATM()) / Constants.ONE_APL);
+                + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float) block.getTotalFeeATM()) / blockchainConfig.getOneAPL());
         } catch (TransactionNotAcceptedException e) {
             log.debug("Generate block failed: " + e.getMessage());
             transactionProcessor.processWaitingTransactions();

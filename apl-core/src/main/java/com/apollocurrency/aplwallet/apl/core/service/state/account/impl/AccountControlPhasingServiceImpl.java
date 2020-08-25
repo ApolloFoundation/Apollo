@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -149,7 +148,7 @@ public class AccountControlPhasingServiceImpl implements AccountControlPhasingSe
             phasingPollService.getSenderPhasedTransactionFees(transaction.getSenderId())) > phasingOnly.getMaxFees()) {
             throw new AplException.AccountControlException(
                 String.format("Maximum total fees limit of %f %s exceeded",
-                    ((double) phasingOnly.getMaxFees()) / Constants.ONE_APL, blockchainConfig.getCoinSymbol()));
+                    ((double) phasingOnly.getMaxFees()) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol()));
         }
         if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PHASING_VOTE_CASTING) {
             return;
