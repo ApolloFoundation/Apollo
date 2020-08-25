@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentChildSpecific;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentMarker;
 import lombok.extern.slf4j.Slf4j;
@@ -111,7 +110,7 @@ public class TransactionValidator {
             throw new AplException.NotValidException("Transactions of this type must have a valid recipient");
         }
 
-        if (!AntifraudValidator.validate(blockchain.getHeight(), transaction.getSenderId(),
+        if (!AntifraudValidator.validate(blockchain.getHeight(), blockchainConfig.getChain().getChainId(), transaction.getSenderId(),
             transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
 
         Account sender = accountService.getAccount(transaction.getSenderId());
@@ -173,7 +172,7 @@ public class TransactionValidator {
             long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchainHeight);
             if (feeATM < minimumFeeATM) {
                 throw new AplException.NotCurrentlyValidException(String.format("Transaction fee %f %s less than minimum fee %f %s at height %d",
-                    ((double) feeATM) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(), ((double) minimumFeeATM) / Constants.ONE_APL, blockchainConfig.getCoinSymbol(),
+                    ((double) feeATM) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol(), ((double) minimumFeeATM) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol(),
                     blockchainHeight));
             }
             long ecBlockId = transaction.getECBlockId();

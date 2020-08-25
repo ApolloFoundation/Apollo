@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -19,20 +18,6 @@ import java.util.List;
 
 public class PhasingAppendix extends AbstractAppendix {
 
-    private static final Fee PHASING_FEE = (transaction, appendage) -> {
-        long fee = 0;
-        PhasingAppendix phasing = (PhasingAppendix) appendage;
-        if (!phasing.params.getVoteWeighting().isBalanceIndependent()) {
-            fee += 20 * Constants.ONE_APL;
-        } else {
-            fee += Constants.ONE_APL;
-        }
-        if (phasing.hashedSecret.length > 0) {
-            fee += (1 + (phasing.hashedSecret.length - 1) / 32) * Constants.ONE_APL;
-        }
-        fee += Constants.ONE_APL * phasing.linkedFullHashes.length;
-        return fee;
-    };
     private final int finishHeight;
     private final PhasingParams params;
     private final byte[][] linkedFullHashes;
@@ -150,8 +135,21 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        return PHASING_FEE;
+    public Fee getBaselineFee(Transaction tx, final long oneAPL) {
+        return (transaction, appendage) -> {
+            long fee = 0;
+            PhasingAppendix phasing = (PhasingAppendix) appendage;
+            if (!phasing.params.getVoteWeighting().isBalanceIndependent()) {
+                fee += 20 * oneAPL;
+            } else {
+                fee += oneAPL;
+            }
+            if (phasing.hashedSecret.length > 0) {
+                fee += (1 + (phasing.hashedSecret.length - 1) / 32) * oneAPL;
+            }
+            fee += oneAPL * phasing.linkedFullHashes.length;
+            return fee;
+        };
     }
 
     @Override

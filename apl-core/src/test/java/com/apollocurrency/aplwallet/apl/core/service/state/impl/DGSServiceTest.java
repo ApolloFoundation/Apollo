@@ -1249,7 +1249,8 @@ public class DGSServiceTest {
         doReturn(txId).when(deliverTransaction).getId();
         doReturn(senderId).when(deliverTransaction).getSenderId();
 
-        DigitalGoodsDelivery deliveryAttachment = new DigitalGoodsDelivery(dtd.PURCHASE_2.getId(), new EncryptedData("goods".getBytes(), new byte[32]), true, Constants.ONE_APL * 2);
+        long testLocalOneAPL = 100000000L;
+        DigitalGoodsDelivery deliveryAttachment = new DigitalGoodsDelivery(dtd.PURCHASE_2.getId(), new EncryptedData("goods".getBytes(), new byte[32]), true, testLocalOneAPL * 2);
         DbUtils.inTransaction(extension, (con) -> {
             service.deliver(deliverTransaction, deliveryAttachment);
         });
@@ -1258,7 +1259,7 @@ public class DGSServiceTest {
         dtd.PURCHASE_2.setHeight(height);
         dtd.PURCHASE_2.setPending(false);
         dtd.PURCHASE_2.setEncryptedGoods(deliveryAttachment.getGoods(), true);
-        dtd.PURCHASE_2.setDiscountATM(2 * Constants.ONE_APL);
+        dtd.PURCHASE_2.setDiscountATM(2 * testLocalOneAPL);
         assertEquals(dtd.PURCHASE_2, purchase);
         verifyAccountBalance(senderId, 500000000L, 550000000L);
         verifyAccountBalance(dtd.PURCHASE_2.getBuyerId(), 14725200000000L, 15024700000000L);

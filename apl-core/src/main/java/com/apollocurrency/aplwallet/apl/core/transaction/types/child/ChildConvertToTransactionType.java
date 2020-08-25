@@ -19,7 +19,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class ChildConvertToTransactionType extends ChildAccount {
+public class ChildConvertToTransactionType extends ChildAccountTransactionType {
     @Inject
     public ChildConvertToTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
         super(blockchainConfig, accountService);
@@ -29,7 +29,7 @@ public class ChildConvertToTransactionType extends ChildAccount {
     public void validateAttachment(Transaction transaction) throws AplException.NotValidException {
         super.validateAttachment(transaction);
         ChildAccountAttachment attachment = (ChildAccountAttachment) transaction.getAttachment();
-        if (attachment.getChildCount() != 1){
+        if (attachment.getChildCount() != 1) {
             throw new AplException.NotValidException("Wrong value of the child count value, only one account can be converted at once.");
         }
         throw new AplException.NotValidException("Not implemented yet.");

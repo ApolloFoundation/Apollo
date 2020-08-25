@@ -157,14 +157,13 @@
             <appender-ref ref="poll-file"/>
         </logger>
     -->
-  <!--
-        <logger name="com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl" level="trace" additivity="false">
-          <appender-ref ref="account-file"/>
-        </logger>
-        <logger name="com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyExchangeOfferFacadeImpl" level="trace" additivity="false">
-          <appender-ref ref="account-file"/>
-        </logger>
-  -->
+  <logger name="com.apollocurrency.aplwallet.apl.core.shard.observer.ShardObserver" level="trace" additivity="false">
+    <appender-ref ref="account-file"/>
+  </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.core.shard.ShardService" level="debug" additivity="false">
+    <appender-ref ref="account-file"/>
+  </logger>
+
   <logger name="jdbc" level="off" additivity="false"/>
   <logger name="jdbc.connection" level="info" additivity="false"/>
   <logger name="jdbc.sqltiming" level="info" additivity="false"/>

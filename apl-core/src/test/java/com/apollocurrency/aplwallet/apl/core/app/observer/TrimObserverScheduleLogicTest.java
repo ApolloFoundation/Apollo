@@ -239,7 +239,7 @@ class TrimObserverScheduleLogicTest {
 
         nextTrimHeight = simulateFireBlockPushed(15000);
         log.debug("nextTrimHeight = {}", nextTrimHeight);
-        assertEquals(15000, nextTrimHeight);
+        assertEquals(15629, nextTrimHeight);
 
         doReturn(555).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random increase
         nextTrimHeight = simulateFireBlockPushed(16000);

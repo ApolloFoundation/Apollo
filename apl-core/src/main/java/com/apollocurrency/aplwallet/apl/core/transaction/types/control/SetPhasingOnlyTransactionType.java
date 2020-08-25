@@ -71,10 +71,11 @@ public class SetPhasingOnlyTransactionType extends AccountControlTransactionType
             throw new AplException.NotValidException("Invalid voting model " + votingModel + " for account control");
         }
         long maxFees = attachment.getMaxFees();
-        long maxFeesLimit = (attachment.getPhasingParams().getVoteWeighting().isBalanceIndependent() ? 3 : 22) * Constants.ONE_APL;
         BlockchainConfig blockchainConfig = getBlockchainConfig();
+        long maxFeesLimit = Math.multiplyExact((attachment.getPhasingParams().getVoteWeighting().isBalanceIndependent() ? 3 : 22), blockchainConfig.getOneAPL());
+
         if (maxFees < 0 || (maxFees > 0 && maxFees < maxFeesLimit) || maxFees > blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
-            throw new AplException.NotValidException(String.format("Invalid max fees %f %s", ((double) maxFees) / Constants.ONE_APL, blockchainConfig.getCoinSymbol()));
+            throw new AplException.NotValidException(String.format("Invalid max fees %f %s", ((double) maxFees) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol()));
         }
         short minDuration = attachment.getMinDuration();
         if (minDuration < 0 || (minDuration > 0 && minDuration < 3) || minDuration >= Constants.MAX_PHASING_DURATION) {

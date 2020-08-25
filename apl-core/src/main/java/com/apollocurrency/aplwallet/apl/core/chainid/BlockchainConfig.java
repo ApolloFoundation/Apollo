@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -62,7 +61,7 @@ public class BlockchainConfig {
         }
         heightConfigMap = blockchainProperties.values()
             .stream()
-            .map(HeightConfig::new)
+            .map((BlockchainProperties bp) -> new HeightConfig(bp, getOneAPL(), getInitialSupply()))
             .sorted(Comparator.comparing(HeightConfig::getHeight))
             .collect(Collectors.toMap(HeightConfig::getHeight, Function.identity(), (old, newv)-> newv, TreeMap::new));
         currentConfig = heightConfigMap.get(0);
@@ -116,8 +115,8 @@ public class BlockchainConfig {
         this.minPrunableLifetime = minPrunableLifetime > 0 ? minPrunableLifetime : DEFAULT_MIN_PRUNABLE_LIFETIME;
         this.shufflingProcessingDeadline = (short) 100;
         this.lastKnownBlock = 0;
-        this.unconfirmedPoolDepositAtm = 100 * Constants.ONE_APL;
-        this.shufflingDepositAtm = 1000 * Constants.ONE_APL;
+        this.unconfirmedPoolDepositAtm = Math.multiplyExact(100, chain.getOneAPL());
+        this.shufflingDepositAtm = Math.multiplyExact(1000, chain.getOneAPL());
         this.guaranteedBalanceConfirmations = 1440;
         this.enablePruning = maxPrunableLifetime >= 0;
         this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, this.minPrunableLifetime) : Integer.MAX_VALUE;
@@ -135,6 +134,18 @@ public class BlockchainConfig {
 
     public String getProjectName() {
         return chain.getProject();
+    }
+
+    public long getInitialSupply() {
+        return chain.getInitialSupply();
+    }
+
+    public int getDecimals() {
+        return chain.getDecimals();
+    }
+
+    public long getOneAPL() {
+        return chain.getOneAPL();
     }
 
     public String getAccountPrefix() {

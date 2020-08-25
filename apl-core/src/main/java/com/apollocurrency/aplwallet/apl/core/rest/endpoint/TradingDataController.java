@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.exchange.service.graph.DexTradingDataService;
 import com.apollocurrency.aplwallet.apl.exchange.service.graph.TimeFrame;
+import com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewService;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -37,8 +38,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import static com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewUtils.getUpdatedDataForIntervalFromOffers;
-
 @Singleton
 @Path("/dex")
 @OpenAPIDefinition(info = @Info(description = "Provide dex trading data (candlesticks) for ETH, PAX, etc"))
@@ -47,6 +46,7 @@ public class TradingDataController {
     public static final String FROM_PARAM = "from";
     public static final String TO_PARAM = "to";
 
+    private TradingViewService tradingViewService;
     private DexTradingDataService dataService;
     private TimeService timeService;
     private DexService dexService;
@@ -56,10 +56,11 @@ public class TradingDataController {
     }
 
     @Inject
-    public TradingDataController(DexTradingDataService dataService, TimeService timeService, DexService dexService) {
+    public TradingDataController(DexTradingDataService dataService, TimeService timeService, DexService dexService, TradingViewService tradingViewService) {
         this.dataService = dataService;
         this.timeService = timeService;
         this.dexService = dexService;
+        this.tradingViewService = tradingViewService;
     }
 
     @GET
@@ -122,8 +123,7 @@ public class TradingDataController {
             return Response.ok(converter.apply(tdo)).build();
         }
 
-
-        TradingDataOutput tradingDataOutput = getUpdatedDataForIntervalFromOffers(symbol, resolution, to, from, dexService, timeService);
+        TradingDataOutput tradingDataOutput = tradingViewService.getUpdatedDataForIntervalFromOffers(symbol, resolution, to, from);
         return Response.ok(new TradingDataOutputToDtoConverter().apply(tradingDataOutput)).build();
     }
 
@@ -157,7 +157,6 @@ public class TradingDataController {
         symbolsOutputDTO.has_empty_bars = true;
         symbolsOutputDTO.has_weekly_and_monthly = false;
         symbolsOutputDTO.supported_resolutions = new ArrayList<>();
-        ;
         symbolsOutputDTO.supported_resolutions.add("15");
         symbolsOutputDTO.supported_resolutions.add("60");
         symbolsOutputDTO.supported_resolutions.add("240");

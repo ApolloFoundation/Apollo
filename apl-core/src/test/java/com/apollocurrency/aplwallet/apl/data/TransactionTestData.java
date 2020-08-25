@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.update.CriticalUp
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.ImportantUpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import lombok.Getter;
 import lombok.NonNull;
 
 import java.nio.ByteBuffer;
@@ -119,9 +120,9 @@ public class TransactionTestData {
     public ReferencedTransaction REFERENCED_TRANSACTION_4 ;
     public ReferencedTransaction REFERENCED_TRANSACTION_5 ;
     public ReferencedTransaction REFERENCED_TRANSACTION_6 ;
-    public ReferencedTransaction REFERENCED_TRANSACTION_7 ;
-    public ReferencedTransaction REFERENCED_TRANSACTION_8 ;
-    public ReferencedTransaction REFERENCED_TRANSACTION_9 ;
+    public ReferencedTransaction REFERENCED_TRANSACTION_7;
+    public ReferencedTransaction REFERENCED_TRANSACTION_8;
+    public ReferencedTransaction REFERENCED_TRANSACTION_9;
     public ReferencedTransaction REFERENCED_TRANSACTION_10;
     public ReferencedTransaction REFERENCED_TRANSACTION_11;
     public ReferencedTransaction REFERENCED_TRANSACTION_12;
@@ -130,12 +131,15 @@ public class TransactionTestData {
     public List<ReferencedTransaction> REFERENCED_TRANSACTIONS;
     private final TransactionTypeFactory transactionTypeFactory;
 
+    @Getter
+    private BlockchainConfig blockchainConfig;
+
     public TransactionTypeFactory getTransactionTypeFactory() {
         return transactionTypeFactory;
     }
 
     public TransactionTestData() {
-        BlockchainConfig config = mock(BlockchainConfig.class);
+        blockchainConfig = mock(BlockchainConfig.class);
         AccountService accountService = mock(AccountService.class);
         CurrencyService currencyService = mock(CurrencyService.class);
         AccountCurrencyService accountCurrencyService = mock(AccountCurrencyService.class);
@@ -145,15 +149,15 @@ public class TransactionTestData {
         DGSService dgsService = mock(DGSService.class);
         PrunableLoadingService prunableLoadingService = mock(PrunableLoadingService.class);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
-            new OrdinaryPaymentTransactionType(config, accountService),
-            new PrivatePaymentTransactionType(config, accountService),
-            new MSCurrencyIssuanceTransactionType(config, accountService, currencyService, accountCurrencyService),
-            new CCAssetIssuanceTransactionType(config, accountService, assetService, accountAssetService),
-            new AliasAssignmentTransactionType(config, accountService, aliasService),
-            new ArbitraryMessageTransactionType(config, accountService),
-            new CriticalUpdateTransactiionType(config, accountService),
-            new ImportantUpdateTransactionType(config, accountService),
-            new ListingTransactionType(config, accountService, dgsService, prunableLoadingService)
+            new OrdinaryPaymentTransactionType(blockchainConfig, accountService),
+            new PrivatePaymentTransactionType(blockchainConfig, accountService),
+            new MSCurrencyIssuanceTransactionType(blockchainConfig, accountService, currencyService, accountCurrencyService),
+            new CCAssetIssuanceTransactionType(blockchainConfig, accountService, assetService, accountAssetService),
+            new AliasAssignmentTransactionType(blockchainConfig, accountService, aliasService),
+            new ArbitraryMessageTransactionType(blockchainConfig, accountService),
+            new CriticalUpdateTransactiionType(blockchainConfig, accountService),
+            new ImportantUpdateTransactionType(blockchainConfig, accountService),
+            new ListingTransactionType(blockchainConfig, accountService, dgsService, prunableLoadingService)
         ));
         initTransactions();
     }

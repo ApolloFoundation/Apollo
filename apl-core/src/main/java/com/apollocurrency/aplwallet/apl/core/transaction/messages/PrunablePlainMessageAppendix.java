@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -21,13 +20,6 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendi
 public class PrunablePlainMessageAppendix extends AbstractAppendix implements Prunable {
 
     static final String APPENDIX_NAME = "PrunablePlainMessage";
-    private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL / 10) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendix) {
-            return appendix.getFullSize();
-        }
-    };
-
     private byte[] hash;
     private byte[] message;
     private boolean isText;
@@ -87,8 +79,13 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
     }
 
     @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        return PRUNABLE_MESSAGE_FEE;
+    public Fee getBaselineFee(Transaction transaction, long oneAPL) {
+        return new Fee.SizeBasedFee(oneAPL / 10) {
+            @Override
+            public int getSize(Transaction transaction, Appendix appendix) {
+                return appendix.getFullSize();
+            }
+        };
     }
 
     @Override

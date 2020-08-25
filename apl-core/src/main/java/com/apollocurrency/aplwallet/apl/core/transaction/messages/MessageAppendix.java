@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -18,12 +17,6 @@ import java.util.Arrays;
 public class MessageAppendix extends AbstractAppendix {
 
     static final String appendixName = "Message";
-    private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, Constants.ONE_APL, 32) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendage) {
-            return ((MessageAppendix) appendage).getMessage().length;
-        }
-    };
     private final byte[] message;
     private final boolean isText;
 
@@ -98,8 +91,13 @@ public class MessageAppendix extends AbstractAppendix {
     }
 
     @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        return MESSAGE_FEE;
+    public Fee getBaselineFee(Transaction transaction, long oneAPL) {
+        return new Fee.SizeBasedFee(0, oneAPL, 32) {
+            @Override
+            public int getSize(Transaction transaction, Appendix appendage) {
+                return ((MessageAppendix) appendage).getMessage().length;
+            }
+        };
     }
 
     @Override

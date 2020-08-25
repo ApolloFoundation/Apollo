@@ -5,7 +5,6 @@ package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
@@ -15,10 +14,8 @@ import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Data;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Observes;
 import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -27,10 +24,9 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
+@Slf4j
 @Singleton
 public class ShardObserver {
-
-    private static final Logger log = LoggerFactory.getLogger(ShardObserver.class);
 
     private final BlockchainConfig blockchainConfig;
     private final ShardService shardService;
@@ -54,21 +50,25 @@ public class ShardObserver {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
         this.random = Objects.requireNonNullElseGet(random, Random::new);
         // random value within 0..500 number of blocks range
-        this.randomShardHeightDivergence =  generatePositiveIntBiggerThenZero(Constants.DEFAULT_TRIM_FREQUENCY / 2);
+        this.randomShardHeightDivergence = generatePositiveIntBiggerThenZero(Constants.DEFAULT_TRIM_FREQUENCY / 2);
         log.debug("random Shard Height Divergence value = {}", randomShardHeightDivergence);
     }
 
+/*
     public void onTrimDoneAsync(@ObservesAsync @TrimEvent TrimData trimData) {
         lastTrimHeight = trimData.getTrimHeight(); // new code
         log.debug("FIRED lastTrimHeight = {}", lastTrimHeight);
 //        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight()); // original code
     }
+*/
 
+/*
     public void onTrimDone(@Observes @TrimEvent TrimData trimData) {
         lastTrimHeight = trimData.getTrimHeight(); // new code
         log.debug("FIRED Async lastTrimHeight = {}", lastTrimHeight);
 //        tryCreateShardAsync(trimData.getTrimHeight(), trimData.getBlockchainHeight()); // original code
     }
+*/
 
 /*
     public CompletableFuture<MigrateState> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
@@ -118,7 +118,7 @@ public class ShardObserver {
                 newShardHeight, configNearShardHeight, blockHeight);
             tryCreateShardAsync(newShardHeight, blockHeight);
         } else {
-            log.debug("Sharding is NOT STARTED, disabled by config = {}, timeForShard = {}",
+            log.debug("Sharding is NOT STARTED, enabled by config ? = '{}', timeForShard = {}",
                 isShardingEnabled, timeForShard);
         }
     }
@@ -171,8 +171,15 @@ public class ShardObserver {
                 howLateWeCanBe = nextShardHeight + randomShardHeightDivergence;
             }
         } else {
-            int configHeight = configNearShardHeight.get().getHeight();
-            nextShardHeight = configHeight + shardingFrequency;
+            // no sharding
+            boolean isPreviousShardDisabled = blockchainConfig.getPreviousConfig().isPresent() &&
+                !blockchainConfig.getPreviousConfig().get().isShardingEnabled();
+            if (isPreviousShardDisabled) { // previous config was disabled
+                int configHeight = configNearShardHeight.get().getHeight();
+                nextShardHeight = configHeight + shardingFrequency;
+            } else {
+                nextShardHeight = lastShardHeight + shardingFrequency;
+            }
             howLateWeCanBe = nextShardHeight + randomShardHeightDivergence;
         }
         int heightGoodToShard = blockchainHeight - this.propertiesHolder.MAX_ROLLBACK();
@@ -184,11 +191,7 @@ public class ShardObserver {
                     heightGoodToShard, blockchainHeight);
             } else {
                 result.setTimeToDoNextShard(true);
-                if (lastShardHeight <= 0) {
-                    result.setNextShardHeightValue(nextShardHeight - 1); // one time
-                } else {
-                    result.setNextShardHeightValue(nextShardHeight);
-                }
+                result.setNextShardHeightValue(nextShardHeight);
                 log.debug("isTimeForShard(): Time for sharding is OK. blockchainHeight: {}, nextShardHeight={}, result={}",
                     blockchainHeight, nextShardHeight, result);
             }

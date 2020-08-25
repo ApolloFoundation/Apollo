@@ -85,7 +85,7 @@ public abstract class AbstractAppendix implements Appendix {
     }
 
     @Override
-    public Fee getBaselineFee(Transaction transaction) {
+    public Fee getBaselineFee(Transaction transaction, long oneAPL) {
         return Fee.NONE;
     }
 

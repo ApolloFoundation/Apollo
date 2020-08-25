@@ -20,7 +20,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.utils.FilterCarriageReturnCharacterInputStream;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
@@ -282,7 +281,7 @@ public class GenesisImporter {
         if (total > maxBalanceATM) {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
-        final String message = String.format("Total balance %f %s", (double) total / Constants.ONE_APL, blockchainConfig.getCoinSymbol());
+        final String message = String.format("Total balance %f %s", (double) total / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol());
         final Account creatorAccount = accountService.addGenesisAccount(CREATOR_ID);
         accountPublicKeyService.apply(creatorAccount, CREATOR_PUBLIC_KEY, true);
         accountService.addToBalanceAndUnconfirmedBalanceATM(creatorAccount, null, 0, -total);

@@ -56,7 +56,7 @@ public final class Constants {
 
     public static final int MIN_TRANSACTION_SIZE = 176; // the transaction HEADER size (without Appendages)
     public static final int BASE_TARGET_GAMMA = 64;
-    public static final long MIN_FORGING_BALANCE_ATM = 1000 * ONE_APL;
+    public static final long MIN_FORGING_BALANCE = 1000;
 
     public static final int MAX_TIMEDRIFT = 15; // allow up to 15 s clock difference
 
@@ -91,7 +91,6 @@ public final class Constants {
     public static final int MAX_ACCOUNT_PROPERTY_NAME_LENGTH = 32;
     public static final int MAX_ACCOUNT_PROPERTY_VALUE_LENGTH = 160;
 
-    public static final long MAX_ASSET_QUANTITY_ATU = 30000000000L * 100000000L;
     public static final int MIN_ASSET_NAME_LENGTH = 3;
     public static final int MAX_ASSET_NAME_LENGTH = 10;
     public static final int MAX_ASSET_DESCRIPTION_LENGTH = 1000;
@@ -120,7 +119,6 @@ public final class Constants {
     public static final int MIN_CURRENCY_CODE_LENGTH = 3;
     public static final int MAX_CURRENCY_CODE_LENGTH = 5;
     public static final int MAX_CURRENCY_DESCRIPTION_LENGTH = 1000;
-    public static final long MAX_CURRENCY_TOTAL_SUPPLY = 30000000000L * 100000000L;
     public static final int MAX_MINTING_RATIO = 10000; // per mint units not more than 0.01% of total supply
     public static final byte MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS = 3;
     public static final byte MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS = 30; // max possible at current block payload limit is 51

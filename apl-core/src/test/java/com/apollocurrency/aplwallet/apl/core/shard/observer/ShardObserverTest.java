@@ -47,6 +47,7 @@ public class ShardObserverTest {
     public static final int DEFAULT_SHARDING_FREQUENCY = 5_000;
     public static final int DEFAULT_TRIM_HEIGHT = 100_000;
     private static final String CONFIG_NAME = "another-list-for-shar-observer-config.json";
+    private static final String CONFIG_NAME_2 = "tn3-shard-observer-config.json";
     private ChainsConfigLoader chainsConfigLoader;
     private Map<UUID, Chain> loadedChains;
     private Chain chain;
@@ -63,17 +64,21 @@ public class ShardObserverTest {
     private ShardObserver shardObserver;
     private BlockchainConfigUpdater blockchainConfigUpdater;
 
-    @BeforeEach
-    void setUp() {
-        chainsConfigLoader = new ChainsConfigLoader(CONFIG_NAME);
+//    @BeforeEach
+//    void setUp() {
+//    }
+
+    private void prepareAndInit(String configName, int maxRollback, int randomValue) {
+//        chainsConfigLoader = new ChainsConfigLoader(CONFIG_NAME);
+        chainsConfigLoader = new ChainsConfigLoader(configName);
         loadedChains = chainsConfigLoader.load();
         chain = loadedChains.get(UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6"));
         assertNotNull(chain);
         doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate", false);
         doReturn(5000).when(propertiesHolder).getIntProperty("apl.maxPrunableLifetime");
         doReturn(5000).when(propertiesHolder).getIntProperty("apl.minPrunableLifetime");
-        doReturn(3).when(propertiesHolder).MAX_ROLLBACK(); // max rollback = 3
-        doReturn(2).when(random).nextInt(any(Integer.class)); // random shard delay = 2
+        doReturn(maxRollback).when(propertiesHolder).MAX_ROLLBACK();
+        doReturn(randomValue).when(random).nextInt(any(Integer.class));
         assertNotNull(chain.getBlockchainProperties());
         blockchainConfig = new BlockchainConfig(chain, propertiesHolder);
         shardObserver = new ShardObserver(blockchainConfig, shardService, propertiesHolder, random);
@@ -86,6 +91,10 @@ public class ShardObserverTest {
                                    int targetShardHeight,
                                    boolean isShouldBeCalled,
                                    boolean isSwitchedToNewConfigHeight) {
+        // prepare components :
+        // max rollback = 3
+        // random shard delay = (2 + 1) = 3
+        prepareAndInit(CONFIG_NAME, 3, 2);
         // prepare tes data
         Shard shard = mock(Shard.class);
         doReturn(latestShardHeight).when(shard).getShardHeight();
@@ -120,7 +129,7 @@ public class ShardObserverTest {
             // 5. isConfigJustUpdate - simulate HeightConfig is updated from previous to next height
             arguments(0, 0, 0, false, false),
             arguments(0, 1, 0, false, false),
-            arguments(0, 206, 0, false, false), // sharding delay (6) = max rollback (3) + random shard delay (2) - 1
+            arguments(0, 206, 0, false, false), // sharding delay (6) = max rollback (3) + random shard delay (2 + 1)
             arguments(0, 220, 0, false, false),
             arguments(0, 225, 0, false, false),
             arguments(0, 226, 220, true, false),
@@ -162,5 +171,49 @@ public class ShardObserverTest {
             arguments(7000, 8007, 8000, true, true)
         );
     }
+
+    @ParameterizedTest
+    @MethodSource("supplyTestDataTN3")
+    void testStartShardingByTN3(int latestShardHeight, int currentBlockHeight,
+                                   int targetShardHeight,
+                                   boolean isShouldBeCalled,
+                                   boolean isSwitchedToNewConfigHeight) {
+        // prepare components
+        prepareAndInit(CONFIG_NAME_2, 2000, 143);
+        // prepare tes data
+        Shard shard = mock(Shard.class);
+        doReturn(latestShardHeight).when(shard).getShardHeight();
+        doReturn(shard).when(shardService).getLastShard();
+        Block block = td.BLOCK_1;
+        block.setHeight(currentBlockHeight);
+        blockchainConfigUpdater.onBlockPopped(block); // simulate setting 'current' and 'previous' config
+        if (!isSwitchedToNewConfigHeight) {
+            blockchainConfig.resetJustUpdated(); // reset flag set by default inside onBlockPopped(block)
+        }
+
+        shardObserver.onBlockPushed(block);
+
+        if (isShouldBeCalled) {
+            verify(shardService).tryCreateShardAsync(targetShardHeight, currentBlockHeight);
+        } else {
+            verify(shardService, never()).tryCreateShardAsync(anyInt(), anyInt());
+        }
+    }
+
+    static Stream<Arguments> supplyTestDataTN3() {
+        return Stream.of(
+            // arguments by order:
+            // 1. lastShardHeight - simulate previously created shard (height)
+            // 2. currentHeightBlockPushed - simulate block to be pushed at that height
+            // 3. newShardHeight - we expect shard to be created at that height !!
+            // 4. isShardingCalled - check if sharding was really executed
+            // 5. isConfigJustUpdate - simulate HeightConfig is updated from previous to next height
+//            arguments(0, 100, 0, false, false),
+//            arguments(0, 4144, 2000, true, false), // TODO: fix
+            arguments(6000, 10144, 8000, true, false),
+            arguments(6000, 10144, 8000, true, false)
+        );
+    }
+
 
 }

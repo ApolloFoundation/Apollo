@@ -46,7 +46,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
@@ -115,6 +114,7 @@ public class DexOrderProcessor {
     private int processingDelay; // seconds
     private DexConfig dexConfig;
     private Blockchain blockchain;
+    private final BlockchainConfig blockchainConfig;
 
     @Inject
     public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService,
@@ -126,7 +126,8 @@ public class DexOrderProcessor {
                              Blockchain blockchain, PhasingPollService phasingPollService, DexOperationService operationService,
                              @Property(name = "apl.dex.orderProcessor.enabled", defaultValue = "true") boolean startProcessor,
                              @Property(name = "apl.dex.orderProcessor.delay", defaultValue = "" + DEFAULT_DEX_OFFER_PROCESSOR_DELAY) int processingDelay,
-                             DexConfig dexConfig
+                             DexConfig dexConfig,
+                             BlockchainConfig blockchainConfig
     ) {
 
         this.secureStorageService = secureStorageService;
@@ -146,6 +147,7 @@ public class DexOrderProcessor {
         this.processingDelay = Math.max(MIN_DEX_OFFER_PROCESSOR_DELAY, processingDelay);
         this.accountService = accountService;
         this.dexConfig = dexConfig;
+        this.blockchainConfig = blockchainConfig;
     }
 
     @PostConstruct
@@ -373,7 +375,7 @@ public class DexOrderProcessor {
         contractAttachment.setTimeToReply(dexConfig.getMaxAtomicSwapDuration());
 
         //TODO move it to some util
-        CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
+        CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Math.multiplyExact(2, blockchainConfig.getOneAPL()));
         createTransactionRequest.setBroadcast(false);
         Transaction contractTx = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(createTransactionRequest);
         if (contractTx == null) {
@@ -575,7 +577,7 @@ public class DexOrderProcessor {
 
                 DexContractAttachment contractAttachment = new DexContractAttachment(contract.getOrderId(), contract.getCounterOrderId(), null, transferTransactionInfo.getTxId(), null, null, STEP_3, (int) transferWithApprovalDuration);
 
-                CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
+                CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Math.multiplyExact(2, blockchainConfig.getOneAPL()));
                 createTransactionRequest.setBroadcast(false);
 
                 Transaction contractTx = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(createTransactionRequest);
@@ -596,7 +598,7 @@ public class DexOrderProcessor {
     private Transaction createContractTransactionStep3(ExchangeContract contract, String txHash, String passphrase, Long accountId, long transferWithApprovalDuration) throws ParameterException, AplException.ValidationException, AplException.ExecutiveProcessException {
         DexContractAttachment contractAttachment = new DexContractAttachment(contract.getOrderId(), contract.getCounterOrderId(), null, txHash, null, null, STEP_3, (int) transferWithApprovalDuration);
 
-        CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
+        CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Math.multiplyExact(2, blockchainConfig.getOneAPL()));
         createTransactionRequest.setBroadcast(false);
 
         Transaction contractTx = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(createTransactionRequest);
