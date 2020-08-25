@@ -27,8 +27,18 @@
     <!--   arti.firstbridge.work for follwing artifacts: web-wallet, fbcrypto -->
     <repository>
       <id>apl</id>
-      <name>arti.firstbridge.work-releases</name>
+      <name>arti.firstbridge.work</name>
       <url>https://arti.firstbridge.work/artifactory/apl</url>
+    </repository>
+    <repository>
+      <id>apl-release</id>
+      <name>arti.firstbridge.work-releases</name>
+      <url>https://arti.firstbridge.work/artifactory/apl-release</url>
+    </repository>
+    <repository>
+      <id>apl-stage</id>
+      <name>arti.firstbridge.work-stage</name>
+      <url>https://arti.firstbridge.work/artifactory/apl-stage</url>
     </repository>
     <repository>
       <id>aplsys</id>
@@ -106,7 +116,7 @@
       <dependency>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apl-bom-ext</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
