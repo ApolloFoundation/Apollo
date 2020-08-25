@@ -114,11 +114,11 @@ public class ShardObserver {
             && timeForShard.getNextShardHeightValue() != -1L) {
             //calculate target shard height
             int newShardHeight = (int)timeForShard.getNextShardHeightValue();
-            log.debug("DO sharding on [{}] for lastTrimHeight={} by config ? = {}",
-                newShardHeight, lastTrimHeight, configNearShardHeight);
+            log.debug("DO sharding on [{}] for by config = {}, blockHeight={}",
+                newShardHeight, configNearShardHeight, blockHeight);
             tryCreateShardAsync(newShardHeight, blockHeight);
         } else {
-            log.debug("Sharding is NOT STARTED, disabled by config ? = {}, timeForShard ? ={}",
+            log.debug("Sharding is NOT STARTED, disabled by config = {}, timeForShard = {}",
                 isShardingEnabled, timeForShard);
         }
     }
@@ -126,7 +126,7 @@ public class ShardObserver {
 
     public CompletableFuture<MigrateState> tryCreateShardAsync(int newShardBlockHeight, int currentBlockchainHeight) {
         CompletableFuture<MigrateState> completableFuture = null;
-        log.debug("tryCreateShardAsync at currentHeight = {} by targetNewShardHeight = {}",
+        log.debug("tryCreateShardAsync at currentHeight = {} by new/target shardHeight = {}",
             currentBlockchainHeight, newShardBlockHeight);
         completableFuture = shardService.tryCreateShardAsync(newShardBlockHeight, currentBlockchainHeight);
         return completableFuture;
@@ -147,7 +147,7 @@ public class ShardObserver {
         //Q. how much blocks we could be late? (frequency - 2) is OK?
         //Q. Do we count on some other parameters like lastTrimBlockHeight?
         if (configNearShardHeight.isEmpty()) {
-            log.trace("Sharding is not now. lastShardHeight = {} configNearShardHeight = {}", lastShardHeight, configNearShardHeight);
+            log.trace("isTimeForShard(): Sharding is not now. lastShardHeight = {} configNearShardHeight = {}", lastShardHeight, configNearShardHeight);
             return result;
         }
         int shardingFrequency = configNearShardHeight.get().getShardingFrequency();
@@ -163,7 +163,7 @@ public class ShardObserver {
                     nextShardHeight = configHeight + shardingFrequency;
                     howLateWeCanBe = nextShardHeight + randomShardHeightDivergence;
                 } else {
-                    log.warn("CHECK logic for sharding config processing! lastShardHeight={}, blockchainHeight={}, configNearShardHeight={}",
+                    log.warn("isTimeForShard(): CHECK logic for sharding config processing! lastShardHeight={}, blockchainHeight={}, configNearShardHeight={}",
                         lastShardHeight, blockchainHeight, configNearShardHeight);
                 }
             } else {
@@ -180,17 +180,22 @@ public class ShardObserver {
 
         if (heightGoodToShard >= 0) {
             if (heightGoodToShard < howLateWeCanBe) {
-                log.warn("Not a shard time at height '{}' blocks! Current blockchainHeight: {}",
+                log.warn("isTimeForShard(): Not a shard time at height '{}' blocks! Current blockchainHeight: {}",
                     heightGoodToShard, blockchainHeight);
             } else {
                 result.setTimeToDoNextShard(true);
-                result.setNextShardHeightValue(nextShardHeight - 1);
-                log.debug("Time for sharding is OK. blockchainHeight: {}", blockchainHeight);
+                if (lastShardHeight <= 0) {
+                    result.setNextShardHeightValue(nextShardHeight - 1); // one time
+                } else {
+                    result.setNextShardHeightValue(nextShardHeight);
+                }
+                log.debug("isTimeForShard(): Time for sharding is OK. blockchainHeight: {}, nextShardHeight={}, result={}",
+                    blockchainHeight, nextShardHeight, result);
             }
         } else {
-            log.trace("Sharding is not now. lastTrimHeight: {} nextShardHeight: {}", lastShardHeight, nextShardHeight);
+            log.trace("isTimeForShard(): Sharding is not now. lastTrimHeight: {} nextShardHeight: {}", lastShardHeight, nextShardHeight);
         }
-        log.debug("Check shard conditions:  heightGoodToShard = {},  blockchainHeight = {}"
+        log.debug("isTimeForShard(): Check shard conditions:  heightGoodToShard = {},  blockchainHeight = {}"
                 + ", shardingFrequency = {} Result: {}", heightGoodToShard, blockchainHeight,
             shardingFrequency, result);
         return result;
@@ -204,14 +209,18 @@ public class ShardObserver {
             lastShardHeight = 0;
         } else {
             lastShardHeight = shard.getShardHeight();
+            log.debug("Last shard was = {}", lastShardHeight);
         }
         return lastShardHeight;
     }
 
     private Optional<HeightConfig> getTargetConfig(long lastShardHeight, int blockchainHeight) {
+        log.debug("start getTargetConfig(): lastShardHeight = {}, blockchainHeight = {}",
+            lastShardHeight, blockchainHeight);
         int heightToShard = blockchainHeight - (this.propertiesHolder.MAX_ROLLBACK() + randomShardHeightDivergence);
         if (heightToShard <= 0) {
-            log.debug("getTargetConfig = {}, lastShardHeight = {}, blockchainHeight = {}", heightToShard, lastShardHeight, blockchainHeight);
+            log.debug("getTargetConfig(): heightToShard = {}, lastShardHeight = {}, blockchainHeight = {}",
+                heightToShard, lastShardHeight, blockchainHeight);
             return Optional.empty();
         }
         boolean isConfigJustUpdated = blockchainConfig.isJustUpdated();
@@ -221,6 +230,8 @@ public class ShardObserver {
             configAtTrimHeight = blockchainConfig.getConfigAtHeight(heightToShard);
 //            Optional<HeightConfig> previousConfigByHeight = blockchainConfig.getPreviousConfigByHeight(blockchainHeight);
             Optional<HeightConfig> previousConfigByHeight = blockchainConfig.getPreviousConfig(); // it was set up previously
+            log.debug("getTargetConfig(): heightToShard={}\nconfigAtTrimHeight = {}\npreviousConfigByHeight = {}",
+                heightToShard, configAtTrimHeight, previousConfigByHeight);
             if (!configAtTrimHeight.isShardingEnabled()) {
                 // check if we has to finish sharding from previous config
                 if (previousConfigByHeight.isPresent()) {
@@ -252,16 +263,16 @@ public class ShardObserver {
                 blockchainConfig.getPreviousConfig().get() // previous config
                 : blockchainConfig.getCurrentConfig(); // fall back to current config
         }
-        log.debug("Check shard conditions: getTargetConfig() ? [{}],  lastShardHeight = {}, blockchainHeight = {}"
-                + ", configAtTrimHeight = {}",
+        log.debug("getTargetConfig(): [{}],  lastShardHeight = {}, blockchainHeight = {}, configAtTrimHeight = {}, isConfigJustUpdated={}",
             (configAtTrimHeight != null
                 && configAtTrimHeight.isShardingEnabled()),
-            lastShardHeight, blockchainHeight, configAtTrimHeight
+            lastShardHeight, blockchainHeight, configAtTrimHeight, isConfigJustUpdated
         );
         if (configAtTrimHeight != null && configAtTrimHeight.isShardingEnabled()) {
-            log.debug("getTargetConfig result = {}", configAtTrimHeight);
+            log.debug("getTargetConfig(): result = {}", configAtTrimHeight);
             return Optional.of(configAtTrimHeight);
         }
+        log.debug("getTargetConfig(): EMPTY result = {}", configAtTrimHeight);
         return Optional.empty();
     }
 
