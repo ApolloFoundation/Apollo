@@ -1,0 +1,40 @@
+[
+  {
+    "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
+    "active": true,
+    "wellKnownPeers": [
+      "51.15.250.32",
+      "51.15.130.37"
+    ],
+    "name": "Apollo experimental testnet",
+    "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
+    "symbol": "Apollo",
+    "prefix": "APL",
+    "project": "Apollo",
+    "initialSupply": 30000000000,
+    "decimals": 8,
+    "genesisLocation": "conf/data/genesisAccounts-testnet.json",
+    "featuresHeightRequirement": {
+      "dexReopenPendingOrdersHeight": 3000,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000
+    },
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "blockTime": 1,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 53,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 10,
+        "blockTime": 1,
+        "maxBalance": 90000000000,
+        "shardingSettings": {
+          "enabled": false,
+          "frequency": 1
+        }
+      }
+    ]
+  }
+]

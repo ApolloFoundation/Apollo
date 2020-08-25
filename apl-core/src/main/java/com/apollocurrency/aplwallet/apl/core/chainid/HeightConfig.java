@@ -20,9 +20,12 @@ public class HeightConfig {
     private final long maxBaseTarget;
     private final long minBaseTarget;
 
-    public HeightConfig(BlockchainProperties bp, long oneAPL) {
+    public HeightConfig(BlockchainProperties bp, long oneAPL, long initialSupply) {
         this.bp = Objects.requireNonNull(bp, "Blockchain properties cannot be null");
         this.maxPayloadLength = bp.getMaxNumberOfTransactions() * Constants.MIN_TRANSACTION_SIZE;
+        if (bp.getMaxBalance() > initialSupply) {
+            throw new IllegalArgumentException("Wrong height config, height=" + bp.getHeight() + ". The maxBalanceATM value " + bp.getMaxBalance() + " can't be greater than the initialSupply value " + initialSupply);
+        }
         this.maxBalanceAtm = Math.multiplyExact(bp.getMaxBalance(), oneAPL);
         this.initialBaseTarget = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(bp.getBlockTime() * bp.getMaxBalance())).longValue();
         this.maxBaseTarget = initialBaseTarget * 50;
