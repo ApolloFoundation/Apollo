@@ -36,7 +36,7 @@ public class CCAssetIssuanceTransactionType extends ColoredCoinsTransactionType 
             return attachment.getDescription().length();
         }
     };
-    private final Fee ASSET_ISSUANCE_FEE = (transaction, appendage) -> isSingletonIssuance(transaction) ? SINGLETON_ASSET_FEE.getFee(transaction, appendage) : 1000 * getBlockchainConfig().getOneAPL();
+    private final Fee ASSET_ISSUANCE_FEE = (transaction, appendage) -> isSingletonIssuance(transaction) ? SINGLETON_ASSET_FEE.getFee(transaction, appendage) : Math.multiplyExact(1000, getBlockchainConfig().getOneAPL());
 
     private final AssetService assetService;
     private final AccountAssetService accountAssetService;
@@ -112,7 +112,7 @@ public class CCAssetIssuanceTransactionType extends ColoredCoinsTransactionType 
             || attachment.getDescription().length() > Constants.MAX_ASSET_DESCRIPTION_LENGTH
             || attachment.getDecimals() < 0 || attachment.getDecimals() > getBlockchainConfig().getDecimals()
             || attachment.getQuantityATU() <= 0
-            || attachment.getQuantityATU() > getBlockchainConfig().getInitialSupply() * getBlockchainConfig().getOneAPL()) {
+            || attachment.getQuantityATU() > Math.multiplyExact(getBlockchainConfig().getInitialSupply(), getBlockchainConfig().getOneAPL())) {
             throw new AplException.NotValidException("Invalid asset issuance: " + attachment.getJSONObject());
         }
         String normalizedName = attachment.getName().toLowerCase();

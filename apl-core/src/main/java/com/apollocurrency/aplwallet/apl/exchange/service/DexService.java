@@ -546,7 +546,7 @@ public class DexService {
             //            createTransactionRequest.setAmountATM(offer.getOrderAmount());
             createTransactionRequest.setDeadlineValue("1440");
 
-            createTransactionRequest.setFeeATM(blockchainConfig.getOneAPL() * 3);
+            createTransactionRequest.setFeeATM(Math.multiplyExact(3, blockchainConfig.getOneAPL()));
             PhasingParams phasingParams = new PhasingParams((byte) 5, 0, 1, 0, (byte) 0, null);
             PhasingAppendixV2 phasing = new PhasingAppendixV2(-1, timeService.getEpochTime() + transferWithApprovalDuration, phasingParams, null, secretHash, (byte) 2);
             createTransactionRequest.setPhased(true);
@@ -629,7 +629,7 @@ public class DexService {
                 .senderAccount(accountService.getAccount(userAccountId))
                 .keySeed(Crypto.getKeySeed(Helper2FA.findAplSecretBytes(userAccountId, passphrase)))
                 .deadlineValue("1440")
-                .feeATM(blockchainConfig.getOneAPL() * 2)
+                .feeATM(Math.multiplyExact(blockchainConfig.getOneAPL(), 2))
                 .broadcast(true)
                 .recipientId(0L)
                 .ecBlockHeight(0)

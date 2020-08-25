@@ -118,7 +118,7 @@ public class DexValidationServiceImpl implements IDexValidator {
 
     boolean checkAplCommisionPayingAbility(Long hisAplBalance) {
         // checking out whether there are commission available
-        Long fee = APL_COMMISSION * blockchainConfig.getOneAPL();
+        Long fee = Math.multiplyExact(APL_COMMISSION, blockchainConfig.getOneAPL());
         log.debug("fee: " + fee);
         return hisAplBalance >= fee;
     }

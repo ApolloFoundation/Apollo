@@ -93,7 +93,7 @@ public class ShufflingCreationTransactionType extends ShufflingTransactionType {
             if (!currencyService.isActive(currency)) {
                 throw new AplException.NotCurrentlyValidException("Currency is not active: " + currency.getCode());
             }
-            if (amount <= 0 || amount > getBlockchainConfig().getInitialSupply() * getBlockchainConfig().getOneAPL()) {
+            if (amount <= 0 || amount > Math.multiplyExact(getBlockchainConfig().getInitialSupply(), getBlockchainConfig().getOneAPL())) {
                 throw new AplException.NotValidException("Invalid currency amount " + amount);
             }
         } else {

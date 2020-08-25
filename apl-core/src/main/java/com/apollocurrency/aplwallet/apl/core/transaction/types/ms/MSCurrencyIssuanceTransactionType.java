@@ -27,9 +27,9 @@ import java.util.Map;
 @Singleton
 public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransactionType {
 
-    private final Fee FIVE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(40 * getBlockchainConfig().getOneAPL());
-    private final Fee FOUR_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(1000 * getBlockchainConfig().getOneAPL());
-    private final Fee THREE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(25000 * getBlockchainConfig().getOneAPL());
+    private final Fee FIVE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(Math.multiplyExact(40, getBlockchainConfig().getOneAPL()));
+    private final Fee FOUR_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(Math.multiplyExact(1000, getBlockchainConfig().getOneAPL()));
+    private final Fee THREE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(Math.multiplyExact(25000, getBlockchainConfig().getOneAPL()));
 
     private final CurrencyService currencyService;
     private final AccountCurrencyService accountCurrencyService;
@@ -126,7 +126,7 @@ public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransaction
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
-        if (attachment.getMaxSupply() > getBlockchainConfig().getInitialSupply() * getBlockchainConfig().getOneAPL()
+        if (attachment.getMaxSupply() > Math.multiplyExact(getBlockchainConfig().getInitialSupply(), getBlockchainConfig().getOneAPL())
             || attachment.getMaxSupply() <= 0 || attachment.getInitialSupply() < 0
             || attachment.getInitialSupply() > attachment.getMaxSupply()
             || attachment.getReserveSupply() < 0

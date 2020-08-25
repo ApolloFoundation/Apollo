@@ -72,7 +72,7 @@ public class SetPhasingOnlyTransactionType extends AccountControlTransactionType
         }
         long maxFees = attachment.getMaxFees();
         BlockchainConfig blockchainConfig = getBlockchainConfig();
-        long maxFeesLimit = (attachment.getPhasingParams().getVoteWeighting().isBalanceIndependent() ? 3 : 22) * blockchainConfig.getOneAPL();
+        long maxFeesLimit = Math.multiplyExact((attachment.getPhasingParams().getVoteWeighting().isBalanceIndependent() ? 3 : 22), blockchainConfig.getOneAPL());
 
         if (maxFees < 0 || (maxFees > 0 && maxFees < maxFeesLimit) || maxFees > blockchainConfig.getCurrentConfig().getMaxBalanceATM()) {
             throw new AplException.NotValidException(String.format("Invalid max fees %f %s", ((double) maxFees) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol()));

@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import lombok.NonNull;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -42,7 +43,7 @@ public final class ColoredCoinsAssetIssuance extends AbstractAttachment {
         this.decimals = ((Long) attachmentData.get("decimals")).byteValue();
     }
 
-    public ColoredCoinsAssetIssuance(String name, String description, long quantityATU, byte decimals) {
+    public ColoredCoinsAssetIssuance(@NonNull String name, String description, long quantityATU, byte decimals) {
         this.name = name;
         this.description = Convert.nullToEmpty(description);
         this.quantityATU = quantityATU;

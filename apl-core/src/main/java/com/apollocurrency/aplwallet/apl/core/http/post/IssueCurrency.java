@@ -138,7 +138,7 @@ public final class IssueCurrency extends CreateTransaction {
             type = HttpParameterParserUtil.getInt(req, "type", 0, Integer.MAX_VALUE, false);
         }
 
-        long maxSupply = HttpParameterParserUtil.getLong(req, "maxSupply", 1, lookupBlockchainConfig().getInitialSupply() * lookupBlockchainConfig().getOneAPL(), false);
+        long maxSupply = HttpParameterParserUtil.getLong(req, "maxSupply", 1, Math.multiplyExact(lookupBlockchainConfig().getInitialSupply(), lookupBlockchainConfig().getOneAPL()), false);
         long reserveSupply = HttpParameterParserUtil.getLong(req, "reserveSupply", 0, maxSupply, false);
         long initialSupply = HttpParameterParserUtil.getLong(req, "initialSupply", 0, maxSupply, false);
         int issuanceHeight = HttpParameterParserUtil.getInt(req, "issuanceHeight", 0, Integer.MAX_VALUE, false);

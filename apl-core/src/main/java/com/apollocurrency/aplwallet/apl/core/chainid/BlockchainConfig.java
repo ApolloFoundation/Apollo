@@ -88,8 +88,8 @@ public class BlockchainConfig {
         this.minPrunableLifetime = minPrunableLifetime > 0 ? minPrunableLifetime : DEFAULT_MIN_PRUNABLE_LIFETIME;
         this.shufflingProcessingDeadline = (short) 100;
         this.lastKnownBlock = 0;
-        this.unconfirmedPoolDepositAtm = 100 * chain.getOneAPL();
-        this.shufflingDepositAtm = 1000 * chain.getOneAPL();
+        this.unconfirmedPoolDepositAtm = Math.multiplyExact(100, chain.getOneAPL());
+        this.shufflingDepositAtm = Math.multiplyExact(1000, chain.getOneAPL());
         this.guaranteedBalanceConfirmations = 1440;
         this.enablePruning = maxPrunableLifetime >= 0;
         this.maxPrunableLifetime = enablePruning ? Math.max(maxPrunableLifetime, this.minPrunableLifetime) : Integer.MAX_VALUE;

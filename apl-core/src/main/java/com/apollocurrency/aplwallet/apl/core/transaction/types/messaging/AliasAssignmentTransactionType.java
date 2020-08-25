@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 @Singleton
 public class AliasAssignmentTransactionType extends MessagingTransactionType {
-    private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * getBlockchainConfig().getOneAPL(), 2 * getBlockchainConfig().getOneAPL(), 32) {
+    private final Fee ALIAS_FEE = new Fee.SizeBasedFee(2 * getBlockchainConfig().getOneAPL(), Math.multiplyExact(2, getBlockchainConfig().getOneAPL()), 32) {
         @Override
         public int getSize(Transaction transaction, Appendix appendage) {
             MessagingAliasAssignment attachment = (MessagingAliasAssignment) transaction.getAttachment();

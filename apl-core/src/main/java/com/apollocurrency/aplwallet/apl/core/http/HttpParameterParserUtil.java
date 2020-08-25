@@ -433,7 +433,7 @@ public final class HttpParameterParserUtil {
     }
 
     public static long getQuantityATU(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "quantityATU", 1L, lookupBlockchainConfig().getInitialSupply() * lookupBlockchainConfig().getOneAPL(), true);
+        return getLong(req, "quantityATU", 1L, Math.multiplyExact(lookupBlockchainConfig().getInitialSupply(), lookupBlockchainConfig().getOneAPL()), true);
     }
 
     public static long getAmountATMPerATU(HttpServletRequest req) throws ParameterException {

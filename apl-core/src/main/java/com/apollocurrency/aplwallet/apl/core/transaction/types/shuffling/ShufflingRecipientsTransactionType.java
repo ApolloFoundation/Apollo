@@ -37,7 +37,7 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 
 @Singleton
 public class ShufflingRecipientsTransactionType extends ShufflingTransactionType {
-    private final Fee SHUFFLING_RECIPIENTS_FEE = new Fee.ConstantFee(11 * getBlockchainConfig().getOneAPL());
+    private final Fee SHUFFLING_RECIPIENTS_FEE = new Fee.ConstantFee(Math.multiplyExact(11, getBlockchainConfig().getOneAPL()));
     private final ShufflingService shufflingService;
 
     @Inject
