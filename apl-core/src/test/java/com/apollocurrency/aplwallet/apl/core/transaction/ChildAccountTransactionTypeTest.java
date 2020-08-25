@@ -28,15 +28,16 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChild
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_1;
 import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_2;
@@ -79,7 +80,8 @@ public class ChildAccountTransactionTypeTest {
     AccountControlPhasingService accountControlPhasingService=mock(AccountControlPhasingService.class);
     BlockchainConfig blockchainConfig=mock(BlockchainConfig.class);
     Blockchain blockchain = mock(Blockchain.class);
-    AccountService accountService=mock(AccountService.class);
+    Chain chain = mock(Chain.class);
+    AccountService accountService = mock(AccountService.class);
     AccountPublicKeyService accountPublicKeyService=mock(AccountPublicKeyService.class);
     FeeCalculator calculator=mock(FeeCalculator.class);
     PrunableLoadingService prunableLoadingService = mock(PrunableLoadingService.class);
@@ -172,14 +174,16 @@ public class ChildAccountTransactionTypeTest {
             .build();
         Transaction tx = txCreator.createTransactionThrowingException(request);
         assertNotNull(tx);
-        when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT+1);
+        when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT + 1);
         when(blockchain.getBlockIdAtHeight(ECBLOCK_HEIGHT)).thenReturn(ECBLOCK_ID);
         when(blockchainConfig.getCurrentConfig()).thenReturn(heightConfig);
+        when(chain.getChainId()).thenReturn(UUID.randomUUID());
+        when(blockchainConfig.getChain()).thenReturn(chain);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
         when(accountService.getAccount(CHILD_ACCOUNT_ATTACHMENT.getChildPublicKey().get(0))).thenReturn(null);
         when(accountService.getAccount(CHILD_ACCOUNT_ATTACHMENT.getChildPublicKey().get(1))).thenReturn(null);
 
-        when(heightConfig.getMaxPayloadLength()).thenReturn(255*Constants.MIN_TRANSACTION_SIZE);
+        when(heightConfig.getMaxPayloadLength()).thenReturn(255 * Constants.MIN_TRANSACTION_SIZE);
 
         //WHEN
         txValidator.validate(tx);
@@ -204,9 +208,11 @@ public class ChildAccountTransactionTypeTest {
         Transaction tx = txCreator.createTransactionThrowingException(request);
 
         assertNotNull(tx);
-        when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT+1);
+        when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT + 1);
         when(blockchain.getBlockIdAtHeight(ECBLOCK_HEIGHT)).thenReturn(ECBLOCK_ID);
         when(blockchainConfig.getCurrentConfig()).thenReturn(heightConfig);
+        when(chain.getChainId()).thenReturn(UUID.randomUUID());
+        when(blockchainConfig.getChain()).thenReturn(chain);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
 
         //WHEN
@@ -237,9 +243,11 @@ public class ChildAccountTransactionTypeTest {
         Transaction tx = txCreator.createTransactionThrowingException(request);
 
         assertNotNull(tx);
-        when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT+1);
+        when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT + 1);
         when(blockchain.getBlockIdAtHeight(ECBLOCK_HEIGHT)).thenReturn(ECBLOCK_ID);
         when(blockchainConfig.getCurrentConfig()).thenReturn(heightConfig);
+        when(chain.getChainId()).thenReturn(UUID.randomUUID());
+        when(blockchainConfig.getChain()).thenReturn(chain);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
 
 
@@ -270,9 +278,11 @@ public class ChildAccountTransactionTypeTest {
         Transaction tx = txCreator.createTransactionThrowingException(request);
 
         assertNotNull(tx);
-        when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT+1);
+        when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT + 1);
         when(blockchain.getBlockIdAtHeight(ECBLOCK_HEIGHT)).thenReturn(ECBLOCK_ID);
         when(blockchainConfig.getCurrentConfig()).thenReturn(heightConfig);
+        when(chain.getChainId()).thenReturn(UUID.randomUUID());
+        when(blockchainConfig.getChain()).thenReturn(chain);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
 
         //WHEN
@@ -302,9 +312,11 @@ public class ChildAccountTransactionTypeTest {
         Transaction tx = txCreator.createTransactionThrowingException(request);
 
         assertNotNull(tx);
-        when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT+1);
+        when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT + 1);
         when(blockchain.getBlockIdAtHeight(ECBLOCK_HEIGHT)).thenReturn(ECBLOCK_ID);
         when(blockchainConfig.getCurrentConfig()).thenReturn(heightConfig);
+        when(chain.getChainId()).thenReturn(UUID.randomUUID());
+        when(blockchainConfig.getChain()).thenReturn(chain);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
 
         //WHEN
