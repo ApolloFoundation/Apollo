@@ -41,6 +41,11 @@
       <url>https://arti.firstbridge.work/artifactory/apl-stage</url>
     </repository>
     <repository>
+      <id>zpl-stage</id>
+      <name>arti.firstbridge.work-zpl</name>
+      <url>https://arti.firstbridge.work/artifactory/zpl-stage/apl-stage</url>
+    </repository>
+    <repository>
       <id>aplsys</id>
       <name>Artifactory APLSYS</name>
       <layout>default</layout>
