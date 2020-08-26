@@ -318,7 +318,6 @@
     <dependency>
       <groupId>com.apollocurrency.antifraud</groupId>
       <artifactId>antifraud</artifactId>
-      <version>1.0.7</version>
     </dependency>
 
     <!-- Ethereum API -->
