@@ -2,7 +2,6 @@ package com.apollocurrency.aplwallet.apl.eth.utils;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import org.ethereum.util.blockchain.EtherUtil;
 import org.web3j.crypto.Credentials;
@@ -68,10 +67,6 @@ public class EthUtil {
 
     public static Long gweiToAtm(Long gwei) {
         return gwei / 10;
-    }
-
-    public static BigDecimal fromAtm(BigDecimal ix) {
-        return ix.divide(BigDecimal.valueOf(Constants.ONE_APL));
     }
 
     public static boolean isAddressValid(String address) {

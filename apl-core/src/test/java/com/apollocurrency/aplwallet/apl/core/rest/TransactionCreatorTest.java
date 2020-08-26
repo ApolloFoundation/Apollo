@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +51,7 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionCreatorTest {
+    public static final long TEST_LOCAL_ONE_APL = 100000000L;
     @Mock
     TransactionValidator validator;
     @Mock
@@ -73,15 +73,16 @@ class TransactionCreatorTest {
     BlockchainConfig blockchainConfig;
     @Mock
     AccountService accountService;
+    Account sender;
     TransactionCreator txCreator;
     private String accountRS = "APL-XR8C-K97J-QDZC-3YXHE";
-    Account sender = new Account(Convert.parseAccountId(accountRS), 1000 * Constants.ONE_APL, 100 * Constants.ONE_APL, 0L, 0L, 0);
     private String publicKey = "d52a07dc6fdf9f5c6b547ccb11444ce7bba73a99014eb9ac647b6971bee9263c";
     private String secretPhrase = "here we go again";
     private CustomTransactionType transactionType;
 
     @BeforeEach
     void setUp() {
+        sender = new Account(Convert.parseAccountId(accountRS), 1000 * TEST_LOCAL_ONE_APL, 100 * TEST_LOCAL_ONE_APL, 0L, 0L, 0);
         transactionType = new CustomTransactionType(blockchainConfig, accountService);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(transactionType));
         transactionBuilder = new TransactionBuilder(transactionTypeFactory);
@@ -95,7 +96,7 @@ class TransactionCreatorTest {
         CreateTransactionRequest request = CreateTransactionRequest.builder()
             .senderAccount(sender)
             .deadlineValue("1440")
-            .feeATM(Constants.ONE_APL)
+            .feeATM(blockchainConfig.getOneAPL())
             .attachment(new CustomAttachment())
             .timestamp(300)
             .keySeed(Crypto.getKeySeed(secretPhrase))
@@ -114,7 +115,7 @@ class TransactionCreatorTest {
         CreateTransactionRequest request = CreateTransactionRequest.builder()
             .senderAccount(sender)
             .deadlineValue("1440")
-            .feeATM(Constants.ONE_APL)
+            .feeATM(blockchainConfig.getOneAPL())
             .attachment(new CustomAttachment())
             .keySeed(Crypto.getKeySeed(secretPhrase))
             .broadcast(true)
@@ -136,7 +137,7 @@ class TransactionCreatorTest {
         CreateTransactionRequest request = CreateTransactionRequest.builder()
             .senderAccount(sender)
             .deadlineValue("1440")
-            .feeATM(Constants.ONE_APL)
+            .feeATM(blockchainConfig.getOneAPL())
             .attachment(new CustomAttachment())
             .keySeed(Crypto.getKeySeed(secretPhrase))
             .broadcast(true)
@@ -158,7 +159,7 @@ class TransactionCreatorTest {
             .senderAccount(sender)
             .deadlineValue("1440")
             .attachment(new CustomAttachment())
-            .feeATM(Constants.ONE_APL)
+            .feeATM(blockchainConfig.getOneAPL())
             .build();
         assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
 
@@ -175,7 +176,7 @@ class TransactionCreatorTest {
             .keySeed(Crypto.getKeySeed(secretPhrase))
             .deadlineValue(deadline)
             .attachment(new CustomAttachment())
-            .feeATM(Constants.ONE_APL)
+            .feeATM(blockchainConfig.getOneAPL())
             .build();
         assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
 
@@ -210,7 +211,7 @@ class TransactionCreatorTest {
             .senderAccount(sender)
             .keySeed(Crypto.getKeySeed(secretPhrase))
             .attachment(new CustomAttachment())
-            .feeATM(Constants.ONE_APL)
+            .feeATM(blockchainConfig.getOneAPL())
             .build();
         assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
 

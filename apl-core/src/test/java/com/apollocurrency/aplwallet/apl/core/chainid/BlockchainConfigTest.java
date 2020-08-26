@@ -52,7 +52,9 @@ public class BlockchainConfigTest {
         "test",
         "test",
         "TEST",
-        "TEST", "Test", "data.json", BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100));
+        "TEST",
+        "Test",
+        10000L, 2, "data.json", BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100));
     @Inject
     BlockchainConfig blockchainConfig;
     @Inject
@@ -67,7 +69,7 @@ public class BlockchainConfigTest {
     @Test
     public void testInitBlockchainConfig() {
         blockchainConfig.updateChain(chain);
-        assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp1, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
         assertEquals(1209600, blockchainConfig.getMaxPrunableLifetime());
         assertEquals(1209600, blockchainConfig.getMinPrunableLifetime());
     }
@@ -87,12 +89,12 @@ public class BlockchainConfigTest {
     @Test
     void testCreateBlockchainConfig() {
         BlockchainConfig blockchainConfig = new BlockchainConfig(chain, new PropertiesHolder());
-        assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp1, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
     }
 
     @Test
     void testCreateBlockchainConfigFromEmptyChain() {
-        Chain emptyChain = new Chain(UUID.randomUUID(), new ArrayList<>(), "Empty", "Empty chain", "EMP", "EM", "EMP", "", List.of());
+        Chain emptyChain = new Chain(UUID.randomUUID(), new ArrayList<>(), "Empty", "Empty chain", "EMP", "EM", "EMP", 10000L, 2, "", List.of());
         assertThrows(IllegalArgumentException.class, () -> blockchainConfig.updateChain(emptyChain));
     }
 
@@ -146,7 +148,7 @@ public class BlockchainConfigTest {
         doReturn(5000).when(propertiesHolder).getIntProperty("apl.maxPrunableLifetime");
 
         blockchainConfigUpdater.updateChain(chain, propertiesHolder);
-        assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp1, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
         assertEquals(1209600, blockchainConfig.getMaxPrunableLifetime());
         assertEquals(1209600, blockchainConfig.getMinPrunableLifetime());
     }
@@ -157,7 +159,7 @@ public class BlockchainConfigTest {
         doReturn(2000000).when(propertiesHolder).getIntProperty("apl.maxPrunableLifetime");
 
         blockchainConfigUpdater.updateChain(chain, propertiesHolder);
-        assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp1, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
         assertEquals(2000000, blockchainConfig.getMaxPrunableLifetime());
         assertEquals(1209600, blockchainConfig.getMinPrunableLifetime());
     }
@@ -166,28 +168,28 @@ public class BlockchainConfigTest {
     void testUpdateToHeight() {
         blockchainConfigUpdater.updateChain(chain, new PropertiesHolder());
         blockchainConfigUpdater.updateToHeight(99);
-        assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp1, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
         blockchainConfigUpdater.updateToHeight(100);
-        assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp2, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
         blockchainConfigUpdater.updateToHeight(201);
-        assertEquals(new HeightConfig(bp3), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp3, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
         blockchainConfigUpdater.updateToHeight(199);
-        assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp2, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
         blockchainConfigUpdater.updateToHeight(200);
-        assertEquals(new HeightConfig(bp3), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp3, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
         blockchainConfigUpdater.updateToHeight(0);
-        assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp1, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
     }
 
     @Test
     void testRollback() {
         blockchainConfigUpdater.updateChain(chain, new PropertiesHolder());
         blockchainConfigUpdater.updateToHeight(102);
-        assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp2, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
         blockchainConfigUpdater.rollback(100);
-        assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp2, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
         blockchainConfigUpdater.rollback(99);
-        assertEquals(new HeightConfig(bp1), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp1, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
     }
 
     @Test
@@ -196,7 +198,7 @@ public class BlockchainConfigTest {
         Block block = mock(Block.class);
         Mockito.doReturn(100).when(block).getHeight();
         blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(block);
-        assertEquals(new HeightConfig(bp2), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp2, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
 
     }
 
@@ -206,7 +208,7 @@ public class BlockchainConfigTest {
         Block block = mock(Block.class);
         Mockito.doReturn(201).when(block).getHeight();
         blockEvent.select(literal(BlockEventType.BLOCK_POPPED)).fire(block);
-        assertEquals(new HeightConfig(bp3), blockchainConfig.getCurrentConfig());
+        assertEquals(new HeightConfig(bp3, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
 
     }
 

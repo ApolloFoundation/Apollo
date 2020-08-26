@@ -22,8 +22,9 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 @Singleton
 @Slf4j
-public class CreateChildTransactionType extends ChildAccount {
+public class CreateChildTransactionType extends ChildAccountTransactionType {
     private final AccountPublicKeyService accountPublicKeyService;
+
     @Inject
     public CreateChildTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AccountPublicKeyService accountPublicKeyService) {
         super(blockchainConfig, accountService);

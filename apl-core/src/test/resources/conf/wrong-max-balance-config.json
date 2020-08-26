@@ -27,32 +27,12 @@
         "maxBalance": 30000000000
       },
       {
-        "height": 1,
-        "maxArbitraryMessageLength": 180,
+        "height": 10,
         "blockTime": 1,
-        "maxBalance": 30000000000,
+        "maxBalance": 90000000000,
         "shardingSettings": {
           "enabled": false,
           "frequency": 1
-        }
-      },
-      {
-        "height": 10,
-        "maxArbitraryMessageLength": 1000,
-        "blockTime": 2,
-        "maxBalance": 30000000000,
-        "shardingSettings": {
-          "enabled": true,
-          "frequency": 2
-        }
-      },
-      {
-        "height": 20,
-        "maxArbitraryMessageLength": 2000,
-        "blockTime": 3,
-        "maxBalance": 30000000000,
-        "shardingSettings": {
-          "frequency": 3
         }
       }
     ]
