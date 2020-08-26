@@ -53,12 +53,14 @@ public class InfoApiServiceImpl implements InfoApiService {
         BlockchainInfo blockchainState = new BlockchainInfo();
         blockchainState.setChainid(blockchainConfig.getChain().getChainId().toString());
         blockchainState.setGenesisAccount(Long.toUnsignedString(GenesisImporter.CREATOR_ID));
-        blockchainState.setTicker(blockchainConfig.getAccountPrefix());
-        blockchainState.setConsensus("Apollo POS");
+        blockchainState.setTicker(blockchainConfig.getCoinSymbol());
+        blockchainState.setConsensus("POS");
         blockchainState.setMining("Pre-mining");
         Account account = accountService.getAccount(GenesisImporter.CREATOR_ID);
-        blockchainState.setTotalSupply(Math.abs(account.getBalanceATM()));
-        blockchainState.setBurning(0L);
+        blockchainState.setTotalSupply(blockchainConfig.getInitialSupply());
+        blockchainState.setBurning(
+            blockchainConfig.getInitialSupply() - Math.abs(account.getBalanceATM()) / blockchainConfig.getOneAPL()
+        );
 
         return builder.bind(blockchainState).build();
     }
