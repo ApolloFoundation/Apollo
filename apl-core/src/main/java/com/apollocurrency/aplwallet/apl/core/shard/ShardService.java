@@ -43,21 +43,21 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ShardService {
     public final static long LOWER_SHARDING_MEMORY_LIMIT = 1536 * 1024 * 1024; //1.5GB
-    private ShardDao shardDao;
-    private BlockchainProcessor blockchainProcessor;
-    private Blockchain blockchain;
-    private DirProvider dirProvider;
-    private Zip zip;
-    private DatabaseManager databaseManager;
-    private BlockchainConfig blockchainConfig;
-    private ShardRecoveryDao shardRecoveryDao;
-    private ShardMigrationExecutor shardMigrationExecutor;
-    private AplAppStatus aplAppStatus;
-    private PropertiesHolder propertiesHolder;
-    private Event<TrimConfig> trimEvent;
-    private Event<DbHotSwapConfig> dbEvent;
-    private TrimService trimService;
-    private GlobalSync globalSync;
+    private final ShardDao shardDao;
+    private final BlockchainProcessor blockchainProcessor;
+    private final Blockchain blockchain;
+    private final DirProvider dirProvider;
+    private final Zip zip;
+    private final DatabaseManager databaseManager;
+    private final BlockchainConfig blockchainConfig;
+    private final ShardRecoveryDao shardRecoveryDao;
+    private final ShardMigrationExecutor shardMigrationExecutor;
+    private final AplAppStatus aplAppStatus;
+    private final PropertiesHolder propertiesHolder;
+    private final Event<TrimConfig> trimEvent;
+    private final Event<DbHotSwapConfig> dbEvent;
+    private final TrimService trimService;
+    private final GlobalSync globalSync;
     private volatile boolean isSharding;
     private volatile CompletableFuture<MigrateState> shardingProcess = null;
 

@@ -44,8 +44,6 @@ import static org.mockito.Mockito.withSettings;
 @ExtendWith(MockitoExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
 public class ShardObserverTest {
-    public static final int DEFAULT_SHARDING_FREQUENCY = 5_000;
-    public static final int DEFAULT_TRIM_HEIGHT = 100_000;
     private static final String CONFIG_NAME = "another-list-for-shar-observer-config.json";
     private static final String CONFIG_NAME_2 = "tn3-shard-observer-config.json";
     private ChainsConfigLoader chainsConfigLoader;
@@ -64,12 +62,7 @@ public class ShardObserverTest {
     private ShardObserver shardObserver;
     private BlockchainConfigUpdater blockchainConfigUpdater;
 
-//    @BeforeEach
-//    void setUp() {
-//    }
-
     private void prepareAndInit(String configName, int maxRollback, int randomValue) {
-//        chainsConfigLoader = new ChainsConfigLoader(CONFIG_NAME);
         chainsConfigLoader = new ChainsConfigLoader(configName);
         loadedChains = chainsConfigLoader.load();
         chain = loadedChains.get(UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6"));
@@ -89,8 +82,7 @@ public class ShardObserverTest {
     @MethodSource("supplyTestData")
     void testStartShardingByConfig(int latestShardHeight, int currentBlockHeight,
                                    int targetShardHeight,
-                                   boolean isShouldBeCalled,
-                                   boolean isSwitchedToNewConfigHeight) {
+                                   boolean isShouldBeCalled) {
         // prepare components :
         // max rollback = 3
         // random shard delay = (2 + 1) = 3
@@ -102,9 +94,6 @@ public class ShardObserverTest {
         Block block = td.BLOCK_1;
         block.setHeight(currentBlockHeight);
         blockchainConfigUpdater.onBlockPopped(block); // simulate setting 'current' and 'previous' config
-        if (!isSwitchedToNewConfigHeight) {
-            blockchainConfig.resetJustUpdated(); // reset flag set by default inside onBlockPopped(block)
-        }
 
         shardObserver.onBlockPushed(block);
 
@@ -126,60 +115,59 @@ public class ShardObserverTest {
             // 2. currentHeightBlockPushed - simulate block to be pushed at that height
             // 3. newShardHeight - we expect shard to be created at that height !!
             // 4. isShardingCalled - check if sharding was really executed
-            // 5. isConfigJustUpdate - simulate HeightConfig is updated from previous to next height
-            arguments(0, 0, 0, false, false),
-            arguments(0, 1, 0, false, false),
-            arguments(0, 206, 0, false, false), // sharding delay (6) = max rollback (3) + random shard delay (2 + 1)
-            arguments(0, 220, 0, false, false),
-            arguments(0, 225, 0, false, false),
-            arguments(0, 226, 220, true, false),
-            arguments(0, 227, 220, true, false),
-            arguments(0, 231, 220, true, false),
-            arguments(220, 239, 0, false, false),
-            arguments(220, 244, 0, false, false),
-            arguments(220, 247, 240, true, false),
-            arguments(0, 247, 220, true, false), // missed one of previous shards
-            arguments(580, 606, 600, true, true), // config has switched recently
-            arguments(600, 636, 0, false, false),
-            arguments(600, 960, 0, false, false),
-            arguments(600, 1506, 1500, true, true), // config has switched recently
-            arguments(1000, 2508, 1500, true, true), // config has switched recently
-            arguments(1500, 2003, 2000, false, true), // config has switched recently
-            arguments(1500, 2008, 2000, true, true), // config has switched recently
-            arguments(2000, 2238, 0, false, false),
-            arguments(2000, 2999, 0, false, false),
-            arguments(2000, 3006, 0, false, true), // config has switched recently
-            arguments(2000, 3250, 0, false, true), // config has switched recently
-            arguments(2000, 3250, 0, false, false), // simulated that config has NOT been switched recently
-            arguments(3750, 4000, 4000, false, false),
-            arguments(3750, 4006, 4000, true, false),
-            arguments(4000, 4456, 0, false, false),
-            arguments(4000, 5006, 0, false, true),
-            arguments(4000, 5106, 5100, true, true),
-            arguments(4000, 5137, 5100, true, false), // simulate that config has NOT been switched recently
-            arguments(5900, 6006, 6000, true, true),
-            arguments(5900, 6006, 6000, true, false), // simulate that config has NOT been switched recently
-            arguments(5800, 6006, 5900, true, false), // simulate LOST previous shard + that config has NOT been switched recently
-            arguments(5400, 6006, 5500, true, false),
-            arguments(5900, 6006, 6000, true, false), // simulate LOST previous shard + that config has NOT been switched recently
-            arguments(5900, 6006, 6000, true, true),
-            arguments(6000, 7005, 0, false, false),
-            arguments(6000, 7005, 0, false, true),
-            arguments(6000, 7006, 7000, true, true),
-            arguments(6000, 7016, 7000, true, true),
-            arguments(6000, 7916, 7000, true, true),
-            arguments(7000, 8007, 8000, true, true)
+            arguments(0, 0, 0, false),
+            arguments(0, 1, 0, false),
+            arguments(0, 206, 0, false), // sharding delay (6) = max rollback (3) + random shard delay (2 + 1)
+            arguments(0, 220, 0, false),
+            arguments(0, 225, 0, false),
+            arguments(0, 226, 220, true),
+            arguments(0, 227, 220, true),
+            arguments(0, 231, 220, true),
+            arguments(220, 239, 0, false),
+            arguments(220, 244, 0, false),
+            arguments(220, 247, 240, true),
+            arguments(0, 247, 220, true), // missed one of previous shards
+            arguments(580, 606, 600, true),
+            arguments(600, 636, 0, false),
+            arguments(600, 960, 0, false),
+            arguments(600, 1506, 1500, true),
+            arguments(1000, 2508, 1500, true),
+            arguments(1500, 2003, 2000, false),
+            arguments(1500, 2008, 2000, true),
+            arguments(2000, 2238, 0, false),
+            arguments(2000, 2999, 0, false),
+            arguments(2000, 3006, 0, false),
+            arguments(2000, 3250, 0, false),
+            arguments(2000, 3250, 0, false),
+            arguments(3750, 4000, 4000, false),
+            arguments(3750, 4006, 4000, true),
+            arguments(4000, 4456, 0, false),
+            arguments(4000, 5006, 0, false),
+            arguments(4000, 5106, 5100, true),
+            arguments(4000, 5137, 5100, true),
+            arguments(5900, 6006, 6000, true),
+            arguments(5900, 6006, 6000, true),
+            arguments(5800, 6006, 5900, true),
+            arguments(5400, 6006, 5500, true),
+            arguments(5900, 6006, 6000, true),
+            arguments(5900, 6006, 6000, true),
+            arguments(6000, 7005, 0, false),
+            arguments(6000, 7005, 0, false),
+            arguments(6000, 7006, 7000, true),
+            arguments(6000, 7016, 7000, true),
+            arguments(6000, 7916, 7000, true),
+            arguments(7000, 8007, 8000, true)
         );
     }
 
     @ParameterizedTest
     @MethodSource("supplyTestDataTN3")
     void testStartShardingByTN3(int latestShardHeight, int currentBlockHeight,
-                                   int targetShardHeight,
-                                   boolean isShouldBeCalled,
-                                   boolean isSwitchedToNewConfigHeight) {
+                                int targetShardHeight,
+                                boolean isShouldBeCalled,
+                                int randomMockValue) {
         // prepare components
-        prepareAndInit(CONFIG_NAME_2, 2000, 143);
+        prepareAndInit(CONFIG_NAME_2, 2000, randomMockValue);
         // prepare tes data
         Shard shard = mock(Shard.class);
         doReturn(latestShardHeight).when(shard).getShardHeight();
@@ -187,9 +175,6 @@ public class ShardObserverTest {
         Block block = td.BLOCK_1;
         block.setHeight(currentBlockHeight);
         blockchainConfigUpdater.onBlockPopped(block); // simulate setting 'current' and 'previous' config
-        if (!isSwitchedToNewConfigHeight) {
-            blockchainConfig.resetJustUpdated(); // reset flag set by default inside onBlockPopped(block)
-        }
 
         shardObserver.onBlockPushed(block);
 
@@ -208,10 +193,15 @@ public class ShardObserverTest {
             // 3. newShardHeight - we expect shard to be created at that height !!
             // 4. isShardingCalled - check if sharding was really executed
             // 5. isConfigJustUpdate - simulate HeightConfig is updated from previous to next height
-//            arguments(0, 100, 0, false, false),
-//            arguments(0, 4144, 2000, true, false), // TODO: fix
-            arguments(6000, 10144, 8000, true, false),
-            arguments(6000, 10144, 8000, true, false)
+            arguments(0, 100, 0, false, 143),
+            arguments(0, 4144, 2000, true, 143),
+            arguments(6000, 10144, 8000, true, 143),
+            arguments(6000, 10144, 8000, true, 143),
+            arguments(8000, 12273, 10000, true, 272),
+            arguments(8000, 12274, 10000, true, 272),
+            arguments(10000, 22144, 20000, true, 143),
+            arguments(20000, 32144, 30000, true, 143),
+            arguments(30000, 42144, 40000, true, 143)
         );
     }
 
