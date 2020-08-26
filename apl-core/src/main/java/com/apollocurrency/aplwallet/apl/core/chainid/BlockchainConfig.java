@@ -84,8 +84,13 @@ public class BlockchainConfig {
             .orElse(null);
     }
 
+    /**
+     * Return previous configuration for any given height. Rollback is considered too.
+     * @param targetHeight specified height value used for selecting 'previous' config
+     * @return optional configuration
+     */
     public Optional<HeightConfig> getPreviousConfigByHeight(int targetHeight) {
-        log.debug("getPreviousConfigByHeight targetHeight = '{}'", targetHeight);
+        log.trace("getPreviousConfigByHeight targetHeight = '{}'", targetHeight);
         Optional<HeightConfig> result = Optional.empty();
         Set<Map.Entry<Integer, HeightConfig>> entries = heightConfigMap.headMap(targetHeight, true).entrySet();
         log.trace("getPreviousConfigByHeight entries: '{}'\n", entries);
@@ -99,7 +104,7 @@ public class BlockchainConfig {
                 result = Optional.ofNullable(prev.getValue());
             }
         }
-        log.debug("getPreviousConfigByHeight RESULT = {}\n", result);
+        log.debug("getPreviousConfigByHeight, targetHeight = '{}' RESULT = {}\n", targetHeight, result);
         return result;
     }
 
@@ -230,7 +235,7 @@ public class BlockchainConfig {
     /**
      * For UNIT TEST only!
      *
-     * @param currentConfig
+     * @param currentConfig configuration to be assigned as current
      */
     public void setCurrentConfig(HeightConfig currentConfig) {
         this.previousConfig = Optional.ofNullable(this.currentConfig);
@@ -254,7 +259,7 @@ public class BlockchainConfig {
      * Flag to catch configuration changing
      * // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
      *
-     * @return
+     * @return if config was recently updated to new height
      */
     public boolean isJustUpdated() {
         return isJustUpdated;

@@ -53,10 +53,10 @@ public class ShardsDownloadService {
 
     @Inject
     public ShardsDownloadService(ShardInfoDownloader shardInfoDownloader,
-            BlockchainConfig blockchainConfig,
-            Event<ShardPresentData> presentDataEvent,
-            PropertiesHolder propertiesHolder,
-            FileDownloadService fileDownloadService
+                                 BlockchainConfig blockchainConfig,
+                                 Event<ShardPresentData> presentDataEvent,
+                                 PropertiesHolder propertiesHolder,
+                                 FileDownloadService fileDownloadService
     ) {
         this.shardInfoDownloader = shardInfoDownloader;
         this.fileDownloadService = fileDownloadService;
