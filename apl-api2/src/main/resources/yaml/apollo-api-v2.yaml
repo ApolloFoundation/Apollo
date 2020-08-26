@@ -156,16 +156,16 @@ paths:
     get:
       tags:
         - state
-      summary: Get blockchain object
-      description: Return details information about the blockchain
-      operationId: getBlockchainInfo
+      summary: Get blockchain state object
+      description: Return details information about the blockchain state
+      operationId: getBlockchainState
       responses:
         200:
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BlockchainInfo'
+                $ref: '#/components/schemas/BlockchainState'
         500:
           $ref: '#/components/responses/ServerError'
   /@@state/block:
@@ -508,6 +508,23 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /@@info/blockchain:
+    get:
+      tags:
+        - info
+      summary: Get blockchain object
+      description: Return details information about the blockchain
+      operationId: getBlockchainInfo
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockchainInfo'
+        500:
+          $ref: '#/components/responses/ServerError'
+
 components:
   schemas:
     TransactionInfoArrayResp:
@@ -732,6 +749,39 @@ components:
               format: integer
               example: '2800000000'
     BlockchainInfo:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            chainid:
+              type: string
+              format: hex_bytearray
+              example: 'a2e9b946290b48b69985dc2e5a5860a1'
+            ticker:
+              type: string
+              example: 'USDS'
+            consensus:
+              type: string
+              example: 'Apollo'
+            mining:
+              type: string
+              example: 'Pre-mining'
+            total_supply:
+              type: integer
+              format: int64
+              example: 10000000000
+              description: The total supply
+            burning:
+              type: integer
+              format: int64
+              example: 30000
+              description: The total amount of the burned tokens
+            genesisAccount:
+              type: string
+              format: hex_bytearray
+              example: '90001259ec21d31a30898d7'
+
+    BlockchainState:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object
