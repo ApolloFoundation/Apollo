@@ -3,7 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.v2.impl;
 import com.apollocurrency.aplwallet.api.v2.NotFoundException;
 import com.apollocurrency.aplwallet.api.v2.StateApiService;
 import com.apollocurrency.aplwallet.api.v2.model.BlockInfo;
-import com.apollocurrency.aplwallet.api.v2.model.BlockchainInfo;
+import com.apollocurrency.aplwallet.api.v2.model.BlockchainState;
 import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -98,27 +98,27 @@ public class StateApiServiceImpl implements StateApiService {
         return builder.bind(response).build();
     }
 
-    public Response getBlockchainInfo(SecurityContext securityContext) throws NotFoundException {
+    public Response getBlockchainState(SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         if (!blockchain.isInitialized()) {
             return builder.error(ApiErrors.BLOCKCHAIN_NOT_INITIALIZED).build();
         }
-        BlockchainInfo blockchainInfo = new BlockchainInfo();
-        blockchainInfo.setChainid(blockchainConfig.getChain().getChainId().toString());
-        blockchainInfo.setGenesisAccount(Long.toUnsignedString(GenesisImporter.CREATOR_ID));
-        blockchainInfo.setGenesisBlockTimestamp(GenesisImporter.EPOCH_BEGINNING);
-        blockchainInfo.setGenesisBlockId(Long.toUnsignedString(blockchain.getBlockIdAtHeight(0)));
+        BlockchainState blockchainState = new BlockchainState();
+        blockchainState.setChainid(blockchainConfig.getChain().getChainId().toString());
+        blockchainState.setGenesisAccount(Long.toUnsignedString(GenesisImporter.CREATOR_ID));
+        blockchainState.setGenesisBlockTimestamp(GenesisImporter.EPOCH_BEGINNING);
+        blockchainState.setGenesisBlockId(Long.toUnsignedString(blockchain.getBlockIdAtHeight(0)));
 
         int height = blockchain.getHeight();
-        blockchainInfo.setHeight((long) height);
+        blockchainState.setHeight((long) height);
         EcBlockData ecBlockData = blockchain.getECBlock(height);
-        blockchainInfo.setEcBlockId(Long.toUnsignedString(ecBlockData.getId()));
-        blockchainInfo.setEcBlockHeight((long) ecBlockData.getHeight());
+        blockchainState.setEcBlockId(Long.toUnsignedString(ecBlockData.getId()));
+        blockchainState.setEcBlockHeight((long) ecBlockData.getHeight());
 
-        blockchainInfo.setTxTimestamp((long) timeService.getEpochTime());
-        blockchainInfo.setTimestamp(timeService.systemTimeMillis());
+        blockchainState.setTxTimestamp((long) timeService.getEpochTime());
+        blockchainState.setTimestamp(timeService.systemTimeMillis());
 
-        return builder.bind(blockchainInfo).build();
+        return builder.bind(blockchainState).build();
     }
 
     public Response getTxReceiptById(String transactionStr, SecurityContext securityContext) throws NotFoundException {
