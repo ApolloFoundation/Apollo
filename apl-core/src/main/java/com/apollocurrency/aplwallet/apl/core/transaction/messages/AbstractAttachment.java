@@ -65,7 +65,7 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
     }
 
     @Override
-    public final Fee getBaselineFee(Transaction transaction) {
+    public final Fee getBaselineFee(Transaction transaction, long oneAPL) {
         return transactionType().getBaselineFee(transaction);
     }
 

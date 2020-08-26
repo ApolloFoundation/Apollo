@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ChildAccountAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 
 import java.util.List;
 
@@ -22,7 +21,8 @@ public class ChildAccountTestData {
     public static final String SENDER_ACCOUNT_RS = "APL-XR8C-K97J-QDZC-3YXHE";
     public static final String SENDER_PUBLIC_KEY = "d52a07dc6fdf9f5c6b547ccb11444ce7bba73a99014eb9ac647b6971bee9263c";
     public static final long SENDER_ID = Convert.parseUnsignedLong("1603209491393731786");
-    public static final Account SENDER = new Account(Convert.parseAccountId(SENDER_ACCOUNT_RS), 1000 * Constants.ONE_APL, 100 * Constants.ONE_APL, 0L, 0L, 0);
+    private static final long LOCAL_ONE_APL = 100000000;
+    public static final Account SENDER = new Account(Convert.parseAccountId(SENDER_ACCOUNT_RS), 1000 * LOCAL_ONE_APL, 100 * LOCAL_ONE_APL, 0L, 0L, 0);
 
     public static final String CHILD_SECRET_PHRASE_1 = "1234567890";
     public static final byte[] CHILD_PUBLIC_KEY_1 = Crypto.getPublicKey(CHILD_SECRET_PHRASE_1);

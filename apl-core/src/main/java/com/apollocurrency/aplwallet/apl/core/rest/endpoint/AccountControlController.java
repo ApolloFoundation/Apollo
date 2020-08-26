@@ -300,7 +300,7 @@ public class AccountControlController {
         SetPhasingOnly attachment = new SetPhasingOnly(phasingParams, maxFees, controlMinDuration.shortValue(), controlMaxDuration.shortValue());
         CreateTransactionRequest txRequest = HttpRequestToCreateTransactionRequestConverter.convert(
             servletRequest, senderAccount, 0, 0, attachment,
-            broadcast != null ? broadcast : false, feeATM != null ? feeATM : Constants.ONE_APL);
+            broadcast != null ? broadcast : false, feeATM != null ? feeATM : blockchainConfig.getOneAPL());
         log.trace("txRequest = {}", txRequest);
 
         Transaction transaction = txCreator.createTransactionThrowingException(txRequest);

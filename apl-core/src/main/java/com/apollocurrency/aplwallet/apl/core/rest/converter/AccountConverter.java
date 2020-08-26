@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.api.dto.account.AccountAssetUnconfirmedBalan
 import com.apollocurrency.aplwallet.api.dto.account.AccountCurrencyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountLeaseDTO;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
@@ -23,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 
 import javax.inject.Inject;
 import java.util.LinkedList;
@@ -43,6 +43,7 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
     private final Blockchain blockchain;
     private final AccountCurrencyConverter accountCurrencyConverter;
     private final CurrencyService currencyService;
+    private final BlockchainConfig blockchainConfig;
 
     @Inject
     public AccountConverter(AccountService accountService,
@@ -51,7 +52,8 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
                             TwoFactorAuthService twoFactorAuthService,
                             Blockchain blockchain,
                             AccountCurrencyConverter accountCurrencyConverter,
-                            CurrencyService currencyService) {
+                            CurrencyService currencyService,
+                            BlockchainConfig blockchainConfig) {
         this.accountService = accountService;
         this.accountInfoService = accountInfoService;
         this.accountLeaseService = accountLeaseService;
@@ -59,6 +61,7 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
         this.blockchain = blockchain;
         this.accountCurrencyConverter = accountCurrencyConverter;
         this.currencyService = currencyService;
+        this.blockchainConfig = blockchainConfig;
     }
 
     private static void addAccountInfo(AccountDTO o, AccountInfo model) {
@@ -159,7 +162,7 @@ public class AccountConverter implements Converter<Account, AccountDTO> {
                         dto.setCurrentHeightFrom(accountLease.getCurrentLeasingHeightFrom());
                         dto.setCurrentHeightTo(accountLease.getCurrentLeasingHeightTo());
                         if (includeEffectiveBalance) {
-                            dto.setEffectiveBalanceAPL(accountService.getGuaranteedBalanceATM(lessor) / Constants.ONE_APL);
+                            dto.setEffectiveBalanceAPL(accountService.getGuaranteedBalanceATM(lessor) / blockchainConfig.getOneAPL());
                         }
                     }
                     if (accountLease.getNextLesseeId() != 0) {

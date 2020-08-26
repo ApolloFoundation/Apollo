@@ -174,7 +174,7 @@ public abstract class TransactionType {
 
     @TransactionFee(FeeMarker.BASE_FEE)
     public Fee getBaselineFee(Transaction transaction) {
-        return Fee.DEFAULT_FEE;
+        return new Fee.ConstantFee(blockchainConfig.getOneAPL());
     }
 
     @TransactionFee(FeeMarker.FEE)

@@ -26,7 +26,7 @@ import java.util.Map;
 
 @Singleton
 public class DeliveryTransactionType extends DigitalGoodsTransactionType {
-    private final Fee DGS_DELIVERY_FEE = new Fee.SizeBasedFee(Constants.ONE_APL, 2 * Constants.ONE_APL, 32) {
+    private final Fee DGS_DELIVERY_FEE = new Fee.SizeBasedFee(getBlockchainConfig().getOneAPL(), Math.multiplyExact(2, getBlockchainConfig().getOneAPL()), 32) {
         @Override
         public int getSize(Transaction transaction, Appendix appendage) {
             DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) transaction.getAttachment();

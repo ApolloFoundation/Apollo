@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 
 public abstract class UpdateTransactionType extends TransactionType {
 
-    private final Fee UPDATE_FEE = new Fee.ConstantFee(Constants.ONE_APL);
+    private final Fee UPDATE_FEE = new Fee.ConstantFee(getBlockchainConfig().getOneAPL());
 
     public UpdateTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
         super(blockchainConfig, accountService);

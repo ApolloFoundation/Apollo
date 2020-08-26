@@ -35,7 +35,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
@@ -544,7 +543,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
                 monitoredAccount.setHeight(blockchain.getHeight());
                 log.debug("{} funding transaction {} for {} {} submitted from {} to {}",
                     blockchainConfig.getCoinSymbol(), transaction.getStringId(),
-                    (double) monitoredAccount.getAmount() / Constants.ONE_APL,
+                    (double) monitoredAccount.getAmount() / blockchainConfig.getOneAPL(),
                     blockchainConfig.getCoinSymbol(), monitor.getAccountName(),
                     monitoredAccount.getAccountName());
             }
