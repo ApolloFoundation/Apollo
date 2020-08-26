@@ -47,17 +47,17 @@ public class TrimObserver {
     private final Queue<Integer> trimHeights = new PriorityQueue<>(); // will sort heights from lowest to highest automatically
     private final int maxRollback;
     private volatile boolean trimDerivedTablesEnabled = true;
-    private int trimFrequency;
-    private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("apl-task-random-trim"));
-    private BlockchainConfig blockchainConfig;
-    private PropertiesHolder propertiesHolder;
-    private Blockchain blockchain;
-    private Random random;
-    private boolean isShardingOff;
+    private final int trimFrequency;
+    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("apl-task-random-trim"));
+    private final BlockchainConfig blockchainConfig;
+    private final PropertiesHolder propertiesHolder;
+    private final Blockchain blockchain;
+    private final Random random;
+    private final boolean isShardingOff;
     /**
      * Callable task for method to run. Next run is scheduled as soon as previous has finished
      */
-    private Callable<Void> taskToCall = new Callable<>() {
+    private final Callable<Void> taskToCall = new Callable<>() {
         public Void call() {
             try {
                 // Do work.
