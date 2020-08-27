@@ -20,6 +20,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.utils.FilterCarriageReturnCharacterInputStream;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.env.config.ResourceLocator;
+import com.apollocurrency.aplwallet.apl.util.env.config.UserResourceLocator;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
@@ -31,6 +34,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.DigestInputStream;
@@ -84,6 +88,7 @@ public class GenesisImporter {
     private byte[] computedDigest;
     private AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
     private AccountTable accountTable;
+    private ResourceLocator resourceLocator;
 
     @Inject
     public GenesisImporter(
@@ -116,6 +121,7 @@ public class GenesisImporter {
             propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
         this.accountGuaranteedBalanceTable = Objects.requireNonNull(accountGuaranteedBalanceTable, "accountGuaranteedBalanceTable is NULL");
         this.accountTable = Objects.requireNonNull(accountTable, "accountTable is NULL");
+        this.resourceLocator = new UserResourceLocator(ConfigDirProviderFactory.getConfigDirProvider(), ConfigDirProviderFactory.getConfigDir());
     }
 
     private String getGenesisParametersLocation(GenesisImporterProducer genesisImporterProducer) {
@@ -134,34 +140,39 @@ public class GenesisImporter {
     @PostConstruct
     public void loadGenesisDataFromResources() {
         if (CREATOR_PUBLIC_KEY == null) {
-            try (
-                final InputStream is =
-                    ClassLoader.getSystemResourceAsStream(genesisParametersLocation);
-                final JsonParser jsonParser = jsonFactory.createParser(is)
-            ) {
-                while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
-                    final String currentName = jsonParser.getCurrentName();
-                    final JsonToken currentToken = jsonParser.currentToken();
-                    if (currentToken == JsonToken.FIELD_NAME) {
-                        if (GENESIS_PUBLIC_KEY_JSON_FIELD_NAME.endsWith(currentName)) {
-                            jsonParser.nextToken();
-                            CREATOR_PUBLIC_KEY = Convert.parseHexString(jsonParser.getText());
-                            CREATOR_ID = AccountService.getId(CREATOR_PUBLIC_KEY);
-                        } else if (EPOCH_BEGINNING_JSON_FIELD_NAME.endsWith(currentName)) {
-                            jsonParser.nextToken();
-                            final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
-                            EPOCH_BEGINNING = dateFormat.parse(jsonParser.getText()).getTime();
-                        }
-                    }
-                }
-            } catch (IOException | ParseException e) {
-                log.error("genesis Parameters were not loaded = {}", e.getMessage());
-                throw new RuntimeException("Failed to load genesis parameters", e);
-            }
+            InputStream is = resourceLocator.locate(genesisParametersLocation)
+                .or(() -> resourceLocator.locate("conf" + File.separator + genesisParametersLocation))
+                .orElseThrow(() -> new RuntimeException("Failed to load genesis parameters"));
+            loadGenesisDataFromIS(is);
         }
     }
 
-    private byte[] loadBalancesAccountsComputeDigest() {
+    private void loadGenesisDataFromIS(InputStream is) {
+        try (
+            final JsonParser jsonParser = jsonFactory.createParser(is)
+        ) {
+            while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+                final String currentName = jsonParser.getCurrentName();
+                final JsonToken currentToken = jsonParser.currentToken();
+                if (currentToken == JsonToken.FIELD_NAME) {
+                    if (GENESIS_PUBLIC_KEY_JSON_FIELD_NAME.endsWith(currentName)) {
+                        jsonParser.nextToken();
+                        CREATOR_PUBLIC_KEY = Convert.parseHexString(jsonParser.getText());
+                        CREATOR_ID = AccountService.getId(CREATOR_PUBLIC_KEY);
+                    } else if (EPOCH_BEGINNING_JSON_FIELD_NAME.endsWith(currentName)) {
+                        jsonParser.nextToken();
+                        final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+                        EPOCH_BEGINNING = dateFormat.parse(jsonParser.getText()).getTime();
+                    }
+                }
+            }
+        } catch (IOException | ParseException e) {
+            log.error("genesis Parameters were not loaded = {}", e.getMessage());
+            throw new RuntimeException("Failed to load genesis parameters", e);
+        }
+    }
+
+    private byte[] loadBalancesAccountsComputeDigest() throws GenesisImportException {
         final long start = System.currentTimeMillis();
         createGenesisTaskIdForStatus();
 
@@ -174,7 +185,10 @@ public class GenesisImporter {
         int publicKeyCount = 0;
         try (
             final InputStream filteredIs =
-                new FilterCarriageReturnCharacterInputStream(ClassLoader.getSystemResourceAsStream(path));
+                new FilterCarriageReturnCharacterInputStream(
+                    resourceLocator.locate(path)
+                        .orElseThrow(() -> new RuntimeException("The resource could not be found, path=" + path))
+                );
             final InputStream digestIs = new DigestInputStream(filteredIs, digest);
             final JsonParser jsonParser = jsonFactory.createParser(digestIs)
         ) {
@@ -244,7 +258,7 @@ public class GenesisImporter {
         }
     }
 
-    public Block newGenesisBlock() {
+    public Block newGenesisBlock() throws GenesisImportException {
         long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
         return new BlockImpl(CREATOR_PUBLIC_KEY, loadBalancesAccountsComputeDigest(), baseTarget);
     }
@@ -306,7 +320,9 @@ public class GenesisImporter {
         final MessageDigest digest = Crypto.sha256();
         try (
             final InputStream filteredIs =
-                new FilterCarriageReturnCharacterInputStream(ClassLoader.getSystemResourceAsStream(path));
+                new FilterCarriageReturnCharacterInputStream(resourceLocator.locate(path)
+                    .orElseThrow(() -> new RuntimeException("The resource could not be found, path=" + path))
+                );
             final InputStream digestedIs = new DigestInputStream(filteredIs, digest);
             final JsonParser jsonParser = jsonFactory.createParser(digestedIs)
         ) {
@@ -340,7 +356,11 @@ public class GenesisImporter {
 
         log.debug("Saved public keys = [{}] in {} sec", count, (System.currentTimeMillis() - start) / 1000);
 
-        validatePublicKeyNumber(count);
+        try {
+            validatePublicKeyNumber(count);
+        } catch (GenesisImportException e) {
+            throw new RuntimeException(e);
+        }
 
         return count;
     }
@@ -369,7 +389,8 @@ public class GenesisImporter {
         log.trace("Saved public keys, start saving Balances...");
         aplAppStatus.durableTaskUpdate(genesisTaskId, 50 + 0.1, "Loading genesis balance amounts");
         try (
-            final InputStream is = ClassLoader.getSystemResourceAsStream(path);
+            final InputStream is = resourceLocator.locate(path)
+                .orElseThrow(() -> new RuntimeException("The resource could not be found, path=" + path));
             final JsonParser jsonParser = jsonFactory.createParser(is)
         ) {
             boolean isBalancesProcessingStarted = false;
@@ -404,24 +425,44 @@ public class GenesisImporter {
             (System.currentTimeMillis() - start) / 1000, totalAmount
         );
 
-        validateBalanceNumber(count);
+        try {
+            validateBalanceNumber(count);
+        } catch (GenesisImportException e) {
+            throw new RuntimeException(e);
+        }
 
         return Pair.of(totalAmount, count);
     }
 
-    List<Map.Entry<String, Long>> loadGenesisAccounts() {
+    List<Map.Entry<String, Long>> loadGenesisAccounts() throws GenesisImportException {
         final String path = blockchainConfig.getChain().getGenesisLocation();
         log.debug("Genesis accounts json resource path = " + path);
+        final InputStream is = resourceLocator.locate(path).orElseThrow(() -> new RuntimeException("The resource could not be found, path=" + path));
 
+        final Queue<Map.Entry<String, Long>> sortedEntries = loadGenesisAccountsFromIS(is);
+
+        final int balanceNumber = sortedEntries.size();
+        validateBalanceNumber(balanceNumber);
+
+        return sortedEntries.stream()
+            .skip(1) //skip first account to collect only genesis accounts
+            .collect(Collectors.toList());
+    }
+
+    private Queue<Map.Entry<String, Long>> loadGenesisAccountsFromIS(InputStream is) throws GenesisImportException {
+        Objects.requireNonNull(is);
         final Queue<Map.Entry<String, Long>> sortedEntries =
             new PriorityQueue<>((o1, o2) -> Long.compare(o2.getValue(), o1.getValue()));
+
         try (
-            final InputStream is = ClassLoader.getSystemResourceAsStream(path);
             final JsonParser jsonParser = jsonFactory.createParser(is)
         ) {
             boolean isBalancesProcessingStarted = false;
             while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
                 final JsonToken currentToken = jsonParser.getCurrentToken();
+                if (currentToken == null) {
+                    break;
+                }
                 final String currentName = jsonParser.getCurrentName();
                 if ((currentToken == JsonToken.FIELD_NAME) && (BALANCES_JSON_FIELD_NAME.equals(currentName))) {
                     jsonParser.nextToken();
@@ -432,15 +473,11 @@ public class GenesisImporter {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load genesis accounts", e);
+            log.error("Failed to load genesis accounts, cause:{}", e.getMessage());
+            throw new GenesisImportException("Failed to load genesis accounts", e);
         }
 
-        final int balanceNumber = sortedEntries.size();
-        validateBalanceNumber(balanceNumber);
-
-        return sortedEntries.stream()
-            .skip(1) //skip first account to collect only genesis accounts
-            .collect(Collectors.toList());
+        return sortedEntries;
     }
 
     /**
@@ -448,9 +485,9 @@ public class GenesisImporter {
      *
      * @param publicKeyCount
      */
-    private void validatePublicKeyNumber(int publicKeyCount) {
+    private void validatePublicKeyNumber(int publicKeyCount) throws GenesisImportException {
         if (publicKeyNumberTotal != publicKeyCount) {
-            throw new IllegalStateException(
+            throw new GenesisImportException(
                 String.format(
                     "A hardcoded public key total number: %d is different to a calculated value: %d",
                     publicKeyNumberTotal, publicKeyCount
@@ -464,9 +501,9 @@ public class GenesisImporter {
      *
      * @param balanceCount
      */
-    private void validateBalanceNumber(int balanceCount) {
+    private void validateBalanceNumber(int balanceCount) throws GenesisImportException {
         if (balanceNumberTotal != balanceCount) {
-            throw new IllegalStateException(
+            throw new GenesisImportException(
                 String.format(
                     "A hardcoded balance total number: %d is different to a calculated value: %d",
                     balanceNumberTotal, balanceCount
