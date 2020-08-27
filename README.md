@@ -73,3 +73,43 @@ mvnw -v
 ## IDE
 
 Project is entirely on Maven v3 and could be loaded in any IDE that supports Maven.
+
+## MariaDB
+
+### Initiate
+    1) Open repository apl-updater2
+    
+    2) Run script depends on OS. 
+        mariadb-pkg/maria_db_linux_pkg.sh
+        mariadb-pkg/maria_db_osx_pkg.sh
+        mariadb-pkg/maria_db_windows_pkg.sh
+        
+    3) Unzip packege and start db installation process. (..../ApolloWallet/apollo-mariadb is a basedir path)
+    
+    4) Create mariadb config. 
+    
+            [client-server]
+            port=3366
+            socket=...../.apl-blockchain/mariadb/3fecf3/mariadb.sock
+           
+            [mysqld]
+            # Only allow connections from localhost
+            bind-address = 127.0.0.1
+            lower_case_table_names=2 
+            
+            datadir=...../.apl-blockchain/mariadb/3fecf3/data
+            tmpdir=...../.apl-blockchain/mariadb/3fecf3/tmp
+            socket=...../.apl-blockchain/mariadb/3fecf3/mariadb.sock
+            log-error=...../.apl-blockchain/mariadb/3fecf3/mariadb.log
+            pid-file=...../.apl-blockchain/mariadb/3fecf3/mariadb.pid
+            
+            basedir=...../apl-updater2/mariadb-pkg/target/ApolloWallet/apollo-mariadb
+            
+            [mariadb]
+            plugin_load_add = ha_rocksdb
+                
+    
+    5) run ./bin/maria-db-init.sh {basedir} {mariadb_apollo_instance.cnf}
+        Example: sh ./bin/maria-db-init.sh /../../..../apl-updater2/mariadb-pkg/target/ApolloWallet/apollo-mariadb /..../..../.apl-blockchain/conf-tn3/mariadb_apollo_instance.cnf
+   
+    
