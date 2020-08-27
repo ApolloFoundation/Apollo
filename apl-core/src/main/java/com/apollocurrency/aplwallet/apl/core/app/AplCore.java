@@ -100,18 +100,7 @@ public final class AplCore {
     @Inject
     @Setter
     private TaskDispatchManager taskDispatchManager;
-    //    @Inject
-//    @Setter
-//    private AccountPublicKeyService accountPublicKeyService;
-//    @Inject
-//    @Setter
-//    private InMemoryCacheManager cacheManager;
-//    @Inject
-//    @Setter
-//    private DexOrderProcessor dexOrderProcessor;
-//    @Inject
-//    @Setter
-//    private PrunableArchiveMonitor prunableArchiveMonitor;
+
     private String initCoreTaskID;
 
     public AplCore() {

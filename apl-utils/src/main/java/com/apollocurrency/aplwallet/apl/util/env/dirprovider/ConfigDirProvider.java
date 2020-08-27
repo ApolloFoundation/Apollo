@@ -10,35 +10,35 @@ import java.util.UUID;
  */
 public interface ConfigDirProvider {
 
-    public static final String CONFIGS_DIR_NAME = "configs";
+    String CONFIGS_DIR_NAME = "configs";
 
     /**
      * Path to directory where main executable jar file is placed
      *
      * @return File denoting path to directory with main executable jar
      */
-    public String getInstallationConfigLocation();
+    String getInstallationConfigLocation();
 
     /**
      * Path to system config directory, depends on OS
      *
      * @return Path to system config directory
      */
-    public String getSysConfigLocation();
+    String getSysConfigLocation();
 
     /**
      * Path to user's config directory, depends on OS
      *
      * @return Path to user's config directory
      */
-    public String getUserConfigLocation();
+    String getUserConfigLocation();
 
     /**
      * Just name of config directory of zip file depending of initialization
      *
      * @return name of config for defined network
      */
-    public String getConfigName();
+    String getConfigName();
 
     /**
      * Directory where config directories or zip files for different networks
@@ -46,7 +46,7 @@ public interface ConfigDirProvider {
      *
      * @return
      */
-    public String getConfigLocation();
+    String getConfigLocation();
 
     /**
      * Each network has it's chain ID and it must be known to ConfigDirProvider
@@ -54,7 +54,7 @@ public interface ConfigDirProvider {
      *
      * @return
      */
-    public UUID getChainId();
+    UUID getChainId();
 
     /**
      * In some cases, e.g.after loading from configs from custom directories,
@@ -62,7 +62,7 @@ public interface ConfigDirProvider {
      *
      * @param newID chain ID to set
      */
-    public void setChainID(UUID newID);
+    void setChainID(UUID newID);
 
     /**
      * Command line may specify chainID partially so we can use this information
@@ -71,6 +71,6 @@ public interface ConfigDirProvider {
      *
      * @return few chain ID UUID firest bytes in hex
      */
-    public String getChainIdPart();
+    String getChainIdPart();
 
 }

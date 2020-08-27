@@ -49,9 +49,11 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -108,6 +110,7 @@ class GenesisImporterTest {
     @Inject
     AccountTable accountTable;
 
+    UUID chainUuid = UUID.randomUUID();
     BalancesPublicKeysTestData testData;
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private BlockchainConfigUpdater blockchainConfigUpdater = mock(BlockchainConfigUpdater.class);
@@ -155,6 +158,8 @@ class GenesisImporterTest {
         doReturn(3000000000000000000L).when(config).getMaxBalanceATM();
         doReturn(100L).when(config).getInitialBaseTarget();
 
+        ConfigDirProviderFactory.setup(false, "Apollo", 1, chainUuid.toString(), null);
+
         testData = new BalancesPublicKeysTestData();
 
         propertiesHolder.init(
@@ -162,6 +167,7 @@ class GenesisImporterTest {
         );
     }
 
+    @SneakyThrows
     @Test
     void newGenesisBlock() {
         doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
@@ -221,6 +227,7 @@ class GenesisImporterTest {
         });
     }
 
+    @SneakyThrows
     @Test
     void newGenesisBlockLongJson() {
         String key = UUID.randomUUID().toString();
@@ -409,6 +416,7 @@ class GenesisImporterTest {
         assertEquals(countExpected, countActual);
     }
 
+    @SneakyThrows
     @Test
     void loadGenesisAccounts() {
         doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
@@ -454,7 +462,7 @@ class GenesisImporterTest {
             accountService,
             accountPublicKeyService
         );
-        assertThrows(RuntimeException.class, () -> genesisImporter.loadGenesisAccounts());
+        assertThrows(GenesisImportException.class, () -> genesisImporter.loadGenesisAccounts());
     }
 
     @Test
@@ -566,7 +574,7 @@ class GenesisImporterTest {
         final Executable executable = () -> genesisImporter.loadGenesisAccounts();
 
         //THEN
-        assertThrows(IllegalStateException.class, executable);
+        assertThrows(GenesisImportException.class, executable);
     }
 
     private Properties getGenesisAccountTotalProperties(

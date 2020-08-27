@@ -14,6 +14,6 @@ public class GenesisImporterProducer {
     @Produces
     @Named("genesisParametersLocation")
     public String genesisParametersLocation() {
-        return "conf/data/genesisParameters.json";
+        return "data/genesisParameters.json";
     }
 }
