@@ -16,6 +16,8 @@
     "symbol": "Apollo",
     "prefix": "APL",
     "project": "Apollo",
+    "initialSupply": 30000000000,
+    "decimals": 8,
     "genesisLocation": "conf/data/genesisAccounts-testnet.json",
     "featuresHeightRequirement": {},
     "blockchainProperties": [
@@ -125,6 +127,8 @@
     "symbol": "BTM",
     "prefix": "BTM",
     "project": "I am batman!",
+    "initialSupply": 30000000000,
+    "decimals": 8,
     "genesisLocation": "conf/data/batman-genesis.json",
     "blockchainProperties": [
       {

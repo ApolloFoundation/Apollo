@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -15,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidPlatformSpecs;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,15 +53,17 @@ public class UpdateController {
     private AccountParametersParser parser;
     private TransactionCreator txCreator;
     private UnconfirmedTransactionConverter converter;
+    private BlockchainConfig blockchainConfig;
 
     public UpdateController() {
     }
 
     @Inject
-    public UpdateController(AccountParametersParser parser, TransactionCreator txCreator, UnconfirmedTransactionConverter converter) {
+    public UpdateController(AccountParametersParser parser, TransactionCreator txCreator, UnconfirmedTransactionConverter converter, BlockchainConfig blockchainConfig) {
         this.parser = parser;
         this.txCreator = txCreator;
         this.converter = converter;
+        this.blockchainConfig = blockchainConfig;
     }
 
     @POST
@@ -93,7 +95,7 @@ public class UpdateController {
             .timestamp(timestamp)
             .senderAccount(senderAccount)
             .broadcast(true)
-            .feeATM(Constants.ONE_APL)
+            .feeATM(blockchainConfig.getOneAPL())
             .deadlineValue("1440")
             .keySeed(keySeed)
             .publicKeyValue(Convert.toHexString(senderAccount.getPublicKey().getPublicKey()))

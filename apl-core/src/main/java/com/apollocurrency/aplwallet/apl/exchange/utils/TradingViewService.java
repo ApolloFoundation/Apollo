@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.exchange.utils;
 
 import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
@@ -13,9 +14,11 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -25,12 +28,23 @@ import java.util.List;
 /**
  * @author Serhiy Lymar
  */
-public class TradingViewUtils {
+@Slf4j
+@Singleton
+public class TradingViewService {
+    private final BlockchainConfig blockchainConfig;
+    private final DexService service;
+    private final TimeService timeService;
 
-    private static final Logger log = LoggerFactory.getLogger(TradingViewUtils.class);
+    @Inject
+    public TradingViewService(@NonNull BlockchainConfig blockchainConfig,
+                              @NonNull DexService service,
+                              @NonNull TimeService timeService) {
+        this.blockchainConfig = blockchainConfig;
+        this.service = service;
+        this.timeService = timeService;
+    }
 
-
-    public static SimpleTradingEntry getDataForPeriodFromOffersEpoch(List<DexOrder> dexOrders, Integer start, Integer finish) {
+    public SimpleTradingEntry getDataForPeriodFromOffersEpoch(List<DexOrder> dexOrders, Integer start, Integer finish) {
         // request type =1 or 0 depending on sale or buy
 
         SimpleTradingEntry result = new SimpleTradingEntry();
@@ -72,7 +86,7 @@ public class TradingViewUtils {
                     low = currentPairRate;
                 }
 
-                BigDecimal amount = EthUtil.fromAtm(BigDecimal.valueOf(entryOfPeriod.getOrderAmount()));
+                BigDecimal amount = fromAtm(BigDecimal.valueOf(entryOfPeriod.getOrderAmount()));
                 BigDecimal vx = amount.multiply(entryOfPeriod.getPairRate());
 
                 if (log.isTraceEnabled()) {
@@ -100,7 +114,7 @@ public class TradingViewUtils {
     }
 
 
-    public static TradingDataOutput getUpdatedDataForIntervalFromOffers(String symbol, String resolution, Integer toTs, Integer fromTs, DexService service, TimeService timeService) {
+    public TradingDataOutput getUpdatedDataForIntervalFromOffers(String symbol, String resolution, Integer toTs, Integer fromTs) {
 
         int initialTime = fromTs;
         int finalTime = toTs;
@@ -173,7 +187,7 @@ public class TradingViewUtils {
         for (DexOrder cr : dexOrdersForInterval) {
             if (log.isTraceEnabled()) {
                 log.trace("order: {}, amount: {}, a1: {}, a2: {}, rate: {},", cr.getId(), cr.getOrderAmount(), EthUtil.weiToEther(BigInteger.valueOf(cr.getOrderAmount())),
-                    EthUtil.fromAtm(BigDecimal.valueOf(cr.getOrderAmount())), cr.getPairRate());
+                    fromAtm(BigDecimal.valueOf(cr.getOrderAmount())), cr.getPairRate());
             }
         }
 
@@ -195,7 +209,7 @@ public class TradingViewUtils {
             Integer startEpoch = Convert2.toEpochTime(start);
             Integer finishEpoch = Convert2.toEpochTime(finish);
 
-            SimpleTradingEntry entryForPeriod = TradingViewUtils.getDataForPeriodFromOffersEpoch(dexOrdersForInterval, startEpoch, finishEpoch);
+            SimpleTradingEntry entryForPeriod = getDataForPeriodFromOffersEpoch(dexOrdersForInterval, startEpoch, finishEpoch);
             entryForPeriod.time = finalTime;
 
             if (dexOrdersForInterval.size() > 0 && !entryForPeriod.isZero() && log.isTraceEnabled()) {
@@ -234,6 +248,10 @@ public class TradingViewUtils {
             tdo.setS("ok");
         }
         return tdo;
+    }
+
+    private BigDecimal fromAtm(BigDecimal ix) {
+        return ix.divide(BigDecimal.valueOf(blockchainConfig.getOneAPL()));
     }
 }
 

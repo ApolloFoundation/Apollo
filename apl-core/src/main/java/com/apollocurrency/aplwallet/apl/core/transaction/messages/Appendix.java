@@ -44,7 +44,7 @@ public interface Appendix {
 
     byte getVersion();
 
-    Fee getBaselineFee(Transaction transaction);
+    Fee getBaselineFee(Transaction transaction, long oneAPL);
 
     default boolean isPhasable() {
         return false;

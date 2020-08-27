@@ -191,7 +191,9 @@ public class Apollo {
         ConfPlaceholder ph = new ConfPlaceholder();
 //load configuration files
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
-        ConfigDirProviderFactory.setup(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx, args.chainId);
+        String configDir = StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir;
+
+        ConfigDirProviderFactory.setup(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx, args.chainId, configDir);
 
         ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
 
@@ -203,13 +205,13 @@ public class Apollo {
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
             configDirProvider,
             args.isResourceIgnored(),
-            StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+            configDir,
             Constants.APPLICATION_DIR_NAME + ".properties",
             SYSTEM_PROPERTY_NAMES);
 
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
             configDirProvider,
-            StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+            configDir,
             args.isResourceIgnored()
         );
 // init application data dir provider

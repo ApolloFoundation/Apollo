@@ -53,7 +53,7 @@ public final class ShufflingCreate extends CreateTransaction {
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (holdingType == HoldingType.APL && amount < blockchainConfig.getShufflingDepositAtm()) {
             return JSONResponses.incorrect("amount",
-                "Minimum shuffling amount is " + blockchainConfig.getShufflingDepositAtm() / Constants.ONE_APL + " " + blockchainConfig.getCoinSymbol());
+                "Minimum shuffling amount is " + blockchainConfig.getShufflingDepositAtm() / blockchainConfig.getOneAPL() + " " + blockchainConfig.getCoinSymbol());
         }
         byte participantCount = HttpParameterParserUtil.getByte(req, "participantCount", Constants.MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS,
             Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS, true);

@@ -144,10 +144,13 @@
     <!--          additivity="false">-->
     <!--    <appender-ref ref="account-file"/>-->
     <!--  </logger>-->
+<!--
+    <logger name="com.apollocurrency.aplwallet.apl.util.env.config" level="DEBUG"/>
     <logger name="com.apollocurrency.aplwallet.apl.core.transaction" level="DEBUG"/>
     <logger name="com.apollocurrency.aplwallet.apl.core.signature" level="DEBUG"/>
-    <logger name="com.apollocurrency.aplwallet.apl.core.rest.v2" level="TRACE"/>
     <logger name="com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl" level="DEBUG"/>
+-->
+    <logger name="com.apollocurrency.aplwallet.apl.core.rest.v2" level="TRACE"/>
 
     <!--    <logger name="com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling" level="trace" additivity="false">-->
     <!--        <appender-ref ref="shuffling-file"/>-->

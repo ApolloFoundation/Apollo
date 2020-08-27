@@ -22,11 +22,9 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 
 public interface Fee {
 
-    Fee DEFAULT_FEE = new Fee.ConstantFee(Constants.ONE_APL);
     Fee NONE = new Fee.ConstantFee();
 
     long getFee(Transaction transaction, Appendix appendage);

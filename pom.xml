@@ -27,8 +27,23 @@
     <!--   arti.firstbridge.work for follwing artifacts: web-wallet, fbcrypto -->
     <repository>
       <id>apl</id>
-      <name>arti.firstbridge.work-releases</name>
+      <name>arti.firstbridge.work</name>
       <url>https://arti.firstbridge.work/artifactory/apl</url>
+    </repository>
+    <repository>
+      <id>apl-release</id>
+      <name>arti.firstbridge.work-releases</name>
+      <url>https://arti.firstbridge.work/artifactory/apl-release</url>
+    </repository>
+    <repository>
+      <id>apl-stage</id>
+      <name>arti.firstbridge.work-stage</name>
+      <url>https://arti.firstbridge.work/artifactory/apl-stage</url>
+    </repository>
+    <repository>
+      <id>zpl-stage</id>
+      <name>arti.firstbridge.work-zpl</name>
+      <url>https://arti.firstbridge.work/artifactory/zpl-stage/apl-stage</url>
     </repository>
     <repository>
       <id>aplsys</id>
@@ -66,8 +81,10 @@
     <zip-format>zip</zip-format>
     <!--Dependency Versions-->
 
+    <antifraud.version>1.0.8</antifraud.version>
+
     <!-- We have to define this property and change it accordingly for correct version of packages -->
-    <apl-bom-ext.version>1.0.0</apl-bom-ext.version>
+    <apl-bom-ext.version>1.0.1</apl-bom-ext.version>
     <base-dist-dir>ApolloWallet/apollo-blockchain</base-dist-dir>
 
     <build-helper-maven-plugin.version>1.9.1</build-helper-maven-plugin.version>
@@ -106,9 +123,14 @@
       <dependency>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apl-bom-ext</artifactId>
-        <version>1.0.2</version>
+        <version>${apl-bom-ext.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.apollocurrency.antifraud</groupId>
+        <artifactId>antifraud</artifactId>
+        <version>${antifraud.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

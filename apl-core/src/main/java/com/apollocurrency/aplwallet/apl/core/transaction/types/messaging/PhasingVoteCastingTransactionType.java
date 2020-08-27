@@ -31,7 +31,7 @@ import java.util.List;
 public class PhasingVoteCastingTransactionType extends MessagingTransactionType {
     private final Fee PHASING_VOTE_FEE = (transaction, appendage) -> {
         MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
-        return attachment.getTransactionFullHashes().size() * Constants.ONE_APL;
+        return Math.multiplyExact(attachment.getTransactionFullHashes().size(), getBlockchainConfig().getOneAPL());
     };
 
     private final PhasingPollService phasingPollService;

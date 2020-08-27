@@ -17,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountContro
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingTestData;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.jboss.resteasy.mock.MockHttpResponse;
@@ -188,7 +187,7 @@ class AccountControlControllerTest extends AbstractEndpointTest {
     void testLeaseBalance_incorrect_period()
         throws URISyntaxException, UnsupportedEncodingException,
         AplException.ValidationException, JsonProcessingException {
-        Account recipient = new Account(recipientId, 10000 * Constants.ONE_APL, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
+        Account recipient = new Account(recipientId, 10000 * blockchainConfig.getOneAPL(), 10000 * blockchainConfig.getOneAPL(), 0, 0, CURRENT_HEIGHT);
         recipient.setPublicKey(new PublicKey(recipient.getId(), new byte[]{}, 0));
 
         MockHttpResponse response = sendPostRequest(accCtrlLeaseBalanceUri,

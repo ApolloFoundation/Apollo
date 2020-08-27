@@ -14,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ChildAccountAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
@@ -23,12 +22,13 @@ import java.util.Map;
 /**
  * Create child account transaction.
  * Sender is a parent account. There is an list of child public keys in the attachment.
+ *
  * @author andrii.zinchenko@firstbridge.io
  */
 @Slf4j
-public abstract class ChildAccount extends TransactionType {
+public abstract class ChildAccountTransactionType extends TransactionType {
 
-    public ChildAccount(BlockchainConfig blockchainConfig, AccountService accountService) {
+    public ChildAccountTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
         super(blockchainConfig, accountService);
     }
 
@@ -36,7 +36,7 @@ public abstract class ChildAccount extends TransactionType {
         return getAccountService().getAccount(childPublicKey) != null;
     }
 
-    private static final Fee TX_FEE = new Fee.ConstantFee(Constants.ONE_APL);
+    private final Fee TX_FEE = new Fee.ConstantFee(getBlockchainConfig().getOneAPL());
 
 
     @Override
