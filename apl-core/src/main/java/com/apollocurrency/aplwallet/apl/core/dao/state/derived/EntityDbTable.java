@@ -36,12 +36,10 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.Getter;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Objects;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -50,7 +48,7 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
     private final String defaultSort;
     @Getter
     private final String fullTextSearchColumns;
-    private Blockchain blockchain;
+//    private Blockchain blockchain;
 
     public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns,
                          DerivedTablesRegistry derivedDbTablesRegistry,
@@ -364,7 +362,7 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
                     pstmt.executeUpdate();
                 }
             }
-            restoreDeletedColumnIfSupported(con, dbKey);
+            restoreDeletedColumnIfSupported(con, dbKey, t);
             save(con, t);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -403,11 +401,11 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
      * @param dbKey unique key for entity identifying
      * @throws SQLException if any db error occurred
      */
-    private void restoreDeletedColumnIfSupported(Connection con, DbKey dbKey) throws SQLException {
+    private void restoreDeletedColumnIfSupported(Connection con, DbKey dbKey, T t) throws SQLException {
         if (supportDelete()) {
-            Blockchain blockchain = lookupBlockchain();
+//            Blockchain blockchain = lookupBlockchain();
             // TODO replace 'height' receiving from CDI Blockchain by entity field 'height' when refactoring will be done
-            int height = blockchain.getHeight();
+            int height = t.getHeight();
             try (PreparedStatement thisExistsAndDeleted = con.prepareStatement("SELECT 1 from " + table + keyFactory.getPKClause() + " AND height = ? AND deleted = true")) { // checking our entity existence on current blockchain height in 'deleted=true' state
                 int index = dbKey.setPK(thisExistsAndDeleted, 1);
                 thisExistsAndDeleted.setInt(index, height);
@@ -434,10 +432,10 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
         }
     }
 
-    private Blockchain lookupBlockchain() {
+/*    private Blockchain lookupBlockchain() {
         if (blockchain == null) {
             blockchain = CDI.current().select(Blockchain.class).get();
         }
         return blockchain;
-    }
+    }*/
 }
