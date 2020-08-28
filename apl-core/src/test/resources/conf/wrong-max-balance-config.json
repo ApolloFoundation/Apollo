@@ -22,13 +22,15 @@
       {
         "height": 0,
         "blockTime": 1,
-        "maxBlockTimeLimit": 67,
-        "minBlockTimeLimit": 53,
+        "maxBlockTimeLimit": 2,
+        "minBlockTimeLimit": 0,
         "maxBalance": 30000000000
       },
       {
         "height": 10,
         "blockTime": 1,
+        "maxBlockTimeLimit": 2,
+        "minBlockTimeLimit": 0,
         "maxBalance": 90000000000,
         "shardingSettings": {
           "enabled": false,
