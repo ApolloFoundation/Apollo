@@ -31,6 +31,15 @@ public class HeightConfig {
         this.maxBaseTarget = initialBaseTarget * 50;
         this.minBaseTarget = initialBaseTarget * 9 / 10;
         this.blockTimeScaledConfig = new BlockTimeScaledConfig(bp.getBlockTime());
+        if (bp.getMaxBlockTimeLimit() < bp.getMinBlockTimeLimit()) {
+            throw new IllegalArgumentException("maxBlockTimeLimit '" + bp.getMaxBlockTimeLimit() + "' is less than minBlockTimeLimit '" + bp.getMinBlockTimeLimit()+"'");
+        }
+        if (bp.getMaxBlockTimeLimit() < bp.getBlockTime()) {
+            throw new IllegalArgumentException("maxBlockTimeLimit '" + bp.getMaxBlockTimeLimit() + "' is less than blockTime '" + bp.getBlockTime() + "'");
+        }
+        if (bp.getMinBlockTimeLimit() > bp.getBlockTime()) {
+            throw new IllegalArgumentException("minBlockTimeLimit '" + bp.getMinBlockTimeLimit() + "' is greater than blockTime '" + bp.getBlockTime() + "'");
+        }
     }
 
     public int getReferencedTransactionHeightSpan() {
