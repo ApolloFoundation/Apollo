@@ -147,11 +147,11 @@ public class TrimService {
                     dbManager.getDataSource().commit(false);
                     int pruningTime = doTrimDerivedTablesOnHeight(trimHeight, false);
                     if (async) {
-                        log.debug("Fire doTrimDerived event height '{}' Async, trimHeight={}", blockchainHeight, trimHeight);
+//                        log.debug("Fire doTrimDerived event height '{}' Async, trimHeight={}", blockchainHeight, trimHeight);
                         trimEvent.select(new AnnotationLiteral<TrimEvent>() {
                         }).fireAsync(new TrimData(trimHeight, blockchainHeight, pruningTime));
                     } else {
-                        log.debug("Fire doTrimDerived event height '{}' Sync, trimHeight={}", blockchainHeight, trimHeight);
+//                        log.debug("Fire doTrimDerived event height '{}' Sync, trimHeight={}", blockchainHeight, trimHeight);
                         trimEvent.select(new AnnotationLiteral<TrimEvent>() {
                         }).fire(new TrimData(trimHeight, blockchainHeight, pruningTime));
                     }
@@ -216,7 +216,7 @@ public class TrimService {
 
         TransactionalDataSource dataSource = dbManager.getDataSource();
         boolean inTransaction = dataSource.isInTransaction();
-        log.debug("doTrimDerivedTablesOnHeight height = '{}', inTransaction = '{}'", height, inTransaction);
+//        log.debug("doTrimDerivedTablesOnHeight height = '{}', inTransaction = '{}'", height, inTransaction);
         if (!inTransaction) {
             dataSource.begin();
         }
@@ -226,8 +226,7 @@ public class TrimService {
 
         for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
             log.trace("Try to acquire lock...");
-            globalSync.readLock();
-            log.trace("Got it.");
+//            globalSync.readLock();
             try {
                 long startTime = System.currentTimeMillis();
                 table.prune(pruningTime);
@@ -235,10 +234,10 @@ public class TrimService {
                 dataSource.commit(false);
                 long duration = System.currentTimeMillis() - startTime;
                 // do not log trim duration here, instead go to the logback config and enable trace logs for BasicDbTable class
-                //                    log.trace("Trim of {} took {} ms", table.getName(), duration);
+                log.debug("Trim of {} took {} ms", table.getName(), duration);
                 onlyTrimTime += duration;
             } finally {
-                globalSync.readUnlock();
+//                globalSync.readUnlock();
             }
         }
 
