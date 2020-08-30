@@ -44,7 +44,7 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                     "height INT NOT NULL, " +
                     "block_id BIGINT NOT NULL, " +
 //                        "FOREIGN KEY (block_id) REFERENCES block (id) ON DELETE CASCADE, "
-                    "signature BINARY(64) NOT NULL, " +
+                    "signature VARBINARY DEFAULT NULL, " +
                     "timestamp INT NOT NULL, " +
                     "type TINYINT NOT NULL, " +
                     "subtype TINYINT NOT NULL, " +
