@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.appdata.impl;
 
-import com.apollocurrency.aplwallet.apl.core.app.runnable.GenerateBlocksThread;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.GenerateBlocksTask;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
@@ -43,8 +43,8 @@ public class GeneratorServiceImpl implements GeneratorService {
 
     private static final String BACKGROUND_SERVICE_NAME = "GeneratorService";
 
-    private static final ConcurrentMap<Long, GeneratorMemoryEntity> generators = new ConcurrentHashMap<>();
-    private static final Collection<GeneratorMemoryEntity> allGenerators = Collections.unmodifiableCollection(generators.values());
+    private  final ConcurrentMap<Long, GeneratorMemoryEntity> generators = new ConcurrentHashMap<>();
+    private  final Collection<GeneratorMemoryEntity> allGenerators = Collections.unmodifiableCollection(generators.values());
     private final PropertiesHolder propertiesHolder;
     private final int MAX_FORGERS;
     private final BlockchainConfig blockchainConfig;
@@ -57,7 +57,7 @@ public class GeneratorServiceImpl implements GeneratorService {
     private final TaskDispatchManager taskDispatchManager;
     private static volatile boolean suspendForging = false;
 
-    private GenerateBlocksThread generateBlocksThread;
+    private GenerateBlocksTask generateBlocksTask;
 
     @Inject
     public GeneratorServiceImpl(PropertiesHolder propertiesHolder,
@@ -79,7 +79,7 @@ public class GeneratorServiceImpl implements GeneratorService {
         this.MAX_FORGERS = propertiesHolder.getIntProperty("apl.maxNumberOfForgers");
 
         if (!propertiesHolder.isLightClient()) {
-            generateBlocksThread = new GenerateBlocksThread(this.propertiesHolder, this.globalSync,
+            generateBlocksTask = new GenerateBlocksTask(this.propertiesHolder, this.globalSync,
                 this.blockchain, this.blockchainConfig, this.timeService,
                 this.transactionProcessor, this);
             this.taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
@@ -87,7 +87,7 @@ public class GeneratorServiceImpl implements GeneratorService {
                     .name("GenerateBlocks")
                     .initialDelay(500)
                     .delay(500)
-                    .task(generateBlocksThread)
+                    .task(generateBlocksTask)
                     .build());
         }
     }
@@ -104,8 +104,8 @@ public class GeneratorServiceImpl implements GeneratorService {
         try {
             if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
                 this.setLastBlock(blockchain.getLastBlock(), generator);
-                if (generateBlocksThread != null) {
-                    generateBlocksThread.resetSortedForgers();
+                if (generateBlocksTask != null) {
+                    generateBlocksTask.resetSortedForgers();
                 }
             }
         } finally {
@@ -124,10 +124,10 @@ public class GeneratorServiceImpl implements GeneratorService {
     public GeneratorMemoryEntity stopForging(byte[] keySeed) {
         long start = System.currentTimeMillis();
         GeneratorMemoryEntity generator = generators.remove(Convert.getId(Crypto.getPublicKey(keySeed)));
-        if (generator != null && generateBlocksThread != null) {
+        if (generator != null && generateBlocksTask != null) {
             globalSync.updateLock();
             try {
-                generateBlocksThread.resetSortedForgers();
+                generateBlocksTask.resetSortedForgers();
             } finally {
                 globalSync.updateUnlock();
             }
@@ -148,8 +148,8 @@ public class GeneratorServiceImpl implements GeneratorService {
         }
         globalSync.updateLock();
         try {
-            if (generateBlocksThread != null) {
-                generateBlocksThread.resetSortedForgers();
+            if (generateBlocksTask != null) {
+                generateBlocksTask.resetSortedForgers();
             }
         } finally {
             globalSync.updateUnlock();
@@ -180,7 +180,7 @@ public class GeneratorServiceImpl implements GeneratorService {
 
     @Override
     public List<GeneratorMemoryEntity> getSortedForgers() {
-        List<GeneratorMemoryEntity> forgers = generateBlocksThread != null ? generateBlocksThread.getSortedForgers() : null;
+        List<GeneratorMemoryEntity> forgers = generateBlocksTask != null ? generateBlocksTask.getSortedForgers() : null;
         return forgers == null ? Collections.emptyList() : forgers;
     }
 
@@ -188,7 +188,7 @@ public class GeneratorServiceImpl implements GeneratorService {
     public long getNextHitTime(long lastBlockId, int curTime) {
         globalSync.readLock();
         try {
-            List<GeneratorMemoryEntity> sortedForgers = generateBlocksThread != null ? generateBlocksThread.getSortedForgers() : null;
+            List<GeneratorMemoryEntity> sortedForgers = generateBlocksTask != null ? generateBlocksTask.getSortedForgers() : null;
             if (sortedForgers != null) {
                 for (GeneratorMemoryEntity generator : sortedForgers) {
                     if (generator.getHitTime() >= curTime - propertiesHolder.FORGING_DELAY()) {
@@ -204,7 +204,7 @@ public class GeneratorServiceImpl implements GeneratorService {
 
     @Override
     public void setDelay(int delay) {
-        generateBlocksThread.setDelayTime(delay);
+        generateBlocksTask.setDelayTime(delay);
     }
 
     public boolean verifyHit(BigInteger hit, BigInteger effectiveBalance, Block previousBlock, int timestamp) {

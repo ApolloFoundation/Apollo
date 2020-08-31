@@ -286,6 +286,7 @@ public class Chain {
             ", project='" + project + '\'' +
             ", initialSupply=" + initialSupply +
             ", decimals=" + decimals +
+            ", oneAPL=" + oneAPL +
             ", genesisLocation='" + genesisLocation + '\'' +
             ", featuresHeightRequirement='" + featuresHeightRequirement + '\'' +
             ", blockchainProperties=" + blockchainProperties +

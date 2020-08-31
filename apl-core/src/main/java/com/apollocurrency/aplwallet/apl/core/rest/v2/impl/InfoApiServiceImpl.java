@@ -56,6 +56,7 @@ public class InfoApiServiceImpl implements InfoApiService {
         blockchainState.setTicker(blockchainConfig.getCoinSymbol());
         blockchainState.setConsensus("POS");
         blockchainState.setMining("Pre-mining");
+        blockchainState.setDecimals(blockchainConfig.getDecimals());
         Account account = accountService.getAccount(GenesisImporter.CREATOR_ID);
         blockchainState.setTotalSupply(blockchainConfig.getInitialSupply());
         blockchainState.setBurning(
