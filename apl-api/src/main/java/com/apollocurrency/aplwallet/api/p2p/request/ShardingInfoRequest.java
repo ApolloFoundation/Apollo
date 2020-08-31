@@ -11,6 +11,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.util.UUID;
+import lombok.NoArgsConstructor;
 
 /**
  * @author alukin@gmail.com
@@ -21,6 +22,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@NoArgsConstructor
 public class ShardingInfoRequest extends BaseP2PRequest {
     public final boolean full;
 
