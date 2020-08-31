@@ -46,6 +46,11 @@ public class ThisNodeIdHandlerImpl implements ThisNodeIdHandler {
         }
         return res;
     }
+
+    @Override
+    public CertKeyHolder generateSelfSignedCert() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
     
     
 }

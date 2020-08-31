@@ -20,9 +20,9 @@ import java.util.TreeMap;
  *
  * @author alukin@gmail.com
  */
-public class CertificateHolder {
+public class CertificateLoader {
     public static final String PVT_SEARCH_PATH = "/../private/";
-    private static final Logger log = LoggerFactory.getLogger(CertificateHolder.class);
+    private static final Logger log = LoggerFactory.getLogger(CertificateLoader.class);
     private final Map<BigInteger, List<ApolloCertificate>> certMap = new TreeMap<>();
 
     public static String rmSuffixes(String fn) {

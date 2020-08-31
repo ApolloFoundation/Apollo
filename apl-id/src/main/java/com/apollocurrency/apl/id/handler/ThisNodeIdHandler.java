@@ -7,11 +7,12 @@ import com.apollocurrency.apl.id.cert.ApolloCertificate;
 import java.math.BigInteger;
 
 /**
- *
+ * Handles operations with X509 certificate and private key of this node 
  * @author alukin@gmail.com
  */
 public interface ThisNodeIdHandler {
     BigInteger getApolloId();
     ApolloCertificate getCertificate();
     byte[] sign(byte[] message);
+    CertKeyHolder generateSelfSignedCert();
 }
