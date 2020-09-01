@@ -265,12 +265,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         UnconfirmedTransaction[] transactions;
         globalSync.readLock();
         try {
-            transactions = unconfirmedTransactionTable.getWaitingTransactionsCache().toArray(
+            transactions = unconfirmedTransactionTable.getWaitingTransactionsQueue().toArray(
                 new UnconfirmedTransaction[unconfirmedTransactionTable.getWaitingTransactionsCacheSize()]);
         } finally {
             globalSync.readUnlock();
         }
-        Arrays.sort(transactions, unconfirmedTransactionTable.getWaitingTransactionsCache().comparator());
+        Arrays.sort(transactions, unconfirmedTransactionTable.getWaitingTransactionsQueue().comparator());
         return transactions;
     }
 
@@ -311,12 +311,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, ntpTime.getTime());
             boolean broadcastLater = lookupBlockchainProcessor().isProcessingBlock();
             if (broadcastLater) {
-                unconfirmedTransactionTable.getWaitingTransactionsCache().add(unconfirmedTransaction);
+                unconfirmedTransactionTable.getWaitingTransactionsQueue().add(unconfirmedTransaction);
                 unconfirmedTransactionTable.getBroadcastedTransactions().add(transaction);
-                log.debug("Will broadcast new transaction later {}", transaction.getStringId());
+//                log.debug("Will broadcast new transaction later {}", transaction.getStringId());
             } else {
                 processTransaction(unconfirmedTransaction);
-                log.debug("Accepted new transaction {}", transaction.getStringId());
+//                log.debug("Accepted new transaction {}", transaction.getStringId());
                 List<Transaction> acceptedTransactions = Collections.singletonList(transaction);
                 peers.sendToSomePeers(acceptedTransactions);
                 txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(acceptedTransactions);
@@ -352,7 +352,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 throw e;
             }
             unconfirmedTransactionTable.getUnconfirmedDuplicates().clear();
-            unconfirmedTransactionTable.getWaitingTransactionsCache().clear();
+            unconfirmedTransactionTable.getWaitingTransactionsQueue().clear();
             unconfirmedTransactionTable.getBroadcastedTransactions().clear();
             unconfirmedTransactionTable.getTransactionCache().clear();
             txsEvent.select(TxEventType.literal(TxEventType.REMOVED_UNCONFIRMED_TRANSACTIONS)).fire(removed);
@@ -386,7 +386,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     if (removed.size() < maxUnconfirmedTransactions) {
                         removed.add(unconfirmedTransaction.getTransaction());
                     }
-                    unconfirmedTransactionTable.getWaitingTransactionsCache().add(unconfirmedTransaction);
+                    unconfirmedTransactionTable.getWaitingTransactionsQueue().add(unconfirmedTransaction);
                 }
             }
             if (removed.size() > 0) {
@@ -463,7 +463,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
 //                log.trace("Process later tx {}", transaction.getId());
                 transaction.unsetBlock();
-                unconfirmedTransactionTable.getWaitingTransactionsCache().add(new UnconfirmedTransaction(
+                unconfirmedTransactionTable.getWaitingTransactionsQueue().add(new UnconfirmedTransaction(
                     transaction, Math.min(currentTime, Convert2.fromEpochTime(transaction.getTimestamp())))
                 );
             }
@@ -479,7 +479,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 int currentTime = timeService.getEpochTime();
                 List<Transaction> addedUnconfirmedTransactions = new ArrayList<>();
                 Iterator<UnconfirmedTransaction> iterator =
-                    unconfirmedTransactionTable.getWaitingTransactionsCache().iterator();
+                    unconfirmedTransactionTable.getWaitingTransactionsQueue().iterator();
                 while (iterator.hasNext()) {
                     UnconfirmedTransaction unconfirmedTransaction = iterator.next();
                     try {
@@ -517,6 +517,11 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     @Override
+    public int getUnconfirmedTxCount() {
+        return unconfirmedTransactionTable.getCount();
+    }
+
+    @Override
     public boolean isWaitingTransactionsCacheFull() {
         return unconfirmedTransactionTable.isWaitingTransactionsCacheFull();
     }
@@ -544,8 +549,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, arrivalTimestamp);
                 processTransaction(unconfirmedTransaction);
                 if (unconfirmedTransactionTable.getBroadcastedTransactions().contains(transaction)) {
-                    log.debug("Received back transaction " + transaction.getStringId()
-                        + " that we broadcasted, will not forward again to peers");
+//                    log.debug("Received back transaction " + transaction.getStringId()
+//                        + " that we broadcasted, will not forward again to peers");
                 } else {
                     sendToPeersTransactions.add(transaction);
                 }

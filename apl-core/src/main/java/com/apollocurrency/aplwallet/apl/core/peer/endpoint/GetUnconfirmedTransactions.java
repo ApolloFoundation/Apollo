@@ -49,7 +49,7 @@ public final class GetUnconfirmedTransactions extends PeerRequestHandler {
         }
 
         SortedSet<? extends Transaction> transactionSet = lookupTransactionProcessor().getCachedUnconfirmedTransactions(exclude);
-        log.trace("Return {} txs to peer {}", transactionSet.size(), peer.getAnnouncedAddress());
+        log.trace("Return {} txs to peer {}", transactionSet.size(), peer.getHost());
         JSONArray transactionsData = new JSONArray();
         for (Transaction transaction : transactionSet) {
             if (transactionsData.size() >= 100) {

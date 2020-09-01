@@ -36,9 +36,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.PriorityBlockingQueue;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -48,7 +48,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
     private final LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory;
     private int maxUnconfirmedTransactions;
     private final Map<DbKey, UnconfirmedTransaction> transactionCache = new HashMap<>();
-    private final PriorityBlockingQueue<UnconfirmedTransaction> waitingTransactions;
+    private final PriorityQueue<UnconfirmedTransaction> waitingTransactions;
     private final Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates = new HashMap<>();
     private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -159,8 +159,8 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
             new DbClause.IntClause("expiration", DbClause.Op.LT, epochTime));
     }
 
-    private PriorityBlockingQueue<UnconfirmedTransaction> createWaitingTransactionsQueue() {
-        return new PriorityBlockingQueue<>(maxUnconfirmedTransactions, new UnconfirmedTransactionComparator()) {
+    private PriorityQueue<UnconfirmedTransaction> createWaitingTransactionsQueue() {
+        return new PriorityQueue<>(maxUnconfirmedTransactions, new UnconfirmedTransactionComparator()) {
 
             @Override
             public boolean add(UnconfirmedTransaction unconfirmedTransaction) {
@@ -222,7 +222,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
         return transactionKeyFactory;
     }
 
-    public PriorityBlockingQueue<UnconfirmedTransaction> getWaitingTransactionsCache() {
+    public PriorityQueue<UnconfirmedTransaction> getWaitingTransactionsQueue() {
         return waitingTransactions;
     }
 

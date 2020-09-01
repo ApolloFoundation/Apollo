@@ -66,6 +66,8 @@ public interface TransactionProcessor {
 
     int getWaitingTransactionsCacheSize();
 
+    int getUnconfirmedTxCount();
+
     boolean isWaitingTransactionsCacheFull();
 
     void processPeerTransactions(List<Transaction> transactions) throws AplException.NotValidException;
