@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetTransactionsRequestParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
-
+@Slf4j
 public final class ProcessTransactions extends PeerRequestHandler {
     private static final Logger LOG = getLogger(ProcessTransactions.class);
 
@@ -59,6 +60,7 @@ public final class ProcessTransactions extends PeerRequestHandler {
                 .map(dtoConverter::convert)
                 .collect(Collectors.toList());
 
+            log.trace("Will process {} peer transactions from {}", transactions.size(), peer.getAnnouncedAddress());
             lookupTransactionProcessor().processPeerTransactions(transactions);
             return JSON.emptyJSON;
         } catch (AplException.ValidationException | RuntimeException e) {

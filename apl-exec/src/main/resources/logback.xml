@@ -116,9 +116,17 @@
     <!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable" level="trace" additivity="false">-->
     <!--    <appender-ref ref="tp-file"/>-->
     <!--  </logger>-->
-    <!--  <logger name="com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl" level="trace" additivity="false">-->
-    <!--    <appender-ref ref="tp-file"/>-->
-    <!--  </logger>-->
+  <logger name="com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl" level="trace"
+          additivity="false">
+    <appender-ref ref="tp-file"/>
+  </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.core.peer.endpoint" level="trace" additivity="false">
+    <appender-ref ref="tp-file"/>
+  </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTransactionsThread" level="trace"
+          additivity="false">
+    <appender-ref ref="tp-file"/>
+  </logger>
     <!--  <logger name="com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable" level="trace" additivity="false">-->
     <!--    <appender-ref ref="tp-file"/>-->
     <!--  </logger>-->

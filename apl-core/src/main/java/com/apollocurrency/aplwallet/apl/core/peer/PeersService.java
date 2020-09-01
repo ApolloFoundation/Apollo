@@ -87,7 +87,7 @@ public class PeersService {
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 200;
     private static final Logger LOG = LoggerFactory.getLogger(PeersService.class);
     private static final Version MAX_VERSION = Constants.VERSION;
-    private static final int sendTransactionsBatchSize = 10;
+    private static final int sendTransactionsBatchSize = 100;
     private final static String BACKGROUND_SERVICE_NAME = "PeersService";
     public static int DEFAULT_CONNECT_TIMEOUT = 2000; //2s default websocket connect timeout
     public static int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
