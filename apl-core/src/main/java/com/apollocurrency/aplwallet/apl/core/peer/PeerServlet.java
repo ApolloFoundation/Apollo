@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.AddPeers;
+import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetCumulativeDifficulty;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileChunk;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileDownloadInfo;
@@ -214,17 +215,16 @@ public final class PeerServlet extends WebSocketServlet {
             JSON.writeJSONString(jsonResponse, writer);
         } catch (RuntimeException e) {
             processException(peer, e);
-            LOG.debug("Exception while responing to {}", pa.getAddrWithPort(), e);
+            LOG.debug("Exception while responding to {}, cause {}", pa.getAddrWithPort(), e.getMessage());
             throw e;
         } catch (IOException e) {
-            LOG.debug("Exception while responing to {}", pa.getAddrWithPort(), e);
+            LOG.debug("Exception while responding to {}, cause {}", pa.getAddrWithPort(), e.getMessage());
         }
     }
 
     private void processException(PeerImpl peer, Exception e) {
         if (peer != null) {
-
-//jetty misused this, ignore
+            //jetty misused this, ignore
             if (!(e instanceof ClosedChannelException)) {
                 LOG.debug("Error sending response to peer " + peer.getHost(), e);
                 peer.blacklist(e);
@@ -320,13 +320,14 @@ public final class PeerServlet extends WebSocketServlet {
                 }
                 return PeerResponses.UNSUPPORTED_PROTOCOL;
             }
-            PeerRequestHandler peerRequestHandler = getHandler((String) request.get("requestType"));
+            String requestType = (String) request.get("requestType");
+            PeerRequestHandler peerRequestHandler = getHandler(requestType);
             if (peerRequestHandler == null) {
-                LOG.debug("Unsupported request type " + request.get((String) request.get("requestType")));
+                LOG.debug("Unsupported request type {}", requestType);
                 return PeerResponses.UNSUPPORTED_REQUEST_TYPE;
             }
 
-            if (peer.getVersion() == null && !"getInfo".equals(request.get("requestType"))) {
+            if (peer.getVersion() == null && !"getInfo".equals(requestType)) {
                 if (LOG.isTraceEnabled()) {
                     LOG.trace("ERROR: Peer - {}, Request = {}", peer, request.toJSONString());
                     LOG.trace("Peer List =[{}], dumping...", peersService.getAllPeers().size());
@@ -343,6 +344,7 @@ public final class PeerServlet extends WebSocketServlet {
             }
             if (peerRequestHandler.rejectWhileDownloading()) {
                 if (blockchainProcessor.isDownloading()) {
+                    LOG.debug("{}, rejected request= {}", Errors.DOWNLOADING, requestType);
                     return PeerResponses.DOWNLOADING;
                 }
                 if (propertiesHolder.isLightClient()) {

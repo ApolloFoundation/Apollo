@@ -169,7 +169,7 @@ public class PeerWebSocket extends WebSocketAdapter {
         Session s = getSession();
         if (s != null) {
             if (log.isTraceEnabled()) {
-                log.trace("thisWebSocket={} jetty.Session={}", this, getSession());
+                log.trace("PeerWebSocket={} jettySession={}", this, sessionToString(getSession()));
             }
             byte[] requestBytes = message.getBytes(StandardCharsets.UTF_8);
             int requestLength = requestBytes.length;
@@ -203,7 +203,7 @@ public class PeerWebSocket extends WebSocketAdapter {
                 throw new AplException.AplIOException("Can't send to " + s.getRemote(), e);
             } catch (InterruptedException e) {
                 log.trace("Can't send to " + s.getRemote() + ", interrupted.");
-                //Thread.currentThread().interrupt();
+                Thread.currentThread().interrupt();
                 throw new AplException.AplIOException(e.getMessage());
             } catch (TimeoutException e) {
                 throw new AplException.AplIOException("Can't send to " + s.getRemote() + ", time limit is reached.");
@@ -244,12 +244,22 @@ public class PeerWebSocket extends WebSocketAdapter {
         return peerReference.get();
     }
 
+    private String sessionToString(Session session) {
+        return "Session{" +
+            "protocolVersion=" + session.getProtocolVersion() +
+            ", localAddress=" + session.getLocalAddress().toString() +
+            ", remoteAddress=" + session.getRemoteAddress().toString() +
+            ", policy=" + session.getPolicy().toString() +
+            ", isOpen=" + session.isOpen() +
+            "} ";
+    }
+
     @Override
     public String toString() {
         return "PeerWebSocket{" +
-            "peerReference=" + peerReference.get() +
+            "p2pTransport=" + peerReference.get() +
             ", version=" + version +
             ", lastActivityTime=" + lastActivityTime +
-            "} " + super.toString();
+            "} ";
     }
 }

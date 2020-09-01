@@ -90,7 +90,7 @@ class PeerConnectingThread implements Runnable {
                                 && PeersService.enableHallmarkProtection
                                 && peer.getWeight() == 0
                                 && peers.hasTooManyOutboundConnections()) {
-                                LOG.debug("Too many outbound connections, deactivating peer " + peer.getHost());
+                                LOG.debug("Too many outbound connections, deactivating peer {}", peer.getHost());
                                 peer.deactivate("Too many outbound connections");
                             }
                             return null;
@@ -137,7 +137,7 @@ class PeerConnectingThread implements Runnable {
             }
         } catch (Throwable t) {
             LOG.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS", t);
-            //TODO: do we really shoud exit here? Can we recover?
+            //TODO: do we really should exit here? Can we recover?
             System.exit(1);
         }
     }

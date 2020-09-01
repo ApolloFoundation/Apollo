@@ -504,7 +504,7 @@ public final class PeerImpl implements Peer {
     }
 
     @Override
-    public <BaseP2PResponse> BaseP2PResponse send(BaseP2PRequest request, ReqRespParser<BaseP2PResponse> parser) throws PeerNotConnectedException {
+    public <R> R send(BaseP2PRequest request, ReqRespParser<R> parser) throws PeerNotConnectedException {
         if (getState() != PeerState.CONNECTED) {
             LOG.debug("send() called before handshake(). Handshacking to: {}", getHostWithPort());
             throw new PeerNotConnectedException("send() called before handshake(). Handshacking");
