@@ -168,11 +168,11 @@ public class Peer2PeerTransport {
             try {
                 res = wsrw.get(PeersService.readTimeout);
             } catch (SocketTimeoutException ex) {
-                log.trace("Timeout excided while waiting response from: {} ID: {}", which(), rqId);
+                log.trace("Timeout exceeded while waiting response from: {} ID: {}", which(), rqId);
             }
             requestMap.remove(rqId);
         } else {
-            log.error("Waiting for non-exisatent request. Peer: {}, ID: {}", which(), rqId);
+            log.error("Waiting for non-existent request. Peer: {}, ID: {}", which(), rqId);
         }
         return res;
     }
@@ -199,13 +199,11 @@ public class Peer2PeerTransport {
     private void cleanUp() {
         List<Long> toDelete = new ArrayList<>();
         if (!requestMap.isEmpty()) {
-            requestMap.keySet().stream().filter((wsw) -> (requestMap.get(wsw).isOld())).forEachOrdered((wsw) -> {
-                toDelete.add(wsw);
-            });
+            requestMap.keySet().stream()
+                .filter(wsw -> (requestMap.get(wsw).isOld()))
+                .forEachOrdered(toDelete::add);
         }
-        toDelete.forEach((key) -> {
-            requestMap.remove(key);
-        });
+        toDelete.forEach(requestMap::remove);
     }
 
     private boolean sendHttp(final String request, Long requestId) {
@@ -227,7 +225,7 @@ public class Peer2PeerTransport {
                 updateUploadedVolume(cow.getCount());
             }
         } catch (IOException ex) {
-            log.trace("Error sending HTTP erequest to {}", getHostWithPort(), ex);
+            log.trace("Error sending HTTP request to {}", getHostWithPort(), ex);
             return sendOK;
         }
         try {
@@ -276,7 +274,6 @@ public class Peer2PeerTransport {
     public boolean send(String message, Long requestId) {
         boolean sendOK = false;
         cleanUp();
-        //   synchronized (this) {
         if (message == null || message.isEmpty()) {
             //we have nothing to send
             return sendOK;
@@ -328,12 +325,11 @@ public class Peer2PeerTransport {
         } else {
             // Send the request using HTTP if websockets are disabled
             sendOK = sendHttp(message, requestId);
-            log.debug("Trying ot use HTTP requests to {} because websockets failed", getHostWithPort());
+            log.debug("Trying to use HTTP requests to {} because websockets failed", getHostWithPort());
             if (!sendOK) {
                 log.debug("Peer: {} Using HTTP. Failed.", getHostWithPort());
             }
         }
-        // }
         if (!sendOK) {
             String msg = "Error on sending request";
             Peer p = getPeer();

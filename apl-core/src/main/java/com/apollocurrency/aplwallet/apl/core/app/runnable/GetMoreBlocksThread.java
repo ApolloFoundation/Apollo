@@ -211,13 +211,12 @@ public class GetMoreBlocksThread implements Runnable {
             }
 
             if (!blockchainProcessorState.isDownloading() && blockchainProcessorState.getLastBlockchainFeederHeight() - commonBlock.getHeight() > 10) {
-                log.info("Blockchain download in progress");
+                log.info("Blockchain download in progress, set blockchain state isDownloading=true.");
                 blockchainProcessorState.setDownloading(true);
             }
 //TODO: check do we need lock here
 // Maybe better to find another sync solution
             globalSync.updateLock();
-//                Generator.suspendForging();
             try {
                 if (peerCumulativeDifficulty.compareTo(blockchain.getLastBlock().getCumulativeDifficulty()) <= 0) {
                     return;
@@ -276,7 +275,7 @@ public class GetMoreBlocksThread implements Runnable {
             } finally {
                 globalSync.updateUnlock();
                 blockchainProcessorState.setDownloading(false);
-//                    Generator.resumeForging();
+                log.info("Set blockchain state isDownloading=false.");
             }
         } catch (AplException.StopException e) {
             log.info("Blockchain download stopped: " + e.getMessage());
