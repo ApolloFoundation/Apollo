@@ -27,14 +27,12 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.limiter.TimeLimiterService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -228,11 +226,23 @@ public class PeersService {
         }
 
         maxNumberOfInboundConnections = propertiesHolder.getIntProperty("apl.maxNumberOfInboundConnections");
+        if (maxNumberOfInboundConnections <= 0) {
+            throw new IllegalArgumentException("Wrong apl.maxNumberOfInboundConnections property value " + maxNumberOfInboundConnections);
+        }
+
         maxNumberOfOutboundConnections = propertiesHolder.getIntProperty("apl.maxNumberOfOutboundConnections");
+        if (maxNumberOfOutboundConnections <= 0) {
+            throw new IllegalArgumentException("Wrong apl.maxNumberOfOutboundConnections property value " + maxNumberOfOutboundConnections);
+        }
+
         maxNumberOfConnectedPublicPeers = Math.min(propertiesHolder.getIntProperty("apl.maxNumberOfConnectedPublicPeers"),
             maxNumberOfOutboundConnections);
         maxNumberOfKnownPeers = propertiesHolder.getIntProperty("apl.maxNumberOfKnownPeers");
         minNumberOfKnownPeers = propertiesHolder.getIntProperty("apl.minNumberOfKnownPeers");
+        if (minNumberOfKnownPeers > maxNumberOfInboundConnections) {
+            throw new IllegalArgumentException("apl.maxNumberOfKnownPeers=" + maxNumberOfKnownPeers + " is less than apl.minNumberOfKnownPeers=" + minNumberOfKnownPeers);
+        }
+
         connectTimeout = propertiesHolder.getIntProperty("apl.connectTimeout", DEFAULT_CONNECT_TIMEOUT);
         readTimeout = propertiesHolder.getIntProperty("apl.readTimeout");
         enableHallmarkProtection = propertiesHolder.getBooleanProperty("apl.enableHallmarkProtection") && !propertiesHolder.isLightClient();
@@ -266,7 +276,7 @@ public class PeersService {
         }), PeersService.Event.CHANGED_SERVICES);
 
         // moved to Weld Event
-       /* Account.addListener(account -> connectablePeers.values().forEach(peer -> {
+        /* Account.addListener(account -> connectablePeers.values().forEach(peer -> {
             if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
                 listeners.notify(peer, Event.WEIGHT);
             }
@@ -428,8 +438,8 @@ public class PeersService {
 
     public void suspend() {
         LOG.debug("peerHttpServer suspend...");
-        if(peerHttpServer!=null){
-           suspend = peerHttpServer.suspend();
+        if (peerHttpServer != null) {
+            suspend = peerHttpServer.suspend();
         }
         TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
         dispatcher.suspend();
@@ -440,7 +450,7 @@ public class PeersService {
 
     public void resume() {
         LOG.debug("peerHttpServer resume...");
-        if (suspend && peerHttpServer!=null) {
+        if (suspend && peerHttpServer != null) {
             suspend = !peerHttpServer.resume();
         }
         TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
