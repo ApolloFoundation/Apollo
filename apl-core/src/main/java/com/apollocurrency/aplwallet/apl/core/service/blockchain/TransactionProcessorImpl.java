@@ -389,7 +389,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     unconfirmedTransactionTable.getWaitingTransactionsCache().add(unconfirmedTransaction);
                 }
             }
-            log.trace("Removed txs {}", removed.size());
+            if (removed.size() > 0) {
+                log.trace("Removed txs {}", removed.size());
+            }
             unconfirmedTransactionTable.truncate();
             unconfirmedTransactionTable.getUnconfirmedDuplicates().clear();
             unconfirmedTransactionTable.getTransactionCache().clear();

@@ -27,14 +27,12 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.limiter.TimeLimiterService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -89,7 +87,7 @@ public class PeersService {
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 200;
     private static final Logger LOG = LoggerFactory.getLogger(PeersService.class);
     private static final Version MAX_VERSION = Constants.VERSION;
-    private static final int sendTransactionsBatchSize = 10;
+    private static final int sendTransactionsBatchSize = 100;
     private final static String BACKGROUND_SERVICE_NAME = "PeersService";
     public static int DEFAULT_CONNECT_TIMEOUT = 2000; //2s default websocket connect timeout
     public static int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
