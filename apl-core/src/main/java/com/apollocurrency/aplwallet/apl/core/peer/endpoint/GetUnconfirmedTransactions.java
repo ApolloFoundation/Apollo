@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -31,7 +32,7 @@ import org.json.simple.JSONStreamAware;
 import javax.enterprise.inject.spi.CDI;
 import java.util.List;
 import java.util.SortedSet;
-
+@Slf4j
 public final class GetUnconfirmedTransactions extends PeerRequestHandler {
     private TransactionSerializer transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
 
@@ -48,6 +49,7 @@ public final class GetUnconfirmedTransactions extends PeerRequestHandler {
         }
 
         SortedSet<? extends Transaction> transactionSet = lookupTransactionProcessor().getCachedUnconfirmedTransactions(exclude);
+        log.trace("Return {} txs to peer {}", transactionSet.size(), peer.getAnnouncedAddress());
         JSONArray transactionsData = new JSONArray();
         for (Transaction transaction : transactionSet) {
             if (transactionsData.size() >= 100) {

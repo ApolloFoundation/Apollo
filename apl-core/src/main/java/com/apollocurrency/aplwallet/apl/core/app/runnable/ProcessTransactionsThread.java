@@ -86,6 +86,8 @@ public class ProcessTransactionsThread implements Runnable {
                         .map(dtoConverter::convert)
                         .collect(Collectors.toList());
 
+                    log.trace("Will process {} txs from peer {}", transactions.size(), peer.getAnnouncedAddress());
+
                     transactionProcessor.processPeerTransactions(transactions);
                 } catch (AplException.NotValidException | RuntimeException e) {
                     peer.blacklist(e);
