@@ -119,7 +119,7 @@
     </encoder>
   </appender>
 
-  <logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE" additivity="false">
+  <logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE">
     <appender-ref ref="p2p-file"/>
   </logger>
 
