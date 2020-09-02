@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -62,7 +63,10 @@ public class BlockApplier {
                 } else {
                     previousGeneratorAccount = accountService.getAccount(blockchain.getBlockAtHeight(blockHeight).getGeneratorId());
                 }
-                log.trace("Back fees {} ATM to forger at height {}", backFees[i], height - i - 1);
+                log.debug("Back transaction fees {} ATM to forger {} at height {}",
+                    backFees[i],
+                    Convert2.rsAccount(previousGeneratorAccount.getId()),
+                    height - i - 1);
                 accountService.addToBalanceAndUnconfirmedBalanceATM(previousGeneratorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), backFees[i]);
                 accountService.addToForgedBalanceATM(previousGeneratorAccount, backFees[i]);
             }
@@ -80,6 +84,10 @@ public class BlockApplier {
         accountPublicKeyService.apply(generatorAccount, block.getGeneratorPublicKey());
         accountService.addToBalanceAndUnconfirmedBalanceATM(generatorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
         accountService.addToForgedBalanceATM(generatorAccount, block.getTotalFeeATM() - totalBackFees);
+        log.debug("Transaction fee {} ATM awarded to forger {} at height {}",
+            block.getTotalFeeATM() - totalBackFees,
+            Convert2.rsAccount(generatorAccount.getId()),
+            height);
     }
 
 }

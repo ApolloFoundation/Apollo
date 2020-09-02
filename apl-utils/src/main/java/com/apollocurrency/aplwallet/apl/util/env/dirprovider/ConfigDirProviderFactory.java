@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018 - 2020 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
@@ -22,22 +22,23 @@ public class ConfigDirProviderFactory {
     private static boolean isService;
     private static String applicationName;
     private static int netIdx;
-    private static String uuid_or_part;
-    private static UUID uuid;
+    private static String uuidOrPart;
+    private static String configDir = null;
 
-    public static void setup(boolean isServiceP, String applicationNameP, int netIdxP, String uuidOrPartP) {
+    public static void setup(boolean isServiceP, String applicationNameP, int netIdxP, String uuidOrPartP, String configDirP) {
         isService = isServiceP;
         applicationName = applicationNameP;
         netIdx = netIdxP;
-        uuid_or_part = uuidOrPartP;
+        uuidOrPart = uuidOrPartP;
+        configDir = configDirP;
     }
 
     public static ConfigDirProvider createConfigDirProvider() {
         ConfigDirProvider res;
         if (RuntimeEnvironment.getInstance().isUnixRuntime()) {
-            res = new UnixConfigDirProvider(applicationName, isService, netIdx, uuid_or_part);
+            res = new UnixConfigDirProvider(applicationName, isService, netIdx, uuidOrPart);
         } else {
-            res = new DefaultConfigDirProvider(applicationName, isService, netIdx, uuid_or_part);
+            res = new DefaultConfigDirProvider(applicationName, isService, netIdx, uuidOrPart);
         }
         return res;
     }
@@ -58,7 +59,7 @@ public class ConfigDirProviderFactory {
                         //at the mopment we chack directories only
                         if (Files.isDirectory(path)) {
                             String fname = path.getFileName().toString();
-                            if (fname.toLowerCase().startsWith(uuid_or_part)) {
+                            if (fname.toLowerCase().startsWith(uuidOrPart)) {
                                 cdp.setChainID(UUID.fromString(fname));
                                 break;
                             }
@@ -69,9 +70,19 @@ public class ConfigDirProviderFactory {
                 }
             }
             if (cdp.getChainId() == null) {
-                System.err.println("UUID part: " + uuid_or_part + " can not be resolved by installed configurations.");
+                System.err.println("UUID part: " + uuidOrPart + " can not be resolved by installed configurations.");
             }
         }
         return cdp;
+    }
+
+    /**
+     * Returns the user-defined config directory,
+     * that dir was set from command line parameter or environment variable
+     *
+     * @return the user-defined config directory or {@code null} if it wasn't set
+     */
+    public static String getConfigDir() {
+        return configDir;
     }
 }

@@ -771,6 +771,10 @@ components:
               format: int64
               example: 10000000000
               description: The total supply
+            decimals:
+              type: integer
+              format: int16
+              example: 8
             burning:
               type: integer
               format: int64

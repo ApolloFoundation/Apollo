@@ -34,7 +34,6 @@ public final class Constants {
     public static final long LONG_TIME_FIVE_SECONDS = 5000L;
     public static final int MAX_AUTO_ROLLBACK = 720; //number of blocks that forms fork
 
-    public static final long ONE_APL = 100000000;
     public static final long APL_COMMISSION = 10;
     public static final long ETH_GAS_MULTIPLIER = 5;
 

@@ -23,12 +23,14 @@
         "height": 0,
         "blockTime": 1,
         "maxBlockTimeLimit": 67,
-        "minBlockTimeLimit": 53,
+        "minBlockTimeLimit": 1,
         "maxBalance": 30000000000
       },
       {
         "height": 1,
         "blockTime": 1,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 1,
         "maxBalance": 30000000000,
         "shardingSettings": {
           "enabled": false,
@@ -38,6 +40,8 @@
       {
         "height": 200,
         "blockTime": 2,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 2,
         "maxBalance": 30000000000,
         "shardingSettings": {
           "enabled": true,
@@ -47,6 +51,8 @@
       {
         "height": 600,
         "blockTime": 6,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 6,
         "maxBalance": 30000000000,
         "shardingSettings": {
           "frequency": 40
@@ -56,6 +62,8 @@
         "height": 1000,
         "blockTime": 10,
         "maxBalance": 30000000000,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 10,
         "shardingSettings": {
           "enabled": true,
           "frequency": 500
@@ -64,12 +72,16 @@
       {
         "height": 2000,
         "blockTime": 20,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 20,
         "maxBalance": 30000000000,
         "maxNumberOfChildAccounts": 1
       },
       {
         "height": 3000,
-        "blockTime": 30,
+        "blockTime": 3,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 3,
         "maxBalance": 30000000000,
         "maxNumberOfChildAccounts": 1,
         "shardingSettings": {
@@ -79,7 +91,9 @@
       },
       {
         "height": 4000,
-        "blockTime": 40,
+        "blockTime": 4,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 4,
         "maxBalance": 30000000000,
         "maxNumberOfChildAccounts": 2,
         "shardingSettings": {
@@ -89,7 +103,9 @@
       },
       {
         "height": 5000,
-        "blockTime": 50,
+        "blockTime": 5,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 5,
         "maxBalance": 30000000000,
         "maxNumberOfChildAccounts": 3,
         "shardingSettings": {
@@ -99,7 +115,9 @@
       },
       {
         "height": 6000,
-        "blockTime": 60,
+        "blockTime": 6,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 6,
         "maxBalance": 30000000000,
         "maxNumberOfChildAccounts": 4,
         "shardingSettings": {

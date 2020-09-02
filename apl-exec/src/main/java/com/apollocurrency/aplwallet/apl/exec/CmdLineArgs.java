@@ -21,9 +21,7 @@ public class CmdLineArgs {
     public boolean serviceMode;
     @Parameter(names = {"--ignore-resources"}, description = "Ignore resources bundled with application jar. Default is false")
     public boolean ingnoreResources = false;
-    @Parameter(names = {"--resources-path", "-r"}, description = "Load all resources from specified path. Sytem resources ignored.")
-    public String resourcesPath = "";
-    @Parameter(names = {"--config-dir", "-c"}, description = "Load all configuration and resources from specified path. Sytem resources not ignored, standard config search is ignored.")
+    @Parameter(names = {"--config-dir", "-c"}, description = "Load all configuration and resources from specified path. System resources not ignored, standard config search is ignored.")
     public String configDir = "";
     @Parameter(names = {"--log-dir", "-l"}, description = "Save log files to from specified directory.")
     public String logDir = "";
@@ -62,7 +60,7 @@ public class CmdLineArgs {
     public boolean disableWeldConcurrentDeployment = false;
 
     public boolean isResourceIgnored() {
-        return !resourcesPath.isEmpty() || ingnoreResources;
+        return ingnoreResources;
     }
 
     public int getNetIdx() {

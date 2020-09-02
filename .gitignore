@@ -38,3 +38,4 @@ nbactions.xml
 /apollo-web-ui
 **/swagger-codegen-cli-*.jar
 **/.swagger-codegen
+apl-api2/src/gen/

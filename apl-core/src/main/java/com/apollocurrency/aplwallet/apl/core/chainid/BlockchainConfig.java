@@ -59,11 +59,12 @@ public class BlockchainConfig {
         if (blockchainProperties.isEmpty() || blockchainProperties.get(0) == null) {
             throw new IllegalArgumentException("Chain has no initial blockchain properties at height 0! ChainId = " + chain.getChainId());
         }
+        log.trace("UpdateChain={}", chain);
         heightConfigMap = blockchainProperties.values()
             .stream()
             .map((BlockchainProperties bp) -> new HeightConfig(bp, getOneAPL(), getInitialSupply()))
             .sorted(Comparator.comparing(HeightConfig::getHeight))
-            .collect(Collectors.toMap(HeightConfig::getHeight, Function.identity(), (old, newv)-> newv, TreeMap::new));
+            .collect(Collectors.toMap(HeightConfig::getHeight, Function.identity(), (old, newv) -> newv, TreeMap::new));
         currentConfig = heightConfigMap.get(0);
         log.debug("Switch to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
     }
