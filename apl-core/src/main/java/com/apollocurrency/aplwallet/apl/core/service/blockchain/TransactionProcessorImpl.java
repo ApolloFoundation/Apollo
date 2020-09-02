@@ -191,6 +191,13 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     .delay(1000)
                     .task(processTransactionsThread)
                     .build());
+                dispatcher.schedule(Task.builder()
+                    .name("MemPoolChecker")
+                    .delay(1000)
+                    .task(() -> {
+                        printMemPoolStat();
+                    })
+                    .build());
                 dispatcher.invokeAfter(Task.builder()
                     .name("InitialUnconfirmedTxsRebroadcasting")
                     .task(this::rebroadcastAllUnconfirmedTransactions)
@@ -218,6 +225,11 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 .task(processTxsToBroadcastWhenConfirmed)
                 .build());
         }
+    }
+
+    @Override
+    public void printMemPoolStat() {
+        log.trace("Processed: {}, waiting {}, cached - {}", unconfirmedTransactionTable.getCount(), unconfirmedTransactionTable.getWaitingTransactionsCacheSize(), unconfirmedTransactionTable.getTransactionCache().size());
     }
 
     @Deprecated
@@ -379,18 +391,22 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 return;
             }
             List<Transaction> removed = new ArrayList<>();
+            int lostTransactions = 0;
             try (DbIterator<UnconfirmedTransaction> unconfirmedTransactions = getAllUnconfirmedTransactions()) {
                 for (UnconfirmedTransaction unconfirmedTransaction : unconfirmedTransactions) {
 //                    log.trace("Requeue tx {} at {}", unconfirmedTransaction.getId(), blockchain.getHeight());
                     transactionApplier.undoUnconfirmed(unconfirmedTransaction.getTransaction());
                     if (removed.size() < maxUnconfirmedTransactions) {
                         removed.add(unconfirmedTransaction.getTransaction());
+                    } else {
+                        lostTransactions++;
                     }
                     unconfirmedTransactionTable.getWaitingTransactionsQueue().add(unconfirmedTransaction);
                 }
             }
-            if (removed.size() > 0) {
-                log.trace("Removed txs {}", removed.size());
+
+            if (lostTransactions > 0) {
+                log.trace("Lost txs {}", lostTransactions);
             }
             unconfirmedTransactionTable.truncate();
             unconfirmedTransactionTable.getUnconfirmedDuplicates().clear();

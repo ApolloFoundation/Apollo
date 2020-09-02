@@ -34,6 +34,8 @@ public interface TransactionProcessor {
 
     void init();
 
+    void printMemPoolStat();
+
     DbIterator<UnconfirmedTransaction> getAllUnconfirmedTransactions();
 
     DbIterator<? extends Transaction> getAllUnconfirmedTransactions(int from, int to);
