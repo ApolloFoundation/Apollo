@@ -4,13 +4,11 @@
 package com.apollocurrency.apl.id.cert;
 
 import com.apollocurrency.apl.id.utils.StringList;
-import io.firstbridge.cryptolib.CryptoFactory;
 import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.KeyGenerator;
 import io.firstbridge.cryptolib.KeyWriter;
 import io.firstbridge.cryptolib.csr.CertificateRequestData;
 import io.firstbridge.cryptolib.csr.X509CertOperations;
-import io.firstbridge.cryptolib.impl.KeyWriterImpl;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
