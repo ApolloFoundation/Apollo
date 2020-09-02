@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -45,6 +46,8 @@ public class ShardObserverTest {
     HeightConfig heightConfig;
     @Mock
     PropertiesHolder propertiesHolder;
+    @Mock
+    private Random random;
     private ShardObserver shardObserver;
 
     @BeforeEach
@@ -54,7 +57,7 @@ public class ShardObserverTest {
     }
 
     private void prepare() {
-        shardObserver = new ShardObserver(blockchainConfig, shardService, propertiesHolder);
+        shardObserver = new ShardObserver(blockchainConfig, shardService, propertiesHolder, random);
     }
 
     @Test

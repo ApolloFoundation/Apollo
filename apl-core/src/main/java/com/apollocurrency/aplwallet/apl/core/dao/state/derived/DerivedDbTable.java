@@ -75,7 +75,7 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     public void trim(int height, boolean isSharding) {
         // default implementation for most of derived successor
         // 'Vote' is only one exception in that case
-        this.trim(height);
+        this.trim(height/*, isSharding*/);
     }
 
     @PostConstruct

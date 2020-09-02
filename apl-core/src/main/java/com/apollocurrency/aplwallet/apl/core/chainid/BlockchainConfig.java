@@ -11,20 +11,24 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Singleton;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
  * <p>This class used as configuration of current working chain. Commonly it mapped to an active chain described in conf/chains.json</p>
  */
+
 @Slf4j
 @Singleton
 public class BlockchainConfig {
     static final int DEFAULT_MIN_PRUNABLE_LIFETIME = 14 * 1440 * 60; // two weeks in seconds
+
     private int leasingDelay;
     private int minPrunableLifetime;
     private boolean enablePruning;
@@ -35,9 +39,9 @@ public class BlockchainConfig {
     private long shufflingDepositAtm;
     private int guaranteedBalanceConfirmations;
     private volatile HeightConfig currentConfig;
-    private volatile HeightConfig previousConfig; // keep a previous config for easy access
+    private volatile Optional<HeightConfig> previousConfig = Optional.empty(); // keep a previous config for easy access
     private Chain chain;
-    private Map<Integer, HeightConfig> heightConfigMap = new LinkedHashMap<>(0);
+    private TreeMap<Integer, HeightConfig> heightConfigMap = new TreeMap<>();
     private volatile boolean isJustUpdated = false;
 
     public BlockchainConfig() {
@@ -55,12 +59,11 @@ public class BlockchainConfig {
         if (blockchainProperties.isEmpty() || blockchainProperties.get(0) == null) {
             throw new IllegalArgumentException("Chain has no initial blockchain properties at height 0! ChainId = " + chain.getChainId());
         }
-        log.trace("UpdateChain={}", chain);
         heightConfigMap = blockchainProperties.values()
             .stream()
             .map((BlockchainProperties bp) -> new HeightConfig(bp, getOneAPL(), getInitialSupply()))
             .sorted(Comparator.comparing(HeightConfig::getHeight))
-            .collect(Collectors.toMap(HeightConfig::getHeight, Function.identity(), (old, newv) -> newv, LinkedHashMap::new));
+            .collect(Collectors.toMap(HeightConfig::getHeight, Function.identity(), (old, newv)-> newv, TreeMap::new));
         currentConfig = heightConfigMap.get(0);
         log.debug("Switch to chain {} - {}. ChainId - {}", chain.getName(), chain.getDescription(), chain.getChainId());
     }
@@ -79,6 +82,34 @@ public class BlockchainConfig {
         return maxHeight
             .map(height -> heightConfigMap.get(height))
             .orElse(null);
+    }
+
+    /**
+     * Return previous configuration for any given height. Rollback is considered too.
+     * @param targetHeight specified height value used for selecting 'previous' config
+     * @return optional configuration
+     */
+    public Optional<HeightConfig> getPreviousConfigByHeight(int targetHeight) {
+        log.trace("getPreviousConfigByHeight targetHeight = '{}'", targetHeight);
+        Optional<HeightConfig> result = Optional.empty();
+        Set<Map.Entry<Integer, HeightConfig>> entries = heightConfigMap.headMap(targetHeight, true).entrySet();
+        log.trace("getPreviousConfigByHeight entries: '{}'\n", entries);
+        for (Map.Entry<Integer, HeightConfig> configEntry : entries) {
+            Map.Entry<Integer, HeightConfig> prev = heightConfigMap.lowerEntry(configEntry.getKey());  // previous
+            Map.Entry<Integer, HeightConfig> next = heightConfigMap.higherEntry(configEntry.getKey()); // next
+            log.trace("prev = {}", prev);
+            log.trace("current = {}", configEntry);
+            log.trace("next = {}\n", next);
+            if (prev != null && previousConfig(targetHeight).test(prev.getKey())) {
+                result = Optional.ofNullable(prev.getValue());
+            }
+        }
+        log.debug("getPreviousConfigByHeight, targetHeight = '{}' RESULT = {}\n", targetHeight, result);
+        return result;
+    }
+
+    public static Predicate<Integer> previousConfig(Integer height) {
+        return targetHeight -> targetHeight < height;
     }
 
     private void setFields(Chain chain, int minPrunableLifetime, int maxPrunableLifetime) {
@@ -204,10 +235,10 @@ public class BlockchainConfig {
     /**
      * For UNIT TEST only!
      *
-     * @param currentConfig
+     * @param currentConfig configuration to be assigned as current
      */
     public void setCurrentConfig(HeightConfig currentConfig) {
-        this.previousConfig = this.currentConfig;
+        this.previousConfig = Optional.ofNullable(this.currentConfig);
         this.currentConfig = currentConfig;
         this.isJustUpdated = true; // setup flag to catch chains.json config change on APPLY_BLOCK
     }
@@ -217,14 +248,18 @@ public class BlockchainConfig {
     }
 
     public Optional<HeightConfig> getPreviousConfig() {
-        return Optional.of(previousConfig);
+        return previousConfig;
+    }
+
+    public void setPreviousConfig(Optional<HeightConfig> previousConfig) {
+        this.previousConfig = previousConfig;
     }
 
     /**
      * Flag to catch configuration changing
      * // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
      *
-     * @return
+     * @return if config was recently updated to new height
      */
     public boolean isJustUpdated() {
         return isJustUpdated;
