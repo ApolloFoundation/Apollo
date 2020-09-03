@@ -22,9 +22,11 @@ import javax.inject.Inject;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
 @EnableWeld
@@ -34,11 +36,13 @@ public class ShardObserverIntegrationTest {
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     HeightConfig heightConfig;
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    Random random = Mockito.mock(Random.class);
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(ShardObserver.class)
         .addBeans(MockBean.of(shardService, ShardService.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(random, Random.class))
         .build();
     @Inject
     Event<TrimData> trimEvent;
@@ -62,9 +66,9 @@ public class ShardObserverIntegrationTest {
             Thread.sleep(200);
         } catch (InterruptedException ex) {
         }
-        verify(heightConfig, times(2)).isShardingEnabled();
-        verify(blockchainConfig, times(1)).getConfigAtHeight(DEFAULT_SHARDING_FREQUENCY);
-        verify(shardService, times(1)).tryCreateShardAsync(DEFAULT_SHARDING_FREQUENCY, Integer.MAX_VALUE);
+        verify(heightConfig, never()).isShardingEnabled();
+        verify(blockchainConfig, never()).getConfigAtHeight(DEFAULT_SHARDING_FREQUENCY);
+        verify(shardService, never()).tryCreateShardAsync(DEFAULT_SHARDING_FREQUENCY, Integer.MAX_VALUE);
     }
 
     @Test
@@ -80,8 +84,8 @@ public class ShardObserverIntegrationTest {
         trimEvent.select(new AnnotationLiteral<TrimEvent>() {
         }).fire(new TrimData(100, 100, 0));
 
-        verify(heightConfig, times(2)).isShardingEnabled();
-        verify(blockchainConfig, times(1)).getConfigAtHeight(DEFAULT_SHARDING_FREQUENCY);
+        verify(heightConfig, never()).isShardingEnabled();
+        verify(blockchainConfig, never()).getConfigAtHeight(DEFAULT_SHARDING_FREQUENCY);
     }
 
 }

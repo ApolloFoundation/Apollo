@@ -67,9 +67,9 @@ public class VoteTable extends EntityDbTable<Vote> {
     }
 
     @Override
-    public void trim(int height) {
+    public void trim(int height, boolean isSharding) {
         log.trace("Vote trim: NO_Sharding, height = {}", height);
-        super.trim(height);
+        super.trim(height, isSharding);
         try (Connection con = databaseManager.getDataSource().getConnection();
              DbIterator<Poll> polls = pollTable.getPollsFinishingBelowHeight(height, 0, Integer.MAX_VALUE);
              PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {

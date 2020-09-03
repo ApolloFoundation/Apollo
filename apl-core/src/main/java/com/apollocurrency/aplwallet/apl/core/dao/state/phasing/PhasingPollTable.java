@@ -252,8 +252,8 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     }
 
     @Override
-    public void trim(int height) {
-        super.trim(height);
+    public void trim(int height, boolean isSharding) {
+        super.trim(height, isSharding);
         TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
         try (Connection con = dataSource.getConnection();
              DbIterator<PhasingPoll> pollsToTrim = getAllFinishedPolls(height);

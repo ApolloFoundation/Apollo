@@ -202,11 +202,11 @@ public class TrimService {
 
     public int doTrimDerivedTablesOnHeightLocked(int height, boolean isSharding) {
         int res = 0;
-        lock.lock();
+//        lock.lock();
         try {
             res = doTrimDerivedTablesOnHeight(height, isSharding);
         } finally {
-            lock.unlock();
+//            lock.unlock();
         }
         return res;
     }

@@ -129,11 +129,11 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
 
 
     @Override
-    public void trim(int height/*, boolean isSharding*/) {
+    public void trim(int height, boolean isSharding) {
         if (multiversion) {
-            doMultiversionTrim(height/*, isSharding*/);
+            doMultiversionTrim(height, isSharding);
         } else {
-            super.trim(height);
+            super.trim(height, isSharding);
         }
     }
 
@@ -179,7 +179,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
      *                                                               }</pre>
      *               </p>
      */
-    private void doMultiversionTrim(final int height/*, boolean isSharding*/) {
+    private void doMultiversionTrim(final int height, boolean isSharding) {
         log.trace("doMultiversionTrim(), height={}", height);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {

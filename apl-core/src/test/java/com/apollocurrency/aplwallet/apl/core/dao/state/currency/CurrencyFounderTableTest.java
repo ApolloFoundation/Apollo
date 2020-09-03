@@ -101,7 +101,7 @@ class CurrencyFounderTableTest {
         doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
         int all = table.getRowCount();
         assertEquals(8, all);
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(100000));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(100000, true));
 
         all = table.getRowCount();
         assertEquals(3, all);

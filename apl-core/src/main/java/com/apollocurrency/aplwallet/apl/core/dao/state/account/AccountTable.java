@@ -106,11 +106,11 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
 
     @Override
-    public void trim(int height) {
+    public void trim(int height, boolean isSharding) {
         if (height <= blockchainConfig.getGuaranteedBalanceConfirmations()) {
             return;
         }
-        super.trim(height);
+        super.trim(height, isSharding);
     }
 
     public long getTotalSupply(long creatorId) {

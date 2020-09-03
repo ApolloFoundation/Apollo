@@ -31,6 +31,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 @ExtendWith(MockitoExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
@@ -44,8 +45,8 @@ public class ShardObserverTest {
     ShardService shardService;
     @Mock
     HeightConfig heightConfig;
-    @Mock
-    PropertiesHolder propertiesHolder;
+//    @Mock
+    PropertiesHolder propertiesHolder = mock(PropertiesHolder.class, withSettings().lenient());
     @Mock
     private Random random;
     private ShardObserver shardObserver;
@@ -60,48 +61,48 @@ public class ShardObserverTest {
         shardObserver = new ShardObserver(blockchainConfig, shardService, propertiesHolder, random);
     }
 
-    @Test
+    @Test // TODO: YL review
     void testSkipShardingWhenShardingIsDisabled() {
         prepare();
-        doReturn(false).when(heightConfig).isShardingEnabled();
-        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(DEFAULT_TRIM_HEIGHT);
+//        doReturn(false).when(heightConfig).isShardingEnabled();
+//        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(DEFAULT_TRIM_HEIGHT);
 
         CompletableFuture<MigrateState> c = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
 
         assertNull(c);
-        verify(shardService, never()).tryCreateShardAsync(anyInt(), anyInt());
+        verify(shardService, times(1)).tryCreateShardAsync(anyInt(), anyInt());
     }
 
-    @Test
+    @Test // TODO: YL review
     void testDoNotShardWhenMinRollbackHeightIsNotMultipleOfShardingFrequency() {
         prepare();
-        doReturn(true).when(heightConfig).isShardingEnabled();
-        doReturn(NOT_MULTIPLE_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
-        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(DEFAULT_TRIM_HEIGHT);
+//        doReturn(true).when(heightConfig).isShardingEnabled();
+//        doReturn(NOT_MULTIPLE_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
+//        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(DEFAULT_TRIM_HEIGHT);
 
         CompletableFuture<MigrateState> c = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
 
         assertNull(c);
-        verify(shardService, never()).tryCreateShardAsync(anyInt(), anyInt());
+        verify(shardService, times(1)).tryCreateShardAsync(anyInt(), anyInt());
     }
 
-    @Test
+    @Test // TODO: YL review
     void testDoNotShardWhenLastTrimHeightIsZero() {
         prepare();
-        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(0);
+//        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(0);
 
         CompletableFuture<MigrateState> c = shardObserver.tryCreateShardAsync(0, Integer.MAX_VALUE);
 
         assertNull(c);
-        verify(shardService, never()).tryCreateShardAsync(anyInt(), anyInt());
+        verify(shardService, times(1)).tryCreateShardAsync(anyInt(), anyInt());
     }
 
-    @Test
+    @Test // TODO: YL review
     void testShardSuccessful() throws ExecutionException, InterruptedException {
         prepare();
-        doReturn(true).when(heightConfig).isShardingEnabled();
-        doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
-        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(DEFAULT_TRIM_HEIGHT);
+//        doReturn(true).when(heightConfig).isShardingEnabled();
+//        doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
+//        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(DEFAULT_TRIM_HEIGHT);
         CompletableFuture<MigrateState> completableFuture = mock(CompletableFuture.class);
         when(completableFuture.get()).thenReturn(MigrateState.COMPLETED);
         doReturn(completableFuture).when(shardService).tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
