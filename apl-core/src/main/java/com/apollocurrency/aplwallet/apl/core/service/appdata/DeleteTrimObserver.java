@@ -66,11 +66,12 @@ public class DeleteTrimObserver {
     public void onDeleteTrimDataAsync(@ObservesAsync @TrimEvent DeleteOnTrimData deleteOnTrimData) {
         log.debug("onDeleteTrimDataAsync = {}", deleteOnTrimData);
         if (deleteOnTrimData.isResetEvent()) {
+            log.debug("onDeleteTrimDataAsync : clean up = {}, size[{}]",
+                deleteOnTrimData.isResetEvent(), deleteOnTrimDataQueue.size());
             deleteOnTrimDataQueue.clear();
-            log.debug("onDeleteTrimDataAsync : clean up = {}", deleteOnTrimData.isResetEvent());
         } else {
-            deleteOnTrimDataQueue.add(deleteOnTrimData);
             log.debug("onDeleteTrimDataAsync : queue size = [{}]", deleteOnTrimDataQueue.size());
+            deleteOnTrimDataQueue.add(deleteOnTrimData);
         }
     }
 
@@ -107,10 +108,13 @@ public class DeleteTrimObserver {
                     }
                 }
             }
+        } else {
+            log.trace("DISABLED: processScheduledDeleteTrimEvent()");
         }
     }
 
     public void performOneTableDelete(DeleteOnTrimData deleteOnTrimData) {
+        log.trace("start performOneTableDelete(): {}", deleteOnTrimData);
         long startDeleteTime = System.currentTimeMillis();
         long deleted = 0L;
         if (deleteOnTrimData != null
@@ -136,7 +140,7 @@ public class DeleteTrimObserver {
                 int[] result = pstmtDeleteById.executeBatch();
                 dataSource.commit(false);
                 deleted += Arrays.stream(result).asLongStream().sum();
-                log.trace("Delete table '{}' in {} ms: deleted=[{}]",
+                log.trace("performOneTableDelete():- Delete table '{}' in {} ms: deleted=[{}]",
                     System.currentTimeMillis() - startDeleteTime, deleteOnTrimData.getTableName(), deleted);
             } catch (Exception e) {
                 log.error("Batch delete error on table {}", deleteOnTrimData.getTableName(), e);

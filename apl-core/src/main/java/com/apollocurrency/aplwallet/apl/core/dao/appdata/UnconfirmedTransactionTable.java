@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -22,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -62,9 +64,10 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
                                        TransactionBuilder transactionBuilder,
                                        TransactionSerializer transactionSerializer,
                                        DerivedTablesRegistry derivedDbTablesRegistry,
-                                       DatabaseManager databaseManager) {
+                                       DatabaseManager databaseManager,
+                                       Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("unconfirmed_transaction", transactionKeyFactory, false, null,
-            derivedDbTablesRegistry, databaseManager, null);
+            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
         this.transactionKeyFactory = transactionKeyFactory;
         this.transactionBuilder = transactionBuilder;
         this.transactionSerializer = transactionSerializer;

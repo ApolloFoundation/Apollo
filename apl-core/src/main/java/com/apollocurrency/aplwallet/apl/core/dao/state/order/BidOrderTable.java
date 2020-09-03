@@ -26,7 +26,9 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
@@ -52,8 +54,9 @@ public class BidOrderTable extends OrderTable<BidOrder> {
 
     @Inject
     public BidOrderTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                         DatabaseManager databaseManager) {
-        super("bid_order", bidOrderDbKeyFactory, derivedDbTablesRegistry, databaseManager);
+                         DatabaseManager databaseManager,
+                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+        super("bid_order", bidOrderDbKeyFactory, derivedDbTablesRegistry, databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override

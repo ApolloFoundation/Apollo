@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
@@ -41,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
@@ -68,9 +70,10 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
     @Inject
     public PollTable(DerivedTablesRegistry derivedDbTablesRegistry,
                      DatabaseManager databaseManager,
-                     FullTextConfig fullTextConfig) {
+                     FullTextConfig fullTextConfig,
+                     Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("poll", POLL_LONG_KEY_FACTORY, false, "name,description",
-            derivedDbTablesRegistry, databaseManager, fullTextConfig);
+            derivedDbTablesRegistry, databaseManager, fullTextConfig, deleteOnTrimDataEvent);
     }
 
     @Override

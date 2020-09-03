@@ -43,16 +43,16 @@ public class TrimService {
     private final TimeService timeService;
     private final ReentrantLock lock = new ReentrantLock();
 
-    private final Event<TrimData> trimEvent;
+//    private final Event<TrimData> trimEvent;
     private final Event<TrimConfig> trimConfigEvent;
 
 
     @Inject
     public TrimService(DatabaseManager databaseManager,
                        DerivedTablesRegistry derivedDbTablesRegistry,
-                       GlobalSync globalSync,
+//                       GlobalSync globalSync,
                        TimeService timeService,
-                       Event<TrimData> trimEvent,
+//                       Event<TrimData> trimEvent,
                        Event<TrimConfig> trimConfigEvent,
                        TrimDao trimDao,
                        @Property(value = "apl.maxRollback", defaultValue = "720") int maxRollback
@@ -64,7 +64,7 @@ public class TrimService {
 //        this.globalSync = Objects.requireNonNull(globalSync, "Synchronization service cannot be null");
         this.timeService = Objects.requireNonNull(timeService, "EpochTime should not be null");
         this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
-        this.trimEvent = Objects.requireNonNull(trimEvent, "Trim event should not be null");
+//        this.trimEvent = Objects.requireNonNull(trimEvent, "Trim event should not be null");
         this.trimConfigEvent = Objects.requireNonNull(trimConfigEvent, "TrimConfig event should not be null");
     }
 

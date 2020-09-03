@@ -19,10 +19,12 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -60,9 +62,10 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
                            DerivedTablesRegistry derivedDbTablesRegistry,
                            DatabaseManager databaseManager,
                            FullTextConfig fullTextConfig,
-                           PropertiesHolder propertiesHolder) {
+                           PropertiesHolder propertiesHolder,
+                           Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super(DB_TABLE, taggedDataKeyFactory, true, FULL_TEXT_SEARCH_COLUMNS,
-            derivedDbTablesRegistry, databaseManager, fullTextConfig, blockchainConfig, propertiesHolder);
+            derivedDbTablesRegistry, databaseManager, fullTextConfig, blockchainConfig, propertiesHolder, deleteOnTrimDataEvent);
         this.dataTagDao = dataTagDao;
         this.timeService = timeService;
         this.blockchainConfig = blockchainConfig;

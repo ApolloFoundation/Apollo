@@ -56,7 +56,7 @@ class TrimServiceTest {
 
     @BeforeEach
     void setUp() {
-        trimService = new TrimService(databaseManager, registry, globalSync, timeService, event, trimConfigEvent, trimDao, 1000);
+        trimService = new TrimService(databaseManager, registry, /*globalSync,*/ timeService, /*event, */trimConfigEvent, trimDao, 1000);
     }
 
     @Test

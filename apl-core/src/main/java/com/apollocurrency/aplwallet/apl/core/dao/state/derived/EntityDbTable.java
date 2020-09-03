@@ -31,11 +31,13 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.Getter;
 import org.slf4j.Logger;
 
+import javax.enterprise.event.Event;
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -55,8 +57,9 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
     public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns,
                          DerivedTablesRegistry derivedDbTablesRegistry,
                          DatabaseManager databaseManager,
-                         FullTextConfig fullTextConfig) {
-        super(table, dbKeyFactory, multiversion, derivedDbTablesRegistry, databaseManager, fullTextConfig);
+                         FullTextConfig fullTextConfig,
+                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+        super(table, dbKeyFactory, multiversion, derivedDbTablesRegistry, databaseManager, fullTextConfig, deleteOnTrimDataEvent);
         this.defaultSort = " ORDER BY " + (multiversion ? dbKeyFactory.getPKColumns() : " height DESC, db_id DESC ");
         this.fullTextSearchColumns = fullTextSearchColumns;
     }
