@@ -20,8 +20,6 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.rest.provider.ByteArrayConverterProvider;
-import com.apollocurrency.aplwallet.apl.core.rest.provider.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
@@ -34,10 +32,13 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.CharsetRequestFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.ByteArrayConverterProvider;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -237,6 +238,7 @@ public final class API {
         return welcomePageUri;
     }
 
+    @SneakyThrows
     public final void start() {
 
         if (enableAPIServer) {
@@ -279,13 +281,13 @@ public final class API {
             apiHandler.addEventListener(new Listener());
             ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/apl");
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
-                    null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+                null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
 
             servletHolder = apiHandler.addServlet(APIProxyServlet.class, "/apl-proxy");
             servletHolder.setInitParameters(Collections.singletonMap("idleTimeout",
-                    "" + Math.max(apiServerIdleTimeout - APIProxyServlet.PROXY_IDLE_TIMEOUT_DELTA, 0)));
+                "" + Math.max(apiServerIdleTimeout - APIProxyServlet.PROXY_IDLE_TIMEOUT_DELTA, 0)));
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
-                    null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+                null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
 
             GzipHandler gzipHandler = new GzipHandler();
             if (!propertiesHolder.getBooleanProperty("apl.enableAPIServerGZIPFilter", isOpenAPI)) {
@@ -330,20 +332,20 @@ public final class API {
             //restEasyServletHolder.setInitParameter("resteasy.role.based.security", "true");
 
             restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
-                    new StringJoiner(",")
-                            .add(ConstraintViolationExceptionMapper.class.getName())
-                            .add(ClientErrorExceptionMapper.class.getName())
-                            .add(ParameterExceptionMapper.class.getName())
-                            .add(LegacyParameterExceptionMapper.class.getName())
-                            .add(SecurityInterceptor.class.getName())
-                            .add(Secured2FAInterceptor.class.getName())
-                            .add(RestParameterExceptionMapper.class.getName())
-                            .add(DefaultGlobalExceptionMapper.class.getName())
-                            .add(CharsetRequestFilter.class.getName())
-                            .add(IllegalArgumentExceptionMapper.class.getName())
-                            .add(PlatformSpecConverterProvider.class.getName())
-                            .add(ByteArrayConverterProvider.class.getName())
-                            .toString()
+                new StringJoiner(",")
+                    .add(ConstraintViolationExceptionMapper.class.getName())
+                    .add(ClientErrorExceptionMapper.class.getName())
+                    .add(ParameterExceptionMapper.class.getName())
+                    .add(LegacyParameterExceptionMapper.class.getName())
+                    .add(SecurityInterceptor.class.getName())
+                    .add(Secured2FAInterceptor.class.getName())
+                    .add(RestParameterExceptionMapper.class.getName())
+                    .add(DefaultGlobalExceptionMapper.class.getName())
+                    .add(CharsetRequestFilter.class.getName())
+                    .add(IllegalArgumentExceptionMapper.class.getName())
+                    .add(PlatformSpecConverterProvider.class.getName())
+                    .add(ByteArrayConverterProvider.class.getName())
+                    .toString()
             );
 
             String restEasyAppClassName = RestEasyApplication.class.getName();
@@ -354,10 +356,11 @@ public final class API {
             //need this listener to support scopes properly
             apiHandler.addEventListener(new org.jboss.weld.environment.servlet.Listener());
 
-            //--------- ADD swagger generated docs and API test page
+            //--------- ADD swagger/openApi generated docs and API test page
             // Set the path to our static (Swagger UI) resources
             URL su = API.class.getResource("/swaggerui");
             if (su != null) {
+                LOG.info("Swagger UI html/js resources base path= {}", su.toURI().toString());
                 String resourceBasePath = su.toExternalForm();
                 ContextHandler contextHandler = new ContextHandler("/swagger");
                 ResourceHandler swFileHandler = new ResourceHandler();
