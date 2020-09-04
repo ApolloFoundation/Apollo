@@ -631,17 +631,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 Block shardInitialBlock = blockchain.getShardInitialBlock();
                 int currentHeight = previousLastBlock.getHeight();
                 // put three latest blocks into array TODO: YL optimize to fetch three blocks later
-                threeLatestBlocksArray[0] = previousLastBlock;
-                if (currentHeight >= 1) {
-                    if (lastShard != null && (currentHeight - 1) >= lastShard.getShardHeight()) {
-                        threeLatestBlocksArray[1] = blockchain.getBlockAtHeight(currentHeight - 1);
-                    }
-                }
-                if (currentHeight >= 2) {
-                    if (lastShard != null && (currentHeight - 2) >= lastShard.getShardHeight()) {
-                        threeLatestBlocksArray[2] = blockchain.getBlockAtHeight(currentHeight - 2);
-                    }
-                }
+                fillInBlockArray(previousLastBlock, lastShard, currentHeight);
                 consensusManager.setPrevious(block, threeLatestBlocksArray, config, lastShard, shardInitialBlock.getHeight());
                 block.assignTransactionsIndex(); // IMPORTANT step !!!
                 log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.BEFORE_BLOCK_ACCEPT.name());
@@ -684,6 +674,25 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block); // send async event to other components
         log.debug("Push block at height {} tx cnt: {} took {} ms (lock acquiring: {} ms)",
             block.getHeight(), block.getTransactions().size(), System.currentTimeMillis() - startTime, lockAquireTime);
+    }
+
+    private void fillInBlockArray(Block previousLastBlock, Shard lastShard, int currentHeight) {
+        threeLatestBlocksArray[0] = previousLastBlock;
+        if (lastShard == null) {
+            if (currentHeight >= 1) {
+                threeLatestBlocksArray[1] = blockchain.getBlockAtHeight(currentHeight - 1);
+            }
+            if (currentHeight >= 2) {
+                threeLatestBlocksArray[2] = blockchain.getBlockAtHeight(currentHeight - 2);
+            }
+        } else {
+            if ((currentHeight - 1) >= lastShard.getShardHeight()) {
+                threeLatestBlocksArray[1] = blockchain.getBlockAtHeight(currentHeight - 1);
+            }
+            if ((currentHeight - 2) >= lastShard.getShardHeight()) {
+                threeLatestBlocksArray[2] = blockchain.getBlockAtHeight(currentHeight - 2);
+            }
+        }
     }
 
     private AnnotationLiteral<BlockEvent> literal(BlockEventType blockEventType) {
