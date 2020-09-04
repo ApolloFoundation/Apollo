@@ -17,18 +17,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * @author alukin@gmail.com
  */
-public class ApolloCertificateTest {
+public class CertificateTest {
 
-    private static final CryptoParams params = CryptoConfig.createDefaultParams();
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(ApolloCertificateTest.class);
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(CertificateTest.class);
     static CertHelper acert;
 
-    public ApolloCertificateTest() {
+    public CertificateTest() {
     }
 
     @BeforeAll
     public static void setUpClass() {
-        try (InputStream is = ApolloCertificateTest.class.getClassLoader().getResourceAsStream("test_cert.pem")) {
+        try (InputStream is = CertificateTest.class.getClassLoader().getResourceAsStream("test_cert.pem")) {
             acert = CertHelper.loadPEMFromStream(is);
         } catch (IOException ex) {
             log.error("Can not load test certificate ", ex);
@@ -43,7 +42,7 @@ public class ApolloCertificateTest {
     @Test
     public void testGetAuthorityId() {
         AuthorityID result = acert.getAuthorityId();
-        assertEquals(5139, result.getActorType());
+        assertEquals(5139, result.getActorTypeAsInt());
     }
 
     /**

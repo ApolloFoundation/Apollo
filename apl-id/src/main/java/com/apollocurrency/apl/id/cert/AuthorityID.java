@@ -8,7 +8,7 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
- * Apollo AUthority ID is set of bits that classifies Apollo crypto actors and
+ * AUthority ID is set of bits that classifies  crypto actors and
  * actor's capabilities.
  * Bytes meaning. Les's number each of 16 bytes as following:
  * 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
@@ -78,7 +78,7 @@ public class AuthorityID {
      *
      * @return 2 bytes of ActorType wrapped to 4 bytes of int
      */
-    public int getActorType() {
+    public int getActorTypeAsInt() {
         int res = authorityID[0] << 8 | authorityID[1];
         return res;
     }
@@ -101,8 +101,8 @@ public class AuthorityID {
      *
      * @return ActorType and ActorSubType wrapped in ActorType class
      */
-    public ActorType getApolloActorType() {
-        return new ActorType(getActorType());
+    public ActorType getActorType() {
+        return new ActorType(getActorTypeAsInt());
     }
 
     /**
@@ -111,8 +111,8 @@ public class AuthorityID {
      *
      * @param vat ActorType class hat wraps those 2 bytes
      */
-    public void setApolloActorType(ActorType vat) {
-        setActorType(vat.getValue());
+    public void setActorType(ActorType vat) {
+        AuthorityID.this.setActorType(vat.getValue());
     }
 
     /**

@@ -25,7 +25,7 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 
 /**
- * Certificate signing request with Apollo-specific attributes
+ * Certificate signing request with additional identity-specific attributes
  *
  * @author alukin@gmail.com
  */
@@ -34,13 +34,13 @@ public class CSRHelper extends CertBase {
     private static final Logger log = LoggerFactory.getLogger(CSRHelper.class);
     private final CertificateRequestData csrData = new CertificateRequestData(CertificateRequestData.CSRType.HOST);
     private String challengePassword = "";
-    private BigInteger apolloID;
-    private AuthorityID apolloAuthID;
+    private BigInteger actorID;
+    private AuthorityID authorityID;
     private final KeyWriter kw;
     
     public CSRHelper() {
-        apolloID = new BigInteger(128, new SecureRandom());
-        apolloAuthID = new AuthorityID();
+        actorID = new BigInteger(128, new SecureRandom());
+        authorityID = new AuthorityID();
         kw = factory.getKeyWriter();
     }
 
@@ -64,8 +64,8 @@ public class CSRHelper extends CertBase {
             va.setSubject(cr.getSubject());
             va.setAttributes(cr.getAttributes());
             res.setCN(va.getCn());
-            res.setAuthID(va.getAuthorityId());
-            res.setApolloID(va.getApolloId());
+            res.setAuthorityId(va.getAuthorityId());
+            res.setActorId(va.getApolloId());
             res.setCountry(va.getCountry());
             res.setState(va.getState());
             res.setCity(va.getCity());
@@ -84,12 +84,12 @@ public class CSRHelper extends CertBase {
 
     public static CSRHelper fromCertificate(CertHelper cert) {
         CSRHelper res = new CSRHelper();
-        res.setApolloAuthorityID(cert.getAuthorityId().getAuthorityID());
+        res.setAuthorityId(cert.getAuthorityId().getAuthorityID());
         BigInteger vid = cert.getApolloId();
         if (vid == null || vid == BigInteger.ZERO) {
             vid = new BigInteger(128, new SecureRandom());
         }
-        res.setApolloID(vid);
+        res.setActorId(vid);
         res.setCN(cert.getCN());
         res.setEmail(cert.getEmail());
         res.setOrg(cert.getOrganization());
@@ -129,30 +129,26 @@ public class CSRHelper extends CertBase {
         return res;
     }
 
-    public BigInteger getApolloID() {
-        return apolloID;
+    public BigInteger getActorId() {
+        return actorID;
     }
 
-    public void setApolloID(BigInteger id) {
-        apolloID = id;
-        csrData.setSubjectAttribute("UID", apolloID.toString(16));
+    public void setActorId(BigInteger id) {
+        actorID = id;
+        csrData.setSubjectAttribute("UID", actorID.toString(16));
     }
 
-    public AuthorityID getApolloAuthorityID() {
-        return apolloAuthID;
+    public AuthorityID getAuthorityId() {
+        return authorityID;
     }
 
-    public void setApolloAuthorityID(BigInteger id) {
-        apolloAuthID = new AuthorityID(id);
-        csrData.setSubjectAttribute("businessCategory", apolloAuthID.getAuthorityID().toString(16));
+    public void setAuthorityId(BigInteger id) {
+        authorityID = new AuthorityID(id);
+        csrData.setSubjectAttribute("businessCategory", authorityID.getAuthorityID().toString(16));
     }
 
-    public AuthorityID getAuthID() {
-        return apolloAuthID;
-    }
-
-    public void setAuthID(AuthorityID authID) {
-        this.apolloAuthID = authID;
+    public void setAuthorityId(AuthorityID authID) {
+        this.authorityID = authID;
         csrData.setSubjectAttribute("businessCategory", authID.getAuthorityID().toString(16));
     }
 
@@ -306,7 +302,7 @@ public class CSRHelper extends CertBase {
     public String toString() {
         String res = "X.509 Certificate:\n";
         res += "CN=" + getCN() + "\n"
-                + "ApolloID=" + getApolloID().toString(16) + "\n";
+                + "ActorID=" + getActorId().toString(16) + "\n";
         res += "emailAddress=" + getEmial() + "\n";
         res += "Country=" + getCountry() + " State/Province=" + getState()
                 + " City=" + getCity();
