@@ -122,24 +122,28 @@ public class DeleteTrimObserver {
             && deleteOnTrimData.getDbIdSet().size() > 0) {
 
             TransactionalDataSource dataSource = databaseManager.getDataSource();
+            boolean inTransaction = dataSource.isInTransaction();
+            if (!inTransaction) {
+                dataSource.begin();
+            }
             try (Connection con = dataSource.getConnection();
                  PreparedStatement pstmtDeleteById =
                      con.prepareStatement("DELETE FROM " + deleteOnTrimData.getTableName() + " WHERE db_id = ?");
             ) {
                 long index = 0;
                 for (Long id : deleteOnTrimData.getDbIdSet()) {
-//                    deleted += addDeleteToBatch(pstmtDeleteById, id);
-                    addDeleteToBatch(pstmtDeleteById, id);
+                    deleted += deleteByDbId(pstmtDeleteById, id);
+//                    addDeleteToBatch(pstmtDeleteById, id);
                     index++;
                     if (index % batchSize == 0) {
-                        int[] result = pstmtDeleteById.executeBatch();
+//                        int[] result = pstmtDeleteById.executeBatch();
                         dataSource.commit(false);
-                        deleted += Arrays.stream(result).asLongStream().sum();
+//                        deleted += Arrays.stream(result).asLongStream().sum();
                     }
                 }
-                int[] result = pstmtDeleteById.executeBatch();
+//                int[] result = pstmtDeleteById.executeBatch();
                 dataSource.commit(false);
-                deleted += Arrays.stream(result).asLongStream().sum();
+//                deleted += Arrays.stream(result).asLongStream().sum();
                 log.trace("performOneTableDelete():- Delete table '{}' in {} ms: deleted=[{}]",
                     System.currentTimeMillis() - startDeleteTime, deleteOnTrimData.getTableName(), deleted);
             } catch (Exception e) {
