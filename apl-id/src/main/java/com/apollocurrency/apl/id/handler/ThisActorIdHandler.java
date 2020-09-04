@@ -11,8 +11,8 @@ import java.math.BigInteger;
  * @author alukin@gmail.com
  */
 public interface ThisActorIdHandler {
-    BigInteger getApolloId();
-    CertHelper getCertificate();
+    BigInteger getActorId();
+    CertHelper getCertHelper();
     byte[] sign(byte[] message);
     CertHelper generateSelfSignedCert();
 }

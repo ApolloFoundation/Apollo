@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 
 import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.apl.id.cert.ApolloCertificate;
+import com.apollocurrency.apl.id.cert.CertHelper;
 import io.firstbridge.cryptolib.CryptoFactory;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ import java.util.Objects;
 public class CertificateMemoryStore {
 
     private CertificateLoader loader;
-    private Map<BigInteger, ApolloCertificate> certificates = new HashMap<>();
+    private Map<BigInteger, CertHelper> certificates = new HashMap<>();
     private final URL caCertUrl;
 
     @Inject
@@ -36,7 +36,7 @@ public class CertificateMemoryStore {
 
     @PostConstruct
     void init() {
-        List<ApolloCertificate> all = null;
+        List<CertHelper> all = null;
         try {
             all = loader.loadAll();
         } catch (Exception e) {
@@ -49,7 +49,7 @@ public class CertificateMemoryStore {
             log.debug("Error readX509 CertPEMorDER", e);
         }
         if (all != null) {
-            for (ApolloCertificate apolloCertificate : all) {
+            for (CertHelper apolloCertificate : all) {
                 if (rootCert != null && !apolloCertificate.verify(rootCert)) {
                     throw new IllegalStateException("Certificate is not valid, ca signature verification failed for " + apolloCertificate);
                 }
@@ -61,7 +61,7 @@ public class CertificateMemoryStore {
         }
     }
 
-    public ApolloCertificate getBySn(BigInteger sn) {
+    public CertHelper getBySn(BigInteger sn) {
         return certificates.get(sn);
     }
 }

@@ -116,7 +116,7 @@ public class CertHelper extends CertBase {
 
     @Override
     public String toString() {
-        String res = "Apollo X.509 Certificate:\n";
+        String res = "X.509 Certificate:\n";
         res += "CN=" + cert_attr.getCn() + "\n"
             + "ApolloID=" + getApolloId().toString(16) + "\n";
 
@@ -129,7 +129,7 @@ public class CertHelper extends CertBase {
         return res;
     }
 
-    public String getPEM() {
+    public String getCertPEM() {
         KeyWriter kw = new KeyWriterImpl();
         String res="";
         try {

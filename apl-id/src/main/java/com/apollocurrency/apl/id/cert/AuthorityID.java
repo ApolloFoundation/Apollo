@@ -6,6 +6,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.UUID;
 
 /**
  * AUthority ID is set of bits that classifies  crypto actors and
@@ -201,14 +202,34 @@ public class AuthorityID {
         return res;
     }
 
-    public void setSuplementalCode(long oc) {
-        ByteBuffer bb = ByteBuffer.allocate(8).order(ByteOrder.BIG_ENDIAN).putLong(oc);
+    public void setSuplementalCode(long sc) {
+        ByteBuffer bb = ByteBuffer.allocate(8).order(ByteOrder.BIG_ENDIAN).putLong(sc);
         authorityID[12] = bb.get(4);
         authorityID[13] = bb.get(5);
         authorityID[14] = bb.get(6);
         authorityID[15] = bb.get(7);
     }
-
+    
+    /** 
+     * Gets network Id declared in certificate's filed AuthorityID
+     * All authorization bits of certificate could be bound to one network only
+     * So part of AuthorityID of any trusted certificate id 128-bit long network Id
+     * @return Network ID as UUID
+     */
+    public byte[] getNetId(){
+        //TODO: implement
+        return null;
+    }
+    
+    /**
+     * Sets network Id declared in certificate's filed AuthorityID
+     * All authorization bits of certificate could be bound to one network only
+     * So part of AuthorityID of any trusted certificate id 128-bit long network Id
+     */ 
+    public void setNetId(byte[] id){
+        //TODO: implement
+    }
+    
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {

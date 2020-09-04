@@ -145,11 +145,11 @@ public class CertificateTest {
     }
 
     /**
-     * Test of getPEM method, of class ApolloCertificate.
+     * Test of getCertPEM method, of class ApolloCertificate.
      */
     @Test
     public void testGetPEM() {
-        String result = acert.getPEM();
+        String result = acert.getCertPEM();
         assertEquals(true, result.startsWith("-----BEGIN CERTIFICATE----"));
     }
 

@@ -19,6 +19,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.apl.id.handler.ThisActorIdHandler;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.limiter.TimeLimiterService;
@@ -75,6 +76,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import org.eclipse.jetty.client.HttpSender;
 
 @Singleton
 public class PeersService {
@@ -402,6 +404,8 @@ public class PeersService {
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonOrgModule());
+        ThisActorIdHandler myId = peerHttpServer.getMyIdHandler();
+        pi.setX509_cert(myId.getCertHelper().getCertPEM());
         myPeerInfo = mapper.convertValue(pi, JSONObject.class);
         LOG.debug("My peer info:\n" + myPeerInfo.toJSONString());
         myPI = pi;

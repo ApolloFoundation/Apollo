@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.apl.id.cert.ApolloCertificate;
+import com.apollocurrency.apl.id.cert.CertHelper;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -32,9 +32,9 @@ public class CertificateLoader {
         this.version = appVersion;
     }
 
-    public List<ApolloCertificate> loadAll() throws IOException {
+    public List<CertHelper> loadAll() throws IOException {
         Path rootPath = Paths.get(loadClass.getProtectionDomain().getCodeSource().getLocation().getPath());
-        List<ApolloCertificate> certs = new ArrayList<>();
+        List<CertHelper> certs = new ArrayList<>();
         Path fsPath = null;
         if (rootPath.toUri().getScheme().equals("jar")) {
             fsPath = rootPath;
@@ -53,13 +53,13 @@ public class CertificateLoader {
         return certs;
     }
 
-    private List<ApolloCertificate> readAll(Path path) throws IOException {
-        List<ApolloCertificate> certs = new ArrayList<>();
+    private List<CertHelper> readAll(Path path) throws IOException {
+        List<CertHelper> certs = new ArrayList<>();
         Files.walkFileTree(path.resolve("certs"), new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 try {
-                    ApolloCertificate cert = ApolloCertificate.loadPEMFromPath(file.toAbsolutePath().toString());
+                    CertHelper cert = CertHelper.loadPEMFromPath(file.toAbsolutePath().toString());
                     certs.add(cert);
                 }
                 catch (Exception e) {
@@ -71,7 +71,7 @@ public class CertificateLoader {
         return certs;
     }
 
-    private List<ApolloCertificate> readAllFromFs(Path path) throws IOException {
+    private List<CertHelper> readAllFromFs(Path path) throws IOException {
         try (FileSystem fileSystem = FileSystems.newFileSystem(path, ClassLoader.getSystemClassLoader())) {
             return readAll(fileSystem.getPath("/"));
         }

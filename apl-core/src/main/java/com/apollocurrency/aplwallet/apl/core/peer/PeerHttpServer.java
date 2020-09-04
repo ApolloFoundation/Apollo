@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.apl.id.handler.ThisActorIdHandler;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.http.JettyConnectorCreator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.Getter;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -62,9 +64,17 @@ public class PeerHttpServer {
     private PeerServlet peerServlet;
     private TaskDispatchManager taskDispatchManager;
     private List<ServerSocket> p2pPortHolders = new ArrayList<>();
+    @Getter
+    private ThisActorIdHandler myIdHandler;
 
     @Inject
-    public PeerHttpServer(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator conCreator, TaskDispatchManager taskDispatchManager) {
+    public PeerHttpServer(
+                    PropertiesHolder propertiesHolder, UPnP upnp, 
+                    JettyConnectorCreator conCreator, 
+                    TaskDispatchManager taskDispatchManager,
+                    ThisActorIdHandler myIdHandler
+            ) 
+    {
         this.upnp = upnp;
         this.taskDispatchManager = taskDispatchManager;
         shareMyAddress = propertiesHolder.getBooleanProperty("apl.shareMyAddress") && !propertiesHolder.isOffline();
@@ -76,6 +86,7 @@ public class PeerHttpServer {
         if (platform.length() > MAX_PLATFORM_LENGTH) {
             platform = platform.substring(0, MAX_PLATFORM_LENGTH);
         }
+        this.myIdHandler=myIdHandler;
         myPlatform = platform;
 
         enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");

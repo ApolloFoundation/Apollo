@@ -24,12 +24,12 @@ public class ThisActorIdHandlerImpl implements ThisActorIdHandler {
     CryptoFactory cryptoFactory;
     
     @Override
-    public BigInteger getApolloId() {
+    public BigInteger getActorId() {
        return myApolloId;
     }
 
     @Override
-    public CertHelper getCertificate() {
+    public CertHelper getCertHelper() {
         return myCert;
     }
 
