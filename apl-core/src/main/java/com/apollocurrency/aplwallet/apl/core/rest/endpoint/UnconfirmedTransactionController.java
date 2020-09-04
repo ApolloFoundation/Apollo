@@ -35,6 +35,6 @@ public class UnconfirmedTransactionController {
         description = "Return current number of unconfirmed transsactions in waiting and processed states  ")
     @PermitAll
     public Response getUnconfirmedTransactionCount() {
-        return Response.ok(new UnconfirmedTransactionCountResponse(processor.getUnconfirmedTxCount(), processor.getWaitingTransactionsCacheSize())).build();
+        return Response.ok(new UnconfirmedTransactionCountResponse(processor.getUnconfirmedTxCount(), processor.getWaitingTransactionsQueueSize())).build();
     }
 }

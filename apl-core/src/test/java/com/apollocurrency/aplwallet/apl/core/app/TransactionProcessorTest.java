@@ -196,7 +196,7 @@ class TransactionProcessorTest {
         doReturn(true).when(transactionApplier).applyUnconfirmed(transaction);
 
         //WHEN
-        service.processTransaction(unconfirmedTransaction);
+        service.processPeerTransactions(List.of(unconfirmedTransaction));
 
         //THEN
         verify(globalSync).writeLock();

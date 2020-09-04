@@ -5,8 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
-import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
@@ -34,37 +32,32 @@ import java.util.stream.Stream;
 @Singleton
 public class FindTransactionServiceImpl implements FindTransactionService {
     private final BlockChainInfoService blockChainInfoService;
-    private final UnconfirmedTransactionTable unconfirmedTransactionTable;
-    private final TransactionProcessor transactionProcessor;
     private final TransactionDao transactionDao;
+    private final MemPool memPool;
     private final DatabaseManager databaseManager;
     private final TxReceiptMapper txReceiptMapper;
-    private final IteratorToStreamConverter<UnconfirmedTransaction> streamConverter;
 
     @Inject
     public FindTransactionServiceImpl(DatabaseManager databaseManager,
-                                      TransactionProcessor transactionProcessor,
                                       TransactionDao transactionDao,
-                                      UnconfirmedTransactionTable unconfirmedTransactionTable,
+                                      MemPool memPool,
                                       BlockChainInfoService blockChainInfoService,
                                       TxReceiptMapper txReceiptMapper) {
         this.databaseManager = Objects.requireNonNull(databaseManager);
-        this.transactionProcessor = Objects.requireNonNull(transactionProcessor);
         this.transactionDao = Objects.requireNonNull(transactionDao);
-        this.unconfirmedTransactionTable = Objects.requireNonNull(unconfirmedTransactionTable);
         this.blockChainInfoService = Objects.requireNonNull(blockChainInfoService);
         this.txReceiptMapper = Objects.requireNonNull(txReceiptMapper);
-        this.streamConverter = new IteratorToStreamConverter<>();
+        this.memPool = memPool;
     }
 
     @Override
     public Stream<UnconfirmedTransaction> getAllUnconfirmedTransactionsStream() {
-        return unconfirmedTransactionTable.getAllUnconfirmedTransactions();
+        return memPool.getAllProcessedStream();
     }
 
     @Override
     public long getAllUnconfirmedTransactionsCount() {
-        return unconfirmedTransactionTable.getCount();
+        return memPool.allProcessedCount();
     }
 
     @Override
@@ -74,7 +67,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
 
     @Override
     public Optional<Transaction> findUnconfirmedTransaction(long transactionId) {
-        return Optional.ofNullable(transactionProcessor.getUnconfirmedTransaction(transactionId));
+        return Optional.ofNullable(memPool.getUnconfirmedTransaction(transactionId));
     }
 
     @Override

@@ -292,4 +292,13 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
     public Optional<Long> getDbIdentity() {
         return this.dbIdentity;
     }
+
+
+    public Connection beginTransactionIfNotStarted() {
+        if (isInTransaction()) {
+            return localConnection.get();
+        } else {
+            return begin();
+        }
+    }
 }
