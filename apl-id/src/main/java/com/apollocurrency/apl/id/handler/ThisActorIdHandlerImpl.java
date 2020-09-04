@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author alukin@gmail.com
  */
 @Slf4j
-public class ThisNodeIdHandlerImpl implements ThisNodeIdHandler {
+public class ThisActorIdHandlerImpl implements ThisActorIdHandler {
     BigInteger myApolloId;
     KeyPair myKeys;
     ApolloCertificate myCert;
@@ -48,7 +48,7 @@ public class ThisNodeIdHandlerImpl implements ThisNodeIdHandler {
     }
 
     @Override
-    public CertKeyHolder generateSelfSignedCert() {
+    public ApolloCertificate generateSelfSignedCert() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     

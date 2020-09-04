@@ -16,15 +16,16 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Holder of available cerificates placed in map with ID as a key
+ * Handler of certificate, CSR and key names and directories placed in map with ID as a key
  *
  * @author alukin@gmail.com
  */
 public class CertKeyDirs {
-    public static final String PVT_SEARCH_PATH = "/../private/";
+    public static final String PVT_SEARCH_PATH = "private/";
     private static final Logger log = LoggerFactory.getLogger(CertKeyDirs.class);
     private final Map<BigInteger, List<ApolloCertificate>> certMap = new TreeMap<>();
-
+    public static final String[] sfxes = {"_pvtkey", "_req", "_cert", "_selfcert", "_csr"}; 
+    
     public static String rmSuffixes(String fn) {
         String name = new String(fn);
         String ext = "";
@@ -91,27 +92,27 @@ public class CertKeyDirs {
             File[] filesList = dir.listFiles();
             for (File f : filesList) {
                 if (f.isFile() && f.canRead()) {
-                    ApolloCertificate vc = null;
+                    ApolloCertificate ac = null;
                     try {
-                        vc = ApolloCertificate.loadPEMFromPath(f.getAbsolutePath());
+                        ac = ApolloCertificate.loadPEMFromPath(f.getAbsolutePath());
                     } catch (IOException ex) {
                         //impossible here
                     } catch (ApolloCertificateException ex) {
                         log.error("Certificate load exception wilr loading " + f.getAbsolutePath(), ex);
                     }
-                    if (vc != null) {
-                        put(vc.getApolloId(), vc);
+                    if (ac != null) {
+                        put(ac.getApolloId(), ac);
                         if (loadPrivateKey) {
                             String parent = f.getParent();
                             String fn = f.getName();
                             PrivateKey pk = null;
                             pk = readPvtKey(parent + "/" + pvtKeyFileName(fn));
-                            if (pk == null) {//no key in the same dir, try ../private
+                            if (pk == null) {//no key in the same dir, try "private/"
                                 pk = readPvtKey(parent + PVT_SEARCH_PATH + pvtKeyFileName(fn));
                             }
                             if (pk != null) {
-                                if (vc.checkKeys(pk)) {
-                                    vc.setPrivateKey(pk);
+                                if (ac.checkKeys(pk)) {
+                                    ac.setPrivateKey(pk);
                                 } else {
                                     log.error("Private key file does not correspond to certificate: {}" + f.getAbsolutePath());
                                 }

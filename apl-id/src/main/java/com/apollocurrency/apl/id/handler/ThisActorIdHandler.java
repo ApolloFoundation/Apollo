@@ -10,9 +10,9 @@ import java.math.BigInteger;
  * Handles operations with X509 certificate and private key of this node 
  * @author alukin@gmail.com
  */
-public interface ThisNodeIdHandler {
+public interface ThisActorIdHandler {
     BigInteger getApolloId();
     ApolloCertificate getCertificate();
     byte[] sign(byte[] message);
-    CertKeyHolder generateSelfSignedCert();
+    ApolloCertificate generateSelfSignedCert();
 }

@@ -12,6 +12,7 @@ import java.security.PublicKey;
 
 /**
  * Base class for certificate and CSR
+ * Also holds private key of certificate
  *
  * @author alukin@gmail.com
  */

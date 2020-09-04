@@ -176,4 +176,8 @@ public class ApolloCertificate extends CertBase {
         //TODO: implement
         return true;
     }
+
+    public boolean isSignedBy(X509Certificate signerCert) {
+        return verify(signerCert);
+    }
 }
