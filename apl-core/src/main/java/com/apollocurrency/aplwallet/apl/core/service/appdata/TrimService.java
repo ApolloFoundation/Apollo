@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.config.TrimConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
@@ -13,9 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.TrimDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TrimEntry;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.Getter;
@@ -212,14 +209,13 @@ public class TrimService {
     }
 
     @Transactional
-//    private int doTrimDerivedTablesOnHeight(int height, boolean isSharding) {
     public int doTrimDerivedTablesOnHeight(int height, boolean isSharding) {
-//        log.debug("TRIM: doTrimDerivedTablesOnHeight on height={}, isSharding={}", height, isSharding);
+        log.debug("TRIM: doTrimDerivedTablesOnHeight on height={}, isSharding={}", height, isSharding);
         long start = System.currentTimeMillis();
 
         TransactionalDataSource dataSource = dbManager.getDataSource();
         boolean inTransaction = dataSource.isInTransaction();
-//        log.debug("doTrimDerivedTablesOnHeight height = '{}', inTransaction = '{}'", height, inTransaction);
+        log.trace("doTrimDerivedTablesOnHeight height = '{}', inTransaction = '{}'", height, inTransaction);
         if (!inTransaction) {
             dataSource.begin();
         }
@@ -237,7 +233,7 @@ public class TrimService {
                 dataSource.commit(false);
                 long duration = System.currentTimeMillis() - startTime;
                 // do not log trim duration here, instead go to the logback config and enable trace logs for BasicDbTable class
-//                log.debug("Trim of {} took {} ms", table.getName(), duration);
+                log.trace("Trim of {} took {} ms", table.getName(), duration);
                 onlyTrimTime += duration;
             } finally {
 //                globalSync.readUnlock();

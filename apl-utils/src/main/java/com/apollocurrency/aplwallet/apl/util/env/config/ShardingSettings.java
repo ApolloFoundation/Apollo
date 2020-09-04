@@ -82,7 +82,7 @@ public class ShardingSettings {
     @Override
     public String toString() {
         return "ShardingSettings{" +
-            ", enabled=" + enabled +
+            "enabled=" + enabled +
             ", frequency=" + frequency +
             ", digestAlgorithm='" + digestAlgorithm + '\'' +
             '}';

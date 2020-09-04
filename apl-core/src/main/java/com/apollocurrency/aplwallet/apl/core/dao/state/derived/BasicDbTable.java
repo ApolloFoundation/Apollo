@@ -216,9 +216,9 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                     keysToDelete.addAll( selectDbIds(selectDbIdStatement, rs) );
                 }
                 log.trace("Select 2. {} time: {} ms", table, System.currentTimeMillis() - startSelectTime);
-                // TODO migrate to PreparedStatement.addBatch for another db
+
                 startDeleteTime = System.currentTimeMillis();
-                if (isSharding) {
+                if (isSharding) { // trim on sharding
                     log.trace("Before delete, SEND reset. isSharding = {}, table: {}, size=[{}]", isSharding, table, keysToDelete.size());
                     deleteOnTrimDataEvent.select(new AnnotationLiteral<TrimEvent>() {
                     }).fireAsync(new DeleteOnTrimData(true, Collections.emptySet(), table));
@@ -235,6 +235,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                     log.trace("Delete table '{}' in {} ms: deleted=[{}]",
                         table, System.currentTimeMillis() - startDeleteTime, deleted);
                 } else {
+                    // simple trimming
                     log.trace("Should SEND to delete? isSharding = {}, table: {} , size = [{}]", isSharding, table, keysToDelete.size());
                     if (keysToDelete.size() > 100) { // low limit
                         // send only if we have bigger then 100 records to delete

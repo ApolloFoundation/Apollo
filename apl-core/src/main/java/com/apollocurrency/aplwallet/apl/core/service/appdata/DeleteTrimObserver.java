@@ -102,7 +102,7 @@ public class DeleteTrimObserver {
                     if (performDeleteTrimData) {
                         deleteOnTrimDataQueue.remove();
                         performOneTableDelete(deleteOnTrimData);
-                        log.debug("Perform trim on blockchain height={}", deleteOnTrimData);
+                        log.debug("Performed trim on blockchain height={}", deleteOnTrimData);
                     } else {
                         log.trace("NO trim data to delete...");
                     }
@@ -144,7 +144,7 @@ public class DeleteTrimObserver {
 //                int[] result = pstmtDeleteById.executeBatch();
                 dataSource.commit(false);
 //                deleted += Arrays.stream(result).asLongStream().sum();
-                log.trace("performOneTableDelete():- Delete table '{}' in {} ms: deleted=[{}]",
+                log.debug("performOneTableDelete():- Delete table '{}' in {} ms: deleted=[{}]",
                     System.currentTimeMillis() - startDeleteTime, deleteOnTrimData.getTableName(), deleted);
             } catch (Exception e) {
                 log.error("Batch delete error on table {}", deleteOnTrimData.getTableName(), e);

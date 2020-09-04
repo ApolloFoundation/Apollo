@@ -57,7 +57,7 @@ public class TrimObserver {
     /**
      * Callable task for method to run. Next run is scheduled as soon as previous has finished
      */
-    private Callable<Void> taskToCall = new Callable<>() {
+    private final Callable<Void> taskToCall = new Callable<>() {
         public Void call() {
             try {
                 // Do work.
