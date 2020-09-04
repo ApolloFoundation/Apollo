@@ -3,9 +3,9 @@ package com.apollocurrency.apl.id.cert;
 /**
  * @author alukin@gmail.com
  */
-public class ApolloCertificateException extends RuntimeException {
+public class CertException extends RuntimeException {
 
-    ApolloCertificateException(String message) {
+    CertException(String message) {
         throw new RuntimeException(message);
     }
 

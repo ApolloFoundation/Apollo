@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.apl.id.handler;
 
-import com.apollocurrency.apl.id.cert.ApolloCertificate;
+import com.apollocurrency.apl.id.cert.CertHelper;
 import io.firstbridge.cryptolib.AsymKeysHolder;
 import io.firstbridge.cryptolib.CryptoFactory;
 import io.firstbridge.cryptolib.CryptoNotValidException;
@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ThisActorIdHandlerImpl implements ThisActorIdHandler {
     BigInteger myApolloId;
     KeyPair myKeys;
-    ApolloCertificate myCert;
+    CertHelper myCert;
     CryptoFactory cryptoFactory;
     
     @Override
@@ -29,7 +29,7 @@ public class ThisActorIdHandlerImpl implements ThisActorIdHandler {
     }
 
     @Override
-    public ApolloCertificate getCertificate() {
+    public CertHelper getCertificate() {
         return myCert;
     }
 
@@ -48,7 +48,7 @@ public class ThisActorIdHandlerImpl implements ThisActorIdHandler {
     }
 
     @Override
-    public ApolloCertificate generateSelfSignedCert() {
+    public CertHelper generateSelfSignedCert() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     

@@ -21,7 +21,7 @@ public class ApolloCertificateTest {
 
     private static final CryptoParams params = CryptoConfig.createDefaultParams();
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(ApolloCertificateTest.class);
-    static ApolloCertificate acert;
+    static CertHelper acert;
 
     public ApolloCertificateTest() {
     }
@@ -29,10 +29,10 @@ public class ApolloCertificateTest {
     @BeforeAll
     public static void setUpClass() {
         try (InputStream is = ApolloCertificateTest.class.getClassLoader().getResourceAsStream("test_cert.pem")) {
-            acert = ApolloCertificate.loadPEMFromStream(is);
+            acert = CertHelper.loadPEMFromStream(is);
         } catch (IOException ex) {
             log.error("Can not load test certificate ", ex);
-        } catch (ApolloCertificateException ex) {
+        } catch (CertException ex) {
             log.error("can not parse test certificate", ex);
         }
     }

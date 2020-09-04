@@ -28,17 +28,17 @@ import java.util.logging.Level;
  *
  * @author alukin@gmail.com
  */
-public class ApolloCertificate extends CertBase {
+public class CertHelper extends CertBase {
 
-    private static final Logger log = LoggerFactory.getLogger(ApolloCertificate.class);
+    private static final Logger log = LoggerFactory.getLogger(CertHelper.class);
 
     private final X509Certificate certificate;
     private final CertAttributes cert_attr;
     private final CertAttributes issuer_attr;
 
-    public ApolloCertificate(X509Certificate certificate) throws ApolloCertificateException {
+    public CertHelper(X509Certificate certificate) throws CertException {
         if (certificate == null) {
-            throw new ApolloCertificateException("Null certificate");
+            throw new CertException("Null certificate");
         }
         this.certificate = certificate;
         pubKey = certificate.getPublicKey();
@@ -48,18 +48,18 @@ public class ApolloCertificate extends CertBase {
         issuer_attr.setSubjectStr(certificate.getIssuerX500Principal().toString());
     }
 
-    public static ApolloCertificate loadPEMFromPath(String path) throws ApolloCertificateException, IOException {
-        ApolloCertificate res = null;
+    public static CertHelper loadPEMFromPath(String path) throws CertException, IOException {
+        CertHelper res = null;
         try (FileInputStream fis = new FileInputStream(path)) {
-            res = ApolloCertificate.loadPEMFromStream(fis);
+            res = CertHelper.loadPEMFromStream(fis);
         }
         return res;
     }
 
-    public static ApolloCertificate loadPEMFromStream(InputStream is) throws IOException, ApolloCertificateException {
+    public static CertHelper loadPEMFromStream(InputStream is) throws IOException, CertException {
         KeyReader kr = new KeyReaderImpl();
         X509Certificate cert = kr.readX509CertPEMorDER(is);
-        ApolloCertificate ac = new ApolloCertificate(cert);
+        CertHelper ac = new CertHelper(cert);
         return ac;
     }
 
@@ -135,7 +135,7 @@ public class ApolloCertificate extends CertBase {
         try {
             res = kw.getX509CertificatePEM(certificate);
         } catch (IOException ex) {
-            java.util.logging.Logger.getLogger(ApolloCertificate.class.getName()).log(Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(CertHelper.class.getName()).log(Level.SEVERE, null, ex);
         }
         return res;
     }

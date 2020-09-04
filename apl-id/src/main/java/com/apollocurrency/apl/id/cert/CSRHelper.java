@@ -29,36 +29,36 @@ import java.security.cert.X509Certificate;
  *
  * @author alukin@gmail.com
  */
-public class ApolloCSR extends CertBase {
+public class CSRHelper extends CertBase {
 
-    private static final Logger log = LoggerFactory.getLogger(ApolloCSR.class);
-    private final CertificateRequestData certData = new CertificateRequestData(CertificateRequestData.CSRType.HOST);
+    private static final Logger log = LoggerFactory.getLogger(CSRHelper.class);
+    private final CertificateRequestData csrData = new CertificateRequestData(CertificateRequestData.CSRType.HOST);
     private String challengePassword = "";
     private BigInteger apolloID;
     private AuthorityID apolloAuthID;
     private final KeyWriter kw;
     
-    public ApolloCSR() {
+    public CSRHelper() {
         apolloID = new BigInteger(128, new SecureRandom());
         apolloAuthID = new AuthorityID();
         kw = factory.getKeyWriter();
     }
 
-    public static ApolloCSR loadCSR(String path) {
+    public static CSRHelper loadCSR(String path) {
         PKCS10CertificationRequest cr;
-        ApolloCSR res = null;
+        CSRHelper res = null;
         try (FileReader fr = new FileReader(path)) {
             PEMParser parser = new PEMParser(fr);
             cr = (PKCS10CertificationRequest) parser.readObject();
-            res = ApolloCSR.fromPKCS10(cr);
+            res = CSRHelper.fromPKCS10(cr);
         } catch (IOException ex) {
             log.error("Can not read PKCS#10 file: " + path, ex);
         }
         return res;
     }
 
-    public static ApolloCSR fromPKCS10(PKCS10CertificationRequest cr) {
-        ApolloCSR res = new ApolloCSR();
+    public static CSRHelper fromPKCS10(PKCS10CertificationRequest cr) {
+        CSRHelper res = new CSRHelper();
         try {
             CertAttributes va  = new CertAttributes();
             va.setSubject(cr.getSubject());
@@ -76,14 +76,14 @@ public class ApolloCSR extends CertBase {
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
             res.pubKey = converter.getPublicKey(pkInfo);
 
-        } catch (ApolloCertificateException | IOException ex) {
+        } catch (CertException | IOException ex) {
             log.error("Error reading public key frpm PKSC#10", ex);
         }
         return res;
     }
 
-    public static ApolloCSR fromCertificate(ApolloCertificate cert) {
-        ApolloCSR res = new ApolloCSR();
+    public static CSRHelper fromCertificate(CertHelper cert) {
+        CSRHelper res = new CSRHelper();
         res.setApolloAuthorityID(cert.getAuthorityId().getAuthorityID());
         BigInteger vid = cert.getApolloId();
         if (vid == null || vid == BigInteger.ZERO) {
@@ -135,7 +135,7 @@ public class ApolloCSR extends CertBase {
 
     public void setApolloID(BigInteger id) {
         apolloID = id;
-        certData.setSubjectAttribute("UID", apolloID.toString(16));
+        csrData.setSubjectAttribute("UID", apolloID.toString(16));
     }
 
     public AuthorityID getApolloAuthorityID() {
@@ -144,7 +144,7 @@ public class ApolloCSR extends CertBase {
 
     public void setApolloAuthorityID(BigInteger id) {
         apolloAuthID = new AuthorityID(id);
-        certData.setSubjectAttribute("businessCategory", apolloAuthID.getAuthorityID().toString(16));
+        csrData.setSubjectAttribute("businessCategory", apolloAuthID.getAuthorityID().toString(16));
     }
 
     public AuthorityID getAuthID() {
@@ -153,11 +153,11 @@ public class ApolloCSR extends CertBase {
 
     public void setAuthID(AuthorityID authID) {
         this.apolloAuthID = authID;
-        certData.setSubjectAttribute("businessCategory", authID.getAuthorityID().toString(16));
+        csrData.setSubjectAttribute("businessCategory", authID.getAuthorityID().toString(16));
     }
 
     public String getCN() {
-        String res = certData.getSubjectAttribute("CN");
+        String res = csrData.getSubjectAttribute("CN");
         if (res == null) {
             res = "";
         }
@@ -165,11 +165,11 @@ public class ApolloCSR extends CertBase {
     }
 
     public void setCN(String cn) {
-        certData.setSubjectAttribute("CN", cn);
+        csrData.setSubjectAttribute("CN", cn);
     }
 
     public String getEmial() {
-        String res = certData.getSubjectAttribute("emailAddress");
+        String res = csrData.getSubjectAttribute("emailAddress");
         if (res == null) {
             res = "";
         }
@@ -177,17 +177,17 @@ public class ApolloCSR extends CertBase {
     }
 
     public void setEmail(String email) {
-        certData.setSubjectAttribute("emailAddress", email);
+        csrData.setSubjectAttribute("emailAddress", email);
     }
 
     public String getIP() {
-        return certData.getExtendedAttribute("subjaltnames.ipaddress");
+        return csrData.getExtendedAttribute("subjaltnames.ipaddress");
     }
 
     public void setIP(String ip) {
         if (ip != null && !ip.isEmpty()) {
             if (isValidIPAddresList(ip)) {
-                certData.setExtendedAttribute("subjaltnames.ipaddress", ip);
+                csrData.setExtendedAttribute("subjaltnames.ipaddress", ip);
             } else {
                 throw new IllegalArgumentException("Invalid IP4 or IP6 addres: " + ip);
             }
@@ -195,13 +195,13 @@ public class ApolloCSR extends CertBase {
     }
 
     public String getDNSNames() {
-        return certData.getExtendedAttribute("subjaltnames.dnsname");
+        return csrData.getExtendedAttribute("subjaltnames.dnsname");
     }
 
     public void setDNSNames(String n) {
         if (n != null && !n.isEmpty()) {
             if (isVaidDNSNameList(n)) {
-                certData.setExtendedAttribute("subjaltnames.dnsname", n);
+                csrData.setExtendedAttribute("subjaltnames.dnsname", n);
             } else {
                 throw new IllegalArgumentException("Invalid DNS name: " + n);
             }
@@ -209,43 +209,43 @@ public class ApolloCSR extends CertBase {
     }
 
     public String getOrgUnit() {
-        return certData.getSubjectAttribute("OU");
+        return csrData.getSubjectAttribute("OU");
     }
 
     public void setOrgUnit(String ou) {
-        certData.setSubjectAttribute("OU", ou);
+        csrData.setSubjectAttribute("OU", ou);
     }
 
     public String getOrg() {
-        return certData.getSubjectAttribute("O");
+        return csrData.getSubjectAttribute("O");
     }
 
     public void setOrg(String o) {
-        certData.setSubjectAttribute("O", o);
+        csrData.setSubjectAttribute("O", o);
     }
 
     public String getCountry() {
-        return certData.getSubjectAttribute("C");
+        return csrData.getSubjectAttribute("C");
     }
 
     public void setCountry(String c) {
-        certData.setSubjectAttribute("C", c);
+        csrData.setSubjectAttribute("C", c);
     }
 
     public String getState() {
-        return certData.getSubjectAttribute("ST");
+        return csrData.getSubjectAttribute("ST");
     }
 
     public void setState(String c) {
-        certData.setSubjectAttribute("ST", c);
+        csrData.setSubjectAttribute("ST", c);
     }
 
     public String getCity() {
-        return certData.getSubjectAttribute("L");
+        return csrData.getSubjectAttribute("L");
     }
 
     public void setCity(String c) {
-        certData.setSubjectAttribute("L", c);
+        csrData.setSubjectAttribute("L", c);
     }
 
     public String getChallengePassword() {
@@ -259,13 +259,13 @@ public class ApolloCSR extends CertBase {
     public String getPemPKCS10() {
         String pem = "";
         try {
-            certData.processCertData(false);
+            csrData.processCertData(false);
             if (pvtKey == null) {
                 newKeyPair();
             }
             KeyPair kp = new KeyPair(pubKey, pvtKey);
             X509CertOperations certOps = factory.getX509CertOperations();
-            PKCS10CertificationRequest cr = certOps.createX509CertificateRequest(kp, certData, false, challengePassword);
+            PKCS10CertificationRequest cr = certOps.createX509CertificateRequest(kp, csrData, false, challengePassword);
             pem = kw.getCertificateRequestPEM(cr);
         } catch (IOException ex) {
             log.error("Can not generate PKSC10 CSR", ex);
@@ -288,13 +288,13 @@ public class ApolloCSR extends CertBase {
     public String getSelfSignedX509PEM() {
         String pem = "";
         try {
-            certData.processCertData(true);
+            csrData.processCertData(true);
             if (pvtKey == null) {
                 newKeyPair();
             }
             KeyPair kp = new KeyPair(pubKey, pvtKey);
             X509CertOperations certOps = factory.getX509CertOperations();            
-            X509Certificate cert = certOps.createSelfSignedX509v3(kp, certData);
+            X509Certificate cert = certOps.createSelfSignedX509v3(kp, csrData);
             pem = kw.getX509CertificatePEM(cert);
         } catch (CryptoNotValidException | IOException ex) {
             log.error("Can not generate self-signed PEM", ex);

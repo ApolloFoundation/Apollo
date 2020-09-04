@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.apl.id.handler;
 
-import com.apollocurrency.apl.id.cert.ApolloCertificate;
+import com.apollocurrency.apl.id.cert.CertHelper;
 import java.math.BigInteger;
 
 /**
@@ -12,7 +12,7 @@ import java.math.BigInteger;
  */
 public interface ThisActorIdHandler {
     BigInteger getApolloId();
-    ApolloCertificate getCertificate();
+    CertHelper getCertificate();
     byte[] sign(byte[] message);
-    ApolloCertificate generateSelfSignedCert();
+    CertHelper generateSelfSignedCert();
 }

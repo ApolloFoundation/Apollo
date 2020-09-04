@@ -23,7 +23,7 @@ import java.util.TreeMap;
 public class CertKeyDirs {
     public static final String PVT_SEARCH_PATH = "private/";
     private static final Logger log = LoggerFactory.getLogger(CertKeyDirs.class);
-    private final Map<BigInteger, List<ApolloCertificate>> certMap = new TreeMap<>();
+    private final Map<BigInteger, List<CertHelper>> certMap = new TreeMap<>();
     public static final String[] sfxes = {"_pvtkey", "_req", "_cert", "_selfcert", "_csr"}; 
     
     public static String rmSuffixes(String fn) {
@@ -69,12 +69,12 @@ public class CertKeyDirs {
         return name + suffix + ".pem";
     }
 
-    public List<ApolloCertificate> getCert(BigInteger id) {
+    public List<CertHelper> getCert(BigInteger id) {
         return certMap.get(id);
     }
 
-    public void put(BigInteger id, ApolloCertificate cert) {
-        List<ApolloCertificate> cl = certMap.get(id);
+    public void put(BigInteger id, CertHelper cert) {
+        List<CertHelper> cl = certMap.get(id);
         if (cl == null) {
             cl = new ArrayList<>();
         }
@@ -92,12 +92,12 @@ public class CertKeyDirs {
             File[] filesList = dir.listFiles();
             for (File f : filesList) {
                 if (f.isFile() && f.canRead()) {
-                    ApolloCertificate ac = null;
+                    CertHelper ac = null;
                     try {
-                        ac = ApolloCertificate.loadPEMFromPath(f.getAbsolutePath());
+                        ac = CertHelper.loadPEMFromPath(f.getAbsolutePath());
                     } catch (IOException ex) {
                         //impossible here
-                    } catch (ApolloCertificateException ex) {
+                    } catch (CertException ex) {
                         log.error("Certificate load exception wilr loading " + f.getAbsolutePath(), ex);
                     }
                     if (ac != null) {

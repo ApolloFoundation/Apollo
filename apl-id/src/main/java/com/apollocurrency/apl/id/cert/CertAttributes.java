@@ -31,12 +31,12 @@ public class CertAttributes {
 
     }
 
-    public void setSubject(X500Name sn) throws ApolloCertificateException {
+    public void setSubject(X500Name sn) throws CertException {
         String name = sn.toString();
         setSubjectStr(name);
     }
 
-    public void setSubjectStr(String name) throws ApolloCertificateException {
+    public void setSubjectStr(String name) throws CertException {
         String[] names = name.split(",");
         try {
             for (String name1 : names) {
@@ -65,7 +65,7 @@ public class CertAttributes {
                 }
             }
         } catch (NumberFormatException ex) {
-            throw new ApolloCertificateException(ex.getMessage());
+            throw new CertException(ex.getMessage());
         }
     }
 
