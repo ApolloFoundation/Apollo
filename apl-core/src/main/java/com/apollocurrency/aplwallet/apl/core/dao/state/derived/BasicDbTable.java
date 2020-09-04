@@ -16,8 +16,8 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -70,7 +70,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
     }
 
     private int doMultiversionRollback(int height) {
-//        log.trace("doMultiversionRollback(), height={}", height);
+        log.trace("doMultiversionRollback(), height={}", height);
         int deletedRecordsCount;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -80,7 +80,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
         String sql = "UPDATE " + table
             + " SET latest = TRUE " + (getDeletedSetStatementIfSupported(false)) + keyFactory.getPKClause() + " AND height ="
             + " (SELECT MAX(height) FROM " + table + keyFactory.getPKClause() + ")";
-//        log.trace(sql);
+        log.trace(sql);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtSelectToDelete = con.prepareStatement("SELECT DISTINCT " + keyFactory.getPKColumns()
                  + " FROM " + table + " WHERE height > ?");
@@ -96,14 +96,14 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
             }
 
             if (dbKeys.size() > 0) {
-//                log.trace("Rollback table {} found {} records to update to latest", table, dbKeys.size());
+                log.trace("Rollback table {} found {} records to update to latest", table, dbKeys.size());
             }
 
             pstmtDelete.setInt(1, height);
             deletedRecordsCount = pstmtDelete.executeUpdate();
 
             if (deletedRecordsCount > 0) {
-//                log.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
+                log.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
             }
             if (supportDelete()) { // do not 'setLatest' for deleted entities ( if last entity below given height was deleted 'deleted=true')
                 try (PreparedStatement pstmtSelectDeletedCount = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height <= ? AND deleted = true GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT HEIGHT) % 2 = 0");
@@ -135,7 +135,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
             log.error("Error", e);
             throw new RuntimeException(e.toString(), e);
         }
-//        log.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
+        log.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
         return deletedRecordsCount;
     }
 
@@ -192,7 +192,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
      *               </p>
      */
     private void doMultiversionTrim(final int height, boolean isSharding) {
-//        log.trace("doMultiversionTrim(), height={}", height);
+        log.trace("doMultiversionTrim(), height={}", height);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -225,11 +225,11 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                     if (keysToDelete.size() > 0) {
                         for (Long id : keysToDelete) {
                             deleted += deleteByDbId(pstmtDeleteById, id);
-                            if (deleted % 100 == 0) {
+                            if (deleted % ShardConstants.DEFAULT_COMMIT_BATCH_SIZE == 0) {
                                 dataSource.commit(false);
                             }
                         }
-    //                    log.debug("Delete for table {} took {} ms", table, System.currentTimeMillis() - startDeleteTime);
+                        log.debug("Delete for table {} took {} ms", table, System.currentTimeMillis() - startDeleteTime);
                     }
                     dataSource.commit(false);
                     log.trace("Delete table '{}' in {} ms: deleted=[{}]",
@@ -237,7 +237,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                 } else {
                     // simple trimming
                     log.trace("Should SEND to delete? isSharding = {}, table: {} , size = [{}]", isSharding, table, keysToDelete.size());
-                    if (keysToDelete.size() > 100) { // low limit
+                    if (keysToDelete.size() > ShardConstants.DEFAULT_COMMIT_BATCH_SIZE) { // low limit
                         // send only if we have bigger then 100 records to delete
                         log.trace("Before SEND delete. isSharding = {}, table: {} , size = [{}]", isSharding, table, keysToDelete.size());
                         deleteOnTrimDataEvent.select(new AnnotationLiteral<TrimEvent>() {
