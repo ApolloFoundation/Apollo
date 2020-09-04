@@ -626,7 +626,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 validatePhasedTransactions(block, previousLastBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                 validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
 
-//                block.setPrevious(previousLastBlock);
                 HeightConfig config = blockchainConfig.getCurrentConfig();
                 Shard lastShard = shardDao.getLastShard();
                 Block shardInitialBlock = blockchain.getShardInitialBlock();
@@ -634,10 +633,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 // put three latest blocks into array TODO: YL optimize to fetch three blocks later
                 threeLatestBlocksArray[0] = previousLastBlock;
                 if (currentHeight >= 1) {
-                    threeLatestBlocksArray[1] = blockchain.getBlockAtHeight(currentHeight - 1);
+                    if (lastShard != null && (currentHeight - 1) >= lastShard.getShardHeight()) {
+                        threeLatestBlocksArray[1] = blockchain.getBlockAtHeight(currentHeight - 1);
+                    }
                 }
                 if (currentHeight >= 2) {
-                    threeLatestBlocksArray[2] = blockchain.getBlockAtHeight(currentHeight - 2);
+                    if (lastShard != null && (currentHeight - 2) >= lastShard.getShardHeight()) {
+                        threeLatestBlocksArray[2] = blockchain.getBlockAtHeight(currentHeight - 2);
+                    }
                 }
                 consensusManager.setPrevious(block, threeLatestBlocksArray, config, lastShard, shardInitialBlock.getHeight());
                 block.assignTransactionsIndex(); // IMPORTANT step !!!
