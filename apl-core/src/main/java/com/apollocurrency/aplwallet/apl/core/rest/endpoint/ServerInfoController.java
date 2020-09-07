@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.OrderedMap;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -194,7 +195,7 @@ public class ServerInfoController {
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
                 content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = Map.class)))
+                    schema = @Schema(implementation = OrderedMap.class)))
         }
     )
     @RolesAllowed("admin")
