@@ -194,11 +194,11 @@ public class ShardObserver {
         long lastShardHeight;
         Shard shard = shardService.getLastShard();
         if (shard == null) {
-            log.debug("No last shard yet");
+            log.trace("No last shard yet");
             lastShardHeight = 0;
         } else {
             lastShardHeight = shard.getShardHeight();
-            log.debug("Last shard was = {}", lastShardHeight);
+            log.trace("Last shard was = {}", lastShardHeight);
         }
         return lastShardHeight;
     }
@@ -265,7 +265,7 @@ public class ShardObserver {
             log.debug("getTargetConfig(): result = {}", configAtTrimHeight);
             return Optional.of(configAtTrimHeight);
         }
-        log.debug("getTargetConfig(): EMPTY result = {}", configAtTrimHeight);
+        log.trace("getTargetConfig(): EMPTY result = {}", configAtTrimHeight);
         return Optional.empty();
     }
 

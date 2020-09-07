@@ -104,7 +104,7 @@ public class BlockchainConfig {
                 result = Optional.ofNullable(prev.getValue());
             }
         }
-        log.debug("getPreviousConfigByHeight, targetHeight = '{}' RESULT = {}\n", targetHeight, result);
+        log.trace("getPreviousConfigByHeight, targetHeight = '{}' RESULT = {}\n", targetHeight, result);
         return result;
     }
 
