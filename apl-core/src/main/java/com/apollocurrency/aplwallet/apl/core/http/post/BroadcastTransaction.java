@@ -72,7 +72,7 @@ public final class BroadcastTransaction extends AbstractAPIRequestHandler {
         try {
             Transaction.Builder builder = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
             Transaction transaction = builder.build();
-            lookupTransactionProcessor().broadcast(transaction);
+            lookupMemPool().softBroadcast(transaction);
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHashString());
         } catch (AplException.ValidationException | RuntimeException e) {
