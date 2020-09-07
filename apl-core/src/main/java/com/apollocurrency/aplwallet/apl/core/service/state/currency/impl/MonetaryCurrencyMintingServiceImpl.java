@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurr
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
-import javax.inject.Inject;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -21,12 +21,18 @@ import java.util.Arrays;
 @Singleton
 public class MonetaryCurrencyMintingServiceImpl implements MonetaryCurrencyMintingService {
 
-    private final CurrencyService currencyService;
+    private CurrencyService currencyService;
 
-    @Inject
-    public MonetaryCurrencyMintingServiceImpl(CurrencyService currencyService) {
-        this.currencyService = currencyService;
+    public MonetaryCurrencyMintingServiceImpl() {
     }
+
+    private CurrencyService lookupCurrencyService() {
+        if (this.currencyService == null) {
+            this.currencyService = CDI.current().select(CurrencyService.class).get();
+        }
+        return currencyService;
+    }
+
 
     @Override
     public boolean meetsTarget(long accountId, Currency currency, MonetarySystemCurrencyMinting attachment) {
@@ -43,7 +49,7 @@ public class MonetaryCurrencyMintingServiceImpl implements MonetaryCurrencyMinti
     }
 
     private Currency localSupplyDependency(Currency currency) {
-        CurrencySupply currencySupply = currencyService.loadCurrencySupplyByCurrency(currency); // load dependency
+        CurrencySupply currencySupply = lookupCurrencyService().loadCurrencySupplyByCurrency(currency); // load dependency
         if (currencySupply != null) {
             currency.setCurrencySupply(currencySupply);
         }
