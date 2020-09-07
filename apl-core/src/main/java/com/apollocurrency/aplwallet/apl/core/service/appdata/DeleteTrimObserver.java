@@ -13,6 +13,7 @@ import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -24,8 +25,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,13 +37,18 @@ public class DeleteTrimObserver {
     private final Object lock = new Object();
     private final Queue<DeleteOnTrimData> deleteOnTrimDataQueue = new ConcurrentLinkedQueue<>();
     protected final DatabaseManager databaseManager;
+    protected final PropertiesHolder propertiesHolder;
     private volatile boolean trimDerivedTablesEnabled = true;
+    private final int COMMIT_BATCH_SIZE;
     private final ScheduledExecutorService executorService =
         Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("apl-delete-on-trim"));
 
     @Inject
-    public DeleteTrimObserver(DatabaseManager databaseManager) {
+    public DeleteTrimObserver(DatabaseManager databaseManager,
+                              PropertiesHolder propertiesHolder) {
         this.databaseManager = databaseManager;
+        this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
+        this.COMMIT_BATCH_SIZE = propertiesHolder.BATCH_COMMIT_SIZE();
     }
 
     @PostConstruct
@@ -58,13 +64,13 @@ public class DeleteTrimObserver {
     }
 
     public void onDeleteTrimDataAsync(@ObservesAsync @TrimEvent DeleteOnTrimData deleteOnTrimData) {
-        log.debug("onDeleteTrimDataAsync = {}", deleteOnTrimData);
+        log.trace("onDeleteTrimDataAsync = {}", deleteOnTrimData);
         if (deleteOnTrimData.isResetEvent()) {
-            log.debug("onDeleteTrimDataAsync : clean up = {}, size[{}]",
+            log.trace("onDeleteTrimDataAsync : clean up = {}, size[{}]",
                 deleteOnTrimData.isResetEvent(), deleteOnTrimDataQueue.size());
             deleteOnTrimDataQueue.clear();
         } else {
-            log.debug("onDeleteTrimDataAsync : queue size = [{}]", deleteOnTrimDataQueue.size());
+            log.trace("onDeleteTrimDataAsync : queue size = [{}]", deleteOnTrimDataQueue.size());
             deleteOnTrimDataQueue.add(deleteOnTrimData);
         }
     }
@@ -87,8 +93,8 @@ public class DeleteTrimObserver {
     private void processScheduledDeleteTrimEvent() {
         log.trace("processScheduledDeleteTrimEvent() scheduled on previous run...");
         if (trimDerivedTablesEnabled) {
-            boolean performDeleteTrimData = false;
-            DeleteOnTrimData deleteOnTrimData = null;
+            boolean performDeleteTrimData;
+            DeleteOnTrimData deleteOnTrimData;
             synchronized (lock) {
                 if (trimDerivedTablesEnabled) {
                     deleteOnTrimData = deleteOnTrimDataQueue.peek();
@@ -107,7 +113,7 @@ public class DeleteTrimObserver {
         }
     }
 
-    public void performOneTableDelete(DeleteOnTrimData deleteOnTrimData) {
+    public long performOneTableDelete(DeleteOnTrimData deleteOnTrimData) {
         log.trace("start performOneTableDelete(): {}", deleteOnTrimData);
         long startDeleteTime = System.currentTimeMillis();
         long deleted = 0L;
@@ -129,7 +135,7 @@ public class DeleteTrimObserver {
                     deleted += deleteByDbId(pstmtDeleteById, id);
 //                    addDeleteToBatch(pstmtDeleteById, id);
                     index++;
-                    if (index % ShardConstants.DEFAULT_COMMIT_BATCH_SIZE == 0) {
+                    if (index % COMMIT_BATCH_SIZE == 0) {
 //                        int[] result = pstmtDeleteById.executeBatch();
                         dataSource.commit(false);
 //                        deleted += Arrays.stream(result).asLongStream().sum();
@@ -138,13 +144,13 @@ public class DeleteTrimObserver {
 //                int[] result = pstmtDeleteById.executeBatch();
                 dataSource.commit(false);
 //                deleted += Arrays.stream(result).asLongStream().sum();
-                log.debug("performOneTableDelete(): Delete table '{}' in {} ms: deleted=[{}]",
-                    deleteOnTrimData.getTableName(), System.currentTimeMillis() - startDeleteTime, deleted);
             } catch (Exception e) {
                 log.error("Batch delete error on table {}", deleteOnTrimData.getTableName(), e);
             }
-            log.debug("Delete for table {} took {} ms", deleteOnTrimData.getTableName(), System.currentTimeMillis() - startDeleteTime);
+            log.debug("performOneTableDelete(): Delete table '{}' in {} ms: deleted=[{}]",
+                deleteOnTrimData.getTableName(), System.currentTimeMillis() - startDeleteTime, deleted);
         }
+        return deleted;
     }
 
     private void addDeleteToBatch(PreparedStatement pstmtDeleteByDbId, long dbId) throws SQLException {
@@ -155,5 +161,13 @@ public class DeleteTrimObserver {
     private int deleteByDbId(PreparedStatement pstmtDeleteByDbId, long dbId) throws SQLException {
         pstmtDeleteByDbId.setLong(1, dbId);
         return pstmtDeleteByDbId.executeUpdate();
+    }
+
+    /**
+     * For unit tests mostly
+     * @return internal queue with data
+     */
+    public Queue<DeleteOnTrimData> getDeleteOnTrimDataQueue() {
+        return deleteOnTrimDataQueue;
     }
 }

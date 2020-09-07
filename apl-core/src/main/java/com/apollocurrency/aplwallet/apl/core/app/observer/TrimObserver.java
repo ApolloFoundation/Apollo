@@ -192,26 +192,10 @@ public class TrimObserver {
                 // the boolean - if shard is possible by trim height
                 boolean isShardingOnTrimHeight = (Math.max(trimHeight, 0)) % shardingFrequency == 0;
 
-                // that boolean - if shard is possible by current blockchain height
-                // we don't want support config params for 'maxRollback', 'shardFrequency' matched incorrectly/badly to each other
-                // so we use that in order do not to 'miss' shard height additionally
-                boolean isShardingOnBlockHeight = block.getHeight() % shardingFrequency == 0;
                 // generate pseudo random for 'trim height divergence'
                 randomTrimHeightIncrease = generatePositiveIntBiggerThenZero(trimFrequency);
-/*
-                if (isShardingOnBlockHeight || isShardingOnTrimHeight) {
-                    // prevent trim randomization on 'potentially dangerous heights'
-                    randomTrimHeightIncrease = 0; // schedule that case in any conditions
-                } else if (trimService.isTrimming()) {
-                    // SAFE SKIP, DO NOT schedule next if we haven't finished previous trim
-                    log.debug("Schedule next trim SKIPPED={}, trimHeight = {} / {}, shardFreq={} ({}}), isShardingOnTrimHeight={}, isShardingOnBlockHeight={}",
-                        randomTrimHeightIncrease, trimHeight, block.getHeight(), shardingFrequency,
-                        isConfigJustUpdated, isShardingOnTrimHeight, isShardingOnBlockHeight);
-                    return scheduleTrimHeight;
-                }
-*/
-                log.debug("Schedule next trim for rndIncrease={}, height/trimHeight = {} / {}, shardFreq={} ({}}), isShardingOnTrimHeight={}, isShardingOnBlockHeight={}",
-                    randomTrimHeightIncrease, trimHeight, block.getHeight(), shardingFrequency, isConfigJustUpdated, isShardingOnTrimHeight, isShardingOnBlockHeight);
+                log.debug("Schedule next trim for rndIncrease={}, height/trimHeight = {} / {}, shardFreq={} ({}}), isShardingOnTrimHeight={}",
+                    randomTrimHeightIncrease, trimHeight, block.getHeight(), shardingFrequency, isConfigJustUpdated, isShardingOnTrimHeight);
             }
             synchronized (lock) {
                 scheduleTrimHeight = block.getHeight() + randomTrimHeightIncrease; // increase next trim height with possible divergence
