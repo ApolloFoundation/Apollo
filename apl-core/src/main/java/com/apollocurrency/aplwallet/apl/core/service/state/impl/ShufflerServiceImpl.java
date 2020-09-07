@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShufflingEvent;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -19,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.exception.ShufflerException;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflerService;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -50,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * The Shuffler service
@@ -61,7 +61,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class ShufflerServiceImpl implements ShufflerService {
 
-    private final TransactionProcessor transactionProcessor;
+    private final MemPool memPool;
     private final Blockchain blockchain;
     private final GlobalSync globalSync;
     private final ShufflingService shufflingService;
@@ -77,11 +77,11 @@ public class ShufflerServiceImpl implements ShufflerService {
     private final Map<Integer, Set<String>> expirations = new ConcurrentHashMap<>();
 
     @Inject
-    public ShufflerServiceImpl(PropertiesHolder propertiesLoade, TransactionProcessor transactionProcessor,
+    public ShufflerServiceImpl(PropertiesHolder propertiesLoade, MemPool memPool,
                                Blockchain blockchain, GlobalSync globalSync, ShufflingService shufflingService,
                                FeeCalculator feeCalculator, BlockchainProcessor blockchainProcessor,
                                AccountService accountService, TransactionBuilder transactionBuilder) {
-        this.transactionProcessor = transactionProcessor;
+        this.memPool = memPool;
         this.blockchain = blockchain;
         this.globalSync = globalSync;
         this.shufflingService = shufflingService;
@@ -466,16 +466,14 @@ public class ShufflerServiceImpl implements ShufflerService {
 
     private void submitTransaction(Shuffler shuffler, ShufflingAttachment attachment) {
         if (blockchainProcessor.isProcessingBlock()) {
-            if (hasUnconfirmedTransaction(shuffler, attachment, transactionProcessor.getWaitingTransactions())) {
+            if (hasUnconfirmedTransaction(shuffler, attachment)) {
                 log.debug("Transaction already submitted");
                 return;
             }
         } else {
-            try (DbIterator<UnconfirmedTransaction> unconfirmedTransactions = transactionProcessor.getAllUnconfirmedTransactions()) {
-                if (hasUnconfirmedTransaction(shuffler, attachment, unconfirmedTransactions)) {
-                    log.debug("Transaction already submitted");
-                    return;
-                }
+            if (hasUnconfirmedTransaction(shuffler, attachment)) {
+                log.debug("Transaction already submitted");
+                return;
             }
         }
         //TODO Use TransactionVersionValidator#getActualVersion()
@@ -507,7 +505,7 @@ public class ShufflerServiceImpl implements ShufflerService {
                 log.debug("Error submitting shuffler transaction", shuffler.getFailureCause());
             }
             try {
-                transactionProcessor.broadcast(transaction);
+                memPool.softBroadcast(transaction);
                 log.trace("Submitted Shuffling Tx: id: {}, participantAccount:{}, atm: {}, deadline: {}",
                     transaction.getId(), participantAccount, transaction.getAmountATM(), transaction.getDeadline());
             } catch (AplException.NotCurrentlyValidException e) {
@@ -520,8 +518,9 @@ public class ShufflerServiceImpl implements ShufflerService {
         }
     }
 
-    private boolean hasUnconfirmedTransaction(Shuffler shuffler, ShufflingAttachment shufflingAttachment, Iterable<UnconfirmedTransaction> unconfirmedTransactions) {
-        for (UnconfirmedTransaction unconfirmedTransaction : unconfirmedTransactions) {
+    private boolean hasUnconfirmedTransaction(Shuffler shuffler, ShufflingAttachment shufflingAttachment) {
+        List<UnconfirmedTransaction> list = memPool.getAllProcessedStream().collect(Collectors.toList());
+        for (UnconfirmedTransaction unconfirmedTransaction : list) {
             if (unconfirmedTransaction.getSenderId() != shuffler.getAccountId()) {
                 continue;
             }

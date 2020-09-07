@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.TransactionCallback;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.Data;
 import net.sf.log4jdbc.ConnectionSpy;
 import org.slf4j.Logger;
 
@@ -294,11 +295,16 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
     }
 
 
-    public Connection beginTransactionIfNotStarted() {
+    public StartedConnection beginTransactionIfNotStarted() {
         if (isInTransaction()) {
-            return localConnection.get();
+            return new StartedConnection(localConnection.get(), true);
         } else {
-            return begin();
+            return new StartedConnection(begin(), false);
         }
+    }
+    @Data
+    public static class StartedConnection {
+        private final Connection connection;
+        private final boolean alreadyStarted;
     }
 }

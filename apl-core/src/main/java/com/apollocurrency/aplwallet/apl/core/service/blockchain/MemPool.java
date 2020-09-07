@@ -194,6 +194,10 @@ public class MemPool {
         table.truncate();
     }
 
+    public UnconfirmedTransaction nextSoftBroadcastTransaction() throws InterruptedException {
+        return memoryState.nextBroadcastPendingTransaction();
+    }
+
     public void rebroadcastAllUnconfirmedTransactions() {
         globalSync.writeLock();
         try {
@@ -253,5 +257,9 @@ public class MemPool {
 
     public void removeBroadcastedWhenConfirmedTransaction(Collection<Transaction> transactions) {
         memoryState.removeBroadcastedWhenConfirmedTransactions(transactions);
+    }
+
+    public int pendingBroadcastQueueSize() {
+        return memoryState.pendingBroadcastQueueSize();
     }
 }

@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TransactionInfoMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -68,7 +68,7 @@ class TransactionApiServiceImplTest {
     @Mock
     BlockChainInfoService blockChainInfoService;
     @Mock
-    TransactionProcessor transactionProcessor;
+    MemPool memPool;
     @Mock
     PrunableLoadingService prunableLoadingService;
     TransactionBuilder transactionBuilder;
@@ -87,7 +87,7 @@ class TransactionApiServiceImplTest {
         Convert2.init(blockchainConfig);
         txReceiptMapper = new TxReceiptMapper(blockChainInfoService);
         transactionInfoMapper = new TransactionInfoMapper(blockchain, prunableLoadingService);
-        transactionApiService = new TransactionApiServiceImpl(transactionProcessor, blockchain, txReceiptMapper, transactionInfoMapper, transactionBuilder);
+        transactionApiService = new TransactionApiServiceImpl(memPool, blockchain, txReceiptMapper, transactionInfoMapper, transactionBuilder);
     }
 
     @Test

@@ -47,7 +47,7 @@ class FindTransactionServiceImplTest {
     @Mock
     DatabaseManager databaseManager;
     @Mock
-    TransactionProcessor transactionProcessor;
+    MemPool memPool;
     @Mock
     TransactionDao transactionDao;
     @Mock
@@ -65,7 +65,7 @@ class FindTransactionServiceImplTest {
     @BeforeEach
     void setUp() {
 
-        findTransactionService = new FindTransactionServiceImpl(databaseManager, transactionProcessor, transactionDao, unconfirmedTransactionTable, blockChainInfoService, txReceiptMapper);
+        findTransactionService = new FindTransactionServiceImpl(databaseManager, transactionDao, memPool, blockChainInfoService, txReceiptMapper);
 
     }
 
@@ -118,7 +118,7 @@ class FindTransactionServiceImplTest {
         //GIVEN
         long transactionId = 111L;
         Transaction tx = mock(Transaction.class);
-        doReturn(tx).when(transactionProcessor).getUnconfirmedTransaction(transactionId);
+        doReturn(tx).when(memPool).getUnconfirmedTransaction(transactionId);
 
         //WHEN
         Optional<Transaction> result = findTransactionService.findUnconfirmedTransaction(transactionId);

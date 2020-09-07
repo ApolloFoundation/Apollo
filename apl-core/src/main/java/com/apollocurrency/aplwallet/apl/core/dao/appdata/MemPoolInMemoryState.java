@@ -189,4 +189,12 @@ public class MemPoolInMemoryState {
         transactions.forEach(txToBroadcastWhenConfirmed::remove);
     }
 
+    public UnconfirmedTransaction nextBroadcastPendingTransaction() throws InterruptedException {
+        return broadcastPendingTransactions.take();
+    }
+
+    public int pendingBroadcastQueueSize() {
+        return broadcastPendingTransactions.size();
+    }
+
 }

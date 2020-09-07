@@ -31,6 +31,8 @@ public interface TransactionProcessor {
 
     void init();
 
+    void broadcastWhenConfirmed(Transaction transaction, Transaction uncTransaction);
+
     void printMemPoolStat();
 
     void clearUnconfirmedTransactions();

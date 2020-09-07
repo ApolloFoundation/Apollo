@@ -22,8 +22,10 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
@@ -83,6 +85,8 @@ class TransactionProcessorTest {
     private TransactionBuilder transactionBuilder = mock(TransactionBuilder.class);
     private PrunableLoadingService prunableLoadingService = mock(PrunableLoadingService.class);
     private TransactionTypeFactory transactionTypeFactory = mock(TransactionTypeFactory.class);
+    private UnconfirmedTransactionProcessingService processingService = mock(UnconfirmedTransactionProcessingService.class);
+    private MemPool memPool = mock(MemPool.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
@@ -115,10 +119,10 @@ class TransactionProcessorTest {
     @BeforeEach
     void setUp() {
         td = new TransactionTestData();
-        service = new TransactionProcessorImpl(propertiesHolder, transactionValidator, transactionApplier,
-            listEvent, unconfirmedTransactionTable, databaseManager, accountService,
-            globalSync, timeService, ntpTimeConfig.time(), blockchainConfig, taskDispatchManager, peersService, blockchain, transactionBuilder, prunableLoadingService,
-            transactionTypeFactory);
+        service = new TransactionProcessorImpl(propertiesHolder, transactionValidator,
+            listEvent, databaseManager,
+            globalSync, timeService, ntpTimeConfig.time(), blockchainConfig, taskDispatchManager, peersService, blockchain, transactionBuilder, prunableLoadingService, processingService,
+            transactionTypeFactory, memPool);
     }
 
     @Test

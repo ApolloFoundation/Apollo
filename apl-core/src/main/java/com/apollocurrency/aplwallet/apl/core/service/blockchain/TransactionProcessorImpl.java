@@ -167,7 +167,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 dispatcher.invokeAfter(Task.builder()
                     .name("Broadcaster")
                     .initialDelay(2000)
-                    .task(()-> )
+                    .task(this::broadcastQueue)
                     .build());
                 dispatcher.invokeAfter(Task.builder()
                     .name("InitialUnconfirmedTxsRebroadcasting")
@@ -198,13 +198,41 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         }
     }
 
+    @Override
+    public void broadcastWhenConfirmed(Transaction transaction, Transaction uncTransaction) {
+        memPool.broadcastWhenConfirmed(transaction, uncTransaction);
+    }
+
     void broadcastQueue() {
-        while (memPool.get)
+        while (true) {
+            try {
+                UnconfirmedTransaction tx = null;
+                try {
+                    tx = memPool.nextSoftBroadcastTransaction();
+                } catch (InterruptedException e) {
+                }
+                if (tx != null) {
+                    try {
+                        transactionValidator.validate(tx);
+                        processingService.validateBeforeProcessing(tx);
+                    } catch (AplException.ValidationException e) {
+                        log.debug("Invalid transaction was not broadcasted txId=" + tx.getId(), e);
+                    }
+                    try {
+                        broadcast(tx);
+                    } catch (AplException.ValidationException e) {
+                        log.debug("Failed to broadcast transaction txId=" + tx.getId(), e);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Unknown exception during broadcast transactions ", e);
+            }
+        }
     }
 
     @Override
     public void printMemPoolStat() {
-//        log.trace("Processed: {}, waiting {}, cached - {}", unconfirmedTransactionTable.getCount(), unconfirmedTransactionTable.getWaitingTransactionsCacheSize(), unconfirmedTransactionTable.getTransactionCache().size());
+        log.trace("Processed: {}, waiting {}, pending broadcast - {}", memPool.allProcessedCount(), memPool.getWaitingTransactionsQueueSize(), memPool.pendingBroadcastQueueSize());
     }
 
     @Override
@@ -226,6 +254,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 memPool.broadcastLater(transaction);
 //                log.debug("Will broadcast new transaction later {}", transaction.getStringId());
             } else {
+                processingService.validateBeforeProcessing(unconfirmedTransaction);
                 processingService.processTransaction(unconfirmedTransaction);
 //                log.debug("Accepted new transaction {}", transaction.getStringId());
                 List<Transaction> acceptedTransactions = Collections.singletonList(transaction);
@@ -264,18 +293,18 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     public void requeueAllUnconfirmedTransactions() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         globalSync.writeLock();
+        TransactionalDataSource.StartedConnection startedConnection = dataSource.beginTransactionIfNotStarted();
         try {
-            dataSource.beginTransactionIfNotStarted();
 
             List<Transaction> removed = new ArrayList<>();
             List<UnconfirmedTransaction> transactions = processingService.undoAllProcessedTransactions();
             transactions.forEach(memPool::addToWaitingQueue);
             memPool.resetProcessedState();
             txsEvent.select(TxEventType.literal(TxEventType.REMOVED_UNCONFIRMED_TRANSACTIONS)).fire(removed);
-            dataSource.commit();
+            dataSource.commit(!startedConnection.isAlreadyStarted());
         } catch (Exception e) {
             log.error(e.toString(), e);
-            dataSource.rollback();
+            dataSource.rollback(!startedConnection.isAlreadyStarted());
             throw e;
         } finally {
             globalSync.writeUnlock();
@@ -339,6 +368,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     try {
 //                        log.trace("Process waiting tx {}", unconfirmedTransaction.getId());
                         transactionValidator.validate(unconfirmedTransaction);
+                        processingService.validateBeforeProcessing(unconfirmedTransaction);
                         processingService.processTransaction(unconfirmedTransaction);
                         iterator.remove();
                         addedUnconfirmedTransactions.add(unconfirmedTransaction.getTransaction());
@@ -395,7 +425,13 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 }
                 transactionValidator.validate(transaction);
                 UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, arrivalTimestamp);
-                processingService.processTransaction(unconfirmedTransaction);
+                globalSync.writeLock();
+                try {
+                    processingService.validateBeforeProcessing(unconfirmedTransaction);
+                    processingService.processTransaction(unconfirmedTransaction);
+                } finally {
+                    globalSync.writeUnlock();
+                }
                 if (memPool.isAlreadyBroadcasted(transaction)) {
 //                    log.debug("Received back transaction " + transaction.getStringId()
 //                        + " that we broadcasted, will not forward again to peers");
