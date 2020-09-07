@@ -235,9 +235,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             if (tx != null) {
                 try {
                     transactionValidator.validate(tx);
-                    processingService.validateBeforeProcessing(tx);
                 } catch (AplException.ValidationException e) {
                     log.debug("Invalid transaction was not broadcasted txId=" + tx.getId(), e);
+                    return;
+                }
+                UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(tx);
+                if (!validationResult.isOk()) {
                     return;
                 }
                 try {
@@ -275,7 +278,10 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 memPool.broadcastLater(transaction);
 //                log.debug("Will broadcast new transaction later {}", transaction.getStringId());
             } else {
-                processingService.validateBeforeProcessing(unconfirmedTransaction);
+                UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
+                if (!validationResult.isOk()) {
+                    throw new AplException.NotValidException(validationResult.getErrorDescription());
+                }
                 processingService.processTransaction(unconfirmedTransaction);
 //                log.debug("Accepted new transaction {}", transaction.getStringId());
                 List<Transaction> acceptedTransactions = Collections.singletonList(transaction);
@@ -389,10 +395,14 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     try {
 //                        log.trace("Process waiting tx {}", unconfirmedTransaction.getId());
                         transactionValidator.validate(unconfirmedTransaction);
-                        processingService.validateBeforeProcessing(unconfirmedTransaction);
-                        processingService.processTransaction(unconfirmedTransaction);
-                        iterator.remove();
-                        addedUnconfirmedTransactions.add(unconfirmedTransaction.getTransaction());
+                        UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
+                        if (!validationResult.isOk()) {
+                            processValidationResult(validationResult, unconfirmedTransaction, iterator);
+                        } else {
+                            processingService.processTransaction(unconfirmedTransaction);
+                            iterator.remove();
+                            addedUnconfirmedTransactions.add(unconfirmedTransaction.getTransaction());
+                        }
                     } catch (AplException.ExistingTransactionException e) {
                         iterator.remove();
 //                        log.trace("Tx processing error " + unconfirmedTransaction.getId(), e);
@@ -413,6 +423,18 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             }
         } finally {
             globalSync.writeUnlock();
+        }
+    }
+
+    private void processValidationResult(UnconfirmedTxValidationResult result, UnconfirmedTransaction tx, Iterator<UnconfirmedTransaction> iterator) {
+        long currentTime = timeService.getEpochTime();
+        if (result.getError() == UnconfirmedTxValidationResult.Error.ALREADY_PROCESSED || result.getError() == UnconfirmedTxValidationResult.Error.NOT_VALID) {
+            iterator.remove();
+        }
+        if (result.getError() == UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID) {
+            if (tx.getExpiration() < currentTime || currentTime - Convert2.toEpochTime(tx.getArrivalTimestamp()) > 3600) {
+                iterator.remove();
+            }
         }
     }
 
@@ -448,8 +470,13 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, arrivalTimestamp);
                 globalSync.writeLock();
                 try {
-                    processingService.validateBeforeProcessing(unconfirmedTransaction);
-                    processingService.processTransaction(unconfirmedTransaction);
+                    UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
+                    if (validationResult.isOk()) {
+                        processingService.processTransaction(unconfirmedTransaction);
+                    } else if (validationResult.getError() == UnconfirmedTxValidationResult.Error.NOT_VALID) {
+                        exceptions.add(new AplException.NotValidException(validationResult.getErrorDescription()));
+                        continue;
+                    }
                 } finally {
                     globalSync.writeUnlock();
                 }
