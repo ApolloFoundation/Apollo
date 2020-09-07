@@ -30,6 +30,7 @@ import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Collection;
 
 @Vetoed
 public final class GetAllBroadcastedTransactions extends AbstractAPIRequestHandler {
@@ -43,7 +44,7 @@ public final class GetAllBroadcastedTransactions extends AbstractAPIRequestHandl
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("transactions", jsonArray);
-        Transaction[] transactions = lookupTransactionProcessor().getAllBroadcastedTransactions();
+        Collection<Transaction> transactions = lookupMemPool().getAllBroadcastedTransactions();
         for (Transaction transaction : transactions) {
             jsonArray.add(JSONData.unconfirmedTransaction(transaction));
         }

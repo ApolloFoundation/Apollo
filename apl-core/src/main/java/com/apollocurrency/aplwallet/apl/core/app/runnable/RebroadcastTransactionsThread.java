@@ -4,21 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * Class makes lookup of BlockchainProcessor
@@ -28,16 +27,16 @@ public class RebroadcastTransactionsThread implements Runnable {
 
     private BlockchainProcessor blockchainProcessor;
     private final TimeService timeService;
-    private final UnconfirmedTransactionTable unconfirmedTransactionTable;
+    private final MemPool memPool;
     private final PeersService peers;
     private final Blockchain blockchain;
 
     public RebroadcastTransactionsThread(TimeService timeService,
-                                         UnconfirmedTransactionTable unconfirmedTransactionTable,
+                                         MemPool memPool,
                                          PeersService peers,
                                          Blockchain blockchain) {
         this.timeService = Objects.requireNonNull(timeService);
-        this.unconfirmedTransactionTable = Objects.requireNonNull(unconfirmedTransactionTable);
+        this.memPool = Objects.requireNonNull(memPool);
         this.peers = Objects.requireNonNull(peers);
         this.blockchain = Objects.requireNonNull(blockchain);
         log.info("Created 'RebroadcastTransactionsThread' instance");
@@ -61,19 +60,21 @@ public class RebroadcastTransactionsThread implements Runnable {
 
     private void rebroadcast() {
         try {
+            if (lookupBlockchainProcessor().isDownloading()) {
+                return;
+            }
             List<Transaction> transactionList = new ArrayList<>();
             int curTime = timeService.getEpochTime();
-            Set<Transaction> broadcastedTransactions = unconfirmedTransactionTable.getBroadcastedTransactions();
+            Collection<Transaction> broadcastedTransactions = memPool.getAllBroadcastedTransactions();
             for (Transaction transaction : broadcastedTransactions) {
                 if (transaction.getExpiration() < curTime || blockchain.hasTransaction(transaction.getId())) {
-                    broadcastedTransactions.remove(transaction);
+                    memPool.removeOutdatedBroadcastedTransactions(transaction);
                 } else if (transaction.getTimestamp() < curTime - 30) {
-                    transactionList.add(
-                        new UnconfirmedTransaction(transaction, Convert2.fromEpochTime(transaction.getTimestamp())));
+                    transactionList.add(transaction);
                 }
             }
 
-            if (!transactionList.isEmpty()) {
+            if (transactionList.size() > 0) {
                 peers.sendToSomePeers(transactionList);
             }
 

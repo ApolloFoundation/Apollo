@@ -21,36 +21,19 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import org.json.simple.JSONArray;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.SortedSet;
 
 public interface TransactionProcessor {
 
     void init();
 
+    void broadcastWhenConfirmed(Transaction transaction, Transaction uncTransaction);
+
     void printMemPoolStat();
-
-    DbIterator<UnconfirmedTransaction> getAllUnconfirmedTransactions();
-
-    DbIterator<? extends Transaction> getAllUnconfirmedTransactions(int from, int to);
-
-    DbIterator<? extends Transaction> getAllUnconfirmedTransactions(String sort);
-
-    DbIterator<? extends Transaction> getAllUnconfirmedTransactions(int from, int to, String sort);
-
-    Transaction getUnconfirmedTransaction(long transactionId);
-
-    Transaction[] getAllWaitingTransactions();
-
-    Collection<UnconfirmedTransaction> getWaitingTransactions();
-
-    Transaction[] getAllBroadcastedTransactions();
 
     void clearUnconfirmedTransactions();
 
@@ -66,19 +49,12 @@ public interface TransactionProcessor {
 
     void processWaitingTransactions();
 
-    int getWaitingTransactionsCacheSize();
+    int getWaitingTransactionsQueueSize();
 
     int getUnconfirmedTxCount();
 
-    boolean isWaitingTransactionsCacheFull();
-
     void processPeerTransactions(List<Transaction> transactions) throws AplException.NotValidException;
-
-    void processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws AplException.ValidationException;
-
-    SortedSet<? extends Transaction> getCachedUnconfirmedTransactions(List<String> exclude);
 
     List<Transaction> restorePrunableData(JSONArray transactions) throws AplException.NotValidException;
 
-    void broadcastWhenConfirmed(Transaction tx, Transaction unconfirmedTx);
 }

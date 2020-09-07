@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TransactionInfoMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.Getter;
@@ -30,18 +30,18 @@ import java.util.Objects;
 @RequestScoped
 public class TransactionApiServiceImpl implements TransactionApiService {
 
-    private final TransactionProcessor transactionProcessor;
     private final Blockchain blockchain;
     private final TxReceiptMapper txReceiptMapper;
     private final TransactionInfoMapper transactionInfoMapper;
     private final TransactionBuilder transactionBuilder;
+    private final MemPool memPool;
 
     @Inject
-    public TransactionApiServiceImpl(TransactionProcessor transactionProcessor,
+    public TransactionApiServiceImpl(MemPool memPool,
                                      Blockchain blockchain,
                                      TxReceiptMapper txReceiptMapper,
                                      TransactionInfoMapper transactionInfoMapper, TransactionBuilder transactionBuilder) {
-        this.transactionProcessor = Objects.requireNonNull(transactionProcessor);
+        this.memPool = Objects.requireNonNull(memPool);
         this.blockchain = Objects.requireNonNull(blockchain);
         this.txReceiptMapper = Objects.requireNonNull(txReceiptMapper);
         this.transactionInfoMapper = Objects.requireNonNull(transactionInfoMapper);
@@ -53,7 +53,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
      */
     public Response broadcastTx(TxRequest body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
-        if (transactionProcessor.isWaitingTransactionsCacheFull()) {
+        if (memPool.isWaitingTransactionsQueueFull()) {
             return ResponseBuilderV2.apiError(ApiErrors.UNCONFIRMED_TRANSACTION_CACHE_IS_FULL).status(409).build();
         }
         StatusResponse rc = broadcastOneTx(body);
@@ -63,7 +63,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
     public Response broadcastTxBatch(List<TxRequest> body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         ListResponse listResponse = new ListResponse();
-        if (transactionProcessor.isWaitingTransactionsCacheFull()) {
+        if (memPool.isWaitingTransactionsQueueFull()) {
             return ResponseBuilderV2.apiError(ApiErrors.UNCONFIRMED_TRANSACTION_CACHE_IS_FULL).status(409).build();
         }
         for (TxRequest req : body) {
@@ -88,7 +88,8 @@ public class TransactionApiServiceImpl implements TransactionApiService {
             }
             log.warn("Given {}", req.getTx());
             log.warn("Actua {}", Convert.toHexString(newTx.getCopyTxBytes()));
-            transactionProcessor.broadcast(newTx);
+            //TODO make soft broadcast
+//            transactionProcessor.broadcast(newTx);
             receipt = txReceiptMapper.convert(newTx);
             if (log.isTraceEnabled()) {
                 log.trace("API_V2: UnTxReceipt={}", receipt);
@@ -121,7 +122,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
         }
         transaction = blockchain.getTransaction(transactionId);
         if (transaction == null) {
-            transaction = transactionProcessor.getUnconfirmedTransaction(transactionId);
+            transaction = memPool.getUnconfirmedTransaction(transactionId);
         }
         if (transaction == null) {
             throw new NotFoundException("Transaction not found. id=" + transactionIdStr);

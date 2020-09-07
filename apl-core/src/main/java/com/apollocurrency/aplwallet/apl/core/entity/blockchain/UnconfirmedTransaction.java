@@ -50,7 +50,7 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
     private final long feePerByte;
 
     public UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp) {
-        super(transaction.getDbId(), transaction.getHeight());
+        super(null, transaction.getHeight());
         this.transaction = transaction;
         this.arrivalTimestamp = arrivalTimestamp;
         this.feePerByte = transaction.getFeeATM() / transaction.getFullSize();

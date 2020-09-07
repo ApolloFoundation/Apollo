@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
@@ -16,8 +17,6 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -30,15 +29,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -46,19 +37,12 @@ import java.util.stream.Stream;
 public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransaction> {
 
     private final LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory;
-    private int maxUnconfirmedTransactions;
-    private final Map<DbKey, UnconfirmedTransaction> transactionCache = new HashMap<>();
-    private final PriorityQueue<UnconfirmedTransaction> waitingTransactions;
-    private final Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates = new HashMap<>();
-    private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
-    private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final TransactionBuilder transactionBuilder;
     private final TransactionSerializer transactionSerializer;
     private final IteratorToStreamConverter<UnconfirmedTransaction> streamConverter;
 
     @Inject
     public UnconfirmedTransactionTable(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory,
-                                       PropertiesHolder propertiesHolder,
                                        TransactionBuilder transactionBuilder,
                                        TransactionSerializer transactionSerializer,
                                        DerivedTablesRegistry derivedDbTablesRegistry,
@@ -68,9 +52,6 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
         this.transactionKeyFactory = transactionKeyFactory;
         this.transactionBuilder = transactionBuilder;
         this.transactionSerializer = transactionSerializer;
-        int n = propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions");
-        this.maxUnconfirmedTransactions = n <= 0 ? Integer.MAX_VALUE : n;
-        this.waitingTransactions = createWaitingTransactionsQueue();
         this.streamConverter = new IteratorToStreamConverter<>();
     }
 
@@ -114,44 +95,27 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
             pstmt.setInt(++i, unconfirmedTransaction.getHeight());
             pstmt.executeUpdate();
         }
-
-        if (transactionCache.size() < maxUnconfirmedTransactions) {
-            DbKey dbKey = transactionKeyFactory.newKey(unconfirmedTransaction.getId());
-            transactionCache.put(dbKey, unconfirmedTransaction);
-        }
     }
 
-    @Override
-    public int rollback(int height) {
-        int rc;
-        try (Connection con = databaseManager.getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM unconfirmed_transaction WHERE height > ?")) {
-            pstmt.setInt(1, height);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    UnconfirmedTransaction unconfirmedTransaction = load(con, rs, null);
-                    waitingTransactions.add(unconfirmedTransaction);
-                    log.trace("Revert to waiting tx {}", unconfirmedTransaction.getId());
-                    DbKey dbKey = transactionKeyFactory.newKey(unconfirmedTransaction.getId());
-                    transactionCache.remove(dbKey);
-                }
-            }
+    public int deleteById(long id) {
+        TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("DELETE FROM unconfirmed_transaction WHERE id = ?")) {
+            pstmt.setLong(1, id);
+            return pstmt.executeUpdate();
         } catch (SQLException e) {
+            databaseManager.getDataSource().rollback();
             throw new RuntimeException(e.toString(), e);
         }
-        rc = super.rollback(height);
-        unconfirmedDuplicates.clear();
-        return rc;
     }
 
-    @Override
-    public void truncate() {
-        super.truncate();
-    }
-
-    @Override
+        @Override
     public String defaultSort() {
         return " ORDER BY transaction_height ASC, fee_per_byte DESC, arrival_timestamp ASC, id ASC ";
+    }
+
+    public Stream<UnconfirmedTransaction> getExpiredTxsStream(int time) {
+        return streamConverter.apply(getManyBy(new DbClause.IntClause("expiration", DbClause.Op.LT, time), 0, -1, ""));
     }
 
     public int countExpiredTransactions(int epochTime) {
@@ -159,46 +123,6 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
             new DbClause.IntClause("expiration", DbClause.Op.LT, epochTime));
     }
 
-    private PriorityQueue<UnconfirmedTransaction> createWaitingTransactionsQueue() {
-        return new PriorityQueue<>(maxUnconfirmedTransactions, new UnconfirmedTransactionComparator()) {
-
-            @Override
-            public boolean add(UnconfirmedTransaction unconfirmedTransaction) {
-                if (!super.add(unconfirmedTransaction)) {
-                    return false;
-                }
-                if (this.size() > maxUnconfirmedTransactions) {
-                    UnconfirmedTransaction removed = remove();
-                    log.debug("Dropped unconfirmed transaction above max size={}, {}",
-                        maxUnconfirmedTransactions, removed.getId());
-                }
-                return true;
-            }
-
-        };
-    }
-
-    // UnconfirmedTransaction Comparator class
-    private static class UnconfirmedTransactionComparator implements Comparator<UnconfirmedTransaction> {
-        @Override
-        public int compare(UnconfirmedTransaction o1, UnconfirmedTransaction o2) {
-            int result;
-            if ((result = Integer.compare(o2.getHeight(), o1.getHeight())) != 0) {
-                return result;
-            }
-            if ((result = Boolean.compare(o2.getTransaction().referencedTransactionFullHash() != null,
-                o1.getTransaction().referencedTransactionFullHash() != null)) != 0) {
-                return result;
-            }
-            if ((result = Long.compare(o1.getFeePerByte(), o2.getFeePerByte())) != 0) {
-                return result;
-            }
-            if ((result = Long.compare(o2.getArrivalTimestamp(), o1.getArrivalTimestamp())) != 0) {
-                return result;
-            }
-            return Long.compare(o2.getId(), o1.getId());
-        }
-    }
 
     public Stream<UnconfirmedTransaction> getAllUnconfirmedTransactions() {
         return streamConverter.convert(this.getAll(0, -1));
@@ -222,40 +146,6 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
         return transactionKeyFactory;
     }
 
-    public PriorityQueue<UnconfirmedTransaction> getWaitingTransactionsQueue() {
-        return waitingTransactions;
-    }
 
-    public int getWaitingTransactionsCacheSize() {
-        return waitingTransactions.size();
-    }
-
-    public boolean isWaitingTransactionsCacheFull() {
-        return waitingTransactions.size() >= maxUnconfirmedTransactions;
-    }
-
-    public Collection<UnconfirmedTransaction> getWaitingTransactionsUnmodifiedCollection() {
-        return Collections.unmodifiableCollection(waitingTransactions);
-    }
-
-    public Map<Transaction, Transaction> getTxToBroadcastWhenConfirmed() {
-        return txToBroadcastWhenConfirmed;
-    }
-
-    public Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> getUnconfirmedDuplicates() {
-        return unconfirmedDuplicates;
-    }
-
-    public Set<Transaction> getBroadcastedTransactions() {
-        return broadcastedTransactions;
-    }
-
-    public int getBroadcastedTransactionsSize() {
-        return broadcastedTransactions.size();
-    }
-
-    public Map<DbKey, UnconfirmedTransaction> getTransactionCache() {
-        return transactionCache;
-    }
 
 }

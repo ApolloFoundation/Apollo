@@ -63,7 +63,7 @@ public final class GetTransactionBytes extends AbstractAPIRequestHandler {
         transaction = blockchain.getTransaction(transactionId);
         JSONObject response = new JSONObject();
         if (transaction == null) {
-            transaction = lookupTransactionProcessor().getUnconfirmedTransaction(transactionId);
+            transaction = lookupMemPool().getUnconfirmedTransaction(transactionId);
             if (transaction == null) {
                 return UNKNOWN_TRANSACTION;
             }
