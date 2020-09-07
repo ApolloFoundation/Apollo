@@ -190,6 +190,9 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
      *                                                               100        4          100        7       true   false
      *                                                               }</pre>
      *               </p>
+     *  After selecting DB_IDs to be deleted in case trim they are
+     *    - either 'sent to DeleteTrimObserver' for later deleting in case usual trim
+     *    - or used for 'sharding trim' to delete at once ('Reset' event is sent to DeleteTrimObserver)
      */
     private void doMultiversionTrim(final int height, boolean isSharding) {
         log.trace("doMultiversionTrim(), height={}", height);
@@ -220,6 +223,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                 startDeleteTime = System.currentTimeMillis();
                 if (isSharding) { // trim on sharding
                     log.trace("Before delete, SEND reset. isSharding = {}, table: {}, size=[{}]", isSharding, table, keysToDelete.size());
+                    // sent 'Reset' event when trim for sharding
                     deleteOnTrimDataEvent.select(new AnnotationLiteral<TrimEvent>() {
                     }).fireAsync(new DeleteOnTrimData(true, Collections.emptySet(), table));
                     if (keysToDelete.size() > 0) {
@@ -237,8 +241,8 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                 } else {
                     // simple trimming
                     log.trace("Should SEND to delete? isSharding = {}, table: {} , size = [{}]", isSharding, table, keysToDelete.size());
+                    // send 'Delete DB_IDs' event only if we have bigger then 100 records for deleting
                     if (keysToDelete.size() > ShardConstants.DEFAULT_COMMIT_BATCH_SIZE) { // low limit
-                        // send only if we have bigger then 100 records to delete
                         log.trace("Before SEND delete. isSharding = {}, table: {} , size = [{}]", isSharding, table, keysToDelete.size());
                         deleteOnTrimDataEvent.select(new AnnotationLiteral<TrimEvent>() {
                         }).fireAsync(new DeleteOnTrimData(false, keysToDelete, table));
