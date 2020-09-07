@@ -119,7 +119,7 @@ public final class PeerAddress implements Comparable {
     @Override
     public int compareTo(Object t) {
         int res = -1;
-        if (t != null && t instanceof PeerAddress) {
+        if (t instanceof PeerAddress) {
             PeerAddress pa = (PeerAddress) t;
             if (pa.ipAddress.getHostAddress().equalsIgnoreCase(ipAddress.getHostAddress())
                 && this.port.intValue() == pa.port.intValue()

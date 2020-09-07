@@ -11,10 +11,11 @@ import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.peer.BlockchainState;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.peer.Peer2PeerTransport;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerTrustLevel;
-import com.apollocurrency.aplwallet.apl.core.peer.parser.ReqRespParser;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.JsonReqRespParser;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
@@ -212,12 +213,12 @@ public class EntityProducer {
             }
 
             @Override
-            public void send(BaseP2PRequest request) throws PeerNotConnectedException {
-
+            public JSONObject send(BaseP2PRequest request) throws PeerNotConnectedException {
+                return null;
             }
 
             @Override
-            public <T> T send(BaseP2PRequest request, ReqRespParser<T> parser) throws PeerNotConnectedException {
+            public <T> T send(BaseP2PRequest request, JsonReqRespParser<T> parser) throws PeerNotConnectedException {
                 return null;
             }
 
@@ -244,6 +245,31 @@ public class EntityProducer {
             @Override
             public long getServices() {
                 return 0L;
+            }
+
+            @Override
+            public long getLastActivityTime() {
+                return 0;
+            }
+
+            @Override
+            public Peer2PeerTransport getP2pTransport() {
+                return null;
+            }
+
+            @Override
+            public boolean processError(JSONObject request) {
+                return false;
+            }
+
+            @Override
+            public void setServices(long code) {
+
+            }
+
+            @Override
+            public void setLastUpdated(int time) {
+
             }
 
             @Override

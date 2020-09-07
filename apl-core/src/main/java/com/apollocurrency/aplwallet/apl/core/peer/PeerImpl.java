@@ -29,7 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
-import com.apollocurrency.aplwallet.apl.core.peer.parser.ReqRespParser;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.JsonReqRespParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -168,11 +168,6 @@ public final class PeerImpl implements Peer {
                 p2pTransport.disconnect();
                 // limiter.runWithTimeout(p2pTransport::disconnect, 1000, TimeUnit.MILLISECONDS);
             }
-//        } catch (InterruptedException e) {
-//            LOG.trace("The p2pTransport can't be disconnected, thread was interrupted.");
-//            Thread.currentThread().interrupt();
-//        } catch (TimeoutException e) {
-//            LOG.warn("The p2pTransport can't be disconnected, time limit is reached, peer={}.", p2pTransport.getPeer());
         } finally {
             //we have to change state anyway
             this.state = newState;
@@ -183,6 +178,9 @@ public final class PeerImpl implements Peer {
         } else if (newState == PeerState.NON_CONNECTED) {
             peers.notifyListeners(this, PeersService.Event.CHANGED_ACTIVE_PEER);
         }
+        LOG.debug("Peer={} {} oldState={} newState={}", this.getAnnouncedAddress(),
+            newState != PeerState.CONNECTED && oldState == PeerState.CONNECTED ? "was disconnected" : "",
+            oldState, newState);
     }
 
     @Override
@@ -455,6 +453,7 @@ public final class PeerImpl implements Peer {
         return lastUpdated;
     }
 
+    @Override
     public void setLastUpdated(int lastUpdated) {
         this.lastUpdated = lastUpdated;
     }
@@ -489,6 +488,7 @@ public final class PeerImpl implements Peer {
         return lastConnectAttempt;
     }
 
+    @Override
     public long getLastActivityTime() {
         return p2pTransport.getLastActivity();
     }
@@ -496,18 +496,20 @@ public final class PeerImpl implements Peer {
     @Override
     public JSONObject send(final JSONStreamAware request, UUID chainId) throws PeerNotConnectedException {
         if (getState() != PeerState.CONNECTED) {
-            LOG.debug("send() called before handshake(). Handshacking to: {}", getHostWithPort());
-            throw new PeerNotConnectedException("send() called before handshake(). Handshacking");
+            String errMsg = "send() called before handshake(). Handshaking to: " + getHostWithPort();
+            LOG.debug(errMsg);
+            throw new PeerNotConnectedException(errMsg);
         } else {
             return sendJSON(request);
         }
     }
 
     @Override
-    public <R> R send(BaseP2PRequest request, ReqRespParser<R> parser) throws PeerNotConnectedException {
+    public <R> R send(BaseP2PRequest request, JsonReqRespParser<R> parser) throws PeerNotConnectedException {
         if (getState() != PeerState.CONNECTED) {
-            LOG.debug("send() called before handshake(). Handshacking to: {}", getHostWithPort());
-            throw new PeerNotConnectedException("send() called before handshake(). Handshacking");
+            String errMsg = "send() called before handshake(). Handshaking to: " + getHostWithPort();
+            LOG.debug(errMsg);
+            throw new PeerNotConnectedException(errMsg);
         } else {
             try {
                 JSONObject response = sendJSON(mapper.writeValueAsString(request));
@@ -516,7 +518,9 @@ public final class PeerImpl implements Peer {
                     LOG.debug("Response is null.");
                     return null;
                 }
-
+                if (parser == null) {
+                    return null;
+                }
                 return parser.parse(response);
             } catch (JsonProcessingException e) {
                 LOG.debug("Can not deserialize request");
@@ -526,17 +530,8 @@ public final class PeerImpl implements Peer {
     }
 
     @Override
-    public void send(BaseP2PRequest request) throws PeerNotConnectedException {
-        if (getState() != PeerState.CONNECTED) {
-            LOG.debug("send() called before handshake(). Handshacking to: {}", getHostWithPort());
-            throw new PeerNotConnectedException("send() called before handshake(). Handshacking");
-        } else {
-            try {
-                sendJSON(mapper.writeValueAsString(request)).toJSONString();
-            } catch (JsonProcessingException e) {
-                LOG.debug("Can not deserialize request");
-            }
-        }
+    public JSONObject send(BaseP2PRequest request) throws PeerNotConnectedException {
+        return send(request, json -> json);
     }
 
     private JSONObject sendJSON(JSONStreamAware request) {
@@ -844,6 +839,7 @@ public final class PeerImpl implements Peer {
         }
     }
 
+    @Override
     public void setServices(long services) {
         synchronized (servicesMonitor) {
             this.services = services;
@@ -971,7 +967,8 @@ public final class PeerImpl implements Peer {
         return res;
     }
 
-    boolean processError(JSONObject message) {
+    @Override
+    public boolean processError(JSONObject message) {
         if (message != null) {
             return processError(message.toJSONString());
         } else {

@@ -129,7 +129,6 @@ class TransactionProcessorTest {
         String signature = "75a2e84c1e039205387b025aa8e1e65384f8b455aa3f2a977d65c577caa31f0410a78f6fcaa875a352843c72b7715fd9ec616f8e2e19281b7e247f3d6642c38f";
         Transaction transaction = mock(Transaction.class);
         doReturn(-9128485677221760321L).when(transaction).getId();
-        doReturn("-9128485677221760321").when(transaction).getStringId();
         doReturn(100L).when(transaction).getFeeATM();
         doReturn(100).when(transaction).getFullSize();
         doReturn(expirationTimestamp).when(transaction).getTimestamp();

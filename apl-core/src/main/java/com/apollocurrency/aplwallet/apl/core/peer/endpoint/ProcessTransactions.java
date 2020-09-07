@@ -24,24 +24,20 @@ import com.apollocurrency.aplwallet.api.p2p.request.ProcessTransactionsRequest;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.parser.GetTransactionsRequestParser;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.ProcessTransactionsRequestParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.slf4j.LoggerFactory.getLogger;
 @Slf4j
 public final class ProcessTransactions extends PeerRequestHandler {
-    private static final Logger LOG = getLogger(ProcessTransactions.class);
-
-    private final GetTransactionsRequestParser responseParser = new GetTransactionsRequestParser();
+    private final ProcessTransactionsRequestParser responseParser = new ProcessTransactionsRequestParser();
     private final TransactionDTOConverter dtoConverter;
 
     @Inject
@@ -49,13 +45,15 @@ public final class ProcessTransactions extends PeerRequestHandler {
         this.dtoConverter = dtoConverter;
     }
 
-
     @Override
     public JSONStreamAware processRequest(JSONObject request, Peer peer) {
 
         try {
-            ProcessTransactionsRequest transactionsResponse = responseParser.parse(request);
-            List<Transaction> transactions = transactionsResponse.transactions
+            long startTime = System.currentTimeMillis();
+            log.trace("---start json conversion {}", startTime);
+            ProcessTransactionsRequest transactionsRequest = responseParser.parse(request);
+            log.trace("---end json conversion in {} ms, tx count={}", System.currentTimeMillis() - startTime, transactionsRequest.transactions.size());
+            List<Transaction> transactions = transactionsRequest.transactions
                 .stream()
                 .map(dtoConverter::convert)
                 .collect(Collectors.toList());

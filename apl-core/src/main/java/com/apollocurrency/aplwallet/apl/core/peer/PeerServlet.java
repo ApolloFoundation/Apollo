@@ -193,7 +193,7 @@ public final class PeerServlet extends WebSocketServlet {
         // Process the peer request
         //
         PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
-        PeerImpl peer = peersService.findOrCreatePeer(pa, null, true);
+        Peer peer = peersService.findOrCreatePeer(pa, null, true);
 
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
@@ -222,7 +222,7 @@ public final class PeerServlet extends WebSocketServlet {
         }
     }
 
-    private void processException(PeerImpl peer, Exception e) {
+    private void processException(Peer peer, Exception e) {
         if (peer != null) {
             //jetty misused this, ignore
             if (!(e instanceof ClosedChannelException)) {
@@ -293,9 +293,8 @@ public final class PeerServlet extends WebSocketServlet {
      * @param inputReader Input reader
      * @return JSON response
      */
-    private JSONStreamAware process(PeerImpl peer, Reader inputReader) {
+    private JSONStreamAware process(Peer peer, Reader inputReader) {
         lookupComponents();
-
         //
         // Process the request
         //
@@ -323,7 +322,7 @@ public final class PeerServlet extends WebSocketServlet {
             String requestType = (String) request.get("requestType");
             PeerRequestHandler peerRequestHandler = getHandler(requestType);
             if (peerRequestHandler == null) {
-                LOG.debug("Unsupported request type {}", requestType);
+                LOG.warn("Unsupported request type {}", requestType);
                 return PeerResponses.UNSUPPORTED_REQUEST_TYPE;
             }
 
@@ -344,13 +343,15 @@ public final class PeerServlet extends WebSocketServlet {
             }
             if (peerRequestHandler.rejectWhileDownloading()) {
                 if (blockchainProcessor.isDownloading()) {
-                    LOG.debug("{}, rejected request= {}", Errors.DOWNLOADING, requestType);
+                    LOG.debug("Request processing:{}, rejected request={} peer={}",
+                        Errors.DOWNLOADING, requestType, peer.getHostWithPort());
                     return PeerResponses.DOWNLOADING;
                 }
                 if (propertiesHolder.isLightClient()) {
                     return PeerResponses.LIGHT_CLIENT;
                 }
             }
+            LOG.trace("Request Processing: request={} peer={}", requestType, peer.getHostWithPort());
             return peerRequestHandler.processRequest(request, peer);
         } catch (RuntimeException | ParseException | IOException e) {
             LOG.debug("Error processing POST request, host = '{}', error = {}", peer.getHostWithPort(), e.toString());
@@ -384,10 +385,10 @@ public final class PeerServlet extends WebSocketServlet {
                 String host = req.getRemoteAddress();
                 int port = req.getRemotePort();
                 PeerAddress pa = new PeerAddress(port, host);
-//we use remote port to distinguish peers behind the NAT/UPnP
-//TODO: it is bad and we have to use reliable node ID to distinguish peers
+                //we use remote port to distinguish peers behind the NAT/UPnP
+                //TODO: it is bad and we have to use reliable node ID to distinguish peers
                 peersService.cleanupPeers(null);
-                PeerImpl peer = peersService.findOrCreatePeer(pa, null, true);
+                Peer peer = peersService.findOrCreatePeer(pa, null, true);
                 if (peer != null) {
                     PeerWebSocket pws = new PeerWebSocket(peer.getP2pTransport());
                     peer.getP2pTransport().setInboundSocket(pws);

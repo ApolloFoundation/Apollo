@@ -126,7 +126,9 @@ public class GetMoreBlocksThread implements Runnable {
             // Restore prunable data
             //
             int now = timeService.getEpochTime();
-            if (!blockchainProcessorState.isRestoring() && !prunableRestorationService.getPrunableTransactions().isEmpty() && now - blockchainProcessorState.getLastRestoreTime() > 60 * 60) {
+            if (!blockchainProcessorState.isRestoring()
+                && !prunableRestorationService.getPrunableTransactions().isEmpty()
+                && now - blockchainProcessorState.getLastRestoreTime() > 60 * 60) {
                 blockchainProcessorState.setRestoring(true);
                 blockchainProcessorState.setLastRestoreTime(now);
                 networkService.submit(new RestorePrunableDataTask(
@@ -481,7 +483,7 @@ public class GetMoreBlocksThread implements Runnable {
                     throw new RuntimeException(exc.getMessage(), exc);
                 }
                 if (blockList == null) {
-// most crtainly this is wrong. We should not kill peer if it does not have blocks higher then we
+// most certainly this is wrong. We should not kill peer if it does not have blocks higher then we
 //                        nextBlocks.getPeer().deactivate();
                     continue;
                 }
