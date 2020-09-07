@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.apl.core.cache.NullCacheProducerForTests;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
@@ -39,7 +38,6 @@ import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import io.swagger.v3.core.util.Json;
 import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -56,11 +54,6 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.PreparedStatement;
@@ -206,188 +199,6 @@ class BlockchainTest {
         Transaction transaction = blockchain.findTransaction(txd.TRANSACTION_1.getId(), Integer.MAX_VALUE);
         assertNotNull(transaction);
         assertEquals(txd.TRANSACTION_1.getId(), transaction.getId());
-    }
-
-
-    @Test
-    void t() throws URISyntaxException, IOException, InterruptedException {
-        HttpClient httpClient = HttpClient.newHttpClient();
-        long counter = 0;
-        for (int i = 262594; i <= 264061; i++) {
-            HttpResponse<String> resp = httpClient.send(HttpRequest.newBuilder()
-                    .GET()
-                    .uri(new URI("http://51.15.130.37:7876/apl?requestType=getBlock&includeTransactions=true&height=" + i))
-                    .build(),
-                HttpResponse.BodyHandlers.ofString()
-            );
-            if (resp.statusCode() == 200) {
-                BlockDTO blockDTO = Json.mapper().readValue(resp.body(), BlockDTO.class);
-                counter += blockDTO.getTransactions().size();
-            } else {
-                System.err.println("Error getting block " + i);
-            }
-        }
-        System.out.println("Txs: " + counter);
-        System.out.println("Tps: " + (counter / 4380));
-    }
-
-    @Test
-    void t1() throws URISyntaxException, IOException, InterruptedException {
-
-        HttpClient httpClient = HttpClient.newHttpClient();
-        long counter = 0;
-        long initialT = 0;
-        long lastT = 0;
-        for (int i = 260238; i <= 260822; i++) {
-            HttpResponse<String> resp = httpClient.send(HttpRequest.newBuilder()
-                    .GET()
-                    .uri(new URI("http://51.15.130.37:7876/apl?requestType=getBlock&includeTransactions=true&height=" + i))
-                    .build(),
-                HttpResponse.BodyHandlers.ofString()
-            );
-            if (resp.statusCode() == 200) {
-
-                BlockDTO blockDTO = Json.mapper().readValue(resp.body(), BlockDTO.class);
-                if (i == 260238) {
-                    initialT = blockDTO.getTimestamp();
-                } else if (i == 260822) {
-                    lastT = blockDTO.getTimestamp();
-                }
-                counter += blockDTO.getTransactions().size();
-            } else {
-                System.err.println("Error getting block " + i);
-            }
-        }
-
-        System.out.println("Txs: " + counter);
-        long t = (lastT - initialT);
-        System.out.println("Time: " + t);
-        System.out.println("Tps: " + (counter / t));
-    }
-    @Test
-    void t2() throws URISyntaxException, IOException, InterruptedException {
-
-        HttpClient httpClient = HttpClient.newHttpClient();
-        long counter = 0;
-        long initialT = 0;
-        long lastT = 0;
-        int startHeight = 264544;
-        int finishHeight = 265338;
-        for (int i = startHeight; i <= finishHeight; i++) {
-            HttpResponse<String> resp = httpClient.send(HttpRequest.newBuilder()
-                    .GET()
-                    .uri(new URI("http://51.15.130.37:7876/apl?requestType=getBlock&includeTransactions=true&height=" + i))
-                    .build(),
-                HttpResponse.BodyHandlers.ofString()
-            );
-            if (resp.statusCode() == 200) {
-
-                BlockDTO blockDTO = Json.mapper().readValue(resp.body(), BlockDTO.class);
-                if (i == startHeight) {
-                    initialT = blockDTO.getTimestamp();
-                } else if (i == finishHeight) {
-                    lastT = blockDTO.getTimestamp();
-                }
-                counter += blockDTO.getTransactions().size();
-            } else {
-                System.err.println("Error getting block " + i);
-            }
-        }
-
-        System.out.println("Txs: " + counter);
-        long t = (lastT - initialT);
-        System.out.println("Time: " + t);
-        System.out.println("Tps: " + (counter / t));
-    }
-
-    @Test
-    void t3() throws URISyntaxException, IOException, InterruptedException {
-
-        HttpClient httpClient = HttpClient.newHttpClient();
-        long counter = 0;
-        long initialT = 0;
-        long lastT = 0;
-        int startHeight = 265536;
-        int finishHeight = 266321;
-        for (int i = startHeight; i <= finishHeight; i++) {
-            HttpResponse<String> resp = httpClient.send(HttpRequest.newBuilder()
-                    .GET()
-                    .uri(new URI("http://51.15.130.37:7876/apl?requestType=getBlock&includeTransactions=true&height=" + i))
-                    .build(),
-                HttpResponse.BodyHandlers.ofString()
-            );
-            if (resp.statusCode() == 200) {
-
-                BlockDTO blockDTO = Json.mapper().readValue(resp.body(), BlockDTO.class);
-                if (i == startHeight) {
-                    initialT = blockDTO.getTimestamp();
-                } else if (i == finishHeight) {
-                    lastT = blockDTO.getTimestamp();
-                }
-                counter += blockDTO.getTransactions().size();
-            } else {
-                System.err.println("Error getting block " + i);
-            }
-        }
-
-        System.out.println("Txs: " + counter);
-        long t = (lastT - initialT);
-        System.out.println("Time: " + t);
-        System.out.println("Tps: " + (counter / t));
-    }
-
-    @Test
-    void tps35tps_noGeneratorLock() throws InterruptedException, IOException, URISyntaxException {
-        testTPS(276111, 277299);
-    }
-
-    @Test
-    void testTps100tx() throws InterruptedException, IOException, URISyntaxException {
-        testTPS(281343, 281665);
-    }
-    @Test
-    void testTps75tx() throws InterruptedException, IOException, URISyntaxException {
-        testTPS(282037, 283664);
-    }
-
-    @Test
-    void testTps75tx_pool_increase() throws InterruptedException, IOException, URISyntaxException {
-        testTPS(283858, 284640);
-    }
-
-    public void testTPS(int fromHeight, int toHeight) throws URISyntaxException, IOException, InterruptedException {
-
-        HttpClient httpClient = HttpClient.newHttpClient();
-        long counter = 0;
-        long initialT = 0;
-        long lastT = 0;
-        int startHeight = fromHeight;
-        int finishHeight = toHeight;
-        for (int i = startHeight; i <= finishHeight; i++) {
-            HttpResponse<String> resp = httpClient.send(HttpRequest.newBuilder()
-                    .GET()
-                    .uri(new URI("http://51.15.130.37:7876/apl?requestType=getBlock&includeTransactions=true&height=" + i))
-                    .build(),
-                HttpResponse.BodyHandlers.ofString()
-            );
-            if (resp.statusCode() == 200) {
-
-                BlockDTO blockDTO = Json.mapper().readValue(resp.body(), BlockDTO.class);
-                if (i == startHeight) {
-                    initialT = blockDTO.getTimestamp();
-                } else if (i == finishHeight) {
-                    lastT = blockDTO.getTimestamp();
-                }
-                counter += blockDTO.getTransactions().size();
-            } else {
-                System.err.println("Error getting block " + i);
-            }
-        }
-
-        System.out.println("Txs: " + counter);
-        long t = (lastT - initialT);
-        System.out.println("Time: " + t);
-        System.out.println("Tps: " + (counter / t));
     }
 
     @Test
