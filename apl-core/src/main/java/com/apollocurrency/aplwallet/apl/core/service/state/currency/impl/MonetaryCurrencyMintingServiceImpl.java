@@ -5,10 +5,13 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -18,7 +21,11 @@ import java.util.Arrays;
 @Singleton
 public class MonetaryCurrencyMintingServiceImpl implements MonetaryCurrencyMintingService {
 
-    public MonetaryCurrencyMintingServiceImpl() {
+    private final CurrencyService currencyService;
+
+    @Inject
+    public MonetaryCurrencyMintingServiceImpl(CurrencyService currencyService) {
+        this.currencyService = currencyService;
     }
 
     @Override
@@ -26,11 +33,21 @@ public class MonetaryCurrencyMintingServiceImpl implements MonetaryCurrencyMinti
         byte[] hash = getHash(currency.getAlgorithm(), attachment.getNonce(), attachment.getCurrencyId(), attachment.getUnits(),
             attachment.getCounter(), accountId);
 
+        Currency currencyFull = this.localSupplyDependency(currency);
+
         byte[] target = getTarget(currency.getMinDifficulty(), currency.getMaxDifficulty(),
             attachment.getUnits(),
-            currency.getCurrencySupply().getCurrentSupply() - currency.getReserveSupply(),
+            currencyFull.getCurrencySupply().getCurrentSupply() - currency.getReserveSupply(),
             currency.getMaxSupply() - currency.getReserveSupply());
         return meetsTarget(hash, target);
+    }
+
+    private Currency localSupplyDependency(Currency currency) {
+        CurrencySupply currencySupply = currencyService.loadCurrencySupplyByCurrency(currency); // load dependency
+        if (currencySupply != null) {
+            currency.setCurrencySupply(currencySupply);
+        }
+        return currency;
     }
 
     @Override
@@ -83,8 +100,9 @@ public class MonetaryCurrencyMintingServiceImpl implements MonetaryCurrencyMinti
 
     @Override
     public BigInteger getNumericTarget(Currency currency, long units) {
+        Currency currencyFull = this.localSupplyDependency(currency);
         return getNumericTarget(currency.getMinDifficulty(), currency.getMaxDifficulty(), units,
-            currency.getCurrencySupply().getCurrentSupply() - currency.getReserveSupply(),
+            currencyFull.getCurrencySupply().getCurrentSupply() - currency.getReserveSupply(),
             currency.getMaxSupply() - currency.getReserveSupply());
     }
 
