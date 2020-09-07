@@ -59,20 +59,18 @@ public class PeerHttpServer {
     private final int idleTimeout;
     boolean shareMyAddress = false;
     boolean enablePeerUPnP;
-    private int myPeerServerPort;
+    private final int myPeerServerPort;
     private PeerAddress myExtAddress;
     private PeerServlet peerServlet;
-    private TaskDispatchManager taskDispatchManager;
-    private List<ServerSocket> p2pPortHolders = new ArrayList<>();
-    @Getter
-    private ThisActorIdHandler myIdHandler;
+    private final TaskDispatchManager taskDispatchManager;
+    private final List<ServerSocket> p2pPortHolders = new ArrayList<>();
+
 
     @Inject
     public PeerHttpServer(
                     PropertiesHolder propertiesHolder, UPnP upnp, 
                     JettyConnectorCreator conCreator, 
-                    TaskDispatchManager taskDispatchManager,
-                    ThisActorIdHandler myIdHandler
+                    TaskDispatchManager taskDispatchManager
             ) 
     {
         this.upnp = upnp;
@@ -86,7 +84,7 @@ public class PeerHttpServer {
         if (platform.length() > MAX_PLATFORM_LENGTH) {
             platform = platform.substring(0, MAX_PLATFORM_LENGTH);
         }
-        this.myIdHandler=myIdHandler;
+
         myPlatform = platform;
 
         enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");

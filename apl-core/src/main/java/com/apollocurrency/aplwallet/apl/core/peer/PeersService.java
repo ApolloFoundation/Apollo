@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
+import com.apollocurrency.aplwallet.apl.core.peer.id.IdentityService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -158,13 +159,15 @@ public class PeersService {
     private BlockchainProcessor blockchainProcessor;
     private volatile TimeService timeService;
     private final BlockSerializer blockSerializer;
-
+    private IdentityService identityService;
+    
     @Inject
     public PeersService(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, Blockchain blockchain,
                         TimeService timeService, TaskDispatchManager taskDispatchManager, PeerHttpServer peerHttpServer,
                         TimeLimiterService timeLimiterService, AccountService accountService,
                         TransactionSerializer serializer,
-                        BlockSerializer blockSerializer) {
+                        BlockSerializer blockSerializer,
+                        IdentityService identityService) {
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
         this.blockchain = blockchain;
@@ -174,7 +177,8 @@ public class PeersService {
         this.timeLimiterService = timeLimiterService;
         this.accountService = accountService;
         this.blockSerializer = blockSerializer;
-
+        this.identityService = identityService;
+        
         isLightClient = propertiesHolder.isLightClient();
         this.serializer = serializer;
     }
@@ -285,7 +289,7 @@ public class PeersService {
         }), AccountEventType.BALANCE);*/
 
         configureBackgroundTasks();
-
+        identityService.loadAll();
         peerHttpServer.start();
     }
 
@@ -404,7 +408,7 @@ public class PeersService {
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonOrgModule());
-        ThisActorIdHandler myId = peerHttpServer.getMyIdHandler();
+        ThisActorIdHandler myId = identityService.getThisNodeIdHandler();
         pi.setX509_cert(myId.getCertHelper().getCertPEM());
         myPeerInfo = mapper.convertValue(pi, JSONObject.class);
         LOG.debug("My peer info:\n" + myPeerInfo.toJSONString());

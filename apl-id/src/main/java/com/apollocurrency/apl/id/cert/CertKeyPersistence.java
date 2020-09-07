@@ -7,23 +7,29 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 
 /**
- * Handler of certificate, CSR and key names and directories placed in map with ID as a key
+ * Handler of certificate, ExtCSR and key names and directories placed in map with ID as a key
  *
  * @author alukin@gmail.com
  */
-public class CertKeyDirs {
+public class CertKeyPersistence {
     public static final String PVT_SEARCH_PATH = "private/";
-    private static final Logger log = LoggerFactory.getLogger(CertKeyDirs.class);
-    private final Map<BigInteger, List<CertHelper>> certMap = new TreeMap<>();
+    private static final Logger log = LoggerFactory.getLogger(CertKeyPersistence.class);
+    private final Map<BigInteger, List<ExtCert>> certMap = new TreeMap<>();
     public static final String[] sfxes = {"_pvtkey", "_req", "_cert", "_selfcert", "_csr"}; 
     
     public static String rmSuffixes(String fn) {
@@ -69,12 +75,12 @@ public class CertKeyDirs {
         return name + suffix + ".pem";
     }
 
-    public List<CertHelper> getCert(BigInteger id) {
+    public List<ExtCert> getCert(BigInteger id) {
         return certMap.get(id);
     }
 
-    public void put(BigInteger id, CertHelper cert) {
-        List<CertHelper> cl = certMap.get(id);
+    public void put(BigInteger id, ExtCert cert) {
+        List<ExtCert> cl = certMap.get(id);
         if (cl == null) {
             cl = new ArrayList<>();
         }
@@ -92,16 +98,16 @@ public class CertKeyDirs {
             File[] filesList = dir.listFiles();
             for (File f : filesList) {
                 if (f.isFile() && f.canRead()) {
-                    CertHelper ac = null;
+                    ExtCert ac = null;
                     try {
-                        ac = CertHelper.loadPEMFromPath(f.getAbsolutePath());
+                        ac = loadPEMFromPath(f.toPath());
                     } catch (IOException ex) {
                         //impossible here
                     } catch (CertException ex) {
                         log.error("Certificate load exception wilr loading " + f.getAbsolutePath(), ex);
                     }
                     if (ac != null) {
-                        put(ac.getApolloId(), ac);
+                        put(ac.getActorId(), ac);
                         if (loadPrivateKey) {
                             String parent = f.getParent();
                             String fn = f.getName();
@@ -138,4 +144,33 @@ public class CertKeyDirs {
         }
         return res;
     }
+  
+    public static ExtCert loadPEMFromPath(Path path) throws CertException, IOException {
+        ExtCert res = null;
+        try (FileInputStream fis = new FileInputStream(path.toString())) {
+            res = loadPEMFromStream(fis);
+        }
+        return res;
+    }
+
+    public static ExtCert loadPEMFromStream(InputStream is) throws IOException, CertException {
+        KeyReader kr = new KeyReaderImpl();
+        X509Certificate cert = kr.readX509CertPEMorDER(is);
+        ExtCert ac = new ExtCert(cert);
+        //try to load corresponding key
+        return ac;
+    } 
+
+    public static ExtCSR loadCSR(String path) {
+        PKCS10CertificationRequest cr;
+        ExtCSR res = null;
+        try (FileReader fr = new FileReader(path)) {
+            PEMParser parser = new PEMParser(fr);
+            cr = (PKCS10CertificationRequest) parser.readObject();
+            res = ExtCSR.fromPKCS10(cr);
+        } catch (IOException ex) {
+            log.error("Can not read PKCS#10 file: " + path, ex);
+        }
+        return res;
+    }    
 }

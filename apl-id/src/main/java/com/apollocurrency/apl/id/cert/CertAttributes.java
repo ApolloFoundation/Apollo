@@ -69,7 +69,7 @@ public class CertAttributes {
         }
     }
 
-    public BigInteger getApolloId() {
+    public BigInteger getActorId() {
         return apolloId;
     }
 

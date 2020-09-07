@@ -23,49 +23,43 @@ import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.Properties;
 
 /**
  * Certificate signing request with additional identity-specific attributes
  *
  * @author alukin@gmail.com
  */
-public class CSRHelper extends CertBase {
+public class ExtCSR extends CertBase {
 
-    private static final Logger log = LoggerFactory.getLogger(CSRHelper.class);
+    private static final Logger log = LoggerFactory.getLogger(ExtCSR.class);
     private final CertificateRequestData csrData = new CertificateRequestData(CertificateRequestData.CSRType.HOST);
     private String challengePassword = "";
     private BigInteger actorID;
     private AuthorityID authorityID;
     private final KeyWriter kw;
     
-    public CSRHelper() {
+    public ExtCSR() {
         actorID = new BigInteger(128, new SecureRandom());
         authorityID = new AuthorityID();
         kw = factory.getKeyWriter();
     }
-
-    public static CSRHelper loadCSR(String path) {
-        PKCS10CertificationRequest cr;
-        CSRHelper res = null;
-        try (FileReader fr = new FileReader(path)) {
-            PEMParser parser = new PEMParser(fr);
-            cr = (PKCS10CertificationRequest) parser.readObject();
-            res = CSRHelper.fromPKCS10(cr);
-        } catch (IOException ex) {
-            log.error("Can not read PKCS#10 file: " + path, ex);
-        }
+    
+    public static ExtCSR newHostCSR(Properties prop){
+        ExtCSR res = new ExtCSR();
+        //TODO: implement
         return res;
     }
 
-    public static CSRHelper fromPKCS10(PKCS10CertificationRequest cr) {
-        CSRHelper res = new CSRHelper();
+    public static ExtCSR fromPKCS10(PKCS10CertificationRequest cr) {
+        ExtCSR res = new ExtCSR();
         try {
             CertAttributes va  = new CertAttributes();
             va.setSubject(cr.getSubject());
             va.setAttributes(cr.getAttributes());
             res.setCN(va.getCn());
             res.setAuthorityId(va.getAuthorityId());
-            res.setActorId(va.getApolloId());
+            res.setActorId(va.getActorId());
             res.setCountry(va.getCountry());
             res.setState(va.getState());
             res.setCity(va.getCity());
@@ -82,10 +76,10 @@ public class CSRHelper extends CertBase {
         return res;
     }
 
-    public static CSRHelper fromCertificate(CertHelper cert) {
-        CSRHelper res = new CSRHelper();
+    public static ExtCSR fromCertificate(ExtCert cert) {
+        ExtCSR res = new ExtCSR();
         res.setAuthorityId(cert.getAuthorityId().getAuthorityID());
-        BigInteger vid = cert.getApolloId();
+        BigInteger vid = cert.getActorId();
         if (vid == null || vid == BigInteger.ZERO) {
             vid = new BigInteger(128, new SecureRandom());
         }
@@ -116,7 +110,7 @@ public class CSRHelper extends CertBase {
         return res;
     }
 
-    public static boolean isVaidDNSNameList(String nameList) {
+    public static boolean isValidDNSNameList(String nameList) {
         boolean res = true;
         String[] names = nameList.split(",");
         String pattern = "^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$";
@@ -196,7 +190,7 @@ public class CSRHelper extends CertBase {
 
     public void setDNSNames(String n) {
         if (n != null && !n.isEmpty()) {
-            if (isVaidDNSNameList(n)) {
+            if (isValidDNSNameList(n)) {
                 csrData.setExtendedAttribute("subjaltnames.dnsname", n);
             } else {
                 throw new IllegalArgumentException("Invalid DNS name: " + n);

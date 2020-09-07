@@ -1,7 +1,5 @@
 package com.apollocurrency.apl.id.cert;
 
-import io.firstbridge.cryptolib.CryptoConfig;
-import io.firstbridge.cryptolib.CryptoParams;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -20,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class CertificateTest {
 
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(CertificateTest.class);
-    static CertHelper acert;
+    static ExtCert acert;
 
     public CertificateTest() {
     }
@@ -28,7 +26,7 @@ public class CertificateTest {
     @BeforeAll
     public static void setUpClass() {
         try (InputStream is = CertificateTest.class.getClassLoader().getResourceAsStream("test_cert.pem")) {
-            acert = CertHelper.loadPEMFromStream(is);
+            acert = CertKeyPersistence.loadPEMFromStream(is);
         } catch (IOException ex) {
             log.error("Can not load test certificate ", ex);
         } catch (CertException ex) {

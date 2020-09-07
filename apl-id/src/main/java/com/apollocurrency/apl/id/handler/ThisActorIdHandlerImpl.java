@@ -3,13 +3,19 @@
  */
 package com.apollocurrency.apl.id.handler;
 
-import com.apollocurrency.apl.id.cert.CertHelper;
+import com.apollocurrency.apl.id.cert.ExtCSR;
+import com.apollocurrency.apl.id.cert.CertException;
+import com.apollocurrency.apl.id.cert.CertKeyPersistence;
+import com.apollocurrency.apl.id.cert.ExtCert;
 import io.firstbridge.cryptolib.AsymKeysHolder;
 import io.firstbridge.cryptolib.CryptoFactory;
 import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.CryptoSignature;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.security.KeyPair;
+import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -20,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ThisActorIdHandlerImpl implements ThisActorIdHandler {
     BigInteger myApolloId;
     KeyPair myKeys;
-    CertHelper myCert;
+    ExtCert myCert;
     CryptoFactory cryptoFactory;
     
     @Override
@@ -29,7 +35,7 @@ public class ThisActorIdHandlerImpl implements ThisActorIdHandler {
     }
 
     @Override
-    public CertHelper getCertHelper() {
+    public ExtCert getCertHelper() {
         return myCert;
     }
 
@@ -48,8 +54,32 @@ public class ThisActorIdHandlerImpl implements ThisActorIdHandler {
     }
 
     @Override
-    public CertHelper generateSelfSignedCert() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void generateSelfSignedCert() {
+        Properties prop = new Properties();
+        ExtCSR csr = new ExtCSR();
+     //   csr.
+    }
+
+    @Override
+    public boolean loadCertAndKey(Path baseDir) {
+        boolean res = false;
+        try {
+            myCert = CertKeyPersistence.loadPEMFromPath(baseDir);
+            res=true;
+        } catch (CertException ex) {            
+        } catch (IOException ex) {         
+        }
+        if(myCert==null){
+            generateSelfSignedCert();            
+        }
+        return res;
+    }
+
+    @Override
+    public boolean saveAll(Path baseDir) {
+        boolean res=false;
+        //TODO: implement
+        return res;
     }
     
     

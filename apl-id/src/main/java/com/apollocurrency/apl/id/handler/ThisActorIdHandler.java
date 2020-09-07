@@ -3,8 +3,9 @@
  */
 package com.apollocurrency.apl.id.handler;
 
-import com.apollocurrency.apl.id.cert.CertHelper;
+import com.apollocurrency.apl.id.cert.ExtCert;
 import java.math.BigInteger;
+import java.nio.file.Path;
 
 /**
  * Handles operations with X509 certificate and private key of this node 
@@ -12,7 +13,9 @@ import java.math.BigInteger;
  */
 public interface ThisActorIdHandler {
     BigInteger getActorId();
-    CertHelper getCertHelper();
+    ExtCert getCertHelper();
     byte[] sign(byte[] message);
-    CertHelper generateSelfSignedCert();
+    void generateSelfSignedCert();
+    boolean loadCertAndKey(Path baseDir);
+    boolean saveAll(Path baseDir);
 }

@@ -1,7 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 
+import com.apollocurrency.apl.id.cert.CertKeyPersistence;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.apl.id.cert.CertHelper;
+import com.apollocurrency.apl.id.cert.ExtCert;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -32,9 +33,9 @@ public class CertificateLoader {
         this.version = appVersion;
     }
 
-    public List<CertHelper> loadAll() throws IOException {
+    public List<ExtCert> loadAll() throws IOException {
         Path rootPath = Paths.get(loadClass.getProtectionDomain().getCodeSource().getLocation().getPath());
-        List<CertHelper> certs = new ArrayList<>();
+        List<ExtCert> certs = new ArrayList<>();
         Path fsPath = null;
         if (rootPath.toUri().getScheme().equals("jar")) {
             fsPath = rootPath;
@@ -53,13 +54,13 @@ public class CertificateLoader {
         return certs;
     }
 
-    private List<CertHelper> readAll(Path path) throws IOException {
-        List<CertHelper> certs = new ArrayList<>();
+    private List<ExtCert> readAll(Path path) throws IOException {
+        List<ExtCert> certs = new ArrayList<>();
         Files.walkFileTree(path.resolve("certs"), new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 try {
-                    CertHelper cert = CertHelper.loadPEMFromPath(file.toAbsolutePath().toString());
+                    ExtCert cert = CertKeyPersistence.loadPEMFromPath(file.toAbsolutePath());
                     certs.add(cert);
                 }
                 catch (Exception e) {
@@ -71,7 +72,7 @@ public class CertificateLoader {
         return certs;
     }
 
-    private List<CertHelper> readAllFromFs(Path path) throws IOException {
+    private List<ExtCert> readAllFromFs(Path path) throws IOException {
         try (FileSystem fileSystem = FileSystems.newFileSystem(path, ClassLoader.getSystemClassLoader())) {
             return readAll(fileSystem.getPath("/"));
         }

@@ -1,16 +1,12 @@
 package com.apollocurrency.apl.id.cert;
 
 import com.apollocurrency.apl.id.utils.StringList;
-import io.firstbridge.cryptolib.KeyReader;
 import io.firstbridge.cryptolib.KeyWriter;
-import io.firstbridge.cryptolib.impl.KeyReaderImpl;
 import io.firstbridge.cryptolib.impl.KeyWriterImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -28,15 +24,18 @@ import java.util.logging.Level;
  *
  * @author alukin@gmail.com
  */
-public class CertHelper extends CertBase {
+public class ExtCert extends CertBase {
 
-    private static final Logger log = LoggerFactory.getLogger(CertHelper.class);
+    private static final Logger log = LoggerFactory.getLogger(ExtCert.class);
 
     private final X509Certificate certificate;
     private final CertAttributes cert_attr;
     private final CertAttributes issuer_attr;
 
-    public CertHelper(X509Certificate certificate) throws CertException {
+
+
+
+    public ExtCert(X509Certificate certificate) throws CertException {
         if (certificate == null) {
             throw new CertException("Null certificate");
         }
@@ -48,23 +47,10 @@ public class CertHelper extends CertBase {
         issuer_attr.setSubjectStr(certificate.getIssuerX500Principal().toString());
     }
 
-    public static CertHelper loadPEMFromPath(String path) throws CertException, IOException {
-        CertHelper res = null;
-        try (FileInputStream fis = new FileInputStream(path)) {
-            res = CertHelper.loadPEMFromStream(fis);
-        }
-        return res;
-    }
-
-    public static CertHelper loadPEMFromStream(InputStream is) throws IOException, CertException {
-        KeyReader kr = new KeyReaderImpl();
-        X509Certificate cert = kr.readX509CertPEMorDER(is);
-        CertHelper ac = new CertHelper(cert);
-        return ac;
-    }
-
-    public BigInteger getApolloId() {
-        return cert_attr.getApolloId();
+    
+    
+    public BigInteger getActorId() {
+        return cert_attr.getActorId();
     }
 
     public AuthorityID getAuthorityId() {
@@ -118,7 +104,7 @@ public class CertHelper extends CertBase {
     public String toString() {
         String res = "X.509 Certificate:\n";
         res += "CN=" + cert_attr.getCn() + "\n"
-            + "ApolloID=" + getApolloId().toString(16) + "\n";
+            + "ApolloID=" + getActorId().toString(16) + "\n";
 
         res += "emailAddress=" + getEmail() + "\n";
         res += "Country=" + getCountry() + " State/Province=" + getStateOrProvince()
@@ -135,7 +121,7 @@ public class CertHelper extends CertBase {
         try {
             res = kw.getX509CertificatePEM(certificate);
         } catch (IOException ex) {
-            java.util.logging.Logger.getLogger(CertHelper.class.getName()).log(Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ExtCert.class.getName()).log(Level.SEVERE, null, ex);
         }
         return res;
     }
@@ -180,4 +166,5 @@ public class CertHelper extends CertBase {
     public boolean isSignedBy(X509Certificate signerCert) {
         return verify(signerCert);
     }
+
 }
