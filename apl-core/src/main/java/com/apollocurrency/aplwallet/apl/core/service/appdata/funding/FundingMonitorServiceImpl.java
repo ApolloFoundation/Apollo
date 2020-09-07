@@ -35,7 +35,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
@@ -519,11 +518,12 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
             monitoredAccount, targetAccount, fundingAccount);
         FundingMonitorInstance monitor = monitoredAccount.getMonitor();
         if (targetAccount.getBalanceATM() < monitoredAccount.getThreshold()) {
+            int timestamp = blockchain.getLastBlockTimestamp();
             Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
-                monitoredAccount.getAmount(), 0, (short) 1440,
-                Attachment.ORDINARY_PAYMENT, blockchain.getLastBlockTimestamp());
+                monitoredAccount.getAmount(), 0, (short) 1440, Attachment.ORDINARY_PAYMENT, timestamp)
+                .recipientId(monitoredAccount.getAccountId())
+                .ecBlockData(blockchain.getECBlock(timestamp));
 
-            builder.recipientId(monitoredAccount.getAccountId());
             Transaction transaction = builder.build();
             long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight());
             transaction.setFeeATM(minimumFeeATM);
@@ -543,7 +543,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
                 monitoredAccount.setHeight(blockchain.getHeight());
                 log.debug("{} funding transaction {} for {} {} submitted from {} to {}",
                     blockchainConfig.getCoinSymbol(), transaction.getStringId(),
-                    (double) monitoredAccount.getAmount() / Constants.ONE_APL,
+                    (double) monitoredAccount.getAmount() / blockchainConfig.getOneAPL(),
                     blockchainConfig.getCoinSymbol(), monitor.getAccountName(),
                     monitoredAccount.getAccountName());
             }
@@ -577,9 +577,12 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
                     monitor.getAccountName(), monitor.getHoldingId());
         } else if (targetAsset == null || targetAsset.getQuantityATU() < monitoredAccount.getThreshold()) {
             Attachment attachment = new ColoredCoinsAssetTransfer(monitor.getHoldingId(), monitoredAccount.getAmount());
+            int timestamp = blockchain.getLastBlockTimestamp();
             Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
-                0, 0, (short) 1440, attachment, blockchain.getLastBlockTimestamp());
-            builder.recipientId(monitoredAccount.getAccountId());
+                0, 0, (short) 1440, attachment, timestamp)
+                .recipientId(monitoredAccount.getAccountId())
+                .ecBlockData(blockchain.getECBlock(timestamp));
+
             Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
             Signature signature = documentSigner.sign(
@@ -627,9 +630,12 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
                     monitor.getAccountName(), monitor.getHoldingId());
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.getThreshold()) {
             Attachment attachment = new MonetarySystemCurrencyTransfer(monitor.getHoldingId(), monitoredAccount.getAmount());
+            int timestamp = blockchain.getLastBlockTimestamp();
             Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
-                0, 0, (short) 1440, attachment, blockchain.getLastBlockTimestamp());
-            builder.recipientId(monitoredAccount.getAccountId());
+                0, 0, (short) 1440, attachment, timestamp)
+                .recipientId(monitoredAccount.getAccountId())
+                .ecBlockData(blockchain.getECBlock(timestamp));
+
             Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
             Signature signature = documentSigner.sign(

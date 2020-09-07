@@ -142,7 +142,7 @@ public class SignatureToolFactory {
             if (log.isTraceEnabled()) {
                 log.trace("#MULTI_SIG# verified pk count={} multi-signature: {} isVerified={}",
                     verifiedPks.size(),
-                    multiSigData.getJsonString(),
+                    multiSigData.getHexString(),
                     multiSigData.isVerified());
             }
             return multiSigData.isVerified();
@@ -167,7 +167,7 @@ public class SignatureToolFactory {
                 Crypto.verify(sigData.bytes(), document, signatureCredential.getKey())
             );
             if (log.isTraceEnabled()) {
-                log.trace("#MULTI_SIG# verify isVerified={} signature={}", sigData.isVerified(), sigData.getJsonString());
+                log.trace("#MULTI_SIG# verify isVerified={} signature={}", sigData.isVerified(), sigData.getHexString());
             }
             return sigData.isVerified();
         }
@@ -191,7 +191,7 @@ public class SignatureToolFactory {
             MultiSigData multiSigData = new MultiSigData(signatures.size());
             signatures.forEach(multiSigData::addSignature);
             if (log.isTraceEnabled()) {
-                log.trace("#MULTI_SIG# sign multi-signature: {}", multiSigData.getJsonString());
+                log.trace("#MULTI_SIG# sign multi-signature: {}", multiSigData.getHexString());
             }
             return multiSigData;
         }
@@ -222,7 +222,7 @@ public class SignatureToolFactory {
                 Crypto.sign(document, signatureCredential.getKey())
             );
             if (log.isTraceEnabled()) {
-                log.trace("#MULTI_SIG# crypto sign single-signature: {}", sigData.getJsonString());
+                log.trace("#MULTI_SIG# crypto sign single-signature: {}", sigData.getHexString());
             }
             return sigData;
         }

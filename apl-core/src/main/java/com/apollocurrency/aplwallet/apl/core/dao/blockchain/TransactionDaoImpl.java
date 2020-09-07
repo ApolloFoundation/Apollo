@@ -222,7 +222,7 @@ public class TransactionDaoImpl implements TransactionDao {
             pstmt.setLong(1, blockId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    rs.getLong("transactionCount");
+                    transactionCount = rs.getLong("transactionCount");
                 }
                 return transactionCount;
             } catch (SQLException e) {
@@ -799,7 +799,7 @@ public class TransactionDaoImpl implements TransactionDao {
             transaction.setBlock(Long.toUnsignedString(blockId));
             transaction.setBlockTimestamp((long) blockTimestamp);
             transaction.setIndex((int) transactionIndex);
-            transaction.setSignature(signature.getJsonString());
+            transaction.setSignature(signature.getHexString());
             transaction.setPayload(payload);
             return transaction;
 

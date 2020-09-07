@@ -144,14 +144,20 @@ public class TransactionBuilder {
         if (prunableAttachments != null) {
             ShufflingProcessingAttachment shufflingProcessing = ShufflingProcessingAttachment.parse(prunableAttachments);
             if (shufflingProcessing != null) {
+                TransactionType transactionType = factory.findTransactionTypeBySpec(shufflingProcessing.getTransactionTypeSpec());
                 builder.appendix(shufflingProcessing);
+                shufflingProcessing.bindTransactionType(transactionType);
             }
             TaggedDataUploadAttachment taggedDataUploadAttachment = TaggedDataUploadAttachment.parse(prunableAttachments);
             if (taggedDataUploadAttachment != null) {
+                TransactionType transactionType = factory.findTransactionTypeBySpec(taggedDataUploadAttachment.getTransactionTypeSpec());
+                taggedDataUploadAttachment.bindTransactionType(transactionType);
                 builder.appendix(taggedDataUploadAttachment);
             }
             TaggedDataExtendAttachment taggedDataExtendAttachment = TaggedDataExtendAttachment.parse(prunableAttachments);
             if (taggedDataExtendAttachment != null) {
+                TransactionType transactionType = factory.findTransactionTypeBySpec(taggedDataExtendAttachment.getTransactionTypeSpec());
+                taggedDataExtendAttachment.bindTransactionType(transactionType);
                 builder.appendix(taggedDataExtendAttachment);
             }
             PrunablePlainMessageAppendix prunablePlainMessage = PrunablePlainMessageAppendix.parse(prunableAttachments);
@@ -166,7 +172,12 @@ public class TransactionBuilder {
         return builder;
     }
 
+    /**
+     * Use com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter
+     */
+    @Deprecated
     public TransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws AplException.NotValidException {
+
         try {
             byte type = ((Long) transactionData.get("type")).byteValue();
             byte subtype = ((Long) transactionData.get("subtype")).byteValue();
@@ -178,15 +189,11 @@ public class TransactionBuilder {
             String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");
             Long versionValue = (Long) transactionData.get("version");
             byte version = versionValue == null ? 0 : versionValue.byteValue();
+
             SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
-            JSONObject sigJsonObject;
-            if (version < 2) {
-                sigJsonObject = new JSONObject();
-                sigJsonObject.put(SignatureParser.SIGNATURE_FIELD_NAME, transactionData.get("signature"));
-            } else {
-                sigJsonObject = (JSONObject) transactionData.get("signature");
-            }
-            Signature signature = signatureParser.parse(sigJsonObject);
+            ByteBuffer signatureBuffer = ByteBuffer.wrap(Convert.parseHexString((String) transactionData.get("signature")));
+            Signature signature = signatureParser.parse(signatureBuffer);
+
             JSONObject attachmentData = (JSONObject) transactionData.get("attachment");
             int ecBlockHeight = 0;
             long ecBlockId = 0;

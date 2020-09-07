@@ -141,18 +141,18 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     @Override
     public List<Transaction> getFinishingTransactions(int height) {
-        return phasingPollTable.getFinishingTransactions(height);
+        return blockchain.loadPrunables(phasingPollTable.getFinishingTransactions(height));
     }
 
     @Override
     public List<Transaction> getFinishingTransactionsByTime(int startTime, int finishTime) {
-        return phasingPollTable.getFinishingTransactionsByTime(startTime, finishTime);
+        return blockchain.loadPrunables(phasingPollTable.getFinishingTransactionsByTime(startTime, finishTime));
     }
 
     @Override
     public List<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) {
         try {
-            return voterTable.getVoterPhasedTransactions(voterId, from, to, blockchain.getHeight());
+            return blockchain.loadPrunables(voterTable.getVoterPhasedTransactions(voterId, from, to, blockchain.getHeight()));
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -162,7 +162,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     public List<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
                                                                 long accountId, boolean withoutWhitelist, int from, int to) {
         try {
-            return phasingPollTable.getHoldingPhasedTransactions(holdingId, votingModel, accountId, withoutWhitelist, from, to, blockchain.getHeight());
+            return blockchain.loadPrunables(phasingPollTable.getHoldingPhasedTransactions(holdingId, votingModel, accountId, withoutWhitelist, from, to, blockchain.getHeight()));
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -171,7 +171,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     @Override
     public List<Transaction> getAccountPhasedTransactions(long accountId, int from, int to) {
         try {
-            return phasingPollTable.getAccountPhasedTransactions(accountId, from, to, blockchain.getHeight());
+            return blockchain.loadPrunables(phasingPollTable.getAccountPhasedTransactions(accountId, from, to, blockchain.getHeight()));
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -189,7 +189,12 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     @Override
     public List<Transaction> getLinkedPhasedTransactions(byte[] linkedTransactionFullHash) {
         try {
-            return linkedTransactionTable.getLinkedPhasedTransactions(linkedTransactionFullHash);
+            List<Long> linkedPhasedTransactionIds = linkedTransactionTable.getLinkedPhasedTransactionIds(linkedTransactionFullHash);
+            List<Transaction> transactions = new ArrayList<>();
+            for (Long linkedPhasedTransactionId : linkedPhasedTransactionIds) {
+                transactions.add(blockchain.getTransaction(linkedPhasedTransactionId));
+            }
+            return transactions;
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

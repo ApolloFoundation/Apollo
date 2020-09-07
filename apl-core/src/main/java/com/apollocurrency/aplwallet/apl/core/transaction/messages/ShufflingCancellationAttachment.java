@@ -13,6 +13,7 @@ import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
+import java.util.List;
 
 /**
  * @author al
@@ -46,12 +47,12 @@ public final class ShufflingCancellationAttachment extends AbstractShufflingAtta
 
     public ShufflingCancellationAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        JSONArray jsonArray = (JSONArray) attachmentData.get("blameData");
+        List<?> jsonArray = (List<?>) attachmentData.get("blameData");
         this.blameData = new byte[jsonArray.size()][];
         for (int i = 0; i < this.blameData.length; i++) {
             this.blameData[i] = Convert.parseHexString((String) jsonArray.get(i));
         }
-        jsonArray = (JSONArray) attachmentData.get("keySeeds");
+        jsonArray = (List<?>) attachmentData.get("keySeeds");
         this.keySeeds = new byte[jsonArray.size()][];
         for (int i = 0; i < this.keySeeds.length; i++) {
             this.keySeeds[i] = Convert.parseHexString((String) jsonArray.get(i));

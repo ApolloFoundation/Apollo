@@ -26,14 +26,12 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import org.json.simple.JSONObject;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 public interface Blockchain {
 
@@ -76,14 +74,14 @@ public interface Blockchain {
     @Deprecated
     List<Block> getBlocks(int from, int to, int timestamp);
 
-    Stream<Block> getBlocksStream(int from, int to, int timestamp);
+    List<Block> getBlocksFromShards(int from, int to, int timestamp);
 
     Block findFirstBlock();
 
     @Deprecated
     List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp);
 
-    Stream<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp);
+    List<Block> getBlocksByAccountFromShards(long accountId, int from, int to, int timestamp);
 
     Block findLastBlock();
 
@@ -183,4 +181,6 @@ public interface Blockchain {
     boolean hasConfirmations(long id, int confirmations);
 
     boolean isExpired(Transaction tx);
+
+    List<Transaction> loadPrunables(List<Transaction> transactions);
 }

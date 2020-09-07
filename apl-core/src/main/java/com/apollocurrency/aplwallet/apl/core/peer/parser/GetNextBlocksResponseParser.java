@@ -19,7 +19,7 @@ import java.util.List;
 
 @Slf4j
 @Singleton
-public class GetNextBlocksResponseParser implements PeerResponseParser<GetNextBlocksResponse> {
+public class GetNextBlocksResponseParser implements ReqRespParser<GetNextBlocksResponse> {
     private final BlockParser blockParser;
     private final BlockchainConfig blockchainConfig;
 

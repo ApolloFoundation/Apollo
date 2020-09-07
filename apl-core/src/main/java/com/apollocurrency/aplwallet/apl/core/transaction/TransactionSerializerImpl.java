@@ -48,12 +48,7 @@ public class TransactionSerializerImpl implements TransactionSerializer {
         json.put("ecBlockId", Long.toUnsignedString(transaction.getECBlockId()));
         Signature signature = transaction.getSignature();
         if (signature != null) {
-            if (transaction.getVersion() < 2) {
-                //json.put("signature", getSignature().getJsonObject().get(SignatureParser.SIGNATURE_FIELD_NAME));
-                json.putAll(signature.getJsonObject());
-            } else {
-                json.put("signature", signature.getJsonObject());
-            }
+            json.put("signature", Convert.toHexString(signature.bytes()));
         }
         JSONObject attachmentJSON = new JSONObject();
         for (AbstractAppendix appendage : transaction.getAppendages()) {

@@ -47,7 +47,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockchainProcessorState;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
@@ -627,19 +626,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 validatePhasedTransactions(block, previousLastBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                 validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
 
-//                block.setPrevious(previousLastBlock);
                 HeightConfig config = blockchainConfig.getCurrentConfig();
                 Shard lastShard = shardDao.getLastShard();
                 Block shardInitialBlock = blockchain.getShardInitialBlock();
                 int currentHeight = previousLastBlock.getHeight();
                 // put three latest blocks into array TODO: YL optimize to fetch three blocks later
-                threeLatestBlocksArray[0] = previousLastBlock;
-                if (currentHeight >= 1) {
-                    threeLatestBlocksArray[1] = blockchain.getBlockAtHeight(currentHeight - 1);
-                }
-                if (currentHeight >= 2) {
-                    threeLatestBlocksArray[2] = blockchain.getBlockAtHeight(currentHeight - 2);
-                }
+                fillInBlockArray(previousLastBlock, lastShard, currentHeight);
                 consensusManager.setPrevious(block, threeLatestBlocksArray, config, lastShard, shardInitialBlock.getHeight());
                 block.assignTransactionsIndex(); // IMPORTANT step !!!
                 log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.BEFORE_BLOCK_ACCEPT.name());
@@ -682,6 +674,25 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block); // send async event to other components
         log.debug("Push block at height {} tx cnt: {} took {} ms (lock acquiring: {} ms)",
             block.getHeight(), block.getTransactions().size(), System.currentTimeMillis() - startTime, lockAquireTime);
+    }
+
+    private void fillInBlockArray(Block previousLastBlock, Shard lastShard, int currentHeight) {
+        threeLatestBlocksArray[0] = previousLastBlock;
+        if (lastShard == null) {
+            if (currentHeight >= 1) {
+                threeLatestBlocksArray[1] = blockchain.getBlockAtHeight(currentHeight - 1);
+            }
+            if (currentHeight >= 2) {
+                threeLatestBlocksArray[2] = blockchain.getBlockAtHeight(currentHeight - 2);
+            }
+        } else {
+            if ((currentHeight - 1) >= lastShard.getShardHeight()) {
+                threeLatestBlocksArray[1] = blockchain.getBlockAtHeight(currentHeight - 1);
+            }
+            if ((currentHeight - 2) >= lastShard.getShardHeight()) {
+                threeLatestBlocksArray[2] = blockchain.getBlockAtHeight(currentHeight - 2);
+            }
+        }
     }
 
     private AnnotationLiteral<BlockEvent> literal(BlockEventType blockEventType) {
@@ -1241,7 +1252,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             pushBlock(block);
             blockEvent.select(literal(BlockEventType.BLOCK_GENERATED)).fire(block);
             log.debug("Account " + Long.toUnsignedString(block.getGeneratorId()) + " generated block " + block.getStringId()
-                + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float) block.getTotalFeeATM()) / Constants.ONE_APL);
+                + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float) block.getTotalFeeATM()) / blockchainConfig.getOneAPL());
         } catch (TransactionNotAcceptedException e) {
             log.debug("Generate block failed: " + e.getMessage());
             transactionProcessor.processWaitingTransactions();
@@ -1418,7 +1429,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                         }
                                         validateTransactions(currentBlock, blockchain.getLastBlock(), curTime, duplicates, true);
                                         for (Transaction transaction : blockchain.getOrLoadTransactions(currentBlock)) {
-                                            byte[] transactionBytes = ((TransactionImpl) transaction).bytes();
+                                            byte[] transactionBytes = transaction.bytes();
                                             if (!Arrays.equals(transactionBytes, transactionBuilder.newTransactionBuilder(transactionBytes).build().bytes())) {
                                                 throw new AplException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
                                                     + transactionSerializer.toJson(transaction).toJSONString());

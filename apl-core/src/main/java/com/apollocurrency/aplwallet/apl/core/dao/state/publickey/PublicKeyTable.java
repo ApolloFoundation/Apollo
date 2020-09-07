@@ -3,9 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.dao.state.publickey;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -14,16 +11,16 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Objects;
 
 /**
  * @author al
@@ -40,14 +37,11 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
             return publicKey.getDbKey();
         }
     };
-    private final Blockchain blockchain;
 
     @Inject
-    public PublicKeyTable(Blockchain blockchain,
-                          DerivedTablesRegistry derivedDbTablesRegistry,
+    public PublicKeyTable(DerivedTablesRegistry derivedDbTablesRegistry,
                           DatabaseManager databaseManager) {
         super("public_key", KEY_FACTORY, true, null, derivedDbTablesRegistry, databaseManager, null);
-        this.blockchain = Objects.requireNonNull(blockchain, "Blockchain cannot be null");
     }
 
     public DbKey newKey(long id) {
@@ -61,7 +55,6 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
 
     @Override
     public void save(Connection con, PublicKey publicKey) throws SQLException {
-        publicKey.setHeight(blockchain.getHeight());
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
             final PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + table

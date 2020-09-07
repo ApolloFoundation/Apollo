@@ -33,7 +33,7 @@ public final class MessagingAliasSell extends AbstractAttachment {
     public MessagingAliasSell(JSONObject attachmentData) {
         super(attachmentData);
         this.aliasName = Convert.nullToEmpty((String) attachmentData.get("alias"));
-        this.priceATM = attachmentData.containsKey("priceATM") ? Convert.parseLong(attachmentData.get("priceATM")) : Convert.parseLong(attachmentData.get("priceNQT"));
+        this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
     }
 
     public MessagingAliasSell(String aliasName, long priceATM) {

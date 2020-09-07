@@ -26,7 +26,7 @@ public final class DigitalGoodsRefund extends AbstractAttachment {
     public DigitalGoodsRefund(JSONObject attachmentData) {
         super(attachmentData);
         this.purchaseId = Convert.parseUnsignedLong((String) attachmentData.get("purchase"));
-        this.refundATM = attachmentData.containsKey("refundATM") ? Convert.parseLong(attachmentData.get("refundATM")) : Convert.parseLong(attachmentData.get("refundNQT"));
+        this.refundATM = Convert.parseLong(attachmentData.get("refundATM"));
     }
 
     public DigitalGoodsRefund(long purchaseId, long refundATM) {

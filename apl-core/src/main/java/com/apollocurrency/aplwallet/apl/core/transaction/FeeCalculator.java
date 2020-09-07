@@ -1,11 +1,10 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.env.config.FeeRate;
@@ -28,15 +27,16 @@ public class FeeCalculator {
 
     @TransactionFee(FeeMarker.CALCULATOR)
     public long getMinimumFeeATM(Transaction transaction, int blockchainHeight) {
+        long oneAPL = blockchainConfig.getOneAPL();
         long totalFee = 0;
         short feeRate;
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             prunableService.loadPrunable(transaction, appendage, false);
-            Fee fee = appendage.getBaselineFee(transaction);
+            Fee fee = appendage.getBaselineFee(transaction, oneAPL);
             totalFee = Math.addExact(totalFee, fee.getFee(transaction, appendage));
         }
         if (transaction.getReferencedTransactionFullHash() != null) {
-            totalFee = Math.addExact(totalFee, Constants.ONE_APL);
+            totalFee = Math.addExact(totalFee, blockchainConfig.getOneAPL());
         }
         HeightConfig heightConfig = blockchainConfig.getConfigAtHeight(blockchainHeight);
         if(heightConfig == null){

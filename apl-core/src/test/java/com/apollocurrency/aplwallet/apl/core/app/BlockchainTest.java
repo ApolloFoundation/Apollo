@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -23,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardDataSourceC
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
@@ -49,7 +51,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.mockito.Mockito;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -62,8 +63,6 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_10_ID;
@@ -88,6 +87,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -102,10 +102,16 @@ class BlockchainTest {
     static DbExtension extension = new DbExtension(blockchainTestDbPath, "mainDb", "db/shard-main-data.sql");
     static DbPopulator shard1Populator;
     static DbPopulator shard2Populator;
-    BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
     TimeService timeService = mock(TimeService.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     TransactionTestData td = new TransactionTestData();
+
+    {
+        initPublicKeyDao();
+    }
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(TransactionDaoImpl.class, BlockchainImpl.class, BlockDaoImpl.class,
         TransactionIndexDao.class, DaoConfig.class, JdbiTransactionalInterceptor.class,
@@ -117,6 +123,7 @@ class BlockchainTest {
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
@@ -168,6 +175,10 @@ class BlockchainTest {
     void setUp() {
         txd = new TransactionTestData();
         btd = new BlockTestData();
+    }
+
+    private void initPublicKeyDao() {
+        doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).searchAll(anyLong());
     }
 
     @Test
@@ -348,9 +359,8 @@ class BlockchainTest {
 
     @Test
     void testGetAccountBlocksAsStream() {
-        Stream<Block> blocks = blockchain.getBlocksByAccountStream(btd.BLOCK_12.getGeneratorId(), 0, 10, 0);
-        List<Block> result = blocks.collect(Collectors.toList());
-        assertEquals(List.of(btd.BLOCK_13, btd.BLOCK_12, btd.SHARD_2_BLOCK_3, btd.SHARD_2_BLOCK_2), result);
+        List<Block> blocks = blockchain.getBlocksByAccountFromShards(btd.BLOCK_12.getGeneratorId(), 0, 10, 0);
+        assertEquals(List.of(btd.BLOCK_13, btd.BLOCK_12, btd.SHARD_2_BLOCK_3, btd.SHARD_2_BLOCK_2), blocks);
     }
 
     @Test

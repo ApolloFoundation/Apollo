@@ -45,6 +45,7 @@ import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageSer
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
@@ -140,6 +141,7 @@ public class PhasingPollServiceTest {
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(ttd.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(mock(CurrencyService.class), CurrencyService.class))
+        .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
         .build();
     @Inject
     PhasingPollServiceImpl service;
@@ -159,7 +161,10 @@ public class PhasingPollServiceTest {
         ptd = new PhasingTestData();
         btd = new BlockTestData();
 
-        blockchainConfig.setCurrentConfig(new HeightConfig(new BlockchainProperties(1, 1, 1, 1, 1, 1, 1, 1L)));
+        blockchainConfig.setCurrentConfig(new HeightConfig(
+            new BlockchainProperties(1, 1, 1, 1, 1, 1, 1, 1L),
+            100000000L, 30000000000L)
+        );
     }
 
     @Test

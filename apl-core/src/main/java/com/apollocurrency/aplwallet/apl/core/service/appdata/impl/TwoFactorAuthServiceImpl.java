@@ -65,7 +65,7 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
             if (!entity.isConfirmed()) {
 
                 String existingBase32Secret = BASE_32.encodeToString(entity.getSecret());
-                return new TwoFactorAuthDetails(getQrCodeUrl(Convert2.defaultRsAccount(entity.getAccount()), existingBase32Secret),
+                return new TwoFactorAuthDetails(getQrCodeUrl(Convert2.rsAccount(entity.getAccount()), existingBase32Secret),
                     existingBase32Secret, Status2FA.OK);
             }
             return new TwoFactorAuthDetails(null, null, Status2FA.ALREADY_ENABLED);
@@ -79,7 +79,7 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
             return new TwoFactorAuthDetails(null, null, Status2FA.INTERNAL_ERROR);
         }
 
-        String qrCodeUrl = getQrCodeUrl(Convert2.defaultRsAccount(accountId), base32Secret);
+        String qrCodeUrl = getQrCodeUrl(Convert2.rsAccount(accountId), base32Secret);
         return new TwoFactorAuthDetails(qrCodeUrl, base32Secret, Status2FA.OK);
     }
 

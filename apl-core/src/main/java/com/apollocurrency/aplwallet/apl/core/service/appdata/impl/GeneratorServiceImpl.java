@@ -4,22 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.appdata.impl;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
-import com.apollocurrency.aplwallet.apl.core.app.runnable.GenerateBlocksThread;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.GenerateBlocksTask;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
@@ -38,14 +23,28 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 @Slf4j
 @Singleton
 public class GeneratorServiceImpl implements GeneratorService {
 
     private static final String BACKGROUND_SERVICE_NAME = "GeneratorService";
 
-    private static final ConcurrentMap<Long, GeneratorMemoryEntity> generators = new ConcurrentHashMap<>();
-    private static final Collection<GeneratorMemoryEntity> allGenerators = Collections.unmodifiableCollection(generators.values());
+    private  final ConcurrentMap<Long, GeneratorMemoryEntity> generators = new ConcurrentHashMap<>();
+    private  final Collection<GeneratorMemoryEntity> allGenerators = Collections.unmodifiableCollection(generators.values());
     private final PropertiesHolder propertiesHolder;
     private final int MAX_FORGERS;
     private final BlockchainConfig blockchainConfig;
@@ -58,7 +57,7 @@ public class GeneratorServiceImpl implements GeneratorService {
     private final TaskDispatchManager taskDispatchManager;
     private static volatile boolean suspendForging = false;
 
-    private GenerateBlocksThread generateBlocksThread;
+    private GenerateBlocksTask generateBlocksTask;
 
     @Inject
     public GeneratorServiceImpl(PropertiesHolder propertiesHolder,
@@ -80,7 +79,7 @@ public class GeneratorServiceImpl implements GeneratorService {
         this.MAX_FORGERS = propertiesHolder.getIntProperty("apl.maxNumberOfForgers");
 
         if (!propertiesHolder.isLightClient()) {
-            generateBlocksThread = new GenerateBlocksThread(this.propertiesHolder, this.globalSync,
+            generateBlocksTask = new GenerateBlocksTask(this.propertiesHolder, this.globalSync,
                 this.blockchain, this.blockchainConfig, this.timeService,
                 this.transactionProcessor, this);
             this.taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
@@ -88,7 +87,7 @@ public class GeneratorServiceImpl implements GeneratorService {
                     .name("GenerateBlocks")
                     .initialDelay(500)
                     .delay(500)
-                    .task(generateBlocksThread)
+                    .task(generateBlocksTask)
                     .build());
         }
     }
@@ -105,8 +104,8 @@ public class GeneratorServiceImpl implements GeneratorService {
         try {
             if (blockchain.getHeight() >= blockchainConfig.getLastKnownBlock()) {
                 this.setLastBlock(blockchain.getLastBlock(), generator);
-                if (generateBlocksThread != null) {
-                    generateBlocksThread.resetSortedForgers();
+                if (generateBlocksTask != null) {
+                    generateBlocksTask.resetSortedForgers();
                 }
             }
         } finally {
@@ -123,21 +122,23 @@ public class GeneratorServiceImpl implements GeneratorService {
 
     @Override
     public GeneratorMemoryEntity stopForging(byte[] keySeed) {
+        long start = System.currentTimeMillis();
         GeneratorMemoryEntity generator = generators.remove(Convert.getId(Crypto.getPublicKey(keySeed)));
-        if (generator != null && generateBlocksThread != null) {
+        if (generator != null && generateBlocksTask != null) {
             globalSync.updateLock();
             try {
-                generateBlocksThread.resetSortedForgers();
+                generateBlocksTask.resetSortedForgers();
             } finally {
                 globalSync.updateUnlock();
             }
-            log.debug(generator + " stopped");
+            log.debug(generator + " stopped ({} ms)", (System.currentTimeMillis() - start));
         }
         return generator;
     }
 
     @Override
     public int stopForging() {
+        long start = System.currentTimeMillis();
         int count = generators.size();
         Iterator<GeneratorMemoryEntity> iter = generators.values().iterator();
         while (iter.hasNext()) {
@@ -147,12 +148,13 @@ public class GeneratorServiceImpl implements GeneratorService {
         }
         globalSync.updateLock();
         try {
-            if (generateBlocksThread != null) {
-                generateBlocksThread.resetSortedForgers();
+            if (generateBlocksTask != null) {
+                generateBlocksTask.resetSortedForgers();
             }
         } finally {
             globalSync.updateUnlock();
         }
+        log.debug("stopped forging ({} ms)", (System.currentTimeMillis() - start));
         return count;
     }
 
@@ -178,7 +180,7 @@ public class GeneratorServiceImpl implements GeneratorService {
 
     @Override
     public List<GeneratorMemoryEntity> getSortedForgers() {
-        List<GeneratorMemoryEntity> forgers = generateBlocksThread != null ? generateBlocksThread.getSortedForgers() : null;
+        List<GeneratorMemoryEntity> forgers = generateBlocksTask != null ? generateBlocksTask.getSortedForgers() : null;
         return forgers == null ? Collections.emptyList() : forgers;
     }
 
@@ -186,7 +188,7 @@ public class GeneratorServiceImpl implements GeneratorService {
     public long getNextHitTime(long lastBlockId, int curTime) {
         globalSync.readLock();
         try {
-            List<GeneratorMemoryEntity> sortedForgers = generateBlocksThread != null ? generateBlocksThread.getSortedForgers() : null;
+            List<GeneratorMemoryEntity> sortedForgers = generateBlocksTask != null ? generateBlocksTask.getSortedForgers() : null;
             if (sortedForgers != null) {
                 for (GeneratorMemoryEntity generator : sortedForgers) {
                     if (generator.getHitTime() >= curTime - propertiesHolder.FORGING_DELAY()) {
@@ -202,7 +204,7 @@ public class GeneratorServiceImpl implements GeneratorService {
 
     @Override
     public void setDelay(int delay) {
-        generateBlocksThread.setDelayTime(delay);
+        generateBlocksTask.setDelayTime(delay);
     }
 
     public boolean verifyHit(BigInteger hit, BigInteger effectiveBalance, Block previousBlock, int timestamp) {
@@ -304,6 +306,7 @@ public class GeneratorServiceImpl implements GeneratorService {
     @Override
     public boolean forge(Block lastBlock, int generationLimit, GeneratorMemoryEntity generator)
         throws BlockchainProcessor.BlockNotAcceptedException {
+        long startLog = System.currentTimeMillis();
         int timestamp = generator.getTimestamp(generationLimit);
         int[] timeoutAndVersion = getBlockTimeoutAndVersion(timestamp, generationLimit, lastBlock);
         if (timeoutAndVersion == null) {
@@ -321,6 +324,7 @@ public class GeneratorServiceImpl implements GeneratorService {
             try {
                 lookupBlockchainProcessor().generateBlock(generator.getKeySeed(), timestamp + timeout, timeout, timeoutAndVersion[1]);
                 setDelay(propertiesHolder.FORGING_DELAY());
+                log.debug(generator + " stopped forge loop in ({} ms)", (System.currentTimeMillis() - startLog));
                 return true;
             } catch (BlockchainProcessor.TransactionNotAcceptedException e) {
                 // the bad transaction has been expunged, try again
@@ -356,7 +360,6 @@ public class GeneratorServiceImpl implements GeneratorService {
             && planedBlockTime < adaptiveBlockTime // calculate timeout only for faster than predefined empty block
         ) {
             int actualBlockTime = generationLimit - lastBlock.getTimestamp();
-            log.trace("Act time:" + actualBlockTime);
             if (actualBlockTime >= adaptiveBlockTime) {
                 // empty block can be generated by timeout
                 version = Block.ADAPTIVE_BLOCK_VERSION;

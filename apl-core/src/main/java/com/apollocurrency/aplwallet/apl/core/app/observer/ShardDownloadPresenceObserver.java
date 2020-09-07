@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.observer;
 
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImportException;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEventType;
@@ -162,7 +163,7 @@ public class ShardDownloadPresenceObserver {
                 dataSource.commit();
                 log.debug("Saved Genesis block = {}", genesisBlock);
                 blockchain.update();
-            } catch (SQLException e) {
+            } catch (SQLException | GenesisImportException e) {
                 dataSource.rollback();
                 log.info(e.getMessage());
                 throw new RuntimeException(e.toString(), e);

@@ -17,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
@@ -28,9 +27,9 @@ import java.util.Map;
 @Singleton
 public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransactionType {
 
-    private static final Fee FIVE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(40 * Constants.ONE_APL);
-    private static final Fee FOUR_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(1000 * Constants.ONE_APL);
-    private static final Fee THREE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(25000 * Constants.ONE_APL);
+    private final Fee FIVE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(Math.multiplyExact(40, getBlockchainConfig().getOneAPL()));
+    private final Fee FOUR_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(Math.multiplyExact(1000, getBlockchainConfig().getOneAPL()));
+    private final Fee THREE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(Math.multiplyExact(25000, getBlockchainConfig().getOneAPL()));
 
     private final CurrencyService currencyService;
     private final AccountCurrencyService accountCurrencyService;
@@ -127,7 +126,14 @@ public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransaction
     @Override
     public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
-        if (attachment.getMaxSupply() > Constants.MAX_CURRENCY_TOTAL_SUPPLY || attachment.getMaxSupply() <= 0 || attachment.getInitialSupply() < 0 || attachment.getInitialSupply() > attachment.getMaxSupply() || attachment.getReserveSupply() < 0 || attachment.getReserveSupply() > attachment.getMaxSupply() || attachment.getIssuanceHeight() < 0 || attachment.getMinReservePerUnitATM() < 0 || attachment.getDecimals() < 0 || attachment.getDecimals() > 8 || attachment.getRuleset() != 0) {
+        if (attachment.getMaxSupply() > Math.multiplyExact(getBlockchainConfig().getInitialSupply(), getBlockchainConfig().getOneAPL())
+            || attachment.getMaxSupply() <= 0 || attachment.getInitialSupply() < 0
+            || attachment.getInitialSupply() > attachment.getMaxSupply()
+            || attachment.getReserveSupply() < 0
+            || attachment.getReserveSupply() > attachment.getMaxSupply()
+            || attachment.getIssuanceHeight() < 0 || attachment.getMinReservePerUnitATM() < 0
+            || attachment.getDecimals() < 0 || attachment.getDecimals() > getBlockchainConfig().getDecimals()
+            || attachment.getRuleset() != 0) {
             throw new AplException.NotValidException("Invalid currency issuance: " + attachment.getJSONObject());
         }
         int t = 1;

@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -97,7 +96,7 @@ class AccountServiceTest {
         Account account = accountService.getAccount(accountId, height);
         assertNull(account);
 
-        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).loadPublicKeyFromDb(dbKey, height);
+        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).loadPublicKeyFromDb(accountId, height);
         account = accountService.getAccount(accountId, height);
         assertEquals(newAccount, account);
         assertEquals(testData.PUBLIC_KEY1, account.getPublicKey());
@@ -111,7 +110,7 @@ class AccountServiceTest {
         Account account = accountService.getAccount(accountId);
         assertNull(account);
 
-        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).getPublicKey(dbKey);
+        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).getPublicKey(accountId);
         account = accountService.getAccount(accountId);
         assertEquals(testData.PUBLIC_KEY1, account.getPublicKey());
     }
@@ -139,7 +138,7 @@ class AccountServiceTest {
         Account newAccount = new Account(((LongKey) dbKey).getId(), dbKey);
         Account account = accountService.addOrGetAccount(accountId);
         assertEquals(newAccount, account);
-        verify(accountPublicKeyService).insertNewPublicKey(dbKey);
+        verify(accountPublicKeyService).insertNewPublicKey(accountId);
     }
 
     @Test
@@ -166,10 +165,11 @@ class AccountServiceTest {
     void getEffectiveBalanceAPLByGenesisAccount() {
         boolean lock = false;
         int height = EFFECTIVE_BALANCE_CONFIRMATIONS - 1;
+        when(blockchainConfig.getOneAPL()).thenReturn(100000000L);
         assertEquals(0L, accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock));
 
         doReturn(testData.ACC_0).when(accountService).getAccount(testData.ACC_0.getId(), 0);
-        assertEquals(testData.ACC_0.getBalanceATM() / Constants.ONE_APL
+        assertEquals(testData.ACC_0.getBalanceATM() / blockchainConfig.getOneAPL()
             , accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock));
     }
 
@@ -181,18 +181,19 @@ class AccountServiceTest {
         long balance = 0;
         long lessorsBalance = 10000L;
         long guaranteedBalance = 50000L;
+        when(blockchainConfig.getOneAPL()).thenReturn(100000000L);
         doReturn(blockchainHeight).when(blockChainInfoService).getHeight();
         assertEquals(0, accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock));
 
-        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).getPublicKey(AccountTable.newKey(testData.ACC_0.getId()));
+        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).getPublicKey(testData.ACC_0.getId());
         doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
         doReturn(lessorsBalance).when(accountService).getLessorsGuaranteedBalanceATM(testData.ACC_0, height);
         doReturn(guaranteedBalance).when(accountService).getGuaranteedBalanceATM(testData.ACC_0, 1440, height);
         balance = accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock);
         assertEquals(0, balance);//the balance is less then MIN_FORGING_BALANCE_ATM
 
-        doReturn(lessorsBalance * Constants.ONE_APL).when(accountService).getLessorsGuaranteedBalanceATM(testData.ACC_0, height);
-        doReturn(guaranteedBalance * Constants.ONE_APL).when(accountService).getGuaranteedBalanceATM(testData.ACC_0, 1440, height);
+        doReturn(lessorsBalance * blockchainConfig.getOneAPL()).when(accountService).getLessorsGuaranteedBalanceATM(testData.ACC_0, height);
+        doReturn(guaranteedBalance * blockchainConfig.getOneAPL()).when(accountService).getGuaranteedBalanceATM(testData.ACC_0, 1440, height);
         balance = accountService.getEffectiveBalanceAPL(testData.ACC_0, height, lock);
         assertEquals(lessorsBalance + guaranteedBalance, balance);
     }

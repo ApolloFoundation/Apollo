@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
@@ -389,6 +390,14 @@ public final class HttpParameterParserUtil {
         return getCurrency(req, true);
     }
 
+    public static Currency getCurrencyWithSupply(HttpServletRequest req) throws ParameterException {
+        Currency currency = getCurrency(req);
+        CurrencyService currencyService = lookupCurrencyService();
+        CurrencySupply supply = currencyService.loadCurrencySupplyByCurrency(currency);
+        currency.setCurrencySupply(supply);
+        return currency;
+    }
+
     public static Currency getCurrency(HttpServletRequest req, boolean isMandatory) throws ParameterException {
         Currency currency = lookupCurrencyService().getCurrency(getUnsignedLong(req, "currency", isMandatory));
         if (isMandatory && currency == null) {
@@ -424,7 +433,7 @@ public final class HttpParameterParserUtil {
     }
 
     public static long getQuantityATU(HttpServletRequest req) throws ParameterException {
-        return getLong(req, "quantityATU", 1L, Constants.MAX_ASSET_QUANTITY_ATU, true);
+        return getLong(req, "quantityATU", 1L, Math.multiplyExact(lookupBlockchainConfig().getInitialSupply(), lookupBlockchainConfig().getOneAPL()), true);
     }
 
     public static long getAmountATMPerATU(HttpServletRequest req) throws ParameterException {

@@ -43,10 +43,10 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
     }
 
     private TransactionType transactionType() {
-        if (transactionType == null) {
+        if (this.transactionType == null) {
             throw new IllegalStateException("Transaction type was not set");
         }
-        return transactionType;
+        return this.transactionType;
     }
 
     @Override
@@ -65,7 +65,7 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
     }
 
     @Override
-    public final Fee getBaselineFee(Transaction transaction) {
+    public final Fee getBaselineFee(Transaction transaction, long oneAPL) {
         return transactionType().getBaselineFee(transaction);
     }
 
