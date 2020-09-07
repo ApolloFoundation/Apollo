@@ -147,6 +147,10 @@ public class MemPool {
         return memoryState.isWaitingQueueFull();
     }
 
+    public boolean isProcessedTxPoolFull() {
+        return allProcessedCount() >= memoryState.getMaxInMemorySize();
+    }
+
     public List<UnconfirmedTransaction> getProcessed(int from, int to) {
         return CollectionUtil.toList(table.getAll(from, to));
     }
@@ -175,9 +179,9 @@ public class MemPool {
 //        return transactionCache;
 //    }
 
-    public void softBroadcast(Transaction uncTx) throws AplException.ValidationException {
+    public boolean softBroadcast(Transaction uncTx) throws AplException.ValidationException {
         validator.validate(uncTx);
-        memoryState.addToSoftBroadcastingQueue(uncTx);
+        return memoryState.addToSoftBroadcastingQueue(uncTx);
     }
 
     public void clear() {
@@ -194,7 +198,7 @@ public class MemPool {
         table.truncate();
     }
 
-    public UnconfirmedTransaction nextSoftBroadcastTransaction() throws InterruptedException {
+    public Transaction nextSoftBroadcastTransaction() throws InterruptedException {
         return memoryState.nextBroadcastPendingTransaction();
     }
 

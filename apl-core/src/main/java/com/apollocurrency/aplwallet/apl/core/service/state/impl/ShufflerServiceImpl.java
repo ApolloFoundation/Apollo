@@ -505,7 +505,12 @@ public class ShufflerServiceImpl implements ShufflerService {
                 log.debug("Error submitting shuffler transaction", shuffler.getFailureCause());
             }
             try {
-                memPool.softBroadcast(transaction);
+                boolean broadcasted = memPool.softBroadcast(transaction);
+                if (!broadcasted) {
+                    shuffler.setFailedTransaction(transaction);
+                    log.info("Broadcast of shuffling transaction was not successful, will try again later");
+                    return;
+                }
                 log.trace("Submitted Shuffling Tx: id: {}, participantAccount:{}, atm: {}, deadline: {}",
                     transaction.getId(), participantAccount, transaction.getAmountATM(), transaction.getDeadline());
             } catch (AplException.NotCurrentlyValidException e) {

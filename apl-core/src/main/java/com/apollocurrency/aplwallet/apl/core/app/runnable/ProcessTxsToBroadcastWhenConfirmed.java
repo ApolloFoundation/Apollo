@@ -51,7 +51,10 @@ public class ProcessTxsToBroadcastWhenConfirmed implements Runnable {
                 } else if (blockchain.hasTransaction(uncTx.getId())) {
                     if (!hasTransaction(tx)) {
                         try {
-                            memPool.softBroadcast(tx);
+                            boolean broadcasted = memPool.softBroadcast(tx);
+                            if (!broadcasted) {
+                                return;
+                            }
                         } catch (AplException.ValidationException e) {
                             log.debug("Unable to broadcast invalid tx {}, reason {}", tx.getId(), e.getMessage());
                         }

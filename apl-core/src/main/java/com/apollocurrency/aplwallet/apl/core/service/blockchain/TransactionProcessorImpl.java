@@ -47,6 +47,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadin
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
@@ -167,7 +168,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 dispatcher.invokeAfter(Task.builder()
                     .name("Broadcaster")
                     .initialDelay(2000)
-                    .task(this::broadcastQueue)
+                    .task(this::broadcastPendingQueue)
                     .build());
                 dispatcher.invokeAfter(Task.builder()
                     .name("InitialUnconfirmedTxsRebroadcasting")
@@ -203,30 +204,50 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         memPool.broadcastWhenConfirmed(transaction, uncTransaction);
     }
 
-    void broadcastQueue() {
+    void broadcastPendingQueue() {
         while (true) {
-            try {
-                UnconfirmedTransaction tx = null;
+            if (memPool.pendingBroadcastQueueSize() > 10) {
+                globalSync.updateLock();
                 try {
-                    tx = memPool.nextSoftBroadcastTransaction();
-                } catch (InterruptedException e) {
-                }
-                if (tx != null) {
-                    try {
-                        transactionValidator.validate(tx);
-                        processingService.validateBeforeProcessing(tx);
-                    } catch (AplException.ValidationException e) {
-                        log.debug("Invalid transaction was not broadcasted txId=" + tx.getId(), e);
+                    for (int i = 0; i < 10; i++) {
+                        doBroadcastOnePendingTx();
                     }
-                    try {
-                        broadcast(tx);
-                    } catch (AplException.ValidationException e) {
-                        log.debug("Failed to broadcast transaction txId=" + tx.getId(), e);
-                    }
+                } finally {
+                    globalSync.updateUnlock();
                 }
-            } catch (Exception e) {
-                log.error("Unknown exception during broadcast transactions ", e);
+                ThreadUtils.sleep(20);
+            } else {
+                doBroadcastOnePendingTx();
+                ThreadUtils.sleep(5);
             }
+        }
+    }
+
+    private void doBroadcastOnePendingTx() {
+        if (memPool.isWaitingTransactionsQueueFull() || memPool.isProcessedTxPoolFull()) { // do not loose existing transactions
+            return;
+        }
+        try {
+            Transaction tx = null;
+            try {
+                tx = memPool.nextSoftBroadcastTransaction();
+            } catch (InterruptedException ignored) {}
+            if (tx != null) {
+                try {
+                    transactionValidator.validate(tx);
+                    processingService.validateBeforeProcessing(tx);
+                } catch (AplException.ValidationException e) {
+                    log.debug("Invalid transaction was not broadcasted txId=" + tx.getId(), e);
+                    return;
+                }
+                try {
+                    broadcast(tx);
+                } catch (AplException.ValidationException e) {
+                    log.debug("Failed to broadcast transaction txId=" + tx.getId(), e);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Unknown exception during broadcast transactions ", e);
         }
     }
 

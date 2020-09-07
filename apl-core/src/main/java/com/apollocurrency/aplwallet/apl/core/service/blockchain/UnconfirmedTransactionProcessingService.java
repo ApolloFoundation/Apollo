@@ -47,8 +47,7 @@ public class UnconfirmedTransactionProcessingService {
     }
 
 
-    public void validateBeforeProcessing(UnconfirmedTransaction unconfirmedTransaction) throws AplException.NotCurrentlyValidException, AplException.NotValidException {
-        Transaction transaction = unconfirmedTransaction.getTransaction();
+    public void validateBeforeProcessing(Transaction transaction) throws AplException.NotCurrentlyValidException, AplException.NotValidException {
         int curTime = timeService.getEpochTime();
         if (transaction.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT || transaction.getExpiration() < curTime) {
             throw new AplException.NotCurrentlyValidException("Invalid transaction timestamp");
