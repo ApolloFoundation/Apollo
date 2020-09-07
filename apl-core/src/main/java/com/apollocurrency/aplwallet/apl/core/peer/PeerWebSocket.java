@@ -169,7 +169,8 @@ public class PeerWebSocket extends WebSocketAdapter {
         Session s = getSession();
         if (s != null) {
             if (log.isTraceEnabled()) {
-                log.trace("Send [{} ...] to PeerWebSocket={} from {}", message.substring(28, 60), this.getTransport().getPeer().getAnnouncedAddress(), getSession().getLocalAddress().toString());
+                String msg = message.length() > 28 ? message.substring(28, Math.min(message.length(), 60)) : message;
+                log.trace("Send [{} ...] to PeerWebSocket={} from {}", msg, this.getTransport().getPeer().getAnnouncedAddress(), getSession().getLocalAddress().toString());
                 //log.trace("Send {} PeerWebSocket={} jettySession={}", message.substring(32), this, sessionToString(getSession()));
             }
             byte[] requestBytes = message.getBytes(StandardCharsets.UTF_8);

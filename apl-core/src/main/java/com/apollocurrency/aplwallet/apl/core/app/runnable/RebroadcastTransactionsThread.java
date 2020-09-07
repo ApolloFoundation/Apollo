@@ -6,10 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
@@ -44,32 +46,39 @@ public class RebroadcastTransactionsThread implements Runnable {
     @Override
     public void run() {
         try {
-            try {
-                if (lookupBlockchainProcessor().isDownloading()) {
-                    return;
-                }
-                List<Transaction> transactionList = new ArrayList<>();
-                int curTime = timeService.getEpochTime();
-                Set<Transaction> broadcastedTransactions = unconfirmedTransactionTable.getBroadcastedTransactions();
-                for (Transaction transaction : broadcastedTransactions) {
-                    if (transaction.getExpiration() < curTime || blockchain.hasTransaction(transaction.getId())) {
-                        broadcastedTransactions.remove(transaction);
-                    } else if (transaction.getTimestamp() < curTime - 30) {
-                        transactionList.add(transaction);
-                    }
-                }
-
-                if (transactionList.size() > 0) {
-                    peers.sendToSomePeers(transactionList);
-                }
-
-            } catch (Exception e) {
-                log.info("Error in transaction re-broadcasting thread", e);
+            if (lookupBlockchainProcessor().isDownloading()) {
+                return;
             }
+
+            rebroadcast();
+
         } catch (Throwable t) {
             log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
             t.printStackTrace();
             System.exit(1);
+        }
+    }
+
+    private void rebroadcast() {
+        try {
+            List<Transaction> transactionList = new ArrayList<>();
+            int curTime = timeService.getEpochTime();
+            Set<Transaction> broadcastedTransactions = unconfirmedTransactionTable.getBroadcastedTransactions();
+            for (Transaction transaction : broadcastedTransactions) {
+                if (transaction.getExpiration() < curTime || blockchain.hasTransaction(transaction.getId())) {
+                    broadcastedTransactions.remove(transaction);
+                } else if (transaction.getTimestamp() < curTime - 30) {
+                    transactionList.add(
+                        new UnconfirmedTransaction(transaction, Convert2.fromEpochTime(transaction.getTimestamp())));
+                }
+            }
+
+            if (!transactionList.isEmpty()) {
+                peers.sendToSomePeers(transactionList);
+            }
+
+        } catch (Exception e) {
+            log.info("Error in transaction re-broadcasting thread", e);
         }
     }
 

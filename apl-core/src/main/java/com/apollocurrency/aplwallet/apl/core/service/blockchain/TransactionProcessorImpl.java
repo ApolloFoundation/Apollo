@@ -329,7 +329,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             } else {
                 processTransaction(unconfirmedTransaction);
 //                log.debug("Accepted new transaction {}", transaction.getStringId());
-                List<Transaction> acceptedTransactions = Collections.singletonList(transaction);
+                List<Transaction> acceptedTransactions = Collections.singletonList(unconfirmedTransaction);
                 peers.sendToSomePeers(acceptedTransactions);
                 txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(acceptedTransactions);
                 if (enableTransactionRebroadcasting) {
@@ -568,7 +568,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 //                    log.debug("Received back transaction " + transaction.getStringId()
 //                        + " that we broadcasted, will not forward again to peers");
                 } else {
-                    sendToPeersTransactions.add(transaction);
+                    sendToPeersTransactions.add(unconfirmedTransaction);
                 }
                 addedUnconfirmedTransactions.add(transaction);
 
@@ -578,10 +578,10 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 exceptions.add(e);
             }
         }
-        if (sendToPeersTransactions.size() > 0) {
+        if (!sendToPeersTransactions.isEmpty()) {
             peers.sendToSomePeers(sendToPeersTransactions);
         }
-        if (addedUnconfirmedTransactions.size() > 0) {
+        if (!addedUnconfirmedTransactions.isEmpty()) {
             txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(addedUnconfirmedTransactions);
         }
         unconfirmedTransactionTable.getBroadcastedTransactions().removeAll(receivedTransactions);
