@@ -47,31 +47,33 @@ public class UnconfirmedTransactionProcessingService {
     }
 
 
-    public void validateBeforeProcessing(Transaction transaction) throws AplException.NotCurrentlyValidException, AplException.NotValidException {
+    public UnconfirmedTxValidationResult validateBeforeProcessing(Transaction transaction) {
         int curTime = timeService.getEpochTime();
         if (transaction.getTimestamp() > curTime + Constants.MAX_TIMEDRIFT || transaction.getExpiration() < curTime) {
-            throw new AplException.NotCurrentlyValidException("Invalid transaction timestamp");
+            return new UnconfirmedTxValidationResult(100_100, UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID, "Invalid transaction timestamp");
         }
         if (transaction.getVersion() < 1) {
-            throw new AplException.NotValidException("Invalid transaction version");
+            return new UnconfirmedTxValidationResult(100_105, UnconfirmedTxValidationResult.Error.NOT_VALID, "Invalid transaction version");
         }
+
         if (transaction.getId() == 0L) {
-            throw new AplException.NotValidException("Invalid transaction id 0");
+            return new UnconfirmedTxValidationResult(100_110, UnconfirmedTxValidationResult.Error.NOT_VALID, "Invalid transaction id 0");
         }
         if (blockchain.getHeight() < blockchainConfig.getLastKnownBlock()) {
-            throw new AplException.NotCurrentlyValidException("Blockchain not ready to accept transactions");
+            return new UnconfirmedTxValidationResult(100_115, UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID, "Blockchain not ready to accept transactions");
         }
         if (memPool.getUnconfirmedTransaction(transaction.getId()) != null || blockchain.hasTransaction(transaction.getId())) {
-            throw new AplException.ExistingTransactionException("Transaction already processed");
+            return new UnconfirmedTxValidationResult(100_120, UnconfirmedTxValidationResult.Error.ALREADY_PROCESSED, "Transaction already processed");
         }
 
         if (!validator.verifySignature(transaction)) {
             if (accountService.getAccount(transaction.getSenderId()) != null) {
-                throw new AplException.NotValidException("Transaction signature verification failed");
+                return new UnconfirmedTxValidationResult(100_125, UnconfirmedTxValidationResult.Error.NOT_VALID, "Transaction signature verification failed");
             } else {
-                throw new AplException.NotCurrentlyValidException("Unknown transaction sender");
+                return new UnconfirmedTxValidationResult(100_130, UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID, "Unknown transaction sender");
             }
         }
+        return new UnconfirmedTxValidationResult(0, null, "");
     }
 
     public void processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws AplException.ValidationException {
