@@ -5,16 +5,17 @@
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -60,9 +61,6 @@ public class RebroadcastTransactionsThread implements Runnable {
 
     private void rebroadcast() {
         try {
-            if (lookupBlockchainProcessor().isDownloading()) {
-                return;
-            }
             List<Transaction> transactionList = new ArrayList<>();
             int curTime = timeService.getEpochTime();
             Collection<Transaction> broadcastedTransactions = memPool.getAllBroadcastedTransactions();
@@ -70,11 +68,13 @@ public class RebroadcastTransactionsThread implements Runnable {
                 if (transaction.getExpiration() < curTime || blockchain.hasTransaction(transaction.getId())) {
                     memPool.removeOutdatedBroadcastedTransactions(transaction);
                 } else if (transaction.getTimestamp() < curTime - 30) {
-                    transactionList.add(transaction);
+                    transactionList.add(
+                        new UnconfirmedTransaction(transaction, Convert2.fromEpochTime(transaction.getTimestamp()))
+                    );
                 }
             }
 
-            if (transactionList.size() > 0) {
+            if (!transactionList.isEmpty()) {
                 peers.sendToSomePeers(transactionList);
             }
 

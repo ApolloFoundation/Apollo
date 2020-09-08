@@ -8,6 +8,7 @@ import lombok.Data;
 
 @Data
 public class UnconfirmedTxValidationResult {
+    public static final UnconfirmedTxValidationResult OK_RESULT = new UnconfirmedTxValidationResult(0, null, null);
     private final long code;
     private final Error error;
     private final String errorDescription;
