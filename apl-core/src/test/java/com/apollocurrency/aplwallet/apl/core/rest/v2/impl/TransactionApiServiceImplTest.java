@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadin
 import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +53,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -67,8 +69,8 @@ class TransactionApiServiceImplTest {
     BlockchainConfig blockchainConfig;
     @Mock
     BlockChainInfoService blockChainInfoService;
-    @Mock
-    MemPool memPool;
+
+    MemPool memPool = mock(MemPool.class);
     @Mock
     PrunableLoadingService prunableLoadingService;
     TransactionBuilder transactionBuilder;
@@ -90,17 +92,36 @@ class TransactionApiServiceImplTest {
         transactionApiService = new TransactionApiServiceImpl(memPool, blockchain, txReceiptMapper, transactionInfoMapper, transactionBuilder);
     }
 
+    @SneakyThrows
     @Test
     void broadcastTx() {
         //GIVEN
         TxRequest request = new TxRequest();
         request.setTx(SIGNED_TX_1_HEX);
+        doReturn(false).when(memPool).isWaitingTransactionsQueueFull();
+        doReturn(true).when(memPool).softBroadcast(any(Transaction.class));
         //WHEN
         Response response = transactionApiService.broadcastTx(request, securityContext);
         //THEN
         assertNotNull(response);
         TxReceipt receipt = (TxReceipt) response.getEntity();
         assertEquals(TX_1_ID, receipt.getTransaction());
+    }
+
+    @SneakyThrows
+    @Test
+    void broadcastTxWhenBlockchainIsBusy() {
+        //GIVEN
+        TxRequest request = new TxRequest();
+        request.setTx(SIGNED_TX_1_HEX);
+        doReturn(true).when(memPool).isWaitingTransactionsQueueFull();
+        //WHEN
+        Response response = transactionApiService.broadcastTx(request, securityContext);
+        //THEN
+        assertNotNull(response);
+        assertEquals(409, response.getStatus());
+        ErrorResponse receipt = (ErrorResponse) response.getEntity();
+        assertEquals(102, receipt.getErrorCode());
     }
 
     @ParameterizedTest(name = "tx {index}")
@@ -121,6 +142,7 @@ class TransactionApiServiceImplTest {
         }
     }
 
+    @SneakyThrows
     @Test
     void broadcastTxBatch() {
         //GIVEN
@@ -132,6 +154,10 @@ class TransactionApiServiceImplTest {
         TxRequest request2 = new TxRequest();
         request2.setTx(SIGNED_TX_1_WRONG_LENGTH);
         requestList.add(request2);
+
+        doReturn(false).when(memPool).isWaitingTransactionsQueueFull();
+        doReturn(true).when(memPool).softBroadcast(any(Transaction.class));
+
         //WHEN
         Response response = transactionApiService.broadcastTxBatch(requestList, securityContext);
         //THEN
