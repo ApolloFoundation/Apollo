@@ -66,8 +66,8 @@ public class MemPoolUnconfirmedTransactionTable extends DbTableWrapper<Unconfirm
     }
 
     @Override
-    public void save(Connection con, UnconfirmedTransaction entity) throws SQLException {
-        super.save(con, entity);
+    public void insert(UnconfirmedTransaction entity) {
+        super.insert(entity);
         memPoolInMemoryState.putInCache(entity);
     }
 
