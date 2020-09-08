@@ -224,7 +224,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     private void doBroadcastOnePendingTx() {
-        if (memPool.isWaitingTransactionsQueueFull() || memPool.isProcessedTxPoolFull()) { // do not loose existing transactions
+        if (!memPool.canSafelyAcceptTransactions()) { // do not loose existing transactions
             return;
         }
         try {
