@@ -1,7 +1,7 @@
 /*
  * Copyright (c)  2018-2020. Apollo Foundation.
  */
-package com.apollocurrency.aplwallet.apl.core.peer.id;
+package com.apollocurrency.aplwallet.apl.security.id;
 
 import com.apollocurrency.apl.id.handler.IdValidator;
 import com.apollocurrency.apl.id.handler.ThisActorIdHandler;

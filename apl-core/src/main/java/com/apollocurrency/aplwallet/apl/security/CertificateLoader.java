@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
+package com.apollocurrency.aplwallet.apl.security;
 
 import com.apollocurrency.apl.id.cert.CertKeyPersistence;
 import com.apollocurrency.aplwallet.apl.util.Version;
