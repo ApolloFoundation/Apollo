@@ -88,11 +88,17 @@ public class TransactionApiServiceImpl implements TransactionApiService {
             }
             log.warn("Given {}", req.getTx());
             log.warn("Actua {}", Convert.toHexString(newTx.getCopyTxBytes()));
-            //TODO make soft broadcast
-//            transactionProcessor.broadcast(newTx);
-            receipt = txReceiptMapper.convert(newTx);
-            if (log.isTraceEnabled()) {
-                log.trace("API_V2: UnTxReceipt={}", receipt);
+
+            boolean rc = memPool.softBroadcast(newTx);
+            if (rc) {
+                receipt = txReceiptMapper.convert(newTx);
+                if (log.isTraceEnabled()) {
+                    log.trace("API_V2: UnTxReceipt={}", receipt);
+                }
+            } else {
+                receipt = ResponseBuilderV2.createErrorResponse(
+                    ApiErrors.UNCONFIRMED_TRANSACTION_CACHE_IS_FULL, "");
+                status = 409;
             }
         } catch (NumberFormatException e) {
             receipt = ResponseBuilderV2.createErrorResponse(
