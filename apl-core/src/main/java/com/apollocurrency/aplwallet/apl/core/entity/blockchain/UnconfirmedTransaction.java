@@ -50,7 +50,7 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
     private final long feePerByte;
 
     public UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp) {
-        super(transaction.getDbId(), transaction.getHeight());
+        super(null, transaction.getHeight());
         this.transaction = transaction;
         this.arrivalTimestamp = arrivalTimestamp;
         this.feePerByte = transaction.getFeeATM() / transaction.getFullSize();
@@ -125,7 +125,6 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
         return transaction.getSenderPublicKey();
     }
 
-
     @Override
     public long getRecipientId() {
         return transaction.getRecipientId();
@@ -195,7 +194,6 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
         } else {
             transaction.setFeeATM(feeATM);
         }
-
     }
 
     @Override
@@ -338,9 +336,10 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
 
     @Override
     public short getIndex() {
-        return transaction.getIndex();
+        return -1;
     }
 
+    @Override
     public void setIndex(int index) {
     }
 
@@ -353,9 +352,6 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
             return false;
         }
         if (atAcceptanceHeight) {
-//            if (lookupAccountControlPhasingService().isBlockDuplicate(this, duplicates)) {
-//                return true;
-//            }
             // all are checked at acceptance height for block duplicates
             if (transaction.getType().isBlockDuplicate(this, duplicates)) {
                 return true;

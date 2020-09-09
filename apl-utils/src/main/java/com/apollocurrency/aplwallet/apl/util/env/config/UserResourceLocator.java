@@ -39,7 +39,7 @@ public class UserResourceLocator implements ResourceLocator {
 
         InputStream is = classloader.getResourceAsStream(resourceName);
         if (is != null) {
-            log.trace("Located in resources, resource={}", resourceName);
+            log.info("Located in resources, resource={}", resourceName);
         }
 
         return Optional.ofNullable(is);
@@ -63,7 +63,7 @@ public class UserResourceLocator implements ResourceLocator {
             String p = dir + File.separator + resourceName;
             try {
                 is = new FileInputStream(p);
-                log.trace("Located in directories, resource={}", p);
+                log.info("Located in directories, resource={}", p);
                 break;
             } catch (FileNotFoundException ignored) {
                 log.info("File not found: " + p); // do not use logger (we should init it before using)

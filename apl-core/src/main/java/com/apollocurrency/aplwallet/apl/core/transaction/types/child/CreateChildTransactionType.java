@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ChildAccountAttachment;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -57,7 +58,7 @@ public class CreateChildTransactionType extends ChildAccountTransactionType {
             childAccount.setMultiSig(true);
             log.trace("CREATE_CHILD: create ParentId={}, childRS={}, childId={}, child publickey={}",
                 senderAccount.getId(),
-                Convert.defaultRsAccount(childAccount.getId()),
+                Convert2.defaultRsAccount(childAccount.getId()),
                 childAccount.getId(),
                 Convert.toHexString(childPublicKey));
             //save the account into db

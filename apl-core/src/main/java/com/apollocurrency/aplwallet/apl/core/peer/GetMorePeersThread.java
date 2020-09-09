@@ -59,7 +59,7 @@ class GetMorePeersThread implements Runnable {
                     int now = timeService.getEpochTime();
                     for (int i = 0; i < peers.size(); i++) {
                         String announcedAddress = peers.get(i);
-                        PeerImpl newPeer = peersService.findOrCreatePeer(null, announcedAddress, true);
+                        Peer newPeer = peersService.findOrCreatePeer(null, announcedAddress, true);
                         if (newPeer != null) {
                             if (now - newPeer.getLastUpdated() > 24 * 3600) {
                                 newPeer.setLastUpdated(now);
