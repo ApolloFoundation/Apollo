@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
+import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
+import com.apollocurrency.aplwallet.api.p2p.request.GetTransactionsRequest;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockchainProcessorState;
@@ -14,11 +16,11 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableRestorationService;
-import com.apollocurrency.aplwallet.apl.util.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -90,8 +92,7 @@ public class RestorePrunableDataTask implements Runnable {
                 //
                 // Get the pruned transactions from the archive peer
                 //
-                JSONObject request = new JSONObject();
-                JSONArray requestList = new JSONArray();
+                List<String> requestList = new ArrayList<>();
                 synchronized (prunableTransactions) {
                     Iterator<Long> it = processing.iterator();
                     while (it.hasNext()) {
@@ -102,13 +103,11 @@ public class RestorePrunableDataTask implements Runnable {
                             break;
                     }
                 }
-                request.put("requestType", "getTransactions");
-                request.put("transactionIds", requestList);
-                request.put("chainId", blockchainConfig.getChain().getChainId());
+                BaseP2PRequest request = new GetTransactionsRequest(requestList, blockchainConfig.getChain().getChainId());
                 JSONObject response;
                 try {
                     //TODO https://firstb.atlassian.net/browse/APL-1633
-                    response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+                    response = peer.send(request);
                 } catch (PeerNotConnectedException ex) {
                     response = null;
                 }

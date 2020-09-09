@@ -21,8 +21,8 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
@@ -50,6 +50,7 @@ import org.slf4j.Logger;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -124,15 +125,17 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     response.put("broadcasted", true);
                     return response;
                 }
-                try (DbIterator<? extends Transaction> unconfirmedTransactions = lookupTransactionProcessor().getAllUnconfirmedTransactions()) {
-                    while (unconfirmedTransactions.hasNext()) {
-                        if (filter.test(unconfirmedTransactions.next())) {
-                            LOG.debug("Exchange offer found in unconfirmed pool, broadcasting transaction " + transaction.getStringId());
+                for (UnconfirmedTransaction unconfirmedTransaction : lookupMemPool().getAllProcessedStream().collect(Collectors.toList())) {
+                    if (filter.test(unconfirmedTransaction)) {
+                        LOG.debug("Exchange offer found in unconfirmed pool, broadcasting transaction " + transaction.getStringId());
+                        try {
                             lookupTransactionProcessor().broadcast(transaction);
-                            response.put("broadcasted", true);
-                            return response;
+                        } catch (AplException.ValidationException validationException) {
+                            throw new RuntimeException(validationException.toString(), validationException);
                         }
+                        response.put("broadcasted", true);
                     }
+                    return response;
                 }
                 if (apw.checkPassword(req)) {
                     LOG.debug("Scheduling transaction " + transaction.getStringId());

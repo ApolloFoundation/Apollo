@@ -6,6 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.peer.parser;
 
 import org.json.simple.JSONObject;
 
-public interface ReqRespParser<T> {
+public interface JsonReqRespParser<T> {
     T parse(JSONObject json);
 }

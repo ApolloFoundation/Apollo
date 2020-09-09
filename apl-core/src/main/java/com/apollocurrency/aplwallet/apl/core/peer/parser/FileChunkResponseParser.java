@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.api.p2p.respons.FileChunkResponse;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 
-public class FileChunkResponseParser implements ReqRespParser<FileChunkResponse> {
+public class FileChunkResponseParser implements JsonReqRespParser<FileChunkResponse> {
     @Override
     public FileChunkResponse parse(JSONObject json) {
         return JSON.getMapper().convertValue(json, FileChunkResponse.class);
