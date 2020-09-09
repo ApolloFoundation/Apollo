@@ -5,6 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 public interface TimeService {
+
+    /**
+     * Time since genesis block.
+     *
+     * @return int (time in seconds).
+     */
     int getEpochTime();
 
     /**

@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.api.p2p.respons.GetPeersResponse;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 
-public class GetPeersResponseParser implements ReqRespParser<GetPeersResponse> {
+public class GetPeersResponseParser implements JsonReqRespParser<GetPeersResponse> {
     @Override
     public GetPeersResponse parse(JSONObject json) {
         return JSON.getMapper().convertValue(json, GetPeersResponse.class);

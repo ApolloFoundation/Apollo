@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.OrderedMap;
 
@@ -191,11 +192,16 @@ public class ServerInfoController {
     @Operation(
         summary = "Returns all node properties",
         description = "Returns all node properties",
-        tags = {"info"},
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Successful execution",
-                content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = OrderedMap.class)))
+        tags = {"info"})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successful execution",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = OrderedMap.class))),
+
+        @ApiResponse(responseCode = "401", description = "Unauthorized Error"),
+
+        @ApiResponse(responseCode = "403", description = "Access Forbidden"),
+
         }
     )
     @RolesAllowed("admin")

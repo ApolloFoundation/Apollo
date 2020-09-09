@@ -25,11 +25,11 @@ import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
-public class GenerateBlocksThread implements Runnable {
+public class GenerateBlocksTask implements Runnable {
 
     private volatile boolean logged;
     private long lastBlockId;
-    private static volatile boolean suspendForging = false;
+    private volatile boolean suspendForging = false;
 
     private final PropertiesHolder propertiesHolder;
     private final GlobalSync globalSync;
@@ -40,16 +40,16 @@ public class GenerateBlocksThread implements Runnable {
     private BlockchainProcessor blockchainProcessor;
     private final GeneratorServiceImpl generatorService;
 
-    private static volatile List<GeneratorMemoryEntity> sortedForgers = null;
+    private volatile List<GeneratorMemoryEntity> sortedForgers = null;
     private int delayTime;
 
-    public GenerateBlocksThread(PropertiesHolder propertiesHolder,
-                                GlobalSync globalSync,
-                                Blockchain blockchain,
-                                BlockchainConfig blockchainConfig,
-                                TimeService timeService,
-                                TransactionProcessor transactionProcessor,
-                                GeneratorServiceImpl generatorService) {
+    public GenerateBlocksTask(PropertiesHolder propertiesHolder,
+                              GlobalSync globalSync,
+                              Blockchain blockchain,
+                              BlockchainConfig blockchainConfig,
+                              TimeService timeService,
+                              TransactionProcessor transactionProcessor,
+                              GeneratorServiceImpl generatorService) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.globalSync = Objects.requireNonNull(globalSync);
         this.blockchain = Objects.requireNonNull(blockchain);
@@ -66,6 +66,10 @@ public class GenerateBlocksThread implements Runnable {
         log.trace("run - generateBlocksThread ({})", start);
         if (suspendForging) {
             log.trace("run - suspendForging = {}", suspendForging);
+            return;
+        }
+        if (generatorService.getGeneratorsMap().isEmpty()) {
+            resetSortedForgers();
             return;
         }
         try {

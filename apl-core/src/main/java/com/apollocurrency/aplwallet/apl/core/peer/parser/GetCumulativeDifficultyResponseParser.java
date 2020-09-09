@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.api.p2p.respons.GetCumulativeDifficultyRespo
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 
-public class GetCumulativeDifficultyResponseParser implements ReqRespParser<GetCumulativeDifficultyResponse> {
+public class GetCumulativeDifficultyResponseParser implements JsonReqRespParser<GetCumulativeDifficultyResponse> {
     @Override
     public GetCumulativeDifficultyResponse parse(JSONObject json) {
         return JSON.getMapper().convertValue(json, GetCumulativeDifficultyResponse.class);

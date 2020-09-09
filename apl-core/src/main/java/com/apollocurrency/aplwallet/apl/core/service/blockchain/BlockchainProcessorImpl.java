@@ -40,8 +40,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
@@ -185,6 +183,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final GetNextBlocksResponseParser getNextBlocksResponseParser;
     private final BlockSerializer blockSerializer;
     private final ConsensusManager consensusManager;
+    private final MemPool memPool;
 
     /**
      * Three blocks are used for internal calculations on assigning previous block
@@ -218,13 +217,15 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    BlockParser blockParser,
                                    GetNextBlocksResponseParser getNextBlocksResponseParser,
                                    BlockSerializer blockSerializer,
-                                   ConsensusManager consensusManager) {
+                                   ConsensusManager consensusManager,
+                                   MemPool memPool) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = blockchainConfig;
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.ledgerEvent = ledgerEvent;
         this.globalSync = globalSync;
+        this.memPool = memPool;
         this.dbTables = dbTables;
         this.trimService = trimService;
         this.phasingPollService = phasingPollService;
@@ -626,19 +627,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 validatePhasedTransactions(block, previousLastBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
                 validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
 
-//                block.setPrevious(previousLastBlock);
                 HeightConfig config = blockchainConfig.getCurrentConfig();
                 Shard lastShard = shardDao.getLastShard();
                 Block shardInitialBlock = blockchain.getShardInitialBlock();
                 int currentHeight = previousLastBlock.getHeight();
                 // put three latest blocks into array TODO: YL optimize to fetch three blocks later
-                threeLatestBlocksArray[0] = previousLastBlock;
-                if (currentHeight >= 1) {
-                    threeLatestBlocksArray[1] = blockchain.getBlockAtHeight(currentHeight - 1);
-                }
-                if (currentHeight >= 2) {
-                    threeLatestBlocksArray[2] = blockchain.getBlockAtHeight(currentHeight - 2);
-                }
+                fillInBlockArray(previousLastBlock, lastShard, currentHeight);
                 consensusManager.setPrevious(block, threeLatestBlocksArray, config, lastShard, shardInitialBlock.getHeight());
                 block.assignTransactionsIndex(); // IMPORTANT step !!!
                 log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.BEFORE_BLOCK_ACCEPT.name());
@@ -681,6 +675,25 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fireAsync(block); // send async event to other components
         log.debug("Push block at height {} tx cnt: {} took {} ms (lock acquiring: {} ms)",
             block.getHeight(), block.getTransactions().size(), System.currentTimeMillis() - startTime, lockAquireTime);
+    }
+
+    private void fillInBlockArray(Block previousLastBlock, Shard lastShard, int currentHeight) {
+        threeLatestBlocksArray[0] = previousLastBlock;
+        if (lastShard == null) {
+            if (currentHeight >= 1) {
+                threeLatestBlocksArray[1] = blockchain.getBlockAtHeight(currentHeight - 1);
+            }
+            if (currentHeight >= 2) {
+                threeLatestBlocksArray[2] = blockchain.getBlockAtHeight(currentHeight - 2);
+            }
+        } else {
+            if ((currentHeight - 1) >= lastShard.getShardHeight()) {
+                threeLatestBlocksArray[1] = blockchain.getBlockAtHeight(currentHeight - 1);
+            }
+            if ((currentHeight - 2) >= lastShard.getShardHeight()) {
+                threeLatestBlocksArray[2] = blockchain.getBlockAtHeight(currentHeight - 2);
+            }
+        }
     }
 
     private AnnotationLiteral<BlockEvent> literal(BlockEventType blockEventType) {
@@ -1132,15 +1145,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit) {
 
         List<UnconfirmedTransaction> orderedUnconfirmedTransactions = new ArrayList<>();
-        DbIterator<UnconfirmedTransaction> allUnconfirmedTransactions = transactionProcessor.getAllUnconfirmedTransactions();
-        try (FilteringIterator<UnconfirmedTransaction> unconfirmedTransactions = new FilteringIterator<>(
-            allUnconfirmedTransactions,
-            transaction -> referencedTransactionService.hasAllReferencedTransactions(
-                transaction.getTransaction(), previousBlock.getHeight() + 1))) {
-            for (UnconfirmedTransaction unconfirmedTransaction : unconfirmedTransactions) {
-                orderedUnconfirmedTransactions.add(unconfirmedTransaction);
-            }
-        }
+        memPool.getAllProcessedStream()
+            .filter(transaction -> referencedTransactionService.hasAllReferencedTransactions(
+                transaction.getTransaction(), previousBlock.getHeight() + 1))
+            .forEach(orderedUnconfirmedTransactions::add);
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int payloadLength = 0;
         int maxPayloadLength = blockchainConfig.getCurrentConfig().getMaxPayloadLength();
@@ -1213,6 +1221,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         Block previousBlock = blockchain.getLastBlock();
         SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp, Integer.MAX_VALUE);
+        transactionProcessor.printMemPoolStat();
         List<Transaction> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
         long totalAmountATM = 0;

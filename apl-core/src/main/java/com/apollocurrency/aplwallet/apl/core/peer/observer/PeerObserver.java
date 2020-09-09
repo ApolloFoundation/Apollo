@@ -18,7 +18,7 @@ import javax.inject.Singleton;
 @Singleton
 public class PeerObserver {
 
-    private PeersService peersService;
+    private final PeersService peersService;
 
     @Inject
     public PeerObserver(PeersService peersService) {
@@ -26,7 +26,7 @@ public class PeerObserver {
     }
 
     public void onAccountBalance(@Observes @AccountEvent(AccountEventType.BALANCE) Account account) {
-        log.trace("Catch event {} accaount={}", AccountEventType.BALANCE, account);
+        //log.trace("Catch event {} account={}", AccountEventType.BALANCE, account);
         peersService.getAllConnectablePeers().forEach(peer -> {
             if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
                 peersService.notifyListeners(peer, PeersService.Event.WEIGHT);
