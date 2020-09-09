@@ -18,7 +18,7 @@ public class ResponseWaiter {
     /**
      * time to live of entry. Entry should de deleted if it is older
      */
-    public static long WSW_TTL_MS = 60000; //1 minute
+    public static final long WSW_TTL_MS = 60000; //1 minute
     /**
      * Request latch
      */
@@ -43,9 +43,9 @@ public class ResponseWaiter {
                 throw new SocketTimeoutException("WebSocket response wait timeout (" + timeoutMs + "ms) exceeded");
             }
         } catch (InterruptedException ex) {
-            log.debug("Interruptrd exception while waiting for response", ex);
+            log.debug("Interrupted exception while waiting for response", ex);
             //we can not just swallow this exception
-            //but we have to return reuslt below
+            //but we have to return result below
             Thread.currentThread().interrupt();
         }
         return response;

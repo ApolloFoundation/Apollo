@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
-import com.apollocurrency.aplwallet.apl.core.peer.parser.ReqRespParser;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.JsonReqRespParser;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -111,16 +111,26 @@ public interface Peer extends Comparable<Peer> {
     @Deprecated
     JSONObject send(JSONStreamAware request, UUID chainId) throws PeerNotConnectedException;
 
-    //todo add base response
-    void send(BaseP2PRequest request) throws PeerNotConnectedException;
+    //TODO: add base response
+    JSONObject send(BaseP2PRequest request) throws PeerNotConnectedException;
 
-    <T> T send(BaseP2PRequest request, ReqRespParser<T> parser) throws PeerNotConnectedException;
+    <T> T send(BaseP2PRequest request, JsonReqRespParser<T> parser) throws PeerNotConnectedException;
 
     boolean isTrusted();
 
     PeerTrustLevel getTrustLevel();
 
     long getServices();
+
+    long getLastActivityTime();
+
+    Peer2PeerTransport getP2pTransport();
+
+    boolean processError(JSONObject request);
+
+    void setServices(long code);
+
+    void setLastUpdated(int time);
 
     enum Service {
         HALLMARK(1),                    // Hallmarked node

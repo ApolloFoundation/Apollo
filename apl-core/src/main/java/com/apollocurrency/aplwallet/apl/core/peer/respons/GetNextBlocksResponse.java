@@ -20,7 +20,6 @@ public class GetNextBlocksResponse extends BaseP2PResponse {
     }
 
     public GetNextBlocksResponse(List<BlockImpl> nextBlocks, Exception exception) {
-//        super(exception);
         this.nextBlocks = nextBlocks;
     }
 }

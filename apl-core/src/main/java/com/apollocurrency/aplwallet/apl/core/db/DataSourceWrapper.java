@@ -343,7 +343,7 @@ public class DataSourceWrapper implements DataSource {
                 if (idleConnections <= totalConnections * 0.1) {
                     int activeConnections = jmxBean.getActiveConnections();
                     int threadAwaitingConnections = jmxBean.getThreadsAwaitingConnection();
-                    log.debug("Total/Active/Idle connections in Pool '{}'/'{}'/'{}', threadsAwaitPool=[{}], {} Tread: {}",
+                    log.debug("Total/Active/Idle connections in Pool '{}'/'{}'/'{}', threadsAwaitPool=[{}], {} Thread: {}",
                         totalConnections,
                         activeConnections,
                         idleConnections,

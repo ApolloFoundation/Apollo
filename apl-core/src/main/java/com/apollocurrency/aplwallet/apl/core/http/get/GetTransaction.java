@@ -70,7 +70,7 @@ public final class GetTransaction extends AbstractAPIRequestHandler {
             return INCORRECT_TRANSACTION;
         }
         if (transaction == null) {
-            transaction = lookupTransactionProcessor().getUnconfirmedTransaction(transactionId);
+            transaction = lookupMemPool().getUnconfirmedTransaction(transactionId);
             if (transaction == null || transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
                 return UNKNOWN_TRANSACTION;
             }

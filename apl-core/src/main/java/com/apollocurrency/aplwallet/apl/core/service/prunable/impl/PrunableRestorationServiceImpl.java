@@ -23,7 +23,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
-import com.apollocurrency.aplwallet.apl.util.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -142,7 +141,7 @@ public class PrunableRestorationServiceImpl implements PrunableRestorationServic
             JSONObject response;
             try {
                 //TODO https://firstb.atlassian.net/browse/APL-1633
-                response = peer.send(JSON.getMapper().convertValue(req, JSONObject.class), blockchainConfig.getChain().getChainId());
+                response = peer.send(req);
             } catch (PeerNotConnectedException ex) {
                 response = null;
             }
