@@ -381,7 +381,7 @@ public final class PeerImpl implements Peer {
 
     @Override
     public void blacklist(Exception cause) {
-        deactivate("Exception: " + cause.getMessage());
+        deactivate("Exception: " + cause.getClass().getName() + ": " + cause.getMessage());
         if (cause instanceof AplException.NotCurrentlyValidException || cause instanceof BlockchainProcessor.BlockOutOfOrderException
             || cause instanceof SQLException || cause.getCause() instanceof SQLException) {
             // don't blacklist peers just because a feature is not yet enabled, or because of database timeouts
@@ -395,7 +395,7 @@ public final class PeerImpl implements Peer {
             return;
         }
         if (!isBlacklisted()) {
-            LOG.trace("Connect error", cause);
+            LOG.trace("Connect error, peer=" + getHostWithPort(), cause);
             if (cause instanceof IOException || cause instanceof ParseException || cause instanceof IllegalArgumentException) {
                 LOG.debug("Blacklisting " + host + " because of: " + cause.toString());
             } else {
@@ -419,7 +419,7 @@ public final class PeerImpl implements Peer {
         if (blacklistingTime == 0) {
             return;
         }
-        LOG.debug("Unblacklisting " + host);
+        LOG.debug("Unblacklisting {}", host);
         blacklistingTime = 0;
         blacklistingCause = null;
         peers.notifyListeners(this, PeersService.Event.UNBLACKLIST);
