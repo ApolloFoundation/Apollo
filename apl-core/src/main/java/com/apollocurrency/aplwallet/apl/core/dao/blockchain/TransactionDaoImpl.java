@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionV
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -789,8 +790,8 @@ public class TransactionDaoImpl implements TransactionDao {
 
             TxReceipt transaction = new TxReceipt();
             transaction.setTransaction(Long.toUnsignedString(id));
-            transaction.setSender(Convert.defaultRsAccount(senderId));
-            transaction.setRecipient(recipientId != 0 ? Convert.defaultRsAccount(recipientId) : "0");
+            transaction.setSender(Convert2.defaultRsAccount(senderId));
+            transaction.setRecipient(recipientId != 0 ? Convert2.defaultRsAccount(recipientId) : "0");
             transaction.setAmount(Long.toUnsignedString(amountATM));
             transaction.setFee(Long.toUnsignedString(feeATM));
             transaction.setTimestamp((long) timestamp);
