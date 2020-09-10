@@ -48,6 +48,7 @@ public class TransactionValidator {
     private final TransactionVersionValidator transactionVersionValidator;
     private final KeyValidator keyValidator;
     private final AppendixValidatorRegistry validatorRegistry;
+    private final AntifraudValidator antifraudValidator;
 
     @Inject
     public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService,
@@ -64,6 +65,7 @@ public class TransactionValidator {
         this.transactionVersionValidator = transactionVersionValidator;
         this.keyValidator = new PublicKeyValidator(accountPublicKeyService);
         this.validatorRegistry = validatorRegistry;
+        this.antifraudValidator = new AntifraudValidator();
     }
 
 
@@ -110,7 +112,7 @@ public class TransactionValidator {
             throw new AplException.NotValidException("Transactions of this type must have a valid recipient");
         }
 
-        if (!(new AntifraudValidator()).validate(blockchain.getHeight(), blockchainConfig.getChain().getChainId(), transaction.getSenderId(),
+        if (!antifraudValidator.validate(blockchain.getHeight(), blockchainConfig.getChain().getChainId(), transaction.getSenderId(),
             transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
 
         Account sender = accountService.getAccount(transaction.getSenderId());
