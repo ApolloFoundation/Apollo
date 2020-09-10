@@ -59,9 +59,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class DataSourceWrapper implements DataSource {
     private static final Logger log = getLogger(DataSourceWrapper.class);
     private static final String DB_INITIALIZATION_ERROR_TEXT = "DatabaseManager was not initialized!";
-    private static Pattern patternExtractShardNumber = Pattern.compile("shard-\\d+");
-    //    private JdbcConnectionPool dataSource;
-//    private volatile int maxActiveConnections;
+    private static Pattern patternExtractShardNumber = Pattern.compile("shard_\\d+");
     private final String dbUrl;
     private final String dbName;
     private final String dbUsername;
@@ -74,7 +72,7 @@ public class DataSourceWrapper implements DataSource {
     private HikariPoolMXBean jmxBean;
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
-    private DataSource systemDateSource;
+    private DataSource systemDataSource;
 
 
     public DataSourceWrapper(DbProperties dbProperties) {
@@ -197,17 +195,17 @@ public class DataSourceWrapper implements DataSource {
 
     private void initDatasource(DbVersion dbVersion) {
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
-        if (this.systemDateSource == null) {
+        if (this.systemDataSource == null) {
             HikariConfig sysDBConf = new HikariConfig();
             sysDBConf.setJdbcUrl(systemDbUrl);
             sysDBConf.setUsername(dbUsername);
             sysDBConf.setPassword(dbPassword);
             sysDBConf.setMaximumPoolSize(20);
             sysDBConf.setPoolName("systemDB");
-            this.systemDateSource = new HikariDataSource(sysDBConf);
+            this.systemDataSource = new HikariDataSource(sysDBConf);
         }
 
-        try (Connection con = this.systemDateSource.getConnection();
+        try (Connection con = this.systemDataSource.getConnection();
              Statement stmt = con.createStatement()) {
             stmt.execute(
                 String.format(
@@ -346,12 +344,12 @@ public class DataSourceWrapper implements DataSource {
         return con;
     }
 
-    public DataSource getSystemDateSource() {
-        return systemDateSource;
+    public DataSource getSystemDataSource() {
+        return systemDataSource;
     }
 
-    public void setSystemDateSource(DataSource systemDateSource) {
-        this.systemDateSource = systemDateSource;
+    public void setSystemDataSource(DataSource systemDataSource) {
+        this.systemDataSource = systemDataSource;
     }
 
     public String getUrl() {

@@ -278,7 +278,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         shardDbProperties.setDbIdentity(TEMP_DB_IDENTITY);
 
         TransactionalDataSource temporaryDataSource = new TransactionalDataSource(shardDbProperties, propertiesHolder);
-        temporaryDataSource.setSystemDateSource(currentTransactionalDataSource.getSystemDateSource());
+        temporaryDataSource.setSystemDataSource(currentTransactionalDataSource.getSystemDataSource());
 
         temporaryDataSource.init(new AplDbVersion());
         connectedShardDataSourceMap.put(TEMP_DB_IDENTITY, temporaryDataSource); // put temporary DS with special ID
