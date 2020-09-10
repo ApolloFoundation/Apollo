@@ -53,7 +53,6 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
     private final ThreadLocal<Set<TransactionCallback>> transactionCallback = new ThreadLocal<>();
     // TODO: YL remove static instance later
     private FilteredFactoryImpl factory;
-    private long stmtThreshold;
     private long txThreshold;
     private long txInterval;
     private boolean enableSqlLogs;
@@ -82,7 +81,6 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
 
     public TransactionalDataSource(DbProperties dbProperties, int stmtThreshold, int txThreshold, int txInterval, boolean enableSqlLogs) {
         super(dbProperties);
-        this.stmtThreshold = stmtThreshold;
         this.txThreshold = txThreshold;
         this.txInterval = txInterval;
         this.enableSqlLogs = enableSqlLogs;

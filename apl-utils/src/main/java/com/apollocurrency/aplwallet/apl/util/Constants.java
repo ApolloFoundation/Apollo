@@ -28,6 +28,7 @@ public final class Constants {
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
+    public static final String APPLICATION_DB_NAME = "apl_blockchain";
     public static final String DESKTOP_APPLICATION_NAME = "apl-desktop";
     public static final int DEFAULT_TRIM_FREQUENCY = 1000;
     public static final long LONG_TIME_TWO_SECONDS = 2000L;

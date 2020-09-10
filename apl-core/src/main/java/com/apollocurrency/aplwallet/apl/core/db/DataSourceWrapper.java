@@ -63,49 +63,62 @@ public class DataSourceWrapper implements DataSource {
     //    private JdbcConnectionPool dataSource;
 //    private volatile int maxActiveConnections;
     private final String dbUrl;
+    private final String dbName;
     private final String dbUsername;
     private final String dbPassword;
+    private final String systemDbUrl;
     private final int maxConnections;
     private final int loginTimeout;
-    private final int defaultLockTimeout;
-    private final int maxMemoryRows;
     private String shardId = "main-db";
     private HikariDataSource dataSource;
     private HikariPoolMXBean jmxBean;
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
+    private DataSource systemDateSource;
+
 
     public DataSourceWrapper(DbProperties dbProperties) {
         //Even though dbUrl is no longer coming from apl-blockchain.properties,
         //DbMigrationExecutor in afterMigration triggers the further creation of DataSourceWrapper
         String dbUrlTemp = dbProperties.getDbUrl();
+        this.dbName = dbProperties.getDbName();
 
         if (StringUtils.isBlank(dbUrlTemp)) {
-            String dbFileName = dbProperties.getDbFileName();
-            Matcher m = patternExtractShardNumber.matcher(dbFileName); // try to match shard name
-            if (m.find()) { // if found
+            Matcher m = patternExtractShardNumber.matcher(dbName); // try to match shard name
+            if (m.find()) {
                 shardId = m.group(); // store shard id
             }
-            //dbUrlTemp = "jdbc:mariadb://localhost:3306/apollo_new?user=root&password=12";
             dbUrlTemp = String.format(
                 "jdbc:%s://%s:%d/%s?user=%s&password=%s",
                 dbProperties.getDbType(),
                 dbProperties.getDatabaseHost(),
                 dbProperties.getDatabasePort(),
-                dbProperties.getDatabaseName(),
+                dbProperties.getDbName(),
                 dbProperties.getDbUsername(),
                 dbProperties.getDbPassword()
             );
+            dbProperties.setDbUrl(dbUrlTemp);
+        }
+
+        if (StringUtils.isBlank(dbProperties.getSystemDbUrl())) {
+            String sysDbUrl = String.format(
+                "jdbc:%s://%s:%d/%s?user=%s&password=%s",
+                dbProperties.getDbType(),
+                dbProperties.getDatabaseHost(),
+                dbProperties.getDatabasePort(),
+                DbProperties.DB_SYSTEM_NAME,
+                dbProperties.getDbUsername(),
+                dbProperties.getDbPassword()
+            );
+            dbProperties.setSystemDbUrl(sysDbUrl);
         }
 
         this.dbUrl = dbUrlTemp;
-        dbProperties.setDbUrl(dbUrlTemp);
         this.dbUsername = dbProperties.getDbUsername();
         this.dbPassword = dbProperties.getDbPassword();
         this.maxConnections = dbProperties.getMaxConnections();
         this.loginTimeout = dbProperties.getLoginTimeout();
-        this.defaultLockTimeout = dbProperties.getDefaultLockTimeout();
-        this.maxMemoryRows = dbProperties.getMaxMemoryRows();
+        this.systemDbUrl = dbProperties.getSystemDbUrl();
     }
 
     @Override
@@ -184,6 +197,27 @@ public class DataSourceWrapper implements DataSource {
 
     private void initDatasource(DbVersion dbVersion) {
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
+        if (this.systemDateSource == null) {
+            HikariConfig sysDBConf = new HikariConfig();
+            sysDBConf.setJdbcUrl(systemDbUrl);
+            sysDBConf.setUsername(dbUsername);
+            sysDBConf.setPassword(dbPassword);
+            sysDBConf.setMaximumPoolSize(20);
+            sysDBConf.setPoolName("systemDB");
+            this.systemDateSource = new HikariDataSource(sysDBConf);
+        }
+
+        try (Connection con = this.systemDateSource.getConnection();
+             Statement stmt = con.createStatement()) {
+            stmt.execute(
+                String.format(
+                    "CREATE DATABASE IF NOT EXISTS %1$s CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;",
+                    dbName)
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
         config.setUsername(dbUsername);
@@ -204,10 +238,14 @@ public class DataSourceWrapper implements DataSource {
         log.debug("Attempting to create DataSource by path = {}...", dbUrl);
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
+
 //            stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
 //            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
+
+            stmt.executeUpdate("set global max_connections=1000");
             stmt.executeUpdate("set global rocksdb_max_row_locks=1073741824");
             stmt.executeUpdate("set session rocksdb_max_row_locks=1073741824");
+
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -312,6 +350,14 @@ public class DataSourceWrapper implements DataSource {
             }
         }
         return con;
+    }
+
+    public DataSource getSystemDateSource() {
+        return systemDateSource;
+    }
+
+    public void setSystemDateSource(DataSource systemDateSource) {
+        this.systemDateSource = systemDateSource;
     }
 
     public String getUrl() {

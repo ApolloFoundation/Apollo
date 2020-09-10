@@ -28,16 +28,13 @@ public class DbConfig {
 
     @Produces
     public DbProperties getDbConfig() {
-//        String customDbDir = propertiesHolder.getStringProperty("apl.customDbDir");
-        String dbFileName = Constants.APPLICATION_DIR_NAME;
-//        if (!StringUtils.isBlank(customDbDir)) {
-//            dbFileName = propertiesHolder.getStringProperty("apl.dbName");
-//        }
+        String dbName = Constants.APPLICATION_DB_NAME;
         DirProvider dp = RuntimeEnvironment.getInstance().getDirProvider();
+
         return DbProperties.builder()
             .dbType(propertiesHolder.getStringProperty("apl.dbType"))
             .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "./unit-test-db") // for unit tests
-            .dbFileName(dbFileName)
+            .dbName(dbName)
             .chainId(chainsConfigHolder.getActiveChain().getChainId())
             .dbParams(propertiesHolder.getStringProperty("apl.dbParams"))
             .dbUsername(propertiesHolder.getStringProperty("apl.dbUsername"))
@@ -46,7 +43,6 @@ public class DbConfig {
             .loginTimeout(propertiesHolder.getIntProperty("apl.dbLoginTimeout"))
             .defaultLockTimeout(propertiesHolder.getIntProperty("apl.dbDefaultLockTimeout") * 1000)
             .maxMemoryRows(propertiesHolder.getIntProperty("apl.dbMaxMemoryRows"))
-            .databaseName(propertiesHolder.getStringProperty("apl.databaseName"))
             .databaseHost(propertiesHolder.getStringProperty("apl.databaseHost"))
             .databasePort(propertiesHolder.getIntProperty("apl.databasePort"))
             .build();

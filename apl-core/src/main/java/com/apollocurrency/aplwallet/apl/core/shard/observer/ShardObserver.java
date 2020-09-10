@@ -51,18 +51,16 @@ public class ShardObserver {
         log.debug("Is sharding enabled GLOBALLY ? : '{}'", !isShardingOff);
         if (!isShardingOff) {
             HeightConfig configAtTrimHeight = blockchainConfig.getConfigAtHeight(lastTrimBlockHeight);
-            log.debug("Check shard conditions: ? [{}],  lastTrimBlockHeight = {}, blockchainHeight = {}"
-                    + ", configAtTrimHeight = {}",
-                (lastTrimBlockHeight != 0
-                    && configAtTrimHeight != null
-                    && configAtTrimHeight.isShardingEnabled()
-                    && lastTrimBlockHeight % configAtTrimHeight.getShardingFrequency() == 0),
-                lastTrimBlockHeight, blockchainHeight, configAtTrimHeight
-            );
-            if (lastTrimBlockHeight != 0
+            boolean isTimeForShard = lastTrimBlockHeight != 0
                 && configAtTrimHeight != null
                 && configAtTrimHeight.isShardingEnabled()
-                && lastTrimBlockHeight % configAtTrimHeight.getShardingFrequency() == 0) {
+                && lastTrimBlockHeight % configAtTrimHeight.getShardingFrequency() == 0;
+
+            log.debug("Check shard conditions: ? [{}],  lastTrimBlockHeight = {}, blockchainHeight = {}"
+                    + ", configAtTrimHeight = {}",
+                isTimeForShard, lastTrimBlockHeight, blockchainHeight, configAtTrimHeight
+            );
+            if (isTimeForShard) {
                 completableFuture = shardService.tryCreateShardAsync(lastTrimBlockHeight, blockchainHeight);
             } else {
                 log.debug("No attempt to create new shard lastTrimHeight = {}, configAtTrimHeight = {} (because {})",
