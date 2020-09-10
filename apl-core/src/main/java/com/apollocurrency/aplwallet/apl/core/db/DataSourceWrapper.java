@@ -230,11 +230,7 @@ public class DataSourceWrapper implements DataSource {
         log.debug("Creating DataSource pool '{}', path = {}", shardId, dbUrl);
         dataSource = new HikariDataSource(config);
         jmxBean = dataSource.getHikariPoolMXBean();
-/*
-        dataSource = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
-        dataSource.setMaxConnections(maxConnections);
-        dataSource.setLoginTimeout(loginTimeout);
-*/
+
         log.debug("Attempting to create DataSource by path = {}...", dbUrl);
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
@@ -242,7 +238,6 @@ public class DataSourceWrapper implements DataSource {
 //            stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
 //            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
 
-            stmt.executeUpdate("set global max_connections=1000");
             stmt.executeUpdate("set global rocksdb_max_row_locks=1073741824");
             stmt.executeUpdate("set session rocksdb_max_row_locks=1073741824");
 
@@ -257,7 +252,6 @@ public class DataSourceWrapper implements DataSource {
         log.debug("Attempting to create Jdbi instance...");
         Jdbi jdbi = Jdbi.create(dataSource);
         jdbi.installPlugin(new SqlObjectPlugin());
-//        jdbi.installPlugin(new H2DatabasePlugin());
         jdbi.registerArgument(new BigIntegerArgumentFactory());
         jdbi.registerArgument(new DexCurrenciesFactory());
         jdbi.registerArgument(new OrderTypeFactory());
