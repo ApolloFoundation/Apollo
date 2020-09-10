@@ -252,9 +252,4 @@ public final class DbUtils {
         return index;
     }
 
-    public static void createDBIfNotExist(Connection connection, String dbName) {
-
-
-    }
-
 }
