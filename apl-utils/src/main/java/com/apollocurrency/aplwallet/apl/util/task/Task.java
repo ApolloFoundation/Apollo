@@ -26,11 +26,11 @@ public class Task implements TaskAttributes, Runnable {
      */
     private String name;
     /**
-     * The initial delay
+     * The initial delay (in milliseconds)
      */
     private int initialDelay;
     /**
-     * The periodic delay
+     * The periodic delay (in milliseconds)
      */
     private int delay;
 

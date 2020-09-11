@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMoni
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
@@ -129,6 +130,7 @@ public abstract class AbstractAPIRequestHandler {
     private ShufflerService shufflerService;
     private FundingMonitorService fundingMonitorService;
     private GeneratorService generatorService;
+    private MemPool memPool;
 
     public AbstractAPIRequestHandler(APITag[] apiTags, String... parameters) {
         this(null, apiTags, parameters);
@@ -246,6 +248,13 @@ public abstract class AbstractAPIRequestHandler {
         if (transactionProcessor == null)
             transactionProcessor = CDI.current().select(TransactionProcessorImpl.class).get();
         return transactionProcessor;
+    }
+
+    protected MemPool lookupMemPool() {
+        if (memPool == null) {
+            memPool = CDI.current().select(MemPool.class).get();
+        }
+        return memPool;
     }
 
     protected TransactionalDataSource lookupDataSource() {

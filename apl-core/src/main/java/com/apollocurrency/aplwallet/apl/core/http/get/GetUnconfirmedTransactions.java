@@ -20,8 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -52,27 +51,23 @@ public final class GetUnconfirmedTransactions extends AbstractAPIRequestHandler 
         int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONArray transactions = new JSONArray();
+        int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
+        if (limit == 0) {
+            limit = Integer.MAX_VALUE;
+        }
         if (accountIds.isEmpty()) {
-            try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<>(
-                lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
-                transaction -> transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT,
-                firstIndex, lastIndex)) {
-                while (transactionsIterator.hasNext()) {
-                    Transaction transaction = transactionsIterator.next();
-                    transactions.add(JSONData.unconfirmedTransaction(transaction));
-                }
-            }
+            lookupMemPool().getAllProcessedStream()
+                .filter(transaction -> transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT)
+                .skip(firstIndex)
+                .limit(limit)
+                .forEach(e -> transactions.add(JSONData.unconfirmedTransaction(e)));
         } else {
-            try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<>(
-                lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
-                transaction -> transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT && (accountIds.contains(transaction.getSenderId()) ||
-                    accountIds.contains(transaction.getRecipientId())),
-                firstIndex, lastIndex)) {
-                while (transactionsIterator.hasNext()) {
-                    Transaction transaction = transactionsIterator.next();
-                    transactions.add(JSONData.unconfirmedTransaction(transaction));
-                }
-            }
+            lookupMemPool().getAllProcessedStream()
+                .filter(transaction -> transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT
+                    && (accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId())))
+                .skip(firstIndex)
+                .limit(limit)
+                .forEach(e -> transactions.add(JSONData.unconfirmedTransaction(e)));
         }
 
         JSONObject response = new JSONObject();

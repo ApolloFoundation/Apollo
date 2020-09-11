@@ -21,6 +21,7 @@ import static com.apollocurrency.aplwallet.apl.util.task.DefaultTaskDispatcher.D
 public class TaskDispatchManager {
 
     private final Object dispatchersMonitor = new Object();
+    private volatile boolean isTasksStarted = false;
     private PropertiesHolder propertiesHolder;
     private Map<String, TaskDispatcher> dispatchers;
 
@@ -52,6 +53,7 @@ public class TaskDispatchManager {
             dispatchers.values().forEach(dispatcher -> log.trace(dispatcher.info()));
         }
         synchronized (dispatchersMonitor) {
+            isTasksStarted = true;
             dispatchers.values().forEach(TaskDispatcher::dispatch);
         }
     }
@@ -66,7 +68,12 @@ public class TaskDispatchManager {
 
     private void registerDispatcher(TaskDispatcher dispatcher, String name) {
         log.trace("Register {} service ", name);
+
         synchronized (dispatchersMonitor) {
+            if (isTasksStarted) {
+                log.error("DispatcherManager has been started all registered tasks. TaskDispatcher {} has wrong register time.", name);
+            }
+
             dispatchers.put(name, dispatcher);
         }
     }
