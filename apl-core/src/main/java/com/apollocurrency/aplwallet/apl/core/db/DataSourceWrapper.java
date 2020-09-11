@@ -206,8 +206,8 @@ public class DataSourceWrapper implements DataSource {
              Statement stmt = con.createStatement()) {
 //            stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
 //            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
-            stmt.executeUpdate("set global rocksdb_max_row_locks=1073741824");
-            stmt.executeUpdate("set session rocksdb_max_row_locks=1073741824");
+//            stmt.executeUpdate("set global rocksdb_max_row_locks=1073741824");
+//            stmt.executeUpdate("set session rocksdb_max_row_locks=1073741824");
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

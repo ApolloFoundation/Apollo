@@ -18,10 +18,17 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -52,13 +59,28 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Slf4j
+@Testcontainers
 @Tag("slow")
 class BlockDaoTest {
+
+    @Container
+    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.4")
+        .withDatabaseName("mysql")
+//        .withUsername("root")
+        .withUsername("mariadb.sys")
+        .withPassword("mypass")
+//        .withExposedPorts(3306)
+//        .withNetwork(Network.newNetwork())
+//        .withNetworkAliases("mariaDbService")
+        .withLogConsumer(new Slf4jLogConsumer(log));
 
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("blockDaoTestDb").toAbsolutePath().toString()));
+//    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("blockDaoTestDb").toAbsolutePath().toString()));
+    DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbFileProperties(createPath("blockDaoTestDb").toAbsolutePath().toString()));
+//    DbExtension extension = new DbExtension(mariaDBContainer, null, null, null, null);
 
     private BlockDao blockDao;
     private TransactionDaoImpl transactionDao;
@@ -75,6 +97,7 @@ class BlockDaoTest {
 
     @BeforeEach
     void setUp() {
+        assertTrue(mariaDBContainer.isRunning());
         td = new BlockTestData();
         txd = new TransactionTestData();
         blockDao = new BlockDaoImpl(extension.getDatabaseManager());

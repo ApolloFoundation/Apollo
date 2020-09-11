@@ -22,6 +22,9 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.JdbcDatabaseContainer;
+import org.testcontainers.containers.MariaDBContainer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,14 +45,51 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     private Path dbDir;
     private LuceneFullTextSearchEngine luceneFullTextSearchEngine;
 
+    public DbExtension(GenericContainer jdbcDatabaseContainer,
+                       DbProperties dbProperties,
+                       PropertiesHolder propertiesHolder,
+                       String schemaScriptPath,
+                       String dataScriptPath) {
+        log.debug("URL: {}", ((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl());
+        log.debug("01: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
+        log.debug("02: {}", ((MariaDBContainer)jdbcDatabaseContainer).getUsername());
+        log.debug("03: {}", jdbcDatabaseContainer.getDockerImageName());
+        log.debug("04: {}", ((MariaDBContainer)jdbcDatabaseContainer).getDriverClassName());
+//        log.debug("05: {}", jdbcDatabaseContainer.getTestHostIpAddress());
+        log.debug("06: {}", jdbcDatabaseContainer.getContainerId());
+        log.debug("07: {}", jdbcDatabaseContainer.getBoundPortNumbers());
+        log.debug("08: {}", jdbcDatabaseContainer.getExposedPorts());
+        log.debug("09: {}", jdbcDatabaseContainer.getPortBindings());
+        log.debug("10: {}", jdbcDatabaseContainer.getHost());
+
+//        dbProperties.setDbUrl(((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl() + "?TC_DAEMON=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql");
+        dbProperties.setDbUrl("jdbc:tc:mariadb:10.4:///mysql?TC_DAEMON=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql");
+//        dbProperties.setDbUrl("jdbc:mariadb://mariaDbService:3306/mysql");
+
+        manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
+//        this(dbProperties, null, null, null);
+    }
+
+    public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties dbProperties) {
+        this(jdbcDatabaseContainer, dbProperties, null, null, null);
+        log.debug("URL: {}", ((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl());
+//        dbProperties.setDbUrl("jdbc:tc:mariadb:10.4:///mysql?TC_DAEMON=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql");
+        log.debug("1: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
+        log.debug("2: {}", ((MariaDBContainer)jdbcDatabaseContainer).getUsername());
+        log.debug("3: {}", jdbcDatabaseContainer.getDockerImageName());
+    }
+
     public DbExtension(DbProperties dbProperties) {
         this(dbProperties, null, null, null);
+    }
+
+    public DbExtension(JdbcDatabaseContainer jdbcDatabaseContainer, DbProperties properties, String dataScriptPath, String schemaScriptPath) {
+        manipulator = new DbManipulator(properties, null, dataScriptPath, schemaScriptPath);
     }
 
     public DbExtension(DbProperties properties, String dataScriptPath, String schemaScriptPath) {
         manipulator = new DbManipulator(properties, null, dataScriptPath, schemaScriptPath);
     }
-
 
     public DbExtension(Map<String, List<String>> tableWithColumns) {
         this();
@@ -64,6 +104,11 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     }
 
     public DbExtension(Path dbDir, String dbName, String dataScript) {
+        manipulator = new DbManipulator(DbTestData.getDbFileProperties(dbDir.resolve(dbName).toAbsolutePath().toString()), null, dataScript, null);
+        this.dbDir = dbDir;
+    }
+
+    public DbExtension(JdbcDatabaseContainer jdbcDatabaseContainer, Path dbDir, String dbName, String dataScript) {
         manipulator = new DbManipulator(DbTestData.getDbFileProperties(dbDir.resolve(dbName).toAbsolutePath().toString()), null, dataScript, null);
         this.dbDir = dbDir;
     }
