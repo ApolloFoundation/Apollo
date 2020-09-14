@@ -8,7 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -34,8 +36,9 @@ public class PhasingApprovedResultTable extends EntityDbTable<PhasingApprovalRes
 
     @Inject
     public PhasingApprovedResultTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                      DatabaseManager databaseManager) {
-        super(TABLE_NAME, KEY_FACTORY, false, null, derivedDbTablesRegistry, databaseManager, null);
+                                      DatabaseManager databaseManager,
+                                      Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+        super(TABLE_NAME, KEY_FACTORY, false, null, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
     }
 
     @Override

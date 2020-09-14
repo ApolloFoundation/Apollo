@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
 
+import javax.enterprise.event.Event;
+
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
@@ -12,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeriv
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -25,8 +28,9 @@ public abstract class VersionedDeletableEntityDbTable<T extends VersionedDerived
     public VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns,
                                            DerivedTablesRegistry derivedDbTablesRegistry,
                                            DatabaseManager databaseManager,
-                                           FullTextConfig fullTextConfig) {
-        super(table, dbKeyFactory, true, fullTextSearchColumns, derivedDbTablesRegistry, databaseManager, fullTextConfig);
+                                           FullTextConfig fullTextConfig,
+                                           Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+        super(table, dbKeyFactory, true, fullTextSearchColumns, derivedDbTablesRegistry, databaseManager, fullTextConfig, deleteOnTrimDataEvent);
     }
 
     @Override

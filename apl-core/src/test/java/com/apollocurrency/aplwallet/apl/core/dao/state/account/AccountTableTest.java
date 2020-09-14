@@ -103,7 +103,7 @@ class AccountTableTest {
     @Test
     void testTrim_on_0_height() throws SQLException {
         doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(0));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(0, true));
 
         List<Account> expected = td.ALL_ACCOUNTS;
         List<Account> all = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
@@ -114,7 +114,7 @@ class AccountTableTest {
     @Test
     void testTrim_on_MAX_height() throws SQLException {
         doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(Integer.MAX_VALUE));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(Integer.MAX_VALUE, true));
 
         List<Account> expected = td.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).collect(Collectors.toList());
         List<Account> all = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
@@ -150,14 +150,14 @@ class AccountTableTest {
         assertFalse(deletedPreviousAcc.isLatest());
 
         // Trim latest=false none of deleted record
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_10.getHeight()));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_10.getHeight(), true));
 
         int afterTrimSize = table.getRowCount();
         assertEquals(14, afterTrimSize); // 1 updated id=700, 2 updated for id=500
 
         // Trim another deleted record for ACC_10
         DbUtils.inTransaction(dbExtension, (con) -> {
-            table.trim(td.ACC_10.getHeight() + 1); // delete 'deleted' record
+            table.trim(td.ACC_10.getHeight() + 1, true); // delete 'deleted' record
         });
 
         int afterDeleteTrimSize = table.getRowCount();

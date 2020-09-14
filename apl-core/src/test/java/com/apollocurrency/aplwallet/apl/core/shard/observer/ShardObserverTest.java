@@ -15,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -25,8 +24,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Map;
 import java.util.Random;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -37,6 +36,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.withSettings;
 
@@ -46,6 +46,7 @@ import static org.mockito.Mockito.withSettings;
 public class ShardObserverTest {
     private static final String CONFIG_NAME = "another-list-for-shar-observer-config.json";
     private static final String CONFIG_NAME_2 = "tn3-shard-observer-config.json";
+    private static final String CONFIG_NAME_3 = "mainnet-config.json";
     private ChainsConfigLoader chainsConfigLoader;
     private Map<UUID, Chain> loadedChains;
     private Chain chain;
@@ -98,7 +99,7 @@ public class ShardObserverTest {
         shardObserver.onBlockPushed(block);
 
         if (isShouldBeCalled) {
-            verify(shardService).tryCreateShardAsync(targetShardHeight, currentBlockHeight);
+            verify(shardService, times(1)).tryCreateShardAsync(targetShardHeight, currentBlockHeight);
         } else {
             verify(shardService, never()).tryCreateShardAsync(anyInt(), anyInt());
         }
@@ -162,7 +163,8 @@ public class ShardObserverTest {
 
     @ParameterizedTest
     @MethodSource("supplyTestDataTN3")
-    void testStartShardingByTN3(int latestShardHeight, int currentBlockHeight,
+    void testStartShardingByTN3(int latestShardHeight,
+                                int currentBlockHeight,
                                 int targetShardHeight,
                                 boolean isShouldBeCalled,
                                 int randomMockValue) {
@@ -192,7 +194,7 @@ public class ShardObserverTest {
             // 2. currentHeightBlockPushed - simulate block to be pushed at that height
             // 3. newShardHeight - we expect shard to be created at that height !!
             // 4. isShardingCalled - check if sharding was really executed
-            // 5. isConfigJustUpdate - simulate HeightConfig is updated from previous to next height
+            // 5. mocked random Value - simulate random divergence
             arguments(0, 100, 0, false, 143),
             arguments(0, 4144, 2000, true, 143),
             arguments(6000, 10144, 8000, true, 143),
@@ -205,5 +207,43 @@ public class ShardObserverTest {
         );
     }
 
+    @ParameterizedTest
+    @MethodSource("supplyTestDataMainNet")
+    void testStartShardingByMainNet(int latestShardHeight, int currentBlockHeight,
+                                int targetShardHeight,
+                                boolean isShouldBeCalled,
+                                int randomMockValue) {
+        // prepare components
+        prepareAndInit(CONFIG_NAME_3, 21000, randomMockValue);
+        // prepare tes data
+        Shard shard = mock(Shard.class);
+        doReturn(latestShardHeight).when(shard).getShardHeight();
+        doReturn(shard).when(shardService).getLastShard();
+        Block block = td.BLOCK_1;
+        block.setHeight(currentBlockHeight);
+        blockchainConfigUpdater.onBlockPopped(block); // simulate setting 'current' and 'previous' config
+
+        shardObserver.onBlockPushed(block);
+
+        if (isShouldBeCalled) {
+            verify(shardService).tryCreateShardAsync(targetShardHeight, currentBlockHeight);
+        } else {
+            verify(shardService, never()).tryCreateShardAsync(anyInt(), anyInt());
+        }
+    }
+
+    static Stream<Arguments> supplyTestDataMainNet() {
+        return Stream.of(
+            // arguments by order:
+            // 1. lastShardHeight - simulate previously created shard (height)
+            // 2. currentHeightBlockPushed - simulate block to be pushed at that height
+            // 3. newShardHeight - we expect shard to be created at that height !!
+            // 4. isShardingCalled - check if sharding was really executed
+            // 5. mocked random Value - simulate random divergence
+            arguments(0, 2247000, 0, false, 323),
+            arguments(0, 2271324, 2250000, true, 323),
+            arguments(0, 2271217, 2250000, true, 216)
+        );
+    }
 
 }

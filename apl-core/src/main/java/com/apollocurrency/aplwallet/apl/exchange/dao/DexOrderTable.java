@@ -11,12 +11,14 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -41,8 +43,9 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
 
     @Inject
     public DexOrderTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                         DatabaseManager databaseManager) {
-        super(TABLE_NAME, keyFactory, true, null, derivedDbTablesRegistry, databaseManager, null);
+                         DatabaseManager databaseManager,
+                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+        super(TABLE_NAME, keyFactory, true, null, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
     }
 
     @Override
