@@ -36,7 +36,7 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
 @EnableWeld
-@Execution(ExecutionMode.CONCURRENT)
+//@Execution(ExecutionMode.CONCURRENT)
 class DeleteTrimObserverTest {
 
     DatabaseManager databaseManager = mock(DatabaseManager.class);
@@ -67,6 +67,7 @@ class DeleteTrimObserverTest {
 
     @Test
     void sendDeleteEvent() {
+        assertNotNull(observer);
         trimEvent.select(new AnnotationLiteral<TrimEvent>() {})
             .fireAsync(new DeleteOnTrimData(false, Collections.emptySet(), "some_table"));
         try {
@@ -74,7 +75,7 @@ class DeleteTrimObserverTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        int size = observer.getDeleteOnTrimDataQueue().size();
+        int size = observer.getDeleteOnTrimDataQueueSize();
 
         assertEquals(1, size);
     }

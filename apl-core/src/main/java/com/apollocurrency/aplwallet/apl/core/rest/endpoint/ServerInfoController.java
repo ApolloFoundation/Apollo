@@ -202,7 +202,7 @@ public class ServerInfoController {
 
         @ApiResponse(responseCode = "403", description = "Access Forbidden"),
 
-    }
+        }
     )
     @RolesAllowed("admin")
     public Response blockchainProperties(

@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.api.p2p.request.GetUnconfirmedTransactionsRe
 import com.apollocurrency.aplwallet.api.p2p.respons.GetUnconfirmedTransactionsResponse;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
@@ -16,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetUnconfirmedTransactionsResponseParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
@@ -36,18 +36,18 @@ public class ProcessTransactionsThread implements Runnable {
 
     private BlockchainProcessor blockchainProcessor;
     private final TransactionProcessor transactionProcessor;
-    private final UnconfirmedTransactionTable unconfirmedTransactionTable;
+    private final MemPool memPool;
     private final BlockchainConfig blockchainConfig;
     private final PeersService peers;
     private final TransactionDTOConverter dtoConverter;
 
     public ProcessTransactionsThread(TransactionProcessor transactionProcessor,
-                                     UnconfirmedTransactionTable unconfirmedTransactionTable,
+                                     MemPool memPool,
                                      BlockchainConfig blockchainConfig,
                                      PeersService peers,
                                      TransactionTypeFactory transactionTypeFactory) {
         this.transactionProcessor = Objects.requireNonNull(transactionProcessor);
-        this.unconfirmedTransactionTable = Objects.requireNonNull(unconfirmedTransactionTable);
+        this.memPool = Objects.requireNonNull(memPool);
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
         this.peers = Objects.requireNonNull(peers);
         this.dtoConverter = new TransactionDTOConverter(transactionTypeFactory);
@@ -68,7 +68,7 @@ public class ProcessTransactionsThread implements Runnable {
                 GetUnconfirmedTransactionsRequest request = new GetUnconfirmedTransactionsRequest(blockchainConfig.getChain().getChainId());
 
                 List<String> exclude = new ArrayList<>();
-                unconfirmedTransactionTable.getAllUnconfirmedTransactionIds().forEach(
+                memPool.getAllProcessedIds().forEach(
                     transactionId -> exclude.add(Long.toUnsignedString(transactionId)));
                 Collections.sort(exclude);
 
@@ -85,6 +85,8 @@ public class ProcessTransactionsThread implements Runnable {
                         .stream()
                         .map(dtoConverter::convert)
                         .collect(Collectors.toList());
+
+                    log.trace("Will process {} txs from peer {}", transactions.size(), peer.getAnnouncedAddress());
 
                     transactionProcessor.processPeerTransactions(transactions);
                 } catch (AplException.NotValidException | RuntimeException e) {

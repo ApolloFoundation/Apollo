@@ -68,10 +68,10 @@ public class DeleteTrimObserver {
         if (deleteOnTrimData.isResetEvent()) {
             log.trace("onDeleteTrimDataAsync : clean up = {}, size[{}]",
                 deleteOnTrimData.isResetEvent(), deleteOnTrimDataQueue.size());
-            deleteOnTrimDataQueue.clear();
+            this.deleteOnTrimDataQueue.clear();
         } else {
             log.trace("onDeleteTrimDataAsync : queue size = [{}]", deleteOnTrimDataQueue.size());
-            deleteOnTrimDataQueue.add(deleteOnTrimData);
+            this.deleteOnTrimDataQueue.add(deleteOnTrimData);
         }
     }
 
@@ -168,6 +168,11 @@ public class DeleteTrimObserver {
      * @return internal queue with data
      */
     public Queue<DeleteOnTrimData> getDeleteOnTrimDataQueue() {
-        return deleteOnTrimDataQueue;
+        return this.deleteOnTrimDataQueue;
     }
+
+    public int getDeleteOnTrimDataQueueSize() {
+        return this.deleteOnTrimDataQueue.size();
+    }
+
 }

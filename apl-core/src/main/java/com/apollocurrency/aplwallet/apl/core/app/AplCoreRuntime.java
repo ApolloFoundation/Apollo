@@ -55,8 +55,6 @@ public class AplCoreRuntime {
     private MintWorker mintworker;
     private Thread mintworkerThread;
 
-
-    private TaskDispatchManager taskManager;
     private TransactionSigner transactionSigner;
 
     // WE CAN'T use @Inject here for 'RuntimeMode' instance because it has several candidates (in CDI hierarchy)
@@ -100,7 +98,6 @@ public class AplCoreRuntime {
         this.blockchainConfig = blockchainConfig;
         this.propertiesHolder = propertiesHolder;
         this.runtimeMode = runtimeMode;
-        this.taskManager = taskManager;
         this.transactionSigner = CDI.current().select(TransactionSigner.class).get();
         TaskDispatcher taskDispatcher = taskManager.newScheduledDispatcher("AplCoreRuntime-periodics");
         taskDispatcher.schedule(Task.builder()
