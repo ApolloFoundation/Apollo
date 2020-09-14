@@ -43,8 +43,8 @@ public class TrimService {
     private final TimeService timeService;
     private final ReentrantLock lock = new ReentrantLock();
 
-    private Event<TrimData> trimEvent;
-    private Event<TrimConfig> trimConfigEvent;
+    private final Event<TrimData> trimEvent;
+    private final Event<TrimConfig> trimConfigEvent;
 
 
     @Inject
