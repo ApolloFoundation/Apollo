@@ -32,15 +32,6 @@ public class ConsensusManagerImpl implements ConsensusManager {
             }
             currentBlock.setHeight( threeLatestBlocksArray[0].getHeight() + 1 );
             this.calculateBaseTarget(currentBlock, threeLatestBlocksArray, config, lastShard, initialBlockHeight);
-/*
-            short index = 0;
-            for (Transaction transaction : this.blockTransactions) {
-                transaction.setBlock(this);
-                transaction.setIndex(index++);
-                ((TransactionImpl) transaction).bytes();
-                transaction.getAppendages();
-            }
-*/
         } else {
             currentBlock.setHeight(0);
         }

@@ -101,7 +101,7 @@ class CurrencyMintTableTest {
         doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
         int all = table.getRowCount();
         assertEquals(12, all);
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(1300));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(1300, true));
 
         all = table.getRowCount();
         assertEquals(5, all);

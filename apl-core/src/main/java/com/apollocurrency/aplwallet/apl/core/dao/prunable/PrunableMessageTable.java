@@ -15,11 +15,13 @@ import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -49,9 +51,10 @@ public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
                                 DatabaseManager databaseManager,
                                 FullTextConfig fullTextConfig,
                                 BlockchainConfig blockchainConfig,
-                                PropertiesHolder propertiesHolder) {
+                                PropertiesHolder propertiesHolder,
+                                Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super(TABLE_NAME, KEY_FACTORY, false, null,
-            derivedDbTablesRegistry, databaseManager, fullTextConfig, blockchainConfig, propertiesHolder);
+            derivedDbTablesRegistry, databaseManager, fullTextConfig, blockchainConfig, propertiesHolder, deleteOnTrimDataEvent);
     }
 
     @Override

@@ -26,7 +26,9 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
@@ -52,8 +54,9 @@ public class AskOrderTable extends OrderTable<AskOrder> {
 
     @Inject
     public AskOrderTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                         DatabaseManager databaseManager) {
-        super("ask_order", askOrderDbKeyFactory, derivedDbTablesRegistry, databaseManager);
+                         DatabaseManager databaseManager,
+                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+        super("ask_order", askOrderDbKeyFactory, derivedDbTablesRegistry, databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override

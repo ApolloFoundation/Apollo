@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.util.cert;
+package com.apollocurrency.aplwallet.apl.crypto.cert;
 
 import io.firstbridge.cryptolib.KeyReader;
 import io.firstbridge.cryptolib.KeyWriter;
