@@ -39,9 +39,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @Slf4j
 @EnableWeld
@@ -119,7 +119,7 @@ class TrimObserverTest {
 
         blockEvent.select(literal(BlockEventType.BLOCK_SCANNED)).fire(block);
 
-        verifyZeroInteractions(trimService);
+        verifyNoInteractions(trimService);
     }
 
     @Test
@@ -129,7 +129,7 @@ class TrimObserverTest {
 
         blockEvent.select(literal(BlockEventType.BLOCK_SCANNED)).fire(block);
 
-        verifyZeroInteractions(trimService);
+        verifyNoInteractions(trimService);
     }
 
     @Test
@@ -160,7 +160,7 @@ class TrimObserverTest {
 //        waitTrim(List.of(5000)); // doesn't work, test hangs here
 //        assertFalse(observer.isTrimDerivedTables());
         Thread.sleep(4000);
-        verify(trimService, times(1)).isTrimming();
+        verify(trimService, never()).isTrimming();
         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
         }).fire(new TrimConfig(true, false));
 //        waitTrim(List.of(5190));

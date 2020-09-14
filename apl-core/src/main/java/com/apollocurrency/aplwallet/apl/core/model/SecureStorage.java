@@ -33,7 +33,7 @@ public class SecureStorage extends FbWallet {
         SecureStorage fbWallet = new SecureStorage();
         try {
             fbWallet.readOpenData(storagePath);
-            byte[] salt = fbWallet.getContanerIV();
+            byte[] salt = fbWallet.getContainerIV();
             byte[] key = fbWallet.keyFromPassPhrase(privateKey, salt);
             fbWallet.openFile(storagePath, key);
         } catch (IOException e) {

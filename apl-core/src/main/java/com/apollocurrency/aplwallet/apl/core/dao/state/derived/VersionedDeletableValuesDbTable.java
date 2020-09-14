@@ -20,6 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
+import javax.enterprise.event.Event;
+
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
@@ -27,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDelet
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,8 +42,9 @@ public abstract class VersionedDeletableValuesDbTable<T extends VersionedDeletab
     public VersionedDeletableValuesDbTable(String table, KeyFactory<T> dbKeyFactory,
                                            DerivedTablesRegistry derivedDbTablesRegistry,
                                            DatabaseManager databaseManager,
-                                           FullTextConfig fullTextConfig) {
-        super(table, dbKeyFactory, true, derivedDbTablesRegistry, databaseManager, fullTextConfig);
+                                           FullTextConfig fullTextConfig,
+                                           Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+        super(table, dbKeyFactory, true, derivedDbTablesRegistry, databaseManager, fullTextConfig, deleteOnTrimDataEvent);
     }
 
     @Override

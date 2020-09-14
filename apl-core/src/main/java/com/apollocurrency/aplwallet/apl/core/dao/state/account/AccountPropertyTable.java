@@ -12,9 +12,11 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -40,9 +42,10 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
 
     @Inject
     private AccountPropertyTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                 DatabaseManager databaseManager) {
+                                 DatabaseManager databaseManager,
+                                 Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("account_property", accountPropertyDbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null);
+            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
     }
 
     public static DbKey newKey(long id) {

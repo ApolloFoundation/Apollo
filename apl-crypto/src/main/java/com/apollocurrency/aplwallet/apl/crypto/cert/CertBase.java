@@ -1,11 +1,12 @@
-package com.apollocurrency.aplwallet.apl.util.cert;
+package com.apollocurrency.aplwallet.apl.crypto.cert;
 
+import io.firstbridge.cryptolib.AsymCryptor;
+import io.firstbridge.cryptolib.AsymKeysHolder;
+import io.firstbridge.cryptolib.CryptoConfig;
+import io.firstbridge.cryptolib.CryptoFactory;
 import io.firstbridge.cryptolib.CryptoNotValidException;
-import io.firstbridge.cryptolib.FBCryptoAsym;
-import io.firstbridge.cryptolib.FBCryptoParams;
-import io.firstbridge.cryptolib.impl.AsymJCEImpl;
+import io.firstbridge.cryptolib.CryptoParams;
 
-import java.security.InvalidKeyException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
@@ -15,20 +16,24 @@ import java.security.PublicKey;
  * @author alukin@gmail.com
  */
 public class CertBase {
+
     protected PublicKey pubKey = null;
     protected PrivateKey pvtKey = null;
-
+    protected CryptoParams params = CryptoConfig.createDefaultParams();
+    protected CryptoFactory factory = CryptoFactory.newInstance(params);
+    
     public boolean checkKeys(PrivateKey pvtk) {
         boolean res = false;
         try {
             String test = "Lazy Fox jumps ofver snoopy dog";
-            FBCryptoAsym ac = new AsymJCEImpl(FBCryptoParams.createDefault());
-            ac.setAsymmetricKeys(pubKey, pvtk, pubKey);
-            byte[] enc = ac.encryptAsymmetric(test.getBytes());
-            byte[] dec = ac.decryptAsymmetric(enc);
+            AsymCryptor ac = factory.getAsymCryptor();
+            AsymKeysHolder kn = new AsymKeysHolder(pubKey, pvtk, pubKey);
+            ac.setKeys(kn);
+            byte[] enc = ac.encrypt(test.getBytes());
+            byte[] dec = ac.decrypt(enc);
             String test_res = new String(dec);
             res = test.compareTo(test_res) == 0;
-        } catch (InvalidKeyException | CryptoNotValidException ex) {
+        } catch (CryptoNotValidException ex) {
         }
         return res;
     }

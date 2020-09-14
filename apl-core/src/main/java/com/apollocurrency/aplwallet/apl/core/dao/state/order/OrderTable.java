@@ -20,11 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.order;
 
+import javax.enterprise.event.Event;
+
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.Order;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -42,8 +45,9 @@ public abstract class OrderTable<T extends Order> extends VersionedDeletableEnti
 
     OrderTable(String tableName, LongKeyFactory<T> longKeyFactory,
                DerivedTablesRegistry derivedDbTablesRegistry,
-               DatabaseManager databaseManager) {
-        super(tableName, longKeyFactory, null, derivedDbTablesRegistry, databaseManager, null);
+               DatabaseManager databaseManager,
+               Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+        super(tableName, longKeyFactory, null, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
     }
 
     @Override
