@@ -5,109 +5,205 @@
 package com.apollocurrency.aplwallet.apl.core.shard.observer;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
+import com.apollocurrency.aplwallet.apl.data.BlockTestData;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
+@Slf4j
 @ExtendWith(MockitoExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
 public class ShardObserverTest {
-    public static final int DEFAULT_SHARDING_FREQUENCY = 5_000;
-    public static final int NOT_MULTIPLE_SHARDING_FREQUENCY = 4_999;
-    public static final int DEFAULT_TRIM_HEIGHT = 100_000;
-    @Mock
+    private static final String CONFIG_NAME = "another-list-for-shar-observer-config.json";
+    private static final String CONFIG_NAME_2 = "tn3-shard-observer-config.json";
+    private ChainsConfigLoader chainsConfigLoader;
+    private Map<UUID, Chain> loadedChains;
+    private Chain chain;
+
     BlockchainConfig blockchainConfig;
     @Mock
     ShardService shardService;
     @Mock
-    HeightConfig heightConfig;
+    BlockDao blockDao;
+    PropertiesHolder propertiesHolder = mock(PropertiesHolder.class, withSettings().lenient());
     @Mock
-    PropertiesHolder propertiesHolder;
+    private Random random;
+    BlockTestData td = new BlockTestData();
     private ShardObserver shardObserver;
+    private BlockchainConfigUpdater blockchainConfigUpdater;
 
-    @BeforeEach
-    void setUp() {
+    private void prepareAndInit(String configName, int maxRollback, int randomValue) {
+        chainsConfigLoader = new ChainsConfigLoader(configName);
+        loadedChains = chainsConfigLoader.load();
+        chain = loadedChains.get(UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6"));
+        assertNotNull(chain);
         doReturn(false).when(propertiesHolder).getBooleanProperty("apl.noshardcreate", false);
-//        Mockito.doReturn(4072*1024*1024L).when(mock(Runtime.class)).totalMemory(); // give it more then 3 GB
+        doReturn(5000).when(propertiesHolder).getIntProperty("apl.maxPrunableLifetime");
+        doReturn(5000).when(propertiesHolder).getIntProperty("apl.minPrunableLifetime");
+        doReturn(maxRollback).when(propertiesHolder).MAX_ROLLBACK();
+        doReturn(randomValue).when(random).nextInt(any(Integer.class));
+        assertNotNull(chain.getBlockchainProperties());
+        blockchainConfig = new BlockchainConfig(chain, propertiesHolder);
+        shardObserver = new ShardObserver(blockchainConfig, shardService, propertiesHolder, random);
+        blockchainConfigUpdater = new BlockchainConfigUpdater(blockchainConfig, blockDao);
     }
 
-    private void prepare() {
-        shardObserver = new ShardObserver(blockchainConfig, shardService, propertiesHolder);
+    @ParameterizedTest
+    @MethodSource("supplyTestData")
+    void testStartShardingByConfig(int latestShardHeight, int currentBlockHeight,
+                                   int targetShardHeight,
+                                   boolean isShouldBeCalled) {
+        // prepare components :
+        // max rollback = 3
+        // random shard delay = (2 + 1) = 3
+        prepareAndInit(CONFIG_NAME, 3, 2);
+        // prepare tes data
+        Shard shard = mock(Shard.class);
+        doReturn(latestShardHeight).when(shard).getShardHeight();
+        doReturn(shard).when(shardService).getLastShard();
+        Block block = td.BLOCK_1;
+        block.setHeight(currentBlockHeight);
+        blockchainConfigUpdater.onBlockPopped(block); // simulate setting 'current' and 'previous' config
+
+        shardObserver.onBlockPushed(block);
+
+        if (isShouldBeCalled) {
+            verify(shardService).tryCreateShardAsync(targetShardHeight, currentBlockHeight);
+        } else {
+            verify(shardService, never()).tryCreateShardAsync(anyInt(), anyInt());
+        }
     }
 
-    @Test
-    void testSkipShardingWhenShardingIsDisabled() {
-        prepare();
-        doReturn(false).when(heightConfig).isShardingEnabled();
-        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(DEFAULT_TRIM_HEIGHT);
-
-        CompletableFuture<MigrateState> c = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
-
-        assertNull(c);
-        verify(shardService, never()).tryCreateShardAsync(anyInt(), anyInt());
+    /**
+     * Height and target Frequency are supplied into unit test method
+     * @return height + frequency value for test
+     */
+    static Stream<Arguments> supplyTestData() {
+        return Stream.of(
+            // arguments by order:
+            // 1. lastShardHeight - simulate previously created shard (height)
+            // 2. currentHeightBlockPushed - simulate block to be pushed at that height
+            // 3. newShardHeight - we expect shard to be created at that height !!
+            // 4. isShardingCalled - check if sharding was really executed
+            arguments(0, 0, 0, false),
+            arguments(0, 1, 0, false),
+            arguments(0, 206, 0, false), // sharding delay (6) = max rollback (3) + random shard delay (2 + 1)
+            arguments(0, 220, 0, false),
+            arguments(0, 225, 0, false),
+            arguments(0, 226, 220, true),
+            arguments(0, 227, 220, true),
+            arguments(0, 231, 220, true),
+            arguments(220, 239, 0, false),
+            arguments(220, 244, 0, false),
+            arguments(220, 247, 240, true),
+            arguments(0, 247, 220, true), // missed one of previous shards
+            arguments(580, 606, 600, true),
+            arguments(600, 636, 0, false),
+            arguments(600, 960, 0, false),
+            arguments(600, 1506, 1500, true),
+            arguments(1000, 2508, 1500, true),
+            arguments(1500, 2003, 2000, false),
+            arguments(1500, 2008, 2000, true),
+            arguments(2000, 2238, 0, false),
+            arguments(2000, 2999, 0, false),
+            arguments(2000, 3006, 0, false),
+            arguments(2000, 3250, 0, false),
+            arguments(2000, 3250, 0, false),
+            arguments(3750, 4000, 4000, false),
+            arguments(3750, 4006, 4000, true),
+            arguments(4000, 4456, 0, false),
+            arguments(4000, 5006, 0, false),
+            arguments(4000, 5106, 5100, true),
+            arguments(4000, 5137, 5100, true),
+            arguments(5900, 6006, 6000, true),
+            arguments(5900, 6006, 6000, true),
+            arguments(5800, 6006, 5900, true),
+            arguments(5400, 6006, 5500, true),
+            arguments(5900, 6006, 6000, true),
+            arguments(5900, 6006, 6000, true),
+            arguments(6000, 7005, 0, false),
+            arguments(6000, 7005, 0, false),
+            arguments(6000, 7006, 7000, true),
+            arguments(6000, 7016, 7000, true),
+            arguments(6000, 7916, 7000, true),
+            arguments(7000, 8007, 8000, true)
+        );
     }
 
-    @Test
-    void testDoNotShardWhenMinRollbackHeightIsNotMultipleOfShardingFrequency() {
-        prepare();
-        doReturn(true).when(heightConfig).isShardingEnabled();
-        doReturn(NOT_MULTIPLE_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
-        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(DEFAULT_TRIM_HEIGHT);
+    @ParameterizedTest
+    @MethodSource("supplyTestDataTN3")
+    void testStartShardingByTN3(int latestShardHeight, int currentBlockHeight,
+                                int targetShardHeight,
+                                boolean isShouldBeCalled,
+                                int randomMockValue) {
+        // prepare components
+        prepareAndInit(CONFIG_NAME_2, 2000, randomMockValue);
+        // prepare tes data
+        Shard shard = mock(Shard.class);
+        doReturn(latestShardHeight).when(shard).getShardHeight();
+        doReturn(shard).when(shardService).getLastShard();
+        Block block = td.BLOCK_1;
+        block.setHeight(currentBlockHeight);
+        blockchainConfigUpdater.onBlockPopped(block); // simulate setting 'current' and 'previous' config
 
-        CompletableFuture<MigrateState> c = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
+        shardObserver.onBlockPushed(block);
 
-        assertNull(c);
-        verify(shardService, never()).tryCreateShardAsync(anyInt(), anyInt());
+        if (isShouldBeCalled) {
+            verify(shardService).tryCreateShardAsync(targetShardHeight, currentBlockHeight);
+        } else {
+            verify(shardService, never()).tryCreateShardAsync(anyInt(), anyInt());
+        }
     }
 
-    @Test
-    void testDoNotShardWhenLastTrimHeightIsZero() {
-        prepare();
-        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(0);
-
-        CompletableFuture<MigrateState> c = shardObserver.tryCreateShardAsync(0, Integer.MAX_VALUE);
-
-        assertNull(c);
-        verify(shardService, never()).tryCreateShardAsync(anyInt(), anyInt());
+    static Stream<Arguments> supplyTestDataTN3() {
+        return Stream.of(
+            // arguments by order:
+            // 1. lastShardHeight - simulate previously created shard (height)
+            // 2. currentHeightBlockPushed - simulate block to be pushed at that height
+            // 3. newShardHeight - we expect shard to be created at that height !!
+            // 4. isShardingCalled - check if sharding was really executed
+            // 5. isConfigJustUpdate - simulate HeightConfig is updated from previous to next height
+            arguments(0, 100, 0, false, 143),
+            arguments(0, 4144, 2000, true, 143),
+            arguments(6000, 10144, 8000, true, 143),
+            arguments(6000, 10144, 8000, true, 143),
+            arguments(8000, 12273, 10000, true, 272),
+            arguments(8000, 12274, 10000, true, 272),
+            arguments(10000, 22144, 20000, true, 143),
+            arguments(20000, 32144, 30000, true, 143),
+            arguments(30000, 42144, 40000, true, 143)
+        );
     }
 
-    @Test
-    void testShardSuccessful() throws ExecutionException, InterruptedException {
-        prepare();
-        doReturn(true).when(heightConfig).isShardingEnabled();
-        doReturn(DEFAULT_SHARDING_FREQUENCY).when(heightConfig).getShardingFrequency();
-        doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(DEFAULT_TRIM_HEIGHT);
-        CompletableFuture<MigrateState> completableFuture = mock(CompletableFuture.class);
-        when(completableFuture.get()).thenReturn(MigrateState.COMPLETED);
-        doReturn(completableFuture).when(shardService).tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
-
-        CompletableFuture<MigrateState> state = shardObserver.tryCreateShardAsync(DEFAULT_TRIM_HEIGHT, Integer.MAX_VALUE);
-
-        assertNotNull(state);
-        assertNotNull(state.get());
-        verify(shardService, times(1)).tryCreateShardAsync(anyInt(), anyInt());
-    }
 
 }
