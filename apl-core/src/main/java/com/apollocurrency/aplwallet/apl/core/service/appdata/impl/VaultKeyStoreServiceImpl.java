@@ -255,7 +255,7 @@
          ApolloFbWallet fbWallet = new ApolloFbWallet();
          try {
              fbWallet.readOpenData(secretPath.toString());
-             byte[] salt = fbWallet.getContanerIV();
+             byte[] salt = fbWallet.getContainerIV();
              byte[] key = fbWallet.keyFromPassPhrase(passphrase, salt);
 
              fbWallet.openFile(secretPath.toString(), key);
