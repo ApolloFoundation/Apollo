@@ -67,8 +67,8 @@ class BlockDaoTest {
     @Container
     public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.4")
         .withDatabaseName("mysql")
-//        .withUsername("root")
-        .withUsername("mariadb.sys")
+        .withUsername("root")
+//        .withUsername("mariadb.sys")
         .withPassword("mypass")
 //        .withExposedPorts(3306)
 //        .withNetwork(Network.newNetwork())
