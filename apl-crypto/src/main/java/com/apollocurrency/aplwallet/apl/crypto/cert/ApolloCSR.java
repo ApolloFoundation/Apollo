@@ -1,11 +1,10 @@
-package com.apollocurrency.aplwallet.apl.util.cert;
+package com.apollocurrency.aplwallet.apl.crypto.cert;
 
 import io.firstbridge.cryptolib.CryptoNotValidException;
-import io.firstbridge.cryptolib.FBCryptoParams;
+import io.firstbridge.cryptolib.KeyGenerator;
 import io.firstbridge.cryptolib.KeyWriter;
 import io.firstbridge.cryptolib.csr.CertificateRequestData;
-import io.firstbridge.cryptolib.csr.KeyGenerator;
-import io.firstbridge.cryptolib.impl.KeyWriterImpl;
+import io.firstbridge.cryptolib.csr.X509CertOperations;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
@@ -30,13 +29,15 @@ public class ApolloCSR extends CertBase {
 
     private static final Logger log = LoggerFactory.getLogger(ApolloCSR.class);
     private final CertificateRequestData certData = new CertificateRequestData(CertificateRequestData.CSRType.HOST);
-    private boolean allowCertSign = false;
     private String challengePassword = "";
     private BigInteger apolloID;
-    private AuthorityID apolloAuthID = new AuthorityID();
-    private KeyWriter kw = new KeyWriterImpl();
+    private AuthorityID apolloAuthID;
+    private final KeyWriter kw;
+
     public ApolloCSR() {
         apolloID = new BigInteger(128, new SecureRandom());
+        apolloAuthID = new AuthorityID();
+        kw = factory.getKeyWriter();
     }
 
     public static ApolloCSR loadCSR(String path) {
@@ -55,7 +56,7 @@ public class ApolloCSR extends CertBase {
     public static ApolloCSR fromPKCS10(PKCS10CertificationRequest cr) {
         ApolloCSR res = new ApolloCSR();
         try {
-            CertAttributes va = new CertAttributes();
+            CertAttributes va  = new CertAttributes();
             va.setSubject(cr.getSubject());
             va.setAttributes(cr.getAttributes());
             res.setCN(va.getCn());
@@ -259,8 +260,8 @@ public class ApolloCSR extends CertBase {
                 newKeyPair();
             }
             KeyPair kp = new KeyPair(pubKey, pvtKey);
-            KeyGenerator kg = new KeyGenerator(FBCryptoParams.createDefault());
-            PKCS10CertificationRequest cr = kg.createX509CertificateRequest(kp, certData, false, challengePassword);
+            X509CertOperations certOps = factory.getX509CertOperations();
+            PKCS10CertificationRequest cr = certOps.createX509CertificateRequest(kp, certData, false, challengePassword);
             pem = kw.getCertificateRequestPEM(cr);
         } catch (IOException ex) {
             log.error("Can not generate PKSC10 CSR", ex);
@@ -288,8 +289,8 @@ public class ApolloCSR extends CertBase {
                 newKeyPair();
             }
             KeyPair kp = new KeyPair(pubKey, pvtKey);
-            KeyGenerator kg = new KeyGenerator(FBCryptoParams.createDefault());
-            X509Certificate cert = kg.createSerlfSignedX509v3(kp, certData);
+            X509CertOperations certOps = factory.getX509CertOperations();
+            X509Certificate cert = certOps.createSelfSignedX509v3(kp, certData);
             pem = kw.getX509CertificatePEM(cert);
         } catch (CryptoNotValidException | IOException ex) {
             log.error("Can not generate self-signed PEM", ex);
@@ -301,10 +302,10 @@ public class ApolloCSR extends CertBase {
     public String toString() {
         String res = "X.509 Certificate:\n";
         res += "CN=" + getCN() + "\n"
-            + "ApolloID=" + getApolloID().toString(16) + "\n";
+                + "ApolloID=" + getApolloID().toString(16) + "\n";
         res += "emailAddress=" + getEmial() + "\n";
         res += "Country=" + getCountry() + " State/Province=" + getState()
-            + " City=" + getCity();
+                + " City=" + getCity();
         res += "Organization=" + getOrg() + " Org. Unit=" + getOrgUnit() + "\n";
         res += "IP address=" + getIP() + "\n";
         res += "DNS names=" + getDNSNames() + "\n";
@@ -312,7 +313,7 @@ public class ApolloCSR extends CertBase {
     }
 
     private void newKeyPair() {
-        KeyGenerator kg = new KeyGenerator(FBCryptoParams.createDefault());
+        KeyGenerator kg = factory.getKeyGenerator();
         KeyPair kp = kg.generateKeys();
         pubKey = kp.getPublic();
         pvtKey = kp.getPrivate();

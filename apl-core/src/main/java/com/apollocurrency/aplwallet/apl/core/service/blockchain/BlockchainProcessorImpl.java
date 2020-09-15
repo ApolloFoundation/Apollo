@@ -40,8 +40,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
@@ -63,7 +61,6 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableRestorationService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
@@ -185,6 +182,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final GetNextBlocksResponseParser getNextBlocksResponseParser;
     private final BlockSerializer blockSerializer;
     private final ConsensusManager consensusManager;
+    private final MemPool memPool;
 
     /**
      * Three blocks are used for internal calculations on assigning previous block
@@ -218,13 +216,15 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    BlockParser blockParser,
                                    GetNextBlocksResponseParser getNextBlocksResponseParser,
                                    BlockSerializer blockSerializer,
-                                   ConsensusManager consensusManager) {
+                                   ConsensusManager consensusManager,
+                                   MemPool memPool) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = blockchainConfig;
         this.validator = validator;
         this.blockEvent = blockEvent;
         this.ledgerEvent = ledgerEvent;
         this.globalSync = globalSync;
+        this.memPool = memPool;
         this.dbTables = dbTables;
         this.trimService = trimService;
         this.phasingPollService = phasingPollService;
@@ -1144,15 +1144,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit) {
 
         List<UnconfirmedTransaction> orderedUnconfirmedTransactions = new ArrayList<>();
-        DbIterator<UnconfirmedTransaction> allUnconfirmedTransactions = transactionProcessor.getAllUnconfirmedTransactions();
-        try (FilteringIterator<UnconfirmedTransaction> unconfirmedTransactions = new FilteringIterator<>(
-            allUnconfirmedTransactions,
-            transaction -> referencedTransactionService.hasAllReferencedTransactions(
-                transaction.getTransaction(), previousBlock.getHeight() + 1))) {
-            for (UnconfirmedTransaction unconfirmedTransaction : unconfirmedTransactions) {
-                orderedUnconfirmedTransactions.add(unconfirmedTransaction);
-            }
-        }
+        memPool.getAllProcessedStream()
+            .filter(transaction -> referencedTransactionService.hasAllReferencedTransactions(
+                transaction.getTransaction(), previousBlock.getHeight() + 1))
+            .forEach(orderedUnconfirmedTransactions::add);
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int payloadLength = 0;
         int maxPayloadLength = blockchainConfig.getCurrentConfig().getMaxPayloadLength();
@@ -1225,6 +1220,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 
         Block previousBlock = blockchain.getLastBlock();
         SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp, Integer.MAX_VALUE);
+        transactionProcessor.printMemPoolStat();
         List<Transaction> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
         long totalAmountATM = 0;

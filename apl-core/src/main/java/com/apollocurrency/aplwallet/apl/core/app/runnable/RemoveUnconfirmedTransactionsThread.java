@@ -5,14 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,18 +24,17 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
 
     private BlockchainProcessor blockchainProcessor;
     private final DatabaseManager databaseManager;
-    private final UnconfirmedTransactionTable unconfirmedTransactionTable;
     private final TransactionProcessor transactionProcessor;
     private final TimeService timeService;
+    private final MemPool memPool;
     private final GlobalSync globalSync;
 
     public RemoveUnconfirmedTransactionsThread(DatabaseManager databaseManager,
-                                               UnconfirmedTransactionTable unconfirmedTransactionTable,
                                                TransactionProcessor transactionProcessor,
                                                TimeService timeService,
-                                               GlobalSync globalSync) {
+                                               MemPool memPool, GlobalSync globalSync) {
         this.databaseManager = Objects.requireNonNull(databaseManager);
-        this.unconfirmedTransactionTable = Objects.requireNonNull(unconfirmedTransactionTable);
+        this.memPool = memPool;
         this.transactionProcessor = Objects.requireNonNull(transactionProcessor);
         this.timeService = Objects.requireNonNull(timeService);
         this.globalSync = Objects.requireNonNull(globalSync);
@@ -53,7 +49,7 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
                     return;
                 }
                 int epochTime = timeService.getEpochTime();
-                int expiredTransactionsCount = unconfirmedTransactionTable.countExpiredTransactions(epochTime);
+                int expiredTransactionsCount = memPool.countExpiredTxs(epochTime);
                 if (expiredTransactionsCount > 0) {
                     log.trace("Found {} unc txs to remove", expiredTransactionsCount);
                     globalSync.writeLock();
@@ -61,12 +57,9 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
                         TransactionalDataSource dataSource = databaseManager.getDataSource();
                         try {
                             dataSource.begin();
-                            try (DbIterator<UnconfirmedTransaction> iterator = unconfirmedTransactionTable.getManyBy(
-                                new DbClause.IntClause("expiration", DbClause.Op.LT, epochTime), 0, -1, "")) {
-                                while (iterator.hasNext()) {
-                                    transactionProcessor.removeUnconfirmedTransaction(iterator.next().getTransaction());
-                                }
-                            }
+                            memPool.getExpiredTxsStream(epochTime).forEach(e-> {
+                                transactionProcessor.removeUnconfirmedTransaction(e.getTransaction());
+                            });
                             dataSource.commit();
                         } catch (Exception e) {
                             log.error(e.toString(), e);

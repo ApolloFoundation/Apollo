@@ -50,8 +50,7 @@ public class CountingInputReader extends FilterReader {
     }
 
     public CountingInputReader(Reader in) {
-        super(in);
-        limit = Long.MAX_VALUE;
+        this(in, Long.MAX_VALUE);
     }
 
     /**
@@ -89,7 +88,7 @@ public class CountingInputReader extends FilterReader {
      * Skip characters in the input stream
      *
      * @param n Number of characters to skip
-     * @return Number of characters skipped or -1 if end of stream reached
+     * @return Number of characters skipped
      * @throws IOException I/O error occurred
      */
     @Override
@@ -119,10 +118,5 @@ public class CountingInputReader extends FilterReader {
         count += c;
         if (count > limit)
             throw new LimitExceededException("Maximum size exceeded: " + count);
-    }
-
-    @Override
-    public boolean markSupported() {
-        return super.markSupported();
     }
 }

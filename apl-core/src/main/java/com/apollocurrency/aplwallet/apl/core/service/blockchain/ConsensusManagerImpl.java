@@ -4,15 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import javax.inject.Singleton;
-import java.math.BigInteger;
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+
+import javax.inject.Singleton;
+import java.math.BigInteger;
+import java.util.Objects;
 
 @Singleton
 public class ConsensusManagerImpl implements ConsensusManager {
@@ -32,15 +32,6 @@ public class ConsensusManagerImpl implements ConsensusManager {
             }
             currentBlock.setHeight( threeLatestBlocksArray[0].getHeight() + 1 );
             this.calculateBaseTarget(currentBlock, threeLatestBlocksArray, config, lastShard, initialBlockHeight);
-/*
-            short index = 0;
-            for (Transaction transaction : this.blockTransactions) {
-                transaction.setBlock(this);
-                transaction.setIndex(index++);
-                ((TransactionImpl) transaction).bytes();
-                transaction.getAppendages();
-            }
-*/
         } else {
             currentBlock.setHeight(0);
         }

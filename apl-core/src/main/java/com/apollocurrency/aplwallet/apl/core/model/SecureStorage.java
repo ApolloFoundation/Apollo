@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.model;
 
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -33,7 +33,7 @@ public class SecureStorage extends FbWallet {
         SecureStorage fbWallet = new SecureStorage();
         try {
             fbWallet.readOpenData(storagePath);
-            byte[] salt = fbWallet.getContanerIV();
+            byte[] salt = fbWallet.getContainerIV();
             byte[] key = fbWallet.keyFromPassPhrase(privateKey, salt);
             fbWallet.openFile(storagePath, key);
         } catch (IOException e) {

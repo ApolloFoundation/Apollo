@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountGuarant
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
@@ -65,7 +64,7 @@ class AccountGuaranteedBalanceTableTest {
 
         long sizeAll = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues().size();
         assertEquals(testData.ALL_BALANCES.size(), sizeAll);
-        DbUtils.inTransaction(dbExtension, con -> table.trim(testData.ACC_GUARANTEE_BALANCE_HEIGHT_MAX));
+        DbUtils.inTransaction(dbExtension, con -> table.trim(testData.ACC_GUARANTEE_BALANCE_HEIGHT_MAX, true));
         long sizeTrim = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues().size();
         assertEquals(1, sizeTrim);
     }

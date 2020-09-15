@@ -38,14 +38,16 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.TableRegistryInitializer;
 import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
+import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMonitor;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TxInitializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOperationService;
+import com.apollocurrency.aplwallet.apl.exchange.service.DexOrderProcessor;
 import com.apollocurrency.aplwallet.apl.exchange.service.IDexMatcherInterface;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -259,6 +261,11 @@ public final class AplCore {
             migrator.migrate();
             // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
             recoverSharding();
+
+            //Init classes to add tasks to the TaskDispatchManager
+            CDI.current().select(DexOrderProcessor.class).get();
+            CDI.current().select(PrunableArchiveMonitor.class).get();
+            CDI.current().select(DexOperationService.class).get();
 
             //start all background tasks
             taskDispatchManager.dispatch();

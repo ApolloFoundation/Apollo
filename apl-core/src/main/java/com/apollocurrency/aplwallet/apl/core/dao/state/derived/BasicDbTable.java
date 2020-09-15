@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
@@ -11,13 +12,18 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,14 +36,17 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
 
     protected KeyFactory<T> keyFactory;
     protected boolean multiversion;
+    private final Event<DeleteOnTrimData> deleteOnTrimDataEvent;
 
     protected BasicDbTable(String table, KeyFactory<T> keyFactory, boolean multiversion,
                            DerivedTablesRegistry derivedDbTablesRegistry,
                            DatabaseManager databaseManager,
-                           FullTextConfig fullTextConfig) {
+                           FullTextConfig fullTextConfig,
+                           Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super(table, derivedDbTablesRegistry, databaseManager, fullTextConfig);
         this.keyFactory = keyFactory;
         this.multiversion = multiversion;
+        this.deleteOnTrimDataEvent = deleteOnTrimDataEvent;
     }
 
     public KeyFactory<T> getDbKeyFactory() {
@@ -129,11 +138,11 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
 
 
     @Override
-    public void trim(int height) {
+    public void trim(int height, boolean isSharding) {
         if (multiversion) {
-            doMultiversionTrim(height);
+            doMultiversionTrim(height, isSharding);
         } else {
-            super.trim(height);
+            super.trim(height, isSharding);
         }
     }
 
@@ -178,8 +187,11 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
      *                                                               100        4          100        7       true   false
      *                                                               }</pre>
      *               </p>
+     *  After selecting DB_IDs to be deleted in case trim they are
+     *    - either 'sent to DeleteTrimObserver' for later deleting in case usual trim
+     *    - or used for 'sharding trim' to delete at once ('Reset' event is sent to DeleteTrimObserver)
      */
-    private void doMultiversionTrim(final int height) {
+    private void doMultiversionTrim(final int height, boolean isSharding) {
         log.trace("doMultiversionTrim(), height={}", height);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -197,28 +209,46 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                      con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?");
                  PreparedStatement selectDbIdStatement =
                      con.prepareStatement("SELECT db_id, height " + getDeletedColumnIfSupported() + " FROM " + table + " " + keyFactory.getPKClause())) {
-                log.trace("Select {} time: {}", table, System.currentTimeMillis() - startSelectTime);
-                startDeleteTime = System.currentTimeMillis();
+                log.trace("Select 1. {} time: {} ms", table, System.currentTimeMillis() - startSelectTime);
 
+                Set<Long> keysToDelete = new HashSet<>();
                 while (rs.next()) {
-                    Set<Long> keysToDelete = selectDbIds(selectDbIdStatement, rs);
-                    // TODO migrate to PreparedStatement.addBatch for another db
-                    for (Long id : keysToDelete) {
-                        deleted += deleteByDbId(pstmtDeleteById, id);
-//                        deleted++;
-                        deleteStm++;
-                        if (deleted % 100 == 0) {
-                            dataSource.commit(false);
+                    keysToDelete.addAll( selectDbIds(selectDbIdStatement, rs) );
+                }
+                log.trace("Select 2. {} time: {} ms", table, System.currentTimeMillis() - startSelectTime);
+
+                startDeleteTime = System.currentTimeMillis();
+                if (isSharding) { // trim on sharding
+                    log.trace("Before delete, SEND reset. isSharding = {}, table: {}, size=[{}]", isSharding, table, keysToDelete.size());
+                    // sent 'Reset' event when trim for sharding
+                    deleteOnTrimDataEvent.select(new AnnotationLiteral<TrimEvent>() {
+                    }).fireAsync(new DeleteOnTrimData(true, Collections.emptySet(), table));
+                    if (keysToDelete.size() > 0) {
+                        for (Long id : keysToDelete) {
+                            deleted += deleteByDbId(pstmtDeleteById, id);
+                            if (deleted % ShardConstants.DEFAULT_COMMIT_BATCH_SIZE == 0) {
+                                dataSource.commit(false);
+                            }
                         }
+                        log.debug("Delete for table {} took {} ms", table, System.currentTimeMillis() - startDeleteTime);
+                    }
+                    dataSource.commit(false);
+                    log.trace("Delete table '{}' in {} ms: deleted=[{}]",
+                        table, System.currentTimeMillis() - startDeleteTime, deleted);
+                } else {
+                    // simple trimming
+                    log.trace("Should SEND to delete? isSharding = {}, table: {} , size = [{}]", isSharding, table, keysToDelete.size());
+                    // send 'Delete DB_IDs' event only if we have bigger then 100 records for deleting
+                    if (keysToDelete.size() > ShardConstants.DEFAULT_COMMIT_BATCH_SIZE) { // low limit
+                        log.trace("Before SEND delete. isSharding = {}, table: {} , size = [{}]", isSharding, table, keysToDelete.size());
+                        deleteOnTrimDataEvent.select(new AnnotationLiteral<TrimEvent>() {
+                        }).fireAsync(new DeleteOnTrimData(false, keysToDelete, table));
                     }
                 }
-                dataSource.commit(false);
-                log.trace("Delete time {} for table '{}': deleteStm=[{}], deleted=[{}]", System.currentTimeMillis() - startDeleteTime, table,
-                    deleteStm, deleted);
             }
             long trimTime = System.currentTimeMillis() - startTime;
-            if (trimTime > 1000) {
-                log.debug("Trim for table {} took {} ms", table, trimTime);
+            if (trimTime > 10) {
+                log.debug("Trim for table {} time {} ms", table, trimTime);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -236,7 +266,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
     private Set<Long> selectDbIds(PreparedStatement selectDbIdStatement, ResultSet rs) throws SQLException {
         DbKey dbKey = keyFactory.newKey(rs);
         dbKey.setPK(selectDbIdStatement);
-        Set<Long> keys = new HashSet<>();
+        Set<Long> outputKeys = new HashSet<>();
         int maxHeight = rs.getInt("max_height");
         boolean lastDeleted = false;
         Set<Integer> deleteHeights = new HashSet<>();
@@ -253,20 +283,19 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                     if (entryDeleted) {
                         deleteHeights.add(currentHeight);
                     }
-                    keys.add(dbId);
+                    outputKeys.add(dbId);
                 }
             }
         }
         // last existing record should be 'deleted' and paired with previously deleted records
         if (deleteHeights.size() % 2 != 0 && lastDeleted) {
-            keys.addAll(lastDbIds);
+            outputKeys.addAll(lastDbIds);
         }
-        return keys;
+        return outputKeys;
     }
 
     private int deleteByDbId(PreparedStatement pstmtDeleteByDbId, long dbId) throws SQLException {
         pstmtDeleteByDbId.setLong(1, dbId);
         return pstmtDeleteByDbId.executeUpdate();
-
     }
 }

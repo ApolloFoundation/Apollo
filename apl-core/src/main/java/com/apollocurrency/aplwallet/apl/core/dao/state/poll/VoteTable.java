@@ -14,10 +14,12 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.Vote;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -40,9 +42,10 @@ public class VoteTable extends EntityDbTable<Vote> {
     @Inject
     public VoteTable(PollTable pollTable,
                      DerivedTablesRegistry derivedDbTablesRegistry,
-                     DatabaseManager databaseManager) {
+                     DatabaseManager databaseManager,
+                     Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("vote", voteDbKeyFactory, false, null,
-            derivedDbTablesRegistry, databaseManager, null);
+            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
         this.pollTable = pollTable;
     }
 
@@ -67,9 +70,9 @@ public class VoteTable extends EntityDbTable<Vote> {
     }
 
     @Override
-    public void trim(int height) {
+    public void trim(int height, boolean isSharding) {
         log.trace("Vote trim: NO_Sharding, height = {}", height);
-        super.trim(height);
+        super.trim(height, isSharding);
         try (Connection con = databaseManager.getDataSource().getConnection();
              DbIterator<Poll> polls = pollTable.getPollsFinishingBelowHeight(height, 0, Integer.MAX_VALUE);
              PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {

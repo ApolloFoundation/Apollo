@@ -4,16 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.asset;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -34,9 +35,10 @@ public class AssetDeleteTable extends EntityDbTable<AssetDelete> {
 
     @Inject
     public AssetDeleteTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                            DatabaseManager databaseManager) {
+                            DatabaseManager databaseManager,
+                            Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("asset_delete", deleteDbKeyFactory, false, null,
-            derivedDbTablesRegistry, databaseManager, null);
+            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
     }
 
     @Override

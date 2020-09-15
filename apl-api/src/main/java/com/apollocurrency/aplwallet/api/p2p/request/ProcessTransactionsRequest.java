@@ -21,4 +21,9 @@ public class ProcessTransactionsRequest extends BaseP2PRequest {
     public ProcessTransactionsRequest(UUID chainId) {
         super("processTransactions", chainId);
     }
+
+    public ProcessTransactionsRequest(List<TransactionDTO> transactions, UUID chainId) {
+        this(chainId);
+        this.transactions = transactions;
+    }
 }

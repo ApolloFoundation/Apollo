@@ -14,7 +14,7 @@
  *
  */
 
-package com.apollocurrency.aplwallet.apl.util.cert;
+package com.apollocurrency.aplwallet.apl.crypto.cert;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;

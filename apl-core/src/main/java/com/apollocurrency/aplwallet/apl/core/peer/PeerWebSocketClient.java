@@ -115,10 +115,4 @@ public class PeerWebSocketClient extends PeerWebSocket {
         return session != null && session.isOpen();
     }
 
-    @Override
-    public String toString() {
-        return "PeerWebSocketClient{" +
-            "session=" + session +
-            "} " + super.toString();
-    }
 }

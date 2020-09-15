@@ -57,9 +57,11 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.ReferencedTransactionService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
@@ -81,6 +83,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
@@ -120,6 +123,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
@@ -175,6 +179,8 @@ class CsvExporterTest {
     CsvExporter csvExporter;
     @Inject
     CsvEscaper translator;
+    @Inject
+    Event<DeleteOnTrimData> deleteOnTrimDataEvent;
     //    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath")); // prod data test
 //    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(extension.getDatabaseManager(),
 //        ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC"); // prod data test
@@ -188,6 +194,8 @@ class CsvExporterTest {
     GeneratorService generatorService = mock(GeneratorService.class);
     TransactionTestData td = new TransactionTestData();
     BlockSerializer blockSerializer = mock(BlockSerializer.class);
+    MemPool memPool = mock(MemPool.class);
+    UnconfirmedTransactionProcessingService unconfirmedTransactionProcessingService = mock(UnconfirmedTransactionProcessingService.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -247,6 +255,8 @@ class CsvExporterTest {
         .addBeans(MockBean.of(mock(TransactionVersionValidator.class), TransactionVersionValidator.class))
         .addBeans(MockBean.of(blockSerializer, BlockSerializer.class))
         .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
+        .addBeans(MockBean.of(unconfirmedTransactionProcessingService, UnconfirmedTransactionProcessingService.class))
+        .addBeans(MockBean.of(memPool, MemPool.class))
         .build();
 
     private HeightConfig config = Mockito.mock(HeightConfig.class);
@@ -304,23 +314,23 @@ class CsvExporterTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         // init several derived tables
-        AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable(derivedTablesRegistry, extension.getDatabaseManager());
+        AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         accountCurrencyTable.init();
         //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
-        AccountInfoTable accountInfoTable = new AccountInfoTable(derivedTablesRegistry, extension.getDatabaseManager(), fullTextConfig);
+        AccountInfoTable accountInfoTable = new AccountInfoTable(derivedTablesRegistry, extension.getDatabaseManager(), fullTextConfig, deleteOnTrimDataEvent);
         accountInfoTable.init();
-        AccountControlPhasingTable accountControlPhasingTable = new AccountControlPhasingTable(derivedTablesRegistry, extension.getDatabaseManager());
+        AccountControlPhasingTable accountControlPhasingTable = new AccountControlPhasingTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         accountControlPhasingTable.init();
 
 //        PhasingOnly.get(7995581942006468815L); // works OK!
 //        PhasingOnly.get(2728325718715804811L); // check 1
 //        PhasingOnly.get(-8446384352342482748L); // check 2
 //        PhasingOnly.get(-4013722529644937202L); // works OK!
-        AccountAssetTable accountAssetTable = new AccountAssetTable(derivedTablesRegistry, extension.getDatabaseManager());
+        AccountAssetTable accountAssetTable = new AccountAssetTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         accountAssetTable.init();
-        PublicKeyTable publicKeyTable = new PublicKeyTable(derivedTablesRegistry, extension.getDatabaseManager());
+        PublicKeyTable publicKeyTable = new PublicKeyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         publicKeyTable.init();
-        DexContractTable dexContractTable = new DexContractTable(derivedTablesRegistry, extension.getDatabaseManager());
+        DexContractTable dexContractTable = new DexContractTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         registry.registerDerivedTable(dexContractTable);
 //        DexOrderTable dexOrderTable = new DexOrderTable();
         registry.registerDerivedTable(dexOrderTable);

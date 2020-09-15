@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
@@ -21,6 +22,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
+import javax.enterprise.event.Event;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -48,12 +50,13 @@ public class PublicKeyTableProducer {
                                   InMemoryCacheManager cacheManager,
                                   TaskDispatchManager taskManager,
                                   DerivedTablesRegistry derivedDbTablesRegistry,
-                                  DatabaseManager databaseManager) {
+                                  DatabaseManager databaseManager,
+                                  Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         this.cacheManager = Objects.requireNonNull(cacheManager, "Cache manager is NULL");
         Objects.requireNonNull(derivedDbTablesRegistry);
         Objects.requireNonNull(databaseManager);
-        this.publicKeyTable = new PublicKeyTable(derivedDbTablesRegistry, databaseManager);
-        this.genesisPublicKeyTable = new GenesisPublicKeyTable(derivedDbTablesRegistry, databaseManager);
+        this.publicKeyTable = new PublicKeyTable(derivedDbTablesRegistry, databaseManager, deleteOnTrimDataEvent);
+        this.genesisPublicKeyTable = new GenesisPublicKeyTable(derivedDbTablesRegistry, databaseManager, deleteOnTrimDataEvent);
         this.taskManager = taskManager;
         this.cacheEnabled = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache");
     }

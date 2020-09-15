@@ -4,9 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.currency;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
@@ -19,9 +16,13 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -46,9 +47,10 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> imp
     @Inject
     public CurrencyTable(DerivedTablesRegistry derivedDbTablesRegistry,
                          DatabaseManager databaseManager,
-                         FullTextConfig fullTextConfig) {
+                         FullTextConfig fullTextConfig,
+                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("currency", currencyDbKeyFactory, "code,name,description",
-            derivedDbTablesRegistry, databaseManager, fullTextConfig);
+            derivedDbTablesRegistry, databaseManager, fullTextConfig, deleteOnTrimDataEvent);
     }
 
     @Override

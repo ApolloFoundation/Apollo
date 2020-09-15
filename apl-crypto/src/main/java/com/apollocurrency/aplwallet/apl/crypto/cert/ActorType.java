@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.util.cert;
+package com.apollocurrency.aplwallet.apl.crypto.cert;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.data.AssetDeleteTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.util.Comparator;
 import java.util.List;
@@ -53,6 +55,8 @@ class AssetDeleteTableTest {
     @Inject
     AssetDeleteTable table;
     AssetDeleteTestData td;
+    @Inject
+    Event<DeleteOnTrimData> deleteOnTrimDataEvent;
 
     Comparator<AssetDelete> assetComparator = Comparator
         .comparing(AssetDelete::getDbId)

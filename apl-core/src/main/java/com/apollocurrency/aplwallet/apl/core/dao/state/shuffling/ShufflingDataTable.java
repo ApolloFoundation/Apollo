@@ -12,10 +12,12 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingData;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -37,9 +39,10 @@ public class ShufflingDataTable extends PrunableDbTable<ShufflingData> {
     public ShufflingDataTable(DerivedTablesRegistry derivedDbTablesRegistry,
                               DatabaseManager databaseManager,
                               BlockchainConfig blockchainConfig,
-                              PropertiesHolder propertiesHolder) {
+                              PropertiesHolder propertiesHolder,
+                              Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("shuffling_data", dbKeyFactory, false, null,
-            derivedDbTablesRegistry, databaseManager, null, blockchainConfig, propertiesHolder);
+            derivedDbTablesRegistry, databaseManager, null, blockchainConfig, propertiesHolder, deleteOnTrimDataEvent);
     }
 
 
