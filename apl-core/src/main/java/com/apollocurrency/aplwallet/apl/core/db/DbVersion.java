@@ -71,7 +71,7 @@ public abstract class DbVersion {
                     log.debug("engine = {}", engine);
                 }
 //                stmt.executeUpdate("CREATE TABLE version (next_update INT NOT NULL) ENGINE=ROCKSDB DEFAULT COLLATE=utf8mb4_unicode_ci;");
-                stmt.executeUpdate("CREATE TABLE version (next_update INT NOT NULL) DEFAULT COLLATE=utf8mb4_unicode_ci;");
+                stmt.executeUpdate("CREATE TABLE version (next_update INT NOT NULL) ENGINE=ROCKSDB DEFAULT COLLATE=utf8mb4_unicode_ci;");
                 con.commit();
                 stmt.executeUpdate("INSERT INTO version VALUES (1)");
                 con.commit();

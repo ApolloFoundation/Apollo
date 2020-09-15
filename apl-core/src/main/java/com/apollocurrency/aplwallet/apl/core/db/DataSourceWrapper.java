@@ -88,13 +88,14 @@ public class DataSourceWrapper implements DataSource {
             }
             //dbUrlTemp = "jdbc:mariadb://localhost:3306/apollo_new?user=root&password=12";
             dbUrlTemp = String.format(
-                "jdbc:%s://%s:%d/%s?user=%s&password=%s",
+//                "jdbc:%s://%s:%d/%s?user=%s&password=%s",
+                "jdbc:%s:///%s:%d/%s",
                 dbProperties.getDbType(),
                 dbProperties.getDatabaseHost(),
                 dbProperties.getDatabasePort(),
-                dbProperties.getDatabaseName(),
-                dbProperties.getDbUsername(),
-                dbProperties.getDbPassword()
+                dbProperties.getDatabaseName()
+//                dbProperties.getDbUsername(),
+//                dbProperties.getDbPassword()
             );
         }
 
@@ -206,8 +207,8 @@ public class DataSourceWrapper implements DataSource {
              Statement stmt = con.createStatement()) {
 //            stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
 //            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
-//            stmt.executeUpdate("set global rocksdb_max_row_locks=1073741824");
-//            stmt.executeUpdate("set session rocksdb_max_row_locks=1073741824");
+//            stmt.executeUpdate("set global rocksdb_max_row_locks=1073741824;");
+//            stmt.executeUpdate("set session rocksdb_max_row_locks=1073741824;");
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

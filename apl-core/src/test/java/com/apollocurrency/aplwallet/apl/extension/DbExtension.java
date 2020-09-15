@@ -50,20 +50,27 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
                        PropertiesHolder propertiesHolder,
                        String schemaScriptPath,
                        String dataScriptPath) {
-        log.debug("URL: {}", ((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl());
-        log.debug("01: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
-        log.debug("02: {}", ((MariaDBContainer)jdbcDatabaseContainer).getUsername());
-        log.debug("03: {}", jdbcDatabaseContainer.getDockerImageName());
-        log.debug("04: {}", ((MariaDBContainer)jdbcDatabaseContainer).getDriverClassName());
+        log.debug("JdbcUrl: {}", ((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl());
+        log.debug("DockerDaemonInfo: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
+        log.debug("Username: {}", ((MariaDBContainer)jdbcDatabaseContainer).getUsername());
+        dbProperties.setDbUsername(((MariaDBContainer)jdbcDatabaseContainer).getUsername());
+        log.debug("DockerImageName: {}", jdbcDatabaseContainer.getDockerImageName());
+        log.debug("DriverClassName: {}", ((MariaDBContainer)jdbcDatabaseContainer).getDriverClassName());
 //        log.debug("05: {}", jdbcDatabaseContainer.getTestHostIpAddress());
-        log.debug("06: {}", jdbcDatabaseContainer.getContainerId());
-        log.debug("07: {}", jdbcDatabaseContainer.getBoundPortNumbers());
-        log.debug("08: {}", jdbcDatabaseContainer.getExposedPorts());
-        log.debug("09: {}", jdbcDatabaseContainer.getPortBindings());
-        log.debug("10: {}", jdbcDatabaseContainer.getHost());
+        log.debug("ContainerId: {}", jdbcDatabaseContainer.getContainerId());
+        log.debug("BoundPortNumbers: {}", jdbcDatabaseContainer.getBoundPortNumbers());
+        log.debug("MappedPort: {}", jdbcDatabaseContainer.getMappedPort(3306));
+        if (jdbcDatabaseContainer.getMappedPort(3306) != null) {
+            dbProperties.setDatabasePort(jdbcDatabaseContainer.getMappedPort(3306));
+        }
+        log.debug("PortBindings: {}", jdbcDatabaseContainer.getPortBindings());
+        log.debug("Host: {}", jdbcDatabaseContainer.getHost());
+        log.debug("Host: {}", jdbcDatabaseContainer.getHost());
+        dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
+        dbProperties.setDatabaseName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
 
 //        dbProperties.setDbUrl(((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl() + "?TC_DAEMON=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql");
-        dbProperties.setDbUrl("jdbc:tc:mariadb:10.4:///mysql?TC_DAEMON=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql");
+//        dbProperties.setDbUrl("jdbc:tc:mariadb:10.4:///mysql?TC_DAEMON=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql");
 //        dbProperties.setDbUrl("jdbc:mariadb://mariaDbService:3306/mysql");
 
         manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
