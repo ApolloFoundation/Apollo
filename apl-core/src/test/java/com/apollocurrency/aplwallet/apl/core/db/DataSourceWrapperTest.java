@@ -23,7 +23,7 @@ class DataSourceWrapperTest {
     void shouldConstructDataSourceWrapper() {
         //GIVEN
         final String dbType = "h2";
-        final String dbFileName = "2f2b61";
+        final String dbName = "2f2b61";
         final String dbDir = "/usr/db";
         final String user = "usr";
         final String pass = "pass";
@@ -32,7 +32,7 @@ class DataSourceWrapperTest {
             .dbPassword(pass)
             .dbUsername(user)
             .dbDir(dbDir)
-            .dbFileName(dbFileName)
+            .dbName(dbName)
             .dbParams(dbParams)
             .dbType(dbType)
             .build();
@@ -47,7 +47,7 @@ class DataSourceWrapperTest {
         assertEquals(
             String.format(
                 "jdbc:%s:file:%s/%s;%s",
-                dbType, dbDir, dbFileName, dbParams + ";MV_STORE=TRUE;CACHE_SIZE="
+                dbType, dbDir, dbName, dbParams + ";MV_STORE=TRUE;CACHE_SIZE="
             ),
             urlActual.substring(0, urlActual.lastIndexOf("=") + 1)
         );

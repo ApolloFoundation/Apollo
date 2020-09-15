@@ -142,7 +142,7 @@ public class ShardService {
                     databaseManager.shutdown();
                     FileUtils.deleteFilesByFilter(dirProvider.getDbDir(), (p) -> {
                         Path fileName = p.getFileName();
-                        int shardIndex = fileName.toString().indexOf("-shard-");
+                        int shardIndex = fileName.toString().indexOf("_shard_");
                         if ((fileName.toString().endsWith(DbProperties.DB_EXTENSION) || fileName.toString().endsWith("trace.db"))
                             && shardIndex != -1) {
                             String idString = fileName.toString().substring(shardIndex + 7);

@@ -17,13 +17,17 @@ import java.util.UUID;
 @Builder
 @Data
 public class DbProperties implements Cloneable {
+    //TODO APL-1714
+    @Deprecated
     public static final String DB_EXTENSION = "mv.db";
+    @Deprecated
     public static final String DB_EXTENSION_WITH_DOT = "." + DbProperties.DB_EXTENSION;
+    public static final String DB_SYSTEM_NAME = "mysql";
 
     private String dbUrl;
     private String dbType;
     private String dbDir;
-    private String dbFileName;
+    private String dbName;
     private String dbParams;
     private String dbUsername;
     private String dbPassword;
@@ -32,12 +36,10 @@ public class DbProperties implements Cloneable {
     private int loginTimeout;
     private int defaultLockTimeout;
     private int maxMemoryRows;
-    private Long dbIdentity = null;
-
-    private String databaseName;
+    private Long dbIdentity;
     private String databaseHost;
     private Integer databasePort;
-
+    private String systemDbUrl;
 
     public Optional<Long> getDbIdentity() {
         return Optional.ofNullable(dbIdentity);

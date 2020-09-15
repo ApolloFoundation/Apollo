@@ -39,7 +39,7 @@ public class DbTestData {
         DbProperties dbProperties = getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0;MV_STORE=TRUE;CACHE_SIZE=16000;AUTO_SERVER=TRUE", fileName));
         Path filePath = Paths.get(fileName).toAbsolutePath();
         dbProperties.setDbDir(filePath.getParent().toString());
-        dbProperties.setDbFileName(filePath.getFileName().toString());
+        dbProperties.setDbName(filePath.getFileName().toString());
         return dbProperties;
     }
 
@@ -48,7 +48,7 @@ public class DbTestData {
         dbPath = dbPath.toAbsolutePath().toAbsolutePath();
         DbProperties dbProperties = getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0;MV_STORE=TRUE;CACHE_SIZE=16000;AUTO_SERVER=TRUE", dbPath));
         dbProperties.setDbDir(dbPath.getParent().toString());
-        dbProperties.setDbFileName(dbPath.getFileName().toString());
+        dbProperties.setDbName(dbPath.getFileName().toString());
         return dbProperties;
     }
 }
