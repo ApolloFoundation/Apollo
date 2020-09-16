@@ -145,7 +145,7 @@ public final class DbUtils {
 
     public static <T> T[] getArray(ResultSet rs, String columnName, Class<? extends T[]> cls, T[] ifNull) throws SQLException {
         final String string = rs.getString(columnName);
-        if (EMPTY_JS_ARRAY.equals(string)) {
+        if (string == null || EMPTY_JS_ARRAY.equals(string)) {
             return ifNull;
         } else {
             try {

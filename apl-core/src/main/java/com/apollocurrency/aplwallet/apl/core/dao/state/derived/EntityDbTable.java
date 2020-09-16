@@ -38,7 +38,6 @@ import lombok.Getter;
 import org.slf4j.Logger;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

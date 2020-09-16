@@ -288,7 +288,6 @@ public class ShardEngineImpl implements ShardEngine {
         checkRequiredParameters(paramInfo);
         log.debug("Starting shard data transfer from [{}] tables...", paramInfo.getTableInfoList().size());
         long startAllTables = System.currentTimeMillis();
-        String lastTableName = null;
 
         TransactionalDataSource targetDataSource = ((ShardManagement) databaseManager).getOrCreateShardDataSourceById(paramInfo.getShardId());
         TransactionalDataSource sourceDataSource = databaseManager.getDataSource();

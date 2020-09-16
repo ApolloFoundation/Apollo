@@ -80,15 +80,16 @@ public class ShardDataSourceCreateHelper {
     public ShardDataSourceCreateHelper createUninitializedDataSource() {
         checkGenerateShardName();
         log.debug("Create new SHARD '{}'", shardName);
-//        logStackTrace("Dump stack on DS creation...", Thread.currentThread().getStackTrace());
-        DbProperties shardDbProperties = null;
+        DbProperties shardDbProperties;
         shardDbProperties = databaseManager.getBaseDbProperties().deepCopy();
-        shardDbProperties.setDbFileName(shardName); // change file name
+        shardDbProperties.setDbName(shardName); // change file name
         shardDbProperties.setMaxConnections(MAX_CONNECTIONS);
         shardDbProperties.setMaxMemoryRows(MAX_MEMORY_ROWS);
         shardDbProperties.setDbUrl(null);  // nullify dbUrl intentionally!;
         shardDbProperties.setDbIdentity(shardId); // put shard related info
         shardDb = new TransactionalDataSource(shardDbProperties, databaseManager.getPropertiesHolder());
+        shardDb.setSystemDataSource(databaseManager.getDataSource().getSystemDataSource());
+
         return this;
     }
 

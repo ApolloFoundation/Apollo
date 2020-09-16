@@ -67,7 +67,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         log.debug("Host: {}", jdbcDatabaseContainer.getHost());
         log.debug("Host: {}", jdbcDatabaseContainer.getHost());
         dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
-        dbProperties.setDatabaseName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
+        dbProperties.setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
 
 //        dbProperties.setDbUrl(((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl() + "?TC_DAEMON=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql");
 //        dbProperties.setDbUrl("jdbc:tc:mariadb:10.4:///mysql?TC_DAEMON=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql");
