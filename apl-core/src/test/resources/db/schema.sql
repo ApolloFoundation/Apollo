@@ -1,3 +1,1 @@
-DROP SCHEMA IF EXISTS testdb;
-CREATE SCHEMA IF NOT EXISTS testdb DEFAULT CHARACTER SET = 'utf8mb4' DEFAULT COLLATE = 'utf8mb4_unicode_ci';
 USE testdb;

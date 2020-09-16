@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -31,6 +32,11 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -50,9 +56,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
+@Slf4j
+@Testcontainers
 @Tag("slow")
 @EnableWeld
 class ShardPrunableZipHashCalculatorTest {
+    @Container
+    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.4")
+        .withDatabaseName("testdb")
+        .withUsername("testuser")
+        .withPassword("testpass")
+        .withExposedPorts(3306)
+        .withLogConsumer(new Slf4jLogConsumer(log));
+
     DerivedTablesRegistry registry = mock(DerivedTablesRegistry.class);
     Zip zip = spy(new ZipImpl());
     ShardDao shardDao = mock(ShardDao.class);
@@ -63,7 +79,7 @@ class ShardPrunableZipHashCalculatorTest {
     @RegisterExtension
     TemporaryFolderExtension tempFolder = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension();
+    DbExtension dbExtension = new DbExtension(mariaDBContainer);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(PrunableMessageTable.class,
         Event.class,
