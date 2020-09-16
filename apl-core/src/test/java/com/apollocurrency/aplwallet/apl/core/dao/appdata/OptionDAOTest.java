@@ -14,6 +14,11 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 
@@ -23,13 +28,22 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Testcontainers
 @Tag("slow")
 @Slf4j
 @EnableWeld
 class OptionDAOTest {
 
+    @Container
+    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.4")
+        .withDatabaseName("testdb")
+        .withUsername("testuser")
+        .withPassword("testpass")
+        .withExposedPorts(3306)
+        .withLogConsumer(new Slf4jLogConsumer(log));
+
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    DbExtension extension = new DbExtension(mariaDBContainer);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(OptionDAO.class)
