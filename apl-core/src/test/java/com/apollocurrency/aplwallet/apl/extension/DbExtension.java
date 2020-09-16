@@ -90,7 +90,8 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         this(dbProperties, null, null, null);
     }
 
-    public DbExtension(JdbcDatabaseContainer jdbcDatabaseContainer, DbProperties properties, String dataScriptPath, String schemaScriptPath) {
+    public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties properties, String dataScriptPath, String schemaScriptPath) {
+        this(jdbcDatabaseContainer, DbTestData.getInMemDbProps(), null, null, null);
         manipulator = new DbManipulator(properties, null, dataScriptPath, schemaScriptPath);
     }
 
@@ -115,9 +116,9 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         this.dbDir = dbDir;
     }
 
-    public DbExtension(JdbcDatabaseContainer jdbcDatabaseContainer, Path dbDir, String dbName, String dataScript) {
-        manipulator = new DbManipulator(DbTestData.getDbFileProperties(dbDir.resolve(dbName).toAbsolutePath().toString()), null, dataScript, null);
-        this.dbDir = dbDir;
+    public DbExtension(GenericContainer jdbcDatabaseContainer) {
+        this(jdbcDatabaseContainer, DbTestData.getInMemDbProps(), null, null, null);
+        manipulator = new DbManipulator(DbTestData.getInMemDbProps());
     }
 
     public DbExtension() {

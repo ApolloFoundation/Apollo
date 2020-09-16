@@ -16,19 +16,35 @@ import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Slf4j
+@Testcontainers
 @Tag("slow")
 class DexOrderDaoTest {
+    @Container
+    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.4")
+        .withDatabaseName("testdb")
+        .withUsername("testuser")
+        .withPassword("testpass")
+        .withExposedPorts(3306)
+        .withLogConsumer(new Slf4jLogConsumer(log));
+
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    DbExtension extension = new DbExtension(mariaDBContainer);
     DexOrderDao dexOrderDao;
     DexTestData td;
 

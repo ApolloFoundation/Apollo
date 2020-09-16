@@ -45,14 +45,21 @@ public class DbPopulator {
     private void loadSqlAndExecute(URI file) {
         byte[] bytes = readAllBytes(file);
 
+        String sqlCommand;
         StringTokenizer tokenizer = new StringTokenizer(new String(bytes), ";");
         while (tokenizer.hasMoreElements()) {
-            String sqlCommand = tokenizer.nextToken();
+            sqlCommand = tokenizer.nextToken();
             try (Connection con = basicDataSource.getConnection();
                  Statement stm = con.createStatement()) {
-                stm.executeUpdate(sqlCommand);
+                if (sqlCommand.trim().length() == 0 || sqlCommand.trim().startsWith("--")) {
+                    // skip empty and commented out strings
+                    continue;
+                } else {
+                    stm.executeUpdate(sqlCommand);
+                }
                 con.commit();
             } catch (SQLException e) {
+                LOG.error("Error for: {}", sqlCommand);
                 throw new RuntimeException(e.toString(), e);
             }
         }

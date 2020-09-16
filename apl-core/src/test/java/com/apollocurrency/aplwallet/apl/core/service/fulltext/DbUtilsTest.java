@@ -5,10 +5,16 @@
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -17,8 +23,18 @@ import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collections;
 
+@Slf4j
+@Testcontainers
 @Tag("slow")
 public class DbUtilsTest {
+    @Container
+    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.4")
+        .withDatabaseName("testdb")
+        .withUsername("testuser")
+        .withPassword("testpass")
+        .withExposedPorts(3306)
+        .withLogConsumer(new Slf4jLogConsumer(log));
+
     private static final TableData CURRENCY_TABLE_DATA = new TableData(
         0,
         "currency",
@@ -43,7 +59,7 @@ public class DbUtilsTest {
         Collections.emptyList());
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension();
+    DbExtension dbExtension = new DbExtension(mariaDBContainer);
 
     @Test
     public void testGetDbInfoForIndexedTable() throws SQLException {

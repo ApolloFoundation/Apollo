@@ -12,9 +12,14 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeriv
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.junit.jupiter.Container;
 
 import java.sql.SQLException;
 import java.util.Comparator;
@@ -28,9 +33,19 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
 public abstract class DerivedDbTableTest<T extends DerivedEntity> {
+
+    @Container
+    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.4")
+        .withDatabaseName("testdb")
+        .withUsername("testuser")
+        .withPassword("testpass")
+        .withExposedPorts(3306)
+        .withLogConsumer(new Slf4jLogConsumer(log));
+
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    DbExtension extension = new DbExtension(mariaDBContainer);
 
     DerivedDbTable<T> derivedDbTable;
     Class<T> clazz;
