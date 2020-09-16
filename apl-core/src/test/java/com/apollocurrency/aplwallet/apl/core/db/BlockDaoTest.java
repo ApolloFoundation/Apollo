@@ -67,12 +67,9 @@ class BlockDaoTest {
     @Container
     public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.4")
         .withDatabaseName("testdb")
-//        .withUsername("root")
         .withUsername("testuser")
         .withPassword("testpass")
         .withExposedPorts(3306)
-//        .withNetwork(Network.newNetwork())
-//        .withNetworkAliases("mariaDbService")
         .withLogConsumer(new Slf4jLogConsumer(log));
 
     @RegisterExtension
@@ -80,7 +77,6 @@ class BlockDaoTest {
     @RegisterExtension
 //    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("blockDaoTestDb").toAbsolutePath().toString()));
     DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbFileProperties(createPath("blockDaoTestDb").toAbsolutePath().toString()));
-//    DbExtension extension = new DbExtension(mariaDBContainer, null, null, null, null);
 
     private BlockDao blockDao;
     private TransactionDaoImpl transactionDao;
