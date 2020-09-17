@@ -79,8 +79,8 @@ public class UnconfirmedTransactionProcessingService {
     public void processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws AplException.ValidationException {
         Transaction transaction = unconfirmedTransaction.getTransaction();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-            try {
-                dataSource.begin();
+        TransactionalDataSource.StartedConnection started = dataSource.beginTransactionIfNotStarted();
+        try {
 //                log.trace("Process tx {} at height {}, stacktrace - {}", transaction.getId(), blockchain.getHeight(), ThreadUtils.last5Stacktrace());
                 if (!transactionApplier.applyUnconfirmed(transaction)) {
                     throw new AplException.InsufficientBalanceException("Insufficient balance");
@@ -95,10 +95,10 @@ public class UnconfirmedTransactionProcessingService {
 ////                    log.trace("Tx {} applied and saved at {}",unconfirmedTransaction, blockchain.getHeight());
 //                }
 
-                dataSource.commit();
+                dataSource.commit(!started.isAlreadyStarted());
             } catch (Exception e) {
 //                log.trace("Processing error for tx " + unconfirmedTransaction.getId(), e);
-                dataSource.rollback();
+                dataSource.rollback(!started.isAlreadyStarted());
                 throw e;
             }
     }

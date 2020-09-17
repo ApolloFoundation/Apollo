@@ -170,7 +170,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 dispatcher.invokeAfter(Task.builder()
                     .name("PendingBroadcaster")
                     .initialDelay(2000)
-                    .task(new PendingBroadcastTask(globalSync, this, memPool, transactionValidator, processingService))
+                    .task(new PendingBroadcastTask( this, memPool, transactionValidator, processingService))
                     .build());
                 dispatcher.invokeAfter(Task.builder()
                     .name("InitialUnconfirmedTxsRebroadcasting")
@@ -216,7 +216,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         globalSync.writeLock();
         try {
             if (blockchain.hasTransaction(transaction.getId())) {
-                log.info("Transaction {} already in blockchain, will not broadcast again", transaction.getStringId());
+//                log.info("Transaction {} already in blockchain, will not broadcast again", transaction.getStringId());
                 return;
             }
             if (memPool.hasUnconfirmedTransaction(transaction.getId())) {
@@ -247,18 +247,74 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     @Override
+    public void broadcast(Collection<Transaction> transactions) {
+        globalSync.writeLock();
+        try {
+            List<UnconfirmedTransaction> toBroadcast = transactions.stream()
+                .filter(this::requireBroadcast)
+                .map(e-> new UnconfirmedTransaction(e, ntpTime.getTime()))
+                .collect(Collectors.toList());
+            boolean broadcastLater = lookupBlockchainProcessor().isProcessingBlock();
+            if (broadcastLater) {
+                toBroadcast.forEach(memPool::broadcastLater);
+//                log.debug("Will broadcast new transaction later {}", transaction.getStringId());
+            } else {
+                TransactionalDataSource.StartedConnection startedConnection = databaseManager.getDataSource().beginTransactionIfNotStarted();
+                List<UnconfirmedTransaction> processed = toBroadcast.stream()
+                    .filter(e -> processingService.validateBeforeProcessing(e).isOk())
+                    .filter(e -> {
+                        try {
+                            processingService.processTransaction(e);
+//                log.debug("Accepted new transaction {}", transaction.getStringId());
+                            return true;
+                        } catch (AplException.ValidationException validationException) {
+                            log.trace("Not valid tx " + e.getId(), validationException);
+                            return false;
+                        }
+                    }).collect(Collectors.toList());
+
+                peers.sendToSomePeers(processed);
+                List<Transaction> processedTxs = processed.stream().map(UnconfirmedTransaction::getTransaction).collect(Collectors.toList());
+                processedTxs.forEach(memPool::rebroadcast);
+                txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(processedTxs);
+                databaseManager.getDataSource().commit(!startedConnection.isAlreadyStarted());
+            }
+        } finally {
+            globalSync.writeUnlock();
+        }
+    }
+
+    private boolean requireBroadcast(Transaction tx) {
+        if (blockchain.hasTransaction(tx.getId())) {
+            log.info("Transaction {} already in blockchain, will not broadcast again", tx.getStringId());
+            return false;
+        }
+        if (memPool.hasUnconfirmedTransaction(tx.getId())) {
+            memPool.rebroadcast(tx);
+            return false;
+        }
+        try {
+            transactionValidator.validate(tx);
+        } catch (AplException.ValidationException e) {
+            log.trace("Tx " + tx.getId() + " is not valid before broadcast", e);
+            return false;
+        }
+        return true;
+    }
+
+    @Override
     public void clearUnconfirmedTransactions() {
         globalSync.writeLock();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         List<UnconfirmedTransaction> transactions;
+        TransactionalDataSource.StartedConnection startedConnection = dataSource.beginTransactionIfNotStarted();
         try {
-            dataSource.beginTransactionIfNotStarted();
             transactions = processingService.undoAllProcessedTransactions();
             memPool.clear();
-            dataSource.commit();
+            dataSource.commit(!startedConnection.isAlreadyStarted());
         } catch (Exception e) {
             log.error(e.toString(), e);
-            dataSource.rollback();
+            dataSource.rollback(!startedConnection.isAlreadyStarted());
             throw e;
         } finally {
             globalSync.writeUnlock();

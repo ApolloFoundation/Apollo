@@ -232,9 +232,9 @@ public class MemPool {
     public void rebroadcast(Transaction tx) {
         if (enableRebroadcasting) {
             memoryState.addToBroadcasted(tx);
-            log.debug("Transaction {} already in unconfirmed pool, will re-broadcast", tx.getStringId());
+//            log.debug("Transaction {} already in unconfirmed pool, will re-broadcast", tx.getStringId());
         } else {
-            log.debug("Transaction {} already in unconfirmed pool, will not broadcast again", tx.getStringId());
+//            log.debug("Transaction {} already in unconfirmed pool, will not broadcast again", tx.getStringId());
         }
     }
 
@@ -269,5 +269,9 @@ public class MemPool {
 
     public int pendingBroadcastQueueSize() {
         return memoryState.pendingBroadcastQueueSize();
+    }
+
+    public double pendingBroadcastQueueLoad() {
+        return memoryState.pendingBroadcastQueueLoadFactor();
     }
 }

@@ -35,6 +35,8 @@ public interface TransactionProcessor {
 
     void printMemPoolStat();
 
+    void broadcast(Collection<Transaction> transactions);
+
     void clearUnconfirmedTransactions();
 
     void requeueAllUnconfirmedTransactions();

@@ -54,6 +54,7 @@ public class MemPoolInMemoryState {
     private final int maxInMemorySize;
     @Getter
     private volatile boolean cacheInitialized;
+    private final int maxPendingBroadcastQueueSize;
 
 
     @Inject
@@ -61,7 +62,8 @@ public class MemPoolInMemoryState {
         this.unconfirmedTransactionCreator = unconfirmedTransactionCreator;
         this.maxInMemorySize = maxUnconfirmedTransactions;
         this.waitingTransactions = new SizeBoundedPriorityQueue<>(maxUnconfirmedTransactions, new UnconfirmedTransactionComparator());
-        this.broadcastPendingTransactions = new PriorityBlockingQueue<>(100_000, Comparator.comparing(TxWithArrivalTimestamp::getArrivalTime));
+        this.maxPendingBroadcastQueueSize = 20_000;
+        this.broadcastPendingTransactions = new PriorityBlockingQueue<>(maxPendingBroadcastQueueSize, Comparator.comparing(TxWithArrivalTimestamp::getArrivalTime));
     }
 
     public void backToWaiting(UnconfirmedTransaction unconfirmedTransaction) {
@@ -199,11 +201,14 @@ public class MemPoolInMemoryState {
         return broadcastPendingTransactions.size();
     }
 
+
+    public double pendingBroadcastQueueLoadFactor() {
+        return 1.0 * broadcastPendingTransactions.size() / maxPendingBroadcastQueueSize;
+    }
+
     @Data
     private static class TxWithArrivalTimestamp {
         private final long arrivalTime = System.currentTimeMillis();
         private final Transaction tx;
     }
-
-
 }
