@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.PendingBroadcastTask;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTxsToBroadcastWhenConfirmed;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessWaitingTransactionsThread;
@@ -47,7 +48,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadin
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
@@ -55,6 +55,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.event.Event;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
@@ -145,6 +146,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         return blockchainProcessor;
     }
 
+    @PostConstruct
     public void init() {
         configureBackgroundTasks();
     }
@@ -166,9 +168,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     })
                     .build());
                 dispatcher.invokeAfter(Task.builder()
-                    .name("Broadcaster")
+                    .name("PendingBroadcaster")
                     .initialDelay(2000)
-                    .task(this::broadcastPendingQueue)
+                    .task(new PendingBroadcastTask(globalSync, this, memPool, transactionValidator, processingService))
                     .build());
                 dispatcher.invokeAfter(Task.builder()
                     .name("InitialUnconfirmedTxsRebroadcasting")
@@ -202,56 +204,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     @Override
     public void broadcastWhenConfirmed(Transaction transaction, Transaction uncTransaction) {
         memPool.broadcastWhenConfirmed(transaction, uncTransaction);
-    }
-
-    void broadcastPendingQueue() {
-        while (true) {
-            if (memPool.pendingBroadcastQueueSize() > 10) {
-                globalSync.updateLock();
-                try {
-                    for (int i = 0; i < 10; i++) {
-                        doBroadcastOnePendingTx();
-                    }
-                } finally {
-                    globalSync.updateUnlock();
-                }
-                ThreadUtils.sleep(20);
-            } else {
-                doBroadcastOnePendingTx();
-                ThreadUtils.sleep(5);
-            }
-        }
-    }
-
-    private void doBroadcastOnePendingTx() {
-        if (!memPool.canSafelyAcceptTransactions()) { // do not loose existing transactions
-            return;
-        }
-        try {
-            Transaction tx = null;
-            try {
-                tx = memPool.nextSoftBroadcastTransaction();
-            } catch (InterruptedException ignored) {}
-            if (tx != null) {
-                try {
-                    transactionValidator.validate(tx);
-                } catch (AplException.ValidationException e) {
-                    log.debug("Invalid transaction was not broadcasted txId=" + tx.getId(), e);
-                    return;
-                }
-                UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(tx);
-                if (!validationResult.isOk()) {
-                    return;
-                }
-                try {
-                    broadcast(tx);
-                } catch (AplException.ValidationException e) {
-                    log.debug("Failed to broadcast transaction txId=" + tx.getId(), e);
-                }
-            }
-        } catch (Exception e) {
-            log.error("Unknown exception during broadcast transactions ", e);
-        }
     }
 
     @Override
