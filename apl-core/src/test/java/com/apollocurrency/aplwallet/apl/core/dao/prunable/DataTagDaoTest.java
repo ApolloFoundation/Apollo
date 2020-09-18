@@ -74,7 +74,7 @@ import static org.mockito.Mockito.mock;
 class DataTagDaoTest {
 
     @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.4")
+    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
         .withDatabaseName("testdb")
         .withUsername("testuser")
         .withPassword("testpass")

@@ -72,7 +72,7 @@ public class DataSourceWrapper implements DataSource {
     private HikariPoolMXBean jmxBean;
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
-    private DataSource systemDataSource;
+//    private DataSource systemDataSource;
 
 
     public DataSourceWrapper(DbProperties dbProperties) {
@@ -197,6 +197,7 @@ public class DataSourceWrapper implements DataSource {
 
     private void initDatasource(DbVersion dbVersion) {
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
+/*
         if (this.systemDataSource == null) {
             HikariConfig sysDBConf = new HikariConfig();
             sysDBConf.setJdbcUrl(systemDbUrl);
@@ -217,6 +218,7 @@ public class DataSourceWrapper implements DataSource {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
+*/
 
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
@@ -238,8 +240,10 @@ public class DataSourceWrapper implements DataSource {
 //            stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
 //            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
 
-//            stmt.executeUpdate("set global rocksdb_max_row_locks=1073741824;");
-//            stmt.executeUpdate("set session rocksdb_max_row_locks=1073741824;");
+            if (this.dbName != null && !this.dbName.equalsIgnoreCase("testdb")) { //skip that for unit test
+                stmt.executeUpdate("set global rocksdb_max_row_locks=1073741824;");
+                stmt.executeUpdate("set session rocksdb_max_row_locks=1073741824;");
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -346,11 +350,12 @@ public class DataSourceWrapper implements DataSource {
     }
 
     public DataSource getSystemDataSource() {
-        return systemDataSource;
+//        return systemDataSource;
+        return null;
     }
 
     public void setSystemDataSource(DataSource systemDataSource) {
-        this.systemDataSource = systemDataSource;
+//        this.systemDataSource = systemDataSource;
     }
 
     public String getUrl() {
