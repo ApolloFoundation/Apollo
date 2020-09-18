@@ -119,79 +119,11 @@ Project is entirely on Maven v3 and could be loaded in any IDE that supports Mav
 https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04-ru
 should be completed
 
-#### MariaDB installation
+Article about MariaDB in docker
 https://mariadb.com/kb/en/installing-and-using-mariadb-via-docker/
 
-$ docker images --all
-REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE
-mariadb                       10.4                79954776f84b        3 weeks ago         400MB
-testcontainersofficial/ryuk   0.3.0               344c0229fe44        3 months ago        11.9MB
-
-$ docker run -i -t -e MYSQL_ROOT_PASSWORD=mypass -d mariadb:10.4
-
-docker ps -a
-
-| CONTAINER ID | IMAGE | COMMAND | CREATED | STATUS | PORTS | NAMES |
-| 0aec9ec26cf9 | mariadb:10.4 | "docker-entrypoint.s…" | 5 seconds ago | Up 5 seconds | 3306/tcp | **eager_kepler** |
-
-$ docker exec -it eager_kepler bash
-
-##### Inside running container from an image do commands
-
-$ apt update
-
-$ apt install nano
-
-$ apt install systemctl
-
-$ apt-get install mariadb-plugin-rocksdb
-
-Add following sections into my.cnf
-
-Make sure to set the client and server character set as well. I have the following in my MySQL configuration file (/etc/my.cnf):
-[client]
-.....
-default-character-set = utf8mb4
-
-[mysql]
-...
-default-character-set = utf8mb4
-
-[mysqld]
-........
-rocksdb
-default-storage-engine=rocksdb
-skip-innodb
-default-tmp-storage-engine=MyISAM
-
-character-set-client-handshake = FALSE
-character-set-server = utf8mb4
-collation-server = utf8mb4_unicode_ci
-plugin_load_add = ha_rocksdb
-log-bin
-binlog-format=ROW
-
-
-Comment out INNODB settings like that:
-
-# Read the manual for more InnoDB related options. There are many!
-#default_storage_engine	= InnoDB
-#innodb_buffer_pool_size	= 256M
-#innodb_log_buffer_size	= 8M
-#innodb_file_per_table	= 1
-#innodb_open_files	= 400
-#innodb_io_capacity	= 400
-#innodb_flush_method	= O_DIRECT
-
-
-Shutdown container to apply changes on next run:
-
-$ mysqladmin -u root -p shutdown
-
-default password = mypass
-
-#### Install MYRocks DB Plugin into Dockerized mariadb image
-https://mariadb.com/kb/en/getting-started-with-myrocks/
+### How create local docker image for unit tests
+See [creation local Docker image link](/unit-test-Docker-Image/README.md)
 
 #### Check IP table / firewall settings to access docker
 https://github.com/testcontainers/testcontainers-java/issues/572#issuecomment-517831833

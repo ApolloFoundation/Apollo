@@ -6,44 +6,43 @@ https://signal18.io/blog/docker-mariadb-myrocks
 
 ##  IMPORTANT !! You should have Docker to be installed locally first !!
 
+### Linux
+
+https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04-ru
+
 #### 1. See prepared 'Dockerfile' script
 
 
 #### 2. Run console commands
 
-2.1 Download initial image we'll use as a base :
+2.1 Download initial image. It we'll use as a base for a custom image and container :
 
-$ docker pull mariadb:10.4
-
-
-2.2 Build a new image 'apl-mariadb-rocksdb:10.4' by running script 'Dockerfile' in the current folder :
-
-# $ docker build -t apl-mariadb-rocksdb:10.4 .
-$ docker build -t mariadb:10.4 .
+$ docker pull mariadb:10.5.5
 
 
-2.3 One time start up a new container by using NEW image 'mariadb:10.4' and give it a name 'apl-mariadb-rocksdb':
+2.2 Build a new image 'mariadb:10.5' by running script 'Dockerfile' in the current folder :
+
+$ docker build -t mariadb:10.5 .
+
+
+2.3 One time start up a new container by using created image 'mariadb:10.5' and give it a name 'apl-mariadb':
 
 $ docker run -p 3306:3306 \
-    --name apl-mariadb-rocksdb \
-    -e MYSQL_ROOT_PASSWORD=mypass \
+    --name apl-mariadb \
+    -e MYSQL_ALLOW_EMPTY_PASSWORD=yes \
     -e MYSQL_DATABASE=testdb \
     -e MYSQL_USER=testuser \
     -e MYSQL_PASSWORD=testpass \
-    -d mariadb:10.4
+    -d mariadb:10.5
 
 
 2.4 Quick check it accessible on local PC :
 
-$ mysql -h 127.0.0.1 -P3306 -u root -pmypass
-
-2.5 Assign more priviliges to test user:
-
-mysql> grant all on *.* to 'testuser'@'%' identified by 'testpass' with grant option;
+$ mysql -h 127.0.0.1 -P3306 -u root
 
 2.6 Quick check by access with testuser on local PC :
 
-$ mysql -h 127.0.0.1 -P3306 -u testuser -pmypass
+$ mysql -h 127.0.0.1 -P3306 -u testuser -ptestpass
 
 
 #### 3. Quickly check that MyRocks is enabled:
@@ -67,8 +66,10 @@ MariaDB [(none)]> show engines;
 | InnoDB             | DEFAULT | Supports transactions, row-level locking, foreign keys and encryption for tables                | YES          | YES  | YES        |
  
 
-#### Usefull commands
+#### Useful commands
 
 Connect to bash in running container
 
-$ docker exec -it apl-mariadb-rocksdb bash
+$ docker exec -it apl-mariadb bash
+
+$ docker logs apl-mariadb

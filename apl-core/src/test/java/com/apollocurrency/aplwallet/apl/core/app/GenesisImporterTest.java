@@ -61,6 +61,7 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -93,6 +94,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@Disabled
 @Testcontainers
 @Tag("slow")
 @Slf4j
@@ -100,7 +102,7 @@ import static org.mockito.Mockito.when;
 class GenesisImporterTest {
 
     @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.4")
+    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
         .withDatabaseName("testdb")
         .withUsername("testuser")
         .withPassword("testpass")
