@@ -69,7 +69,7 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 public class ShardServiceIntegrationTest {
     @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.4")
+    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
         .withDatabaseName("testdb")
         .withUsername("testuser")
         .withPassword("testpass")
@@ -141,7 +141,7 @@ public class ShardServiceIntegrationTest {
     @Test
     void testReset() throws IOException, SQLException {
         Path dbDir = folder.newFolder().toPath();
-        DatabaseManagerImpl databaseManager = new DatabaseManagerImpl(DbTestData.getDbFileProperties(dbDir.resolve(Constants.APPLICATION_DIR_NAME)), new PropertiesHolder(), new JdbiHandleFactory());
+        DatabaseManagerImpl databaseManager = new DatabaseManagerImpl(DbTestData.getDbFilePropertiesByPath(dbDir.resolve(Constants.APPLICATION_DIR_NAME)), new PropertiesHolder(), new JdbiHandleFactory());
         Chain mockChain = mock(Chain.class);
         doReturn(mockChain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5")).when(mockChain).getChainId();
@@ -155,7 +155,7 @@ public class ShardServiceIntegrationTest {
         Path backupDir = dbDir.resolve("backup");
         Files.createDirectory(backupDir);
         Path dbPath = backupDir.resolve(Constants.APPLICATION_DIR_NAME);
-        DbManipulator manipulator = new DbManipulator(DbTestData.getDbFileProperties(dbPath), null, "db/shard/service-reset-data.sql", "db/schema.sql");
+        DbManipulator manipulator = new DbManipulator(DbTestData.getDbFilePropertiesByPath(dbPath), null, "db/shard/service-reset-data.sql", "db/schema.sql");
         manipulator.init();
         manipulator.populate();
         manipulator.shutdown();

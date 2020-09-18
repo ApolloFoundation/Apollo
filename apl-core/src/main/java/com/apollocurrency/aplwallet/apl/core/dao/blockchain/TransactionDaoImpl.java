@@ -419,13 +419,13 @@ public class TransactionDaoImpl implements TransactionDao {
             throw new RuntimeException("None of private transactions should be retrieved!");
         }
         if (type >= 0) {
-            buf.append("AND type = ? ");
+            buf.append("AND `type` = ? ");
             if (subtype >= 0) {
                 buf.append("AND subtype = ? ");
             }
         }
         if (!includePrivate) {
-            buf.append("AND (type <> ? ");
+            buf.append("AND (`type` <> ? ");
             buf.append("OR subtype <> ? ) ");
         }
         if (height < Integer.MAX_VALUE) {
@@ -433,7 +433,7 @@ public class TransactionDaoImpl implements TransactionDao {
         }
         if (withMessage) {
             buf.append("AND (has_message = TRUE OR has_encrypted_message = TRUE ");
-            buf.append("OR ((has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE) AND timestamp > ?)) ");
+            buf.append("OR ((has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE) AND `timestamp` > ?)) ");
         }
         if (phasedOnly) {
             buf.append("AND phased = TRUE ");
@@ -452,13 +452,13 @@ public class TransactionDaoImpl implements TransactionDao {
             buf.append("AND block_timestamp >= ? ");
         }
         if (type >= 0) {
-            buf.append("AND type = ? ");
+            buf.append("AND `type` = ? ");
             if (subtype >= 0) {
                 buf.append("AND subtype = ? ");
             }
         }
         if (!includePrivate) {
-            buf.append("AND (type <> ? ");
+            buf.append("AND (`type` <> ? ");
             buf.append("OR subtype <> ? ) ");
         }
         if (height < Integer.MAX_VALUE) {
@@ -466,7 +466,7 @@ public class TransactionDaoImpl implements TransactionDao {
         }
         if (withMessage) {
             buf.append("AND (has_message = TRUE OR has_encrypted_message = TRUE OR has_encrypttoself_message = TRUE ");
-            buf.append("OR ((has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE) AND timestamp > ?)) ");
+            buf.append("OR ((has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE) AND `timestamp` > ?)) ");
         }
         if (phasedOnly) {
             buf.append("AND phased = TRUE ");
@@ -504,6 +504,7 @@ public class TransactionDaoImpl implements TransactionDao {
         createTransactionSelectSqlNoOrder(buf, "transaction.id", type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height);
         buf.append(")");
         String sql = buf.toString();
+        log.trace(sql);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql)) {
             log.trace("getTxCount sql = {}\naccountId={}, dataSource={}", sql, accountId, dataSource.getDbIdentity());
@@ -719,7 +720,7 @@ public class TransactionDaoImpl implements TransactionDao {
                                                         int from, int to) {
         List<TxReceipt> result = new ArrayList<>();
         StringBuilder sqlQuery = new StringBuilder("SELECT version, type, subtype, id, sender_id, recipient_id, " +
-            "signature, timestamp, amount, fee, height, block_id, block_timestamp, transaction_index, " +
+            "signature, `timestamp`, amount, fee, height, block_id, block_timestamp, transaction_index, " +
             "attachment_bytes, has_message " +
             "FROM transaction ");
         sqlQuery.append("WHERE 1=1 ");
