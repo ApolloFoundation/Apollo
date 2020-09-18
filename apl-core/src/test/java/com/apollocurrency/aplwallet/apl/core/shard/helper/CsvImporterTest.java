@@ -135,7 +135,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Execution(ExecutionMode.CONCURRENT)
 class CsvImporterTest {
     @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.4")
+    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
         .withDatabaseName("testdb")
         .withUsername("testuser")
         .withPassword("testpass")
