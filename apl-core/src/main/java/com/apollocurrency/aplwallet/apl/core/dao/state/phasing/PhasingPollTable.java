@@ -304,7 +304,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
 
     int blockTimestamp(int height) throws SQLException {
         try (Connection connection = databaseManager.getDataSource().getConnection();
-             PreparedStatement pstm = connection.prepareStatement("SELECT timestamp from block where height = ?")) {
+             PreparedStatement pstm = connection.prepareStatement("SELECT `timestamp` from block where height = ?")) {
             pstm.setInt(1, height);
             try (ResultSet rs = pstm.executeQuery()) {
                 if (rs.next()) {
