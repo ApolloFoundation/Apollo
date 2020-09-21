@@ -62,7 +62,7 @@ public class MemPoolInMemoryState {
         this.unconfirmedTransactionCreator = unconfirmedTransactionCreator;
         this.maxInMemorySize = maxUnconfirmedTransactions;
         this.waitingTransactions = new SizeBoundedPriorityQueue<>(maxUnconfirmedTransactions, new UnconfirmedTransactionComparator());
-        this.maxPendingBroadcastQueueSize = 20_000;
+        this.maxPendingBroadcastQueueSize = maxUnconfirmedTransactions;
         this.broadcastPendingTransactions = new PriorityBlockingQueue<>(maxPendingBroadcastQueueSize, Comparator.comparing(TxWithArrivalTimestamp::getArrivalTime));
     }
 

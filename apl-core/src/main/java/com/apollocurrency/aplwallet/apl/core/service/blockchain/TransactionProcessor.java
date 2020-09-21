@@ -29,8 +29,6 @@ import java.util.List;
 
 public interface TransactionProcessor {
 
-    void init();
-
     void broadcastWhenConfirmed(Transaction transaction, Transaction uncTransaction);
 
     void printMemPoolStat();

@@ -114,10 +114,9 @@ class TransactionProcessorTest {
     @BeforeEach
     void setUp() {
         td = new TransactionTestData();
-        service = new TransactionProcessorImpl(propertiesHolder, transactionValidator,
+        service = new TransactionProcessorImpl(transactionValidator,
             listEvent, databaseManager,
-            globalSync, timeService, ntpTimeConfig.time(), blockchainConfig, taskDispatchManager, peersService, blockchain, transactionBuilder, prunableLoadingService, processingService,
-            transactionTypeFactory, memPool);
+            globalSync, timeService, ntpTimeConfig.time(), blockchainConfig, peersService, blockchain, transactionBuilder, prunableLoadingService, processingService, memPool);
     }
 
     @Test

@@ -26,19 +26,14 @@ public class PendingBroadcastTask implements Runnable {
     private final MemPool memPool;
     private final TransactionValidator validator;
     private final UnconfirmedTransactionProcessingService processingService;
-    private final int maxBatchBroadcastSize;
-    private final int minBatchBroadcastSize;
-    private final static double batchSizeScaleStep = 0.01;
-    private final static double batchSizeScaleCoef = 1.15;
+    private final BatchSizeCalculator batchSizeCalculator;
 
-
-    public PendingBroadcastTask(TransactionProcessor txProcessor, MemPool memPool, TransactionValidator validator, UnconfirmedTransactionProcessingService processingService) {
+    public PendingBroadcastTask(TransactionProcessor txProcessor, MemPool memPool, BatchSizeCalculator batchSizeCalculator, TransactionValidator validator, UnconfirmedTransactionProcessingService processingService) {
         this.txProcessor = txProcessor;
         this.memPool = memPool;
         this.validator = validator;
         this.processingService = processingService;
-        maxBatchBroadcastSize = 1024;
-        minBatchBroadcastSize = 40;
+        this.batchSizeCalculator = batchSizeCalculator;
     }
 
 
@@ -61,17 +56,16 @@ public class PendingBroadcastTask implements Runnable {
     void broadcastBatch() {
         int batchSize = batchSize();
         List<Transaction> transactions = collectBatch(batchSize);
+        batchSizeCalculator.startTiming(transactions.size());
         txProcessor.broadcast(transactions);
+        batchSizeCalculator.stopTiming();
         ThreadUtils.sleep(20);
     }
 
     int batchSize() {
-        double load = memPool.pendingBroadcastQueueLoad();
-        double factor = load / batchSizeScaleStep;
-        int batchSize = minBatchBroadcastSize;
-        batchSize = (int) (batchSize * Math.pow(batchSizeScaleCoef, factor));
-        log.debug("Load factor {}, batch size {}", load, batchSize);
-        return Math.min(batchSize, maxBatchBroadcastSize);
+        int batchSize = batchSizeCalculator.currentBatchSize();
+        log.debug("Load factor {}, batch size {}", memPool.pendingBroadcastQueueLoad(), batchSize);
+        return batchSize;
     }
 
     private List<Transaction> collectBatch(int number) {
@@ -93,25 +87,24 @@ public class PendingBroadcastTask implements Runnable {
     }
 
     NextPendingTx nextValidTxFromPendingQueue() {
-        Transaction tx = null;
         try {
-            tx = memPool.nextSoftBroadcastTransaction();
-        } catch (InterruptedException ignored) {
-        }
-        if (tx != null) {
-            try {
+            if (memPool.pendingBroadcastQueueSize() > 0) { // try to not lock
+                Transaction tx = memPool.nextSoftBroadcastTransaction();
                 validator.validate(tx);
-            } catch (AplException.ValidationException e) {
-                log.debug("Invalid transaction was not broadcasted txId=" + tx.getId(), e);
-                return new NextPendingTx(null, true);
+                UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(tx);
+                if (!validationResult.isOk()) {
+                    return new NextPendingTx(null, true);
+                }
+                return new NextPendingTx(tx, true);
+            } else {
+                return new NextPendingTx(null, false);
             }
-            UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(tx);
-            if (!validationResult.isOk()) {
-                return new NextPendingTx(null, true);
-            }
-            return new NextPendingTx(tx, true);
+        } catch (InterruptedException ignored) { // should never happen for blocking queue and one processing thread
+            return new NextPendingTx(null, false);
+        } catch (AplException.ValidationException e) {
+            log.debug("Invalid transaction was not broadcasted ", e);
+            return new NextPendingTx(null, true);
         }
-        return new NextPendingTx(null, false);
     }
 
     @Data

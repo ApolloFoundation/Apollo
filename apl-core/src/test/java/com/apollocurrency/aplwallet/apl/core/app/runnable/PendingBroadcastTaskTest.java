@@ -14,8 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.doReturn;
 @ExtendWith(MockitoExtension.class)
 class PendingBroadcastTaskTest {
     @Mock
@@ -26,28 +24,32 @@ class PendingBroadcastTaskTest {
     MemPool memPool;
     @Mock
     TransactionValidator validator;
+    @Mock
+    BatchSizeCalculator batchSizeCalculator;
 
     PendingBroadcastTask pendingBroadcastTask;
 
     @BeforeEach
     void setUp() {
-        pendingBroadcastTask = new PendingBroadcastTask(transactionProcessor, memPool, validator, processingService);
+        pendingBroadcastTask = new PendingBroadcastTask(transactionProcessor, memPool, batchSizeCalculator, validator, processingService);
     }
 
     @Test
-    void broadcastPendingQueue() {
-
+    void broadcastBatch() {
+//        doReturn(20).when(batchSizeCalculator).currentBatchSize();
+//        doReturn(1).when(memPool.pendingBroadcastQueueSize());
     }
 
-    @Test
-    void batchSize() {
-        doReturn(0.2).when(memPool).pendingBroadcastQueueLoad();
-        int size = pendingBroadcastTask.batchSize();
-        assertEquals(654, size);
-    }
+//    @Test
+//    void batchSize() {
+//        doReturn(0.2).when(memPool).pendingBroadcastQueueLoad();
+//        int size = pendingBroadcastTask.batchSize();
+//        assertEquals(654, size);
+//    }
 
     @Test
     void nextValidTxFromPendingQueue() {
-
+//        doReturn()
+        pendingBroadcastTask.nextValidTxFromPendingQueue();
     }
 }
