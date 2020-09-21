@@ -4,15 +4,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTxValidationResult;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.Answer;
+
+import java.util.List;
+
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class PendingBroadcastTaskTest {
@@ -35,9 +46,36 @@ class PendingBroadcastTaskTest {
     }
 
     @Test
-    void broadcastBatch() {
-//        doReturn(20).when(batchSizeCalculator).currentBatchSize();
-//        doReturn(1).when(memPool.pendingBroadcastQueueSize());
+    void broadcastBatch() throws InterruptedException {
+        doReturn(20).when(batchSizeCalculator).currentBatchSize();
+        doReturn(true).when(memPool).canSafelyAcceptTransactions();
+        doAnswer(new Answer<Integer>() {
+            int iters = 0;
+            @Override
+            public Integer answer(InvocationOnMock invocationOnMock) throws Throwable {
+                if (++iters == 5) {
+                    return 0;
+                }
+                return 1;
+            }
+        }).when(memPool).pendingBroadcastQueueSize();
+        Transaction tx = mock(Transaction.class);
+        doReturn(tx).when(memPool).nextSoftBroadcastTransaction();
+        doAnswer(new Answer<UnconfirmedTxValidationResult>() {
+            int iter;
+            @Override
+            public UnconfirmedTxValidationResult answer(InvocationOnMock invocationOnMock) throws Throwable {
+                if (++iter == 2) {
+                    return new UnconfirmedTxValidationResult(1, UnconfirmedTxValidationResult.Error.ALREADY_PROCESSED, "");
+                }
+                return new UnconfirmedTxValidationResult(0, null, "");
+            }
+        }).when(processingService).validateBeforeProcessing(tx);
+
+        pendingBroadcastTask.broadcastBatch();
+
+        verify(transactionProcessor).broadcast(List.of(tx, tx, tx));
+
     }
 
 //    @Test
