@@ -195,18 +195,18 @@ public class DataSourceWrapper implements DataSource {
 
     private void initDatasource(DbVersion dbVersion) {
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
-        if (this.systemDataSource == null) {
-            HikariConfig sysDBConf = new HikariConfig();
-            sysDBConf.setJdbcUrl(systemDbUrl);
-            sysDBConf.setUsername(dbUsername);
-            sysDBConf.setPassword(dbPassword);
-            sysDBConf.setMaximumPoolSize(20);
-            sysDBConf.setPoolName("systemDB");
-            this.systemDataSource = new HikariDataSource(sysDBConf);
-        }
 
-        try (Connection con = this.systemDataSource.getConnection();
+        HikariConfig sysDBConf = new HikariConfig();
+        sysDBConf.setJdbcUrl(systemDbUrl);
+        sysDBConf.setUsername(dbUsername);
+        sysDBConf.setPassword(dbPassword);
+        sysDBConf.setMaximumPoolSize(5);
+        sysDBConf.setPoolName("systemDB");
+
+        try (HikariDataSource systemDataSource = new HikariDataSource(sysDBConf);
+             Connection con = systemDataSource.getConnection();
              Statement stmt = con.createStatement()) {
+
             stmt.execute(
                 String.format(
                     "CREATE DATABASE IF NOT EXISTS %1$s CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;",
@@ -232,7 +232,6 @@ public class DataSourceWrapper implements DataSource {
         log.debug("Attempting to create DataSource by path = {}...", dbUrl);
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
-
 //            stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
 //            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
 
