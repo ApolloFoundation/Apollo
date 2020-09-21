@@ -15,11 +15,13 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControl
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -53,9 +55,10 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     //TODO Remove references to the Blockchain and BlockchainConfig classes when the EntityDbTable class will be refactored
     public AccountTable(Blockchain blockchain, BlockchainConfig blockchainConfig/*, @Named("CREATOR_ID")long creatorId*/,
                         DerivedTablesRegistry derivedDbTablesRegistry,
-                        DatabaseManager databaseManager) {
+                        DatabaseManager databaseManager,
+                        Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("account", accountDbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null);
+            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL.");
     }
 
@@ -106,11 +109,11 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
 
     @Override
-    public void trim(int height) {
+    public void trim(int height, boolean isSharding) {
         if (height <= blockchainConfig.getGuaranteedBalanceConfirmations()) {
             return;
         }
-        super.trim(height);
+        super.trim(height, isSharding);
     }
 
     public long getTotalSupply(long creatorId) {

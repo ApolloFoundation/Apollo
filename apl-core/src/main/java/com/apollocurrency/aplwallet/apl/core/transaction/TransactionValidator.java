@@ -48,6 +48,7 @@ public class TransactionValidator {
     private final TransactionVersionValidator transactionVersionValidator;
     private final KeyValidator keyValidator;
     private final AppendixValidatorRegistry validatorRegistry;
+    private final AntifraudValidator antifraudValidator;
 
     @Inject
     public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService,
@@ -64,6 +65,7 @@ public class TransactionValidator {
         this.transactionVersionValidator = transactionVersionValidator;
         this.keyValidator = new PublicKeyValidator(accountPublicKeyService);
         this.validatorRegistry = validatorRegistry;
+        this.antifraudValidator = new AntifraudValidator();
     }
 
 

@@ -33,6 +33,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -55,7 +56,7 @@ class TrimServiceTest {
 
     @BeforeEach
     void setUp() {
-        trimService = new TrimService(databaseManager, registry, globalSync, timeService, event, trimConfigEvent, trimDao, 1000);
+        trimService = new TrimService(databaseManager, registry, /*globalSync,*/ timeService, /*event, */trimConfigEvent, trimDao, 1000);
     }
 
     @Test
@@ -92,13 +93,13 @@ class TrimServiceTest {
 
         trimService.init(5999, 0);
 
-        verify(globalSync).readLock();
-        verify(globalSync).readUnlock();
+        verify(globalSync, never()).readLock();
+        verify(globalSync, never()).readUnlock();
         verify(trimDao).clear();
         verify(trimDao, times(2)).save(new TrimEntry(1L, 5000, true));
         verify(dataSource).begin();
         verify(dataSource).commit(true);
-        verify(firedEvent).fire(new TrimData(4000, 5000, 7200));
+        verify(firedEvent, never()).fire(new TrimData(4000, 5000, 7200));
         verify(timeService).getEpochTime();
         verify(derivedTable).trim(4000, false);
     }
@@ -119,14 +120,14 @@ class TrimServiceTest {
 
         trimService.init(5999, 5500);
 
-        verify(globalSync).readLock();
-        verify(globalSync).readUnlock();
+        verify(globalSync, never()).readLock();
+        verify(globalSync, never()).readUnlock();
         verify(trimDao).clear();
         verify(trimDao).save(new TrimEntry(null, 5500, false));
         verify(trimDao).save(new TrimEntry(1L, 5500, true));
         verify(dataSource).begin();
         verify(dataSource).commit(true);
-        verify(firedEvent).fire(new TrimData(4500, 5500, 7200));
+        verify(firedEvent, never()).fire(new TrimData(4500, 5500, 7200));
         verify(timeService).getEpochTime();
         verify(derivedTable).trim(4500, false);
     }
@@ -145,14 +146,14 @@ class TrimServiceTest {
 
         trimService.init(10500, 0);
 
-        verify(globalSync, times(6)).readLock();
-        verify(globalSync, times(6)).readUnlock();
+        verify(globalSync, never()).readLock();
+        verify(globalSync, never()).readUnlock();
         verify(trimDao, times(3)).clear();
         verify(dataSource, times(3)).begin();
         verify(dataSource, times(3)).commit(true);
-        verify(firedEvent).fire(new TrimData(7000, 8000, 7200));
-        verify(firedEvent).fire(new TrimData(8000, 9000, 7200));
-        verify(firedEvent).fire(new TrimData(9000, 10000, 7200));
+        verify(firedEvent, never()).fire(new TrimData(7000, 8000, 7200));
+        verify(firedEvent, never()).fire(new TrimData(8000, 9000, 7200));
+        verify(firedEvent, never()).fire(new TrimData(9000, 10000, 7200));
         verify(timeService, times(3)).getEpochTime();
         verify(derivedTable, times(6)).trim(anyInt(), anyBoolean());
     }
@@ -173,13 +174,13 @@ class TrimServiceTest {
 
         trimService.init(11999, 0);
 
-        verify(globalSync, times(2)).readLock();
-        verify(globalSync, times(2)).readUnlock();
+        verify(globalSync, never()).readLock();
+        verify(globalSync, never()).readUnlock();
         verify(trimDao, times(2)).clear();
         verify(dataSource, times(2)).begin();
         verify(dataSource, times(2)).commit(true);
-        verify(firedEvent).fire(new TrimData(9000, 10000, 3600));
-        verify(firedEvent).fire(new TrimData(10000, 11000, 3600));
+        verify(firedEvent, never()).fire(new TrimData(9000, 10000, 3600));
+        verify(firedEvent, never()).fire(new TrimData(10000, 11000, 3600));
         verify(derivedTable, times(2)).trim(anyInt(), anyBoolean());
         verify(derivedTable, times(2)).prune(3600);
     }
@@ -202,7 +203,7 @@ class TrimServiceTest {
         DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnBlockchainHeight(5000, true));
 
         verify(derivedTable).trim(4000, false);
-        verify(firedEvent).fireAsync(new TrimData(4000, 5000, 7200));
+        verify(firedEvent, never()).fireAsync(new TrimData(4000, 5000, 7200));
     }
 
     @Test
@@ -237,7 +238,7 @@ class TrimServiceTest {
 
         assertTrue(databaseManager.getDataSource().isInTransaction());
         verify(derivedTable).trim(4000, false);
-        verify(firedEvent).fireAsync(new TrimData(4000, 5000, 0));
+        verify(firedEvent, never()).fireAsync(new TrimData(4000, 5000, 0));
     }
 
 

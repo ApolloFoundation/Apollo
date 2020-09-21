@@ -246,7 +246,7 @@ public class ShardInfoDownloader {
     /**
      * Hash of main archive only
      *
-     * @param shardId  id of shard
+     * @param shardId id of shard
      * @param peerAddr address of peer that provided this shard
      * @return Hash of main archive as in ShardInfo.zipCrcHash
      */
@@ -268,7 +268,7 @@ public class ShardInfoDownloader {
     /**
      * Composite hash of main archive and all additional files
      *
-     * @param shardId         id of shard
+     * @param shardId id of shard
      * @param peerAddraddress of peer that provided this shard
      * @return hash of hashes of archive and all additional files
      */
@@ -293,7 +293,6 @@ public class ShardInfoDownloader {
         }
         return res;
     }
-
 
     private FileDownloadDecision checkShard(Long shardId) {
         Objects.requireNonNull(shardId, "shardId is NULL");
@@ -370,13 +369,14 @@ public class ShardInfoDownloader {
 
     /**
      * Shard weight is calculated using number of peers with good shards
-     * Algorithm is under development, changes are possible.
-     * Aim is to assign bigger weight to shards with more good peers and less bad peers
+     * Algorithm is under development, changes are possible. Aim is to assign
+     * bigger weight to shards with more good peers and less bad peers
      *
      * @param shardId
-     * @return normed weight of shard from -1.0 to 1.0. +1.0 means that all peers
-     * have good shard. -1.0 means that all peers have no shard. Negative number means
-     * that count of bad shards and no shards is greater then good shard count
+     * @return normed weight of shard from -1.0 to 1.0. +1.0 means that all
+     * peers have good shard. -1.0 means that all peers have no shard. Negative
+     * number means that count of bad shards and no shards is greater then good
+     * shard count
      */
     public double getShardWeight(Long shardId) {
         Objects.requireNonNull(shardId, "shardId is NULL");
@@ -405,8 +405,8 @@ public class ShardInfoDownloader {
     }
 
     /**
-     * Calculates relative weight of each available shard
-     * Weight is less for older shard
+     * Calculates relative weight of each available shard Weight is less for
+     * older shard
      *
      * @return map of relative weight of each shard.
      */
