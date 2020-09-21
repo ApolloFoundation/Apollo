@@ -77,7 +77,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
             propertiesHolder.getIntProperty("apl.statementLogThreshold", 1000),
             propertiesHolder.getIntProperty("apl.transactionLogThreshold", 5000),
             propertiesHolder.getIntProperty("apl.transactionLogInterval", 15) * 60 * 1000,
-            propertiesHolder.getBooleanProperty("apl.enableSqlLogs"));
+            propertiesHolder.getBooleanProperty("apl.enableSqlLogs", false));
     }
 
     public TransactionalDataSource(DbProperties dbProperties, int stmtThreshold, int txThreshold, int txInterval, boolean enableSqlLogs) {

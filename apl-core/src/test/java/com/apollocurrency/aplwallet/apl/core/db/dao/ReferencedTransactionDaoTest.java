@@ -93,7 +93,7 @@ class ReferencedTransactionDaoTest {
         .withLogConsumer(new Slf4jLogConsumer(log));
 
     @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer);
+    DbExtension extension = new DbExtension(mariaDBContainer);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());

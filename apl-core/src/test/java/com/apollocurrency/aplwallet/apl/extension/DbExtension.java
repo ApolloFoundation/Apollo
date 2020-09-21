@@ -6,12 +6,10 @@ package com.apollocurrency.aplwallet.apl.extension;
 
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.LuceneFullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
-import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.apache.commons.io.FileUtils;
@@ -23,17 +21,13 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.containers.MariaDBContainer;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-
-import static org.mockito.Mockito.mock;
 
 public class DbExtension implements BeforeEachCallback, AfterEachCallback, AfterAllCallback, BeforeAllCallback {
     private static final Logger log = LoggerFactory.getLogger(DbExtension.class);
@@ -50,40 +44,29 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
                        PropertiesHolder propertiesHolder,
                        String schemaScriptPath,
                        String dataScriptPath) {
-        log.debug("JdbcUrl: {}", ((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl());
-        log.debug("DockerDaemonInfo: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
-        log.debug("Username: {}", ((MariaDBContainer)jdbcDatabaseContainer).getUsername());
+        log.trace("JdbcUrl: {}", ((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl());
+        log.trace("DockerDaemonInfo: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
+        log.trace("Username: {}", ((MariaDBContainer)jdbcDatabaseContainer).getUsername());
         dbProperties.setDbUsername(((MariaDBContainer)jdbcDatabaseContainer).getUsername());
-        log.debug("DockerImageName: {}", jdbcDatabaseContainer.getDockerImageName());
-        log.debug("DriverClassName: {}", ((MariaDBContainer)jdbcDatabaseContainer).getDriverClassName());
-//        log.debug("05: {}", jdbcDatabaseContainer.getTestHostIpAddress());
-        log.debug("ContainerId: {}", jdbcDatabaseContainer.getContainerId());
-        log.debug("BoundPortNumbers: {}", jdbcDatabaseContainer.getBoundPortNumbers());
-        log.debug("MappedPort: {}", jdbcDatabaseContainer.getMappedPort(3306));
+        log.trace("DockerImageName: {}", jdbcDatabaseContainer.getDockerImageName());
+        log.trace("DriverClassName: {}", ((MariaDBContainer)jdbcDatabaseContainer).getDriverClassName());
+        log.trace("ContainerId: {}", jdbcDatabaseContainer.getContainerId());
+        log.trace("BoundPortNumbers: {}", jdbcDatabaseContainer.getBoundPortNumbers());
+        log.trace("MappedPort: {}", jdbcDatabaseContainer.getMappedPort(3306));
         if (jdbcDatabaseContainer.getMappedPort(3306) != null) {
             dbProperties.setDatabasePort(jdbcDatabaseContainer.getMappedPort(3306));
         }
-        log.debug("PortBindings: {}", jdbcDatabaseContainer.getPortBindings());
-        log.debug("Host: {}", jdbcDatabaseContainer.getHost());
-        log.debug("Host: {}", jdbcDatabaseContainer.getHost());
+        log.trace("PortBindings: {}", jdbcDatabaseContainer.getPortBindings());
+        log.trace("Host: {}", jdbcDatabaseContainer.getHost());
         dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
         dbProperties.setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
-
-//        dbProperties.setDbUrl(((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl() + "?TC_DAEMON=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql");
-//        dbProperties.setDbUrl("jdbc:tc:mariadb:10.4:///mysql?TC_DAEMON=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql");
-//        dbProperties.setDbUrl("jdbc:mariadb://mariaDbService:3306/mysql");
-
-        manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
-//        this(dbProperties, null, null, null);
+        if (manipulator == null) {
+            manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
+        }
     }
 
     public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties dbProperties) {
         this(jdbcDatabaseContainer, dbProperties, null, null, null);
-        log.debug("URL: {}", ((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl());
-//        dbProperties.setDbUrl("jdbc:tc:mariadb:10.4:///mysql?TC_DAEMON=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql");
-        log.debug("1: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
-        log.debug("2: {}", ((MariaDBContainer)jdbcDatabaseContainer).getUsername());
-        log.debug("3: {}", jdbcDatabaseContainer.getDockerImageName());
     }
 
     public DbExtension(DbProperties dbProperties) {
@@ -91,8 +74,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     }
 
     public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties properties, String dataScriptPath, String schemaScriptPath) {
-        this(jdbcDatabaseContainer, DbTestData.getInMemDbProps(), null, null, null);
-        manipulator = new DbManipulator(properties, null, dataScriptPath, schemaScriptPath);
+        this(jdbcDatabaseContainer, properties, null, dataScriptPath, schemaScriptPath);
     }
 
     public DbExtension(DbProperties properties, String dataScriptPath, String schemaScriptPath) {
@@ -107,8 +89,22 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         }
     }
 
+    public DbExtension(GenericContainer jdbcDatabaseContainer, Map<String, List<String>> tableWithColumns) {
+        this(jdbcDatabaseContainer);
+        if (!tableWithColumns.isEmpty()) {
+            this.tableWithColumns = tableWithColumns;
+            //createFtl();
+        }
+    }
+
     public DbExtension(DbProperties dbProperties, PropertiesHolder propertiesHolder, String schemaScriptPath, String dataScriptPath) {
         manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
+    }
+
+    public DbExtension(GenericContainer jdbcDatabaseContainer, Path dbDir, String dbName, String dataScript) {
+        this(jdbcDatabaseContainer);
+        manipulator = new DbManipulator(DbTestData.getInMemDbProps(), null, dataScript, null);
+        this.dbDir = dbDir;
     }
 
     public DbExtension(Path dbDir, String dbName, String dataScript) {
@@ -118,7 +114,6 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     public DbExtension(GenericContainer jdbcDatabaseContainer) {
         this(jdbcDatabaseContainer, DbTestData.getInMemDbProps(), null, null, null);
-        manipulator = new DbManipulator(DbTestData.getInMemDbProps());
     }
 
     public DbExtension() {

@@ -58,7 +58,7 @@ class CurrencyBuyOfferTableTest {
         .withLogConsumer(new Slf4jLogConsumer(log));
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
+    DbExtension dbExtension = new DbExtension(mariaDBContainer);
 
     @Inject
     CurrencyBuyOfferTable table;

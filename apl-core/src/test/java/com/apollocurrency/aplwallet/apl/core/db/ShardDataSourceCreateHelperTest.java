@@ -45,7 +45,7 @@ class ShardDataSourceCreateHelperTest {
         .withLogConsumer(new Slf4jLogConsumer(log));
 
     @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer);
+    DbExtension extension = new DbExtension(mariaDBContainer);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(

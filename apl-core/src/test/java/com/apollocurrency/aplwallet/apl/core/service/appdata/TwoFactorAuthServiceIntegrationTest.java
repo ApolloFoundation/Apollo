@@ -61,7 +61,7 @@ public class TwoFactorAuthServiceIntegrationTest {
         .withLogConsumer(new Slf4jLogConsumer(log));
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
+    DbExtension dbExtension = new DbExtension(mariaDBContainer);
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @WeldSetup
