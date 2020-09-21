@@ -112,7 +112,7 @@ public class TransactionValidator {
             throw new AplException.NotValidException("Transactions of this type must have a valid recipient");
         }
 
-        if (!AntifraudValidator.validate(
+        if (!antifraudValidator.validate(
                 blockchain.getHeight(), 
                 blockchainConfig.getChain().getChainId(), 
                 transaction.getSenderId(),
