@@ -21,10 +21,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class ShardNameHelper {
     private static final Logger log = getLogger(ShardNameHelper.class);
 
-    private final static String SHARD_NAME_PATTERN = APPLICATION_DB_NAME + "_shard_%d_%s";
-    private final static String SHARD_CORE_ARCHIVE_NAME_PATTERN = APPLICATION_DB_NAME + "_shard_%d_%s.zip";
-    private final static String SHARD_PRUNABLE_ARCHIVE_NAME_PATTERN = APPLICATION_DB_NAME + "_shardprun_%d_%s.zip";
-    private final static String SHARD_ID_PATTERN = "shard::%d;chain::%s";
+    private final static String SHARD_NAME_PATTERN = APPLICATION_DB_NAME + "_%s_shard_%d";
+    private final static String SHARD_CORE_ARCHIVE_NAME_PATTERN = APPLICATION_DB_NAME + "_%s_shard_%d.zip";
+    private final static String SHARD_PRUNABLE_ARCHIVE_NAME_PATTERN = APPLICATION_DB_NAME + "_%s_shardprun_%d.zip";
+    private final static String SHARD_ID_PATTERN = "chain::%s;shard::%d";
     private final static String SHARD_PRUN_ID_PATTERN = "shardprun::%d;chain::%s";
 
     public ShardNameHelper() {
@@ -57,7 +57,7 @@ public class ShardNameHelper {
             throw new IllegalArgumentException("'shardId' should have positive value, but " + shardId + " was supplied");
         }
         Objects.requireNonNull(chainId, "chainID must be set");
-        String result = String.format(pattern, shardId, chainId.toString().substring(0, 8));
+        String result = String.format(pattern, chainId.toString().substring(0, 6), shardId);
         log.debug(result);
         return result;
     }

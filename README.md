@@ -90,26 +90,28 @@ Project is entirely on Maven v3 and could be loaded in any IDE that supports Mav
     
             [client-server]
             port=3366
-            socket=...../.apl-blockchain/mariadb/3fecf3/mariadb.sock
-           
+            socket=/Users/user/.apl-blockchain/apl-blockchain-db/mariadb.sock
+            
             [mysqld]
             # Only allow connections from localhost
             bind-address = 127.0.0.1
-            lower_case_table_names=2 
+            lower_case_table_names=2
+            default-storage-engine=rocksdb
+            max_connections=1024
             
-            datadir=...../.apl-blockchain/mariadb/3fecf3/data
-            tmpdir=...../.apl-blockchain/mariadb/3fecf3/tmp
-            socket=...../.apl-blockchain/mariadb/3fecf3/mariadb.sock
-            log-error=...../.apl-blockchain/mariadb/3fecf3/mariadb.log
-            pid-file=...../.apl-blockchain/mariadb/3fecf3/mariadb.pid
+            datadir=/Users/user/.apl-blockchain/apl-blockchain-db/data
+            tmpdir=/Users/user/.apl-blockchain/apl-blockchain-db/tmp
+            socket=/Users/user/.apl-blockchain/apl-blockchain-db/mariadb.sock
+            log-error=/Users/user/.apl-blockchain/apl-blockchain-db/mariadb.log
+            pid-file=/Users/user/.apl-blockchain/apl-blockchain-db/mariadb.pid
             
-            basedir=...../apl-updater2/mariadb-pkg/target/ApolloWallet/apollo-mariadb
+            basedir=/Users/user/projects/apolo/apl-updater2/mariadb-pkg/target/ApolloWallet/apollo-mariadb
             
             [mariadb]
             plugin_load_add = ha_rocksdb
                 
     
     5) run ./bin/maria-db-init.sh {basedir} {mariadb_apollo_instance.cnf}
-        Example: sh ./bin/maria-db-init.sh /../../..../apl-updater2/mariadb-pkg/target/ApolloWallet/apollo-mariadb /..../..../.apl-blockchain/conf-tn3/mariadb_apollo_instance.cnf
+        Example: sh ./bin/maria-db-init.sh /../../..../apl-updater2/mariadb-pkg/target/ApolloWallet/apollo-mariadb /..../..../.apl-blockchain/apl-blockchain-db/conf/mariadb_apollo_instance.cnf
    
     
