@@ -56,6 +56,9 @@ public class PendingBroadcastTask implements Runnable {
     void broadcastBatch() {
         int batchSize = batchSize();
         List<Transaction> transactions = collectBatch(batchSize);
+        if (transactions.isEmpty()) {
+            return;
+        }
         batchSizeCalculator.startTiming(transactions.size());
         txProcessor.broadcast(transactions);
         batchSizeCalculator.stopTiming();

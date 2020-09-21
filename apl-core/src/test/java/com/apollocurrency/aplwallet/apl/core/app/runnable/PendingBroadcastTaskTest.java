@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
@@ -20,9 +21,11 @@ import org.mockito.stubbing.Answer;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,20 +49,30 @@ class PendingBroadcastTaskTest {
     }
 
     @Test
-    void broadcastBatch() throws InterruptedException {
+    void broadcastBatchSuccessfully() throws InterruptedException, AplException.ValidationException {
         doReturn(20).when(batchSizeCalculator).currentBatchSize();
         doReturn(true).when(memPool).canSafelyAcceptTransactions();
         doAnswer(new Answer<Integer>() {
             int iters = 0;
             @Override
             public Integer answer(InvocationOnMock invocationOnMock) throws Throwable {
-                if (++iters == 5) {
+                if (++iters == 6) {
                     return 0;
                 }
                 return 1;
             }
         }).when(memPool).pendingBroadcastQueueSize();
         Transaction tx = mock(Transaction.class);
+        doAnswer(new Answer() {
+            int i;
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                if (++i == 4) {
+                    throw new AplException.NotValidException("Test not valid tx");
+                }
+                return null;
+            }
+        }).when(validator).validate(tx);
         doReturn(tx).when(memPool).nextSoftBroadcastTransaction();
         doAnswer(new Answer<UnconfirmedTxValidationResult>() {
             int iter;
@@ -78,16 +91,13 @@ class PendingBroadcastTaskTest {
 
     }
 
-//    @Test
-//    void batchSize() {
-//        doReturn(0.2).when(memPool).pendingBroadcastQueueLoad();
-//        int size = pendingBroadcastTask.batchSize();
-//        assertEquals(654, size);
-//    }
-
     @Test
-    void nextValidTxFromPendingQueue() {
-//        doReturn()
-        pendingBroadcastTask.nextValidTxFromPendingQueue();
+    void broadcastBatch_memPool_is_full() {
+        doReturn(20).when(batchSizeCalculator).currentBatchSize();
+        doReturn(false).when(memPool).canSafelyAcceptTransactions();
+
+        pendingBroadcastTask.broadcastBatch();
+
+        verify(transactionProcessor, never()).broadcast(any(List.class));
     }
 }
