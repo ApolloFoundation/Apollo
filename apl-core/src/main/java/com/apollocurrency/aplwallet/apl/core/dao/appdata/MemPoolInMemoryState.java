@@ -62,8 +62,16 @@ public class MemPoolInMemoryState {
         this.unconfirmedTransactionCreator = unconfirmedTransactionCreator;
         this.maxInMemorySize = maxUnconfirmedTransactions;
         this.waitingTransactions = new SizeBoundedPriorityQueue<>(maxUnconfirmedTransactions, new UnconfirmedTransactionComparator());
-        this.maxPendingBroadcastQueueSize = maxUnconfirmedTransactions;
-        this.broadcastPendingTransactions = new PriorityBlockingQueue<>(maxPendingBroadcastQueueSize, Comparator.comparing(TxWithArrivalTimestamp::getArrivalTime));
+        this.maxPendingBroadcastQueueSize = maxUnconfirmedTransactions / 5;
+        this.broadcastPendingTransactions = new PriorityBlockingQueue<>(maxPendingBroadcastQueueSize, Comparator.comparing(TxWithArrivalTimestamp::getArrivalTime)) {
+            @Override
+            public boolean offer(TxWithArrivalTimestamp txWithArrivalTimestamp) {
+                if (size() == maxPendingBroadcastQueueSize) {
+                    return false;
+                }
+                return super.offer(txWithArrivalTimestamp);
+            }
+        };
     }
 
     public void backToWaiting(UnconfirmedTransaction unconfirmedTransaction) {

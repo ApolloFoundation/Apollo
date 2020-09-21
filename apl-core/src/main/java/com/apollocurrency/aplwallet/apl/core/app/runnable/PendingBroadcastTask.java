@@ -48,7 +48,6 @@ public class PendingBroadcastTask implements Runnable {
                 broadcastBatch();
             } else {
                 doBroadcastOnePendingTx();
-                ThreadUtils.sleep(5);
             }
         }
     }
@@ -59,10 +58,10 @@ public class PendingBroadcastTask implements Runnable {
         if (transactions.isEmpty()) {
             return;
         }
-        batchSizeCalculator.startTiming(transactions.size());
+        batchSizeCalculator.startTiming(batchSize);
         txProcessor.broadcast(transactions);
         batchSizeCalculator.stopTiming();
-        ThreadUtils.sleep(20);
+        ThreadUtils.sleep(50);
     }
 
     int batchSize() {
@@ -129,6 +128,7 @@ public class PendingBroadcastTask implements Runnable {
             try {
                 if (tx.hasTransaction()) {
                     txProcessor.broadcast(tx.getTx());
+                    ThreadUtils.sleep(15);
                 }
             } catch (AplException.ValidationException e) {
                 log.debug("Failed to broadcast transaction txId=" + tx.getTx(), e);
