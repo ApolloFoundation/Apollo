@@ -35,12 +35,12 @@ public class ShardNameHelper {
     }
 
     public String getFullShardId(Long shardId, UUID chainId) {
-        String result = String.format(SHARD_ID_PATTERN, shardId, chainId.toString().substring(0, 8));
+        String result = String.format(SHARD_ID_PATTERN, shardId, chainId.toString());
         return result;
     }
 
     public String getFullShardPrunId(Long shardId, UUID chainId) {
-        String result = String.format(SHARD_PRUN_ID_PATTERN, shardId, chainId.toString().substring(0, 8));
+        String result = String.format(SHARD_PRUN_ID_PATTERN, shardId, chainId.toString());
         return result;
     }
 
