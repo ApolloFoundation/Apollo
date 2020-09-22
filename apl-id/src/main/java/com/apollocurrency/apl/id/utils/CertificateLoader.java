@@ -1,7 +1,6 @@
-package com.apollocurrency.aplwallet.apl.security;
+package com.apollocurrency.apl.id.utils;
 
 import com.apollocurrency.apl.id.cert.CertKeyPersistence;
-import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.apl.id.cert.ExtCert;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,13 +25,17 @@ import java.util.List;
 @Slf4j
 public class CertificateLoader {
     private final Class<?> loadClass;
-    private final Version version;
+    private final String version;
 
-    public CertificateLoader(Class<?> tClass, Version appVersion) {
+    public CertificateLoader(Class<?> tClass, String appVersion) {
         this.loadClass = tClass;
         this.version = appVersion;
     }
-
+    
+    public ExtCert getCaCert(){
+        //TODO: implement
+        return null;
+    }
     public List<ExtCert> loadAll() throws IOException {
         Path rootPath = Paths.get(loadClass.getProtectionDomain().getCodeSource().getLocation().getPath());
         List<ExtCert> certs = new ArrayList<>();

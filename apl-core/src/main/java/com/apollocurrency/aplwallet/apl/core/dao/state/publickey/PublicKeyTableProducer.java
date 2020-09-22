@@ -83,7 +83,7 @@ public class PublicKeyTableProducer {
     @Named("publicKeyTable")
     public EntityDbTableInterface<PublicKey> getPublicKeyTable() {
         if (isCacheEnabled()) {
-            return new CachedTable<>(publicKeyCache, publicKeyTable);
+                return new CachedTable<>(publicKeyCache, publicKeyTable);
         } else {
             return publicKeyTable;
         }

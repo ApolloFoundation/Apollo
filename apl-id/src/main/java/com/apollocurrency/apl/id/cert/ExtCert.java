@@ -17,6 +17,7 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
+import lombok.Getter;
 
 /**
  * Represents X.509 certificate with Apollo-specific attributes and signed by
@@ -28,6 +29,7 @@ public class ExtCert extends CertBase {
 
     private static final Logger log = LoggerFactory.getLogger(ExtCert.class);
 
+    @Getter
     private final X509Certificate certificate;
     private final CertAttributes cert_attr;
     private final CertAttributes issuer_attr;

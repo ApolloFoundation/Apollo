@@ -1,8 +1,6 @@
-package com.apollocurrency.aplwallet.apl.security;
+package com.apollocurrency.apl.id.utils;
 
-import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.apl.id.cert.ExtCert;
-import io.firstbridge.cryptolib.CryptoFactory;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -11,8 +9,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -23,15 +19,12 @@ import java.util.Objects;
 @Singleton
 public class CertificateMemoryStore {
 
-    private CertificateLoader loader;
-    private Map<BigInteger, ExtCert> certificates = new HashMap<>();
-    private final URL caCertUrl;
+    private final CertificateLoader loader;
+    private final Map<BigInteger, ExtCert> certificates = new HashMap<>();
 
     @Inject
-    public CertificateMemoryStore(@Property("updater.ca.cert-url") String caCertUrl, CertificateLoader loader) throws MalformedURLException {
+    public CertificateMemoryStore(CertificateLoader loader) throws MalformedURLException {
         this.loader = Objects.requireNonNull(loader);
-        String notNullCertUrl = Objects.requireNonNull(caCertUrl);
-        this.caCertUrl = new URL(notNullCertUrl);
     }
 
     @PostConstruct
@@ -39,24 +32,22 @@ public class CertificateMemoryStore {
         List<ExtCert> all = null;
         try {
             all = loader.loadAll();
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.debug("Error loading all certificates !", e);
         }
-        X509Certificate rootCert = null;
-        try {
-            rootCert = CryptoFactory.newInstance().getKeyReader().readX509CertPEMorDER(caCertUrl.openStream());
-        } catch (IOException e) {
-            log.debug("Error readX509 CertPEMorDER", e);
+        ExtCert rootCert = loader.getCaCert();
+        if(rootCert==null){
+             throw new IllegalStateException("CA Certificate is not loaded!");                     
         }
         if (all != null) {
             for (ExtCert apolloCertificate : all) {
-                if (rootCert != null && !apolloCertificate.verify(rootCert)) {
+                if (!apolloCertificate.verify(rootCert.getCertificate())) {
                     throw new IllegalStateException("Certificate is not valid, ca signature verification failed for " + apolloCertificate);
                 }
                 if (apolloCertificate.isValid(new Date())) {
                     throw new IllegalStateException("Certificate is out of valid time range: " + apolloCertificate);
                 }
-                certificates.put(apolloCertificate.getSerial(), apolloCertificate);
+                certificates.put(apolloCertificate.getActorId(), apolloCertificate);
             }
         }
     }
