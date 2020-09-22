@@ -72,7 +72,6 @@ public class DataSourceWrapper implements DataSource {
     private HikariPoolMXBean jmxBean;
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
-//    private DataSource systemDataSource;
 
 
     public DataSourceWrapper(DbProperties dbProperties) {
@@ -87,28 +86,26 @@ public class DataSourceWrapper implements DataSource {
                 shardId = m.group(); // store shard id
             }
             dbUrlTemp = String.format(
-//                "jdbc:%s://%s:%d/%s?user=%s&password=%s",
-                "jdbc:%s:///%s:%d/%s",
+                "jdbc:%s://%s:%d/%s?user=%s&password=%s",
                 dbProperties.getDbType(),
                 dbProperties.getDatabaseHost(),
                 dbProperties.getDatabasePort(),
-                dbProperties.getDbName()
-//                dbProperties.getDbUsername(),
-//                dbProperties.getDbPassword()
+                dbProperties.getDbName(),
+                dbProperties.getDbUsername(),
+                dbProperties.getDbPassword()
             );
             dbProperties.setDbUrl(dbUrlTemp);
         }
 
         if (StringUtils.isBlank(dbProperties.getSystemDbUrl())) {
             String sysDbUrl = String.format(
-//                "jdbc:%s://%s:%d/%s?user=%s&password=%s",
-                "jdbc:%s:///%s:%d/%s",
+                "jdbc:%s://%s:%d/%s?user=%s&password=%s",
                 dbProperties.getDbType(),
                 dbProperties.getDatabaseHost(),
                 dbProperties.getDatabasePort(),
-                "testdb".equalsIgnoreCase(dbProperties.getDbName()) ?  dbProperties.getDbName() : DbProperties.DB_SYSTEM_NAME
-//                dbProperties.getDbUsername(),
-//                dbProperties.getDbPassword()
+                "testdb".equalsIgnoreCase(dbProperties.getDbName()) ?  dbProperties.getDbName() : DbProperties.DB_SYSTEM_NAME,
+                dbProperties.getDbUsername(),
+                dbProperties.getDbPassword()
             );
             dbProperties.setSystemDbUrl(sysDbUrl);
         }
@@ -197,19 +194,18 @@ public class DataSourceWrapper implements DataSource {
 
     private void initDatasource(DbVersion dbVersion) {
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
-/*
-        if (this.systemDataSource == null) {
-            HikariConfig sysDBConf = new HikariConfig();
-            sysDBConf.setJdbcUrl(systemDbUrl);
-            sysDBConf.setUsername(dbUsername);
-            sysDBConf.setPassword(dbPassword);
-            sysDBConf.setMaximumPoolSize(20);
-            sysDBConf.setPoolName("systemDB");
-            this.systemDataSource = new HikariDataSource(sysDBConf);
-        }
 
-        try (Connection con = this.systemDataSource.getConnection();
+        HikariConfig sysDBConf = new HikariConfig();
+        sysDBConf.setJdbcUrl(systemDbUrl);
+        sysDBConf.setUsername(dbUsername);
+        sysDBConf.setPassword(dbPassword);
+        sysDBConf.setMaximumPoolSize(5);
+        sysDBConf.setPoolName("systemDB");
+
+        try (HikariDataSource systemDataSource = new HikariDataSource(sysDBConf);
+             Connection con = systemDataSource.getConnection();
              Statement stmt = con.createStatement()) {
+
             stmt.execute(
                 String.format(
                     "CREATE DATABASE IF NOT EXISTS %1$s CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;",
@@ -218,7 +214,6 @@ public class DataSourceWrapper implements DataSource {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-*/
 
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
@@ -236,7 +231,6 @@ public class DataSourceWrapper implements DataSource {
         log.debug("Attempting to create DataSource by path = {}...", dbUrl);
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
-
 //            stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
 //            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
 

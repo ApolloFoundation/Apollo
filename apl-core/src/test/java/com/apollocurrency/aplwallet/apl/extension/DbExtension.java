@@ -45,21 +45,25 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
                        String schemaScriptPath,
                        String dataScriptPath) {
         log.trace("JdbcUrl: {}", ((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl());
-        log.trace("DockerDaemonInfo: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
+
         log.trace("Username: {}", ((MariaDBContainer)jdbcDatabaseContainer).getUsername());
         dbProperties.setDbUsername(((MariaDBContainer)jdbcDatabaseContainer).getUsername());
-        log.trace("DockerImageName: {}", jdbcDatabaseContainer.getDockerImageName());
+        log.trace("User pass: {}", ((MariaDBContainer)jdbcDatabaseContainer).getPassword());
+        dbProperties.setDbPassword(((MariaDBContainer)jdbcDatabaseContainer).getPassword());
         log.trace("DriverClassName: {}", ((MariaDBContainer)jdbcDatabaseContainer).getDriverClassName());
-        log.trace("ContainerId: {}", jdbcDatabaseContainer.getContainerId());
-        log.trace("BoundPortNumbers: {}", jdbcDatabaseContainer.getBoundPortNumbers());
         log.trace("MappedPort: {}", jdbcDatabaseContainer.getMappedPort(3306));
         if (jdbcDatabaseContainer.getMappedPort(3306) != null) {
             dbProperties.setDatabasePort(jdbcDatabaseContainer.getMappedPort(3306));
         }
-        log.trace("PortBindings: {}", jdbcDatabaseContainer.getPortBindings());
         log.trace("Host: {}", jdbcDatabaseContainer.getHost());
         dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
         dbProperties.setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
+
+        log.trace("DockerDaemonInfo: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
+        log.trace("DockerImageName: {}", jdbcDatabaseContainer.getDockerImageName());
+        log.trace("ContainerId: {}", jdbcDatabaseContainer.getContainerId());
+        log.trace("BoundPortNumbers: {}", jdbcDatabaseContainer.getBoundPortNumbers());
+        log.trace("PortBindings: {}", jdbcDatabaseContainer.getPortBindings());
         if (manipulator == null) {
             manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
         }

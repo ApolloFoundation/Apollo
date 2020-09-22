@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
@@ -24,9 +25,11 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollVoterT
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
@@ -46,6 +49,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.TwoTablesPublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
@@ -60,6 +64,8 @@ import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheConfigurator;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -95,6 +101,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
@@ -102,7 +109,7 @@ import static org.mockito.Mockito.mock;
 @Testcontainers
 @Tag("slow")
 @EnableWeld
-@Execution(ExecutionMode.CONCURRENT)
+//@Execution(ExecutionMode.CONCURRENT)
 public class PhasingPollServiceTest {
 
     @Container
@@ -119,10 +126,12 @@ public class PhasingPollServiceTest {
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
     private TransactionTestData ttd = new TransactionTestData();
+    private PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+//        TwoTablesPublicKeyDao.class, PublicKeyTableProducer.class, InMemoryCacheManager.class, InMemoryCacheConfigurator.class, TaskDispatchManager.class,
         PhasingPollServiceImpl.class,
         GlobalSyncImpl.class,
         TransactionRowMapper.class,
@@ -157,7 +166,7 @@ public class PhasingPollServiceTest {
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(ttd.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(mock(CurrencyService.class), CurrencyService.class))
-        .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
+        .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
         .build();
     @Inject
     PhasingPollServiceImpl service;
@@ -165,6 +174,16 @@ public class PhasingPollServiceTest {
     TransactionDao transactionDao;
     @Inject
     Blockchain blockchain;
+//    @Inject
+//    PublicKeyDao publicKeyDao;
+//    @Inject
+//    InMemoryCacheManager inMemoryCacheManager;
+//    @Inject
+//    InMemoryCacheConfigurator inMemoryCacheConfigurator;
+//    @Inject
+//    PublicKeyTableProducer publicKeyTableProducer;
+//    @Inject
+//    TwoTablesPublicKeyDao twoTablesPublicKeyDao;
 
     PhasingTestData ptd;
     BlockTestData btd;
@@ -181,6 +200,7 @@ public class PhasingPollServiceTest {
             new BlockchainProperties(1, 1, 1, 1, 1, 1, 1, 1L),
             100000000L, 30000000000L)
         );
+        doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).searchAll(-208393164898941117L);
     }
 
     @Test

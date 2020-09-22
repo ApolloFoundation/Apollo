@@ -229,7 +229,8 @@ INSERT INTO public_key
 (7, -6151359720024440589, X'D6896785B0D0A106B75B5268919B4D361EA32E53F2C6E93C277DB567FF7DB67D', 8000, true),
 (8, -6724281675870110558, X'3BF91EC2D8ABE04B4BEDB7BF09140E31BA8B4195002D093C3BF32259FEA5A513', 8000, true),
 (9, 1344527020205736624, X'5C6D82CD66A3328AA9A83C2FC2EC7724EB788A81E78ED67E2A979B127B9A887D', 10000, true),
-(10, -4013722529644937202, X'6DFB3D4C9A0BC930B4700DC6C49881B71F5A48F38AFEC702BD8DE8D041CC9023', 15000, true)
+(10, -4013722529644937202, X'6DFB3D4C9A0BC930B4700DC6C49881B71F5A48F38AFEC702BD8DE8D041CC9023', 15000, true),
+(11, -208393164898941117, X'AF888EE65F2CE7355D10B3D69390BB48BBD47B725F2EB0C786F9D9E623A1AC51', 15000, true)
 ;
 
 INSERT INTO shard_recovery (SHARD_RECOVERY_ID, STATE, COLUMN_NAME, UPDATED, HEIGHT) VALUES (1, 'INIT', NULL, CURRENT_TIMESTAMP(), 10000);
@@ -268,24 +269,24 @@ INSERT into tagged_data_extend
 (50         ,808614188720864902 ,  2083198303623116770 , 8000, TRUE)
 ;
 
---Digital goods store
+--Digital goods store;
 
 INSERT into goods
 (DB_ID,  	ID,  	            SELLER_ID,  	        NAME,  	                DESCRIPTION,  	            PARSED_TAGS,  	        HAS_IMAGE,  	TAGS,  	                `TIMESTAMP`, QUANTITY,  PRICE,  	    DELISTED,  	 HEIGHT,  	LATEST) values
-(54,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,('product','some','ptd')	,TRUE	,'product some ptd test'	,41814871	,2	        ,100000000000	,FALSE	    ,541839	    ,FALSE),
-(55,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,('product','some','ptd')	,TRUE	,'product some ptd test'	,41814871	,1	        ,100000000000	,FALSE	    ,541867	    ,FALSE),
-(56,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,('product','some','ptd')	,TRUE	,'product some ptd test'	,41814871	,0	        ,100000000000	,FALSE	    ,541874	    ,TRUE ),
-(57,	-1443882373390424300	,9211698109297098287	,'Test product'	    ,'Test'	                        ,('tag')	                ,TRUE	,'tag'	                    ,41816306	,1	        ,100000000	    ,FALSE	    ,541986	    ,FALSE),
-(58,	-1443882373390424300	,9211698109297098287	,'Test product'	    ,'Test'	                        ,('tag')	                ,TRUE	,'tag'	                    ,41816306	,0	        ,100000000	    ,FALSE	    ,542026	    ,TRUE ),
-(59,	-2208439159357779035	,9211698109297098287	,'1'		        , null	                        ,()                         ,TRUE	,''	                        ,38796761	,0	        ,100000000	    ,FALSE	    ,542029	    ,TRUE ),
-(60,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,('asdf')	                ,TRUE	,'asdf'	                    ,37965044	,222	    ,400000000	    ,FALSE	    ,542710	    ,FALSE),
-(61,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,('asdf')                   ,TRUE	,'asdf'	                    ,37965044	,2	        ,400000000	    ,FALSE	    ,542712	    ,FALSE),
-(62,	-8243930277887618399	,9211698109297098287	,'test'	            ,'TEST'	                        ,('sport')	                ,TRUE	,'sport'	                ,38188829	,21	        ,44400000000	,TRUE	    ,542717	    ,TRUE ),
-(63,	-2394458469048114141	,9211698109297098287	,'fsf'	            ,'fsdfsd'	                    ,()	                        ,TRUE	,'ff'	                    ,38176323	,1	        ,100000000000	,TRUE	    ,542719	    ,TRUE ),
-(64,	8788482956389726350	    ,9211698109297098287	,'test'	            ,'test'	                        ,('test')	                ,TRUE	,'test'	                    ,38189627	,2	        ,100000000	    ,FALSE	    ,542721	    ,TRUE ),
-(65,	4948091426407579194	    ,9211698109297098287	,'qwe'	            ,'qwe'	                        ,('qwe')	                ,TRUE	,'qwe'	                    ,38039976	,12	        ,100000000  	,FALSE	    ,542725	    ,TRUE ),
-(66,	-9127861922199955586    ,9211698109297098287	,'Another product'	,'Just another produc'	        ,('tag','batman')	        ,TRUE	,'tag batman'	            ,41824604	,3	        ,150000000000	,FALSE	    ,542828	    ,TRUE ),
-(67,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,('asdf')	                ,TRUE	,'asdf'	                    ,37965044	,2	        ,500000000	    ,FALSE	    ,542860	    ,TRUE )
+(54,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,'["product","some","ptd","test"]'	,TRUE	,'product some ptd test'	,41814871	,2	        ,100000000000	,FALSE	    ,541839	    ,FALSE),
+(55,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,'["product","some","ptd","test"]'	,TRUE	,'product some ptd test'	,41814871	,1	        ,100000000000	,FALSE	    ,541867	    ,FALSE),
+(56,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,'["product","some","ptd","test"]'	,TRUE	,'product some ptd test'	,41814871	,0	        ,100000000000	,FALSE	    ,541874	    ,TRUE ),
+(57,	-1443882373390424300	,9211698109297098287	,'Test product'	    ,'Test'	                        ,'["tag"]'	                ,TRUE	,'tag'	                    ,41816306	,1	        ,100000000	    ,FALSE	    ,541986	    ,FALSE),
+(58,	-1443882373390424300	,9211698109297098287	,'Test product'	    ,'Test'	                        ,'["tag"]'	                ,TRUE	,'tag'	                    ,41816306	,0	        ,100000000	    ,FALSE	    ,542026	    ,TRUE ),
+(59,	-2208439159357779035	,9211698109297098287	,'1'		        , null	                        ,'[]'                        ,TRUE	,''	                        ,38796761	,0	        ,100000000	    ,FALSE	    ,542029	    ,TRUE ),
+(60,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,'["asdf"]'	                ,TRUE	,'asdf'	                    ,37965044	,222	    ,400000000	    ,FALSE	    ,542710	    ,FALSE),
+(61,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,'["asdf"]'                  ,TRUE	,'asdf'	                    ,37965044	,2	        ,400000000	    ,FALSE	    ,542712	    ,FALSE),
+(62,	-8243930277887618399	,9211698109297098287	,'test'	            ,'TEST'	                        ,'["sport"]'	             ,TRUE	,'sport'	                ,38188829	,21	        ,44400000000	,TRUE	    ,542717	    ,TRUE ),
+(63,	-2394458469048114141	,9211698109297098287	,'fsf'	            ,'fsdfsd'	                    ,'["ff"]'	                ,TRUE	,'ff'	                    ,38176323	,1	        ,100000000000	,TRUE	    ,542719	    ,TRUE ),
+(64,	8788482956389726350	    ,9211698109297098287	,'test'	            ,'test'	                    ,'["test"]'	                ,TRUE	,'test'	                    ,38189627	,2	        ,100000000	    ,FALSE	    ,542721	    ,TRUE ),
+(65,	4948091426407579194	    ,9211698109297098287	,'qwe'	            ,'qwe'	                    ,'["qwe"]'	                ,TRUE	,'qwe'	                    ,38039976	,12	        ,100000000  	,FALSE	    ,542725	    ,TRUE ),
+(66,	-9127861922199955586    ,9211698109297098287	,'Another product'	,'Just another produc'	    ,'["tag","batman"]'	        ,TRUE	,'tag batman'	            ,41824604	,3	        ,150000000000	,FALSE	    ,542828	    ,TRUE ),
+(67,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,'["asdf"]'	                ,TRUE	,'asdf'	                    ,37965044	,2	        ,500000000	    ,FALSE	    ,542860	    ,TRUE )
 ;
 
 INSERT INTO purchase

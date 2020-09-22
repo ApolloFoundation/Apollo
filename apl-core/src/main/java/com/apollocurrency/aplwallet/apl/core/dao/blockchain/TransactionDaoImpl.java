@@ -514,7 +514,7 @@ public class TransactionDaoImpl implements TransactionDao {
                 return rs.getInt(1);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
+            throw new RuntimeException("sql: " + sql + ", " + e.toString(), e);
         }
     }
 

@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableData;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
@@ -20,6 +21,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.sql.SQLException;
 import java.util.Comparator;
@@ -33,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+@Testcontainers
 @Slf4j
 public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
@@ -69,7 +72,8 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
     @Test
     public void testGetAll() throws SQLException {
-        List<T> all = derivedDbTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        DerivedTableData<T> allByDbId = derivedDbTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE);
+        List<T> all = allByDbId.getValues();
 
         List<T> expected = sortByHeightAsc(getAll());
         assertEquals(expected, all);

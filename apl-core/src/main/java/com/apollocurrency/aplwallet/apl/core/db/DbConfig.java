@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.UUID;
 
 @Singleton
 public class DbConfig {
@@ -30,12 +31,13 @@ public class DbConfig {
     public DbProperties getDbConfig() {
         String dbName = Constants.APPLICATION_DB_NAME;
         DirProvider dp = RuntimeEnvironment.getInstance().getDirProvider();
+        UUID chainId = chainsConfigHolder.getActiveChain().getChainId();
 
         return DbProperties.builder()
             .dbType(propertiesHolder.getStringProperty("apl.dbType"))
             .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "./unit-test-db") // for unit tests
-            .dbName(dbName)
-            .chainId(chainsConfigHolder.getActiveChain().getChainId())
+            .dbName(dbName.concat("_".concat(chainId.toString().substring(0, 6))))
+            .chainId(chainId)
             .dbParams(propertiesHolder.getStringProperty("apl.dbParams"))
             .dbUsername(propertiesHolder.getStringProperty("apl.dbUsername"))
             .dbPassword(propertiesHolder.getStringProperty("apl.dbPassword", null, true))
