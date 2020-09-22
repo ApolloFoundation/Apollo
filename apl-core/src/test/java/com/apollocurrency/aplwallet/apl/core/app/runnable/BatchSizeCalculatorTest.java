@@ -38,12 +38,12 @@ class BatchSizeCalculatorTest {
         doTimeOp(50, 35);
         doTimeOp(20, 20);
         doTimeOp(18, 20);
-        assertEquals(19, calculator.currentBatchSize());
-        doTimeOp(23, 25);
+        assertEquals(22, calculator.currentBatchSize());
+        doTimeOp(30, 25);
         assertEquals(20, calculator.currentBatchSize());
         doTimeOp(18, 24);
         doTimeOp(19, 25);
-        assertEquals(22, calculator.currentBatchSize());
+        assertEquals(23, calculator.currentBatchSize());
         doTimeOp(24, 10);
         doTimeOp(25, 8);
         doTimeOp(30, 1);

@@ -51,12 +51,16 @@ class PendingBroadcastTaskTest {
     @Test
     void broadcastBatchSuccessfully() throws InterruptedException, AplException.ValidationException {
         doReturn(20).when(batchSizeCalculator).currentBatchSize();
-        doReturn(true).when(memPool).canSafelyAcceptTransactions();
+        doReturn(20).when(memPool).canSafelyAccept();
         doAnswer(new Answer<Integer>() {
             int iters = 0;
             @Override
             public Integer answer(InvocationOnMock invocationOnMock) throws Throwable {
-                if (++iters == 6) {
+                ++iters;
+                if (iters == 1) {
+                    return 5; // initial size
+                }
+                if (iters == 7) {
                     return 0;
                 }
                 return 1;
@@ -94,8 +98,7 @@ class PendingBroadcastTaskTest {
     @Test
     void broadcastBatch_memPool_is_full() {
         doReturn(20).when(batchSizeCalculator).currentBatchSize();
-        doReturn(false).when(memPool).canSafelyAcceptTransactions();
-
+        doReturn(0).when(memPool).canSafelyAccept();
         pendingBroadcastTask.broadcastBatch();
 
         verify(transactionProcessor, never()).broadcast(any(List.class));

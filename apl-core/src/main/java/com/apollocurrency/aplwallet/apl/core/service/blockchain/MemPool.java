@@ -137,8 +137,12 @@ public class MemPool {
         memoryState.removeBroadcasted(List.of(transaction));
     }
 
-    public boolean canSafelyAcceptTransactions() {
-        return !isProcessedTxPoolFull() && !isWaitingTransactionsQueueFull() && allProcessedCount() + getWaitingTransactionsQueueSize() < memoryState.getMaxInMemorySize();
+    public boolean canSafelyAcceptTransactions(int numTx) {
+        return canSafelyAccept() - numTx >= 0;
+    }
+
+    public int canSafelyAccept() {
+        return memoryState.getMaxInMemorySize() - allProcessedCount() + getWaitingTransactionsQueueSize();
     }
 
 

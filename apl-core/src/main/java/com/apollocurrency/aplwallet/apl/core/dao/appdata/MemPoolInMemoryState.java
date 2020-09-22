@@ -58,11 +58,14 @@ public class MemPoolInMemoryState {
 
 
     @Inject
-    public MemPoolInMemoryState(UnconfirmedTransactionCreator unconfirmedTransactionCreator, @Property(name = "apl.maxUnconfirmedTransactions", defaultValue = "" + Integer.MAX_VALUE) int maxUnconfirmedTransactions) {
+    public MemPoolInMemoryState(UnconfirmedTransactionCreator unconfirmedTransactionCreator,
+                                @Property(name = "apl.maxUnconfirmedTransactions", defaultValue = "" + Integer.MAX_VALUE) int maxUnconfirmedTransactions,
+                                @Property(name = "apl.mempool.maxPendingTransactions", defaultValue = "2000") int maxPendingTransactions
+    ) {
         this.unconfirmedTransactionCreator = unconfirmedTransactionCreator;
         this.maxInMemorySize = maxUnconfirmedTransactions;
         this.waitingTransactions = new SizeBoundedPriorityQueue<>(maxUnconfirmedTransactions, new UnconfirmedTransactionComparator());
-        this.maxPendingBroadcastQueueSize = maxUnconfirmedTransactions / 5;
+        this.maxPendingBroadcastQueueSize = maxPendingTransactions;
         this.broadcastPendingTransactions = new PriorityBlockingQueue<>(maxPendingBroadcastQueueSize, Comparator.comparing(TxWithArrivalTimestamp::getArrivalTime)) {
             @Override
             public boolean offer(TxWithArrivalTimestamp txWithArrivalTimestamp) {

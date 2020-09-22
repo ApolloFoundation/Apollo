@@ -162,33 +162,34 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         try {
             List<UnconfirmedTransaction> toBroadcast = transactions.stream()
                 .filter(this::requireBroadcast)
-                .map(e-> new UnconfirmedTransaction(e, ntpTime.getTime()))
+                .map(e -> new UnconfirmedTransaction(e, ntpTime.getTime()))
                 .collect(Collectors.toList());
-            boolean broadcastLater = lookupBlockchainProcessor().isProcessingBlock();
-            if (broadcastLater) {
-                toBroadcast.forEach(memPool::broadcastLater);
-//                log.debug("Will broadcast new transaction later {}", transaction.getStringId());
-            } else {
-                TransactionalDataSource.StartedConnection startedConnection = databaseManager.getDataSource().beginTransactionIfNotStarted();
-                List<UnconfirmedTransaction> processed = toBroadcast.stream()
-                    .filter(e -> processingService.validateBeforeProcessing(e).isOk())
-                    .filter(e -> {
-                        try {
-                            processingService.processTransaction(e);
-//                log.debug("Accepted new transaction {}", transaction.getStringId());
-                            return true;
-                        } catch (AplException.ValidationException validationException) {
-                            log.trace("Not valid tx " + e.getId(), validationException);
-                            return false;
-                        }
-                    }).collect(Collectors.toList());
-
-                peers.sendToSomePeers(processed);
-                List<Transaction> processedTxs = processed.stream().map(UnconfirmedTransaction::getTransaction).collect(Collectors.toList());
-                processedTxs.forEach(memPool::rebroadcast);
-                txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(processedTxs);
-                databaseManager.getDataSource().commit(!startedConnection.isAlreadyStarted());
+            TransactionalDataSource.StartedConnection startedConnection = databaseManager.getDataSource().beginTransactionIfNotStarted();
+            int limit = memPool.canSafelyAccept();
+            List<UnconfirmedTransaction> toProcess = toBroadcast.stream()
+                .filter(e -> processingService.validateBeforeProcessing(e).isOk())
+                .collect(Collectors.toList());
+            int processedCount = 0;
+            List<UnconfirmedTransaction> processed = new ArrayList<>();
+            for (UnconfirmedTransaction tx : toProcess) {
+                try {
+                    if (processedCount < limit) {
+                        processingService.processTransaction(tx);
+                        processedCount++;
+                        processed.add(tx);
+                    } else {
+                        log.debug("Limit of mempool is reached, will return to pending queue tx {}", tx.getId());
+                        memPool.softBroadcast(tx);
+                    }
+                } catch (AplException.ValidationException validationException) {
+                    log.trace("Not valid tx " + tx.getId(), validationException);
+                }
             }
+            peers.sendToSomePeers(processed);
+            List<Transaction> processedTxs = processed.stream().map(UnconfirmedTransaction::getTransaction).collect(Collectors.toList());
+            processedTxs.forEach(memPool::rebroadcast);
+            txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(processedTxs);
+            databaseManager.getDataSource().commit(!startedConnection.isAlreadyStarted());
         } finally {
             globalSync.writeUnlock();
         }

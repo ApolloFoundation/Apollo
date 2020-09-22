@@ -19,6 +19,9 @@ public class BatchSizeCalculator {
     private final int maxBatchSize;
     private final EMA opEMA;
     private volatile TimeOperation lastOperation;
+    private final double maxDecreasePercent = -0.3;
+    private final double maxIncreasePercent = 0.66;
+
 
 
     @Inject
@@ -46,6 +49,11 @@ public class BatchSizeCalculator {
         long diff = targetOperationTime - duration;
         double percent = diff * 1.0 / targetOperationTime;
         percent /= 2;
+        if (percent < 0) {
+            percent = Math.max(percent, maxDecreasePercent);
+        } else {
+            percent = Math.min(percent, maxIncreasePercent);
+        }
         int newBatchSize = (int) (lastOperation.batchSize + lastOperation.batchSize * percent);
         opEMA.add(newBatchSize);
     }

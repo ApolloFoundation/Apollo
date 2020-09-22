@@ -73,9 +73,11 @@ public final class BroadcastTransaction extends AbstractAPIRequestHandler {
             Transaction.Builder builder = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
             Transaction transaction = builder.build();
             boolean broadcasted = lookupMemPool().softBroadcast(transaction);
+            if (!broadcasted) {
+                throw new RuntimeException("Broadcast queue is full. Please try again later.");
+            }
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHashString());
-            response.put("broadcasted", broadcasted);
         } catch (AplException.ValidationException | RuntimeException e) {
             JSONData.putException(response, e, "Failed to broadcast transaction");
         }

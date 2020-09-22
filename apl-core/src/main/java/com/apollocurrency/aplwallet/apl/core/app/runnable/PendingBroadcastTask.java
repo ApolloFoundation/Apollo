@@ -59,6 +59,7 @@ public class PendingBroadcastTask implements Runnable {
             return;
         }
         batchSizeCalculator.startTiming(batchSize);
+        log.debug("Pending processing batch size {}, transactions {}", batchSize, transactions.size());
         txProcessor.broadcast(transactions);
         batchSizeCalculator.stopTiming();
         ThreadUtils.sleep(50);
@@ -72,11 +73,12 @@ public class PendingBroadcastTask implements Runnable {
 
     private List<Transaction> collectBatch(int number) {
         List<Transaction> collectedTxs = new ArrayList<>();
-        if (!memPool.canSafelyAcceptTransactions()) { // do not loose existing transactions
+        int allowedBatch = calculateAllowedBatch(number);
+        if (allowedBatch == 0) { // do not loose existing tranPublicKeyTablesactions
             return collectedTxs;
         }
         int collected = 0;
-        while (collected < number) {
+        while (collected < allowedBatch) {
             NextPendingTx tx = nextValidTxFromPendingQueue();
             if (tx.hasTransaction()) {
                 collected++;
@@ -86,6 +88,10 @@ public class PendingBroadcastTask implements Runnable {
             }
         }
         return collectedTxs;
+    }
+
+    private int calculateAllowedBatch(int desirableBatch) {
+        return Math.min(memPool.canSafelyAccept(), Math.min(desirableBatch, memPool.pendingBroadcastQueueSize()));
     }
 
     NextPendingTx nextValidTxFromPendingQueue() {
@@ -120,7 +126,7 @@ public class PendingBroadcastTask implements Runnable {
     }
 
     void doBroadcastOnePendingTx() {
-        if (!memPool.canSafelyAcceptTransactions()) { // do not loose existing transactions
+        if (!memPool.canSafelyAcceptTransactions(1)) { // do not loose existing transactions
             return;
         }
         try {
