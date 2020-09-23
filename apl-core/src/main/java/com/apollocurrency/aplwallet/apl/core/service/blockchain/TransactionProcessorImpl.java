@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
@@ -159,40 +160,44 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     @Override
     public void broadcast(Collection<Transaction> transactions) {
         globalSync.writeLock();
+        List<Transaction> returned = new ArrayList<>();
         try {
             List<UnconfirmedTransaction> toBroadcast = transactions.stream()
                 .filter(this::requireBroadcast)
                 .map(e -> new UnconfirmedTransaction(e, ntpTime.getTime()))
                 .collect(Collectors.toList());
-            TransactionalDataSource.StartedConnection startedConnection = databaseManager.getDataSource().beginTransactionIfNotStarted();
             int limit = memPool.canSafelyAccept();
-            List<UnconfirmedTransaction> toProcess = toBroadcast.stream()
-                .filter(e -> processingService.validateBeforeProcessing(e).isOk())
-                .collect(Collectors.toList());
-            int processedCount = 0;
             List<UnconfirmedTransaction> processed = new ArrayList<>();
-            for (UnconfirmedTransaction tx : toProcess) {
-                try {
-                    if (processedCount < limit) {
-                        processingService.processTransaction(tx);
-                        processedCount++;
-                        processed.add(tx);
-                    } else {
-                        log.debug("Limit of mempool is reached, will return to pending queue tx {}", tx.getId());
-                        memPool.softBroadcast(tx);
+            TransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
+                int processedCount = 0;
+                for (UnconfirmedTransaction tx : toBroadcast) {
+                    try {
+                        if (processedCount >= limit) {
+                            log.debug("Limit of mempool is reached, will return to pending queue tx {}", tx.getId());
+                            returned.add(tx);
+                        } else if (processingService.validateBeforeProcessing(tx).isOk()) {
+                            processingService.processTransaction(tx);
+                            processedCount++;
+                            processed.add(tx);
+                        }
+                    } catch (AplException.ValidationException validationException) {
+                        log.trace("Not valid tx " + tx.getId(), validationException);
                     }
-                } catch (AplException.ValidationException validationException) {
-                    log.trace("Not valid tx " + tx.getId(), validationException);
                 }
-            }
+            });
             peers.sendToSomePeers(processed);
             List<Transaction> processedTxs = processed.stream().map(UnconfirmedTransaction::getTransaction).collect(Collectors.toList());
             processedTxs.forEach(memPool::rebroadcast);
             txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(processedTxs);
-            databaseManager.getDataSource().commit(!startedConnection.isAlreadyStarted());
         } finally {
             globalSync.writeUnlock();
         }
+        returned.forEach(e-> {
+            try {
+                memPool.softBroadcast(e);
+            }catch (AplException.ValidationException ignored) {}
+        });
+
     }
 
     private boolean requireBroadcast(Transaction tx) {

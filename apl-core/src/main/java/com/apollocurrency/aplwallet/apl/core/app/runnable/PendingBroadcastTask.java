@@ -44,10 +44,14 @@ public class PendingBroadcastTask implements Runnable {
 
     void broadcastPendingQueue() {
         while (true) {
-            if (memPool.pendingBroadcastQueueLoad() > 0.05) {
-                broadcastBatch();
-            } else {
-                doBroadcastOnePendingTx();
+            try {
+                if (memPool.pendingBroadcastQueueLoad() > 0.05) {
+                    broadcastBatch();
+                } else {
+                    doBroadcastOnePendingTx();
+                }
+            } catch (Exception e) {
+                log.error("Unknown error during broadcasting pending queue", e);
             }
         }
     }
@@ -55,13 +59,15 @@ public class PendingBroadcastTask implements Runnable {
     void broadcastBatch() {
         int batchSize = batchSize();
         List<Transaction> transactions = collectBatch(batchSize);
-        if (transactions.isEmpty()) {
-            return;
+        if (!transactions.isEmpty()) {
+            batchSizeCalculator.startTiming(batchSize);
+            try {
+                log.debug("Pending processing batch size {}, transactions {}", batchSize, transactions.size());
+                txProcessor.broadcast(transactions);
+            } finally {
+                batchSizeCalculator.stopTiming();
+            }
         }
-        batchSizeCalculator.startTiming(batchSize);
-        log.debug("Pending processing batch size {}, transactions {}", batchSize, transactions.size());
-        txProcessor.broadcast(transactions);
-        batchSizeCalculator.stopTiming();
         ThreadUtils.sleep(50);
     }
 

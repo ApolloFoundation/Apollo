@@ -142,7 +142,7 @@ public class MemPool {
     }
 
     public int canSafelyAccept() {
-        return memoryState.getMaxInMemorySize() - allProcessedCount() + getWaitingTransactionsQueueSize();
+        return memoryState.getMaxInMemorySize() - allProcessedCount() - getWaitingTransactionsQueueSize();
     }
 
 
