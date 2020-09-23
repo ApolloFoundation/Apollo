@@ -38,6 +38,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -135,34 +136,34 @@ class PrunableMessageTableTest {
     void testGetAccountMessages() {
         List<PrunableMessage> prunableMessages = table.getPrunableMessages(data.ALICE_ID, 0, Integer.MAX_VALUE);
         List<PrunableMessage> expected = List.of(data.MESSAGE_11, data.MESSAGE_8, data.MESSAGE_6, data.MESSAGE_5, data.MESSAGE_4, data.MESSAGE_3, data.MESSAGE_2, data.MESSAGE_1);
-        assertEquals(expected, prunableMessages);
+        assertIterableEquals(expected, prunableMessages);
     }
 
     @Test
     void testGetAccountMessagesWithPagination() {
         List<PrunableMessage> prunableMessages = table.getPrunableMessages(data.ALICE_ID, 2, 4);
         List<PrunableMessage> expected = List.of(data.MESSAGE_6, data.MESSAGE_5, data.MESSAGE_4);
-        assertEquals(expected, prunableMessages);
+        assertIterableEquals(expected, prunableMessages);
     }
 
     @Test
     void testGetAccountMutualMessages() {
         List<PrunableMessage> prunableMessages = table.getPrunableMessages(data.BOB_ID, data.ALICE_ID, 0, Integer.MAX_VALUE);
         List<PrunableMessage> expected = List.of(data.MESSAGE_4, data.MESSAGE_3, data.MESSAGE_2, data.MESSAGE_1);
-        assertEquals(expected, prunableMessages);
+        assertIterableEquals(expected, prunableMessages);
     }
 
     @Test
     void testGetAccountMutualMessagesWithPagination() {
         List<PrunableMessage> prunableMessages = table.getPrunableMessages(data.BOB_ID, data.ALICE_ID, 1, 2);
         List<PrunableMessage> expected = List.of(data.MESSAGE_3, data.MESSAGE_2);
-        assertEquals(expected, prunableMessages);
+        assertIterableEquals(expected, prunableMessages);
     }
 
     @Test
     void testGetAllWithDefaultSort() {
         List<PrunableMessage> prunableMessages = CollectionUtil.toList(table.getAll(0, 2));
-        assertEquals(List.of(data.MESSAGE_11, data.MESSAGE_10, data.MESSAGE_9), prunableMessages);
+        assertIterableEquals(List.of(data.MESSAGE_11, data.MESSAGE_10, data.MESSAGE_9), prunableMessages);
     }
 
     @Test

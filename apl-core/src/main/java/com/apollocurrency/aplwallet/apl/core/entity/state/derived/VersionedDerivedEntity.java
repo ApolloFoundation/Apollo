@@ -34,7 +34,7 @@ public abstract class VersionedDerivedEntity extends DerivedEntity {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof VersionedDerivedEntity)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         VersionedDerivedEntity that = (VersionedDerivedEntity) o;
         return latest == that.latest;

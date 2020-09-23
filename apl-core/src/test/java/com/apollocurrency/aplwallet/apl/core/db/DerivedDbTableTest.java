@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -76,7 +76,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
         List<T> all = allByDbId.getValues();
 
         List<T> expected = sortByHeightAsc(getAll());
-        assertEquals(expected, all);
+        assertIterableEquals(expected, all);
     }
 
     @Test
@@ -94,7 +94,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
         List<T> expected = getAll();
         List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertEquals(expected, all);
+        assertIterableEquals(expected, all);
     }
 
     @Test
@@ -138,7 +138,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
         List<T> expected = sublistByHeight(getAll(), height);
         DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(height));
         List<T> actual = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertEquals(expected, actual);
+        assertIterableEquals(expected, actual);
     }
 
 

@@ -62,6 +62,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -145,13 +146,15 @@ class DataTagDaoTest {
     void insertDataTag() throws Exception {
         DbUtils.inTransaction(extension, (con) -> dataTagDao.insert(tagtd.dataTag_NOT_SAVED));
         List<DataTag> all = dataTagDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues();
-        assertEquals(List.of(tagtd.dataTag_1, tagtd.dataTag_2, tagtd.dataTag_3, tagtd.dataTag_4, tagtd.dataTag_NOT_SAVED), all);
+        List<DataTag> dataTagTestData = List.of(tagtd.dataTag_1, tagtd.dataTag_2, tagtd.dataTag_3, tagtd.dataTag_4, tagtd.dataTag_NOT_SAVED);
+        assertEquals(dataTagTestData.size(), all.size());
+        assertIterableEquals(dataTagTestData, all); // dataTag_NOT_SAVED.getDbId is different from real value in DB
     }
 
     @Test
     void testRollback() throws SQLException {
         DbUtils.inTransaction(extension, (con) -> dataTagDao.rollback(tagtd.dataTag_4.getHeight()));
-        assertEquals(List.of(tagtd.dataTag_1, tagtd.dataTag_2, tagtd.dataTag_3, tagtd.dataTag_4),
+        assertIterableEquals(List.of(tagtd.dataTag_1, tagtd.dataTag_2, tagtd.dataTag_3, tagtd.dataTag_4),
             dataTagDao.getAllByDbId(0, 100, Long.MAX_VALUE).getValues());
     }
 
@@ -180,7 +183,7 @@ class DataTagDaoTest {
             tagtd.dataTag_4
         );
 
-        assertEquals(expected, dataTags);
+        assertIterableEquals(expected, dataTags);
     }
 
 }
