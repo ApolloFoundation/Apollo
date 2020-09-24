@@ -85,6 +85,7 @@ import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_3_ID;
 import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_0_ID;
 import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_1_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -829,7 +830,7 @@ public class DGSServiceTest {
 
         expected.setDbId(dtd.PUBLIC_FEEDBACK_13.getDbId() + 1);
         List<DGSPublicFeedback> feedbacks = service.getPublicFeedbacks(purchase);
-        assertEquals(List.of(expected), feedbacks);
+        assertIterableEquals(List.of(expected), feedbacks);
     }
 
     @Test
@@ -1345,25 +1346,25 @@ public class DGSServiceTest {
     @Test
     void testGetSellerGoods() {
         List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, false, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_5, dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_10, dtd.GOODS_8), goods);
+        assertIterableEquals(List.of(dtd.GOODS_5, dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_10, dtd.GOODS_8), goods);
         goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, false, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_2), goods);
+        assertIterableEquals(List.of(dtd.GOODS_2), goods);
     }
 
     @Test
     void testGetSellerGoodsInStock() {
         List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, true, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_11, dtd.GOODS_10), goods);
+        assertIterableEquals(List.of(dtd.GOODS_12, dtd.GOODS_11, dtd.GOODS_10), goods);
         goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, true, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(), goods);
+        assertIterableEquals(List.of(), goods);
     }
 
     @Test
     void testGetSellerGoodsWithPagination() {
         List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, false, 2, 4));
-        assertEquals(List.of(dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11), goods);
+        assertIterableEquals(List.of(dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11), goods);
         goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, false, 0, 0));
-        assertEquals(List.of(dtd.GOODS_2), goods);
+        assertIterableEquals(List.of(dtd.GOODS_2), goods);
     }
 
     @Test

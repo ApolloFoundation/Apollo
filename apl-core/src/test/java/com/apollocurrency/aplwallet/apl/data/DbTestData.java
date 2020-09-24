@@ -23,7 +23,7 @@ public class DbTestData {
 //        .dbType("tc:mariadb:10.5")
         .dbType("mariadb")
         .chainId(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5"))
-        .dbParams("?TC_DAEMON=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql")
+        .dbParams("?TC_DAEMON=true&TC_REUSABLE=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql")
         .loginTimeout(2)
         .maxMemoryRows(100000)
         .defaultLockTimeout(1)
