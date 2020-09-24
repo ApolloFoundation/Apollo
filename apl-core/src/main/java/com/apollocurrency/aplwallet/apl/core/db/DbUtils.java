@@ -235,7 +235,7 @@ public final class DbUtils {
         } else if (limit > 0) {
             return " LIMIT ? ";
         } else if (from > 0) {
-            return " LIMIT NULL OFFSET ? ";
+            return " LIMIT 0 OFFSET ? ";
         } else {
             return "";
         }
