@@ -3,7 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.apl.id.handler.ThisActorIdHandler;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.http.JettyConnectorCreator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;

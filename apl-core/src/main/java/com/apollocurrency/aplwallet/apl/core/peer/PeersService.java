@@ -19,7 +19,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.apl.id.handler.ThisActorIdHandler;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
@@ -57,6 +56,7 @@ import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import com.apollocurrency.aplwallet.apl.util.task.Tasks;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
+import io.firstbridge.identity.handler.ThisActorIdHandler;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

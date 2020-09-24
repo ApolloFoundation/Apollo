@@ -3,11 +3,13 @@
  */
 package com.apollocurrency.aplwallet.apl.security.id;
 
-import com.apollocurrency.apl.id.handler.IdValidator;
-import com.apollocurrency.apl.id.handler.IdValidatorImpl;
-import com.apollocurrency.apl.id.handler.ThisActorIdHandler;
-import com.apollocurrency.apl.id.handler.ThisActorIdHandlerImpl;
+
+
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
+import io.firstbridge.identity.handler.IdValidator;
+import io.firstbridge.identity.handler.IdValidatorImpl;
+import io.firstbridge.identity.handler.ThisActorIdHandler;
+import io.firstbridge.identity.handler.ThisActorIdHandlerImpl;
 import java.io.File;
 import javax.inject.Inject;
 

@@ -3,8 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.security.id;
 
-import com.apollocurrency.apl.id.handler.IdValidator;
-import com.apollocurrency.apl.id.handler.ThisActorIdHandler;
+import io.firstbridge.identity.handler.IdValidator;
+import io.firstbridge.identity.handler.ThisActorIdHandler;
+
 
 /**
  * Service that handles identity of peers using X.509 certificates od nodes
