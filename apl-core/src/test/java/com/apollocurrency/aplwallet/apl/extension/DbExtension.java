@@ -4,12 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.extension;
 
+import static org.mockito.Mockito.mock;
+
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.LuceneFullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.apache.commons.io.FileUtils;
@@ -24,6 +28,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MariaDBContainer;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.List;
@@ -89,7 +94,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         this();
         if (!tableWithColumns.isEmpty()) {
             this.tableWithColumns = tableWithColumns;
-            //createFtl();
+            createFtl();
         }
     }
 
@@ -97,7 +102,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         this(jdbcDatabaseContainer);
         if (!tableWithColumns.isEmpty()) {
             this.tableWithColumns = tableWithColumns;
-            //createFtl();
+            createFtl();
         }
     }
 
@@ -165,7 +170,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         }
     }
 
-/*    private void createFtl() {
+    private void createFtl() {
         try {
             this.indexDir = Files.createTempDirectory("indexDir");
             this.luceneFullTextSearchEngine = new LuceneFullTextSearchEngine(mock(NtpTime.class), indexDir);
@@ -173,7 +178,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         } catch (IOException e) {
             throw new RuntimeException("Unable to init ftl", e);
         }
-    }*/
+    }
 
     private void initFtl() {
         ftl.init();

@@ -4,10 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
+import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.SimpleResultSet;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.ReadWriteUpdateLock;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.DateTools;
@@ -43,29 +45,29 @@ import java.util.List;
 import java.util.StringJoiner;
 import java.util.stream.Stream;
 
+@Slf4j
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-public class LuceneFullTextSearchEngine  {
-/*    private static final Logger LOG = LoggerFactory.getLogger(LuceneFullTextSearchEngine.class);
-    *//**
+public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
+    /**
      * Lucene index reader (thread-safe)
-     *//*
+     */
     private static DirectoryReader indexReader;
-    *//**
+    /**
      * Lucene index searcher (thread-safe)
-     *//*
+     */
     private static IndexSearcher indexSearcher;
-    *//**
+    /**
      * Lucene index writer (thread-safe)
-     *//*
+     */
     private static IndexWriter indexWriter;
-    *//**
+    /**
      * Index lock
-     *//*
+     */
     private final ReadWriteUpdateLock indexLock = new ReadWriteUpdateLock();
-    *//**
+    /**
      * Lucene analyzer (thread-safe)
-     *//*
+     */
     private final Analyzer analyzer = new StandardAnalyzer();
     private NtpTime ntpTime;
     private Path indexDirPath;
@@ -84,9 +86,9 @@ public class LuceneFullTextSearchEngine  {
         }
     }
 
-    *//**
+    /**
      * {@inheritDoc}
-     *//*
+     */
     @Override
     public void indexRow(Object[] row, TableData tableData) throws SQLException {
         indexLock.readLock().lock();
@@ -110,16 +112,16 @@ public class LuceneFullTextSearchEngine  {
             document.add(new TextField("_DATA", sj.toString(), Field.Store.NO));
             indexWriter.updateDocument(new Term("_QUERY", query), document);
         } catch (IOException exc) {
-            LOG.error("Unable to index row", exc);
+            log.error("Unable to index row", exc);
             throw new SQLException("Unable to index row", exc);
         } finally {
             indexLock.readLock().unlock();
         }
     }
 
-    *//**
+    /**
      * {@inheritDoc}
-     *//*
+     */
     @Override
     public void commitRow(Object[] oldRow, Object[] newRow, TableData tableData) throws SQLException {
         if (oldRow != null) {
@@ -140,16 +142,16 @@ public class LuceneFullTextSearchEngine  {
         try {
             indexWriter.deleteDocuments(new Term("_QUERY", query));
         } catch (IOException exc) {
-            LOG.error("Unable to delete indexed row", exc);
+            log.error("Unable to delete indexed row", exc);
             throw new SQLException("Unable to delete indexed row", exc);
         } finally {
             indexLock.readLock().unlock();
         }
     }
 
-    *//**
+    /**
      * {@inheritDoc}
-     *//*
+     */
     @Override
     public void init() throws IOException {
         boolean obtainedUpdateLock = false;
@@ -176,7 +178,7 @@ public class LuceneFullTextSearchEngine  {
             }
 
         } catch (IOException exc) {
-            LOG.error("Unable to access the Lucene index", exc);
+            log.error("Unable to access the Lucene index", exc);
             throw new IOException("Unable to access the Lucene index", exc);
         } finally {
             if (obtainedUpdateLock) {
@@ -185,9 +187,9 @@ public class LuceneFullTextSearchEngine  {
         }
     }
 
-    *//**
+    /**
      * {@inheritDoc}
-     *//*
+     */
     @Override
     public void commitIndex() throws SQLException {
         indexLock.writeLock().lock();
@@ -200,18 +202,18 @@ public class LuceneFullTextSearchEngine  {
                 indexSearcher = new IndexSearcher(indexReader);
             }
         } catch (IOException exc) {
-            LOG.error("Unable to commit Lucene index updates", exc);
+            log.error("Unable to commit Lucene index updates", exc);
             throw new SQLException("Unable to commit Lucene index updates", exc);
         } finally {
             indexLock.writeLock().unlock();
         }
     }
 
-    *//**
+    /**
      * Remove the Lucene index files
      *
      * @throws SQLException I/O error occurred
-     *//*
+     */
     @Override
     public void clearIndex() throws SQLException {
         indexLock.writeLock().lock();
@@ -228,9 +230,9 @@ public class LuceneFullTextSearchEngine  {
                     }
                 }
                 init();
-                LOG.info("Lucene search index deleted");
+                log.info("Lucene search index deleted");
             } catch (IOException exc) {
-                LOG.error("Unable to remove Lucene index files", exc);
+                log.error("Unable to remove Lucene index files", exc);
                 throw new SQLException("Unable to remove Lucene index files", exc);
             }
         } finally {
@@ -238,9 +240,9 @@ public class LuceneFullTextSearchEngine  {
         }
     }
 
-    *//**
+    /**
      * {@inheritDoc}
-     *//*
+     */
     @Override
     public ResultSet search(String schema, String table, String queryText, int limit, int offset)
         throws SQLException {
@@ -282,10 +284,10 @@ public class LuceneFullTextSearchEngine  {
                     hits[i].score);
             }
         } catch (ParseException exc) {
-            LOG.debug("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());
+            log.debug("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());
             throw new SQLException("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());
         } catch (IOException exc) {
-            LOG.error("Unable to search Lucene index", exc);
+            log.error("Unable to search Lucene index", exc);
             throw new SQLException("Unable to search Lucene index", exc);
         } finally {
             indexLock.readLock().unlock();
@@ -293,9 +295,9 @@ public class LuceneFullTextSearchEngine  {
         return result;
     }
 
-    *//**
+    /**
      * {@inheritDoc}
-     *//*
+     */
     @Override
     public void shutdown() {
         indexLock.writeLock().lock();
@@ -308,9 +310,9 @@ public class LuceneFullTextSearchEngine  {
                 indexWriter.close();
             }
         } catch (IOException | SQLException exc) {
-            LOG.error("Unable to remove Lucene index access", exc);
+            log.error("Unable to remove Lucene index access", exc);
         } finally {
             indexLock.writeLock().unlock();
         }
-    }*/
+    }
 }
