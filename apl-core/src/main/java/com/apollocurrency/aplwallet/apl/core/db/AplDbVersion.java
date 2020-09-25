@@ -839,7 +839,7 @@ public class AplDbVersion extends DbVersion {
             case 320:
                 apply("DROP TABLE IF EXISTS dex_trade");
             case 321:
-                apply("CREATE TABLE IF NOT EXISTS dex_candlestick(coin TINYINT NOT NULL, open DECIMAL NOT NULL, close DECIMAL NOT NULL, min DECIMAL NOT NULL, max DECIMAL NOT NULL, from_volume DECIMAL NOT NULL, to_volume DECIMAL NOT NULL, timestamp INT NOT NULL, open_order_timestamp INT NOT NULL, close_order_timestamp INT NOT NULL) ENGINE=ROCKSDB;");
+                apply("CREATE TABLE IF NOT EXISTS dex_candlestick(coin TINYINT NOT NULL, open DECIMAL(12,7) NOT NULL, close DECIMAL(12,7) NOT NULL, min DECIMAL(12,7) NOT NULL, max DECIMAL(12,7) NOT NULL, from_volume DECIMAL(12,2) NOT NULL, to_volume DECIMAL(12,7) NOT NULL, `timestamp` INT NOT NULL, open_order_timestamp INT NOT NULL, close_order_timestamp INT NOT NULL) ENGINE=ROCKSDB;");
             case 322:
                 apply("ALTER TABLE dex_candlestick ADD CONSTRAINT dex_candlestick_coin_timestamp_idx UNIQUE IF NOT EXISTS (coin, timestamp)");
             case 323:

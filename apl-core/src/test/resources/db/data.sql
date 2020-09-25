@@ -35,7 +35,7 @@ delete from dex_offer;
 delete from mandatory_transaction;
 delete from dex_contract;
 delete from dex_transaction;
-delete from user_error_message;
+TRUNCATE user_error_message;
 delete from account_info;
 delete from asset;
 delete from asset_delete;

@@ -23,6 +23,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -107,8 +108,8 @@ class DexCandlestickDaoTest {
     @Test
     void testUpdate() {
         DexCandlestick candlestick = td.ETH_3_CANDLESTICK;
-        candlestick.setClose(BigDecimal.ZERO);
-        candlestick.setOpen(BigDecimal.ONE);
+        candlestick.setClose(BigDecimal.valueOf(1, 7));
+        candlestick.setOpen(BigDecimal.valueOf(0, 7));
         dao.update(candlestick);
 
         assertEquals(candlestick, dao.getByTimestamp(candlestick.getTimestamp(), candlestick.getCoin()));
@@ -116,7 +117,7 @@ class DexCandlestickDaoTest {
 
     @Test
     void testAdd() {
-        DexCandlestick candlestick = new DexCandlestick(DexCurrency.ETH, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, td.ETH_9_CANDLESTICK.getTimestamp() + 1, td.ETH_9_CANDLESTICK.getTimestamp() + 1, td.ETH_9_CANDLESTICK.getTimestamp() + 1);
+        DexCandlestick candlestick = new DexCandlestick(DexCurrency.ETH, BigDecimal.valueOf(10, 7), BigDecimal.valueOf(10, 7), BigDecimal.valueOf(10, 7), BigDecimal.valueOf(10, 7), BigDecimal.valueOf(1, 2), BigDecimal.valueOf(1, 7), td.ETH_9_CANDLESTICK.getTimestamp() + 1, td.ETH_9_CANDLESTICK.getTimestamp() + 1, td.ETH_9_CANDLESTICK.getTimestamp() + 1);
 
         dao.add(candlestick);
 

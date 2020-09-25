@@ -58,7 +58,8 @@ class DexOrderDaoTest {
 
     @Test
     void testGetOrdersByType() {
-        List<DexOrder> orders = dexOrderDao.getOrders(DexOrderDBRequest.builder().type(OrderType.SELL.ordinal()).build(),
+        List<DexOrder> orders = dexOrderDao.getOrders(
+            DexOrderDBRequest.builder().type(OrderType.SELL.ordinal()).limit(10).offset(0).build(),
             DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 
         assertEquals(List.of(td.ORDER_SPA_2, td.ORDER_SEA_7, td.ORDER_SEA_3), orders); // sorted by pair rate desc
@@ -70,6 +71,7 @@ class DexOrderDaoTest {
                 .dbId(td.ORDER_SPA_2.getDbId())
                 .accountId(td.BOB)
                 .pairCur(DexCurrency.PAX.ordinal())
+                .limit(10).offset(0)
                 .build(),
             DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 
