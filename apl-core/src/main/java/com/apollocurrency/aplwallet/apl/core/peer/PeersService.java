@@ -184,7 +184,7 @@ public class PeersService {
         this.accountService = accountService;
         this.transactionConverter = transactionConverter;
         this.blockConverter = blockConverter;
-        this.txSendingDispatcher = new ThreadPoolExecutor(5, 200, 60000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(500), new NamedThreadFactory("P2PTxSendingPool", true));
+        this.txSendingDispatcher = new ThreadPoolExecutor(5, propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30), 60000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(500), new NamedThreadFactory("P2PTxSendingPool", true));
 
         isLightClient = propertiesHolder.isLightClient();
     }
