@@ -51,6 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -87,11 +88,22 @@ public class BlockchainImpl implements Blockchain {
 
     private final AtomicReference<Block> lastBlock;
     private final AtomicReference<Block> shardInitialBlock;
+    private final boolean isPostConstruct;
 
     @Inject
-    public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, TimeService timeService,
-                          PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexService blockIndexService,
-                          DatabaseManager databaseManager, ShardDao shardDao, ShardRecoveryDao shardRecoveryDao, PrunableLoadingService prunableService, PublicKeyDao publicKeyDao) {
+    public BlockchainImpl(BlockDao blockDao,
+                          TransactionDao transactionDao,
+                          BlockchainConfig blockchainConfig,
+                          TimeService timeService,
+                          PropertiesHolder propertiesHolder,
+                          TransactionIndexDao transactionIndexDao,
+                          BlockIndexService blockIndexService,
+                          DatabaseManager databaseManager,
+                          ShardDao shardDao,
+                          ShardRecoveryDao shardRecoveryDao,
+                          PrunableLoadingService prunableService,
+                          PublicKeyDao publicKeyDao,
+                          @Named(value = "isPostConstruct") boolean isPostConstruct) {
         this.blockDao = blockDao;
         this.transactionDao = transactionDao;
         this.blockchainConfig = blockchainConfig;
@@ -106,6 +118,7 @@ public class BlockchainImpl implements Blockchain {
         this.publicKeyDao = publicKeyDao;
         this.lastBlock = new AtomicReference<>();
         this.shardInitialBlock = new AtomicReference<>();
+        this.isPostConstruct = isPostConstruct;
     }
 
     @Override
@@ -121,10 +134,12 @@ public class BlockchainImpl implements Blockchain {
     @PostConstruct
     @Override
     public void update() {
-        this.lastBlock.set(findLastBlock());
-        this.shardInitialBlock.set(findFirstBlock());
-        ((ShardManagement) this.databaseManager).initFullShards(
-            shardDao.getAllCompletedShards().stream().map(Shard::getShardId).collect(Collectors.toList()));
+        if (isPostConstruct) { // not needed for unit tests !
+            this.lastBlock.set(findLastBlock());
+            this.shardInitialBlock.set(findFirstBlock());
+            ((ShardManagement) this.databaseManager).initFullShards(
+                shardDao.getAllCompletedShards().stream().map(Shard::getShardId).collect(Collectors.toList()));
+        }
     }
 
     @Override
@@ -235,6 +250,7 @@ public class BlockchainImpl implements Blockchain {
             return null;
         }
         PublicKey publicKey = publicKeyDao.searchAll(block.getGeneratorId());
+        log.debug("getId = {}, pubKey = {}", block.getGeneratorId(), publicKey);
         block.setGeneratorPublicKey(publicKey.getPublicKey());
         return block;
     }
