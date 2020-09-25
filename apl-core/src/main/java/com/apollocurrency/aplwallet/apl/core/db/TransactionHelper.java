@@ -15,9 +15,36 @@ public class TransactionHelper {
             dataSource.commit(!startedConnection.isAlreadyStarted());
         } catch (Exception e) {
             dataSource.rollback(!startedConnection.isAlreadyStarted());
+            throw new DbTransactionExecutionException(e.toString(), e);
+        }
+    }
+
+    public static<T> T executeInTransaction(TransactionalDataSource dataSource, TransactionFunction<T> op) {
+        TransactionalDataSource.StartedConnection startedConnection = dataSource.beginTransactionIfNotStarted();
+        try {
+            T result = op.execute();
+            dataSource.commit(!startedConnection.isAlreadyStarted());
+            return result;
+        } catch (Exception e) {
+            dataSource.rollback(!startedConnection.isAlreadyStarted());
+            throw new DbTransactionExecutionException(e.toString(), e);
         }
     }
     public interface TransactionOperation {
         void execute() throws Exception;
+    }
+
+    public interface TransactionFunction<T> {
+        T execute() throws Exception;
+    }
+
+    public static class DbTransactionExecutionException extends RuntimeException {
+        public DbTransactionExecutionException(String message) {
+            super(message);
+        }
+
+        public DbTransactionExecutionException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 }

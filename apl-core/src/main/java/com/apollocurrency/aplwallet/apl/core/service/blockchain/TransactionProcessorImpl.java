@@ -180,7 +180,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                             processedCount++;
                             processed.add(tx);
                         }
-                    } catch (AplException.ValidationException validationException) {
+                    } catch (TransactionHelper.DbTransactionExecutionException validationException) {
                         log.trace("Not valid tx " + tx.getId(), validationException);
                     }
                 }
@@ -221,23 +221,19 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     @Override
     public void clearUnconfirmedTransactions() {
         globalSync.writeLock();
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        List<UnconfirmedTransaction> transactions;
-        TransactionalDataSource.StartedConnection startedConnection = dataSource.beginTransactionIfNotStarted();
         try {
-            transactions = processingService.undoAllProcessedTransactions();
-            memPool.clear();
-            dataSource.commit(!startedConnection.isAlreadyStarted());
-        } catch (Exception e) {
-            log.error(e.toString(), e);
-            dataSource.rollback(!startedConnection.isAlreadyStarted());
-            throw e;
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
+            List<UnconfirmedTransaction> unconfirmedTransactions = TransactionHelper.executeInTransaction(dataSource, () -> {
+                List<UnconfirmedTransaction> transactions = processingService.undoAllProcessedTransactions();
+                memPool.clear();
+                log.trace("Unc txs cleared");
+                return transactions;
+            });
+            List<Transaction> removedTxs = unconfirmedTransactions.stream().map(UnconfirmedTransaction::getTransaction).collect(Collectors.toList());
+            txsEvent.select(TxEventType.literal(TxEventType.REMOVED_UNCONFIRMED_TRANSACTIONS)).fire(removedTxs);
         } finally {
             globalSync.writeUnlock();
         }
-        log.trace("Unc txs cleared");
-        List<Transaction> removedTxs = transactions.stream().map(UnconfirmedTransaction::getTransaction).collect(Collectors.toList());
-        txsEvent.select(TxEventType.literal(TxEventType.REMOVED_UNCONFIRMED_TRANSACTIONS)).fire(removedTxs);
     }
 
     @Override
@@ -331,13 +327,14 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                         iterator.remove();
 //                        log.trace("Tx processing error " + unconfirmedTransaction.getId(), e);
                     } catch (AplException.NotCurrentlyValidException e) {
-                        if (unconfirmedTransaction.getExpiration() < currentTime
-                            || currentTime - Convert2.toEpochTime(unconfirmedTransaction.getArrivalTimestamp()) > 3600) {
-                            iterator.remove();
-                        }
+                            processNotCurrentlyValidTx(unconfirmedTransaction, currentTime, iterator);
 //                        log.trace("Tx is not valid currently " + unconfirmedTransaction.getId(), e);
                     } catch (AplException.ValidationException | RuntimeException e) {
-                        iterator.remove();
+                        if (e instanceof TransactionHelper.DbTransactionExecutionException && e.getCause() instanceof AplException.NotCurrentlyValidException) {
+                            processNotCurrentlyValidTx(unconfirmedTransaction, currentTime, iterator);
+                        } else {
+                            iterator.remove();
+                        }
 //                        log.trace("Validation tx processing error " + unconfirmedTransaction.getId(), e);
                     }
                 }
@@ -347,6 +344,13 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             }
         } finally {
             globalSync.writeUnlock();
+        }
+    }
+
+    private void processNotCurrentlyValidTx(UnconfirmedTransaction unconfirmedTransaction, int currentTime, Iterator<UnconfirmedTransaction> iterator) {
+        if (unconfirmedTransaction.getExpiration() < currentTime
+            || currentTime - Convert2.toEpochTime(unconfirmedTransaction.getArrivalTimestamp()) > 3600) {
+            iterator.remove();
         }
     }
 

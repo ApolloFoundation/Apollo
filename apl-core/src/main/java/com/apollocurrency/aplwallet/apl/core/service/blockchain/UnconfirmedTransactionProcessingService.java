@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.TransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -76,31 +77,20 @@ public class UnconfirmedTransactionProcessingService {
         return new UnconfirmedTxValidationResult(0, null, "");
     }
 
-    public void processTransaction(UnconfirmedTransaction unconfirmedTransaction) throws AplException.ValidationException {
+    public void processTransaction(UnconfirmedTransaction unconfirmedTransaction) {
         Transaction transaction = unconfirmedTransaction.getTransaction();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        TransactionalDataSource.StartedConnection started = dataSource.beginTransactionIfNotStarted();
-        try {
-//                log.trace("Process tx {} at height {}, stacktrace - {}", transaction.getId(), blockchain.getHeight(), ThreadUtils.last5Stacktrace());
+        TransactionHelper.executeInTransaction(dataSource, () -> {
                 if (!transactionApplier.applyUnconfirmed(transaction)) {
                     throw new AplException.InsufficientBalanceException("Insufficient balance");
                 }
-
                 if (memPool.isUnconfirmedDuplicate(transaction)) {
                     throw new AplException.NotCurrentlyValidException("Duplicate unconfirmed transaction");
                 }
                 unconfirmedTransaction.setHeight(blockchain.getHeight());
                 memPool.addProcessed(unconfirmedTransaction);
-//                if (log.isTraceEnabled()) {
-////                    log.trace("Tx {} applied and saved at {}",unconfirmedTransaction, blockchain.getHeight());
-//                }
-
-                dataSource.commit(!started.isAlreadyStarted());
-            } catch (Exception e) {
-//                log.trace("Processing error for tx " + unconfirmedTransaction.getId(), e);
-                dataSource.rollback(!started.isAlreadyStarted());
-                throw e;
             }
+        );
     }
 
     public List<UnconfirmedTransaction> undoAllProcessedTransactions() {
