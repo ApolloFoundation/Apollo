@@ -75,12 +75,7 @@ public class BlockApplier {
             log.trace("Fee reduced by {} ATM at height {}", totalBackFees, height);
         }
         //fetch generatorAccount after a possible change in previousGeneratorAccount
-        Account generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());
-        byte[] generatorPublicKey = block.getGeneratorPublicKey();
-        if (generatorPublicKey == null) {
-            generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
-            block.setGeneratorPublicKey(generatorPublicKey);
-        }
+        Account generatorAccount = accountService.createAccount(block.getGeneratorId());
         accountPublicKeyService.apply(generatorAccount, block.getGeneratorPublicKey());
         accountService.addToBalanceAndUnconfirmedBalanceATM(generatorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
         accountService.addToForgedBalanceATM(generatorAccount, block.getTotalFeeATM() - totalBackFees);

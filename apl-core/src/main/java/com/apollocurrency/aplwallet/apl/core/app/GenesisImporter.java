@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
@@ -270,24 +269,18 @@ public class GenesisImporter {
 
         this.blockchainConfigUpdater.reset();
 
-        final TransactionalDataSource dataSource = databaseManager.getDataSource();
-        // load 'public Keys' from JSON only
-        if (!dataSource.isInTransaction()) {
-            dataSource.begin();
-        }
         // Always remove possibly previously 'incomplete genesis import' data
         cleanUpGenesisData(); // clean up previous incomplete genesis import (if any)
 
-        final int publicKeyNumber = savePublicKeys(dataSource);
+        final int publicKeyNumber = saveGenesisPublicKeys();
 
-        dataSource.commit(false);
         if (loadOnlyPublicKeys) {
             log.debug("Public Keys were saved in {} ms. The rest of GENESIS is skipped, shard info will be loaded...",
                 (System.currentTimeMillis() - start) / 1000);
             return;
         }
         // load 'balances' from JSON only
-        final Pair<Long, Integer> balanceStatistics = saveBalances(dataSource);
+        final Pair<Long, Integer> balanceStatistics = saveBalances();
         final Integer balanceNumber = balanceStatistics.getRight();
         final long total = balanceStatistics.getLeft();
 
@@ -296,8 +289,9 @@ public class GenesisImporter {
             throw new RuntimeException("Total balance " + total + " exceeds maximum allowed " + maxBalanceATM);
         }
         final String message = String.format("Total balance %f %s", (double) total / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol());
-        final Account creatorAccount = accountService.addGenesisAccount(CREATOR_ID);
+        final Account creatorAccount = accountService.createAccount(CREATOR_ID, CREATOR_PUBLIC_KEY);
         accountPublicKeyService.apply(creatorAccount, CREATOR_PUBLIC_KEY, true);
+
         accountService.addToBalanceAndUnconfirmedBalanceATM(creatorAccount, null, 0, -total);
         aplAppStatus.durableTaskFinished(genesisTaskId, false, message);
         log.debug("Public Keys [{}] + Balances [{}] were saved in {} ms", publicKeyNumber, balanceNumber,
@@ -310,7 +304,7 @@ public class GenesisImporter {
     }
 
     @SneakyThrows(value = {JsonParseException.class, IOException.class})
-    private int savePublicKeys(final TransactionalDataSource dataSource) {
+    private int saveGenesisPublicKeys() {
         final long start = System.currentTimeMillis();
         int count = 0;
         final String path = blockchainConfig.getChain().getGenesisLocation();
@@ -338,12 +332,10 @@ public class GenesisImporter {
                     final byte[] publicKey = Convert.parseHexString(jsonPublicKey);
                     final long id = AccountService.getId(publicKey);
                     log.trace("AccountId = '{}' by publicKey string = '{}'", id, jsonPublicKey);
-                    final Account account = accountService.addGenesisAccount(id);
+                    final Account account = accountService.createAccount(id, publicKey);
                     accountPublicKeyService.apply(account, publicKey, true);
-                    if (count++ % 100 == 0) {
-                        dataSource.commit(false);
-                    }
-                    if (count % 10000 == 0) {
+
+                    if (++count % 10000 == 0) {
                         final String message = String.format(LOADING_STRING_PUB_KEYS, count, publicKeyNumberTotal);
                         log.debug(message);
                         aplAppStatus.durableTaskUpdate(genesisTaskId, (count * 1.0 / publicKeyNumberTotal * 1.0) * 50, message);
@@ -380,7 +372,7 @@ public class GenesisImporter {
     }
 
     @SneakyThrows(value = {JsonParseException.class, IOException.class})
-    private Pair<Long, Integer> saveBalances(final TransactionalDataSource dataSource) {
+    private Pair<Long, Integer> saveBalances() {
         final String path = blockchainConfig.getChain().getGenesisLocation();
 
         final long start = System.currentTimeMillis();
@@ -404,13 +396,11 @@ public class GenesisImporter {
                     jsonParser.nextToken();
                     final long balanceValue = jsonParser.getLongValue();
                     log.trace("Parsed json balance: {} - {}", currentName, balanceValue);
-                    final Account account = accountService.addGenesisAccount(Long.parseUnsignedLong(currentName));
+                    final Account account = accountService.createAccount(Long.parseUnsignedLong(currentName));
                     accountService.addToBalanceAndUnconfirmedBalanceATM(account, null, 0, balanceValue);
                     totalAmount += balanceValue;
-                    if (count++ % 100 == 0) {
-                        dataSource.commit(false);
-                    }
-                    if (count % 10000 == 0) {
+
+                    if (++count % 10000 == 0) {
                         final String message = String.format(LOADING_STRING_GENESIS_BALANCE, count, balanceNumberTotal);
                         log.debug(message);
                         aplAppStatus.durableTaskUpdate(genesisTaskId, 50 + (count * 1.0 / balanceNumberTotal * 1.0) * 50, message);

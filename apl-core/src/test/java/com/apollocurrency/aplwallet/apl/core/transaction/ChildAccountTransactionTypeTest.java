@@ -109,8 +109,8 @@ public class ChildAccountTransactionTypeTest {
         EcBlockData ecBlockData = new EcBlockData(ECBLOCK_ID, ECBLOCK_HEIGHT);
         when(blockchain.getECBlock(300)).thenReturn(ecBlockData);
         when(accountService.getAccount(SENDER_ID)).thenReturn(SENDER);
-        when(accountService.addOrGetAccount(CHILD_ID_1)).thenReturn(CHILD_1);
-        when(accountService.addOrGetAccount(CHILD_ID_2)).thenReturn(CHILD_2);
+        when(accountService.createAccount(CHILD_ID_1)).thenReturn(CHILD_1);
+        when(accountService.createAccount(CHILD_ID_2)).thenReturn(CHILD_2);
         when(accountService.getAccount(CHILD_PUBLIC_KEY_1)).thenReturn(CHILD_1).thenReturn(null);
     }
 

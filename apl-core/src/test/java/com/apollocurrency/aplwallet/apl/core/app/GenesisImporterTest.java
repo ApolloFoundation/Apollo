@@ -20,7 +20,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableP
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountGuaranteedBalance;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
@@ -357,7 +356,6 @@ class GenesisImporterTest {
         assertEquals(0, count);
         count = accountPublicKeyService.getGenesisPublicKeysCount();
         assertEquals(10, count);
-        checkImportedPublicKeys(10);
     }
 
     @Test
@@ -400,20 +398,6 @@ class GenesisImporterTest {
             accountPublicKeyService
         );
         assertThrows(RuntimeException.class, () -> genesisImporter.importGenesisJson(false));
-    }
-
-    private void checkImportedPublicKeys(int countExpected) {
-        List<PublicKey> result = accountPublicKeyService.loadPublicKeyList(0, 10, true);
-        int countActual = 0;
-        for (PublicKey publicKey : result) {
-            String toHexString = Convert.toHexString(publicKey.getPublicKey());
-            log.trace("publicKeySet contains key = {} = {}", toHexString, testData.publicKeySet.contains(toHexString));
-            assertTrue(testData.publicKeySet.contains(Convert.toHexString(publicKey.getPublicKey())),
-                "ERROR, publicKeySet doesn't contain key = "
-                    + Convert.toHexString(publicKey.getPublicKey()));
-            countActual++;
-        }
-        assertEquals(countExpected, countActual);
     }
 
     @SneakyThrows

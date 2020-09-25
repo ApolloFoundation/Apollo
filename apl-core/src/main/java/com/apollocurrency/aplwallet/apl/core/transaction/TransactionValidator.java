@@ -212,7 +212,7 @@ public class TransactionValidator {
         }
         Account sender = accountService.getAccount(transaction.getSenderId());
         if (sender == null) {
-            log.debug("Sender account not found, senderId={}", transaction.getSenderId());
+            log.trace("Sender account not found, senderId={}", transaction.getSenderId());
         }
         @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
         Credential signatureCredential;

@@ -4,14 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.publickey;
 
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.CachedTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -23,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.event.Event;
+import javax.enterprise.event.Observes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,13 +39,10 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.HEALTH_CHECK_INTER
 @Slf4j
 @Singleton
 public class PublicKeyTableProducer {
+    private final TaskDispatchManager taskManager;
     private final InMemoryCacheManager cacheManager;
-
     private final EntityDbTableInterface<PublicKey> publicKeyTable;
     private final EntityDbTableInterface<PublicKey> genesisPublicKeyTable;
-
-    private final TaskDispatchManager taskManager;
-
     @Getter
     private final boolean cacheEnabled;
     private Cache<DbKey, PublicKey> publicKeyCache;
@@ -63,6 +65,7 @@ public class PublicKeyTableProducer {
 
     @PostConstruct
     private void init() {
+        //todo warm up the cache APL-1726
         if (isCacheEnabled()) {
             log.info("'{}' is TURNED ON...", PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
             publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
@@ -98,4 +101,35 @@ public class PublicKeyTableProducer {
             return genesisPublicKeyTable;
         }
     }
+
+    public void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
+        publicKeyCache.invalidateAll();
+    }
+
+    public void onDbHotSwapBegin(@Observes DbHotSwapConfig dbHotSwapConfig) {
+        publicKeyCache.invalidateAll();
+    }
+
+    //TODO: Don't remove this comment, that code might be helpful for further data layer redesign
+    /*
+    void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
+        if (isCacheEnabled()) {
+            removeFromCache(AccountTable.newKey(block.getGeneratorId()));
+            block.getOrLoadTransactions().forEach(transaction -> {
+                removeFromCache(AccountTable.newKey(transaction.getSenderId()));
+                if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
+                    removeFromCache(AccountTable.newKey(transaction.getRecipientId()));
+                }
+                if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
+                    ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
+                    for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
+                        removeFromCache(AccountTable.newKey(Account.getId(publicKey)));
+                    }
+                }
+            });
+        }
+    }
+    */
+
+
 }

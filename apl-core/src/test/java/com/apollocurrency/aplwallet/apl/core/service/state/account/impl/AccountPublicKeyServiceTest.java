@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.TwoTablesPublicKeyDao;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -31,7 +32,7 @@ class AccountPublicKeyServiceTest {
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private InMemoryCacheManager cacheManager = mock(InMemoryCacheManager.class);
     private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
-    private PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
+    private PublicKeyDao publicKeyDao = mock(TwoTablesPublicKeyDao.class);
 
     private AccountPublicKeyService accountPublicKeyService;
     private AccountTestData testData;
@@ -39,10 +40,7 @@ class AccountPublicKeyServiceTest {
     @BeforeEach
     void setUp() {
         testData = new AccountTestData();
-        accountPublicKeyService = spy(new AccountPublicKeyServiceImpl(
-            propertiesHolder,
-            cacheManager,
-            blockChainInfoService, publicKeyDao));
+        accountPublicKeyService = spy(new AccountPublicKeyServiceImpl(blockChainInfoService, publicKeyDao));
     }
 
     @Test
