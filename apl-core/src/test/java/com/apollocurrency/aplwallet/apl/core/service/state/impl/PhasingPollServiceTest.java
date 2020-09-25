@@ -64,6 +64,7 @@ import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.BlockchainProducerUnitTests;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheConfigurator;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
@@ -109,7 +110,7 @@ import static org.mockito.Mockito.mock;
 @Testcontainers
 @Tag("slow")
 @EnableWeld
-//@Execution(ExecutionMode.CONCURRENT)
+@Execution(ExecutionMode.CONCURRENT)
 public class PhasingPollServiceTest {
 
     @Container
@@ -130,8 +131,7 @@ public class PhasingPollServiceTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-//        TwoTablesPublicKeyDao.class, PublicKeyTableProducer.class, InMemoryCacheManager.class, InMemoryCacheConfigurator.class, TaskDispatchManager.class,
+        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, BlockchainProducerUnitTests.class,
         PhasingPollServiceImpl.class,
         GlobalSyncImpl.class,
         TransactionRowMapper.class,
@@ -174,16 +174,6 @@ public class PhasingPollServiceTest {
     TransactionDao transactionDao;
     @Inject
     Blockchain blockchain;
-//    @Inject
-//    PublicKeyDao publicKeyDao;
-//    @Inject
-//    InMemoryCacheManager inMemoryCacheManager;
-//    @Inject
-//    InMemoryCacheConfigurator inMemoryCacheConfigurator;
-//    @Inject
-//    PublicKeyTableProducer publicKeyTableProducer;
-//    @Inject
-//    TwoTablesPublicKeyDao twoTablesPublicKeyDao;
 
     PhasingTestData ptd;
     BlockTestData btd;

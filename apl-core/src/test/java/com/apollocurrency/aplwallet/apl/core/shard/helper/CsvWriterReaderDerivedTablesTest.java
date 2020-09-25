@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
@@ -187,7 +188,8 @@ class CsvWriterReaderDerivedTablesTest {
     BlockSerializer blockSerializer = mock(BlockSerializer.class);
     MemPool memPool = mock(MemPool.class);
     UnconfirmedTransactionProcessingService unconfirmedTransactionProcessingService = mock(UnconfirmedTransactionProcessingService.class);
-
+    PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
+//    doReturn(new PublicKey(-208393164898941117L, new byte[]{}, 100)).when(publicKeyDao).searchAll(-208393164898941117L);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -240,7 +242,7 @@ class CsvWriterReaderDerivedTablesTest {
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(blockSerializer, BlockSerializer.class))
-        .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
+        .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
         .addBeans(MockBean.of(unconfirmedTransactionProcessingService, UnconfirmedTransactionProcessingService.class))
         .addBeans(MockBean.of(memPool, MemPool.class))
         .build();
@@ -271,6 +273,9 @@ class CsvWriterReaderDerivedTablesTest {
         doReturn(config).when(blockchainConfig).getCurrentConfig();
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
+        long accountId = -208393164898941117L;
+//        PublicKey publicKey = new PublicKey(accountId, new byte[]{}, 100);
+//        doReturn(publicKey).when(publicKeyDao).searchAll(accountId);
         // init several derived tables
         AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         accountCurrencyTable.init();
@@ -523,7 +528,7 @@ class CsvWriterReaderDerivedTablesTest {
 
         int processCount = csvExportData.getProcessCount();
         assertEquals(8, processCount);
-        assertEquals(Map.of("PUBLIC_KEY", "null", "ACCOUNT_ID", "batman", "HEIGHT", 8000, "LATEST", Boolean.TRUE, "DB_ID", 8L), csvExportData.getLastRow());
+        assertEquals(Map.of("public_key", "null", "account_id", "batman", "height", 8000, "latest", Boolean.TRUE, "db_id", 8L), csvExportData.getLastRow());
 
         CsvReader csvReader = new CsvReaderImpl(dirProvider.getDataExportDir(), translator);
         ResultSet rs = csvReader.read("public_key", null, null);
