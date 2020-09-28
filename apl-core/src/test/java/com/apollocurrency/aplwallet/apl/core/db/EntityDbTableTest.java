@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -259,10 +260,11 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     @Test
     public void testGetManyByEmptyClauseWithOffset() {
-        List<T> all = CollectionUtil.toList(table.getManyBy(DbClause.EMPTY_CLAUSE, 2, Integer.MAX_VALUE));
+        DbIterator<T> manyBy = table.getManyBy(DbClause.EMPTY_CLAUSE, 2, Integer.MAX_VALUE);
+        List<T> all = CollectionUtil.toList(manyBy);
         List<T> allExpectedData = getAllLatest();
         List<T> expected = allExpectedData.stream().sorted(getDefaultComparator()).skip(2).collect(Collectors.toList());
-        assertEquals(expected, all);
+        assertIterableEquals(expected, all);
     }
 
     @Test
