@@ -10,8 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.TwoTablesPublicKeyDao;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
-import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -29,8 +27,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class AccountPublicKeyServiceTest {
-    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    private InMemoryCacheManager cacheManager = mock(InMemoryCacheManager.class);
     private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
     private PublicKeyDao publicKeyDao = mock(TwoTablesPublicKeyDao.class);
 
@@ -108,7 +104,7 @@ class AccountPublicKeyServiceTest {
         //key match
         expectedPublicKey.setHeight(998);
         accountPublicKeyService.apply(testData.ACC_1, testData.PUBLIC_KEY_STR.getBytes(), false);
-        verify(publicKeyDao, times(3)).searchAll(anyLong());
+        verify(publicKeyDao, times(2)).searchAll(anyLong());
         assertEquals(expectedPublicKey, testData.ACC_1.getPublicKey());
     }
 

@@ -265,6 +265,7 @@ class GenesisImporterTest {
 
     @Test
     void savePublicKeysOnly() throws Exception {
+        TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
         doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
         doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
@@ -287,11 +288,12 @@ class GenesisImporterTest {
         );
         genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
 
+        dataSource.begin();
         genesisImporter.importGenesisJson(false);
         int count = accountPublicKeyService.getPublicKeysCount();
         assertEquals(0, count);
         count = accountPublicKeyService.getGenesisPublicKeysCount();
-        assertEquals(19, count);
+        assertEquals(11, count);
         Account genesisAccount = accountService.getAccount(genesisImporter.CREATOR_ID);
         assertEquals(-43678392484062L, genesisAccount.getBalanceATM());
         DerivedTableData derivedTableData = accountGuaranteedBalanceTable.getAllByDbId(0L, 20, 20L);

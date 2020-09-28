@@ -138,7 +138,6 @@ class AccountServiceTest {
         Account newAccount = new Account(((LongKey) dbKey).getId(), dbKey);
         Account account = accountService.createAccount(accountId);
         assertEquals(newAccount, account);
-        verify(accountPublicKeyService).insertNewPublicKey(accountId);
     }
 
     @Test
@@ -150,15 +149,6 @@ class AccountServiceTest {
         accountService.update(newAccount);
         verify(accountTable, times(1)).insert(newAccount);
         verify(accountTable, never()).delete(any(Account.class), eq(height));
-    }
-
-    @Test
-    void testUpdate_as_delete() {
-        int height = 1000;
-        doReturn(height).when(blockChainInfoService).getHeight();
-        accountService.update(testData.newAccount);
-        verify(accountTable, times(1)).delete(eq(testData.newAccount), eq(height));
-        verify(accountTable, never()).insert(any(Account.class));
     }
 
     @Test
