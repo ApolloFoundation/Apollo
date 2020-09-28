@@ -2,7 +2,7 @@
  *  Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.service.blockchain;
+package com.apollocurrency.aplwallet.apl.util;
 
 import java.util.ArrayList;
 import java.util.List;

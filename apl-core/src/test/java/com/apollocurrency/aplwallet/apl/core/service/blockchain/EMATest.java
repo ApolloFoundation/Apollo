@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
+import com.apollocurrency.aplwallet.apl.util.EMA;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

@@ -2,17 +2,10 @@
  *  Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app.runnable;
+package com.apollocurrency.aplwallet.apl.util;
 
-import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.EMA;
 import lombok.Data;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.validation.constraints.Positive;
-
-@Singleton
 public class BatchSizeCalculator {
     private final int targetOperationTime;
     private final int minBatchSize;
@@ -24,10 +17,9 @@ public class BatchSizeCalculator {
 
 
 
-    @Inject
-    public BatchSizeCalculator(@Positive @Property(name = "apl.pendingBroadcast.targetTime", defaultValue = "1000") int targetOperationTime,
-                               @Positive @Property(name = "apl.pendingBroadcast.minBatchSize", defaultValue = "10") int minBatchSize,
-                               @Positive @Property(name = "apl.pendingBroadcast.maxBatchSize", defaultValue = "255") int maxBatchSize) {
+    public BatchSizeCalculator(int targetOperationTime,
+                               int minBatchSize,
+                               int maxBatchSize) {
         if (minBatchSize > maxBatchSize) {
             throw new IllegalArgumentException("minBatchSize should be less than maxBatchSize");
         }

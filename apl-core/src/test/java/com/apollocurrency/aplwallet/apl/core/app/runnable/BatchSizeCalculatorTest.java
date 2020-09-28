@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
+import com.apollocurrency.aplwallet.apl.util.BatchSizeCalculator;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import org.junit.jupiter.api.Test;
 
