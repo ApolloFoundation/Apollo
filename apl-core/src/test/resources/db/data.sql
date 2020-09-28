@@ -19,7 +19,7 @@ delete from genesis_public_key;
 delete from public_key;
 delete from shard_recovery;
 delete from tagged_data_timestamp;
-delete from data_tag;
+TRUNCATE data_tag;
 delete from tagged_data_extend;
 delete from tagged_data;
 TRUNCATE goods;
