@@ -53,7 +53,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
      */
     public Response broadcastTx(TxRequest body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
-        if (!memPool.canSafelyAcceptTransactions()) {
+        if (!memPool.canSafelyAcceptTransactions(1)) {
             return ResponseBuilderV2.apiError(ApiErrors.UNCONFIRMED_TRANSACTION_CACHE_IS_FULL).status(409).build();
         }
         StatusResponse rc = broadcastOneTx(body);
@@ -62,7 +62,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
 
     public Response broadcastTxBatch(List<TxRequest> body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
-        if (!memPool.canSafelyAcceptTransactions()) {
+        if (!memPool.canSafelyAcceptTransactions(body.size())) {
             return ResponseBuilderV2.apiError(ApiErrors.UNCONFIRMED_TRANSACTION_CACHE_IS_FULL).status(409).build();
         }
         ListResponse listResponse = new ListResponse();
