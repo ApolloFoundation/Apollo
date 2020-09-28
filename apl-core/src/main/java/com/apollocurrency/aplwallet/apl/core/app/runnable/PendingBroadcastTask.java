@@ -49,7 +49,7 @@ public class PendingBroadcastTask implements Runnable {
                 if (memPool.pendingBroadcastQueueLoad() > 0.05) {
                     broadcastBatch();
                 } else {
-                    doBroadcastOnePendingTx();
+                    broadcastOnePending();
                 }
             } catch (Exception e) {
                 log.error("Unknown error during broadcasting pending queue", e);
@@ -69,7 +69,7 @@ public class PendingBroadcastTask implements Runnable {
                 batchSizeCalculator.stopTiming();
             }
         }
-        ThreadUtils.sleep(50);
+        ThreadUtils.sleep(100);
     }
 
     int batchSize() {
@@ -132,6 +132,12 @@ public class PendingBroadcastTask implements Runnable {
         }
     }
 
+    void broadcastOnePending() {
+        doBroadcastOnePendingTx();
+        ThreadUtils.sleep(50);
+    }
+
+
     void doBroadcastOnePendingTx() {
         if (!memPool.canSafelyAcceptTransactions(1)) { // do not loose existing transactions
             return;
@@ -141,7 +147,6 @@ public class PendingBroadcastTask implements Runnable {
             try {
                 if (tx.hasTransaction()) {
                     txProcessor.broadcast(tx.getTx());
-                    ThreadUtils.sleep(15);
                 }
             } catch (AplException.ValidationException e) {
                 log.debug("Failed to broadcast transaction txId=" + tx.getTx(), e);
