@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -29,13 +30,15 @@ public abstract class AbstractBlockValidator implements BlockValidator {
     protected AccountService accountService;
     private static GeneratorService generatorService;
     protected final BlockSerializer blockSerializer;
+    protected final AccountPublicKeyService accountPublicKeyService;
 
     @Inject
     public AbstractBlockValidator(Blockchain blockchain,
                                   BlockchainConfig blockchainConfig,
                                   AccountService accountService,
                                   GeneratorService generatorService,
-                                  BlockSerializer blockSerializer) {
+                                  BlockSerializer blockSerializer,
+                                  AccountPublicKeyService accountPublicKeyService) {
         Objects.requireNonNull(blockchain, "Blockchain is null");
         Objects.requireNonNull(blockchainConfig, "Blockchain config is null");
         this.blockchain = blockchain;
@@ -43,6 +46,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
         this.accountService = accountService;
         this.generatorService = generatorService;
         this.blockSerializer = blockSerializer;
+        this.accountPublicKeyService = accountPublicKeyService;
     }
 
     @Override

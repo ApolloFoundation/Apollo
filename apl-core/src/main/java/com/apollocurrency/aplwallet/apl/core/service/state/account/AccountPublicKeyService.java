@@ -32,21 +32,13 @@ public interface AccountPublicKeyService {
     PublicKey getPublicKey(long accountId);
 
     /**
-     * Load public key from the data base
-     *
-     * @param accountId id of account for which new public key should be loaded
-     * @return public key or null
-     */
-    PublicKey loadPublicKeyFromDb(long accountId);
-
-    /**
-     * Load public key for specified height from the database
+     * Load public key for specified height.
      *
      * @param accountId id of account for which new public key should be loaded
      * @param height    block height
      * @return public key or null
      */
-    PublicKey loadPublicKeyFromDb(long accountId, int height);
+    PublicKey getByHeight(long accountId, int height);
 
     /**
      *
@@ -80,11 +72,6 @@ public interface AccountPublicKeyService {
     void apply(Account account, byte[] key, boolean isGenesis);
 
     PublicKey insertPublicKey(PublicKey publicKey, boolean isGenesis);
-
-    /**
-     * Forget all public keys by cleaning the internal cache.
-     */
-    void cleanUpPublicKeysInMemory();
 
     void cleanUpPublicKeys();
 

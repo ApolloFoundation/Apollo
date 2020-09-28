@@ -52,7 +52,7 @@ public class CreateChildTransactionType extends ChildAccountTransactionType {
         log.trace("CREATE_CHILD: parentId={}, child count={}", senderAccount.getId(), attachment.getChildPublicKey().size());
         for (byte[] childPublicKey : attachment.getChildPublicKey()) {
             //create an account
-            childAccount = getAccountService().addOrGetAccount(AccountService.getId(childPublicKey));
+            childAccount = getAccountService().createAccount(AccountService.getId(childPublicKey));
             childAccount.setParentId(senderAccount.getId());
             childAccount.setAddrScope(attachment.getAddressScope());
             childAccount.setMultiSig(true);

@@ -30,9 +30,23 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
     }
 
     @Override
+    public T get(DbKey dbKey) {
+        T t = cache.getIfPresent(dbKey);
+         if(t == null){
+             t = super.get(dbKey);
+             if(t != null){
+                 cache.put(dbKey, t);
+             }
+         }
+         return t;
+    }
+
+    @Override
     public int rollback(final int height) {
         int rc = super.rollback(height);
         final Map<DbKey, T> map = cache.asMap();
+
+        //todo implement quick search APL-1725
         map.values().forEach(v -> {
             if (v.getHeight() > height) {
                 log.trace("--cache-- remove  dbKey={} height={}", v.getDbKey(), v.getHeight());
@@ -58,7 +72,5 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
         log.trace("--cache-- remove  ALL");
         cache.invalidateAll();
     }
-
-    //other methods don't suppose to affect the cache value
 
 }

@@ -61,12 +61,12 @@ public class TwoTablesPublicKeyDao implements PublicKeyDao {
 
     @Override
     public PublicKey getByHeight(long id, int height) {
-        return publicKeyTable.get(AccountTable.newKey(id), height);
-    }
-
-    @Override
-    public PublicKey getGenesisByHeight(long id, int height) {
-        return genesisPublicKeyTable.get(AccountTable.newKey(id), height);
+        DbKey dbKey = AccountTable.newKey(id);
+        PublicKey publicKey = publicKeyTable.get(dbKey, height);
+        if (publicKey == null) {
+            publicKey = genesisPublicKeyTable.get(dbKey, height);
+        }
+        return publicKey;
     }
 
     @Override

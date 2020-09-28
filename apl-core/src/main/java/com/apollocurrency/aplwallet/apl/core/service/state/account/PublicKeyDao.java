@@ -24,8 +24,6 @@ public interface PublicKeyDao {
 
     PublicKey getByHeight(long id, int height);
 
-    PublicKey getGenesisByHeight(long id, int height);
-
     List<PublicKey> getAll(int from, int to);
 
     int genesisCount();
