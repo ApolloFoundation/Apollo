@@ -71,6 +71,7 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.testutil.BlockchainProducerUnitTests;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -239,7 +240,7 @@ class ShardEngineTest {
         weld.addInterceptor(JdbiTransactionalInterceptor.class);
         weld.addBeanClasses(BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
             DerivedDbTablesRegistryImpl.class, JdbiTransactionalInterceptor.class,
-            TransactionRowMapper.class,
+            TransactionRowMapper.class, BlockchainProducerUnitTests.class,
             TransactionBuilder.class,
             TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
             GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,

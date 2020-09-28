@@ -126,7 +126,6 @@ class ShardImporterTest {
             MockBean.of(blockchainProcessor, BlockchainProcessor.class),
             MockBean.of(extension.getDatabaseManager(), DatabaseManager.class),
             MockBean.of(genesisImporter, GenesisImporter.class))
-
         .build();
 
     @Inject

@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadin
 import com.apollocurrency.aplwallet.apl.data.IndexTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.BlockchainProducerUnitTests;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
@@ -78,7 +79,7 @@ public class TransactionIndexDaoTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, BlockchainProducerUnitTests.class,
         TransactionRowMapper.class,
         TransactionBuilder.class,
         GlobalSyncImpl.class,
