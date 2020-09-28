@@ -65,7 +65,7 @@ class TransactionDaoTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbFileProperties(createPath("blockDaoTestDb").toAbsolutePath().toString()));
+    DbExtension extension = new DbExtension(mariaDBContainer);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))

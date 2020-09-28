@@ -502,7 +502,7 @@ public class TransactionDaoImpl implements TransactionDao {
         StringBuilder buf = new StringBuilder();
         buf.append("SELECT count(*) FROM (SELECT transaction.id FROM transaction ");
         createTransactionSelectSqlNoOrder(buf, "transaction.id", type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height);
-        buf.append(")");
+        buf.append(") AS tr_id_count");
         String sql = buf.toString();
         log.trace(sql);
         try (Connection con = dataSource.getConnection();

@@ -63,7 +63,7 @@ public class DataSourceWrapper implements DataSource {
     private final String dbUrl;
     private final String dbName;
     private final String dbUsername;
-    private final String dbPassword;
+    private String dbPassword; // can be empty for 'apasswordless mode' in docker container
     private final String systemDbUrl;
     private final int maxConnections;
     private final int loginTimeout;
@@ -85,37 +85,56 @@ public class DataSourceWrapper implements DataSource {
             if (m.find()) {
                 shardId = m.group(); // store shard id
             }
-            dbUrlTemp = String.format(
-                "jdbc:%s://%s:%d/%s?user=%s&password=%s",
-                dbProperties.getDbType(),
-                dbProperties.getDatabaseHost(),
-                dbProperties.getDatabasePort(),
-                dbProperties.getDbName(),
-                dbProperties.getDbUsername(),
-                dbProperties.getDbPassword()
-            );
+            dbUrlTemp = formatJdbcUrlString(dbProperties, false);
             dbProperties.setDbUrl(dbUrlTemp);
         }
 
         if (StringUtils.isBlank(dbProperties.getSystemDbUrl())) {
-            String sysDbUrl = String.format(
-                "jdbc:%s://%s:%d/%s?user=%s&password=%s",
-                dbProperties.getDbType(),
-                dbProperties.getDatabaseHost(),
-                dbProperties.getDatabasePort(),
-                "testdb".equalsIgnoreCase(dbProperties.getDbName()) ?  dbProperties.getDbName() : DbProperties.DB_SYSTEM_NAME,
-                dbProperties.getDbUsername(),
-                dbProperties.getDbPassword()
-            );
-            dbProperties.setSystemDbUrl(sysDbUrl);
+            dbUrlTemp = formatJdbcUrlString(dbProperties, true);
+            dbProperties.setSystemDbUrl(dbUrlTemp);
         }
 
         this.dbUrl = dbUrlTemp;
         this.dbUsername = dbProperties.getDbUsername();
-        this.dbPassword = dbProperties.getDbPassword();
+        if (dbProperties.getDbPassword() != null && !dbProperties.getDbPassword().isEmpty()) {
+            // skip password for 'password less mode' (in docker container, unit tests as example)
+            this.dbPassword = dbProperties.getDbPassword();
+        }
         this.maxConnections = dbProperties.getMaxConnections();
         this.loginTimeout = dbProperties.getLoginTimeout();
         this.systemDbUrl = dbProperties.getSystemDbUrl();
+    }
+
+    private String formatJdbcUrlString(DbProperties dbProperties, boolean isSystemDb) {
+        String finalDbUrl;
+        String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s";
+        String passwordlessUrlString = "jdbc:%s://%s:%d/%s?user=%s"; // skip password for 'password less mode' (in docker container)
+        String tempDbName = dbProperties.getDbName();
+        if (isSystemDb) {
+            tempDbName = "testdb".equalsIgnoreCase(dbProperties.getDbName()) ?  dbProperties.getDbName() : DbProperties.DB_SYSTEM_NAME;
+        }
+        if (dbProperties.getDbPassword() != null && !dbProperties.getDbPassword().isEmpty()) {
+            finalDbUrl = String.format(
+                fullUrlString,
+                dbProperties.getDbType(),
+                dbProperties.getDatabaseHost(),
+                dbProperties.getDatabasePort(),
+                tempDbName,
+                dbProperties.getDbUsername(),
+                dbProperties.getDbPassword()
+            );
+        } else {
+            // skip password for 'password less mode' (in docker container)
+            finalDbUrl = String.format(
+                passwordlessUrlString,
+                dbProperties.getDbType(),
+                dbProperties.getDatabaseHost(),
+                dbProperties.getDatabasePort(),
+                tempDbName,
+                dbProperties.getDbUsername()
+            );
+        }
+        return finalDbUrl;
     }
 
     @Override
@@ -198,7 +217,9 @@ public class DataSourceWrapper implements DataSource {
         HikariConfig sysDBConf = new HikariConfig();
         sysDBConf.setJdbcUrl(systemDbUrl);
         sysDBConf.setUsername(dbUsername);
-        sysDBConf.setPassword(dbPassword);
+        if (dbPassword != null && !dbPassword.isEmpty()) {
+            sysDBConf.setPassword(dbPassword);
+        }
         sysDBConf.setMaximumPoolSize(5);
         sysDBConf.setPoolName("systemDB");
 
@@ -218,7 +239,9 @@ public class DataSourceWrapper implements DataSource {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
         config.setUsername(dbUsername);
-        config.setPassword(dbPassword);
+        if (dbPassword != null && !dbPassword.isEmpty()) {
+            config.setPassword(dbPassword);
+        }
         config.setMaximumPoolSize(maxConnections);
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
         config.setLeakDetectionThreshold(60_000 * 5); // 5 minutes
