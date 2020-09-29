@@ -4,28 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
-import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
-import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.core.utils.EncryptedDataUtil;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
-import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.google.common.cache.Cache;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Arrays;
@@ -37,62 +25,14 @@ import java.util.List;
 @Slf4j
 @Singleton
 public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
-
-    private final InMemoryCacheManager cacheManager;
-    @Getter
-    private final boolean cacheEnabled;
     private final BlockChainInfoService blockChainInfoService;
-    @Getter
-    private Cache<Long, PublicKey> publicKeyCache;
     private final PublicKeyDao publicKeyDao;
 
     @Inject
-    public AccountPublicKeyServiceImpl(
-        PropertiesHolder propertiesHolder,
-        InMemoryCacheManager cacheManager,
-        BlockChainInfoService blockChainInfoService, PublicKeyDao publicKeyDao) {
-        this.publicKeyDao = publicKeyDao;
-        this.cacheManager = cacheManager;
-        this.cacheEnabled = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache");
+    public AccountPublicKeyServiceImpl(BlockChainInfoService blockChainInfoService, PublicKeyDao publicKeyDao) {
         this.blockChainInfoService = blockChainInfoService;
+        this.publicKeyDao = publicKeyDao;
     }
-
-    @PostConstruct
-    void init() {
-        if (isCacheEnabled()) {
-            publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
-            log.debug("--cache-- init PUBLIC KEY CACHE={}", publicKeyCache);
-        }
-    }
-
-    void onRescanBegan(@Observes @BlockEvent(BlockEventType.RESCAN_BEGIN) Block block) {
-        clearCache();
-    }
-
-    void onDbHotSwapBegin(@Observes DbHotSwapConfig dbHotSwapConfig) {
-        clearCache();
-    }
-
-    //TODO: Don't remove this comment, that code might be helpful for further data layer redesign
-    /*
-    void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block block) {
-        if (isCacheEnabled()) {
-            removeFromCache(AccountTable.newKey(block.getGeneratorId()));
-            block.getOrLoadTransactions().forEach(transaction -> {
-                removeFromCache(AccountTable.newKey(transaction.getSenderId()));
-                if (!transaction.getAppendages(appendix -> (appendix instanceof PublicKeyAnnouncementAppendix), false).isEmpty()) {
-                    removeFromCache(AccountTable.newKey(transaction.getRecipientId()));
-                }
-                if (transaction.getType() == ShufflingTransaction.SHUFFLING_RECIPIENTS) {
-                    ShufflingRecipientsAttachment shufflingRecipients = (ShufflingRecipientsAttachment) transaction.getAttachment();
-                    for (byte[] publicKey : shufflingRecipients.getRecipientPublicKeys()) {
-                        removeFromCache(AccountTable.newKey(Account.getId(publicKey)));
-                    }
-                }
-            });
-        }
-    }
-    */
 
     @Override
     public int getCount() {
@@ -120,47 +60,12 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public PublicKey getPublicKey(long accountId) {
-        PublicKey publicKey = getFromCache(accountId);
-        if (publicKey == null) {
-            publicKey = publicKeyDao.searchAll(accountId);
-            if (publicKey != null) {
-                putInCache(accountId, publicKey);
-            }
-        }
-        return publicKey;
-    }
-
-    @Override
-    public PublicKey loadPublicKeyFromDb(long accountId) {
         return publicKeyDao.searchAll(accountId);
     }
 
+
     @Override
-    public PublicKey loadPublicKeyFromDb(long id, int height) {
-        PublicKey publicKey = getPublicKey(id, height);
-        if (publicKey == null) {
-            publicKey = getGenesisPublicKey(id, height);
-        }
-        return publicKey;
-    }
-
-    /**
-     * Gets GenesisPublicKey without checking doesNotExceed and checkAvailable
-     * because GenesisPublicKeys are unchangeable.
-     *
-     * @param id
-     * @param height
-     * @return
-     */
-    private PublicKey getGenesisPublicKey(long id, int height) {
-        return publicKeyDao.getByHeight(id, height);
-    }
-
-    private PublicKey getPublicKey(long id, int height) {
-        if (height < 0 || blockChainInfoService.doesNotExceed(height)) {
-            return publicKeyDao.get(id);
-        }
-        blockChainInfoService.checkAvailable(height, true);
+    public PublicKey getByHeight(long id, int height) {
         return publicKeyDao.getByHeight(id, height);
     }
 
@@ -196,16 +101,16 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         return setOrVerifyPublicKey(accountId, key, blockChainInfoService.getHeight());
     }
 
+    //TODO setOrVerifyPublicKey ???  Split 2 on the methods
     @Override
     public boolean setOrVerifyPublicKey(long id, byte[] key, int height) {
         PublicKey publicKey = getPublicKey(id);
         if (publicKey == null) {
-            publicKey = new PublicKey(id, null, blockChainInfoService.getHeight());
+            publicKey = new PublicKey(id, null, height);
         }
         if (publicKey.getPublicKey() == null) {
             publicKey.setPublicKey(key);
             publicKey.setHeight(height);
-            putInCache(id, publicKey);
             return true;
         }
         return Arrays.equals(publicKey.getPublicKey(), key);
@@ -227,17 +132,19 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public void apply(Account account, byte[] key, boolean isGenesis) {
-        PublicKey publicKey = getPublicKey(account.getId());
+        PublicKey dbPublicKey = getPublicKey(account.getId());
+        PublicKey publicKey = dbPublicKey;
+
         if (publicKey == null) {
-            publicKey = new PublicKey(account.getId(), null, blockChainInfoService.getHeight());
+            publicKey = new PublicKey(account.getId(), key, blockChainInfoService.getHeight());
         }
+        //Such cases happens, because of air drop was on accounts id.
         if (publicKey.getPublicKey() == null) {
             publicKey.setPublicKey(key);
             insertPublicKey(publicKey, isGenesis);
         } else if (!Arrays.equals(publicKey.getPublicKey(), key)) {
             throw new IllegalStateException("Public key mismatch");
         } else if (publicKey.getHeight() >= blockChainInfoService.getHeight() - 1) {
-            PublicKey dbPublicKey = loadPublicKeyFromDb(account.getId());
             if (dbPublicKey == null || dbPublicKey.getPublicKey() == null) {
                 insertPublicKey(publicKey, isGenesis);
             }
@@ -269,56 +176,8 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
         return publicKey;
     }
 
-    public void cleanUpPublicKeysInMemory() {
-        clearCache();
-    }
-
     public void cleanUpPublicKeys() {
         publicKeyDao.truncate();
     }
 
-    private boolean isCacheEnabled() {
-//        return cacheEnabled;
-        return false; // temporary IGNORE that cache without considering config property value
-    }
-
-    private void clearCache() {
-        if (isCacheEnabled()) {
-            publicKeyCache.invalidateAll();
-        }
-    }
-
-    private void removeFromCache(DbKey key) {
-        if (isCacheEnabled()) {
-            log.trace("--cache-- remove dbKey={}", key);
-            publicKeyCache.invalidate(key);
-        }
-    }
-
-    private PublicKey getFromCache(long accountId) {
-        if (isCacheEnabled()) {
-            PublicKey pkey = publicKeyCache.getIfPresent(accountId);
-            log.trace("--cache-- get dbKey={}, from cache pkey={}", accountId, pkey);
-            return pkey;
-        } else {
-            return null;
-        }
-    }
-
-    private void refreshInCache(long id) {
-        if (isCacheEnabled()) {
-            PublicKey publicKey = loadPublicKeyFromDb(id);
-            if (publicKey != null) {
-                log.trace("--cache-- refresh dbKey={} height={}", id, publicKey.getHeight());
-                publicKeyCache.put(id, publicKey);
-            }
-        }
-    }
-
-    private void putInCache(long id, PublicKey value) {
-        if (isCacheEnabled()) {
-            log.trace("--cache-- put  dbKey={} height={}", id, value.getHeight());
-            publicKeyCache.put(id, value);
-        }
-    }
 }

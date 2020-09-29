@@ -74,19 +74,14 @@ public class BlockApplier {
         if (totalBackFees != 0) {
             log.trace("Fee reduced by {} ATM at height {}", totalBackFees, height);
         }
-        //fetch generatorAccount after a possible change in previousGeneratorAccount
-        Account generatorAccount = accountService.addOrGetAccount(block.getGeneratorId());
-        byte[] generatorPublicKey = block.getGeneratorPublicKey();
-        if (generatorPublicKey == null) {
-            generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
-            block.setGeneratorPublicKey(generatorPublicKey);
-        }
-        accountPublicKeyService.apply(generatorAccount, block.getGeneratorPublicKey());
-        accountService.addToBalanceAndUnconfirmedBalanceATM(generatorAccount, LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
-        accountService.addToForgedBalanceATM(generatorAccount, block.getTotalFeeATM() - totalBackFees);
+        //fetch account after a possible change in previousGeneratorAccount
+        Account account = accountService.createAccount(block.getGeneratorId());
+        accountPublicKeyService.apply(account, block.getGeneratorPublicKey());
+        accountService.addToBalanceAndUnconfirmedBalanceATM(account, LedgerEvent.BLOCK_GENERATED, block.getId(), block.getTotalFeeATM() - totalBackFees);
+        accountService.addToForgedBalanceATM(account, block.getTotalFeeATM() - totalBackFees);
         log.debug("Transaction fee {} ATM awarded to forger {} at height {}",
             block.getTotalFeeATM() - totalBackFees,
-            Convert2.rsAccount(generatorAccount.getId()),
+            Convert2.rsAccount(account.getId()),
             height);
     }
 

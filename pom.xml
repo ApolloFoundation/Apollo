@@ -30,31 +30,8 @@
       <name>arti.firstbridge.work</name>
       <url>https://arti.firstbridge.work/artifactory/apl</url>
     </repository>
-    <repository>
-      <id>apl-release</id>
-      <name>arti.firstbridge.work-releases</name>
-      <url>https://arti.firstbridge.work/artifactory/apl-release</url>
-    </repository>
-    <repository>
-      <id>apl-stage</id>
-      <name>arti.firstbridge.work-stage</name>
-      <url>https://arti.firstbridge.work/artifactory/apl-stage</url>
-    </repository>
-    <repository>
-      <id>zpl-stage</id>
-      <name>arti.firstbridge.work-zpl</name>
-      <url>https://arti.firstbridge.work/artifactory/zpl-stage/apl-stage</url>
-    </repository>
-    <repository>
-      <id>aplsys</id>
-      <name>Artifactory APLSYS</name>
-      <layout>default</layout>
-      <url>https://arti.firstbridge.work/artifactory/aplsys</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
   </repositories>
+
   <modules>
     <module>apl-api</module>
     <module>apl-api2</module>
@@ -81,7 +58,7 @@
     <zip-format>zip</zip-format>
     <!--Dependency Versions-->
 
-    <antifraud.version>1.0.10</antifraud.version>
+    <antifraud.version>1.0.11</antifraud.version>
 
     <!-- We have to define this property and change it accordingly for correct version of packages -->
     <apl-bom-ext.version>1.0.2</apl-bom-ext.version>
