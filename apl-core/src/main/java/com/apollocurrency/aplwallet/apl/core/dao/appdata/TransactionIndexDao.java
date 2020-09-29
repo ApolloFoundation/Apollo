@@ -30,7 +30,7 @@ public interface TransactionIndexDao {
      * @return found records list
      */
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT * FROM transaction_shard_index WHERE height =:height ORDER BY transaction_index FETCH FIRST :limit ROWS ONLY")
+    @SqlQuery("SELECT * FROM transaction_shard_index WHERE height =:height ORDER BY transaction_index LIMIT :limit")
     @RegisterRowMapper(TransactionIndexRowMapper.class)
     List<TransactionIndex> getByBlockHeight(@Bind("height") int height, @Bind("limit") long limit);
 
