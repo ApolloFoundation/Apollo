@@ -42,6 +42,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import com.google.common.util.concurrent.TimeLimiter;
+import io.firstbridge.identity.cert.ExtCert;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -104,7 +105,8 @@ public final class PeerImpl implements Peer {
     private TimeService timeService;
     @Getter
     private volatile int failedConnectAttempts = 0;
-
+    private String peerId;
+    
     PeerImpl(PeerAddress addrByFact,
              PeerAddress announcedAddress,
              BlockchainConfig blockchainConfig,
@@ -922,11 +924,6 @@ public final class PeerImpl implements Peer {
     }
 
     @Override
-    public boolean isTrusted() {
-        return getTrustLevel().getCode() > PeerTrustLevel.REGISTERED.getCode();
-    }
-
-    @Override
     public PeerTrustLevel getTrustLevel() {
         //TODO implement using Apollo ID
         return PeerTrustLevel.NOT_TRUSTED;
@@ -976,6 +973,22 @@ public final class PeerImpl implements Peer {
             deactivate(host);
             return true;
         }
+    }
+
+    @Override
+    public String getX509pem() {
+        return pi.getX509_cert();
+    }
+
+    @Override
+    public String getIdentity() {
+        String res;
+        if (peerId!=null){
+            res = peerId;
+        }else{
+            res = getAnnouncedAddress(); // host with port?
+        }
+        return res;
     }
 
 }

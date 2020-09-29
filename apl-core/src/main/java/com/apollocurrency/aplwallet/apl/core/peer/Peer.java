@@ -31,6 +31,13 @@ import java.util.Set;
 import java.util.UUID;
 
 public interface Peer extends Comparable<Peer> {
+    /**
+     * ID of peer. It is UID field of X.509 certificate
+     * To keep a temporary compatibility with old peers,
+     * it could be announced address with port
+     * @return 
+     */
+    String getIdentity();
 
     boolean providesService(Service service);
 
@@ -116,8 +123,6 @@ public interface Peer extends Comparable<Peer> {
 
     <T> T send(BaseP2PRequest request, JsonReqRespParser<T> parser) throws PeerNotConnectedException;
 
-    boolean isTrusted();
-
     PeerTrustLevel getTrustLevel();
 
     long getServices();
@@ -131,6 +136,8 @@ public interface Peer extends Comparable<Peer> {
     void setServices(long code);
 
     void setLastUpdated(int time);
+    
+    String getX509pem();
 
     enum Service {
         HALLMARK(1),                    // Hallmarked node

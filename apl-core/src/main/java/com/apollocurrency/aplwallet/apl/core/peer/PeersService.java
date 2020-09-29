@@ -19,6 +19,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.PeerDao;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
@@ -27,6 +28,7 @@ import com.apollocurrency.aplwallet.api.p2p.request.ProcessTransactionsRequest;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.limiter.TimeLimiterService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.PeerEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.API;
@@ -96,7 +98,7 @@ public class PeersService {
     private static final Version MAX_VERSION = Constants.VERSION;
     private static final int sendTransactionsBatchSize = 100;
     private final static String BACKGROUND_SERVICE_NAME = "PeersService";
-    public static int DEFAULT_CONNECT_TIMEOUT = 2000; //2s default websocket connect timeout
+    public static final int DEFAULT_CONNECT_TIMEOUT = 2000; //2s default websocket connect timeout
     public static int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     public static boolean getMorePeers;
     //TODO:  hardcode in Constants and use from there
@@ -117,8 +119,8 @@ public class PeersService {
     static boolean isGzipEnabled;
     static int minNumberOfKnownPeers;
     static boolean enableHallmarkProtection;
-    static boolean usePeersDb;
-    static boolean savePeers;
+    boolean usePeersDb;
+    boolean savePeers;
     static boolean cjdnsOnly;
     private static String myHallmark;
     private static int maxNumberOfInboundConnections;
@@ -168,13 +170,15 @@ public class PeersService {
     
     private final TransactionConverter transactionConverter;
     private final BlockConverter blockConverter;
-
+    @Getter
+    private final PeerDao peerDao;
 
     @Inject
     public PeersService(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, Blockchain blockchain,
                         TimeService timeService, TaskDispatchManager taskDispatchManager, PeerHttpServer peerHttpServer,
                         TimeLimiterService timeLimiterService, AccountService accountService,
                         IdentityService identityService,
+                        PeerDao peerDao,
                         TransactionSerializer transactionSerializer,
                         BlockSerializer blockSerializer,
                         TransactionConverter transactionConverter,
@@ -191,7 +195,7 @@ public class PeersService {
         this.blockSerializer = blockSerializer;
 
         this.identityService = identityService;
-
+        this.peerDao = peerDao; 
         this.transactionConverter = transactionConverter;
         this.blockConverter = blockConverter;
 
@@ -291,7 +295,7 @@ public class PeersService {
         addListener(peer -> peersExecutorService.submit(() -> {
             if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
                 try {
-                    PeerDb.updatePeer((PeerImpl) peer);
+                    peerDao.updatePeer(peer);
                 } catch (RuntimeException e) {
                     LOG.error("Unable to update peer database", e);
                 }
@@ -710,8 +714,8 @@ public class PeersService {
     public Peer removePeer(Peer peer) {
         Peer p = null;
         if (peer.getAnnouncedAddress() != null) {
-            PeerDb.Entry entry = new PeerDb.Entry(peer.getAnnouncedAddress(), 0, 0);
-            PeerDb.deletePeer(entry);
+            PeerEntity entry = new PeerEntity(peer.getIdentity(), 0, 0,null,peer.getHostWithPort());
+            peerDao.deletePeer(entry);
             if (connectablePeers.containsKey(peer.getAnnouncedAddress())) {
                 p = connectablePeers.remove(peer.getAnnouncedAddress());
             }

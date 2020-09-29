@@ -32,6 +32,18 @@ public class EntityProducer {
         final PeerState state = active ? PeerState.CONNECTED : PeerState.NON_CONNECTED;
 
         Peer peer = new Peer() {
+            
+            @Override
+            public String getIdentity() {
+               return getHostWithPort();
+            }
+
+            @Override
+            public String getX509pem() {
+                return null;
+            }
+            
+            
             @Override
             public int compareTo(Peer o) {
                 return 0;
@@ -225,11 +237,6 @@ public class EntityProducer {
             @Override
             public String getHostWithPort() {
                 return null;
-            }
-
-            @Override
-            public boolean isTrusted() {
-                return false;
             }
 
             @Override
