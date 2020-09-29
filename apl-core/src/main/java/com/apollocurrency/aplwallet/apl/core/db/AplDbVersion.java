@@ -847,7 +847,7 @@ public class AplDbVersion extends DbVersion {
             case 324:
                 apply("ALTER TABLE order_scan ADD CONSTRAINT order_scan_coin_idx UNIQUE IF NOT EXISTS (coin)");
             case 325:
-                apply("CREATE TABLE dex_operation (db_id SERIAL, account VARCHAR(255) NOT NULL, stage TINYINT NOT NULL, eid VARCHAR(255) NOT NULL, description VARCHAR(255), details VARCHAR(255), finished BOOLEAN NOT NULL DEFAULT FALSE, ts TIMESTAMP NOT NULL) ENGINE=ROCKSDB;");
+                apply("CREATE TABLE dex_operation (db_id SERIAL, account VARCHAR(255) NOT NULL, stage TINYINT NOT NULL, eid VARCHAR(255) NOT NULL, description VARCHAR(255), details VARCHAR(255), finished BOOLEAN NOT NULL DEFAULT FALSE, ts TIMESTAMP(4) NOT NULL) ENGINE=ROCKSDB;");
             case 326:
                 //apply("ALTER TABLE dex_operation ADD CONSTRAINT dex_operation_account_stage_eid_idx UNIQUE IF NOT EXISTS (account, stage, eid)");
             case 327:

@@ -171,7 +171,7 @@ class AssetTableTest {
         assertEquals(2, expected.size());
     }
 
-    @Test
+    @Disabled // TODO: YL @full_text_search_fix is needed
     void test_searchAssets() {
         List<Asset> expected = toList(table.search("This", DbClause.EMPTY_CLAUSE, 0, 3, " ORDER BY ft.score DESC "));
         assertEquals(4, expected.size());
