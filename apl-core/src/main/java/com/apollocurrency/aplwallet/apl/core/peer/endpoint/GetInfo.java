@@ -63,17 +63,15 @@ public final class GetInfo extends PeerRequestHandler {
     public GetInfo(TimeService timeService) {
         this.timeService = timeService;
     }
-    
-    private void processPeerIdentity(PeerInfo pi){
-        
-    } 
+
     
     @Override
     public JSONStreamAware processRequest(JSONObject req, Peer peer) {
         PeerImpl peerImpl = (PeerImpl) peer;
         PeerInfo pi = mapper.convertValue(req, PeerInfo.class);
         log.trace("GetInfo - PeerInfo from request = {}", pi);
-        processPeerIdentity(pi);
+        
+        peerImpl.setX509pem(pi.getX509_cert());
         peerImpl.setLastUpdated(timeService.getEpochTime());
         long origServices = peerImpl.getServices();
         String servicesString = pi.getServices();
@@ -96,7 +94,6 @@ public final class GetInfo extends PeerRequestHandler {
                     }
                     if (!announcedAddress.equals(peerImpl.getAnnouncedAddress())) {
                         log.trace("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
-                        int oldPort = peerImpl.getPort();
                         lookupPeersService().setAnnouncedAddress(peerImpl, announcedAddress);
                     }
                 } else {

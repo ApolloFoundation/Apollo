@@ -42,7 +42,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import com.google.common.util.concurrent.TimeLimiter;
+import io.firstbridge.identity.cert.ActorType;
+import io.firstbridge.identity.cert.CertException;
+import io.firstbridge.identity.cert.CertKeyPersistence;
 import io.firstbridge.identity.cert.ExtCert;
+import io.firstbridge.identity.utils.Hex;
+import java.io.ByteArrayInputStream;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -51,10 +56,12 @@ import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.channels.ClosedChannelException;
+import java.security.cert.X509Certificate;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,12 +74,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import lombok.Setter;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class PeerImpl implements Peer {
     private static final Logger LOG = getLogger(PeerImpl.class);
-
+    @Getter
     private final String host;
     private final Object servicesMonitor = new Object();
     private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
@@ -82,31 +90,42 @@ public final class PeerImpl implements Peer {
     private final Blockchain blockchain;
     private final PeersService peers;
     private final AccountService accountService;
+    @Getter
     private final PeerInfo pi = new PeerInfo();
     //Jackson JSON
     private final ObjectMapper mapper = new ObjectMapper();
     @Getter
     private final Peer2PeerTransport p2pTransport;
+    @Getter
     private volatile int port;
+    @Getter
     private Hallmark hallmark;
     private EnumSet<APIEnum> disabledAPIs;
+    @Getter
     private Version version;
     private volatile boolean isOldVersion;
     private volatile long adjustedWeight;
     private volatile int blacklistingTime;
-    private volatile String blacklistingCause;
+    @Getter
+    private volatile String blacklistingCause = "unknown";
+    @Getter
     private PeerState state;
+    @Getter @Setter
     private volatile int lastUpdated;
+    @Getter
     private volatile int lastConnectAttempt;
     private volatile long hallmarkBalance = -1;
     private volatile int hallmarkBalanceHeight;
     private volatile long services;
+    @Getter
     private BlockchainState blockchainState;
     private TimeService timeService;
     @Getter
     private volatile int failedConnectAttempts = 0;
     private String peerId;
-    
+    @Getter
+    private PeerTrustLevel trustLevel = PeerTrustLevel.NOT_TRUSTED;
+            
     PeerImpl(PeerAddress addrByFact,
              PeerAddress announcedAddress,
              BlockchainConfig blockchainConfig,
@@ -143,20 +162,11 @@ public final class PeerImpl implements Peer {
     }
 
     @Override
-    public String getHost() {
-        return host;
-    }
-
-    @Override
     public String getHostWithPort() {
         PeerAddress pa = new PeerAddress(port, host);
         return pa.getAddrWithPort();
     }
 
-    @Override
-    public PeerState getState() {
-        return state;
-    }
 
     private void setState(PeerState newState) {
         // if we are even not connected and some routine say to disconnect
@@ -194,11 +204,6 @@ public final class PeerImpl implements Peer {
     @Override
     public long getUploadedVolume() {
         return p2pTransport.getUploadedVolume();
-    }
-
-    @Override
-    public Version getVersion() {
-        return version;
     }
 
     public void setVersion(Version version) {
@@ -307,10 +312,6 @@ public final class PeerImpl implements Peer {
         pi.setApiServerIdleTimeout(apiServerIdleTimeout);
     }
 
-    @Override
-    public BlockchainState getBlockchainState() {
-        return blockchainState;
-    }
 
     public void setBlockchainState(Integer blockchainStateInt) {
         if (blockchainStateInt >= 0 && blockchainStateInt < BlockchainState.values().length) {
@@ -347,15 +348,6 @@ public final class PeerImpl implements Peer {
         this.port = pa.getPort();
     }
 
-    @Override
-    public int getPort() {
-        return port;
-    }
-
-    @Override
-    public Hallmark getHallmark() {
-        return hallmark;
-    }
 
     private void setHallmark(Hallmark hallmark) {
         this.hallmark = hallmark;
@@ -451,16 +443,6 @@ public final class PeerImpl implements Peer {
     }
 
     @Override
-    public int getLastUpdated() {
-        return lastUpdated;
-    }
-
-    @Override
-    public void setLastUpdated(int lastUpdated) {
-        this.lastUpdated = lastUpdated;
-    }
-
-    @Override
     public boolean isInbound() {
         return pi.getAnnouncedAddress() == null;
     }
@@ -478,16 +460,6 @@ public final class PeerImpl implements Peer {
     @Override
     public boolean isOutboundSocket() {
         return p2pTransport.isOutbound();
-    }
-
-    @Override
-    public String getBlacklistingCause() {
-        return blacklistingCause == null ? "unknown" : blacklistingCause;
-    }
-
-    @Override
-    public int getLastConnectAttempt() {
-        return lastConnectAttempt;
     }
 
     @Override
@@ -667,6 +639,7 @@ public final class PeerImpl implements Peer {
 
                 setPlatform(newPi.getPlatform());
                 setShareAddress(newPi.getShareAddress());
+                setX509pem(newPi.getX509_cert());
 
                 if (!PeersService.ignorePeerAnnouncedAddress) {
                     if (newPi.getAnnouncedAddress() != null && newPi.getShareAddress()) {
@@ -896,38 +869,6 @@ public final class PeerImpl implements Peer {
         return uri;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        PeerImpl peer = (PeerImpl) o;
-        return port == peer.port &&
-            Objects.equals(host, peer.host) &&
-            Objects.equals(pi.getAnnouncedAddress(), peer.getAnnouncedAddress());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(host, pi.getAnnouncedAddress(), port);
-    }
-
-    @Override
-    public String toString() {
-        return "Peer{" +
-            "state=" + getState() +
-            ", announcedAddress='" + pi.getAnnouncedAddress() + '\'' +
-            ", services=" + services +
-            ", host='" + host + '\'' +
-            ", application ='" + getApplication() + '\'' +
-            ", version='" + version + '\'' +
-            '}';
-    }
-
-    @Override
-    public PeerTrustLevel getTrustLevel() {
-        //TODO implement using Apollo ID
-        return PeerTrustLevel.NOT_TRUSTED;
-    }
 
     /**
      * process error from transport and application level
@@ -974,12 +915,35 @@ public final class PeerImpl implements Peer {
             return true;
         }
     }
-
+    
+//--------- X.509 certificates related methods
     @Override
     public String getX509pem() {
         return pi.getX509_cert();
     }
 
+    public void setX509pem(String pem) {
+        if (pem == null || pem.isEmpty()){
+            return;
+        }
+        InputStream is = new ByteArrayInputStream(pem.getBytes());
+        ExtCert xc=null;
+        X509Certificate caCert = null;
+        try {
+            xc = CertKeyPersistence.loadPEMFromStream(is);
+            if (xc.isSelfSigned()){
+                trustLevel = PeerTrustLevel.REGISTERED;
+            }else if(xc.isSignedBy(caCert)){
+                trustLevel = PeerTrustLevel.TRUSTED;
+                if( (xc.getAuthorityId().getActorType().getType() & ActorType.NODE_CERTIFIED_STORAGE) !=0 ){
+                    trustLevel = PeerTrustLevel.SYSTEM_TRUSTED;
+                }
+            }
+            peerId=Hex.encode(xc.getActorId());
+        } catch (IOException | CertException ex) {
+        }
+    }
+    
     @Override
     public String getIdentity() {
         String res;
@@ -990,5 +954,32 @@ public final class PeerImpl implements Peer {
         }
         return res;
     }
+    
+//----------- overwitten methods of Object
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PeerImpl peer = (PeerImpl) o;
+        return port == peer.port &&
+            Objects.equals(host, peer.host) &&
+            Objects.equals(pi.getAnnouncedAddress(), peer.getAnnouncedAddress());
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(host, pi.getAnnouncedAddress(), port);
+    }
+
+    @Override
+    public String toString() {
+        return "Peer{" +
+            "state=" + getState() +
+            ", announcedAddress='" + pi.getAnnouncedAddress() + '\'' +
+            ", services=" + services +
+            ", host='" + host + '\'' +
+            ", application ='" + getApplication() + '\'' +
+            ", version='" + version + '\'' +
+            '}';
+    }
 }
