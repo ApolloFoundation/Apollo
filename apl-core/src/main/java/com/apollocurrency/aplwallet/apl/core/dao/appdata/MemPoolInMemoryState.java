@@ -54,14 +54,27 @@ public class MemPoolInMemoryState {
     private final int maxInMemorySize;
     @Getter
     private volatile boolean cacheInitialized;
+    private final int maxPendingBroadcastQueueSize;
 
 
     @Inject
-    public MemPoolInMemoryState(UnconfirmedTransactionCreator unconfirmedTransactionCreator, @Property(name = "apl.maxUnconfirmedTransactions", defaultValue = "" + Integer.MAX_VALUE) int maxUnconfirmedTransactions) {
+    public MemPoolInMemoryState(UnconfirmedTransactionCreator unconfirmedTransactionCreator,
+                                @Property(name = "apl.maxUnconfirmedTransactions", defaultValue = "" + Integer.MAX_VALUE) int maxUnconfirmedTransactions,
+                                @Property(name = "apl.mempool.maxPendingTransactions", defaultValue = "2000") int maxPendingTransactions
+    ) {
         this.unconfirmedTransactionCreator = unconfirmedTransactionCreator;
         this.maxInMemorySize = maxUnconfirmedTransactions;
         this.waitingTransactions = new SizeBoundedPriorityQueue<>(maxUnconfirmedTransactions, new UnconfirmedTransactionComparator());
-        this.broadcastPendingTransactions = new PriorityBlockingQueue<>(100_000, Comparator.comparing(TxWithArrivalTimestamp::getArrivalTime));
+        this.maxPendingBroadcastQueueSize = maxPendingTransactions;
+        this.broadcastPendingTransactions = new PriorityBlockingQueue<>(maxPendingBroadcastQueueSize, Comparator.comparing(TxWithArrivalTimestamp::getArrivalTime)) {
+            @Override
+            public boolean offer(TxWithArrivalTimestamp txWithArrivalTimestamp) {
+                if (size() == maxPendingBroadcastQueueSize) {
+                    return false;
+                }
+                return super.offer(txWithArrivalTimestamp);
+            }
+        };
     }
 
     public void backToWaiting(UnconfirmedTransaction unconfirmedTransaction) {
@@ -199,11 +212,14 @@ public class MemPoolInMemoryState {
         return broadcastPendingTransactions.size();
     }
 
+
+    public double pendingBroadcastQueueLoadFactor() {
+        return 1.0 * broadcastPendingTransactions.size() / maxPendingBroadcastQueueSize;
+    }
+
     @Data
     private static class TxWithArrivalTimestamp {
         private final long arrivalTime = System.currentTimeMillis();
         private final Transaction tx;
     }
-
-
 }

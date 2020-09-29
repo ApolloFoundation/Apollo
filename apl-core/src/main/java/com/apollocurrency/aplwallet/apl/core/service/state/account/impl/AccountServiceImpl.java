@@ -93,6 +93,7 @@ public class AccountServiceImpl implements AccountService {
     public Account getAccount(long id) {
         DbKey dbKey = AccountTable.newKey(id);
         Account account = accountTable.get(dbKey);
+
         if (account == null) {
             PublicKey publicKey = accountPublicKeyService.getPublicKey(id);
             if (publicKey != null) {
@@ -108,7 +109,7 @@ public class AccountServiceImpl implements AccountService {
         DbKey dbKey = AccountTable.newKey(id);
         Account account = getAccount(dbKey, height);
         if (account == null) {
-            PublicKey publicKey = accountPublicKeyService.loadPublicKeyFromDb(id, height);
+            PublicKey publicKey = accountPublicKeyService.getByHeight(id, height);
             if (publicKey != null) {
                 account = new Account(id, height);
                 account.setPublicKey(publicKey);
@@ -159,13 +160,8 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Account addGenesisAccount(long id) {
-        return addAccount(id, true);
-    }
-
-    @Override
-    public Account addOrGetAccount(long id) {
-        return addAccount(id, false);
+    public Account createAccount(long id) {
+        return createAccount(id, null);
     }
 
     /**
@@ -173,44 +169,28 @@ public class AccountServiceImpl implements AccountService {
      * This account will be saved during further operation of the balance changing (the set of 'add to balance' operation).
      *
      * @param id        account id
-     * @param isGenesis true if this account is a genesis account
      * @return new account
      */
-    private Account addAccount(long id, boolean isGenesis) {
+    @Override
+    public Account createAccount(long id, byte[] publicKey) {
         Preconditions.checkArgument(id != 0, "Invalid accountId 0");
         DbKey dbKey = AccountTable.newKey(id);
         Account account = accountTable.get(dbKey);
         if (account == null) {
             account = new Account(id, dbKey);
-            PublicKey publicKey = accountPublicKeyService.getPublicKey(id);
-            if (publicKey == null) {
-                if (isGenesis) {
-                    publicKey = accountPublicKeyService.insertGenesisPublicKey(id);
-                } else {
-                    publicKey = accountPublicKeyService.insertNewPublicKey(id);
-                }
+            if(publicKey != null) {
+                PublicKey pk = new PublicKey(account.getId(), publicKey, blockChainInfoService.getHeight());
+                account.setPublicKey(pk);
             }
-            account.setPublicKey(publicKey);
         }
         return account;
-    }
-
-    private static boolean isHasZeroBalance(Account account){
-        return account.getBalanceATM() == 0
-            && account.getUnconfirmedBalanceATM() == 0
-            && account.getForgedBalanceATM() == 0
-            && account.getActiveLesseeId() == 0
-            && account.getControls().isEmpty();
     }
 
     @Override
     public void update(Account account, boolean deleteIfHasZeroBalance) {
         account.setHeight(blockChainInfoService.getHeight());
-        if (isHasZeroBalance(account) && deleteIfHasZeroBalance) {
-            accountTable.delete(account, blockChainInfoService.getHeight());
-        } else {
-            accountTable.insert(account);
-        }
+        accountTable.insert(account);
+
         if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
             try {
                 log.trace("Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).limit(3).collect(Collectors.joining("-----")));
@@ -533,10 +513,6 @@ public class AccountServiceImpl implements AccountService {
     }
 
     //Delegated from AccountPublicKeyService
-    @Override
-    public boolean setOrVerifyPublicKey(long accountId, byte[] key) {
-        return accountPublicKeyService.setOrVerifyPublicKey(accountId, key);
-    }
 
     @Override
     public byte[] getPublicKeyByteArray(long id) {

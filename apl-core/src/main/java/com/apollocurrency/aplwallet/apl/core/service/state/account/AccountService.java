@@ -52,9 +52,9 @@ public interface AccountService {
 
     Account getAccount(Account account);
 
-    Account addGenesisAccount(long id);
+    Account createAccount(long id, byte[] publicKey);
 
-    Account addOrGetAccount(long id);
+    Account createAccount(long id);
 
     default void update(Account account){
         update(account, true);
@@ -124,7 +124,5 @@ public interface AccountService {
     ApolloFbWallet generateUserAccounts(byte[] secretApl);
 
     //Delegated from  AccountPublicKeyService
-    boolean setOrVerifyPublicKey(long accountId, byte[] key);
-
     byte[] getPublicKeyByteArray(long id);
 }

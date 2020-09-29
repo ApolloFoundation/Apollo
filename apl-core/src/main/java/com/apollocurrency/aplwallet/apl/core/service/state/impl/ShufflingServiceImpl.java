@@ -555,7 +555,7 @@ public class ShufflingServiceImpl implements ShufflingService {
         for (byte[] recipientPublicKey : shuffling.getRecipientPublicKeys()) {
             long recipientId = AccountService.getId(recipientPublicKey);
             if (accountPublicKeyService.setOrVerifyPublicKey(recipientId, recipientPublicKey)) {
-                Account account = accountService.addOrGetAccount(recipientId);
+                Account account = accountService.createAccount(recipientId);
                 accountPublicKeyService.apply(account, recipientPublicKey);
             }
         }
@@ -736,7 +736,7 @@ public class ShufflingServiceImpl implements ShufflingService {
         }
         for (byte[] recipientPublicKey : shuffling.getRecipientPublicKeys()) {
             long recipientId = AccountService.getId(recipientPublicKey);
-            Account recipientAccount = accountService.addOrGetAccount(recipientId);
+            Account recipientAccount = accountService.createAccount(recipientId);
             accountPublicKeyService.apply(recipientAccount, recipientPublicKey);
             shuffling.getHoldingType().addToBalanceAndUnconfirmedBalance(recipientAccount, event, shuffling.getId(), shuffling.getHoldingId(), shuffling.getAmount());
             if (shuffling.getHoldingType() != HoldingType.APL) {

@@ -50,7 +50,7 @@ public class TransactionApplier {
         if (transaction.getRecipientId() != 0) {
             recipientAccount = accountService.getAccount(transaction.getRecipientId());
             if (recipientAccount == null) {
-                recipientAccount = accountService.addOrGetAccount(transaction.getRecipientId());
+                recipientAccount = accountService.createAccount(transaction.getRecipientId());
             }
         }
         if (transaction.getReferencedTransactionFullHash() != null) {

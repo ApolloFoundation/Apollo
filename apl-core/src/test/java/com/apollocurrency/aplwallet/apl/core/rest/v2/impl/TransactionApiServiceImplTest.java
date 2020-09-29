@@ -98,7 +98,7 @@ class TransactionApiServiceImplTest {
         //GIVEN
         TxRequest request = new TxRequest();
         request.setTx(SIGNED_TX_1_HEX);
-        doReturn(true).when(memPool).canSafelyAcceptTransactions();
+        doReturn(true).when(memPool).canSafelyAcceptTransactions(1);
         doReturn(true).when(memPool).softBroadcast(any(Transaction.class));
         //WHEN
         Response response = transactionApiService.broadcastTx(request, securityContext);
@@ -155,7 +155,7 @@ class TransactionApiServiceImplTest {
         request2.setTx(SIGNED_TX_1_WRONG_LENGTH);
         requestList.add(request2);
 
-        doReturn(true).when(memPool).canSafelyAcceptTransactions();
+        doReturn(true).when(memPool).canSafelyAcceptTransactions(2);
         doReturn(true).when(memPool).softBroadcast(any(Transaction.class));
 
         //WHEN

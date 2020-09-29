@@ -56,11 +56,9 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -75,8 +73,6 @@ public class TableRegistryInitializer {
     private PhasingPollTable phasingPollTable;
     @Inject
     private DGSGoodsTable dgsGoodsTable;
-    @Inject
-    private TransactionProcessor transactionProcessor;
     @Inject
     private DGSTagTable dgsTagTable;
     @Inject
@@ -179,9 +175,4 @@ public class TableRegistryInitializer {
     private ShufflingTable shufflingTable;
     @Inject
     private UnconfirmedTransactionTable unconfirmedTransactionTable;
-
-    @PostConstruct
-    public void init() {
-        transactionProcessor.init();
-    }
 }
