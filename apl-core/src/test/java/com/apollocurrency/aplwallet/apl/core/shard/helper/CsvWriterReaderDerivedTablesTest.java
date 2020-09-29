@@ -131,6 +131,9 @@ import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InvalidClassException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -318,8 +321,8 @@ class CsvWriterReaderDerivedTablesTest {
         result.forEach(item -> {
             assertNotNull(item);
             log.debug("Table = '{}'", item.toString());
-            long minDbValue = 0;
-            long maxDbValue = 0;
+            BigDecimal minDbValue = BigDecimal.ZERO;
+            BigDecimal maxDbValue = BigDecimal.ZERO;
             int processedCount = 0;
             int totalCount = 0;
             int batchLimit = 1; // used for pagination and partial commit
@@ -334,7 +337,7 @@ class CsvWriterReaderDerivedTablesTest {
                 MinMaxValue minMaxValue = item.getMinMaxValue(targetHeight);
                 minDbValue = minMaxValue.getMin();
                 maxDbValue = minMaxValue.getMax();
-                assertTrue(minMaxValue.getMax() >= 0);
+                assertTrue(minMaxValue.getMax().longValue() >= 0);
                 log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxValue, targetHeight);
 
                 // process non empty tables
@@ -345,7 +348,16 @@ class CsvWriterReaderDerivedTablesTest {
 
                         processedCount = csvExportData.getProcessCount();
                         if (processedCount > 0) {
-                            minMaxValue.setMin((Long) csvExportData.getLastRow().get("DB_ID") + 1);
+                            Object rawObjectIdValue = csvExportData.getLastRow().get("db_id");
+                            if (rawObjectIdValue instanceof BigInteger) {
+                                BigDecimal bidDecimalId = new BigDecimal((BigInteger)rawObjectIdValue);
+                                bidDecimalId = bidDecimalId.add(BigDecimal.ONE);
+                                minMaxValue.setMin(bidDecimalId);
+                            } else {
+                                String error = "Something different then BigDecimal in type = " + rawObjectIdValue.getClass();
+                                log.error(error);
+                                throw new InvalidClassException(error);
+                            }
                         }
                         totalCount += processedCount;
                     } while (processedCount > 0); //keep processing while not found more rows
@@ -467,12 +479,12 @@ class CsvWriterReaderDerivedTablesTest {
      * @param itemName   derived table name
      * @return deleted rows quantity
      */
-    private int dropDataByName(long minDbValue, long maxDbValue, String itemName) {
+    private int dropDataByName(BigDecimal minDbValue, BigDecimal maxDbValue, String itemName) {
         // drop data
         try (Connection con = extension.getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("delete from " + itemName + " where db_id  BETWEEN ? AND ?")) {
-            pstmt.setLong(1, minDbValue);
-            pstmt.setLong(2, maxDbValue);
+            pstmt.setBigDecimal(1, minDbValue);
+            pstmt.setBigDecimal(2, maxDbValue);
             int deleted = pstmt.executeUpdate();
             log.debug("Table = {}, deleted = {} by MIN = {} / MAX = {}", itemName.toString(), deleted, minDbValue, maxDbValue);
             return deleted;

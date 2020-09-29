@@ -278,7 +278,7 @@ class DerivedDbTableListingTest {
             assertNotNull(item);
             log.debug("Table = '{}'", item.toString());
             MinMaxValue minMaxValue = item.getMinMaxValue(targetHeight);
-            assertTrue(minMaxValue.getMax() >= 0, "incorrect for '" + item.toString() + "', value = " + minMaxValue.getMax());
+            assertTrue(minMaxValue.getMax().longValue() >= 0, "incorrect for '" + item.toString() + "', value = " + minMaxValue.getMax());
             log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxValue, targetHeight);
         });
     }
