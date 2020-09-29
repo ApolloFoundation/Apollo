@@ -20,10 +20,9 @@ public class DbTestData {
         .dbUsername("testuser")
         .dbPassword("testpass")
         .maxConnections(10)
-//        .dbType("tc:mariadb:10.5")
         .dbType("mariadb")
         .chainId(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5"))
-        .dbParams("?TC_DAEMON=true&TC_REUSABLE=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql")
+        .dbParams("&TC_DAEMON=true&TC_REUSABLE=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql")
         .loginTimeout(2)
         .maxMemoryRows(100000)
         .defaultLockTimeout(1)
@@ -36,7 +35,6 @@ public class DbTestData {
 
     public static DbProperties getDbUrlProps(String url) {
         DbProperties dbProperties = DB_PROPERTIES.deepCopy();
-//        dbProperties.setDbUrl(url);
         return dbProperties;
     }
 
@@ -51,6 +49,9 @@ public class DbTestData {
     public static DbProperties getDbFileProperties(GenericContainer jdbcDatabaseContainer) {
         DbProperties dbProperties = DB_PROPERTIES.deepCopy();
         dbProperties.setDbUsername(((MariaDBContainer)jdbcDatabaseContainer).getUsername());
+        if (((MariaDBContainer)jdbcDatabaseContainer).getPassword() != null && !((MariaDBContainer)jdbcDatabaseContainer).getPassword().isEmpty()) {
+            dbProperties.setDbPassword(((MariaDBContainer)jdbcDatabaseContainer).getPassword());
+        }
         if (jdbcDatabaseContainer.getMappedPort(3306) != null) {
             dbProperties.setDatabasePort(jdbcDatabaseContainer.getMappedPort(3306));
         }
@@ -60,10 +61,6 @@ public class DbTestData {
     }
 
     public static DbProperties getDbFilePropertiesByPath(Path dbPath) {
-//        dbPath = dbPath.toAbsolutePath().toAbsolutePath();
-//        DbProperties dbProperties = getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0;MV_STORE=TRUE;CACHE_SIZE=16000;AUTO_SERVER=TRUE", dbPath));
-//        dbProperties.setDbDir(dbPath.getParent().toString());
-//        dbProperties.setDbName(dbPath.getFileName().toString());
         return DB_PROPERTIES.deepCopy();
     }
 }

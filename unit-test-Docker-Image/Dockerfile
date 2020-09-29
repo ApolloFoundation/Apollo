@@ -36,4 +36,11 @@ RUN apt-get -y install mariadb-plugin-rocksdb -f
 #RUN sudo chown -R mysql.mysql /etc/mysql/
 #RUN chown -R mysql.mysql /etc/mysql/
 
+ENV MYSQL_USER=testuser \
+    MYSQL_PASSWORD=testpass \
+    MYSQL_DATABASE=testdb \
+    MYSQL_ROOT_PASSWORD=root
+
+ADD . /
+
 RUN rm -rf /var/cache/apt/lists/*

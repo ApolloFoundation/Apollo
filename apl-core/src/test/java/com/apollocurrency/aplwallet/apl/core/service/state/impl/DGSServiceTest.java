@@ -1347,7 +1347,7 @@ public class DGSServiceTest {
     @Test
     void testGetSellerGoods() {
         List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, false, 0, Integer.MAX_VALUE));
-        assertIterableEquals(List.of(dtd.GOODS_5, dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_10, dtd.GOODS_8), goods);
+        assertIterableEquals(List.of(dtd.GOODS_5, dtd.GOODS_12, dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_10, dtd.GOODS_8, dtd.GOODS_4), goods);
         goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, false, 0, Integer.MAX_VALUE));
         assertIterableEquals(List.of(dtd.GOODS_2), goods);
     }
@@ -1363,7 +1363,7 @@ public class DGSServiceTest {
     @Test
     void testGetSellerGoodsWithPagination() {
         List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, false, 2, 4));
-        assertIterableEquals(List.of(dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11), goods);
+        assertIterableEquals(List.of(dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_10), goods);
         goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, false, 0, 0));
         assertIterableEquals(List.of(dtd.GOODS_2), goods);
     }

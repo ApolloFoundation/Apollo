@@ -107,8 +107,8 @@ public class DataSourceWrapper implements DataSource {
 
     private String formatJdbcUrlString(DbProperties dbProperties, boolean isSystemDb) {
         String finalDbUrl;
-        String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s";
-        String passwordlessUrlString = "jdbc:%s://%s:%d/%s?user=%s"; // skip password for 'password less mode' (in docker container)
+        String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s%s";
+        String passwordlessUrlString = "jdbc:%s://%s:%d/%s?user=%s%s"; // skip password for 'password less mode' (in docker container)
         String tempDbName = dbProperties.getDbName();
         if (isSystemDb) {
             tempDbName = "testdb".equalsIgnoreCase(dbProperties.getDbName()) ?  dbProperties.getDbName() : DbProperties.DB_SYSTEM_NAME;
@@ -121,7 +121,8 @@ public class DataSourceWrapper implements DataSource {
                 dbProperties.getDatabasePort(),
                 tempDbName,
                 dbProperties.getDbUsername(),
-                dbProperties.getDbPassword()
+                dbProperties.getDbPassword(),
+                dbProperties.getDbParams()
             );
         } else {
             // skip password for 'password less mode' (in docker container)
@@ -131,7 +132,8 @@ public class DataSourceWrapper implements DataSource {
                 dbProperties.getDatabaseHost(),
                 dbProperties.getDatabasePort(),
                 tempDbName,
-                dbProperties.getDbUsername()
+                dbProperties.getDbUsername(),
+                dbProperties.getDbParams()
             );
         }
         return finalDbUrl;
@@ -257,7 +259,8 @@ public class DataSourceWrapper implements DataSource {
 //            stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
 //            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
 
-            if (this.dbName != null && !this.dbName.equalsIgnoreCase("testdb")) { //skip that for unit test
+            if (this.dbName != null && !this.dbName.equalsIgnoreCase("testdb")
+                && this.dbUsername != null && this.dbUsername.equalsIgnoreCase("root")) { //skip that for unit tests
                 stmt.executeUpdate("set global rocksdb_max_row_locks=1073741824;");
                 stmt.executeUpdate("set session rocksdb_max_row_locks=1073741824;");
             }

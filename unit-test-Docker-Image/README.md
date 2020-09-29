@@ -3,6 +3,7 @@
 Link with instructions:
 https://signal18.io/blog/docker-mariadb-myrocks
 
+MariaDb in docker info - https://hub.docker.com/_/mariadb/
 
 ##  IMPORTANT !! You should have Docker to be installed locally first !!
 
@@ -29,7 +30,7 @@ $ docker build -t mariadb:10.5 .
 
 $ docker run -p 3306:3306 \
     --name apl-mariadb \
-    -e MYSQL_ALLOW_EMPTY_PASSWORD=yes \
+    -e MYSQL_ROOT_PASSWORD=root \
     -e MYSQL_DATABASE=testdb \
     -e MYSQL_USER=testuser \
     -e MYSQL_PASSWORD=testpass \
@@ -38,7 +39,7 @@ $ docker run -p 3306:3306 \
 
 2.4 Quick check it accessible on local PC :
 
-$ mysql -h 127.0.0.1 -P3306 -u root
+$ mysql -h 127.0.0.1 -P3306 -u root -proot
 
 2.6 Quick check by access with testuser on local PC :
 
@@ -47,11 +48,11 @@ $ mysql -h 127.0.0.1 -P3306 -u testuser -ptestpass
 
 #### 3. Quickly check that MyRocks is enabled:
 
-$ mysql -uroot -pmypass -h127.0.0.1 -P3306
+$ mysql -uroot -proot -h127.0.0.1 -P3306
 
 or 
 
-$ mysql -h 172.17.0.2 -u root -pmypass
+$ mysql -h 172.17.0.2 -u root -proot
 
 MariaDB [(none)]> show engines;
 
@@ -68,8 +69,18 @@ MariaDB [(none)]> show engines;
 
 #### Useful commands
 
+Start container by name
+
+$ docker start apl-mariadb
+
+Stop container by name
+
+$ docker stop apl-mariadb
+
 Connect to bash in running container
 
 $ docker exec -it apl-mariadb bash
+
+See logs for running container 
 
 $ docker logs apl-mariadb
