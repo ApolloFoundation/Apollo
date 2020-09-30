@@ -57,9 +57,12 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
+import org.junit.jupiter.api.Disabled;
 
 import static org.mockito.Mockito.mock;
 
+@Disabled
+    //this test is disabled because DB migration will be replaced with FlyWay or other tool
 @EnableWeld
 public class DbMigrationExecutorTest {
 
