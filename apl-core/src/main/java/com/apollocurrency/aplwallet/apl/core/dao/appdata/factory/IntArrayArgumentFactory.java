@@ -9,13 +9,13 @@ import java.sql.Types;
 import java.util.Arrays;
 
 @Slf4j
-public class LongArrayArgumentFactory extends AbstractArgumentFactory<long[]> {
-    public LongArrayArgumentFactory() {
+public class IntArrayArgumentFactory extends AbstractArgumentFactory<int[]> {
+    public IntArrayArgumentFactory() {
         super(Types.LONGVARCHAR);
     }
 
     @Override
-    protected Argument build(long[] value, ConfigRegistry config) {
+    protected Argument build(int[] value, ConfigRegistry config) {
         return (position, statement, ctx) -> statement.setString(position, Arrays.toString(value));
     }
 }

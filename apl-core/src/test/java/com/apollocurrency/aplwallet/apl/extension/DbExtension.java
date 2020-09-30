@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.extension;
 
-import static org.mockito.Mockito.mock;
-
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchServiceImpl;
@@ -33,6 +31,8 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+
+import static org.mockito.Mockito.mock;
 
 public class DbExtension implements BeforeEachCallback, AfterEachCallback, AfterAllCallback, BeforeAllCallback {
     private static final Logger log = LoggerFactory.getLogger(DbExtension.class);
@@ -69,9 +69,8 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         log.trace("ContainerId: {}", jdbcDatabaseContainer.getContainerId());
         log.trace("BoundPortNumbers: {}", jdbcDatabaseContainer.getBoundPortNumbers());
         log.trace("PortBindings: {}", jdbcDatabaseContainer.getPortBindings());
-        if (manipulator == null) {
-            manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
-        }
+
+        manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
     }
 
     public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties dbProperties) {

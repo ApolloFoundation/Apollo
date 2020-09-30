@@ -30,16 +30,16 @@ public class DbTestData {
         .build();
 
     public static DbProperties getInMemDbProps() {
-        return getDbUrlProps("jdbc:h2:mem:tempDb" + random.nextLong() + ";MV_STORE=TRUE;CACHE_SIZE=16000");
+        return getDbUrlProps();
     }
 
-    public static DbProperties getDbUrlProps(String url) {
+    public static DbProperties getDbUrlProps() {
         DbProperties dbProperties = DB_PROPERTIES.deepCopy();
         return dbProperties;
     }
 
     public static DbProperties getDbFileProperties(String fileName) {
-        DbProperties dbProperties = getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0;MV_STORE=TRUE;CACHE_SIZE=16000;AUTO_SERVER=TRUE", fileName));
+        DbProperties dbProperties = getDbUrlProps();
         Path filePath = Paths.get(fileName).toAbsolutePath();
         dbProperties.setDbDir(filePath.getParent().toString());
         dbProperties.setDbName(filePath.getFileName().toString());

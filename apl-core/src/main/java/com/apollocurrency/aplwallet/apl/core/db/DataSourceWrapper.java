@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.BigIntegerArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.DexCurrenciesFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.IntArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.LongArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.OrderStatusFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.OrderTypeFactory;
@@ -280,6 +281,7 @@ public class DataSourceWrapper implements DataSource {
         jdbi.registerArgument(new OrderTypeFactory());
         jdbi.registerArgument(new OrderStatusFactory());
         jdbi.registerArgument(new LongArrayArgumentFactory());
+        jdbi.registerArgument(new IntArrayArgumentFactory());
         jdbi.registerArrayType(long.class, "generatorIds");
         jdbi.registerArgument(new ShardStateFactory());
 

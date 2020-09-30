@@ -2,6 +2,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.ShardRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.IntArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.LongArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -48,16 +49,16 @@ public interface ShardDao {
     @SqlUpdate("INSERT INTO shard(shard_id, shard_hash, shard_state, shard_height, zip_hash_crc, prunable_zip_hash, generator_ids, block_timeouts, block_timestamps) " +
         "VALUES (:shardId, :shardHash, :shardState, :shardHeight, :coreZipHash, :prunableZipHash, :generatorIds, " +
         ":blockTimeouts, :blockTimestamps)")
-    @RegisterRowMapper(ShardRowMapper.class)
     @RegisterArgumentFactory(LongArrayArgumentFactory.class)
+    @RegisterArgumentFactory(IntArrayArgumentFactory.class)
     void saveShard(@BindBean Shard shard);
 
     @Transactional
     @SqlUpdate("UPDATE shard SET shard_hash =:shardHash, shard_state =:shardState, shard_height =:shardHeight, " +
         "zip_hash_crc =:coreZipHash, prunable_zip_hash =:prunableZipHash, generator_ids =:generatorIds, block_timeouts =:blockTimeouts, block_timestamps =:blockTimestamps " +
         "where shard_id =:shardId")
-    @RegisterRowMapper(ShardRowMapper.class)
     @RegisterArgumentFactory(LongArrayArgumentFactory.class)
+    @RegisterArgumentFactory(IntArrayArgumentFactory.class)
     int updateShard(@BindBean Shard shard);
 
     @Transactional
