@@ -69,7 +69,7 @@ class ShardDataSourceCreateHelperTest {
         createHelper = new ShardDataSourceCreateHelper(extension.getDatabaseManager(), 1L);
         createHelper.createUninitializedDataSource();
         String shardName = createHelper.getShardName();
-        assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5", shardName);
+        assertEquals("apl_blockchain_b5d7b6_shard_1", shardName);
     }
 
     @Test

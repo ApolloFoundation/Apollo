@@ -79,6 +79,7 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.testutil.BlockchainProducerUnitTests;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -173,7 +174,7 @@ class ShardMigrationExecutorTest {
 
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
-        BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class,
+        BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, BlockchainProducerUnitTests.class,
         PropertyProducer.class,
         TransactionRowMapper.class,
         TransactionBuilder.class,
