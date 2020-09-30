@@ -901,8 +901,8 @@ public class AplDbVersion extends DbVersion {
             case 352:
                 apply("ALTER TABLE transaction ALTER COLUMN signature VARBINARY NULL DEFAULT NULL");
             case 353:
-                apply("ALTER TABLE peer ADD COLUMN x509pem TEXT NULL DEFAULT NULL");
-                apply("ALTER TABLE peer ADD COLUMN ip_and_port VARCHAR NULL DEFAULT NULL");
+                apply("ALTER TABLE peer ADD COLUMN x509pem TEXT NULL DEFAULT NULL;" +
+                      "ALTER TABLE peer ADD COLUMN ip_and_port VARCHAR NULL DEFAULT NULL");
             case 354:
                 return 354;
             default:
