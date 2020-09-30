@@ -37,11 +37,9 @@ import com.apollocurrency.aplwallet.apl.security.id.IdentityService;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -60,6 +58,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import io.firstbridge.identity.handler.ThisActorIdHandler;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -77,6 +76,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -84,14 +84,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
+@Slf4j
 public class PeersService {
 
     public static final int MIN_COMPRESS_SIZE = 256;
-    static final int LOGGING_MASK_EXCEPTIONS = 1;
-    static final int LOGGING_MASK_NON200_RESPONSES = 2;
-    static final int LOGGING_MASK_200_RESPONSES = 4;
     static final int MAX_APPLICATION_LENGTH = 20;
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 200;
     private static final Logger LOG = LoggerFactory.getLogger(PeersService.class);
@@ -153,7 +153,6 @@ public class PeersService {
     private final PeerHttpServer peerHttpServer;
     private final TaskDispatchManager taskDispatchManager;
     private final AccountService accountService;
-    private final TransactionSerializer transactionSerializer;
     List<String> wellKnownPeers;
     Set<String> knownBlacklistedPeers;
     boolean shutdown = false;
@@ -164,23 +163,24 @@ public class PeersService {
     private JSONStreamAware myPeerInfoResponse;
     private BlockchainProcessor blockchainProcessor;
     private volatile TimeService timeService;
-    private final BlockSerializer blockSerializer;
-
-    private IdentityService identityService;
-    
-    private final TransactionConverter transactionConverter;
-    private final BlockConverter blockConverter;
+    private final IdentityService identityService;
     @Getter
     private final PeerDao peerDao;
+    private final TransactionConverter transactionConverter;
+    private final BlockConverter blockConverter;
+    private final ExecutorService txSendingDispatcher;
 
     @Inject
-    public PeersService(PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, Blockchain blockchain,
-                        TimeService timeService, TaskDispatchManager taskDispatchManager, PeerHttpServer peerHttpServer,
-                        TimeLimiterService timeLimiterService, AccountService accountService,
+    public PeersService(PropertiesHolder propertiesHolder,
+                        BlockchainConfig blockchainConfig,
+                        Blockchain blockchain,
+                        TimeService timeService,
+                        TaskDispatchManager taskDispatchManager,
+                        PeerHttpServer peerHttpServer,
+                        TimeLimiterService timeLimiterService,
+                        AccountService accountService,
                         IdentityService identityService,
                         PeerDao peerDao,
-                        TransactionSerializer transactionSerializer,
-                        BlockSerializer blockSerializer,
                         TransactionConverter transactionConverter,
                         BlockConverter blockConverter) {
 
@@ -192,16 +192,19 @@ public class PeersService {
         this.peerHttpServer = peerHttpServer;
         this.timeLimiterService = timeLimiterService;
         this.accountService = accountService;
-        this.blockSerializer = blockSerializer;
-
         this.identityService = identityService;
         this.peerDao = peerDao; 
         this.transactionConverter = transactionConverter;
         this.blockConverter = blockConverter;
+        this.txSendingDispatcher = new ThreadPoolExecutor(5,
+                propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30), 
+                60000, TimeUnit.MILLISECONDS, 
+                new ArrayBlockingQueue<>(500), 
+                new NamedThreadFactory("P2PTxSendingPool", true)
+        );
 
 
         isLightClient = propertiesHolder.isLightClient();
-        this.transactionSerializer = transactionSerializer;
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -761,12 +764,46 @@ public class PeersService {
         }
     }
 
-    private void sendToSomePeers(BaseP2PRequest request) {
+    private void checkP2PUp() {
         if (shutdown || suspend) {
             String errorMessage = String.format("Cannot send request to peers. Peer server was %s", suspend ? "suspended" : "shutdown");
             LOG.error(errorMessage);
             throw new PeerRuntimeException(errorMessage);
         }
+    }
+    public void sendToSomePeersAsync(BaseP2PRequest request) {
+        txSendingDispatcher.submit(() -> {
+            long time = System.nanoTime();
+            checkP2PUp();
+            Set<Peer> peers = new HashSet<>(getPeers(PeerState.CONNECTED));
+            int counterOfPeersToSend = Math.min(peers.size(), sendToPeersLimit);
+            for (final Peer peer : peers) {
+                if (counterOfPeersToSend == 0) {
+                    break;
+                }
+                if (!peer.isBlacklisted()
+                    && peer.getState() == PeerState.CONNECTED // skip not connected peers
+                    && peer.getBlockchainState() != BlockchainState.LIGHT_CLIENT
+                ) {
+                    counterOfPeersToSend--;
+                    txSendingDispatcher.submit(() -> {
+                        try {
+                            long startSendingTime = System.nanoTime();
+                            peer.send(request);
+                            log.trace("Time to send to peer {} async {}", peer.getHost(), (System.nanoTime() - startSendingTime));
+                        } catch (PeerNotConnectedException ignored) {}
+
+                    });
+                }
+            }
+            log.trace("Time to send to peers async {}", (System.nanoTime() - time));
+        });
+    }
+
+
+
+    private void sendToSomePeers(BaseP2PRequest request) {
+        checkP2PUp();
         sendingService.submit(() -> {
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();

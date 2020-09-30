@@ -34,13 +34,10 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.HEALTH_CHECK_INTER
 @Slf4j
 @Singleton
 public class PublicKeyTableProducer {
+    private final TaskDispatchManager taskManager;
     private final InMemoryCacheManager cacheManager;
-
     private final EntityDbTableInterface<PublicKey> publicKeyTable;
     private final EntityDbTableInterface<PublicKey> genesisPublicKeyTable;
-
-    private final TaskDispatchManager taskManager;
-
     @Getter
     private final boolean cacheEnabled;
     private Cache<DbKey, PublicKey> publicKeyCache;
@@ -63,6 +60,7 @@ public class PublicKeyTableProducer {
 
     @PostConstruct
     private void init() {
+        //todo warm up the cache APL-1726
         if (isCacheEnabled()) {
             log.info("'{}' is TURNED ON...", PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
             publicKeyCache = cacheManager.acquireCache(PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
@@ -98,4 +96,5 @@ public class PublicKeyTableProducer {
             return genesisPublicKeyTable;
         }
     }
+
 }

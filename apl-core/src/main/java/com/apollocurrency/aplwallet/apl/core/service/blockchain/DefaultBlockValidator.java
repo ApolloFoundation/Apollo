@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +26,9 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
                                  BlockchainConfig blockchainConfig,
                                  AccountService accountService,
                                  GeneratorService generatorService,
-                                 BlockSerializer blockSerializer) {
-        super(blockchain, blockchainConfig, accountService, generatorService, blockSerializer);
+                                 BlockSerializer blockSerializer,
+                                 AccountPublicKeyService accountPublicKeyService) {
+        super(blockchain, blockchainConfig, accountService, generatorService, blockSerializer, accountPublicKeyService);
     }
 
     @Override
@@ -47,7 +49,7 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
 
     @Override
     void verifySignature(Block block) throws BlockchainProcessor.BlockNotAcceptedException {
-        boolean checkResult = accountService.setOrVerifyPublicKey(block.getGeneratorId(), block.getGeneratorPublicKey());
+        boolean checkResult = accountPublicKeyService.setOrVerifyPublicKey(block.getGeneratorId(), block.getGeneratorPublicKey());
         if (!block.checkSignature() && !checkResult) {
             throw new BlockchainProcessor.BlockNotAcceptedException(
                 "Block signature verification failed", blockSerializer.getJSONObject(block));

@@ -96,7 +96,7 @@ class AccountServiceTest {
         Account account = accountService.getAccount(accountId, height);
         assertNull(account);
 
-        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).loadPublicKeyFromDb(accountId, height);
+        doReturn(testData.PUBLIC_KEY1).when(accountPublicKeyService).getByHeight(accountId, height);
         account = accountService.getAccount(accountId, height);
         assertEquals(newAccount, account);
         assertEquals(testData.PUBLIC_KEY1, account.getPublicKey());
@@ -132,13 +132,12 @@ class AccountServiceTest {
 
     @Test
     void testAddOrGetAccount() {
-        assertThrows(IllegalArgumentException.class, () -> accountService.addOrGetAccount(0));
+        assertThrows(IllegalArgumentException.class, () -> accountService.createAccount(0));
         long accountId = testData.PUBLIC_KEY1.getAccountId();
         DbKey dbKey = AccountTable.newKey(accountId);
         Account newAccount = new Account(((LongKey) dbKey).getId(), dbKey);
-        Account account = accountService.addOrGetAccount(accountId);
+        Account account = accountService.createAccount(accountId);
         assertEquals(newAccount, account);
-        verify(accountPublicKeyService).insertNewPublicKey(accountId);
     }
 
     @Test
@@ -150,15 +149,6 @@ class AccountServiceTest {
         accountService.update(newAccount);
         verify(accountTable, times(1)).insert(newAccount);
         verify(accountTable, never()).delete(any(Account.class), eq(height));
-    }
-
-    @Test
-    void testUpdate_as_delete() {
-        int height = 1000;
-        doReturn(height).when(blockChainInfoService).getHeight();
-        accountService.update(testData.newAccount);
-        verify(accountTable, times(1)).delete(eq(testData.newAccount), eq(height));
-        verify(accountTable, never()).insert(any(Account.class));
     }
 
     @Test
