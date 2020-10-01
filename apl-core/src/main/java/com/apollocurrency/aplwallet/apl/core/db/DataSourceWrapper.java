@@ -91,16 +91,13 @@ public class DataSourceWrapper implements DataSource {
         }
 
         if (StringUtils.isBlank(dbProperties.getSystemDbUrl())) {
-            dbUrlTemp = formatJdbcUrlString(dbProperties, true);
-            dbProperties.setSystemDbUrl(dbUrlTemp);
+            String systemDbUrl = formatJdbcUrlString(dbProperties, true);
+            dbProperties.setSystemDbUrl(systemDbUrl);
         }
 
         this.dbUrl = dbUrlTemp;
         this.dbUsername = dbProperties.getDbUsername();
-        if (dbProperties.getDbPassword() != null && !dbProperties.getDbPassword().isEmpty()) {
-            // skip password for 'password less mode' (in docker container, unit tests as example)
-            this.dbPassword = dbProperties.getDbPassword();
-        }
+        this.dbPassword = StringUtils.isBlank(dbProperties.getDbPassword()) ? null : dbProperties.getDbPassword();
         this.maxConnections = dbProperties.getMaxConnections();
         this.loginTimeout = dbProperties.getLoginTimeout();
         this.systemDbUrl = dbProperties.getSystemDbUrl();
