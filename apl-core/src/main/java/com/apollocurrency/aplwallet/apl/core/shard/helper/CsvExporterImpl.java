@@ -93,7 +93,7 @@ public class CsvExporterImpl implements CsvExporter {
     }
 
     private long exportDerivedTableByUniqueLongColumnPagination(String table, MinMaxValue minMaxValue, int batchLimit, Set<String> excludedColumns) {
-        return exportTable(table, "where  " + minMaxValue.getColumn() + " BETWEEN ? and ? and height <= ? order by " + minMaxValue.getColumn() + " limit ?", minMaxValue, excludedColumns, (pstmt, minMaxColumnValue, totalProcessed) -> {
+        return exportTable(table, "WHERE  " + minMaxValue.getColumn() + " BETWEEN ? and ? and height <= ? ORDER BY " + minMaxValue.getColumn() + " LIMIT ?", minMaxValue, excludedColumns, (pstmt, minMaxColumnValue, totalProcessed) -> {
             pstmt.setBigDecimal(1, minMaxColumnValue.getMin());
             pstmt.setBigDecimal(2, minMaxColumnValue.getMax());
             pstmt.setInt(3, minMaxColumnValue.getHeight());
@@ -103,7 +103,7 @@ public class CsvExporterImpl implements CsvExporter {
 
     @Override
     public long exportDerivedTableCustomSort(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns, String sortColumn) {
-        return exportTable(derivedTableInterface.getName(), "where height <= ? order by " + sortColumn + " LIMIT ? OFFSET ?", derivedTableInterface.getMinMaxValue(targetHeight), excludedColumns, (pstmt, minMaxId, totalProcessed) -> {
+        return exportTable(derivedTableInterface.getName(), "WHERE height <= ? ORDER BY " + sortColumn + " LIMIT ? OFFSET ?", derivedTableInterface.getMinMaxValue(targetHeight), excludedColumns, (pstmt, minMaxId, totalProcessed) -> {
             pstmt.setInt(1, targetHeight);
             pstmt.setInt(2, batchLimit);
             pstmt.setInt(3, totalProcessed);
@@ -218,8 +218,8 @@ public class CsvExporterImpl implements CsvExporter {
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement blockPstm = con.prepareStatement(
-                 "select * from " + BLOCK_INDEX_TABLE_NAME + " where block_height >= ? and block_height < ? order by block_height limit ?");
-             PreparedStatement blockCountPstm = con.prepareStatement("select count(*) from " + BLOCK_INDEX_TABLE_NAME);
+                 "SELECT * FROM " + BLOCK_INDEX_TABLE_NAME + " WHERE block_height >= ? AND block_height < ? ORDER BY block_height limit ?");
+             PreparedStatement blockCountPstm = con.prepareStatement("SELECT COUNT(*) FROM " + BLOCK_INDEX_TABLE_NAME);
              CsvWriter blockCsvWriter = new CsvWriterImpl(this.dataExportPath, null, translator)
         ) {
             blockCsvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
@@ -264,7 +264,7 @@ public class CsvExporterImpl implements CsvExporter {
         MinMaxValue minMaxValue = new MinMaxValue(BigDecimal.ZERO, BigDecimal.valueOf(Long.MAX_VALUE), "transaction_id", 1, targetHeight - 1);
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement txCountPstm = con.prepareStatement("select count(*) from transaction_shard_index");
+             PreparedStatement txCountPstm = con.prepareStatement("SELECT COUNT(*) FROM transaction_shard_index");
         ) {
             try (ResultSet rs = txCountPstm.executeQuery()) {
                 rs.next();
@@ -291,11 +291,11 @@ public class CsvExporterImpl implements CsvExporter {
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              // block related Txs
-             PreparedStatement blockTxPstm = con.prepareStatement("select * from "
-                 + TRANSACTION_TABLE_NAME + " where height = ? order by transaction_index");
+             PreparedStatement blockTxPstm = con.prepareStatement("SELECT * FROM "
+                 + TRANSACTION_TABLE_NAME + " WHERE height = ? ORDER BY transaction_index");
              // phasing related Txs for inclusion
              PreparedStatement txPstm = con.prepareStatement(
-                 "select * from " + TRANSACTION_TABLE_NAME + " where db_id = ?");
+                 "SELECT * FROM " + TRANSACTION_TABLE_NAME + " WHERE db_id = ?");
              CsvWriter txCsvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("db_id"), translator)
         ) {
             txCsvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
@@ -338,7 +338,7 @@ public class CsvExporterImpl implements CsvExporter {
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement blockPstm = con.prepareStatement(
-                 "select * from " + BLOCK_TABLE_NAME + " where height = ?");
+                 "SELECT * FROM " + BLOCK_TABLE_NAME + " WHERE height = ?");
              CsvWriter blockCsvWriter = new CsvWriterImpl(this.dataExportPath, Set.of("db_id"), translator);
         ) {
             blockCsvWriter.setOptions("fieldDelimiter="); // do not remove! it deletes double quotes  around values in csv
@@ -372,7 +372,7 @@ public class CsvExporterImpl implements CsvExporter {
         int processedCount;
         int totalCount = 0;
         // prepare connection + statement + writer
-        String sql = "select * from " + table + " " + condition;
+        String sql = "SELECT * FROM " + table + " " + condition;
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql);

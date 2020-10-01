@@ -43,7 +43,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
 
     Long totalSelectedRows = 0L;
     Long totalProcessedCount = 0L;
-    String BASE_COLUMN_NAME = "DB_ID";
+    String BASE_COLUMN_NAME = "db_id";
     PreparedStatement preparedInsertStatement = null;
 
     String sqlToExecuteWithPaging;
@@ -137,7 +137,7 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
             selectStatement.setInt(1, snapshotBlockHeight);
             ResultSet rs = selectStatement.executeQuery();
             if (rs.next()) {
-                highDbIdValue = rs.getLong("DB_ID");
+                highDbIdValue = rs.getLong("db_id");
                 log.trace("FOUND Upper DB_ID value = {}", highDbIdValue);
             }
         } catch (Exception e) {
@@ -160,8 +160,8 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
         try (PreparedStatement selectStatement = sourceConnect.prepareStatement(sqlSelectBottomBound)) {
             ResultSet rs = selectStatement.executeQuery();
             if (rs.next()) {
-                bottomDbIdValue = rs.getLong("DB_ID");
-                log.trace("FOUND Bottom DB_ID value = {}", bottomDbIdValue);
+                bottomDbIdValue = rs.getLong("db_id");
+                log.trace("FOUND Bottom db_id value = {}", bottomDbIdValue);
             }
         } catch (Exception e) {
             log.error("Error finding Bottom DB_ID", e);

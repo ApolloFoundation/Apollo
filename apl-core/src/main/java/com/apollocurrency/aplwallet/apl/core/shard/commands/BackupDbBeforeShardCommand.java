@@ -15,6 +15,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Command for creating db backup before sharding database.
  *
+ * @deprecated MariaDb doesn't support that command as a many other databases
  * @author yuriy.larin
  */
 public class BackupDbBeforeShardCommand implements DataMigrateOperation {
