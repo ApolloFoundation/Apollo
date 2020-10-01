@@ -40,6 +40,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -66,7 +67,7 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
     private int rowId = -1;
     private boolean wasNull;
     private SimpleRowSource source;
-    private ArrayList<Column> columns = new ArrayList<>(4);
+    private List<Column> columns = new ArrayList<>(4);
     private boolean autoClose = true;
 
     /**
@@ -85,6 +86,7 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
      * @param source the row source
      */
     public SimpleResultSet(SimpleRowSource source) {
+        super();
         this.source = source;
     }
 
@@ -145,8 +147,8 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
      */
     @SneakyThrows
     public void addColumn(String name, int sqlType, int precision, int scale) {
-        addColumn(name, sqlType, getColumnClassName(findColumn(name)),
-            precision, scale);
+        Class sqlTypeClass = ColumnType.classFromJavaType(sqlType);
+        addColumn(name, sqlType, sqlTypeClass.getTypeName(), precision, scale);
     }
 
     /**
@@ -1987,7 +1989,7 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
     /**
      * Returns the Java class name if this column.
      *
-     * @param columnIndex (1,2,...)
+     * @param column (1,2,...)
      * @return the class name
      */
     @Override
@@ -2245,7 +2247,7 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
     private void checkColumnIndex(int columnIndex) throws SQLException {
         if (columnIndex < 1 || columnIndex > columns.size()) {
 //            throw DbException.getInvalidValueException("columnIndex", columnIndex).getSQLException();
-            throw new SQLException("Inocrrect columnIndex = " + columnIndex);
+            throw new SQLException("Incorrect columnIndex = " + columnIndex);
         }
     }
 

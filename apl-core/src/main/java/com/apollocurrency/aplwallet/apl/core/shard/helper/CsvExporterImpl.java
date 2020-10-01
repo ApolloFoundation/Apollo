@@ -389,13 +389,21 @@ public class CsvExporterImpl implements CsvExporter {
                     CsvExportData csvExportData = csvWriter.append(table, pstmt.executeQuery());
                     processedCount = csvExportData.getProcessCount();
                     if (processedCount > 0) {
+                        // sometimes DB_ID can have a SQL type mapped to BigDecimal or Long (depends on table)
                         Object rawObjectValue = csvExportData.getLastRow().get(minMaxValue.getColumn().toLowerCase());
-                        if (rawObjectValue instanceof BigInteger) {
+                        if (rawObjectValue instanceof Long) {
+                            Long longValue = (Long)rawObjectValue;
+                            BigDecimal bidDecimalId = new BigDecimal(longValue);
+                            bidDecimalId = bidDecimalId.add(BigDecimal.ONE);
+                            minMaxValue.setMin(bidDecimalId);
+                        } else if (rawObjectValue instanceof BigInteger) {
                             BigDecimal bidDecimalId = new BigDecimal((BigInteger)rawObjectValue);
                             bidDecimalId = bidDecimalId.add(BigDecimal.ONE);
                             minMaxValue.setMin(bidDecimalId);
                         } else {
-                            String error = String.format("Something different then BigDecimal in type: '%s', column: %s, value=%d in table=%s",
+                            String error = String.format(
+                                "BigDecimal or Long should be present for DB_ID column, but here are data:" +
+                                    " Java class: '%s', column name: '%s', table value=%d in table=%s",
                                 rawObjectValue.getClass(), minMaxValue.getColumn().toLowerCase(), rawObjectValue, table);
                             log.error(error);
                             throw new InvalidClassException(error);

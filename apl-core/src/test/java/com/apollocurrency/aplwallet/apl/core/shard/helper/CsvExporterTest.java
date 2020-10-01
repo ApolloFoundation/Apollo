@@ -151,12 +151,12 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.slf4j.LoggerFactory.getLogger;
 
 @Slf4j
 @Testcontainers
@@ -173,7 +173,6 @@ class CsvExporterTest {
         .withExposedPorts(3306)
         .withLogConsumer(new Slf4jLogConsumer(log));
 
-    //    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("apl-blockchain").toAbsolutePath().toString())); // prod data test
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
@@ -281,7 +280,7 @@ class CsvExporterTest {
     private Chain chain = Mockito.mock(Chain.class);
     private List<String> blockIndexExportContent = List.of("block_id(-5|20|0),block_height(4|11|0)", "1,1", "2,2", "3,30");
     private List<String> transactionIndexExportContent = List.of(
-        "transaction_id(-5|19|0),partial_transaction_hash(-3|2147483647|0),transaction_index(5|5|0),height(4|10|0)",
+        "transaction_id(-5|20|0),partial_transaction_hash(-3|65535|0),transaction_index(5|6|0),height(4|11|0)",
         "100,b'zG8XGTR3IJylgh0305HnCuZo3RwR3XmO',0,30",
         "101,b'InCisA4/cPtdXY4No8eRnt1NM2gXbm8t',0,1",
         "102,b'uW1en2TlHFl1E3F2ke7urxiiaoZANPYs',1,1",
@@ -418,9 +417,9 @@ class CsvExporterTest {
         Path shardExportedFile = dataExportPath.resolve("shard.csv");
         List<String> lines = Files.readAllLines(shardExportedFile);
         assertEquals(3, lines.size());
-        assertTrue(lines.get(0).contains("BLOCK_TIMEOUTS"));
-        assertTrue(lines.get(0).contains("BLOCK_TIMESTAMPS"));
-        assertFalse(lines.get(0).contains("PRUNABLE_ZIP_HASH"));
+        assertTrue(lines.get(0).contains("block_timeouts"));
+        assertTrue(lines.get(0).contains("block_timestamps"));
+        assertFalse(lines.get(0).contains("prunable_zip_hash"));
         log.debug("Processed Table = [{}]", filesInFolder.size());
     }
 
@@ -437,7 +436,8 @@ class CsvExporterTest {
         long exported = csvExporter.exportTransactionIndex(IndexTestData.BLOCK_INDEX_0.getBlockHeight(), 2);
         assertEquals(3, exported);
         List<String> transactionIndexCsv = Files.readAllLines(dataExportPath.resolve("transaction_shard_index.csv"));
-        assertEquals(List.of(transactionIndexExportContent.get(0), transactionIndexExportContent.get(2), transactionIndexExportContent.get(3), transactionIndexExportContent.get(4)), transactionIndexCsv);
+        assertIterableEquals(List.of(transactionIndexExportContent.get(0), transactionIndexExportContent.get(2),
+            transactionIndexExportContent.get(3), transactionIndexExportContent.get(4)), transactionIndexCsv);
     }
 
     @Test
