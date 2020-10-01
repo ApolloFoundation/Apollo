@@ -118,7 +118,7 @@ public interface ShardDao {
     @Transactional(readOnly = true)
 //    @SqlQuery("(select * from SHARD where SHARD_STATE = 100 and SHARD_HEIGHT <= :heightFrom + 1 limit 1) UNION ALL" +
 //        " (select * from SHARD where SHARD_STATE = 100 and (SHARD_HEIGHT > :heightFrom + 1 OR SHARD_HEIGHT >= :heightTo) order by SHARD_HEIGHT)")
-    @SqlQuery("select * from SHARD where SHARD_STATE = 100 and (SHARD_HEIGHT between :heightFrom - 1 and :heightTo) order by SHARD_HEIGHT")
+    @SqlQuery("select * from shard WHERE SHARD_STATE = 100 and (SHARD_HEIGHT between :heightFrom - 1 and :heightTo) order by SHARD_HEIGHT")
     @RegisterRowMapper(ShardRowMapper.class)
     List<Shard> getCompletedBetweenBlockHeight(@Bind("heightFrom") long heightFrom, @Bind("heightTo") long heightTo);
 }
