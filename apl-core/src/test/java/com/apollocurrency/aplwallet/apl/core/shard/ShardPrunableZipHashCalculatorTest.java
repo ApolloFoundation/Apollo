@@ -54,7 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @Slf4j
 @Testcontainers
@@ -116,7 +116,7 @@ class ShardPrunableZipHashCalculatorTest {
         trimDataEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(200, 300, 250));
 
         verify(shardDao).getAllCompletedShards();
-        verifyZeroInteractions(zip, dirProvider);
+        verifyNoInteractions(zip, dirProvider);
     }*/
 
     @Test
@@ -150,7 +150,7 @@ class ShardPrunableZipHashCalculatorTest {
     void testSkipRecalculationWhenTimeIsNotGreaterThanPrevPruningTime() {
         prunableZipHashCalculator.tryRecalculatePrunableArchiveHashes(0);
 
-        verifyZeroInteractions(shardDao, zip, dirProvider);
+        verifyNoInteractions(shardDao, zip, dirProvider);
     }
 
     private void mockChain() {

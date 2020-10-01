@@ -58,7 +58,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 public class ShardServiceTest {
@@ -168,7 +168,7 @@ public class ShardServiceTest {
 
         assertEquals(MigrateState.FAILED, c.get());
 
-        verifyZeroInteractions(shardMigrationExecutor);
+        verifyNoInteractions(shardMigrationExecutor);
         verify(trimEvent, after(250).times(2)).fire(any(TrimConfig.class)); //wait 250 ms to make sure, that next completable future task was performed as well as sharding task
     }
 
@@ -182,7 +182,7 @@ public class ShardServiceTest {
         assertNull(shardFuture2);
         assertNull(shardFuture3);
 
-        verifyZeroInteractions(shardMigrationExecutor);
+        verifyNoInteractions(shardMigrationExecutor);
     }
 
     @Test
@@ -213,7 +213,7 @@ public class ShardServiceTest {
         boolean reset = shardService.reset(1L);
 
         assertFalse(reset);
-        verifyZeroInteractions(shardMigrationExecutor);
+        verifyNoInteractions(shardMigrationExecutor);
     }
 
     @Test
@@ -226,7 +226,7 @@ public class ShardServiceTest {
         boolean reset = shardService.reset(1);
 
         assertFalse(reset);
-        verifyZeroInteractions(shardMigrationExecutor);
+        verifyNoInteractions(shardMigrationExecutor);
     }
 
     @Test
@@ -307,7 +307,7 @@ public class ShardServiceTest {
 
         shardService.recoverSharding();
 
-        verifyZeroInteractions(shardMigrationExecutor);
+        verifyNoInteractions(shardMigrationExecutor);
     }
 
     @Test
@@ -317,7 +317,7 @@ public class ShardServiceTest {
         doReturn(true).when(config).isShardingEnabled();
         shardService.recoverSharding();
 
-        verifyZeroInteractions(shardMigrationExecutor);
+        verifyNoInteractions(shardMigrationExecutor);
     }
 
     @Test
@@ -329,7 +329,7 @@ public class ShardServiceTest {
 
         shardService.recoverSharding();
 
-        verifyZeroInteractions(shardMigrationExecutor);
+        verifyNoInteractions(shardMigrationExecutor);
     }
 
     @Test
@@ -360,7 +360,7 @@ public class ShardServiceTest {
 
         verify(shardDao).hardDeleteShard(1L);
         verify(shardRecoveryDao).hardDeleteShardRecovery(2L);
-        verifyZeroInteractions(shardMigrationExecutor);
+        verifyNoInteractions(shardMigrationExecutor);
     }
 
 

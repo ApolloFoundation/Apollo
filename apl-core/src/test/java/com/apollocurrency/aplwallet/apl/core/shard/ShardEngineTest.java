@@ -136,7 +136,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Slf4j
@@ -667,7 +667,7 @@ class ShardEngineTest {
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
         assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
-        verifyZeroInteractions(csvExporter);
+        verifyNoInteractions(csvExporter);
     }
 
     @Test

@@ -123,7 +123,7 @@ public class DataSourceWrapper implements DataSource {
                 tempDbName,
                 dbProperties.getDbUsername(),
                 dbProperties.getDbPassword(),
-                dbProperties.getDbParams()
+                dbProperties.getDbParams() != null ? dbProperties.getDbParams() : ""
             );
         } else {
             // skip password for 'password less mode' (in docker container)
@@ -134,7 +134,7 @@ public class DataSourceWrapper implements DataSource {
                 dbProperties.getDatabasePort(),
                 tempDbName,
                 dbProperties.getDbUsername(),
-                dbProperties.getDbParams()
+                dbProperties.getDbParams() != null ? dbProperties.getDbParams() : ""
             );
         }
         return finalDbUrl;

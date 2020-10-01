@@ -80,7 +80,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @Slf4j
 @Testcontainers
@@ -381,7 +381,7 @@ class ShardImporterTest {
         shardImporter.importLastShard(0);
 
         verify(genesisImporter).importGenesisJson(false);
-        verifyZeroInteractions(aplAppStatus, zipComponent, downloadableFilesManager, blockchain, blockchainConfig, blockchainProcessor);
+        verifyNoInteractions(aplAppStatus, zipComponent, downloadableFilesManager, blockchain, blockchainConfig, blockchainProcessor);
     }
 
     @Test

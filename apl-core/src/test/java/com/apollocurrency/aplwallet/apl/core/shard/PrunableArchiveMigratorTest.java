@@ -55,7 +55,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 @EnableWeld
@@ -99,7 +99,7 @@ class PrunableArchiveMigratorTest {
         doReturn("false").when(optionDAO).get(anyString());
         mockChain();
         migrator.migrate();
-        verifyZeroInteractions(shardDao, dirProvider, zip, registry);
+        verifyNoInteractions(shardDao, dirProvider, zip, registry);
     }
 
     @Test
@@ -200,7 +200,7 @@ class PrunableArchiveMigratorTest {
 
         verify(shardDao).getAllCompletedShards();
         verifyNoMoreInteractions(shardDao);
-        verifyZeroInteractions(zip);
+        verifyNoInteractions(zip);
     }
 
     private void mockPrunableTablesAndShards() {

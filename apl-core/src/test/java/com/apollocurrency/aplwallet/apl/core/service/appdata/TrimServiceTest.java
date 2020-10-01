@@ -44,7 +44,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @Slf4j
 @Testcontainers
@@ -228,7 +228,7 @@ class TrimServiceTest {
     void testDoTrimDerivedTablesAtHeightLessThanMaxRollback() {
         trimService.doTrimDerivedTablesOnBlockchainHeight(999, true);
 
-        verifyZeroInteractions(trimDao);
+        verifyNoInteractions(trimDao);
     }
 
     @Test
@@ -239,7 +239,7 @@ class TrimServiceTest {
         DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnBlockchainHeight(250000, true));
 
         verify(trimDao, times(0)).clear();
-        verifyZeroInteractions(firedEvent);
+        verifyNoInteractions(firedEvent);
     }
 
     @Test
@@ -271,7 +271,7 @@ class TrimServiceTest {
         assertFalse(dataSource.isInTransaction());
         verify(dataSource).begin();
         verify(dataSource).rollback(true);
-        verifyZeroInteractions(derivedTable, event);
+        verifyNoInteractions(derivedTable, event);
     }
 
     @Test
