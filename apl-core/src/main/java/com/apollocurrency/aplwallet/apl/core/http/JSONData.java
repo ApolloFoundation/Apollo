@@ -707,8 +707,8 @@ public final class JSONData {
         json.put("lastUpdated", peer.getLastUpdated());
         json.put("lastConnectAttempt", peer.getLastConnectAttempt());
         json.put("inbound", peer.isInbound());
-        json.put("inboundWebSocket", peer.isInboundSocket());
-        json.put("outboundWebSocket", peer.isOutboundSocket());
+        json.put("inboundWebSocket", peer.isInbound());
+        json.put("outboundWebSocket", peer.isOutbound());
         if (peer.isBlacklisted()) {
             json.put("blacklistingCause", peer.getBlacklistingCause());
         }

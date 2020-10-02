@@ -50,7 +50,9 @@ public interface Peer extends Comparable<Peer> {
     String getHostWithPort();
 
     String getAnnouncedAddress();
-
+    
+    void setAnnouncedAddress(String addr);
+    
     PeerState getState();
 
     Version getVersion();
@@ -100,10 +102,6 @@ public interface Peer extends Comparable<Peer> {
     boolean isInbound();
 
     boolean isOutbound();
-
-    boolean isInboundSocket();
-
-    boolean isOutboundSocket();
 
     boolean isOpenAPI();
 

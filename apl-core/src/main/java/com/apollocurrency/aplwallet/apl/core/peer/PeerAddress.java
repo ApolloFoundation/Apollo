@@ -115,7 +115,21 @@ public final class PeerAddress implements Comparable {
             || ipAddress.isLinkLocalAddress());
         return res;
     }
-
+    
+    public boolean isPublic(){
+        boolean not_public = 
+                ipAddress.isLinkLocalAddress()
+             || ipAddress.isLoopbackAddress()
+             || ipAddress.isSiteLocalAddress() // 192.168.0.0/16 172.16.0.0/12 10.0.0.0/8
+             || ipAddress.isAnyLocalAddress()
+             || ipAddress.isMulticastAddress();
+        return ! not_public;
+    }
+    
+    public boolean isValid() {
+        return valid;
+    }
+    
     @Override
     public int compareTo(Object t) {
         int res = -1;
@@ -131,13 +145,10 @@ public final class PeerAddress implements Comparable {
         return res;
     }
 
-    public boolean isValid() {
-        return valid;
-    }
+
 
     @Override
     public String toString() {
         return "host:" + ipAddress + " name:" + hostName + " port: " + port;
     }
-
 }

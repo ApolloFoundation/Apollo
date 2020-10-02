@@ -650,13 +650,14 @@ public class PeersService {
         return peer;
     }
 
-    public void setAnnouncedAddress(PeerImpl peer, String newAnnouncedAddress) {
+    public boolean setAnnouncedAddress(Peer peer, String newAnnouncedAddress) {
         if (StringUtils.isBlank(newAnnouncedAddress)) {
             LOG.debug("newAnnouncedAddress is empty for host: {}, ignoring", peer.getHostWithPort());
         }
         PeerAddress newPa = resolveAnnouncedAddress(newAnnouncedAddress);
-        if (newPa == null) {
-            return;
+        if (newPa == null || !newPa.isPublic()) {
+            log.debug("Peer {}  announced wrong or not public address: {}", peer.getHostWithPort(), newAnnouncedAddress);
+            return false;
         }
         String oldAnnouncedAddr = peer.getAnnouncedAddress();
         Peer oldPeer = null;
@@ -668,17 +669,20 @@ public class PeersService {
             if (newPa.compareTo(oldPa) != 0) {
                 LOG.debug("Removing old announced address {} for peer {}:{}", oldPa, oldPeer.getHost(), oldPeer.getPort());
 
-                peer.setAnnouncedAddress(newAnnouncedAddress);
+                peer.setAnnouncedAddress(newPa.getAddrWithPort());
                 oldPeer = removePeer(oldPeer);
                 if (oldPeer != null) {
                     notifyListeners(oldPeer, Event.REMOVE);
                 }
             }
         }
+        return true;
     }
 
-    public boolean addPeer(Peer peer, String newAnnouncedAddress) {
-        setAnnouncedAddress((PeerImpl) peer, newAnnouncedAddress.toLowerCase());
+    public boolean addPeer(Peer peer, String announcedAddress) {
+        if(setAnnouncedAddress(peer, announcedAddress.toLowerCase())){
+            return false;
+        }
         return addPeer(peer);
     }
 
@@ -686,7 +690,7 @@ public class PeersService {
 
         if (peer != null && peer.getAnnouncedAddress() != null) {
             // put new or replace previous
-            connectablePeers.put(peer.getAnnouncedAddress(), (PeerImpl) peer);
+            connectablePeers.put(peer.getAnnouncedAddress(),  peer);
             listeners.notify(peer, Event.NEW_PEER);
             return true;
         }
@@ -740,7 +744,7 @@ public class PeersService {
             res = ((PeerImpl) peer).handshake();
         }
         if (res) {
-            connectablePeers.putIfAbsent(peer.getHostWithPort(), (PeerImpl) peer);
+            connectablePeers.putIfAbsent(peer.getHostWithPort(), peer);
         }
         return res;
     }

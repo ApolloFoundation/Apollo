@@ -339,7 +339,8 @@ public final class PeerImpl implements Peer {
      *
      * @param announcedAddress address with port  optionally
      */
-    void setAnnouncedAddress(String announcedAddress) {
+    @Override
+    public void setAnnouncedAddress(String announcedAddress) {
         if (announcedAddress != null && announcedAddress.length() > PeersService.MAX_ANNOUNCED_ADDRESS_LENGTH) {
             throw new IllegalArgumentException("Announced address too long: " + announcedAddress.length());
         }
@@ -444,21 +445,11 @@ public final class PeerImpl implements Peer {
 
     @Override
     public boolean isInbound() {
-        return pi.getAnnouncedAddress() == null;
-    }
-
-    @Override
-    public boolean isOutbound() {
-        return pi.getAnnouncedAddress() != null;
-    }
-
-    @Override
-    public boolean isInboundSocket() {
         return p2pTransport.isInbound();
     }
 
     @Override
-    public boolean isOutboundSocket() {
+    public boolean isOutbound() {
         return p2pTransport.isOutbound();
     }
 

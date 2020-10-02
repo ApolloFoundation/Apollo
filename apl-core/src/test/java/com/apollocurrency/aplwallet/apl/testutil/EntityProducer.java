@@ -278,17 +278,11 @@ public class EntityProducer {
             public void setLastUpdated(int time) {
 
             }
-
+            
             @Override
-            public boolean isInboundSocket() {
-                return false;
+            public void setAnnouncedAddress(String addr){
+    
             }
-
-            @Override
-            public boolean isOutboundSocket() {
-                return false;
-            }
-
         };
         return peer;
     }
