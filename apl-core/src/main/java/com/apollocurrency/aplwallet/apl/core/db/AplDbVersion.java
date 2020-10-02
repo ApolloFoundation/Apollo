@@ -706,8 +706,8 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_shard_index_transaction_id_height_idx ON transaction_shard_index (transaction_id, height)");
             case 261:
                 apply("CREATE TABLE IF NOT EXISTS shard_recovery (shard_recovery_id SERIAL NOT NULL, " +
-                    "state VARCHAR(150) NOT NULL, object_name VARCHAR(255) NULL, column_name VARCHAR(255) NULL, " +
-                    "last_column_value BIGINT, processed_object VARCHAR(255), updated TIMESTAMP NOT NULL, height INT NOT NULL) ENGINE=ROCKSDB;");
+                    "state VARCHAR(150) NOT NULL, object_name VARCHAR(500) NULL, column_name VARCHAR(255) NULL, " +
+                    "last_column_value BIGINT, processed_object VARCHAR(2000), updated TIMESTAMP NOT NULL, height INT NOT NULL) ENGINE=ROCKSDB;");
             case 262:
                 apply("ALTER TABLE shard_recovery ADD CONSTRAINT pk_shard_recovery_state PRIMARY KEY IF NOT EXISTS (shard_recovery_id)");
             case 263:

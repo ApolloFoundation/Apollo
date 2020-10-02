@@ -330,8 +330,8 @@ public class DataSourceWrapper implements DataSource {
     public void analyzeTables() {
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
-            log.debug("Start DB 'ANALYZE' on {}", con.getMetaData());
-            stmt.execute("ANALYZE");
+//            log.debug("Start DB 'ANALYZE' on {}", con.getMetaData());
+//            stmt.execute("ANALYZE");
             log.debug("FINISHED DB 'ANALYZE' on {}", con.getMetaData());
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

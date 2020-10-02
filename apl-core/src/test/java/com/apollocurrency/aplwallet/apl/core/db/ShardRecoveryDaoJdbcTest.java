@@ -123,8 +123,8 @@ class ShardRecoveryDaoJdbcTest {
     void saveShardRecovery() {
         assertNotNull(daoJdbc);
         ShardRecovery recovery = new ShardRecovery(
-            MigrateState.COMPLETED, "Object1", "DB_ID", 100L,
-            "BLOCK");
+            MigrateState.COMPLETED, "Object1", "db_id", 100L,
+            "block");
         long result = daoJdbc.saveShardRecovery(connection, recovery);
         assertTrue(result > 1);
 
@@ -147,8 +147,8 @@ class ShardRecoveryDaoJdbcTest {
     void saveShardRecoveryDataSource() {
         assertNotNull(daoJdbc);
         ShardRecovery recovery = new ShardRecovery(
-            MigrateState.COMPLETED, "Object1", "DB_ID", 100L,
-            "BLOCK");
+            MigrateState.COMPLETED, "Object1", "db_id", 100L,
+            "block");
         long result = daoJdbc.saveShardRecovery(extension.getDatabaseManager().getDataSource(), recovery);
         assertTrue(result > 1);
 
@@ -162,17 +162,17 @@ class ShardRecoveryDaoJdbcTest {
         ShardRecovery recovery = daoJdbc.getLatestShardRecovery(connection);
         assertNotNull(recovery);
         recovery.setState(MigrateState.DATA_COPY_TO_SHARD_STARTED);
-        recovery.setColumnName("DB_ID");
+        recovery.setColumnName("db_id");
         recovery.setObjectName("Object");
         recovery.setLastColumnValue(10L);
-        recovery.setProcessedObject("BLOCK");
+        recovery.setProcessedObject("block");
         int updated = daoJdbc.updateShardRecovery(connection, recovery);
         assertEquals(1, updated);
 
         ShardRecovery result = daoJdbc.getLatestShardRecovery(connection);
         assertNotNull(result);
         assertEquals(MigrateState.DATA_COPY_TO_SHARD_STARTED, result.getState());
-        assertEquals("DB_ID", result.getColumnName());
+        assertEquals("db_id", result.getColumnName());
         assertEquals("Object", result.getObjectName());
     }
 
@@ -182,24 +182,24 @@ class ShardRecoveryDaoJdbcTest {
         ShardRecovery recovery = daoJdbc.getLatestShardRecovery(connection);
         assertNotNull(recovery);
         recovery.setState(MigrateState.DATA_COPY_TO_SHARD_STARTED);
-        recovery.setColumnName("ID");
+        recovery.setColumnName("id");
         recovery.setObjectName("Object");
         recovery.setLastColumnValue(10L);
-        recovery.setProcessedObject("TRANSACTION");
+        recovery.setProcessedObject("transaction");
         int updated = daoJdbc.updateShardRecovery(extension.getDatabaseManager().getDataSource(), recovery);
         assertEquals(1, updated);
 
         ShardRecovery result = daoJdbc.getLatestShardRecovery(connection);
         assertNotNull(result);
         assertEquals(MigrateState.DATA_COPY_TO_SHARD_STARTED, result.getState());
-        assertEquals("ID", result.getColumnName());
-        assertEquals("TRANSACTION", result.getProcessedObject());
+        assertEquals("id", result.getColumnName());
+        assertEquals("transaction", result.getProcessedObject());
     }
 
     @Test
     void hardDeleteShardRecovery() throws SQLException {
         ShardRecovery recovery = new ShardRecovery(MigrateState.COMPLETED, "Object1",
-            "DB_ID", 100L, "TRANSACTION");
+            "db_id", 100L, "transaction");
         long saveResult = daoJdbc.saveShardRecovery(connection, recovery);
         assertTrue(saveResult > 1);
         List<ShardRecovery> allResult = daoJdbc.getAllShardRecovery(connection);
