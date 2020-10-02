@@ -82,7 +82,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS alias_offer_id_height_idx ON alias_offer (id, height DESC)");
             case 17:
                 apply("CREATE TABLE IF NOT EXISTS asset (db_id SERIAL, id BIGINT NOT NULL, account_id BIGINT NOT NULL, "
-                    + "name VARCHAR(255) NOT NULL, description VARCHAR(255), quantity BIGINT NOT NULL, decimals TINYINT NOT NULL, "
+                    + "name VARCHAR(255) NOT NULL, description VARCHAR(1000), quantity BIGINT NOT NULL, decimals TINYINT NOT NULL, "
                     + "initial_quantity BIGINT NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE, deleted BOOLEAN NOT NULL DEFAULT FALSE) ENGINE=ROCKSDB;");
             case 18:
                 apply("CREATE INDEX IF NOT EXISTS asset_account_id_idx ON asset (account_id)");
@@ -124,8 +124,8 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS bid_order_asset_id_price_idx ON bid_order (asset_id, price DESC)");
             case 31:
                 apply("CREATE TABLE IF NOT EXISTS goods (db_id SERIAL, id BIGINT NOT NULL, seller_id BIGINT NOT NULL, "
-                    + "name VARCHAR(255) NOT NULL, description VARCHAR(255), parsed_tags JSON CHECK (JSON_VALID(parsed_tags)), has_image BOOLEAN NOT NULL, "
-                    + "tags VARCHAR(255), `TIMESTAMP` INT NOT NULL, quantity INT NOT NULL, price BIGINT NOT NULL, "
+                    + "name VARCHAR(255) NOT NULL, description VARCHAR(1000), parsed_tags JSON CHECK (JSON_VALID(parsed_tags)), has_image BOOLEAN NOT NULL, "
+                    + "tags VARCHAR(1000), `TIMESTAMP` INT NOT NULL, quantity INT NOT NULL, price BIGINT NOT NULL, "
                     + "delisted BOOLEAN NOT NULL, height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE) ENGINE=ROCKSDB;");
             case 32:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS goods_id_height_idx ON goods (id, height DESC)");
@@ -217,7 +217,7 @@ public class AplDbVersion extends DbVersion {
             case 65:
                 apply("CREATE TABLE IF NOT EXISTS currency (db_id SERIAL, id BIGINT NOT NULL, account_id BIGINT NOT NULL, "
                     + "name VARCHAR(255) NOT NULL, name_lower VARCHAR(255) NOT NULL, code VARCHAR(255) NOT NULL, "
-                    + "description VARCHAR(255), type INT NOT NULL, initial_supply BIGINT NOT NULL DEFAULT 0, "
+                    + "description VARCHAR(1000), type INT NOT NULL, initial_supply BIGINT NOT NULL DEFAULT 0, "
                     + "reserve_supply BIGINT NOT NULL, max_supply BIGINT NOT NULL, creation_height INT NOT NULL, issuance_height INT NOT NULL, "
                     + "min_reserve_per_unit_nqt BIGINT NOT NULL, min_difficulty TINYINT NOT NULL, "
                     + "max_difficulty TINYINT NOT NULL, ruleset TINYINT NOT NULL, algorithm TINYINT NOT NULL, "
@@ -334,7 +334,7 @@ public class AplDbVersion extends DbVersion {
             case 110:
                 apply("CREATE TABLE IF NOT EXISTS poll (db_id SERIAL, id BIGINT NOT NULL, "
                     + "account_id BIGINT NOT NULL, name VARCHAR(255) NOT NULL, "
-                    + "description VARCHAR(255), options JSON NOT NULL CHECK (JSON_VALID(options)), min_num_options TINYINT, max_num_options TINYINT, "
+                    + "description VARCHAR(1000), options JSON NOT NULL CHECK (JSON_VALID(options)), min_num_options TINYINT, max_num_options TINYINT, "
                     + "min_range_value TINYINT, max_range_value TINYINT, `TIMESTAMP` INT NOT NULL, "
                     + "finish_height INT NOT NULL, voting_model TINYINT NOT NULL, min_balance BIGINT, "
                     + "min_balance_model TINYINT, holding_id BIGINT, height INT NOT NULL) ENGINE=ROCKSDB;");
@@ -400,7 +400,7 @@ public class AplDbVersion extends DbVersion {
                 apply("CREATE INDEX IF NOT EXISTS trade_bid_idx ON trade (bid_order_id, height DESC)");
             case 136:
                 apply("CREATE TABLE IF NOT EXISTS account_info (db_id SERIAL, account_id BIGINT NOT NULL, "
-                    + "name VARCHAR(255), description VARCHAR(255), height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE, deleted BOOLEAN NOT NULL DEFAULT FALSE) ENGINE=ROCKSDB;");
+                    + "name VARCHAR(255), description VARCHAR(1000), height INT NOT NULL, latest BOOLEAN NOT NULL DEFAULT TRUE, deleted BOOLEAN NOT NULL DEFAULT FALSE) ENGINE=ROCKSDB;");
             case 137:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS account_info_id_height_idx ON account_info (account_id, height DESC)");
             case 138:
@@ -847,7 +847,7 @@ public class AplDbVersion extends DbVersion {
             case 324:
                 apply("ALTER TABLE order_scan ADD CONSTRAINT order_scan_coin_idx UNIQUE IF NOT EXISTS (coin)");
             case 325:
-                apply("CREATE TABLE dex_operation (db_id SERIAL, account VARCHAR(255) NOT NULL, stage TINYINT NOT NULL, eid VARCHAR(255) NOT NULL, description VARCHAR(255), details VARCHAR(255), finished BOOLEAN NOT NULL DEFAULT FALSE, ts TIMESTAMP(4) NOT NULL) ENGINE=ROCKSDB;");
+                apply("CREATE TABLE dex_operation (db_id SERIAL, account VARCHAR(255) NOT NULL, stage TINYINT NOT NULL, eid VARCHAR(255) NOT NULL, description VARCHAR(1000), details VARCHAR(255), finished BOOLEAN NOT NULL DEFAULT FALSE, ts TIMESTAMP(4) NOT NULL) ENGINE=ROCKSDB;");
             case 326:
                 //apply("ALTER TABLE dex_operation ADD CONSTRAINT dex_operation_account_stage_eid_idx UNIQUE IF NOT EXISTS (account, stage, eid)");
             case 327:
