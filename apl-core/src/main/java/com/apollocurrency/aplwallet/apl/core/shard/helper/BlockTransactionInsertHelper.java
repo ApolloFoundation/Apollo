@@ -239,7 +239,8 @@ public class BlockTransactionInsertHelper extends AbstractHelper {
             log.trace(sqlSelectUpperBound);
             sqlSelectBottomBound = "SELECT IFNULL(MIN(db_id)-1, 0) AS db_id FROM " + currentTableName;
             log.trace(sqlSelectBottomBound);
-            sqlDeleteFromBottomBound = "DELETE tx, us from transaction AS tx LEFT JOIN update_status AS us ON tx.id = us.transaction_id WHERE tx.db_id > ? AND tx.db_id < ?";
+//            sqlDeleteFromBottomBound = "DELETE tx, us from transaction AS tx LEFT JOIN update_status AS us ON tx.id = us.transaction_id WHERE tx.db_id > ? AND tx.db_id < ?";
+            sqlDeleteFromBottomBound = "DELETE FROM transaction WHERE db_id > ? AND db_id < ?";
             log.trace(sqlDeleteFromBottomBound);
         } else {
             throw new IllegalAccessException("Unsupported table. Either 'Block' or 'Transaction' is expected. Pls use another Helper class");

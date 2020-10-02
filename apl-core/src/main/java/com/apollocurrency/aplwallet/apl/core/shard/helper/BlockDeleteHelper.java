@@ -89,7 +89,8 @@ public class BlockDeleteHelper extends AbstractHelper {
 //                        sqlInsertString.append("delete from BLOCK WHERE DB_ID >= ? AND DB_ID < ? LIMIT ?");
                         sqlInsertString.append("DELETE FROM block WHERE db_id = ?");
                     } else if (ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-                        sqlInsertString.append("DELETE tx, us FROM transaction AS tx LEFT JOIN update_status AS us ON tx.id = us.transaction_id WHERE tx.db_id = ?");
+//                        sqlInsertString.append("DELETE tx, us FROM transaction AS tx LEFT JOIN update_status AS us ON tx.id = us.transaction_id WHERE tx.db_id = ?");
+                        sqlInsertString.append("DELETE FROM transaction WHERE db_id = ?");
                     }
                     // precompile sql
                     if (preparedInsertStatement == null) {
@@ -157,7 +158,8 @@ public class BlockDeleteHelper extends AbstractHelper {
             log.trace(sqlSelectUpperBound);
             sqlSelectBottomBound = "SELECT IFNULL(MIN(db_id)-1, 0) AS db_id FROM " + currentTableName;
             log.trace(sqlSelectBottomBound);
-            sqlDeleteFromBottomBound = "DELETE tx, us FROM transaction AS tx LEFT JOIN update_status AS us ON tx.id = us.transaction_id WHERE tx.db_id > ? AND tx.db_id < ?";
+//            sqlDeleteFromBottomBound = "DELETE tx, us FROM transaction AS tx LEFT JOIN update_status AS us ON tx.id = us.transaction_id WHERE tx.db_id > ? AND tx.db_id < ?";
+            sqlDeleteFromBottomBound = "DELETE FROM transaction WHERE db_id > ? AND db_id < ?";
             log.trace(sqlDeleteFromBottomBound);
         } else {
             throw new IllegalAccessException("Unsupported table. 'Block' is expected. Pls use another Helper class");
