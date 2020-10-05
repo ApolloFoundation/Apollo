@@ -52,14 +52,7 @@ import static org.mockito.Mockito.mock;
 @Testcontainers
 @Tag("slow")
 @EnableWeld
-class CurrencyFounderTableTest {
-    @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-        .withDatabaseName("testdb")
-        .withUsername("testuser")
-        .withPassword("testpass")
-        .withExposedPorts(3306)
-        .withLogConsumer(new Slf4jLogConsumer(log));
+class CurrencyFounderTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
     DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/currency_founder-data.sql", "db/schema.sql");
