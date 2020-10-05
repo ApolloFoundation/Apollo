@@ -20,12 +20,10 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.lang.reflect.UndeclaredThrowableException;
 import java.sql.Timestamp;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Slf4j
 @Testcontainers
@@ -77,13 +75,6 @@ class DexOperationDaoTest {
         DexOperation savedOp = dao.getBy("New acc", DexOperation.Stage.APL_CONTRACT_S2, "100");
         newOp.setDbId(1005L);
         assertEquals(newOp, savedOp);
-    }
-
-    @Test
-    void testUniqueConstraint() {
-        DexOperation newOp = new DexOperation(null, td.OP_4.getAccount(), td.OP_4.getStage(), td.OP_4.getEid(), null, null, false, new Timestamp(System.currentTimeMillis()));
-
-        assertThrows(UndeclaredThrowableException.class, () -> dao.add(newOp));
     }
 
     @Test
