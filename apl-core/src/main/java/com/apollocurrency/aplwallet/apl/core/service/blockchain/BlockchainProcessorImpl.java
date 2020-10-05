@@ -1366,7 +1366,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 dataSource.commit(false);
                 aplAppStatus.durableTaskUpdate(scanTaskId, 20.0, "Rolled back " + derivedTables.size() + " derived tables");
-                Block currentBlock = blockchain.getBlockAtHeight(height);
+                Block currentBlock = blockchain.getBlockAtHeightWithoutPublicKey(height);
                 log.debug("scan currentBlock={} at height={}", currentBlock, height);
                 blockEvent.select(literal(BlockEventType.RESCAN_BEGIN)).fire(currentBlock);
                 long currentBlockId = currentBlock.getId();

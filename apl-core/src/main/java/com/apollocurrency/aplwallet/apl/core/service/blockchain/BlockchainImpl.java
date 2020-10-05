@@ -481,6 +481,12 @@ public class BlockchainImpl implements Blockchain {
     @Transactional(readOnly = true)
     @Override
     public Block getBlockAtHeight(int height) {
+        return loadBlockData(getBlockAtHeightWithoutPublicKey(height));
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Block getBlockAtHeightWithoutPublicKey(int height) {
         Block block = lastBlock.get();
         if (height > block.getHeight()) {
             throw new IllegalArgumentException("Invalid height " + height + ", current blockchain is at " + block.getHeight());
@@ -489,7 +495,7 @@ public class BlockchainImpl implements Blockchain {
             return block;
         }
         TransactionalDataSource dataSource = getDataSourceWithShardingByHeight(height);
-        return loadBlockData(blockDao.findBlockAtHeight(height, dataSource));
+        return blockDao.findBlockAtHeight(height, dataSource);
     }
 
 

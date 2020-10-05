@@ -67,6 +67,8 @@ public interface Blockchain {
      */
     Block getBlockAtHeight(int height);
 
+    Block getBlockAtHeightWithoutPublicKey(int height);
+
     boolean hasBlock(long blockId);
 
     boolean hasBlockInShards(long blockId);
