@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.data.DexOperationTestData;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOperation;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -20,10 +21,12 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.lang.reflect.UndeclaredThrowableException;
 import java.sql.Timestamp;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Slf4j
 @Testcontainers
@@ -76,6 +79,28 @@ class DexOperationDaoTest {
         newOp.setDbId(1005L);
         assertEquals(newOp, savedOp);
     }
+
+    @Test
+    void testAddMaxDescriptionLength() {
+        String description = RandomStringUtils.randomAlphabetic(1000);
+        DexOperation newOp = new DexOperation(null, "New acc", DexOperation.Stage.APL_CONTRACT_S2, "100", description, null, false, new Timestamp(System.currentTimeMillis()));
+        long dbId = dao.add(newOp);
+
+        assertEquals(1005, dbId);
+        DexOperation savedOp = dao.getBy("New acc", DexOperation.Stage.APL_CONTRACT_S2, "100");
+        newOp.setDbId(1005L);
+        assertEquals(newOp, savedOp);
+    }
+
+    @Test
+    void testAddDescriptionOverLength() {
+        String description = RandomStringUtils.randomAlphabetic(1001);
+        DexOperation newOp = new DexOperation(null, "New acc", DexOperation.Stage.APL_CONTRACT_S2, "100", description, null, false, new Timestamp(System.currentTimeMillis()));
+
+        assertThrows(UndeclaredThrowableException.class, () -> dao.add(newOp));
+    }
+
+
 
     @Test
     void testDelete() {

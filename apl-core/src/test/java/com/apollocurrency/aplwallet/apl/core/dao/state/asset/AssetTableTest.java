@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -43,15 +44,18 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil.toList;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ASSET_DESCRIPTION_LENGTH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -133,6 +137,31 @@ class AssetTableTest {
         assertTrue(actual.getDbId() != 0);
         assertEquals(td.ASSET_NEW.getAccountId(), actual.getAccountId());
         assertEquals(td.ASSET_NEW.getId(), actual.getId());
+    }
+
+
+    @Test
+    void testSave_MaxDescriptionLength() {
+        String description = RandomStringUtils.randomAlphabetic(MAX_ASSET_DESCRIPTION_LENGTH);
+        Asset asset = td.ASSET_NEW;
+        asset.setDescription(description);
+
+        DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.ASSET_NEW));
+        Asset actual = table.get(table.getDbKeyFactory().newKey(td.ASSET_NEW));
+
+        assertNotNull(actual);
+        assertTrue(actual.getDbId() != 0);
+        assertEquals(td.ASSET_NEW.getAccountId(), actual.getAccountId());
+        assertEquals(td.ASSET_NEW.getId(), actual.getId());
+    }
+
+    @Test
+    void testSave_OverDescriptionLength() {
+        String description = RandomStringUtils.randomAlphabetic(MAX_ASSET_DESCRIPTION_LENGTH + 1);
+        Asset asset = td.ASSET_NEW;
+        asset.setDescription(description);
+
+        assertThrows(UndeclaredThrowableException.class, () -> table.insert(td.ASSET_NEW));
     }
 
     @Test
