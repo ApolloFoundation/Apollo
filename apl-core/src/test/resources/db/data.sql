@@ -17,7 +17,7 @@ delete from phasing_vote;
 delete from phasing_poll_linked_transaction;
 delete from genesis_public_key;
 delete from public_key;
-delete from shard_recovery;
+TRUNCATE TABLE shard_recovery;
 delete from tagged_data_timestamp;
 TRUNCATE TABLE data_tag;
 delete from tagged_data_extend;

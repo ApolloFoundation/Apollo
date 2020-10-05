@@ -11,6 +11,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc;
 
 import com.apollocurrency.aplwallet.apl.core.shard.util.ConversionUtils;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.mariadb.jdbc.UrlParser;
 import org.mariadb.jdbc.internal.ColumnType;
 import org.mariadb.jdbc.internal.com.read.resultset.ColumnDefinition;
@@ -60,6 +61,7 @@ import java.util.Map;
  * rs.addRow(1, &quot;World&quot; });
  * </pre>
  */
+@Slf4j
 public class SimpleResultSet implements ResultSet, ResultSetMetaData {
 
     private ArrayList<Object[]> rows;
@@ -148,6 +150,11 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
     @SneakyThrows
     public void addColumn(String name, int sqlType, int precision, int scale) {
         Class sqlTypeClass = ColumnType.classFromJavaType(sqlType);
+        if (sqlTypeClass == null) {
+            String error = String.format("Incorrect java from type by data name/sql/presision/scale: '%s | %s | %s | %s'",
+                name, sqlType, precision, scale);
+            log.error(error);
+            throw new RuntimeException(error);        }
         addColumn(name, sqlType, sqlTypeClass.getTypeName(), precision, scale);
     }
 

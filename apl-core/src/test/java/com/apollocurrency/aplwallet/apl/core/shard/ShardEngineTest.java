@@ -415,9 +415,9 @@ class ShardEngineTest {
         shardDao.saveShard(newShard);
 
 //1.        // create main db backup
-        state = shardEngine.createBackup();
-        assertEquals(MAIN_DB_BACKUPED, state);
-        assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
+//        state = shardEngine.createBackup();
+//        assertEquals(MAIN_DB_BACKUPED, state);
+//        assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
 
 //2.        // create shard db with 'initial' schema
         state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), CommandParamInfo.builder().shardId(4L).build());
@@ -708,7 +708,7 @@ class ShardEngineTest {
         assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
         verify(csvExporter, times(2)).getDataExportPath();
         verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit);
-        verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit, Set.of("DB_ID", "LATEST", "DELETED"));
+        verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit, Set.of("db_id", "latest", "deleted"));
         verifyNoMoreInteractions(csvExporter);
         ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
         assertEquals(2, recovery.getShardRecoveryId());
@@ -737,7 +737,7 @@ class ShardEngineTest {
         assertEquals(MigrateState.CSV_EXPORT_FINISHED, state);
         verify(csvExporter, times(2)).getDataExportPath();
         verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit);
-        verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit, Set.of("DB_ID", "LATEST", "DELETED"));
+        verify(csvExporter, times(1)).exportDerivedTable(goodsTable, snaphotBlockHeight, batchLimit, Set.of("db_id", "latest", "deleted"));
 
         verifyNoMoreInteractions(csvExporter);
         ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
