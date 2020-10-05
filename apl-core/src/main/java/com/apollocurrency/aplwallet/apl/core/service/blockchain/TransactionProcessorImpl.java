@@ -157,45 +157,40 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public void broadcast(Collection<Transaction> transactions) {
-        globalSync.writeLock();
         List<Transaction> returned = new ArrayList<>();
-        try {
-            List<UnconfirmedTransaction> toBroadcast = transactions.stream()
-                .filter(this::requireBroadcast)
-                .map(e -> new UnconfirmedTransaction(e, ntpTime.getTime()))
-                .collect(Collectors.toList());
-            int limit = memPool.canSafelyAccept();
-            List<UnconfirmedTransaction> processed = new ArrayList<>();
-            TransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
-                int processedCount = 0;
-                for (UnconfirmedTransaction tx : toBroadcast) {
-                    try {
-                        if (processedCount >= limit) {
-                            log.debug("Limit of mempool is reached, will return to pending queue tx {}", tx.getId());
-                            returned.add(tx);
-                        } else if (processingService.validateBeforeProcessing(tx).isOk()) {
-                            // TODO save Unconfirmed tx here
-                            processedCount++;
-                            processed.add(tx);
-                        }
-                    } catch (TransactionHelper.DbTransactionExecutionException validationException) {
-                        log.trace("Not valid tx " + tx.getId(), validationException);
+        List<UnconfirmedTransaction> toBroadcast = transactions.stream()
+            .filter(this::requireBroadcast)
+            .map(e -> new UnconfirmedTransaction(e, ntpTime.getTime()))
+            .collect(Collectors.toList());
+        int limit = memPool.canSafelyAccept();
+        List<UnconfirmedTransaction> processed = new ArrayList<>();
+        TransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
+            int processedCount = 0;
+            for (UnconfirmedTransaction tx : toBroadcast) {
+                try {
+                    if (processedCount >= limit) {
+                        log.debug("Limit of mempool is reached, will return to pending queue tx {}", tx.getId());
+                        returned.add(tx);
+                    } else if (processingService.validateBeforeProcessing(tx).isOk()) {
+                        memPool.addProcessed(tx);
+                        processedCount++;
+                        processed.add(tx);
                     }
+                } catch (TransactionHelper.DbTransactionExecutionException validationException) {
+                    log.trace("Not valid tx " + tx.getId(), validationException);
                 }
-            });
-            peers.sendToSomePeers(processed);
-            List<Transaction> processedTxs = processed.stream().map(UnconfirmedTransaction::getTransaction).collect(Collectors.toList());
-            processedTxs.forEach(memPool::rebroadcast);
-            txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(processedTxs);
-        } finally {
-            globalSync.writeUnlock();
-        }
-        returned.forEach(e-> {
+            }
+        });
+        peers.sendToSomePeers(processed);
+        List<Transaction> processedTxs = processed.stream().map(UnconfirmedTransaction::getTransaction).collect(Collectors.toList());
+        processedTxs.forEach(memPool::rebroadcast);
+        txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(processedTxs);
+        returned.forEach(e -> {
             try {
                 memPool.softBroadcast(e);
-            }catch (AplException.ValidationException ignored) {}
+            } catch (AplException.ValidationException ignored) {
+            }
         });
-
     }
 
     private boolean requireBroadcast(Transaction tx) {
@@ -349,14 +344,10 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         List<Transaction> sendToPeersTransactions = new ArrayList<>();
         List<Transaction> addedUnconfirmedTransactions = new ArrayList<>();
         List<Exception> exceptions = new ArrayList<>();
+        TransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
         for (Transaction transaction : transactions) {
             try {
                 receivedTransactions.add(transaction);
-                if (memPool.hasUnconfirmedTransaction(transaction.getId()) || blockchain.hasTransaction(transaction.getId())) {
-                    continue;
-                }
-                transactionValidator.validateSignatureWithTxFee(transaction);
-                transactionValidator.validateLightly(transaction);
                 UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, arrivalTimestamp);
                 UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
                 if (validationResult.isOk()) {
@@ -365,10 +356,16 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     exceptions.add(new AplException.NotValidException(validationResult.getErrorDescription()));
                     continue;
                 }
+                transactionValidator.validateSignatureWithTxFee(transaction);
+                transactionValidator.validateLightly(transaction);
+
                 if (memPool.isAlreadyBroadcasted(transaction)) {
 //                    log.debug("Received back transaction " + transaction.getStringId()
 //                        + " that we broadcasted, will not forward again to peers");
                 } else {
+                    TransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
+                        memPool.addProcessed(unconfirmedTransaction);
+                    });
                     sendToPeersTransactions.add(unconfirmedTransaction);
                 }
                 addedUnconfirmedTransactions.add(transaction);
@@ -379,6 +376,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 exceptions.add(e);
             }
         }
+        });
         if (!sendToPeersTransactions.isEmpty()) {
             peers.sendToSomePeers(sendToPeersTransactions);
         }
