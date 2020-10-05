@@ -10,10 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -46,23 +42,25 @@ public class MemPoolUnconfirmedTransactionTable extends DbTableWrapper<Unconfirm
 
     @Override
     public int rollback(int height) {
-        int rc;
-        try (Connection con = table.getDatabaseManager().getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM unconfirmed_transaction WHERE height > ?")) {
-            pstmt.setInt(1, height);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    UnconfirmedTransaction unconfirmedTransaction = table.load(con, rs, null);
-                    memPoolInMemoryState.backToWaiting(unconfirmedTransaction);
-                    log.trace("Revert to waiting tx {}", unconfirmedTransaction.getId());
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-        rc = super.rollback(height);
-        memPoolInMemoryState.resetUnconfirmedDuplicates();
-        return rc;
+        // rollback nothing
+//        int rc;
+//        try (Connection con = table.getDatabaseManager().getDataSource().getConnection();
+//             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM unconfirmed_transaction WHERE height > ?")) {
+//            pstmt.setInt(1, height);
+//            try (ResultSet rs = pstmt.executeQuery()) {
+//                while (rs.next()) {
+//                    UnconfirmedTransaction unconfirmedTransaction = table.load(con, rs, null);
+//                    memPoolInMemoryState.backToWaiting(unconfirmedTransaction);
+//                    log.trace("Revert to waiting tx {}", unconfirmedTransaction.getId());
+//                }
+//            }
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e.toString(), e);
+//        }
+//        rc = super.rollback(height);
+//        memPoolInMemoryState.resetUnconfirmedDuplicates();
+//        return rc;
+        return 0;
     }
 
     @Override

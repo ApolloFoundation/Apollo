@@ -71,17 +71,23 @@ public class AliasDeleteTransactionType extends MessagingTransactionType {
     }
 
     @Override
-    public void validateAttachment(final Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(final Transaction transaction) throws AplException.ValidationException {
         final MessagingAliasDelete attachment = (MessagingAliasDelete) transaction.getAttachment();
         final String aliasName = attachment.getAliasName();
-        if (aliasName == null || aliasName.length() == 0) {
-            throw new AplException.NotValidException("Missing alias name");
-        }
         final Alias alias = aliasService.getAliasByName(aliasName);
         if (alias == null) {
             throw new AplException.NotCurrentlyValidException("No such alias: " + aliasName);
         } else if (alias.getAccountId() != transaction.getSenderId()) {
             throw new AplException.NotCurrentlyValidException("Alias doesn't belong to sender: " + aliasName);
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        final MessagingAliasDelete attachment = (MessagingAliasDelete) transaction.getAttachment();
+        final String aliasName = attachment.getAliasName();
+        if (aliasName == null || aliasName.length() == 0) {
+            throw new AplException.NotValidException("Missing alias name");
         }
     }
 

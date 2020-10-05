@@ -116,7 +116,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
 
             globalSync.updateLock();
             try {
-                validator.validate(transaction);
+                validator.validateFully(transaction);
                 CurrencySellOffer sellOffer = exchangeOfferFacade.getCurrencySellOfferService()
                     .getOffer(attachment.getCurrencyId(), offerIssuerId);
                 if (sellOffer != null && sellOffer.getSupply() > 0 && sellOffer.getRateATM() <= attachment.getRateATM()) {

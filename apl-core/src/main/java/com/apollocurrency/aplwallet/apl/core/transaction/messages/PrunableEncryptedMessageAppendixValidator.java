@@ -26,7 +26,11 @@ public class PrunableEncryptedMessageAppendixValidator extends AbstractAppendixV
     }
 
     @Override
-    public void validate(Transaction transaction, PrunableEncryptedMessageAppendix appendix, int validationHeight) throws AplException.ValidationException {
+    public void validateStateDependent(Transaction transaction, PrunableEncryptedMessageAppendix appendix, int validationHeight) throws AplException.ValidationException {
+    }
+
+    @Override
+    public void validateStateIndependent(Transaction transaction, PrunableEncryptedMessageAppendix appendix, int validationHeight) throws AplException.ValidationException {
         if (transaction.getEncryptedMessage() != null) {
             throw new AplException.NotValidException("Cannot have both encrypted and prunable encrypted message attachments");
         }

@@ -3,10 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
@@ -84,17 +82,25 @@ public class CCAssetDeleteTransactionType extends ColoredCoinsTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         ColoredCoinsAssetDelete attachment = (ColoredCoinsAssetDelete) transaction.getAttachment();
-        if (attachment.getAssetId() == 0) {
-            throw new AplException.NotValidException("Invalid asset identifier: " + attachment.getJSONObject());
-        }
         Asset asset = assetService.getAsset(attachment.getAssetId());
-        if (attachment.getQuantityATU() <= 0 || (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU())) {
+        if (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU()) {
             throw new AplException.NotValidException("Invalid asset delete asset or quantity: " + attachment.getJSONObject());
         }
         if (asset == null) {
             throw new AplException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId()) + " does not exist yet");
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        ColoredCoinsAssetDelete attachment = (ColoredCoinsAssetDelete) transaction.getAttachment();
+        if (attachment.getAssetId() == 0) {
+            throw new AplException.NotValidException("Invalid asset identifier: " + attachment.getJSONObject());
+        }
+        if (attachment.getQuantityATU() <= 0) {
+            throw new AplException.NotValidException("Invalid asset quantity: " + attachment.getQuantityATU());
         }
     }
 

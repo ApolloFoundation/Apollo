@@ -39,7 +39,7 @@ public class UpdateTransactionTest {
     void testValidateAttachment_successfully(String v) throws AplException.ValidationException {
         Transaction tx = createUpdateTx(v);
 
-        type.validateAttachment(tx);
+        type.doStateIndependentValidation(tx);
     }
 
     @ParameterizedTest
@@ -47,7 +47,7 @@ public class UpdateTransactionTest {
     void testValidateAttachment_incorrectVersion(String incorrectVersionString) throws AplException.ValidationException {
         Transaction tx = createUpdateTx(incorrectVersionString);
 
-        assertThrows(AplException.NotValidException.class, () -> type.validateAttachment(tx));
+        assertThrows(AplException.NotValidException.class, () -> type.doStateIndependentValidation(tx));
     }
 
     @Test

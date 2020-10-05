@@ -64,7 +64,7 @@ public class PhasingAppendixV2 extends PhasingAppendix {
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
         throw new UnsupportedOperationException("Validate for PhasingV2 is not supported, use separate class");
     }
 

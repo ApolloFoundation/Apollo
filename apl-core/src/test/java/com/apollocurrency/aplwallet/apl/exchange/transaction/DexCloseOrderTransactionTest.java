@@ -119,51 +119,51 @@ class DexCloseOrderTransactionTest {
         // sender
         Transaction tx = mock(Transaction.class);
         doReturn(attachment).when(tx).getAttachment();
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         doReturn(contract).when(dexService).getDexContractById(10);
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         doReturn(1000L).when(tx).getSenderId();
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         contract.setContractStatus(ExchangeContractStatus.STEP_3);
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         doReturn(order).when(dexService).getOrder(200L);
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         order.setAccountId(1000L);
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         order.setType(OrderType.SELL);
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         order.setStatus(OrderStatus.WAITING_APPROVAL);
 
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         Transaction transferTx = mock(Transaction.class);
         doReturn(new DexTransferMoneyTransaction(blockchainConfig, accountService, dexService)).when(transferTx).getType();
 
         doReturn(transferTx).when(blockchain).getTransaction(100);
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         doReturn(transactionType).when(transferTx).getType();
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         doReturn(new DexTransferMoneyTransaction(blockchainConfig, accountService, dexService)).when(transferTx).getType();
         doReturn(1000L).when(transferTx).getSenderId();
         DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(11L, 100000L);
         doReturn(attachment).when(transferTx).getAttachment();
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
 
         attachment = new DexControlOfFrozenMoneyAttachment(10L, 100000);
         doReturn(attachment).when(transferTx).getAttachment();
 
-        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.validateAttachment(tx));
+        assertThrows(AplException.NotCurrentlyValidException.class, () -> transactionType.doStateDependentValidation(tx));
         doReturn(new PhasingPollResult(1L, 1, 1L, 1L, true)).when(phasingPollService).getResult(100);
-        transactionType.validateAttachment(tx);
+        transactionType.doStateDependentValidation(tx);
 
         // recipient
         order.setAccountId(2000L);
@@ -171,7 +171,7 @@ class DexCloseOrderTransactionTest {
         doReturn(order).when(dexService).getOrder(300L);
         contract.setCounterTransferTxId("100");
         doReturn(2000L).when(transferTx).getSenderId();
-        transactionType.validateAttachment(tx);
+        transactionType.doStateDependentValidation(tx);
     }
 
     @Test

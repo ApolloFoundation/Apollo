@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,15 +63,6 @@ public class MemPool {
         return getUnconfirmedTransaction(id) != null;
     }
 
-    public List<UnconfirmedTransaction> getAllWaitingTransactions() {
-        globalSync.readLock();
-        try {
-            return memoryState.waitingTransactions();
-        } finally {
-            globalSync.readUnlock();
-        }
-    }
-
     public Collection<Transaction> getAllBroadcastedTransactions() {
         globalSync.readLock();
         try {
@@ -101,12 +91,6 @@ public class MemPool {
         }
     }
 
-    public boolean isUnconfirmedDuplicate(Transaction transaction) {
-        return memoryState.isDuplicate(transaction);
-    }
-
-
-
     public void addToBroadcastedTransactions(Transaction tx) {
         memoryState.addToBroadcasted(tx);
     }
@@ -129,10 +113,6 @@ public class MemPool {
         return table.getCount();
     }
 //
-    public Iterator<UnconfirmedTransaction> getWaitingTransactionsQueueIterator() {
-        return memoryState.waitingQueueIterator();
-    }
-
     public void removeOutdatedBroadcastedTransactions(Transaction transaction) {
         memoryState.removeBroadcasted(List.of(transaction));
     }
@@ -142,19 +122,13 @@ public class MemPool {
     }
 
     public int canSafelyAccept() {
-        return memoryState.getMaxInMemorySize() - allProcessedCount() - getWaitingTransactionsQueueSize();
+        return memoryState.getMaxInMemorySize() - allProcessedCount();
     }
 
-
-//
-    public int getWaitingTransactionsQueueSize() {
-        return memoryState.waitingQueueSize();
+    public List<Transaction> allPendingTransactions() {
+        return memoryState.allPendingTransactions();
     }
 //
-    public boolean isWaitingTransactionsQueueFull() {
-        return memoryState.isWaitingQueueFull();
-    }
-
     public boolean isProcessedTxPoolFull() {
         return allProcessedCount() >= memoryState.getMaxInMemorySize();
     }
@@ -188,17 +162,13 @@ public class MemPool {
 //    }
 
     public boolean softBroadcast(Transaction uncTx) throws AplException.ValidationException {
-        validator.validate(uncTx);
+        validator.validateLightly(uncTx);
         return memoryState.addToSoftBroadcastingQueue(uncTx);
     }
 
     public void clear() {
         memoryState.clear();
         table.truncate();
-    }
-
-    public void addToWaitingQueue(UnconfirmedTransaction tx) {
-        memoryState.addToWaitingQueue(tx);
     }
 
     public void resetProcessedState() {
@@ -214,9 +184,9 @@ public class MemPool {
         globalSync.writeLock();
         try {
             getAllProcessedStream().forEach(e -> {
-                if (memoryState.isDuplicate(e.getTransaction())) {
-                    log.debug("Skipping duplicate unconfirmed transaction {}", e.getId());
-                } else if (enableRebroadcasting) {
+//                if (memoryState.isDuplicate(e.getTransaction())) {
+//                    log.debug("Skipping duplicate unconfirmed transaction {}", e.getId());
+                if (enableRebroadcasting) {
                     memoryState.addToBroadcasted(e.getTransaction());
                 }
             });

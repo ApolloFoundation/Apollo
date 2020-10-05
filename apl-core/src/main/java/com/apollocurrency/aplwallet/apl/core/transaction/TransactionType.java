@@ -81,7 +81,9 @@ public abstract class TransactionType {
 
     public abstract AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException;
 
-    public abstract void validateAttachment(Transaction transaction) throws AplException.ValidationException;
+    public abstract void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException;
+
+    public abstract void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException;
 
     // return false if double spending
     @TransactionFee(FeeMarker.UNCONFIRMED_BALANCE)

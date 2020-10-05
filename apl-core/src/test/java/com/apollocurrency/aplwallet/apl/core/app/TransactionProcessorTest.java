@@ -150,7 +150,7 @@ class TransactionProcessorTest {
         verify(globalSync, times(1)).writeLock();
         verify(globalSync, times(1)).writeUnlock();
         verify(blockchain, times(1)).hasTransaction(anyLong());
-        verify(transactionValidator).validate(any(Transaction.class));
+        verify(transactionValidator).validateFully(any(Transaction.class));
     }
 
     @Test

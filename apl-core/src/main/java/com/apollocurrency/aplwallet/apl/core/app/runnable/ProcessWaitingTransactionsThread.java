@@ -32,7 +32,7 @@ public class ProcessWaitingTransactionsThread implements Runnable {
                 if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
-                transactionProcessor.processWaitingTransactions();
+//                transactionProcessor.processWaitingTransactions();
             } catch (Exception e) {
                 log.info("Error processing waiting transactions", e);
             }

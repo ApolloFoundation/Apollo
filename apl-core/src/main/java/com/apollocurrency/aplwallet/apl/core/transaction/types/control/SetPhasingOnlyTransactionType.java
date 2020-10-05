@@ -58,16 +58,24 @@ public class SetPhasingOnlyTransactionType extends AccountControlTransactionType
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         SetPhasingOnly attachment = (SetPhasingOnly) transaction.getAttachment();
         VoteWeighting.VotingModel votingModel = attachment.getPhasingParams().getVoteWeighting().getVotingModel();
-        phasingPollService.validate(attachment.getPhasingParams());
+        phasingPollService.validateStateDependent(attachment.getPhasingParams());
         if (votingModel == VoteWeighting.VotingModel.NONE) {
             Account senderAccount = getAccountService().getAccount(transaction.getSenderId());
             if (senderAccount == null || !senderAccount.getControls().contains(AccountControlType.PHASING_ONLY)) {
                 throw new AplException.NotCurrentlyValidException("Phasing only account control is not currently enabled");
             }
-        } else if (votingModel == VoteWeighting.VotingModel.TRANSACTION || votingModel == VoteWeighting.VotingModel.HASH) {
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        SetPhasingOnly attachment = (SetPhasingOnly) transaction.getAttachment();
+        VoteWeighting.VotingModel votingModel = attachment.getPhasingParams().getVoteWeighting().getVotingModel();
+        phasingPollService.validateStateIndependent(attachment.getPhasingParams());
+        if (votingModel == VoteWeighting.VotingModel.TRANSACTION || votingModel == VoteWeighting.VotingModel.HASH) {
             throw new AplException.NotValidException("Invalid voting model " + votingModel + " for account control");
         }
         long maxFees = attachment.getMaxFees();

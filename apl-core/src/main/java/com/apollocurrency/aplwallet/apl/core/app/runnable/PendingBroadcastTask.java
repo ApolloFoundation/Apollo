@@ -105,7 +105,7 @@ public class PendingBroadcastTask implements Runnable {
         try {
             if (memPool.pendingBroadcastQueueSize() > 0) { // try to not lock
                 Transaction tx = memPool.nextSoftBroadcastTransaction();
-                validator.validate(tx);
+                validator.validateLightly(tx);
                 UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(tx);
                 if (!validationResult.isOk()) {
                     return new NextPendingTx(null, true);

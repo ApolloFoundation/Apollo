@@ -4,9 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
@@ -20,8 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.List;
 
 @Singleton
 @Slf4j
@@ -77,32 +73,39 @@ public class UnconfirmedTransactionProcessingService {
         return new UnconfirmedTxValidationResult(0, null, "");
     }
 
-    public void processTransaction(UnconfirmedTransaction unconfirmedTransaction) {
-        Transaction transaction = unconfirmedTransaction.getTransaction();
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        TransactionHelper.executeInTransaction(dataSource, () -> {
-                if (!transactionApplier.applyUnconfirmed(transaction)) {
-                    throw new AplException.InsufficientBalanceException("Insufficient balance");
-                }
-                if (memPool.isUnconfirmedDuplicate(transaction)) {
-                    throw new AplException.NotCurrentlyValidException("Duplicate unconfirmed transaction");
-                }
-                unconfirmedTransaction.setHeight(blockchain.getHeight());
-                memPool.addProcessed(unconfirmedTransaction);
-            }
-        );
-    }
-
-    public List<UnconfirmedTransaction> undoAllProcessedTransactions() {
-        List<UnconfirmedTransaction> removed = new ArrayList<>();
-        memPool.getAllProcessedStream().forEach(e -> {
-            transactionApplier.undoUnconfirmed(e.getTransaction());
-            removed.add(e);
+    public void addNewUnconfirmedTransaction(UnconfirmedTransaction unconfirmedTransaction) {
+        TransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
+            unconfirmedTransaction.setHeight(blockchain.getHeight());
+            memPool.addProcessed(unconfirmedTransaction);
         });
-        return removed;
     }
 
-    public void undoProcessedTransaction(Transaction transaction) {
-        transactionApplier.undoUnconfirmed(transaction);
-    }
+//    public void processTransaction(UnconfirmedTransaction unconfirmedTransaction) {
+//        Transaction transaction = unconfirmedTransaction.getTransaction();
+//        TransactionalDataSource dataSource = databaseManager.getDataSource();
+//        TransactionHelper.executeInTransaction(dataSource, () -> {
+//                if (!transactionApplier.applyUnconfirmed(transaction)) {
+//                    throw new AplException.InsufficientBalanceException("Insufficient balance");
+//                }
+////                if (memPool.isUnconfirmedDuplicate(transaction)) {
+////                    throw new AplException.NotCurrentlyValidException("Duplicate unconfirmed transaction");
+////                }
+//                unconfirmedTransaction.setHeight(blockchain.getHeight());
+//                memPool.addProcessed(unconfirmedTransaction);
+//            }
+//        );
+//    }
+
+//    public List<UnconfirmedTransaction> undoAllProcessedTransactions() {
+//        List<UnconfirmedTransaction> removed = new ArrayList<>();
+//        memPool.getAllProcessedStream().forEach(e -> {
+//            transactionApplier.undoUnconfirmed(e.getTransaction());
+//            removed.add(e);
+//        });
+//        return removed;
+//    }
+
+//    public void undoProcessedTransaction(Transaction transaction) {
+//        transactionApplier.undoUnconfirmed(transaction);
+//    }
 }

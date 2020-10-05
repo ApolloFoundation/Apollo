@@ -37,8 +37,6 @@ public interface TransactionProcessor {
 
     void clearUnconfirmedTransactions();
 
-    void requeueAllUnconfirmedTransactions();
-
     void rebroadcastAllUnconfirmedTransactions();
 
     void removeUnconfirmedTransaction(Transaction transaction);
@@ -46,10 +44,6 @@ public interface TransactionProcessor {
     void broadcast(Transaction transaction) throws AplException.ValidationException;
 
     void processLater(Collection<Transaction> transactions);
-
-    void processWaitingTransactions();
-
-    int getWaitingTransactionsQueueSize();
 
     int getUnconfirmedTxCount();
 
