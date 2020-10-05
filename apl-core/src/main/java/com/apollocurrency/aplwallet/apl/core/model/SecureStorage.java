@@ -36,10 +36,7 @@ public class SecureStorage extends FbWallet {
             byte[] salt = fbWallet.getContainerIV();
             byte[] key = fbWallet.keyFromPassPhrase(privateKey, salt);
             fbWallet.openFile(storagePath, key);
-        } catch (IOException e) {
-            LOG.error(e.getMessage(), e);
-            return null;
-        } catch (CryptoNotValidException e) {
+        } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return null;
         }
