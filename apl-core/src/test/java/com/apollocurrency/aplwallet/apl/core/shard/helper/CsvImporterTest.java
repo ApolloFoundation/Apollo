@@ -86,6 +86,7 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ServiceModeDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -219,6 +220,7 @@ class CsvImporterTest {
     private ValueParser valueParser;
     @Inject
     private CsvEscaper translator;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     private Set<String> tables = Set.of("account_info", "account_control_phasing", "phasing_poll", "public_key", "purchase", "shard", "shuffling_data");
 
@@ -403,20 +405,20 @@ class CsvImporterTest {
                 log.error("Import error " + tableName, e);
                 throw new RuntimeException(e);
             }
-            assertEquals(14, result);
+            assertEquals(13, result);
             try (Connection con = dataSource.getConnection();
                  Statement stmt = con.createStatement()) {
                 ResultSet countRs = stmt.executeQuery("select count(*) from " + tableName);
                 countRs.next();
-                assertEquals(14, countRs.getInt(1));
+                assertEquals(13, countRs.getInt(1));
                 ResultSet allRs = stmt.executeQuery("select * from " + tableName);
                 while (allRs.next()) {
-                    Array data = allRs.getArray("parsed_tags");// should not fail
+                    String data = allRs.getString("parsed_tags");// should not fail
                     assertNotNull(data);
-                    Object[] array = (Object[]) data.getArray();
+                    String[] array = mapper.readValue(data, String[].class);
                     assertNotNull(array);
                     for (int i = 0; i < array.length; i++) {
-                        String tag = (String) array[i];
+                        String tag = array[i];
                         assertNotNull(tag);
                     }
                 }
@@ -522,8 +524,10 @@ class CsvImporterTest {
                  PreparedStatement pstmt = con.prepareStatement("select GENERATOR_IDS, BLOCK_TIMEOUTS from " + tableName + " order by shard_id")) {
                 ResultSet rs = pstmt.executeQuery();
                 rs.next();
-                assertNotNull(rs.getArray(1).getArray());
-                assertNotNull(rs.getArray(2).getArray());
+                assertNotNull(rs.getString(1));
+                assertTrue(rs.getString(1).length() > 0);
+                assertNotNull(rs.getString(2));
+                assertTrue(rs.getString(2).length() > 0);
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }

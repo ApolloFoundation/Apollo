@@ -84,3 +84,11 @@ $ docker exec -it apl-mariadb bash
 See logs for running container 
 
 $ docker logs apl-mariadb
+
+Set max connection in MariaDb
+
+mysql> set global max_connections = 1024;
+
+Connect to bash
+
+$ docker exec -it apl-mariadb bash
