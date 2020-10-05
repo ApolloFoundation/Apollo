@@ -53,7 +53,7 @@
         }
       },
       {
-        "height": 1000000,
+        "height": 200100,
         "maxNumberOfTransactions": 255,
         "maxArbitraryMessageLength": 160,
         "maxNumberOfChildAccounts": 10,
@@ -69,7 +69,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 10000
+          "frequency": 2000
         }
       }
     ]
