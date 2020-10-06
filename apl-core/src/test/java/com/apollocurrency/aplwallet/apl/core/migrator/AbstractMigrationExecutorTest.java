@@ -71,6 +71,13 @@ public abstract class AbstractMigrationExecutorTest {
         folder = getTempFolder();
     }
 
+    @AfterEach
+    public void tearDown() {
+        OptionDAO optionDAO = new OptionDAO(databaseManager);
+        optionDAO.deleteAll();
+        databaseManager.shutdown();
+    }
+
     private void fillDatabaseParamsFromContainer(GenericContainer jdbcDatabaseContainer,
                                                  DbProperties dbProperties) {
         log.trace("JdbcUrl: {}", ((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl());
@@ -93,11 +100,6 @@ public abstract class AbstractMigrationExecutorTest {
         log.trace("ContainerId: {}", jdbcDatabaseContainer.getContainerId());
         log.trace("BoundPortNumbers: {}", jdbcDatabaseContainer.getBoundPortNumbers());
         log.trace("PortBindings: {}", jdbcDatabaseContainer.getPortBindings());
-    }
-
-    @AfterEach
-    public void tearDown() {
-        databaseManager.shutdown();
     }
 
     public abstract MigrationExecutor getExecutor(DatabaseManager databaseManager, PropertiesHolder propertiesHolder);
@@ -126,7 +128,6 @@ public abstract class AbstractMigrationExecutorTest {
 
     @Test
     public void testPerformMigration() throws IOException {
-
         initProperties(true);
         File srcFolder = folder.newFolder();
         Files.createFile(srcFolder.toPath().resolve("1"));
@@ -136,7 +137,9 @@ public abstract class AbstractMigrationExecutorTest {
         MigrationExecutor executor = Mockito.spy(getExecutor(databaseManager,
             propertiesHolder));
         Mockito.doReturn(Arrays.asList(srcFolder.toPath())).when(executor).getSrcPaths();
+
         executor.performMigration(destDir.toPath());
+
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         Assertions.assertFalse(Boolean.parseBoolean(optionDAO.get(migrationProp)));
         Assertions.assertEquals(2, FileUtils.countElementsOfDirectory(destDir.toPath()));
@@ -206,10 +209,11 @@ public abstract class AbstractMigrationExecutorTest {
         Files.createFile(srcFolder.toPath().resolve("2"));
 
         File destDir = folder.newFolder();
-        MigrationExecutor executor = Mockito.spy(getExecutor(databaseManager,
-            propertiesHolder));
+        MigrationExecutor executor = Mockito.spy(getExecutor(databaseManager, propertiesHolder));
         Mockito.doReturn(Arrays.asList(srcFolder.toPath())).when(executor).getSrcPaths();
+
         executor.performMigration(destDir.toPath());
+
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         Assertions.assertFalse(Boolean.parseBoolean(optionDAO.get(migrationProp)));
         Assertions.assertEquals(2, FileUtils.countElementsOfDirectory(destDir.toPath()));
