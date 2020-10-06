@@ -55,7 +55,7 @@ class DatabaseManagerTest {
     public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
         .withDatabaseName("mysql")
         .withUsername("testuser")
-        .withPassword("testpass")
+        .withPassword("rootpass")
         .withExposedPorts(3306)
         .withLogConsumer(new Slf4jLogConsumer(log));
 

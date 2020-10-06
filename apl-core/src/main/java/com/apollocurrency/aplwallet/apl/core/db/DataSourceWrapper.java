@@ -118,7 +118,7 @@ public class DataSourceWrapper implements DataSource {
                 dbProperties.getDatabaseHost(),
                 dbProperties.getDatabasePort(),
                 tempDbName,
-                dbProperties.getDbUsername(),
+                dbProperties.getDbUsername() != null ? dbProperties.getDbUsername() : "",
                 dbProperties.getDbPassword(),
                 dbProperties.getDbParams() != null ? dbProperties.getDbParams() : ""
             );
@@ -130,7 +130,7 @@ public class DataSourceWrapper implements DataSource {
                 dbProperties.getDatabaseHost(),
                 dbProperties.getDatabasePort(),
                 tempDbName,
-                dbProperties.getDbUsername(),
+                dbProperties.getDbUsername() != null ? dbProperties.getDbUsername() : "",
                 dbProperties.getDbParams() != null ? dbProperties.getDbParams() : ""
             );
         }

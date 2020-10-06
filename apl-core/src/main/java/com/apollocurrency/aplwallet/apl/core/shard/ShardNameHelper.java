@@ -35,7 +35,7 @@ public class ShardNameHelper {
     }
 
     public String getFullShardId(Long shardId, UUID chainId) {
-        String result = String.format(SHARD_ID_PATTERN, shardId, chainId.toString());
+        String result = String.format(SHARD_ID_PATTERN, chainId.toString(), shardId);
         return result;
     }
 

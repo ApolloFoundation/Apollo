@@ -39,7 +39,7 @@ RUN apt-get -y install mariadb-plugin-rocksdb -f
 ENV MYSQL_USER=testuser \
     MYSQL_PASSWORD=testpass \
     MYSQL_DATABASE=testdb \
-    MYSQL_ROOT_PASSWORD=root
+    MYSQL_ROOT_PASSWORD=rootpass
 
 ADD . /
 

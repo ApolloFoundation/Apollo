@@ -138,12 +138,12 @@ class ShardImporterTest {
     private ShardImporter shardImporter;
 
 
-    private DataTag dataTag_1 = new DataTag(44L, 3500, "tag2", 3);
-    private DataTag dataTag_2 = new DataTag(45L, 3500, "tag3", 3);
-    private DataTag dataTag_3 = new DataTag(48L, 8000, "iambatman", 1);
-    private DataTag dataTag_4 = new DataTag(47L, 3500, "newtag", 1);
-    private DataTag dataTag_5 = new DataTag(41L, 2000, "tag1", 1);
-    private DataTag dataTag_6 = new DataTag(46L, 3500, "tag4", 1);
+    private DataTag dataTag_1 = new DataTag(4L, 3500, "tag2", 3);
+    private DataTag dataTag_2 = new DataTag(5L, 3500, "tag3", 3);
+    private DataTag dataTag_3 = new DataTag(10L, 8000, "iambatman", 1);
+    private DataTag dataTag_4 = new DataTag(7L, 3500, "newtag", 1);
+    private DataTag dataTag_5 = new DataTag(1L, 2000, "tag1", 1);
+    private DataTag dataTag_6 = new DataTag(6L, 3500, "tag4", 1);
     private UUID chainId = UUID.fromString("2f2b6149-d29e-41ca-8c0d-f3343f5540c6");
 
     @BeforeEach
@@ -386,7 +386,7 @@ class ShardImporterTest {
 
     @Test
     void testImportLastShard() {
-        doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("shard::1;chain::" + chainId);
+        doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("chain::" + chainId + ";shard::1");
         doReturn(true).when(zipComponent).extract(Paths.get("").toAbsolutePath().toString(), csvImporter.getDataExportPath().toAbsolutePath().toString(), true);
         doNothing().when(genesisImporter).importGenesisJson(true);
         doReturn(List.of(ShardConstants.GOODS_TABLE_NAME, ShardConstants.PHASING_POLL_TABLE_NAME, ShardConstants.TAGGED_DATA_TABLE_NAME)).when(derivedTablesRegistry).getDerivedTableNames();

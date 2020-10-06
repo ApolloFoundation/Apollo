@@ -86,6 +86,7 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ServiceModeDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
@@ -159,7 +160,6 @@ class CsvImporterTest {
     BlockSerializer blockSerializer = mock(BlockSerializer.class);
     MemPool memPool = mock(MemPool.class);
     UnconfirmedTransactionProcessingService unconfirmedTransactionProcessingService = mock(UnconfirmedTransactionProcessingService.class);
-
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -363,11 +363,11 @@ class CsvImporterTest {
                 assertEquals(2, countRs.getInt(1));
                 ResultSet allRs = stmt.executeQuery("select * from " + tableName);
                 while (allRs.next()) {
-                    Array data = allRs.getArray("data");// should not fail
+                    String data = allRs.getString("data");// should not fail
                     if (data != null) {
-                        Object[] array = (Object[]) data.getArray();
+                        String[] array = mapper.readValue(data, new TypeReference<>() {});
                         for (int i = 0; i < array.length; i++) {
-                            byte[] bytes = (byte[]) array[i];
+                            byte[] bytes = array[i].getBytes();
                             assertNotNull(bytes);
                         }
                     }

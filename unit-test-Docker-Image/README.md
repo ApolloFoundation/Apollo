@@ -30,7 +30,7 @@ $ docker build -t mariadb:10.5 .
 
 $ docker run -p 3306:3306 \
     --name apl-mariadb \
-    -e MYSQL_ROOT_PASSWORD=root \
+    -e MYSQL_ROOT_PASSWORD=rootpass \
     -e MYSQL_DATABASE=testdb \
     -e MYSQL_USER=testuser \
     -e MYSQL_PASSWORD=testpass \
@@ -39,7 +39,7 @@ $ docker run -p 3306:3306 \
 
 2.4 Quick check it accessible on local PC :
 
-$ mysql -h 127.0.0.1 -P3306 -u root -proot
+$ mysql -h 127.0.0.1 -P3306 -u root -prootpass
 
 2.6 Quick check by access with testuser on local PC :
 
@@ -48,11 +48,11 @@ $ mysql -h 127.0.0.1 -P3306 -u testuser -ptestpass
 
 #### 3. Quickly check that MyRocks is enabled:
 
-$ mysql -uroot -proot -h127.0.0.1 -P3306
+$ mysql -uroot -prootpass -h127.0.0.1 -P3306
 
 or 
 
-$ mysql -h 172.17.0.2 -u root -proot
+$ mysql -h 172.17.0.2 -u root -prootpass
 
 mysql> show engines;
 
