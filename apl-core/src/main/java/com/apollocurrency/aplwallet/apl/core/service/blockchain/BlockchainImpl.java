@@ -235,7 +235,12 @@ public class BlockchainImpl implements Blockchain {
             return null;
         }
         PublicKey publicKey = publicKeyDao.searchAll(block.getGeneratorId());
-        block.setGeneratorPublicKey(publicKey.getPublicKey());
+        if (publicKey != null) {
+            block.setGeneratorPublicKey(publicKey.getPublicKey());
+        } else {
+            //special case when scan was failed and no public keys in db exist
+            log.warn("No public key for generator's account {} on block {} at {}", block.getGeneratorId(), block.getId(), block.getHeight());
+        }
         return block;
     }
 
@@ -481,12 +486,6 @@ public class BlockchainImpl implements Blockchain {
     @Transactional(readOnly = true)
     @Override
     public Block getBlockAtHeight(int height) {
-        return loadBlockData(getBlockAtHeightWithoutPublicKey(height));
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public Block getBlockAtHeightWithoutPublicKey(int height) {
         Block block = lastBlock.get();
         if (height > block.getHeight()) {
             throw new IllegalArgumentException("Invalid height " + height + ", current blockchain is at " + block.getHeight());
