@@ -54,7 +54,7 @@ or
 
 $ mysql -h 172.17.0.2 -u root -proot
 
-MariaDB [(none)]> show engines;
+mysql> show engines;
 
 | Engine | Support | Comment | Transactions | XA | Savepoints |
 |:---|:---:|:---|:---:|:---:|:---:|
@@ -66,6 +66,10 @@ MariaDB [(none)]> show engines;
 | SEQUENCE           | YES     | Generated tables filled with sequential values                                                  | YES          | NO   | YES        |
 | InnoDB             | DEFAULT | Supports transactions, row-level locking, foreign keys and encryption for tables                | YES          | YES  | YES        |
  
+Set max connection in MariaDb
+
+mysql> set global max_connections = 1024;
+
 
 #### Useful commands
 
@@ -85,10 +89,6 @@ See logs for running container
 
 $ docker logs apl-mariadb
 
-Set max connection in MariaDb
-
-mysql> set global max_connections = 1024;
-
-Connect to bash
+Connect to MariaDb container bash
 
 $ docker exec -it apl-mariadb bash

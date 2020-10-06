@@ -11,12 +11,18 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManage
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.junit.jupiter.Container;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +37,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Slf4j
 public abstract class AbstractMigrationExecutorTest {
+    @Container
+    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
+        .withDatabaseName("testdb")
+        .withUsername("testuser")
+        .withPassword("testpass")
+        .withExposedPorts(3306)
+        .withLogConsumer(new Slf4jLogConsumer(log));
+
     private static PropertiesHolder propertiesHolder = new PropertiesHolder();
     private static Properties properties = new Properties();
     private final String deleteProp;
@@ -50,8 +65,34 @@ public abstract class AbstractMigrationExecutorTest {
 
     @BeforeEach
     public void setUp() throws IOException {
-        databaseManager = new DatabaseManagerImpl(DbTestData.getInMemDbProps(), propertiesHolder, new JdbiHandleFactory());
+        DbProperties memDbProps = DbTestData.getInMemDbProps();
+        fillDatabaseParamsFromContainer(mariaDBContainer, memDbProps);
+        databaseManager = new DatabaseManagerImpl(memDbProps, propertiesHolder, new JdbiHandleFactory());
         folder = getTempFolder();
+    }
+
+    private void fillDatabaseParamsFromContainer(GenericContainer jdbcDatabaseContainer,
+                                                 DbProperties dbProperties) {
+        log.trace("JdbcUrl: {}", ((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl());
+
+        log.trace("Username: {}", ((MariaDBContainer)jdbcDatabaseContainer).getUsername());
+        dbProperties.setDbUsername(((MariaDBContainer)jdbcDatabaseContainer).getUsername());
+        log.trace("User pass: {}", ((MariaDBContainer)jdbcDatabaseContainer).getPassword());
+        dbProperties.setDbPassword(((MariaDBContainer)jdbcDatabaseContainer).getPassword());
+        log.trace("DriverClassName: {}", ((MariaDBContainer)jdbcDatabaseContainer).getDriverClassName());
+        log.trace("MappedPort: {}", jdbcDatabaseContainer.getMappedPort(3306));
+        if (jdbcDatabaseContainer.getMappedPort(3306) != null) {
+            dbProperties.setDatabasePort(jdbcDatabaseContainer.getMappedPort(3306));
+        }
+        log.trace("Host: {}", jdbcDatabaseContainer.getHost());
+        dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
+        dbProperties.setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
+
+        log.trace("DockerDaemonInfo: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
+        log.trace("DockerImageName: {}", jdbcDatabaseContainer.getDockerImageName());
+        log.trace("ContainerId: {}", jdbcDatabaseContainer.getContainerId());
+        log.trace("BoundPortNumbers: {}", jdbcDatabaseContainer.getBoundPortNumbers());
+        log.trace("PortBindings: {}", jdbcDatabaseContainer.getPortBindings());
     }
 
     @AfterEach
