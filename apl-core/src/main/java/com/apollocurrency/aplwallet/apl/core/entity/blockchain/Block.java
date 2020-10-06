@@ -20,10 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
-import org.json.simple.JSONObject;
-
 import java.math.BigInteger;
 import java.util.List;
 
@@ -48,6 +44,8 @@ public interface Block {
     long getGeneratorId();
 
     byte[] getGeneratorPublicKey();
+
+    boolean hasGeneratorPublicKey();
 
     void setGeneratorPublicKey(byte[] generatorPublicKey);
 

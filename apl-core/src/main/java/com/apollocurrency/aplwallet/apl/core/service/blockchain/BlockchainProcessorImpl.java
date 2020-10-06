@@ -1403,7 +1403,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         while (rs.next()) {
                             try {
                                 dbId = rs.getLong("db_id");
-//                                currentBlock = blockchain.loadBlock(con, rs, true);
+                                currentBlock = blockchain.loadBlock(con, rs, true);
                                 blockchain.getOrLoadTransactions(currentBlock); // load transactions
                                 if (currentBlock.getHeight() > shardInitialHeight) {
 //                                    blockchain.getOrLoadTransactions(currentBlock);
