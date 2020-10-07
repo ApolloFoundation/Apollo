@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 @Slf4j
+@Singleton
 public class MemPool {
 
 

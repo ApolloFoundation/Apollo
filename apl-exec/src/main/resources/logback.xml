@@ -119,9 +119,9 @@
     </encoder>
   </appender>
 
-  <logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE" additivity="falтse">
-    <appender-ref ref="p2p-file"/>
-  </logger>
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE" additivity="false">-->
+<!--    <appender-ref ref="p2p-file"/>-->
+<!--  </logger>-->
 <!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksThread" level="TRACE"-->
 <!--          additivity="false">-->
 <!--    <appender-ref ref="p2p-file"/>-->
@@ -134,13 +134,13 @@
           additivity="false">
     <appender-ref ref="tp-file"/>
   </logger>
-  <logger name="com.apollocurrency.aplwallet.apl.core.peer.endpoint" level="trace" additivity="false">
-    <appender-ref ref="tp-file"/>
-  </logger>
-  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTransactionsThread" level="trace"
-          additivity="false">
-    <appender-ref ref="tp-file"/>
-  </logger>
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.peer.endpoint" level="trace" additivity="false">-->
+<!--    <appender-ref ref="tp-file"/>-->
+<!--  </logger>-->
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTransactionsThread" level="trace"-->
+<!--          additivity="false">-->
+<!--    <appender-ref ref="tp-file"/>-->
+<!--  </logger>-->
   <!--  <logger name="com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable" level="trace" additivity="false">-->
   <!--    <appender-ref ref="tp-file"/>-->
   <!--  </logger>-->
@@ -171,7 +171,7 @@
       <logger name="com.apollocurrency.aplwallet.apl.core.signature" level="DEBUG"/>
       <logger name="com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl" level="DEBUG"/>
   -->
-  <logger name="com.apollocurrency.aplwallet.apl.core.rest.v2" level="TRACE"/>
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.rest.v2" level="TRACE"/>-->
 
   <!--    <logger name="com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling" level="trace" additivity="false">-->
   <!--        <appender-ref ref="shuffling-file"/>-->

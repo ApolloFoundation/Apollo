@@ -5,9 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.app.runnable.PendingBroadcastTask;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessLaterTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTxsToBroadcastWhenConfirmed;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessLaterTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RebroadcastTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RemoveUnconfirmedTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
@@ -22,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -59,12 +58,9 @@ public class TransactionProcessingTaskScheduler {
         this.transactionValidator = transactionValidator;
         this.processingService = processingService;
         this.batchSizeCalculator = batchSizeCalculator;
-    }
-
-    @PostConstruct
-    public void init() {
         configureBackgroundTasks();
     }
+
 
     private void configureBackgroundTasks() {
         if (!propertiesHolder.isLightClient()) {
