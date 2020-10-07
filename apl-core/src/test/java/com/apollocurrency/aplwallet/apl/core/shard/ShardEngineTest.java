@@ -762,9 +762,9 @@ class ShardEngineTest {
         MigrateState state = shardEngine.archiveCsv(paramInfo);
 
         assertEquals(MigrateState.ZIP_ARCHIVE_FINISHED, state);
-        Path coreZip = dataExportDirPath.resolve("apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip");
+        Path coreZip = dataExportDirPath.resolve("apl_blockchain_b5d7b6_shard_4.zip"); //apl_blockchain_3fecf3_shard_4.zip
         verifyZip(coreZip, GOODS_TABLE_NAME + CSV_FILE_EXTENSION);
-        Path prunableZip = dataExportDirPath.resolve("apl-blockchain-shardprun-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip");
+        Path prunableZip = dataExportDirPath.resolve("apl_blockchain_b5d7b6_shardprun_4.zip");//apl_blockchain_3fecf3_shardprun_4.zip
         verifyZip(prunableZip, PRUNABLE_MESSAGE_TABLE_NAME + CSV_FILE_EXTENSION);
 
         Shard lastShard = shardDao.getLastShard();
@@ -797,13 +797,13 @@ class ShardEngineTest {
         MigrateState state = shardEngine.archiveCsv(paramInfo);
 
         assertEquals(MigrateState.FAILED, state);
-        assertTrue(Files.exists(dataExportDirPath.resolve("apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
-        assertFalse(Files.exists(dataExportDirPath.resolve("apl-blockchain-shardprun-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
+        assertTrue(Files.exists(dataExportDirPath.resolve("apl_blockchain_b5d7b6_shard_4.zip")));
+        assertFalse(Files.exists(dataExportDirPath.resolve("apl_blockchain_b5d7b6_shardprun_4.zip")));//apl_blockchain_3fecf3_shardprun_4.zip
         Shard lastShard = shardDao.getLastShard();
         assertNotNull(lastShard.getCoreZipHash());
         assertNull(lastShard.getPrunableZipHash());
         ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(extension.getDatabaseManager().getDataSource());
-        assertEquals("apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", recovery.getProcessedObject());
+        assertEquals("apl_blockchain_b5d7b6_shard_4.zip", recovery.getProcessedObject());
         assertEquals(MigrateState.ZIP_ARCHIVE_STARTED, recovery.getState());
     }
 
@@ -816,8 +816,8 @@ class ShardEngineTest {
         MigrateState state = shardEngine.archiveCsv(paramInfo);
 
         assertEquals(MigrateState.ZIP_ARCHIVE_FINISHED, state);
-        assertFalse(Files.exists(dataExportDirPath.resolve("apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
-        assertFalse(Files.exists(dataExportDirPath.resolve("apl-blockchain-shardprun-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
+        assertFalse(Files.exists(dataExportDirPath.resolve("apl_blockchain_b5d7b6_shard_4.zip")));
+        assertFalse(Files.exists(dataExportDirPath.resolve("apl_blockchain_b5d7b6_shardprun_4.zip")));
     }
 
     @Test
@@ -825,7 +825,7 @@ class ShardEngineTest {
         Files.createFile(dataExportDirPath.resolve(GOODS_TABLE_NAME + CSV_FILE_EXTENSION));
         Files.createFile(dataExportDirPath.resolve(PRUNABLE_MESSAGE_TABLE_NAME + CSV_FILE_EXTENSION));
         Files.createFile(dataExportDirPath.resolve("another-file.txt"));
-        Files.createFile(dataExportDirPath.resolve("apl-blockchain-shardprun-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip"));
+        Files.createFile(dataExportDirPath.resolve("apl_blockchain_b5d7b6_shardprun_4.zip"));
 
         DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
         shardRecoveryDaoJdbc.saveShardRecovery(extension.getDatabaseManager().getDataSource(), new ShardRecovery(MigrateState.ZIP_ARCHIVE_STARTED, null, null, null, "apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip"));
@@ -835,9 +835,9 @@ class ShardEngineTest {
         MigrateState state = shardEngine.archiveCsv(paramInfo);
 
         assertEquals(MigrateState.ZIP_ARCHIVE_FINISHED, state);
-        Path coreZip = dataExportDirPath.resolve("apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip");
+        Path coreZip = dataExportDirPath.resolve("apl_blockchain_b5d7b6_shard_4.zip");
         assertFalse(Files.exists(coreZip));
-        Path prunableZip = dataExportDirPath.resolve("apl-blockchain-shardprun-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip");
+        Path prunableZip = dataExportDirPath.resolve("apl_blockchain_b5d7b6_shardprun_4.zip");
         verifyZip(prunableZip, PRUNABLE_MESSAGE_TABLE_NAME + CSV_FILE_EXTENSION);
 
         Shard lastShard = shardDao.getLastShard();
@@ -851,7 +851,7 @@ class ShardEngineTest {
     void testArchiveWithoutPrunableData() throws IOException {
         Files.createFile(dataExportDirPath.resolve(GOODS_TABLE_NAME + CSV_FILE_EXTENSION));
         Files.createFile(dataExportDirPath.resolve("another-file.txt"));
-        Files.createFile(dataExportDirPath.resolve("apl-blockchain-shardprun-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip"));
+        Files.createFile(dataExportDirPath.resolve("apl_blockchain_b5d7b6_shardprun_4.zip"));
 
         DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
 
@@ -860,9 +860,9 @@ class ShardEngineTest {
         MigrateState state = shardEngine.archiveCsv(paramInfo);
 
         assertEquals(MigrateState.ZIP_ARCHIVE_FINISHED, state);
-        Path coreZip = dataExportDirPath.resolve("apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip");
+        Path coreZip = dataExportDirPath.resolve("apl_blockchain_b5d7b6_shard_4.zip");
         verifyZip(coreZip, GOODS_TABLE_NAME + CSV_FILE_EXTENSION);
-        Path prunableZip = dataExportDirPath.resolve("apl-blockchain-shardprun-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip");
+        Path prunableZip = dataExportDirPath.resolve("apl_blockchain_b5d7b6_shardprun_4.zip");
         assertFalse(Files.exists(prunableZip));
 
         Shard lastShard = shardDao.getLastShard();

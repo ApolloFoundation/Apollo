@@ -112,10 +112,10 @@ public class ShardMigrationExecutor {
         ExcludeInfo excludeInfo = null;
         switch (state) {
             case INIT:
-                if (backupDb) {
-                    log.info("Will backup db before sharding");
-                    BackupDbBeforeShardCommand beforeShardCommand = new BackupDbBeforeShardCommand(shardEngine);
-                    this.addOperation(beforeShardCommand);
+                if (backupDb) { // there is not backup-ing in mariadb using SQL command
+//                    log.info("Will backup db before sharding");
+//                    BackupDbBeforeShardCommand beforeShardCommand = new BackupDbBeforeShardCommand(shardEngine);
+//                    this.addOperation(beforeShardCommand);
                 } else {
                     addCreateSchemaCommand(shardId);
                 }

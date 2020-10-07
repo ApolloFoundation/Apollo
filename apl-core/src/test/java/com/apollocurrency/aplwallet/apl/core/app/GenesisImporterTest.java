@@ -46,6 +46,7 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.testutil.BlockchainProducerUnitTests;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
@@ -60,7 +61,6 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -93,7 +93,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@Disabled
 @Testcontainers
 @Tag("slow")
 @Slf4j
@@ -141,7 +140,7 @@ class GenesisImporterTest {
         AccountTable.class, AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
         AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
         FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
-        ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class,
+        ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class, BlockchainProducerUnitTests.class,
         TransactionRowMapper.class, TwoTablesPublicKeyDao.class,
         TransactionBuilder.class,
         TransactionDaoImpl.class, BlockchainImpl.class,

@@ -304,11 +304,11 @@ class ShardMigrationExecutorTest {
 
         MigrateState state;
 
-//1.        // create main db backup
-        BackupDbBeforeShardCommand beforeShardCommand = new BackupDbBeforeShardCommand(shardEngine);
-        state = shardMigrationExecutor.executeOperation(beforeShardCommand);
-        assertEquals(MAIN_DB_BACKUPED, state);
-        assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
+        // there is not backup-ing in mariadb using SQL command
+//        BackupDbBeforeShardCommand beforeShardCommand = new BackupDbBeforeShardCommand(shardEngine);
+//        state = shardMigrationExecutor.executeOperation(beforeShardCommand);
+//        assertEquals(MAIN_DB_BACKUPED, state);
+//        assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
 
 //2.        // create shard db with 'initial' schema
         CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(4L, shardEngine,
