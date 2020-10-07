@@ -45,9 +45,8 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         dto.setHeight(model.getHeight());
         dto.setGenerator(Long.toUnsignedString(model.getGeneratorId()));
         dto.setGeneratorRS(Convert2.rsAccount(model.getGeneratorId()));
-        byte[] generatorPublicKey = model.getGeneratorPublicKey();
-        if (generatorPublicKey == null) {
-            generatorPublicKey = accountService.getPublicKeyByteArray(model.getGeneratorId());
+        if (!model.hasGeneratorPublicKey()) {
+            byte [] generatorPublicKey = accountService.getPublicKeyByteArray(model.getGeneratorId());
             model.setGeneratorPublicKey(generatorPublicKey);
         }
         dto.setGeneratorPublicKey(Convert.toHexString(model.getGeneratorPublicKey()));
