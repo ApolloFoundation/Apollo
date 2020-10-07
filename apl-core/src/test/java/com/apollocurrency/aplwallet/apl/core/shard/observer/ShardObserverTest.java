@@ -45,8 +45,9 @@ import static org.mockito.Mockito.withSettings;
 @Execution(ExecutionMode.CONCURRENT)
 public class ShardObserverTest {
     private static final String CONFIG_NAME = "another-list-for-shar-observer-config.json";
-    private static final String CONFIG_NAME_2 = "tn3-shard-observer-config.json";
-    private static final String CONFIG_NAME_3 = "mainnet-config.json";
+    private static final String CONFIG_NAME_TN3 = "tn3-shard-observer-config.json";
+    private static final String CONFIG_NAME_MAIN = "mainnet-config.json";
+    private static final String CONFIG_NAME_TN2 = "tn2-shard-observer-config.json";
     private ChainsConfigLoader chainsConfigLoader;
     private Map<UUID, Chain> loadedChains;
     private Chain chain;
@@ -169,7 +170,7 @@ public class ShardObserverTest {
                                 boolean isShouldBeCalled,
                                 int randomMockValue) {
         // prepare components
-        prepareAndInit(CONFIG_NAME_2, 2000, randomMockValue);
+        prepareAndInit(CONFIG_NAME_TN3, 2000, randomMockValue);
         // prepare tes data
         Shard shard = mock(Shard.class);
         doReturn(latestShardHeight).when(shard).getShardHeight();
@@ -214,7 +215,7 @@ public class ShardObserverTest {
                                 boolean isShouldBeCalled,
                                 int randomMockValue) {
         // prepare components
-        prepareAndInit(CONFIG_NAME_3, 21000, randomMockValue);
+        prepareAndInit(CONFIG_NAME_MAIN, 21000, randomMockValue);
         // prepare tes data
         Shard shard = mock(Shard.class);
         doReturn(latestShardHeight).when(shard).getShardHeight();
@@ -245,5 +246,45 @@ public class ShardObserverTest {
             arguments(0, 2271217, 2250000, true, 216)
         );
     }
+
+    @ParameterizedTest
+    @MethodSource("supplyTestDataTN2")
+    void testStartShardingByTN2(int latestShardHeight,
+                                int currentBlockHeight,
+                                int targetShardHeight,
+                                boolean isShouldBeCalled,
+                                int randomMockValue) {
+        // prepare components
+        prepareAndInit(CONFIG_NAME_TN2, 2000, randomMockValue);
+        // prepare tes data
+        Shard shard = mock(Shard.class);
+        doReturn(latestShardHeight).when(shard).getShardHeight();
+        doReturn(shard).when(shardService).getLastShard();
+        Block block = td.BLOCK_1;
+        block.setHeight(currentBlockHeight);
+        blockchainConfigUpdater.onBlockPopped(block); // simulate setting 'current' and 'previous' config
+
+        shardObserver.onBlockPushed(block);
+
+        if (isShouldBeCalled) {
+            verify(shardService).tryCreateShardAsync(targetShardHeight, currentBlockHeight);
+        } else {
+            verify(shardService, never()).tryCreateShardAsync(anyInt(), anyInt());
+        }
+    }
+
+    static Stream<Arguments> supplyTestDataTN2() {
+        return Stream.of(
+            // arguments by order:
+            // 1. lastShardHeight - simulate previously created shard (height)
+            // 2. currentHeightBlockPushed - simulate block to be pushed at that height
+            // 3. newShardHeight - we expect shard to be created at that height !!
+            // 4. isShardingCalled - check if sharding was really executed
+            // 5. mocked random Value - simulate random divergence
+            arguments(200000, 204100, 202000, true, 79),
+            arguments(204000, 208109, 206000, true, 79)
+        );
+    }
+
 
 }

@@ -235,7 +235,12 @@ public class BlockchainImpl implements Blockchain {
             return null;
         }
         PublicKey publicKey = publicKeyDao.searchAll(block.getGeneratorId());
-        block.setGeneratorPublicKey(publicKey.getPublicKey());
+        if (publicKey != null) {
+            block.setGeneratorPublicKey(publicKey.getPublicKey());
+        } else {
+            //special case when scan was failed and no public keys in db exist
+            log.warn("No public key for generator's account {} on block {} at {}", block.getGeneratorId(), block.getId(), block.getHeight());
+        }
         return block;
     }
 
@@ -489,7 +494,7 @@ public class BlockchainImpl implements Blockchain {
             return block;
         }
         TransactionalDataSource dataSource = getDataSourceWithShardingByHeight(height);
-        return loadBlockData(blockDao.findBlockAtHeight(height, dataSource));
+        return blockDao.findBlockAtHeight(height, dataSource);
     }
 
 
