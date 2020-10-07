@@ -2,11 +2,12 @@
  *  Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.dao.appdata;
+package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.util.SizeBoundedPriorityQueue;
 import lombok.Data;
 import lombok.Getter;
 
@@ -17,6 +18,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,21 +44,22 @@ public class MemPoolInMemoryState {
     private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final PriorityBlockingQueue<TxWithArrivalTimestamp> broadcastPendingTransactions;
+    private final PriorityBlockingQueue<UnconfirmedTransaction> processLaterQueue;
 
-    @Getter
-    private final int maxInMemorySize;
     @Getter
     private volatile boolean cacheInitialized;
     private final int maxPendingBroadcastQueueSize;
+    private final int maxCachedTransactions;
 
 
     @Inject
-    public MemPoolInMemoryState(UnconfirmedTransactionCreator unconfirmedTransactionCreator,
-                                @Property(name = "apl.maxUnconfirmedTransactions", defaultValue = "" + Integer.MAX_VALUE) int maxUnconfirmedTransactions,
-                                @Property(name = "apl.mempool.maxPendingTransactions", defaultValue = "2000") int maxPendingTransactions
+    public MemPoolInMemoryState(@Property(name = "apl.mempool.maxPendingTransactions", defaultValue = "3000") int maxPendingTransactions,
+                                @Property(name = "apl.mempool.maxCachedTransactions", defaultValue = "2000") int maxCachedTransactions,
+                                @Property(name = "apl.mempool.processLaterQueueSize", defaultValue = "5000") int processLaterQueueSize
     ) {
-        this.maxInMemorySize = maxUnconfirmedTransactions;
+        this.maxCachedTransactions = maxCachedTransactions;
         this.maxPendingBroadcastQueueSize = maxPendingTransactions;
+        this.processLaterQueue = new SizeBoundedPriorityQueue<>(processLaterQueueSize, new UnconfirmedTransactionComparator());
         this.broadcastPendingTransactions = new PriorityBlockingQueue<>(maxPendingBroadcastQueueSize, Comparator.comparing(TxWithArrivalTimestamp::getArrivalTime)) {
             @Override
             public boolean offer(TxWithArrivalTimestamp txWithArrivalTimestamp) {
@@ -66,6 +69,14 @@ public class MemPoolInMemoryState {
                 return super.offer(txWithArrivalTimestamp);
             }
         };
+    }
+
+    public void processLater(UnconfirmedTransaction unconfirmedTransaction) {
+        processLaterQueue.add(unconfirmedTransaction);
+    }
+
+    public Iterator<UnconfirmedTransaction> processLaterQueueIterator() {
+        return processLaterQueue.iterator();
     }
 
     public boolean addToSoftBroadcastingQueue(Transaction transaction) {
@@ -85,7 +96,7 @@ public class MemPoolInMemoryState {
     }
 
     public void putInCache(UnconfirmedTransaction unconfirmedTransaction) {
-        if (transactionCache.size() < maxInMemorySize) {
+        if (transactionCache.size() < maxCachedTransactions) {
             transactionCache.put(unconfirmedTransaction.getId(), unconfirmedTransaction);
         }
     }
@@ -120,6 +131,7 @@ public class MemPoolInMemoryState {
         txToBroadcastWhenConfirmed.clear();
         broadcastedTransactions.clear();
         broadcastPendingTransactions.clear();
+        processLaterQueue.clear();
     }
 
     public UnconfirmedTransaction getFromCacheSorted(long id) {
@@ -128,10 +140,6 @@ public class MemPoolInMemoryState {
 
     public void broadcastLater(Transaction tx) {
         broadcastedTransactions.add(tx);
-    }
-
-    public void resetProcessedState() {
-        transactionCache.clear();
     }
 
     public void removeFromCache(long id) {

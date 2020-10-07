@@ -116,7 +116,7 @@ class TransactionProcessorTest {
         td = new TransactionTestData();
         service = new TransactionProcessorImpl(transactionValidator,
             listEvent, databaseManager,
-            globalSync, timeService, ntpTimeConfig.time(), blockchainConfig, peersService, blockchain, transactionBuilder, prunableLoadingService, processingService, memPool);
+            globalSync, timeService, blockchainConfig, peersService, blockchain, transactionBuilder, prunableLoadingService, processingService, memPool);
     }
 
     @Test
@@ -133,6 +133,7 @@ class TransactionProcessorTest {
         doReturn(100L).when(transaction).getFeeATM();
         doReturn(100).when(transaction).getFullSize();
         doReturn(true).when(transactionValidator).verifySignature(transaction);
+        doReturn(true).when(processingService).addNewUnconfirmedTransaction(any(UnconfirmedTransaction.class));
         doReturn(false).when(blockchain).hasTransaction(-9128485677221760321L);
         doReturn(BLOCK_5_HEIGHT).when(blockchain).getHeight();
         doReturn(Long.valueOf(BLOCK_5_HEIGHT - 1)).when(blockchainConfig).getLastKnownBlock();
@@ -147,10 +148,9 @@ class TransactionProcessorTest {
         service.broadcast(transaction);
 
         //THEN
-        verify(globalSync, times(1)).writeLock();
-        verify(globalSync, times(1)).writeUnlock();
         verify(blockchain, times(1)).hasTransaction(anyLong());
-        verify(transactionValidator).validateFully(any(Transaction.class));
+        verify(transactionValidator).validateLightly(any(Transaction.class));
+        verify(transactionValidator).validateSignatureWithTxFee(any(Transaction.class));
     }
 
     @Test
@@ -165,20 +165,22 @@ class TransactionProcessorTest {
             .validateBeforeProcessing(any(UnconfirmedTransaction.class));
         doReturn(100L).when(transaction).getFeeATM();
         doReturn(100).when(transaction).getFullSize();
+        doReturn(true).when(processingService).addNewUnconfirmedTransaction(any(UnconfirmedTransaction.class));
         UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, expirationTimestamp);
-        doReturn(false).when(blockchain).hasTransaction(-9128485677221760321L);
+//        doReturn(false).when(blockchain).hasTransaction(-9128485677221760321L);
         doReturn(BLOCK_5_HEIGHT).when(blockchain).getHeight();
         doReturn(Long.valueOf(BLOCK_5_HEIGHT - 1)).when(blockchainConfig).getLastKnownBlock();
         TransactionalDataSource dataSource = mock(TransactionalDataSource.class);
         doReturn(dataSource).when(databaseManager).getDataSource();
         doReturn(mock(Event.class)).when(listEvent).select(any());
+        doReturn(mock(TransactionalDataSource.StartedConnection.class)).when(dataSource).beginTransactionIfNotStarted();
         //WHEN
-        service.processPeerTransactions(List.of(unconfirmedTransaction));
+        service.processPeerTransactions(List.of(transaction));
 
         //THEN
-        verify(globalSync).writeLock();
-        verify(globalSync).writeUnlock();
-        verify(blockchain).hasTransaction(anyLong());
+        verify(transactionValidator).validateLightly(transaction);
+        verify(transactionValidator).validateSignatureWithTxFee(transaction);
+        verify(processingService).addNewUnconfirmedTransaction(any(UnconfirmedTransaction.class));
     }
 
 }

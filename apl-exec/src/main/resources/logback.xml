@@ -119,13 +119,13 @@
     </encoder>
   </appender>
 
-  <logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE" additivity="false">
+  <logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE" additivity="falтse">
     <appender-ref ref="p2p-file"/>
   </logger>
-  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksThread" level="TRACE"
-          additivity="false">
-    <appender-ref ref="p2p-file"/>
-  </logger>
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksThread" level="TRACE"-->
+<!--          additivity="false">-->
+<!--    <appender-ref ref="p2p-file"/>-->
+<!--  </logger>-->
 
   <!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable" level="trace" additivity="false">-->
   <!--    <appender-ref ref="tp-file"/>-->

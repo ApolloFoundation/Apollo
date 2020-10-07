@@ -6,13 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.util.BatchSizeCalculator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTxValidationResult;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.BatchSizeCalculator;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,7 +43,6 @@ public class PendingBroadcastTask implements Runnable {
     }
 
     void broadcastPendingQueue() {
-        while (true) {
             try {
                 if (memPool.pendingBroadcastQueueLoad() > 0.05) {
                     broadcastBatch();
@@ -54,7 +52,6 @@ public class PendingBroadcastTask implements Runnable {
             } catch (Exception e) {
                 log.error("Unknown error during broadcasting pending queue", e);
             }
-        }
     }
 
     void broadcastBatch() {
@@ -69,7 +66,6 @@ public class PendingBroadcastTask implements Runnable {
                 batchSizeCalculator.stopTiming();
             }
         }
-        ThreadUtils.sleep(100);
     }
 
     int batchSize() {
@@ -134,7 +130,6 @@ public class PendingBroadcastTask implements Runnable {
 
     void broadcastOnePending() {
         doBroadcastOnePendingTx();
-        ThreadUtils.sleep(50);
     }
 
 

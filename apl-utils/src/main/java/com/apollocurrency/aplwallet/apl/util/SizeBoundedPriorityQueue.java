@@ -5,9 +5,9 @@
 package com.apollocurrency.aplwallet.apl.util;
 
 import java.util.Comparator;
-import java.util.PriorityQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
-public class SizeBoundedPriorityQueue<T> extends PriorityQueue<T> {
+public class SizeBoundedPriorityQueue<T> extends PriorityBlockingQueue<T> {
     private final int maxSize;
     public SizeBoundedPriorityQueue(int maxSize, Comparator<? super T> comparator) {
         super(maxSize, comparator);

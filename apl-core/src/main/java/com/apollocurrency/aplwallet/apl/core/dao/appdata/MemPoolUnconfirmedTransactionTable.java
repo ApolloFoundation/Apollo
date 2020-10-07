@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DbTableWrapper;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPoolInMemoryState;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;

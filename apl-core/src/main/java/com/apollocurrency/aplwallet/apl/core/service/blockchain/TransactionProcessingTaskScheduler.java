@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.PendingBroadcastTask;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTxsToBroadcastWhenConfirmed;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessWaitingTransactionsThread;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessLaterTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RebroadcastTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RemoveUnconfirmedTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
@@ -82,9 +82,9 @@ public class TransactionProcessingTaskScheduler {
                     .delay(1000)
                     .task(transactionProcessor::printMemPoolStat)
                     .build());
-                dispatcher.invokeAfter(Task.builder()
+                dispatcher.schedule(Task.builder()
                     .name("PendingBroadcaster")
-                    .initialDelay(2000)
+                    .delay(100)
                     .task(new PendingBroadcastTask( transactionProcessor,  memPool, batchSizeCalculator, transactionValidator, processingService))
                     .build());
                 dispatcher.invokeAfter(Task.builder()
@@ -107,8 +107,8 @@ public class TransactionProcessingTaskScheduler {
                 .build());
             dispatcher.schedule(Task.builder()
                 .name("ProcessWaitingTransactions")
-                .delay(333)
-                .task(new ProcessWaitingTransactionsThread(transactionProcessor))
+                .delay(3000)
+                .task(new ProcessLaterTransactionsThread(transactionProcessor))
                 .build());
             dispatcher.schedule(Task.builder()
                 .name("ProcessTransactionsToBroadcastWhenConfirmed")

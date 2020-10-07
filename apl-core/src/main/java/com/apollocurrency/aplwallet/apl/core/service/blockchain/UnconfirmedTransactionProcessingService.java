@@ -73,10 +73,10 @@ public class UnconfirmedTransactionProcessingService {
         return new UnconfirmedTxValidationResult(0, null, "");
     }
 
-    public void addNewUnconfirmedTransaction(UnconfirmedTransaction unconfirmedTransaction) {
-        TransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
+    public boolean addNewUnconfirmedTransaction(UnconfirmedTransaction unconfirmedTransaction) {
+        return TransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
             unconfirmedTransaction.setHeight(blockchain.getHeight());
-            memPool.addProcessed(unconfirmedTransaction);
+            return memPool.addProcessed(unconfirmedTransaction);
         });
     }
 

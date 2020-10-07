@@ -57,9 +57,7 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
                         TransactionalDataSource dataSource = databaseManager.getDataSource();
                         try {
                             dataSource.begin();
-                            memPool.getExpiredTxsStream(epochTime).forEach(e-> {
-                                transactionProcessor.removeUnconfirmedTransaction(e.getTransaction());
-                            });
+                            memPool.getExpiredTxsStream(epochTime).forEach(e-> transactionProcessor.removeUnconfirmedTransaction(e.getTransaction()));
                             dataSource.commit();
                         } catch (Exception e) {
                             log.error(e.toString(), e);

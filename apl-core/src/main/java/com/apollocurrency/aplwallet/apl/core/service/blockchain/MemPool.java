@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.MemPoolInMemoryState;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.MemPoolUnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
@@ -17,9 +16,11 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -32,18 +33,23 @@ public class MemPool {
     private final GlobalSync globalSync;
     private final TransactionValidator validator;
     private final boolean enableRebroadcasting;
+    private final int maxUnconfirmedTransactions;
+    private final AtomicInteger currentNumberOfUnconfirmedTxs = new AtomicInteger(0);
 
     @Inject
     public MemPool(MemPoolUnconfirmedTransactionTable table,
                    MemPoolInMemoryState memoryState,
                    GlobalSync globalSync,
                    TransactionValidator validator,
-                    @Property(name = "apl.enableTransactionRebroadcasting") boolean enableRebroadcasting) {
+                   @Property(name = "apl.maxUnconfirmedTransactions", defaultValue = "" + Integer.MAX_VALUE) int maxUnconfirmedTransactions,
+                   @Property(name = "apl.enableTransactionRebroadcasting") boolean enableRebroadcasting) {
         this.table = table;
+        this.maxUnconfirmedTransactions = maxUnconfirmedTransactions;
         this.enableRebroadcasting = enableRebroadcasting;
         this.memoryState = memoryState;
         this.globalSync = globalSync;
         this.validator = validator;
+        allProcessedCount();
     }
 
     public Transaction getUnconfirmedTransaction(long id) {
@@ -99,8 +105,13 @@ public class MemPool {
         memoryState.broadcastLater(tx);
     }
 
-    public void addProcessed(UnconfirmedTransaction tx) {
-        table.insert(tx);
+    public boolean addProcessed(UnconfirmedTransaction tx) {
+        boolean canSaveTxs = allProcessedCount() < maxUnconfirmedTransactions;
+        if (canSaveTxs) {
+            table.insert(tx);
+            currentNumberOfUnconfirmedTxs.incrementAndGet();
+        }
+        return canSaveTxs;
     }
 
 
@@ -110,7 +121,10 @@ public class MemPool {
     }
 
     public int allProcessedCount() {
-        return table.getCount();
+        if (currentNumberOfUnconfirmedTxs.get() == 0) {
+            currentNumberOfUnconfirmedTxs.set(table.getCount());
+        }
+        return currentNumberOfUnconfirmedTxs.get();
     }
 //
     public void removeOutdatedBroadcastedTransactions(Transaction transaction) {
@@ -122,7 +136,7 @@ public class MemPool {
     }
 
     public int canSafelyAccept() {
-        return memoryState.getMaxInMemorySize() - allProcessedCount();
+        return maxUnconfirmedTransactions - allProcessedCount();
     }
 
     public List<Transaction> allPendingTransactions() {
@@ -130,11 +144,19 @@ public class MemPool {
     }
 //
     public boolean isProcessedTxPoolFull() {
-        return allProcessedCount() >= memoryState.getMaxInMemorySize();
+        return allProcessedCount() >= maxUnconfirmedTransactions;
     }
 
     public List<UnconfirmedTransaction> getProcessed(int from, int to) {
         return CollectionUtil.toList(table.getAll(from, to));
+    }
+
+    public void processLater(UnconfirmedTransaction unconfirmedTransaction) {
+        memoryState.processLater(unconfirmedTransaction);
+    }
+
+    public Iterator<UnconfirmedTransaction> processLaterQueueIterator() {
+        return memoryState.processLaterQueueIterator();
     }
 //
 //    public Collection<UnconfirmedTransaction> getWaitingTransactionsUnmodifiedCollection() {
@@ -169,11 +191,7 @@ public class MemPool {
     public void clear() {
         memoryState.clear();
         table.truncate();
-    }
-
-    public void resetProcessedState() {
-        memoryState.resetProcessedState();
-        table.truncate();
+        currentNumberOfUnconfirmedTxs.set(0);
     }
 
     public Transaction nextSoftBroadcastTransaction() throws InterruptedException {
@@ -198,7 +216,9 @@ public class MemPool {
     public boolean removeProcessedTransaction(long id) {
         boolean deleted = table.deleteById(id);
         if (deleted) {
+            currentNumberOfUnconfirmedTxs.decrementAndGet();
             memoryState.removeFromCache(id);
+
         }
         return deleted;
     }

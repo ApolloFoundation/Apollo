@@ -1252,12 +1252,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             log.debug("Generate block failed: " + e.getMessage());
             Transaction transaction = e.getTransaction();
             log.debug("Removing invalid transaction: " + transaction.getStringId());
-            globalSync.writeLock();
-            try {
-                transactionProcessor.removeUnconfirmedTransaction(transaction);
-            } finally {
-                globalSync.writeUnlock();
-            }
+            transactionProcessor.removeUnconfirmedTransaction(transaction);
             throw e;
         } catch (BlockNotAcceptedException e) {
             log.debug("Generate block failed: " + e.getMessage());

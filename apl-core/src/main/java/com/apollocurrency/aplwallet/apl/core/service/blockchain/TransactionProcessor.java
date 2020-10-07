@@ -43,6 +43,8 @@ public interface TransactionProcessor {
 
     void broadcast(Transaction transaction) throws AplException.ValidationException;
 
+    void processDelayedTxs(int number);
+
     void processLater(Collection<Transaction> transactions);
 
     int getUnconfirmedTxCount();
