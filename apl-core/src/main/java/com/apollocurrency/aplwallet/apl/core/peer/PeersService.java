@@ -433,7 +433,7 @@ public class PeersService {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonOrgModule());
         ThisActorIdHandler myId = identityService.getThisNodeIdHandler();
-        pi.setX509_cert(myId.getCertHelper().getCertPEM());
+        pi.setX509_cert(myId.getExtCert().getCertPEM());
         myPeerInfo = mapper.convertValue(pi, JSONObject.class);
         LOG.debug("My peer info:\n" + myPeerInfo.toJSONString());
         myPI = pi;
