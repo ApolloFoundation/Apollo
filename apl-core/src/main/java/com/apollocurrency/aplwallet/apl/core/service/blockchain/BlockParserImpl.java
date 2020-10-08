@@ -77,9 +77,9 @@ public class BlockParserImpl implements BlockParser {
         }
     }
 
-    private Transaction parseTransaction(JSONObject jsonObject) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
+    private Transaction parseTransaction(JSONObject jsonObject) throws AplException.NotValidException {
         TransactionImpl tx = transactionBuilder.newTransactionBuilder(jsonObject).build();
-        transactionValidator.validateSignatureWithTxFee(tx);
+        transactionValidator.verifySignature(tx);
         return tx;
     }
 
