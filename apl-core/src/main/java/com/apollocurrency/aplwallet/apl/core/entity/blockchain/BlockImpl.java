@@ -173,6 +173,11 @@ public final class BlockImpl implements Block {
         return generatorPublicKey;
     }
 
+    @Override
+    public boolean hasGeneratorPublicKey() {
+        return generatorPublicKey != null;
+    }
+
     public void setGeneratorPublicKey(byte[] generatorPublicKey) {
         if (generatorPublicKey != null && generatorPublicKey.length > 0) {
             this.generatorPublicKey = generatorPublicKey;
