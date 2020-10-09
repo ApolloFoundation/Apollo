@@ -5,7 +5,7 @@
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apollo-blockchain</artifactId>
-  <version>1.46.1</version>
+  <version>1.46.3</version>
   <packaging>pom</packaging>
   <name>apollo-blockchain</name>
 
