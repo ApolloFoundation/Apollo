@@ -19,6 +19,7 @@ public class DbTestData {
         .dbName("testdb")
         .dbUsername("testuser")
         .dbPassword("testpass")
+//        .databasePort(3306) // docker container default for quick test only
         .maxConnections(10)
         .dbType("mariadb")
         .chainId(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5"))
@@ -55,6 +56,7 @@ public class DbTestData {
         if (jdbcDatabaseContainer.getMappedPort(3306) != null) {
             dbProperties.setDatabasePort(jdbcDatabaseContainer.getMappedPort(3306));
         }
+//        dbProperties.setDatabasePort(3306); // docker container default for quick test only
         dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
         dbProperties.setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
         return dbProperties;

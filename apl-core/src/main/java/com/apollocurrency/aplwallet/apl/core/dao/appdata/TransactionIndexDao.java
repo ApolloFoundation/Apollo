@@ -57,7 +57,7 @@ public interface TransactionIndexDao {
     long countTransactionIndexByBlockHeight(@Bind("height") int height);
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT count(*) FROM transaction_shard_index where height < IFNULL((select shard_height from shard where shard_id =:shardId),0) AND height >= IFNULL((select shard_height from shard where shard_height < (select shard_height from shard where shard_id =:shardId) ORDER BY height desc LIMIT 1),0)")
+    @SqlQuery("SELECT count(*) FROM transaction_shard_index where height < IFNULL((select shard_height from shard where shard_id =:shardId),0) AND height >= IFNULL((select shard_height from shard where shard_height < (select shard_height from shard where shard_id =:shardId) ORDER BY shard_height desc LIMIT 1),0)")
     @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
     long countTransactionIndexByShardId(@Bind("shardId") long shardId);
 

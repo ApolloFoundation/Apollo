@@ -32,12 +32,12 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
+import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -49,6 +49,7 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -102,11 +103,12 @@ import static org.mockito.Mockito.spy;
 
 @Slf4j
 @Testcontainers
+@Tag("slow")
 @EnableWeld
 //@Execution(ExecutionMode.SAME_THREAD)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    //for better performance we will not recreate 3 datasources for each test method
 class BlockchainTest {
+
     @Container
     public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
         .withDatabaseName("testdb")
@@ -117,7 +119,7 @@ class BlockchainTest {
 
     private static final Path blockchainTestDbPath = createPath("blockchainTestDbPath");
     @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer, blockchainTestDbPath, "mainDb", "db/shard-main-data.sql");
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), null, "db/shard-main-data.sql");
     static DbPopulator shard1Populator;
     static DbPopulator shard2Populator;
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);

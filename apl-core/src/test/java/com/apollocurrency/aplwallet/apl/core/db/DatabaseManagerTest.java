@@ -54,7 +54,7 @@ class DatabaseManagerTest {
     @Container
     public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
         .withDatabaseName("mysql")
-        .withUsername("testuser")
+        .withUsername("root")
         .withPassword("rootpass")
         .withExposedPorts(3306)
         .withLogConsumer(new Slf4jLogConsumer(log));
@@ -173,7 +173,7 @@ class DatabaseManagerTest {
         TransactionalDataSource dataSource = ((ShardManagement) databaseManager).getOrInitFullShardDataSourceById(2L);
 
         assertNotNull(dataSource, "Shard datasource with shardId=2 should be full, (shard state = 100)");
-        assertTrue(dataSource.getUrl().contains("shard-2"), "Datasource should represent full shard with id 2");
+        assertTrue(dataSource.getUrl().contains("shard_2"), "Datasource should represent full shard with id 2");
     }
 
     @Test

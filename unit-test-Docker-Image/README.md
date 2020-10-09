@@ -26,10 +26,12 @@ $ docker pull mariadb:10.5.5
 $ docker build -t mariadb:10.5 .
 
 
-2.3 One time start up a new container by using created image 'mariadb:10.5' and give it a name 'apl-mariadb':
+2.3 CHECKING. Start up a new container by using created image 'mariadb:10.5' and give it a name 'apl-mariadb':
 
 $ docker run -p 3306:3306 \
     --name apl-mariadb \
+     --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci \
+    -e MYSQL_ROOT_HOST=% \
     -e MYSQL_ROOT_PASSWORD=rootpass \
     -e MYSQL_DATABASE=testdb \
     -e MYSQL_USER=testuser \
@@ -45,6 +47,10 @@ $ mysql -h 127.0.0.1 -P3306 -u root -prootpass
 
 $ mysql -h 127.0.0.1 -P3306 -u testuser -ptestpass
 
+
+2.7 Show all mariadb image option parameters:
+
+$ docker run -it --rm mariadb:10.5 --verbose --help
 
 #### 3. Quickly check that MyRocks is enabled:
 
@@ -92,3 +98,8 @@ $ docker logs apl-mariadb
 Connect to MariaDb container bash
 
 $ docker exec -it apl-mariadb bash
+
+##### SQL
+
+select concat(user, '@', host, ' => ', json_detailed(priv)) from mysql.global_priv;
+

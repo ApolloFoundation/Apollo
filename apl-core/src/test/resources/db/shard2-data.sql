@@ -1,6 +1,6 @@
-DELETE FROM transaction;
-DELETE FROM block;
-delete from version;
+TRUNCATE TABLE transaction;
+TRUNCATE TABLE block;
+TRUNCATE TABLE version;
 
 INSERT INTO block
 (DB_ID,         ID,                HEIGHT,      VERSION,   `TIMESTAMP`,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
