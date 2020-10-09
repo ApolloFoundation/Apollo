@@ -200,7 +200,8 @@ public class AccountServiceImpl implements AccountService {
             && account.getUnconfirmedBalanceATM() == 0
             && account.getForgedBalanceATM() == 0
             && account.getActiveLesseeId() == 0
-            && account.getControls().isEmpty();
+            && account.getControls().isEmpty()
+            && account.isParent(); // delete only parent accounts (parentId = 0)
     }
 
     @Override
