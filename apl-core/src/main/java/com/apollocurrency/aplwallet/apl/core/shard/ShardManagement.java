@@ -62,15 +62,6 @@ public interface ShardManagement {
     TransactionalDataSource getOrInitFullShardDataSourceById(long shardId);
 
     /**
-     * Method gives ability to create 'temporary database' file with fully initialized internal schema.
-     * The datasource is cached by -1L long value.
-     *
-     * @param temporaryDatabaseName temp database name
-     * @return temp database data source
-     */
-    TransactionalDataSource createAndAddTemporaryDb(String temporaryDatabaseName);
-
-    /**
      * @param shardId id of shard datasorce
      * @return Return datasource for shard by id if exists, otherwise - null
      */

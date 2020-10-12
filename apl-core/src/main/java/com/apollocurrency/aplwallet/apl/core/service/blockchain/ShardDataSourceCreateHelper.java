@@ -88,7 +88,6 @@ public class ShardDataSourceCreateHelper {
         shardDbProperties.setDbUrl(null);  // nullify dbUrl intentionally!;
         shardDbProperties.setDbIdentity(shardId); // put shard related info
         shardDb = new TransactionalDataSource(shardDbProperties, databaseManager.getPropertiesHolder());
-        shardDb.setSystemDataSource(databaseManager.getDataSource().getSystemDataSource());
 
         return this;
     }

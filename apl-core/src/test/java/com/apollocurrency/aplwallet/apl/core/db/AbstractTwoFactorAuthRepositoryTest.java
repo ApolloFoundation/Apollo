@@ -27,14 +27,15 @@ import static org.mockito.Mockito.mock;
 public abstract class AbstractTwoFactorAuthRepositoryTest {
 
     @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-        .withDatabaseName("testdb")
-        .withUsername("testuser")
-        .withPassword("testpass")
-        .withExposedPorts(3306)
-        .withLogConsumer(new Slf4jLogConsumer(log));
+    public static GenericContainer mariaDBContainer;
 
     static {
+        mariaDBContainer = new MariaDBContainer("mariadb:10.5")
+            .withDatabaseName("testdb")
+            .withUsername("testuser")
+            .withPassword("testpass")
+            .withExposedPorts(3306)
+            .withLogConsumer(new Slf4jLogConsumer(log));
         BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
         doReturn("APL").when(blockchainConfig).getAccountPrefix();
         Convert2.init(blockchainConfig);

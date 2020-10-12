@@ -30,7 +30,6 @@ $ docker build -t mariadb:10.5 .
 
 $ docker run -p 3306:3306 \
     --name apl-mariadb \
-     --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci \
     -e MYSQL_ROOT_HOST=% \
     -e MYSQL_ROOT_PASSWORD=rootpass \
     -e MYSQL_DATABASE=testdb \

@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
@@ -32,6 +33,7 @@ import static org.mockito.Mockito.mock;
 
 @Slf4j
 @Testcontainers
+@Tag("slow")
 class MandatoryTransactionDaoTest {
     @Container
     public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")

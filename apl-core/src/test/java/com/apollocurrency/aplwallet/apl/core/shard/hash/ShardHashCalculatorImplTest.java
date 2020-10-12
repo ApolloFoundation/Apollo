@@ -46,10 +46,10 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -66,10 +66,10 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.slf4j.LoggerFactory.getLogger;
 
 @Slf4j
 @Testcontainers
+@Tag("slow")
 @EnableWeld
 public class ShardHashCalculatorImplTest {
     @Container
@@ -79,6 +79,7 @@ public class ShardHashCalculatorImplTest {
         .withPassword("testpass")
         .withExposedPorts(3306)
         .withLogConsumer(new Slf4jLogConsumer(log));
+
     static final String SHA_256 = "SHA-256";
     static final byte[] PARTIAL_MERKLE_ROOT_2_6 = Convert.parseHexString("57a86e3f4966f6751d661fbb537780b65d4b0edfc1b01f48780a360c4babdea7");
     static final byte[] PARTIAL_MERKLE_ROOT_7_12 = Convert.parseHexString("da5ad74821dc77fa9fb0f0ddd2e48284fe630fee9bf70f98d7aa38032ddc8f57");

@@ -196,18 +196,17 @@ public class ShardServiceTest {
         verify(shardMigrationExecutor).executeAllOperations();
     }
 
-    private void mockBackupExists() throws IOException {
+    private void mockInitSettings() throws IOException {
         Chain chain = mock(Chain.class);
         UUID chainId = UUID.randomUUID();
         doReturn(chainId).when(chain).getChainId();
         doReturn(folder.getRoot().toPath()).when(dirProvider).getDbDir();
         doReturn(chain).when(blockchainConfig).getChain();
-        folder.newFile("BACKUP-BEFORE-apl-blockchain-shard-1-chain-" + chainId + ".zip");
     }
 
     @Test
     void testSkipResetToShardWhenShardingProcessWasStartedWithoutCompleteableFuture() throws IOException {
-        mockBackupExists();
+        mockInitSettings();
         shardService.setSharding(true);
 
         boolean reset = shardService.reset(1L);
@@ -217,21 +216,25 @@ public class ShardServiceTest {
     }
 
     @Test
-    void testSkipResetWhenShardBackupNotExists() throws IOException {
+    void testNotSkipResetWhenNoShardBackup() throws IOException {
         Chain chain = mock(Chain.class);
         doReturn(UUID.randomUUID()).when(chain).getChainId();
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(folder.newFolder().toPath()).when(dirProvider).getDbDir();
+        doReturn(mock(HeightConfig.class)).when(blockchainConfig).getCurrentConfig();
+        Event firedEvent = mock(Event.class);
+        doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
+        });
 
         boolean reset = shardService.reset(1);
 
-        assertFalse(reset);
+        assertTrue(reset);
         verifyNoInteractions(shardMigrationExecutor);
     }
 
     @Test
     void testReset() throws IOException {
-        mockBackupExists();
+        mockInitSettings();
         doReturn(mock(HeightConfig.class)).when(blockchainConfig).getCurrentConfig();
         Event firedEvent = mock(Event.class);
         doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
@@ -244,7 +247,7 @@ public class ShardServiceTest {
 
     @Test
     void testResetWithCancellingShardingProcess() throws IOException, InterruptedException {
-        mockBackupExists();
+        mockInitSettings();
         doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
         });
         doReturn(mock(HeightConfig.class)).when(blockchainConfig).getCurrentConfig();
@@ -270,7 +273,7 @@ public class ShardServiceTest {
 
     @Test
     void testResetWaitingTrim() throws IOException, ExecutionException, InterruptedException {
-        mockBackupExists();
+        mockInitSettings();
         doReturn(mock(HeightConfig.class)).when(blockchainConfig).getCurrentConfig();
         Event firedEvent = mock(Event.class);
         doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {

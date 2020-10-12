@@ -134,7 +134,7 @@ public class BlockchainImpl implements Blockchain {
     @PostConstruct
     @Override
     public void update() {
-        if (isPostConstruct) { // not needed for unit tests !
+        if (isPostConstruct) { // for unit tests !
             this.lastBlock.set(findLastBlock());
             this.shardInitialBlock.set(findFirstBlock());
             ((ShardManagement) this.databaseManager).initFullShards(

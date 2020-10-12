@@ -23,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ShardRecoveryDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollTable;
@@ -146,8 +147,8 @@ class ShardMigrationExecutorTest {
     @Container
     public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
         .withDatabaseName("testdb")
-        .withUsername("testuser")
-        .withPassword("testpass")
+        .withUsername("root")
+        .withPassword("rootpass")
         .withExposedPorts(3306)
         .withLogConsumer(new Slf4jLogConsumer(log));
 
@@ -176,7 +177,7 @@ class ShardMigrationExecutorTest {
     WeldInitiator weld = WeldInitiator.from(
         BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, BlockchainProducerUnitTests.class,
         PropertyProducer.class,
-        TransactionRowMapper.class,
+        TransactionRowMapper.class, TransactionDaoImpl.class,
         TransactionBuilder.class,
         GlobalSyncImpl.class, BlockIndexDao.class, ShardHashCalculatorImpl.class,
         DerivedDbTablesRegistryImpl.class, ShardEngineImpl.class, ShardRecoveryDao.class,
@@ -229,6 +230,8 @@ class ShardMigrationExecutorTest {
     @Inject
     private ShardDao shardDao;
     @Inject
+    private TransactionDao transactionDao;
+    @Inject
     private ShardRecoveryDaoJdbc shardRecoveryDaoJdbc;
     @Inject
     private ShardRecoveryDaoJdbc recoveryDao;
@@ -252,7 +255,6 @@ class ShardMigrationExecutorTest {
 
     @BeforeAll
     static void setUpAll() {
-
         Mockito.doReturn(SHA_512).when(heightConfig).getShardingDigestAlgorithm();
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
     }
@@ -284,7 +286,7 @@ class ShardMigrationExecutorTest {
 
     @AfterEach
     void tearDown() {
-        extension.getDatabaseManager().shutdown();
+//        extension.getDatabaseManager().shutdown();
     }
 
     @Test

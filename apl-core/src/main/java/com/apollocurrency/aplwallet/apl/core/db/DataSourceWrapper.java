@@ -254,8 +254,6 @@ public class DataSourceWrapper implements DataSource {
         log.debug("Attempting to create DataSource by path = {}...", dbUrl);
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
-//            stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
-//            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
 
             if (this.dbName != null && !this.dbName.equalsIgnoreCase("testdb")
                 && this.dbUsername != null && this.dbUsername.equalsIgnoreCase("root")) { //skip that for unit tests
@@ -310,32 +308,17 @@ public class DataSourceWrapper implements DataSource {
             return;
         }
         try {
-            Connection con = dataSource.getConnection();
-            Statement stmt = con.createStatement();
-//            stmt.execute("SHUTDOWN");
             shutdown = true;
             initialized = false;
             dataSource.close();
-//            dataSource.dispose();
             log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.info(e.toString(), e);
         }
     }
 
     public boolean isShutdown() {
         return shutdown;
-    }
-
-    public void analyzeTables() {
-        try (Connection con = dataSource.getConnection();
-             Statement stmt = con.createStatement()) {
-//            log.debug("Start DB 'ANALYZE' on {}", con.getMetaData());
-//            stmt.execute("ANALYZE");
-            log.debug("FINISHED DB 'ANALYZE' on {}", con.getMetaData());
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
     }
 
     @Override
@@ -366,15 +349,6 @@ public class DataSourceWrapper implements DataSource {
             }
         }
         return con;
-    }
-
-    public DataSource getSystemDataSource() {
-//        return systemDataSource;
-        return null;
-    }
-
-    public void setSystemDataSource(DataSource systemDataSource) {
-//        this.systemDataSource = systemDataSource;
     }
 
     public String getUrl() {

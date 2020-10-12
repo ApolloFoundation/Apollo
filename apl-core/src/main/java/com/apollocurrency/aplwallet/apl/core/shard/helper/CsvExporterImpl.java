@@ -261,7 +261,7 @@ public class CsvExporterImpl implements CsvExporter {
      */
     @Override
     public long exportTransactionIndex(int targetHeight, int batchLimit) {
-        MinMaxValue minMaxValue = new MinMaxValue(BigDecimal.ZERO, BigDecimal.valueOf(Long.MAX_VALUE), "transaction_id", 1, targetHeight - 1);
+        MinMaxValue minMaxValue = new MinMaxValue(BigDecimal.valueOf(Long.MIN_VALUE), BigDecimal.valueOf(Long.MAX_VALUE), "transaction_id", 1, targetHeight - 1);
         TransactionalDataSource dataSource = this.databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement txCountPstm = con.prepareStatement("SELECT COUNT(*) FROM transaction_shard_index");

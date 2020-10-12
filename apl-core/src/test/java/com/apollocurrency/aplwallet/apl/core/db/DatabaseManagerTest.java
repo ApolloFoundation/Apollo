@@ -60,7 +60,6 @@ class DatabaseManagerTest {
         .withLogConsumer(new Slf4jLogConsumer(log));
 
     private static PropertiesHolder propertiesHolder = new PropertiesHolder();
-    private String TEMP_FILE_NAME = "apl_temp_utest_db_name";
     private DbProperties baseDbProperties;
     private DatabaseManagerImpl databaseManager;
 
@@ -107,7 +106,6 @@ class DatabaseManagerTest {
         sqlStatement.execute();
     }
 
-
     @Test
     void createShardAddConstraintsSchemaVersion() throws Exception {
         assertNotNull(databaseManager);
@@ -133,16 +131,6 @@ class DatabaseManagerTest {
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
         checkTablesCreated(newShardDbConnection);
-    }
-
-    @Test
-    void createTemporaryDb() throws Exception {
-        assertNotNull(databaseManager);
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        assertNotNull(dataSource);
-        TransactionalDataSource temporaryDb = ((ShardManagement) databaseManager).createAndAddTemporaryDb(TEMP_FILE_NAME);
-        assertNotNull(temporaryDb);
-        assertNotNull(temporaryDb.getConnection());
     }
 
     @Test
