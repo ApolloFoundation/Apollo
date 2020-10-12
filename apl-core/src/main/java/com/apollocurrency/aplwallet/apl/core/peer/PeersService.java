@@ -77,8 +77,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -142,7 +142,7 @@ public class PeersService {
      * be added to connectablePeers
      */
     private final ConcurrentMap<String, Peer> inboundPeers = new ConcurrentHashMap<>();
-    private final ExecutorService sendingService = Executors.newFixedThreadPool(10, new NamedThreadFactory("PeersSendingService"));
+    private final ExecutorService sendingService;
     private final TimeLimiterService timeLimiterService;
     private final PropertiesHolder propertiesHolder;
     private final Blockchain blockchain;
@@ -184,8 +184,10 @@ public class PeersService {
         this.accountService = accountService;
         this.transactionConverter = transactionConverter;
         this.blockConverter = blockConverter;
-        this.txSendingDispatcher = new ThreadPoolExecutor(5, propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30), 60000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(500), new NamedThreadFactory("P2PTxSendingPool", true));
+        int asyncTxSendingPoolSize = propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30);
+        this.txSendingDispatcher = new ThreadPoolExecutor(5, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(asyncTxSendingPoolSize / 4), new NamedThreadFactory("P2PTxSendingPool", true));
 
+        this.sendingService = new ThreadPoolExecutor(10, 20, 10_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(20), new NamedThreadFactory("PeersSendingService"));
         isLightClient = propertiesHolder.isLightClient();
     }
 
@@ -728,7 +730,7 @@ public class PeersService {
     public void sendToSomePeers(Block block) {
         ProcessBlockRequest request = new ProcessBlockRequest(blockConverter.convert(block), blockchainConfig.getChain().getChainId());
         LOG.debug("Send to some peers the block: {} at height: {}", block.getId(), block.getHeight());
-        sendToSomePeers(request);
+        sendToSomePeersAsync(request);
     }
 
     public void sendToSomePeers(List<? extends Transaction> transactions) {
@@ -739,7 +741,7 @@ public class PeersService {
                 transactionsData.add(transactionConverter.convert(transactions.get(i)));
             }
             BaseP2PRequest request = new ProcessTransactionsRequest(transactionsData, blockchainConfig.getChain().getChainId());
-            sendToSomePeers(request);
+            sendToSomePeersAsync(request);
             nextBatchStart += sendTransactionsBatchSize;
         }
     }
