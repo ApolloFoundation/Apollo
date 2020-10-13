@@ -80,7 +80,7 @@ public class TransactionProcessingTaskScheduler {
                     .build());
                 dispatcher.schedule(Task.builder()
                     .name("PendingBroadcaster")
-                    .delay(100)
+                    .delay(250)
                     .task(new PendingBroadcastTask( transactionProcessor,  memPool, batchSizeCalculator, transactionValidator, processingService))
                     .build());
                 dispatcher.invokeAfter(Task.builder()

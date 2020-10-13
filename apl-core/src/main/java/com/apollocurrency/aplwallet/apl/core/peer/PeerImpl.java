@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
@@ -62,6 +63,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -104,6 +108,7 @@ public final class PeerImpl implements Peer {
     private TimeService timeService;
     @Getter
     private volatile int failedConnectAttempts = 0;
+    private volatile ThreadPoolExecutor asyncExecutor;
 
     PeerImpl(PeerAddress addrByFact,
              PeerAddress announcedAddress,
@@ -140,6 +145,10 @@ public final class PeerImpl implements Peer {
         this.accountService = accountService;
     }
 
+    private void initAsyncExecutor() {
+        this.asyncExecutor = new ThreadPoolExecutor(1, 10, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<>(100), new NamedThreadFactory(getHost() + "-AsyncExecutor"));
+    }
+
     @Override
     public String getHost() {
         return host;
@@ -166,7 +175,12 @@ public final class PeerImpl implements Peer {
         try {
             if (newState != PeerState.CONNECTED) {
                 p2pTransport.disconnect();
+                asyncExecutor.shutdownNow();
                 // limiter.runWithTimeout(p2pTransport::disconnect, 1000, TimeUnit.MILLISECONDS);
+            }  else {
+                if (asyncExecutor.isShutdown() || asyncExecutor.isTerminated() || asyncExecutor.isTerminating()) {
+                    initAsyncExecutor();
+                }
             }
         } finally {
             //we have to change state anyway
@@ -532,6 +546,22 @@ public final class PeerImpl implements Peer {
     @Override
     public JSONObject send(BaseP2PRequest request) throws PeerNotConnectedException {
         return send(request, json -> json);
+    }
+
+    /**
+     * Tries to send request to peer asynchronously by using peer's thread executor
+     * @throws java.util.concurrent.RejectedExecutionException when unable to send request asynchronously
+     * @param request request to send to peer
+     */
+    @Override
+    public void sendAsync(BaseP2PRequest request) {
+        asyncExecutor.submit( ()-> {
+            try {
+                send(request);
+            } catch (PeerNotConnectedException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     private JSONObject sendJSON(JSONStreamAware request) {

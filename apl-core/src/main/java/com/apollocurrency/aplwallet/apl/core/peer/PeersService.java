@@ -72,13 +72,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -92,7 +92,7 @@ public class PeersService {
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 200;
     private static final Logger LOG = LoggerFactory.getLogger(PeersService.class);
     private static final Version MAX_VERSION = Constants.VERSION;
-    private static final int sendTransactionsBatchSize = 100;
+    private static final int sendTransactionsBatchSize = 500;
     private final static String BACKGROUND_SERVICE_NAME = "PeersService";
     public static int DEFAULT_CONNECT_TIMEOUT = 2000; //2s default websocket connect timeout
     public static int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
@@ -161,7 +161,7 @@ public class PeersService {
     private volatile TimeService timeService;
     private final TransactionConverter transactionConverter;
     private final BlockConverter blockConverter;
-    private final ExecutorService txSendingDispatcher;
+//    private final ExecutorService txSendingDispatcher;
 
     @Inject
     public PeersService(PropertiesHolder propertiesHolder,
@@ -185,9 +185,9 @@ public class PeersService {
         this.transactionConverter = transactionConverter;
         this.blockConverter = blockConverter;
         int asyncTxSendingPoolSize = propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30);
-        this.txSendingDispatcher = new ThreadPoolExecutor(5, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(asyncTxSendingPoolSize / 4), new NamedThreadFactory("P2PTxSendingPool", true));
+//        this.txSendingDispatcher = new ThreadPoolExecutor(5, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(asyncTxSendingPoolSize), new NamedThreadFactory("P2PTxSendingPool", true));
 
-        this.sendingService = new ThreadPoolExecutor(10, 20, 10_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(20), new NamedThreadFactory("PeersSendingService"));
+        this.sendingService = new ThreadPoolExecutor(10, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(1000), new NamedThreadFactory("PeersSendingService"));
         isLightClient = propertiesHolder.isLightClient();
     }
 
@@ -730,7 +730,7 @@ public class PeersService {
     public void sendToSomePeers(Block block) {
         ProcessBlockRequest request = new ProcessBlockRequest(blockConverter.convert(block), blockchainConfig.getChain().getChainId());
         LOG.debug("Send to some peers the block: {} at height: {}", block.getId(), block.getHeight());
-        sendToSomePeersAsync(request);
+        sendToSomePeers(request);
     }
 
     public void sendToSomePeers(List<? extends Transaction> transactions) {
@@ -754,7 +754,7 @@ public class PeersService {
         }
     }
     public void sendToSomePeersAsync(BaseP2PRequest request) {
-        txSendingDispatcher.submit(() -> {
+        sendingService.submit(() -> {
             long time = System.nanoTime();
             checkP2PUp();
             Set<Peer> peers = new HashSet<>(getPeers(PeerState.CONNECTED));
@@ -768,14 +768,16 @@ public class PeersService {
                     && peer.getBlockchainState() != BlockchainState.LIGHT_CLIENT
                 ) {
                     counterOfPeersToSend--;
-                    txSendingDispatcher.submit(() -> {
+                    try {
+                        peer.sendAsync(request);
+                    } catch (RejectedExecutionException e) {
                         try {
-                            long startSendingTime = System.nanoTime();
+                            log.debug("Failed to send to peers asynchronously, will send synchronously");
                             peer.send(request);
-                            log.trace("Time to send to peer {} async {}", peer.getHost(), (System.nanoTime() - startSendingTime));
-                        } catch (PeerNotConnectedException ignored) {}
-
-                    });
+                        } catch (PeerNotConnectedException peerNotConnectedException) {
+                            peerNotConnectedException.printStackTrace();
+                        }
+                    }
                 }
             }
             log.trace("Time to send to peers async {}", (System.nanoTime() - time));
