@@ -259,6 +259,7 @@ public class DataSourceWrapper implements DataSource {
                 && this.dbUsername != null && this.dbUsername.equalsIgnoreCase("root")) { //skip that for unit tests
                 stmt.executeUpdate("set global rocksdb_max_row_locks=1073741824;");
                 stmt.executeUpdate("set session rocksdb_max_row_locks=1073741824;");
+                stmt.executeUpdate(String.format("use %s;", this.dbName));
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

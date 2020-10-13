@@ -121,6 +121,11 @@ RUN set -ex; \
 VOLUME /var/lib/mysql
 
 COPY docker-entrypoint.sh /usr/local/bin/
+# APOLLO addition START (set max_connections to = 1024)
+COPY --chown=mysql:mysql my_conf.cnf /etc/mysql/my.cnf
+USER mysql
+RUN chmod -R 0444 /etc/mysql/my.cnf
+# APOLLO addition END
 ENTRYPOINT ["docker-entrypoint.sh"]
 
 EXPOSE 3306

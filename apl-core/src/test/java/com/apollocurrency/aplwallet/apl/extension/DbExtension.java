@@ -70,7 +70,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         log.trace("BoundPortNumbers: {}", jdbcDatabaseContainer.getBoundPortNumbers());
         log.trace("PortBindings: {}", jdbcDatabaseContainer.getPortBindings());
 
-        manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
+        this.manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
     }
 
     public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties dbProperties) {
@@ -86,7 +86,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     }
 
     public DbExtension(DbProperties properties, String dataScriptPath, String schemaScriptPath) {
-        manipulator = new DbManipulator(properties, null, dataScriptPath, schemaScriptPath);
+        this.manipulator = new DbManipulator(properties, null, dataScriptPath, schemaScriptPath);
     }
 
     public DbExtension(Map<String, List<String>> tableWithColumns) {
@@ -106,17 +106,17 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     }
 
     public DbExtension(DbProperties dbProperties, PropertiesHolder propertiesHolder, String schemaScriptPath, String dataScriptPath) {
-        manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
+        this.manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
     }
 
     public DbExtension(GenericContainer jdbcDatabaseContainer, Path dbDir, String dbName, String dataScript) {
         this(jdbcDatabaseContainer);
-        manipulator = new DbManipulator(DbTestData.getInMemDbProps(), null, dataScript, null);
+        this.manipulator = new DbManipulator(DbTestData.getInMemDbProps(), null, dataScript, null);
         this.dbDir = dbDir;
     }
 
     public DbExtension(Path dbDir, String dbName, String dataScript) {
-        manipulator = new DbManipulator(DbTestData.getDbFileProperties(dbDir.resolve(dbName).toAbsolutePath().toString()), null, dataScript, null);
+        this.manipulator = new DbManipulator(DbTestData.getDbFileProperties(dbDir.resolve(dbName).toAbsolutePath().toString()), null, dataScript, null);
         this.dbDir = dbDir;
     }
 

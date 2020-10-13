@@ -1,8 +1,9 @@
+use testdb;
 TRUNCATE TABLE transaction;
 TRUNCATE TABLE block;
 TRUNCATE TABLE version;
 TRUNCATE TABLE transaction_shard_index;
-TRUNCATE TABLE public.block_index;
+TRUNCATE TABLE block_index;
 --delete from FTL.INDEXES;
 TRUNCATE TABLE option;
 TRUNCATE TABLE shard;

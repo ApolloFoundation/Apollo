@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHan
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -20,12 +19,12 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardDataSourceCreateHelper;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
@@ -35,12 +34,13 @@ import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.BlockchainProducerUnitTests;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -51,10 +51,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -101,25 +97,24 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-@Slf4j
 @Testcontainers
 @Tag("slow")
 @EnableWeld
-//@Execution(ExecutionMode.SAME_THREAD)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Slf4j
 class BlockchainTest {
 
     @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-        .withDatabaseName("testdb")
-        .withUsername("testuser")
-        .withPassword("testpass")
-        .withExposedPorts(3306)
-        .withLogConsumer(new Slf4jLogConsumer(log));
+    public static GenericContainer mariaDBContainer;
+    static {
+        mariaDBContainer = new MariaDBContainer("mariadb:10.5")
+            .withDatabaseName("testdb")
+            .withUsername("root")
+            .withPassword("rootpass")
+            .withExposedPorts(3306)
+            .withLogConsumer(new Slf4jLogConsumer(log));
+    }
 
-    private static final Path blockchainTestDbPath = createPath("blockchainTestDbPath");
-    @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), null, "db/shard-main-data.sql");
+    static DbExtension extension;// init later in manual mode
     static DbPopulator shard1Populator;
     static DbPopulator shard2Populator;
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
@@ -134,7 +129,7 @@ class BlockchainTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(TransactionDaoImpl.class, BlockchainImpl.class, BlockDaoImpl.class,
-        TransactionIndexDao.class, DaoConfig.class, JdbiTransactionalInterceptor.class,
+        TransactionIndexDao.class, DaoConfig.class, JdbiTransactionalInterceptor.class, BlockchainProducerUnitTests.class,
         TransactionRowMapper.class,
         TransactionBuilder.class,
         BlockIndexServiceImpl.class, NullCacheProducerForTests.class)
@@ -167,26 +162,26 @@ class BlockchainTest {
 
     @BeforeAll
     static void init() {
+        // first time start up
         shard1Populator = initDb("db/shard1-data.sql", 1);
         shard2Populator = initDb("db/shard2-data.sql", 2);
     }
 
-    @AfterAll
-    static void shutdown() throws IOException {
-        extension.getDatabaseManager().shutdown();
-        FileUtils.deleteDirectory(blockchainTestDbPath.toFile());
-    }
-
     private static DbPopulator initDb(String dataScriptPath, long shardId) {
-        ShardDataSourceCreateHelper shardDataSourceCreateHelper =
-            new ShardDataSourceCreateHelper(extension.getDatabaseManager(), shardId).createUninitializedDataSource();
-        TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
-        shardDb.initWithJdbi(new ShardInitTableSchemaVersion());
+        // initialize main db only one time !!
+        if (shardId == 1 && extension == null) {
+            DbProperties inMemDbProps = DbTestData.getInMemDbProps();
+            inMemDbProps.setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
+            extension = new DbExtension(mariaDBContainer, inMemDbProps, "db/schema.sql", "db/shard-main-data.sql");
+            TransactionalDataSource mainDb = extension.getDatabaseManager().getDataSource();
+            extension.beforeEach(null); // execute initial schema script
+        }
 
-        DbPopulator dbPopulator = new DbPopulator(shardDb, "db/schema.sql", dataScriptPath);
+        TransactionalDataSource shardDb = ((ShardManagement)extension.getDatabaseManager()).getOrCreateShardDataSourceById(shardId);
+
+        DbPopulator dbPopulator = new DbPopulator(shardDb, "db/schema2_empty.sql", dataScriptPath);
         dbPopulator.initDb();
         dbPopulator.populateDb();
-        shardDb.shutdown();
         return dbPopulator;
     }
 
@@ -194,6 +189,9 @@ class BlockchainTest {
     void setUp() {
         txd = new TransactionTestData();
         btd = new BlockTestData();
+        extension.beforeEach(null); // init main db again !!
+        shard1Populator = initDb("db/shard1-data.sql", 1); // init shard 1 again
+        shard2Populator = initDb("db/shard2-data.sql", 2); // init shard 2 again
     }
 
     private void initPublicKeyDao() {
@@ -391,7 +389,7 @@ class BlockchainTest {
 
     @Test
     void testLoadBlock() {
-        DbUtils.inTransaction(extension, (con) -> {
+        DbUtils.checkAndRunInTransaction(extension, (con) -> {
             try (Statement stmt = con.createStatement()) {
                 ResultSet rs = stmt.executeQuery("select * from block where id = " + btd.BLOCK_13.getId());
                 rs.next();
@@ -405,7 +403,7 @@ class BlockchainTest {
 
     @Test
     void testLoadBlockWithoutTransactions() {
-        DbUtils.inTransaction(extension, (con) -> {
+        DbUtils.checkAndRunInTransaction(extension, (con) -> {
             try (Statement stmt = con.createStatement()) {
                 ResultSet rs = stmt.executeQuery("select * from block where id = " + btd.BLOCK_10.getId());
                 assertTrue(rs.next());
@@ -425,7 +423,7 @@ class BlockchainTest {
         });
         btd.NEW_BLOCK.setTransactions(newTransactions);
 
-        DbUtils.inTransaction(extension, (con) -> {
+        DbUtils.checkAndRunInTransaction(extension, (con) -> {
             blockchain.saveBlock(con, btd.NEW_BLOCK);
             blockchain.commit(btd.NEW_BLOCK);
         });
@@ -524,6 +522,7 @@ class BlockchainTest {
     @Test
     void testGetBlocksAfterBlockInMainDataSource() {
         blockchain.setLastBlock(btd.LAST_BLOCK);
+//        blockchain.setShardInitialBlock(btd.BLOCK_0);
         List<Long> blockIds = List.of(BLOCK_11_ID, BLOCK_12_ID, BLOCK_13_ID);
         List<Block> blocks = blockchain.getBlocksAfter(BLOCK_10_ID, blockIds);
         List<Block> expectedBlocks = List.of(btd.BLOCK_11, btd.BLOCK_12, btd.BLOCK_13);
@@ -623,6 +622,7 @@ class BlockchainTest {
     @Test
     void testGetShardInitialBlock() {
         blockchain.setLastBlock(btd.BLOCK_12);
+        blockchain.setShardInitialBlock(btd.BLOCK_10);
 
         Block shardIntialBlock = blockchain.getShardInitialBlock();
 
@@ -632,6 +632,7 @@ class BlockchainTest {
     @Test
     void testGetEcBlockWhenLastBlockByTimestampWasNotFound() {
         blockchain.setLastBlock(btd.BLOCK_13);
+        blockchain.setShardInitialBlock(btd.BLOCK_11);
         Blockchain spy = spy(blockchain);
         doReturn(null).when(spy).getLastBlock(btd.BLOCK_12.getTimestamp());
 
@@ -643,6 +644,7 @@ class BlockchainTest {
     @Test
     void testGetEcBlockWhenLastBlockByTimestampWasFound() {
         blockchain.setLastBlock(btd.BLOCK_13);
+        blockchain.setShardInitialBlock(btd.BLOCK_11);
         Block mockBlock = mock(Block.class);
         Blockchain spy = spy(blockchain);
         doReturn(mockBlock).when(spy).getLastBlock(btd.BLOCK_12.getTimestamp() - 1);
@@ -1153,7 +1155,7 @@ class BlockchainTest {
 
     @Test
     void testGetTransactionsByPreparedStatementOnConnection() {
-        DbUtils.inTransaction(extension, (con) -> {
+        DbUtils.checkAndRunInTransaction(extension, (con) -> {
             try (PreparedStatement pstm = con.prepareStatement("select * from transaction where id = ?")) {
                 pstm.setLong(1, txd.TRANSACTION_10.getId());
                 List<Transaction> transactions = blockchain.getTransactions(con, pstm);
@@ -1166,7 +1168,7 @@ class BlockchainTest {
 
     @Test
     void testFindPrunableTransactionsStartingFromFirstPrunableTransactionTimestampExclusive() {
-        DbUtils.inTransaction(extension, (con) -> {
+        DbUtils.checkAndRunInTransaction(extension, (con) -> {
             List<PrunableTransaction> prunableTransactions = blockchain.findPrunableTransactions(con, txd.TRANSACTION_13.getTimestamp() + 1, Integer.MAX_VALUE);
             assertEquals(1, prunableTransactions.size());
             assertEquals(txd.TRANSACTION_14.getId(), prunableTransactions.get(0).getId());
@@ -1175,7 +1177,7 @@ class BlockchainTest {
 
     @Test
     void testFindPrunableTransactionsBetweenTxTimestampsInclusive() {
-        DbUtils.inTransaction(extension, (con) -> {
+        DbUtils.checkAndRunInTransaction(extension, (con) -> {
             List<PrunableTransaction> prunableTransactions = blockchain.findPrunableTransactions(con, txd.TRANSACTION_13.getTimestamp(), txd.TRANSACTION_14.getTimestamp());
             assertEquals(2, prunableTransactions.size());
             assertEquals(txd.TRANSACTION_14.getId(), prunableTransactions.get(1).getId());

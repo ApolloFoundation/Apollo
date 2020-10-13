@@ -1,3 +1,5 @@
+CREATE DATABASE IF NOT EXISTS apl_blockchain_b5d7b6_shard_2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+use apl_blockchain_b5d7b6_shard_2;
 TRUNCATE TABLE transaction;
 TRUNCATE TABLE block;
 TRUNCATE TABLE version;

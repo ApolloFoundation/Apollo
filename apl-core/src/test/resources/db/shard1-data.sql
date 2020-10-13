@@ -1,3 +1,5 @@
+CREATE DATABASE IF NOT EXISTS apl_blockchain_b5d7b6_shard_1 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+use apl_blockchain_b5d7b6_shard_1;
 TRUNCATE TABLE transaction;
 TRUNCATE TABLE block;
 TRUNCATE TABLE version;
@@ -10,7 +12,8 @@ INSERT INTO block
 (1641706	,-6746699668324916965  ,2996	 	,5	        ,18400      , 2069655134915376442	,0	            ,200000000	        ,207	    ,X'3ab5313461e4b81c8b7af02d73861235a4e10a91a400b05ca01a3c1fdd83ca7e'	,X'02dfb5187e88edab'	,23058430050	,-3540343645446911906		,X'dd7899249f0adf0d7d6f05055f7c6396a4a8a9bd1d189bd5e2eed647f8dfcc0b'	,X'4b415617a8d85f7fcac17d2e9a1628ebabf336285acdfcb8a4c4a7e2ba34fc0f0e54cd88d66aaa5f926bc02b49bc42b5ae52870ba4ac802b8276d1c264bec3f4'	,X'18fa6d968fcc1c7f8e173be45492da816d7251a8401354d25c4f75f27c50ae99'	, 5564664969772495473	,1   ),
 (1641707	,-3540343645446911906  ,2997	 	,6	        ,22998      ,-6746699668324916965	,0	            ,0	                ,0	        ,X'1b613faf65e85ea257289156c62ec7d45684759ebceca59e46f8c94961b7a09e'	,X'02dfb518ae37f5ac'	,23058430050	, 2729391131122928659		,X'facad4c1e0a7d407e0665393253eaf8e9f1e1e7b26e035687939897eaec9efe3'	,X'f35393c0ff9721c84123075988a278cfdc596e2686772c4e6bd82751ecf06902a942f214c5afb56ea311a8d48dcdd2a44258ee03764c3e25ad1796f7d646185e'	,X'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'	,-902424482979450876	,4   )
   ;
---last block from testnet1
+--last block from testnet1;
+
 INSERT INTO transaction
 (DB_ID,     ID,                      HEIGHT,      BLOCK_ID,            BLOCK_TIMESTAMP,    DEADLINE, RECIPIENT_ID,     TRANSACTION_INDEX, AMOUNT,             FEE,            FULL_HASH,                                                                     SIGNATURE,                                                                                                                                  `TIMESTAMP`, TYPE, SUBTYPE, SENDER_ID,                SENDER_PUBLIC_KEY,                                                   REFERENCED_TRANSACTION_FULL_HASH,                                                     PHASED, VERSION, HAS_MESSAGE, HAS_ENCRYPTED_MESSAGE, HAS_PUBLIC_KEY_ANNOUNCEMENT, EC_BLOCK_HEIGHT,   EC_BLOCK_ID,            HAS_ENCRYPTTOSELF_MESSAGE, HAS_PRUNABLE_MESSAGE, HAS_PRUNABLE_ENCRYPTED_MESSAGE, HAS_PRUNABLE_ATTACHMENT, ATTACHMENT_BYTES) VALUES
   (150      ,3444674909301056677	  ,2994	     ,-468651855371775066       ,9200	       ,1440,	null	                ,0	        ,0	                ,2500000000000	,X'a524974f94f1cd2fcc6f17193477209ca5821d37d391e70ae668dd1c11dd798e'	      ,X'375ef1c05ae59a27ef26336a59afe69014c68b9bf4364d5b1b2fa4ebe302020a868ad365f35f0ca8d3ebaddc469ecd3a7c49dec5e4d2fad41f6728977b7333cc'	    ,35073712	    ,0	   ,1	    ,-8315839810807014152	 ,X'bf0ced0472d8ba3df9e21808e98e61b34404aad737e2bae1778cebc698b40f37' ,X'6400000000000000cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e'	    ,FALSE	    ,1	,FALSE	        ,FALSE	            ,FALSE	                        ,14399	        ,-5416619518547901377	,FALSE	                    ,FALSE	                ,FALSE	                        ,FALSE,                 null),

@@ -23,14 +23,12 @@ import java.sql.Statement;
 import java.util.Objects;
 import java.util.StringTokenizer;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 @Slf4j
 public class DbPopulator {
 
-    private DataSource basicDataSource;
-    private String schemaScriptPath;
-    private String dataScriptPath;
+    private final DataSource basicDataSource;
+    private final String schemaScriptPath;
+    private final String dataScriptPath;
 
     public DbPopulator(TransactionalDataSource db, String schemaScriptPath, String dataScriptPath) {
         this.basicDataSource = db;
@@ -60,7 +58,7 @@ public class DbPopulator {
                 throw new RuntimeException(e.toString(), e);
             }
         }
-        log.trace("Applied '{}' test data commands", appliedResults);
+        log.debug("Applied '{}' test data commands into db=[{}]", appliedResults, ((TransactionalDataSource)basicDataSource).getDbIdentity());
     }
 
     private byte[] readAllBytes(URI file) {
