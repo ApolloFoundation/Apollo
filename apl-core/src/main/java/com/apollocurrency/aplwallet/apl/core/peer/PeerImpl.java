@@ -175,10 +175,12 @@ public final class PeerImpl implements Peer {
         try {
             if (newState != PeerState.CONNECTED) {
                 p2pTransport.disconnect();
-                asyncExecutor.shutdownNow();
+                if (asyncExecutor != null) {
+                    asyncExecutor.shutdownNow();
+                }
                 // limiter.runWithTimeout(p2pTransport::disconnect, 1000, TimeUnit.MILLISECONDS);
             }  else {
-                if (asyncExecutor.isShutdown() || asyncExecutor.isTerminated() || asyncExecutor.isTerminating()) {
+                if (asyncExecutor == null || asyncExecutor.isShutdown() || asyncExecutor.isTerminated() || asyncExecutor.isTerminating()) {
                     initAsyncExecutor();
                 }
             }
@@ -514,32 +516,53 @@ public final class PeerImpl implements Peer {
             LOG.debug(errMsg);
             throw new PeerNotConnectedException(errMsg);
         } else {
-            return sendJSON(request);
+            return sendJSON(request, false);
         }
     }
 
     @Override
     public <R> R send(BaseP2PRequest request, JsonReqRespParser<R> parser) throws PeerNotConnectedException {
+        checkConnectedStatus();
+        try {
+            JSONObject response = sendJSON(mapper.writeValueAsString(request));
+
+            if (response == null) {
+                LOG.debug("Response is null.");
+                return null;
+            }
+            if (parser == null) {
+                return null;
+            }
+            return parser.parse(response);
+        } catch (JsonProcessingException e) {
+            LOG.debug("Can not deserialize request");
+            return null;
+        }
+    }
+
+    @Override
+    public void sendAsync(BaseP2PRequest request) {
+        asyncExecutor.submit(() -> {
+            try {
+                checkConnectedStatus();
+            } catch (PeerNotConnectedException e) {
+                LOG.debug("Peer is not connected " + getHostWithPort());
+                return;
+            }
+            try {
+                sendJSONAsync(mapper.writeValueAsString(request));
+            } catch (JsonProcessingException e) {
+                LOG.debug("Can not deserialize request");
+            }
+        });
+
+    }
+
+    private void checkConnectedStatus() throws PeerNotConnectedException {
         if (getState() != PeerState.CONNECTED) {
             String errMsg = "send() called before handshake(). Handshaking to: " + getHostWithPort();
             LOG.debug(errMsg);
             throw new PeerNotConnectedException(errMsg);
-        } else {
-            try {
-                JSONObject response = sendJSON(mapper.writeValueAsString(request));
-
-                if (response == null) {
-                    LOG.debug("Response is null.");
-                    return null;
-                }
-                if (parser == null) {
-                    return null;
-                }
-                return parser.parse(response);
-            } catch (JsonProcessingException e) {
-                LOG.debug("Can not deserialize request");
-                return null;
-            }
         }
     }
 
@@ -548,23 +571,19 @@ public final class PeerImpl implements Peer {
         return send(request, json -> json);
     }
 
-    /**
-     * Tries to send request to peer asynchronously by using peer's thread executor
-     * @throws java.util.concurrent.RejectedExecutionException when unable to send request asynchronously
-     * @param request request to send to peer
-     */
-    @Override
-    public void sendAsync(BaseP2PRequest request) {
-        asyncExecutor.submit( ()-> {
-            try {
-                send(request);
-            } catch (PeerNotConnectedException e) {
-                throw new RuntimeException(e);
-            }
-        });
+    private JSONObject sendJSON(JSONStreamAware request, boolean async) {
+        String stringRequest = requestToString(request);
+        if (StringUtils.isBlank(stringRequest)) {
+            return null;
+        }
+        if (async) {
+            return sendJSONAsync(stringRequest);
+        } else {
+            return sendJSON(stringRequest);
+        }
     }
 
-    private JSONObject sendJSON(JSONStreamAware request) {
+    private String requestToString(JSONStreamAware request) {
         StringWriter wsWriter = new StringWriter(PeersService.MAX_REQUEST_SIZE);
         try {
             request.writeJSONString(wsWriter);
@@ -572,8 +591,7 @@ public final class PeerImpl implements Peer {
             LOG.debug("Can not deserialize request");
             return null;
         }
-
-        return sendJSON(wsWriter.toString());
+        return wsWriter.toString();
     }
 
     private JSONObject sendJSON(String rq) {
@@ -599,6 +617,23 @@ public final class PeerImpl implements Peer {
                 }
             }
         } catch (RuntimeException | ParseException e) {
+            LOG.debug("Exception while sending request to '{}'", getHostWithPort(), e);
+            deactivate("Exception while sending request: " + e.getMessage());
+        }
+        return response;
+    }
+
+
+    private JSONObject sendJSONAsync(String rq) {
+        JSONObject response = null;
+
+        try {
+            Long resp = p2pTransport.sendRequest(rq);
+            if (resp == null) {
+                LOG.trace("Null response from: {}", getHostWithPort());
+                return response;
+            }
+        } catch (RuntimeException e) {
             LOG.debug("Exception while sending request to '{}'", getHostWithPort(), e);
             deactivate("Exception while sending request: " + e.getMessage());
         }
@@ -644,7 +679,7 @@ public final class PeerImpl implements Peer {
         LOG.trace("Start handshake  to chainId = {}...", targetChainId);
         lastConnectAttempt = timeService.getEpochTime();
         try {
-            JSONObject response = sendJSON(peers.getMyPeerInfoRequest());
+            JSONObject response = sendJSON(peers.getMyPeerInfoRequest(), false);
             if (response != null) {
                 LOG.trace("handshake Response = '{}'", response != null ? response.toJSONString() : "NULL");
                 if (processError(response)) {
