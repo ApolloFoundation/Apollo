@@ -99,7 +99,6 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
     @Override
     public void setShardRecoveryDao(ShardRecoveryDaoJdbc dao) {
         this.shardRecoveryDao = Objects.requireNonNull(dao, "shard Recovery Dao is NULL");
-        ;
     }
 
     protected void checkMandatoryParameters(Connection sourceConnect, TableOperationParams operationParams) {
