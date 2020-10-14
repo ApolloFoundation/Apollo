@@ -522,7 +522,6 @@ class BlockchainTest {
     @Test
     void testGetBlocksAfterBlockInMainDataSource() {
         blockchain.setLastBlock(btd.LAST_BLOCK);
-//        blockchain.setShardInitialBlock(btd.BLOCK_0);
         List<Long> blockIds = List.of(BLOCK_11_ID, BLOCK_12_ID, BLOCK_13_ID);
         List<Block> blocks = blockchain.getBlocksAfter(BLOCK_10_ID, blockIds);
         List<Block> expectedBlocks = List.of(btd.BLOCK_11, btd.BLOCK_12, btd.BLOCK_13);
@@ -632,7 +631,7 @@ class BlockchainTest {
     @Test
     void testGetEcBlockWhenLastBlockByTimestampWasNotFound() {
         blockchain.setLastBlock(btd.BLOCK_13);
-        blockchain.setShardInitialBlock(btd.BLOCK_11);
+        blockchain.setShardInitialBlock(btd.BLOCK_10);
         Blockchain spy = spy(blockchain);
         doReturn(null).when(spy).getLastBlock(btd.BLOCK_12.getTimestamp());
 

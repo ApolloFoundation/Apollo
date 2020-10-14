@@ -100,7 +100,7 @@ RUN set -ex; \
 		mariadb-backup \
 		socat \
 	; \
-# APOLLO addition START
+# APOLLO addition START (install rocksdb plugin and nano editor)
 	apt-get -y install mariadb-plugin-rocksdb -f; \
 	apt-get -y install nano -f; \
 # APOLLO addition END

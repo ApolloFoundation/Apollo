@@ -340,7 +340,7 @@ _main() {
 			ls /docker-entrypoint-initdb.d/ > /dev/null
 
 #			docker_init_database_dir "$@"
-			docker_init_database_dir "--auth-root-authentication-method=normal" # APOLLO change for SUPER user
+			docker_init_database_dir "--auth-root-authentication-method=normal" # APOLLO addition for container's SUPER user
 
 			mysql_note "Starting temporary server"
 			docker_temp_server_start "$@"

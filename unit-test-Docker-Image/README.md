@@ -1,7 +1,6 @@
 # How to create and install local MyRocks DB docker image
 
-Link with instructions:
-https://signal18.io/blog/docker-mariadb-myrocks
+Dockerfile file to build container image in folder /unit-test-Docker-Image is official script from repo https://github.com/docker-library/mariadb and modified to our needs. 
 
 MariaDb in docker info - https://hub.docker.com/_/mariadb/
 
@@ -11,22 +10,19 @@ MariaDb in docker info - https://hub.docker.com/_/mariadb/
 
 https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04-ru
 
-#### 1. See prepared 'Dockerfile' script
+#### 1. Run console commands to build custom Apollo mariadb docker image
+
+1.1 Go to sub folder to build new image :
+
+$ cd unit-test-Docker-Image
 
 
-#### 2. Run console commands
-
-2.1 Download initial image. It we'll use as a base for a custom image and container :
-
-$ docker pull mariadb:10.5.5
-
-
-2.2 Build a new image 'mariadb:10.5' by running script 'Dockerfile' in the current folder :
+1.2 Build a new image named 'mariadb:10.5' by running script 'Dockerfile' in the folder /unit-test-Docker-Image :
 
 $ docker build -t mariadb:10.5 .
 
 
-2.3 CHECKING. Start up a new container by using created image 'mariadb:10.5' and give it a name 'apl-mariadb':
+1.3 CHECKING. Start up a new container by using created image 'mariadb:10.5' and give it a name 'apl-mariadb':
 
 $ docker run -p 3306:3306 \
     --name apl-mariadb \
@@ -37,21 +33,37 @@ $ docker run -p 3306:3306 \
     -e MYSQL_PASSWORD=testpass \
     -d mariadb:10.5
 
+You can stop reading here if your local docker image has been built successfully. You can try run 'slow' unit tests with mariadb in docker by using command:
 
-2.4 Quick check it accessible on local PC :
+$ mvn test -Dgroups="slow" 
+
+#### 2. Check connectivity with mariadb run docker container  
+
+#### Check if docker run and run it if it's needed
+
+$ $ docker ps -a
+
+| CONTAINER ID | IMAGE | COMMAND | CREATED | STATUS | PORTS | NAMES |
+|:---|:---:|:---|:---:|:---:|:---:|:---:|
+| da72e6287db9 | mariadb:10.5 | "docker-entrypoint.s…" | 14 hours ago | Up 1 second | 0.0.0.0:3306->3306/tcp | apl-mariadb |
+
+See run container with NAME = apl-mariadb and STATUS = Up
+
+You can start created container by command: $ docker start apl-mariadb 
+
+2.1 Quick check mariadb is accessible on local PC :
 
 $ mysql -h 127.0.0.1 -P3306 -u root -prootpass
 
-2.6 Quick check by access with testuser on local PC :
+2.2 Quick check by access with 'testuser' on local PC :
 
 $ mysql -h 127.0.0.1 -P3306 -u testuser -ptestpass
 
-
-2.7 Show all mariadb image option parameters:
+2.3 You can look for all mariadb image optional run parameters by command:
 
 $ docker run -it --rm mariadb:10.5 --verbose --help
 
-#### 3. Quickly check that MyRocks is enabled:
+2.4 Quickly check that MyRocks is enabled:
 
 $ mysql -uroot -prootpass -h127.0.0.1 -P3306
 
@@ -71,34 +83,49 @@ mysql> show engines;
 | SEQUENCE           | YES     | Generated tables filled with sequential values                                                  | YES          | NO   | YES        |
 | InnoDB             | DEFAULT | Supports transactions, row-level locking, foreign keys and encryption for tables                | YES          | YES  | YES        |
  
-Set max connection in MariaDb
 
-mysql> set global max_connections = 1024;
+#### 3. Useful docker commands
 
-
-#### Useful commands
-
-Start container by name
+3.1 Start container by name
 
 $ docker start apl-mariadb
 
-Stop container by name
+3.2 Stop container by name
 
 $ docker stop apl-mariadb
 
-Connect to bash in running container
+3.3 Restart container
+
+$ docker restart mariadbtest
+
+3.4 Connect to MariaDb container bash
 
 $ docker exec -it apl-mariadb bash
 
-See logs for running container 
+3.5 See logs for running container (troubleshooting) 
 
 $ docker logs apl-mariadb
 
-Connect to MariaDb container bash
+3.6 Find the IP address that has been assigned to the container:
+    
+$ docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' apl-mariadb
 
-$ docker exec -it apl-mariadb bash
+3.7 Kill container
 
-##### SQL
+docker kill apl-mariadb
+
+3.8 Remove container (not a saved data ! )
+
+$ docker rm apl-mariadb
+
+3.9 Remove data related to container
+
+$ docker rm -v apl-mariadb
+
+##### 4. Useful SQL
 
 select concat(user, '@', host, ' => ', json_detailed(priv)) from mysql.global_priv;
 
+##### Links
+
+MariaDB reserved keyword list - https://github.com/AnanthaRajuCprojects/Reserved-Key-Words-list-of-various-programming-languages/blob/master/MariaDB%20Reserved%20Words.md 
