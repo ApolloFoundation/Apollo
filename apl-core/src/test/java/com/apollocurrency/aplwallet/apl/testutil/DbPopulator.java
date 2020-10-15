@@ -26,7 +26,7 @@ import java.util.StringTokenizer;
 @Slf4j
 public class DbPopulator {
 
-    private final DataSource basicDataSource;
+    private final TransactionalDataSource basicDataSource;
     private final String schemaScriptPath;
     private final String dataScriptPath;
 
@@ -38,6 +38,18 @@ public class DbPopulator {
 
     public void initDb() {
         findAndExecute(schemaScriptPath, "Schema");
+    }
+
+    public void executeUseDbSql(String shardName) {
+        Objects.requireNonNull(shardName , "shardName is NULL");
+        try (Connection con = basicDataSource.getConnection();
+             Statement stm = con.createStatement()) {
+            stm.executeUpdate(String.format("use %s;", shardName));
+            con.commit();
+        } catch (SQLException e) {
+            log.error("Error executing USE shard command", e);
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     private void loadSqlAndExecute(URI file) {
@@ -58,7 +70,7 @@ public class DbPopulator {
                 throw new RuntimeException(e.toString(), e);
             }
         }
-        log.debug("Applied '{}' test data commands into db=[{}]", appliedResults, ((TransactionalDataSource)basicDataSource).getDbIdentity());
+        log.trace("Applied '{}' test data commands into db=[{}]", appliedResults, ((TransactionalDataSource)basicDataSource).getDbIdentity());
     }
 
     private byte[] readAllBytes(URI file) {
