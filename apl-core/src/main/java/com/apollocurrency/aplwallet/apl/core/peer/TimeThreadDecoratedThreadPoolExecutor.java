@@ -59,7 +59,7 @@ public class TimeThreadDecoratedThreadPoolExecutor extends DecoratedThreadPoolEx
         @Override
         public void atStart() {
             this.taskId = taskIdCounter.incrementAndGet();
-            log.debug("Async task {} started, trace {}", taskId, ThreadUtils.lastNStacktrace(15));
+            log.debug("Async task #{} started, trace {}", taskId, ThreadUtils.lastNStacktrace(15));
             scheduleTime = System.currentTimeMillis();
         }
     }
