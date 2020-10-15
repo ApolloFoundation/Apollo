@@ -195,7 +195,7 @@ public class PeerWebSocket extends WebSocketAdapter {
                 throw new ProtocolException("POST request length exceeds max message size");
             }
             //synchronizing here
-            sendMonitor.enter();
+//            sendMonitor.enter();
             try {
                 limiter.runWithTimeout(() -> sendBytes(buf), 5000, TimeUnit.MILLISECONDS);
             } catch (IllegalStateException e) {
@@ -210,7 +210,7 @@ public class PeerWebSocket extends WebSocketAdapter {
             } catch (TimeoutException e) {
                 throw new AplException.AplIOException("Can't send to " + s.getRemote() + ", time limit is reached.");
             } finally {
-                sendMonitor.leave();
+//                sendMonitor.leave();
             }
         } else {
             throw new AplException.AplIOException("Websocket session is null for " + which());
