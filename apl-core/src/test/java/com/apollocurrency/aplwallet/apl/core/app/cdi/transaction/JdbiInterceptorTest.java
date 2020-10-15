@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.app.cdi.transaction;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiTransactionalInterceptor;
@@ -22,10 +23,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.enterprise.inject.spi.CDI;
@@ -44,14 +41,7 @@ import static org.mockito.Mockito.verify;
 @Testcontainers
 @Tag("slow")
 @EnableWeld
-public class JdbiInterceptorTest {
-    @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-        .withDatabaseName("testdb")
-        .withUsername("testuser")
-        .withPassword("testpass")
-        .withExposedPorts(3306)
-        .withLogConsumer(new Slf4jLogConsumer(log));
+public class JdbiInterceptorTest extends DbContainerBaseTest {
 
     @RegisterExtension
     DbExtension extension = new DbExtension(mariaDBContainer);

@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
@@ -39,10 +40,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
@@ -58,15 +55,7 @@ import static org.mockito.Mockito.mock;
 @Testcontainers
 @Tag("slow")
 @EnableWeld
-class ShardRecoveryDaoTest {
-
-    @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-        .withDatabaseName("testdb")
-        .withUsername("testuser")
-        .withPassword("testpass")
-        .withExposedPorts(3306)
-        .withLogConsumer(new Slf4jLogConsumer(log));
+class ShardRecoveryDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
     DbExtension extension = new DbExtension(mariaDBContainer);

@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.prunable;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -39,10 +40,6 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
@@ -60,14 +57,7 @@ import static org.mockito.Mockito.mock;
 @Testcontainers
 @Tag("slow")
 @EnableWeld
-class PrunableMessageServiceTest {
-    @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-        .withDatabaseName("testdb")
-        .withUsername("testuser")
-        .withPassword("testpass")
-        .withExposedPorts(3306)
-        .withLogConsumer(new Slf4jLogConsumer(log));
+class PrunableMessageServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
     DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), null, null, "db/prunable-message-data.sql");

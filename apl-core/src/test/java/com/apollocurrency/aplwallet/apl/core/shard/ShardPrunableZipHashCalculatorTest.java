@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
@@ -32,10 +33,6 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.enterprise.event.Event;
@@ -60,14 +57,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @Testcontainers
 @Tag("slow")
 @EnableWeld
-class ShardPrunableZipHashCalculatorTest {
-    @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-        .withDatabaseName("testdb")
-        .withUsername("testuser")
-        .withPassword("testpass")
-        .withExposedPorts(3306)
-        .withLogConsumer(new Slf4jLogConsumer(log));
+class ShardPrunableZipHashCalculatorTest extends DbContainerBaseTest {
 
     DerivedTablesRegistry registry = mock(DerivedTablesRegistry.class);
     Zip zip = spy(new ZipImpl());
@@ -108,16 +98,6 @@ class ShardPrunableZipHashCalculatorTest {
     Shard shard2 = new Shard(2L, new byte[32], ShardState.FULL, 20, new byte[32], new long[3], new int[3], new int[3], new byte[32]);
     Shard shard3 = new Shard(3L, new byte[32], ShardState.FULL, 28, new byte[32], new long[3], new int[3], new int[3], new byte[32]);
 
-
-    /*@Test
-    void testTriggerAsyncTrimDoneEvent() {
-        doReturn(List.of()).when(shardDao).getAllCompletedShards();
-        mockChain();
-        trimDataEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(200, 300, 250));
-
-        verify(shardDao).getAllCompletedShards();
-        verifyNoInteractions(zip, dirProvider);
-    }*/
 
     @Test
     void testTryRecalculatePrunableArchiveHashes() throws IOException {

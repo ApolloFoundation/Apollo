@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.data.DexTestData;
@@ -20,10 +21,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
@@ -35,14 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Testcontainers
 @Tag("slow")
 @EnableWeld
-public class DexContractDaoTest {
-    @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-        .withDatabaseName("testdb")
-        .withUsername("testuser")
-        .withPassword("testpass")
-        .withExposedPorts(3306)
-        .withLogConsumer(new Slf4jLogConsumer(log));
+public class DexContractDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
     DbExtension extension = new DbExtension(mariaDBContainer);

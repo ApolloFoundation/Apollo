@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.dao.state.currency;
+package com.apollocurrency.aplwallet.apl.core.dao;
 
 import lombok.extern.slf4j.Slf4j;
 import org.testcontainers.containers.GenericContainer;

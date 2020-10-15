@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdat
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.TrimConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
@@ -67,14 +68,7 @@ import static org.mockito.Mockito.verify;
 @Testcontainers
 @Tag("slow")
 @ExtendWith(MockitoExtension.class)
-public class ShardServiceIntegrationTest {
-    @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-        .withDatabaseName("testdb")
-        .withUsername("testuser")
-        .withPassword("testpass")
-        .withExposedPorts(3306)
-        .withLogConsumer(new Slf4jLogConsumer(log));
+public class ShardServiceIntegrationTest extends DbContainerBaseTest {
 
     @RegisterExtension
     TemporaryFolderExtension folder = new TemporaryFolderExtension();
