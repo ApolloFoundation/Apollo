@@ -135,8 +135,15 @@ public class Peer2PeerTransport {
     }
 
     public Long sendRequest(String message) {
+        Long requestId = sendRequestNoResponseWaiter(message);
+        if (requestId != null) {
+            requestMap.put(requestId, new ResponseWaiter());
+        }
+        return requestId;
+    }
+
+    public Long sendRequestNoResponseWaiter(String message) {
         Long requestId = nextRequestId();
-        requestMap.put(requestId, new ResponseWaiter());
         boolean sendOK = send(message, requestId);
         if (sendOK) {
             return requestId;

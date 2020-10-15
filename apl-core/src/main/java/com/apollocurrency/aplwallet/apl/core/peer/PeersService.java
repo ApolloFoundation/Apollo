@@ -730,7 +730,7 @@ public class PeersService {
     public void sendToSomePeers(Block block) {
         ProcessBlockRequest request = new ProcessBlockRequest(blockConverter.convert(block), blockchainConfig.getChain().getChainId());
         LOG.debug("Send to some peers the block: {} at height: {}", block.getId(), block.getHeight());
-        sendToSomePeers(request);
+        sendToSomePeersAsync(request);
     }
 
     public void sendToSomePeers(List<? extends Transaction> transactions) {

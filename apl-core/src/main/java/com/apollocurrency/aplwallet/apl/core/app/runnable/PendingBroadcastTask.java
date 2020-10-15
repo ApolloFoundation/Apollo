@@ -70,7 +70,7 @@ public class PendingBroadcastTask implements Runnable {
 
     int batchSize() {
         int batchSize = batchSizeCalculator.currentBatchSize();
-        log.debug("Load factor {}, batch size {}", memPool.pendingBroadcastQueueLoad(), batchSize);
+        log.trace("Load factor {}, batch size {}", memPool.pendingBroadcastQueueLoad(), batchSize);
         return batchSize;
     }
 

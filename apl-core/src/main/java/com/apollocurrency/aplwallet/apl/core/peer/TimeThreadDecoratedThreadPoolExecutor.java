@@ -4,12 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimeThreadDecoratedThreadPoolExecutor extends DecoratedThreadPoolExecutor {
 
@@ -37,9 +39,11 @@ public class TimeThreadDecoratedThreadPoolExecutor extends DecoratedThreadPoolEx
 
     @Slf4j
     private static class TimeThreadJob implements Event {
+        private static final AtomicInteger taskIdCounter = new AtomicInteger(0);
         private volatile long startTime;
         private volatile long scheduleTime;
         private volatile long finishTime;
+        private volatile long taskId;
 
         @Override
         public void before() {
@@ -49,11 +53,13 @@ public class TimeThreadDecoratedThreadPoolExecutor extends DecoratedThreadPoolEx
         @Override
         public void after() {
             finishTime = System.currentTimeMillis();
-            log.debug("Async task finished, fullTime/taskTime {}/{}", finishTime - scheduleTime, finishTime - startTime);
+            log.debug("Async task #{} finished, fullTime/taskTime {}/{}", taskId, finishTime - scheduleTime, finishTime - startTime);
         }
 
         @Override
         public void atStart() {
+            this.taskId = taskIdCounter.incrementAndGet();
+            log.debug("Async task {} started, trace {}", taskId, ThreadUtils.lastNStacktrace(15));
             scheduleTime = System.currentTimeMillis();
         }
     }

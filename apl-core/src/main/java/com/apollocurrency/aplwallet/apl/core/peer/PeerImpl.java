@@ -629,7 +629,7 @@ public final class PeerImpl implements Peer {
         JSONObject response = null;
 
         try {
-            Long resp = p2pTransport.sendRequest(rq);
+            Long resp = p2pTransport.sendRequestNoResponseWaiter(rq);
             if (resp == null) {
                 LOG.trace("Null response from: {}", getHostWithPort());
                 return response;
