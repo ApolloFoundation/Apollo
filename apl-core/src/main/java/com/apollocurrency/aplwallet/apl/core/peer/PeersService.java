@@ -741,7 +741,11 @@ public class PeersService {
                 transactionsData.add(transactionConverter.convert(transactions.get(i)));
             }
             BaseP2PRequest request = new ProcessTransactionsRequest(transactionsData, blockchainConfig.getChain().getChainId());
-            sendToSomePeersAsync(request);
+            try {
+                sendToSomePeersAsync(request);
+            } catch (RejectedExecutionException e) {
+                log.debug("Unable to send async batch, skip it");
+            }
             nextBatchStart += sendTransactionsBatchSize;
         }
     }
@@ -775,7 +779,7 @@ public class PeersService {
                             log.debug("Failed to send to peer {} asynchronously, will send synchronously", peer.getHost());
                             peer.send(request);
                         } catch (PeerNotConnectedException peerNotConnectedException) {
-                            peerNotConnectedException.printStackTrace();
+                            log.debug("Peer not connected, failed to send request {}", peerNotConnectedException.getMessage());
                         }
                     }
                 }
