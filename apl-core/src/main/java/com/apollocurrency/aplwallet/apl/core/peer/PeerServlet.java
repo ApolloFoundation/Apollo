@@ -256,6 +256,9 @@ public final class PeerServlet extends WebSocketServlet {
         //
 
         PeerImpl peer = (PeerImpl) transport.getPeer();
+        if (JSON.emptyJSONString.equalsIgnoreCase(request)) {
+            return;
+        }
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
