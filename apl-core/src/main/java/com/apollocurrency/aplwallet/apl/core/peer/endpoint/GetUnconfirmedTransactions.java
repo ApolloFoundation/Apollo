@@ -31,9 +31,11 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.util.List;
 import java.util.Set;
 @Slf4j
+@Singleton
 public final class GetUnconfirmedTransactions extends PeerRequestHandler {
     private TransactionSerializer transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
 
