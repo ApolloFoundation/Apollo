@@ -3,10 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.io.CountingInputReader;
 import com.apollocurrency.aplwallet.apl.util.io.CountingOutputWriter;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.google.common.util.concurrent.TimeLimiter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -263,8 +262,6 @@ public class Peer2PeerTransport {
                 return sendOK;
             }
             sendOK = ws.send(wsRequest, requestId);
-        } catch (AplException.AplIOException ex) {
-            log.debug("Can't sent to {}, cause {}", getHostWithPort(), ex.getMessage());
         } catch (IOException ex) {
             log.debug("Can't sent to " + getHostWithPort(), ex);
         }
