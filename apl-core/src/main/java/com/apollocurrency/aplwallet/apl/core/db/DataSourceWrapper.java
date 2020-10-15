@@ -308,14 +308,10 @@ public class DataSourceWrapper implements DataSource {
         if (!initialized) {
             return;
         }
-        try {
-            shutdown = true;
-            initialized = false;
-            dataSource.close();
-            log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
-        } catch (Exception e) {
-            log.info(e.toString(), e);
-        }
+        shutdown = true;
+        initialized = false;
+        dataSource.close();
+        log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
     }
 
     public boolean isShutdown() {
