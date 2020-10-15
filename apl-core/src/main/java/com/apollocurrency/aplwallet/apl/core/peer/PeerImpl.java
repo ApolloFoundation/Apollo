@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -194,9 +195,9 @@ public final class PeerImpl implements Peer {
         } else if (newState == PeerState.NON_CONNECTED) {
             peers.notifyListeners(this, PeersService.Event.CHANGED_ACTIVE_PEER);
         }
-        LOG.debug("Peer={} {} oldState={} newState={}", this.getAnnouncedAddress(),
+        LOG.debug("Peer={} {} oldState={} newState={}, trace: {}", this.getAnnouncedAddress(),
             newState != PeerState.CONNECTED && oldState == PeerState.CONNECTED ? "was disconnected" : "",
-            oldState, newState);
+            oldState, newState, ThreadUtils.last5Stacktrace());
     }
 
     @Override
