@@ -147,7 +147,7 @@ public final class PeerImpl implements Peer {
     }
 
     private void initAsyncExecutor() {
-        this.asyncExecutor = new ThreadPoolExecutor(1, 10, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<>(100), new NamedThreadFactory(getHost() + "-AsyncExecutor"));
+        this.asyncExecutor = new TimeThreadDecoratedThreadPoolExecutor(1, 10, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<>(100), new NamedThreadFactory(getHost() + "-AsyncExecutor"));
     }
 
     @Override

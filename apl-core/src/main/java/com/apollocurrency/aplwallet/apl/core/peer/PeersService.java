@@ -142,7 +142,7 @@ public class PeersService {
      * be added to connectablePeers
      */
     private final ConcurrentMap<String, Peer> inboundPeers = new ConcurrentHashMap<>();
-    private final ExecutorService sendingService;
+    private final ThreadPoolExecutor sendingService;
     private final TimeLimiterService timeLimiterService;
     private final PropertiesHolder propertiesHolder;
     private final Blockchain blockchain;
@@ -187,8 +187,8 @@ public class PeersService {
         int asyncTxSendingPoolSize = propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30);
 //        this.txSendingDispatcher = new ThreadPoolExecutor(5, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(asyncTxSendingPoolSize), new NamedThreadFactory("P2PTxSendingPool", true));
 
-        this.sendingService = new ThreadPoolExecutor(10, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(1000), new NamedThreadFactory("PeersSendingService"));
-        isLightClient = propertiesHolder.isLightClient();
+        this.sendingService = new TimeThreadDecoratedThreadPoolExecutor(10, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(1000), new NamedThreadFactory("PeersSendingService"));
+    isLightClient = propertiesHolder.isLightClient();
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -772,7 +772,7 @@ public class PeersService {
                         peer.sendAsync(request);
                     } catch (RejectedExecutionException e) {
                         try {
-                            log.debug("Failed to send to peers asynchronously, will send synchronously");
+                            log.debug("Failed to send to peer {} asynchronously, will send synchronously", peer.getHost());
                             peer.send(request);
                         } catch (PeerNotConnectedException peerNotConnectedException) {
                             peerNotConnectedException.printStackTrace();
@@ -788,6 +788,7 @@ public class PeersService {
 
     private void sendToSomePeers(BaseP2PRequest request) {
         checkP2PUp();
+        log.debug("Sending Service STATS: current running {}, waiting {}", sendingService.getActiveCount(), sendingService.getQueue().size());
         sendingService.submit(() -> {
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();
