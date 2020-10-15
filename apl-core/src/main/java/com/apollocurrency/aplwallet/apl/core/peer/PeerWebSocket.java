@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.google.common.util.concurrent.TimeLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
@@ -166,7 +167,7 @@ public class PeerWebSocket extends WebSocketAdapter {
         Session s = getSession();
         if (s != null) {
             if (log.isTraceEnabled()) {
-                log.trace("Send [{} ...] to PeerWebSocket={} from {}", message, this.getTransport().getPeer().getAnnouncedAddress(), getSession().getLocalAddress().toString());
+                log.trace("Send [{} ...] to PeerWebSocket={} from {} -- trace {}", message, this.getTransport().getPeer().getAnnouncedAddress(), getSession().getLocalAddress().toString(), ThreadUtils.lastNStacktrace(10));
                 //log.trace("Send {} PeerWebSocket={} jettySession={}", message.substring(32), this, sessionToString(getSession()));
             }
             byte[] requestBytes = message.getBytes(StandardCharsets.UTF_8);
