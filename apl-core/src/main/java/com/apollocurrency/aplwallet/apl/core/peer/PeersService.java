@@ -187,7 +187,7 @@ public class PeersService {
         int asyncTxSendingPoolSize = propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30);
 //        this.txSendingDispatcher = new ThreadPoolExecutor(5, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(asyncTxSendingPoolSize), new NamedThreadFactory("P2PTxSendingPool", true));
 
-        this.sendingService = new TimeThreadDecoratedThreadPoolExecutor(10, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(1000), new NamedThreadFactory("PeersSendingService"));
+        this.sendingService = new TimeTraceDecoratedThreadPoolExecutor(10, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(1000), new NamedThreadFactory("PeersSendingService"));
     isLightClient = propertiesHolder.isLightClient();
     }
 

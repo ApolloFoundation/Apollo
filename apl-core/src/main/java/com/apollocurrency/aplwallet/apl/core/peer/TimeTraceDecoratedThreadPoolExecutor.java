@@ -13,21 +13,21 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class TimeThreadDecoratedThreadPoolExecutor extends DecoratedThreadPoolExecutor {
+public class TimeTraceDecoratedThreadPoolExecutor extends DecoratedThreadPoolExecutor {
 
-    public TimeThreadDecoratedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue) {
+    public TimeTraceDecoratedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue) {
         super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue);
     }
 
-    public TimeThreadDecoratedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory) {
+    public TimeTraceDecoratedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory) {
         super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory);
     }
 
-    public TimeThreadDecoratedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue, RejectedExecutionHandler handler) {
+    public TimeTraceDecoratedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue, RejectedExecutionHandler handler) {
         super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, handler);
     }
 
-    public TimeThreadDecoratedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler) {
+    public TimeTraceDecoratedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler) {
         super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
     }
 
@@ -53,13 +53,13 @@ public class TimeThreadDecoratedThreadPoolExecutor extends DecoratedThreadPoolEx
         @Override
         public void after() {
             finishTime = System.currentTimeMillis();
-            log.debug("Async task #{} finished, fullTime/taskTime {}/{}", taskId, finishTime - scheduleTime, finishTime - startTime);
+            log.trace("Async task #{} finished, fullTime/taskTime {}/{}", taskId, finishTime - scheduleTime, finishTime - startTime);
         }
 
         @Override
         public void atStart() {
             this.taskId = taskIdCounter.incrementAndGet();
-            log.debug("Async task #{} started, trace {}", taskId, ThreadUtils.lastNStacktrace(15));
+            log.trace("Async task #{} started, trace {}", taskId, ThreadUtils.lastNStacktrace(15));
             scheduleTime = System.currentTimeMillis();
         }
     }
