@@ -45,6 +45,7 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
@@ -730,12 +731,12 @@ public class PeersService {
 
     public void sendToSomePeers(Block block) {
         ProcessBlockRequest request = new ProcessBlockRequest(blockConverter.convert(block), blockchainConfig.getChain().getChainId());
-        LOG.debug("Send to some peers the block: {} at height: {}", block.getId(), block.getHeight());
+        LOG.debug("Send to some peers the block: {} at height: {}, trace - {}", block.getId(), block.getHeight(), ThreadUtils.lastNStacktrace(8));
         sendToSomePeersAsync(request);
     }
 
     public void sendToSomePeers(List<? extends Transaction> transactions) {
-        log.debug("Send transactions to peers, {}", transactions.stream().map(Transaction::getId).map(String::valueOf).collect(Collectors.joining(",")));
+        log.debug("Send transactions to peers, {} - {}", transactions.stream().map(Transaction::getId).map(String::valueOf).collect(Collectors.joining(",")), ThreadUtils.lastNStacktrace(10));
         int nextBatchStart = 0;
         while (nextBatchStart < transactions.size()) {
             List<TransactionDTO> transactionsData = new ArrayList<>();
