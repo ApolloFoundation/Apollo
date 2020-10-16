@@ -91,13 +91,14 @@ public class PeerWebSocket extends WebSocketAdapter {
     }
 
     @Override
-    public void onWebSocketConnect(Session sess) {
+    public synchronized void onWebSocketConnect(Session sess) {
         super.onWebSocketConnect(sess);
         log.trace("{} WebSocket connectded:", which());
     }
 
     @Override
-    public void onWebSocketClose(int statusCode, String reason) {
+    public synchronized void onWebSocketClose(int statusCode, String reason) {
+
         super.onWebSocketClose(statusCode, reason);
         log.trace("Peer: {} WebSocket close: {}", which(), statusCode);
         Peer2PeerTransport p = peerReference.get();
@@ -222,7 +223,7 @@ public class PeerWebSocket extends WebSocketAdapter {
         }
     }
 
-    public void close() {
+    public synchronized void close() {
         Session s = getSession();
         if (s != null) {
             s.close(1001, "Disconnect"); //RFC 6455, Section 7.4.1
