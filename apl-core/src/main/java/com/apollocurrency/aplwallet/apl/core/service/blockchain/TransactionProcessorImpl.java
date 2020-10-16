@@ -378,18 +378,16 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     if (!processingService.addNewUnconfirmedTransaction(unconfirmedTransaction)) {
                         break;
                     }
-                } else if (validationResult.getError() == UnconfirmedTxValidationResult.Error.NOT_VALID) {
-                    exceptions.add(new AplException.NotValidException(validationResult.getErrorDescription()));
-                    continue;
-                }
-                if (memPool.isAlreadyBroadcasted(transaction)) {
+                    if (memPool.isAlreadyBroadcasted(transaction)) {
 //                    log.debug("Received back transaction " + transaction.getStringId()
 //                        + " that we broadcasted, will not forward again to peers");
-                } else {
-                    sendToPeersTransactions.add(unconfirmedTransaction);
+                    } else {
+                        sendToPeersTransactions.add(unconfirmedTransaction);
+                    }
+                    addedUnconfirmedTransactions.add(transaction);
+                } else if (validationResult.getError() == UnconfirmedTxValidationResult.Error.NOT_VALID) {
+                    exceptions.add(new AplException.NotValidException(validationResult.getErrorDescription()));
                 }
-                addedUnconfirmedTransactions.add(transaction);
-
             } catch (AplException.NotCurrentlyValidException ignore) {
             } catch (AplException.ValidationException | RuntimeException e) {
                 log.warn(String.format("Invalid transaction from peer: %s", JSONData.unconfirmedTransaction(transaction)), e);
