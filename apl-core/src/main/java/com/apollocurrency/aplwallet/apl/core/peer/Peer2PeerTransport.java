@@ -14,8 +14,6 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.net.SocketTimeoutException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -193,16 +191,16 @@ public class Peer2PeerTransport {
             ws.close();
         }
     }
-
-    private void cleanUp() {
-        List<Long> toDelete = new ArrayList<>();
-        if (requestCache.size() != 0) {
-            requestCache.asMap().keySet().stream()
-                .filter(wsw -> (requestCache.getIfPresent(wsw).isOld()))
-                .forEachOrdered(toDelete::add);
-        }
-        requestCache.invalidateAll(toDelete);
-    }
+//
+//    private void cleanUp() {
+//        List<Long> toDelete = new ArrayList<>();
+//        if (requestCache.size() != 0) {
+//            requestCache.asMap().keySet().stream()
+//                .filter(wsw -> (requestCache.getIfPresent(wsw).isOld()))
+//                .forEachOrdered(toDelete::add);
+//        }
+//        requestCache.invalidateAll(toDelete);
+//    }
 
     private boolean sendToWebSocket(final String wsRequest, PeerWebSocket ws, Long requestId) {
         boolean sendOK = false;
@@ -220,7 +218,7 @@ public class Peer2PeerTransport {
 
     public boolean send(String message, Long requestId) {
         boolean sendOK = false;
-        cleanUp();
+//        cleanUp();
         if (message == null || message.isEmpty()) {
             //we have nothing to send
             return sendOK;
