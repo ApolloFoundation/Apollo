@@ -47,7 +47,6 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.io.CountingInputReader;
-import com.apollocurrency.aplwallet.apl.util.io.CountingOutputWriter;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
@@ -64,8 +63,6 @@ import javax.annotation.PreDestroy;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -178,49 +175,49 @@ public final class PeerServlet extends WebSocketServlet {
         factory.setCreator(new PeerSocketCreator());
     }
 
-    /**
-     * Process HTTP POST request
-     *
-     * @param req  HTTP request
-     * @param resp HTTP response
-     * @throws IOException I/O error
-     */
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        JSONStreamAware jsonResponse;
-        lookupComponents();
-        //
-        // Process the peer request
-        //
-        PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
-        Peer peer = peersService.findOrCreatePeer(pa, null, true);
-
-        if (peer == null) {
-            jsonResponse = PeerResponses.UNKNOWN_PEER;
-        } else {
-            if (peer.isBlacklisted()) {
-                jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
-            } else {
-                jsonResponse = process(peer, req.getReader());
-            }
-        }
-        //
-        // Return the response
-        //
-        if (jsonResponse == null) { //this is because we got just error message from peer
-            return;
-        }
-        resp.setContentType("text/plain; charset=UTF-8");
-        try (CountingOutputWriter writer = new CountingOutputWriter(resp.getWriter())) {
-            JSON.writeJSONString(jsonResponse, writer);
-        } catch (RuntimeException e) {
-            processException(peer, e);
-            LOG.debug("Exception while responding to {}, cause {}", pa.getAddrWithPort(), e.getMessage());
-            throw e;
-        } catch (IOException e) {
-            LOG.debug("Exception while responding to {}, cause {}", pa.getAddrWithPort(), e.getMessage());
-        }
-    }
+//    /**
+//     * Process HTTP POST request
+//     *
+//     * @param req  HTTP request
+//     * @param resp HTTP response
+//     * @throws IOException I/O error
+//     */
+//    @Override
+//    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+//        JSONStreamAware jsonResponse;
+//        lookupComponents();
+//        //
+//        // Process the peer request
+//        //
+//        PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
+//        Peer peer = peersService.findOrCreatePeer(pa, null, true);
+//
+//        if (peer == null) {
+//            jsonResponse = PeerResponses.UNKNOWN_PEER;
+//        } else {
+//            if (peer.isBlacklisted()) {
+//                jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
+//            } else {
+//                jsonResponse = process(peer, req.getReader());
+//            }
+//        }
+//        //
+//        // Return the response
+//        //
+//        if (jsonResponse == null) { //this is because we got just error message from peer
+//            return;
+//        }
+//        resp.setContentType("text/plain; charset=UTF-8");
+//        try (CountingOutputWriter writer = new CountingOutputWriter(resp.getWriter())) {
+//            JSON.writeJSONString(jsonResponse, writer);
+//        } catch (RuntimeException e) {
+//            processException(peer, e);
+//            LOG.debug("Exception while responding to {}, cause {}", pa.getAddrWithPort(), e.getMessage());
+//            throw e;
+//        } catch (IOException e) {
+//            LOG.debug("Exception while responding to {}, cause {}", pa.getAddrWithPort(), e.getMessage());
+//        }
+//    }
 
     private void processException(Peer peer, Exception e) {
         if (peer != null) {
@@ -235,9 +232,7 @@ public final class PeerServlet extends WebSocketServlet {
     }
 
     void doPostWebSocket(Peer2PeerTransport transport, Long requestId, String request) {
-        threadPool.execute(() -> {
-            doPostTask(transport, requestId, request);
-        });
+        threadPool.execute(() -> doPostTask(transport, requestId, request));
     }
 
     /**

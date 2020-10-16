@@ -68,7 +68,7 @@ public final class GetUnconfirmedTransactions extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 
 }

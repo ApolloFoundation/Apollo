@@ -4,32 +4,18 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.io.CountingInputReader;
-import com.apollocurrency.aplwallet.apl.util.io.CountingOutputWriter;
 import com.google.common.util.concurrent.TimeLimiter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.lang.ref.SoftReference;
-import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URI;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.zip.GZIPInputStream;
 
 /**
  * @author alukin@gmail.com
@@ -50,9 +36,9 @@ public class Peer2PeerTransport {
     private final TimeLimiter limiter;
     private volatile long downloadedVolume;
     private volatile long uploadedVolume;
-    private PeerWebSocket inboundWebSocket;
+    private volatile PeerWebSocket inboundWebSocket;
     //this should be final because it is problematic to stop websocket client properly
-    private PeerWebSocketClient outboundWebSocket;
+    private volatile PeerWebSocketClient outboundWebSocket;
     @Getter
     private long lastActivity;
 
@@ -212,55 +198,6 @@ public class Peer2PeerTransport {
         toDelete.forEach(requestMap::remove);
     }
 
-    private boolean sendHttp(final String request, Long requestId) {
-        boolean sendOK = false;
-        HttpURLConnection connection;
-        String urlString = "http://" + getHostWithPort() + "/apl";
-        try {
-            URL url = new URL(urlString);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setDoOutput(true);
-            connection.setConnectTimeout(PeersService.connectTimeout);
-            connection.setReadTimeout(PeersService.readTimeout);
-            connection.setRequestProperty("Accept-Encoding", "gzip");
-            connection.setRequestProperty("Content-Type", "text/plain; charset=UTF-8");
-            try (Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8))) {
-                CountingOutputWriter cow = new CountingOutputWriter(writer);
-                cow.write(request);
-                updateUploadedVolume(cow.getCount());
-            }
-        } catch (IOException ex) {
-            log.trace("Error sending HTTP request to {}", getHostWithPort(), ex);
-            return sendOK;
-        }
-        try {
-            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                InputStream responseStream = connection.getInputStream();
-                if ("gzip".equals(connection.getHeaderField("Content-Encoding"))) {
-                    responseStream = new GZIPInputStream(responseStream);
-                }
-                try (Reader reader = new BufferedReader(new InputStreamReader(responseStream, StandardCharsets.UTF_8))) {
-                    CountingInputReader cir = new CountingInputReader(reader, PeersService.MAX_RESPONSE_SIZE);
-                    updateDownloadedVolume(cir.getCount());
-                    StringWriter sw = new StringWriter(1000);
-                    cir.transferTo(sw);
-                    String response = sw.toString();
-                    onIncomingMessage(response, null, requestId);
-                    sendOK = true;
-                }
-            } else {
-                log.debug("Peer " + getHostWithPort() + " responded with HTTP " + connection.getResponseCode());
-            }
-        } catch (IOException ex) {
-            log.trace("Error getting HTTP response from {}", getHostWithPort(), ex);
-        } finally {
-            connection.disconnect();
-        }
-        return sendOK;
-
-    }
-
     private boolean sendToWebSocket(final String wsRequest, PeerWebSocket ws, Long requestId) {
         boolean sendOK = false;
         try {
@@ -326,14 +263,15 @@ public class Peer2PeerTransport {
                     sendOK = sendToWebSocket(message, outboundWebSocket, requestId);
                 }
             }
-        } else {
-            // Send the request using HTTP if websockets are disabled
-            sendOK = sendHttp(message, requestId);
-            log.debug("Trying to use HTTP requests to {} because websockets failed", getHostWithPort());
-            if (!sendOK) {
-                log.debug("Peer: {} Using HTTP. Failed.", getHostWithPort());
-            }
         }
+//        else {
+////            // Send the request using HTTP if websockets are disabled
+////            sendOK = sendHttp(message, requestId);
+////            log.debug("Trying to use HTTP requests to {} because websockets failed", getHostWithPort());
+////            if (!sendOK) {
+////                log.debug("Peer: {} Using HTTP. Failed.", getHostWithPort());
+////            }
+//        }
         if (!sendOK) {
             String msg = "Error on sending request";
             Peer p = getPeer();
