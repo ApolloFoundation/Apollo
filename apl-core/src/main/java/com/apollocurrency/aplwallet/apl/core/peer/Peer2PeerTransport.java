@@ -4,6 +4,8 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.TimeLimiter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +17,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author alukin@gmail.com
@@ -27,7 +29,11 @@ public class Peer2PeerTransport {
     /**
      * map requests to responses
      */
-    private final ConcurrentHashMap<Long, ResponseWaiter> requestMap = new ConcurrentHashMap<>();
+    private final Cache<Long, ResponseWaiter> requestCache = CacheBuilder.newBuilder()
+        .expireAfterAccess(60, TimeUnit.SECONDS)
+        .expireAfterWrite(60, TimeUnit.SECONDS)
+        .concurrencyLevel(100)
+        .build();
     private final Random rnd;
     private final SoftReference<PeerServlet> peerServlet;
     private final boolean useWebSocket = PeersService.useWebSockets && !PeersService.useProxy;
@@ -103,7 +109,7 @@ public class Peer2PeerTransport {
         if (rqId == null) {
             log.debug("Protocol error, requestId=null from {}, message:\n{}\n", which(), message);
         } else {
-            ResponseWaiter wsrw = requestMap.get(rqId);
+            ResponseWaiter wsrw = requestCache.getIfPresent(rqId);
             if (wsrw != null) { //this is response we are waiting for
                 wsrw.setResponse(message);
             } else {
@@ -123,12 +129,12 @@ public class Peer2PeerTransport {
     public Long sendRequest(String message) {
         Long requestId = sendRequestNoResponseWaiter(message);
         if (requestId != null) {
-            requestMap.put(requestId, new ResponseWaiter());
+            requestCache.put(requestId, new ResponseWaiter());
         }
         return requestId;
     }
 
-    public Long sendRequestNoResponseWaiter(String message) {
+    private Long sendRequestNoResponseWaiter(String message) {
         Long requestId = nextRequestId();
         boolean sendOK = send(message, requestId);
         if (sendOK) {
@@ -155,14 +161,14 @@ public class Peer2PeerTransport {
 
     public String getResponse(Long rqId) {
         String res = null;
-        ResponseWaiter wsrw = requestMap.get(rqId);
+        ResponseWaiter wsrw = requestCache.getIfPresent(rqId);
         if (wsrw != null) {
             try {
                 res = wsrw.get(PeersService.readTimeout);
             } catch (SocketTimeoutException ex) {
                 log.trace("Timeout exceeded while waiting response from: {} ID: {}", which(), rqId);
             }
-            requestMap.remove(rqId);
+            requestCache.invalidate(rqId);
         } else {
             log.error("Waiting for non-existent request. Peer: {}, ID: {}", which(), rqId);
         }
@@ -190,12 +196,12 @@ public class Peer2PeerTransport {
 
     private void cleanUp() {
         List<Long> toDelete = new ArrayList<>();
-        if (!requestMap.isEmpty()) {
-            requestMap.keySet().stream()
-                .filter(wsw -> (requestMap.get(wsw).isOld()))
+        if (requestCache.size() != 0) {
+            requestCache.asMap().keySet().stream()
+                .filter(wsw -> (requestCache.getIfPresent(wsw).isOld()))
                 .forEachOrdered(toDelete::add);
         }
-        toDelete.forEach(requestMap::remove);
+        requestCache.invalidateAll(toDelete);
     }
 
     private boolean sendToWebSocket(final String wsRequest, PeerWebSocket ws, Long requestId) {

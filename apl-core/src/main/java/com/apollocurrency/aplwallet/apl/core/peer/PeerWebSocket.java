@@ -194,6 +194,9 @@ public class PeerWebSocket extends WebSocketAdapter {
             }
             //synchronizing here
             synchronized (this) {
+                if (getSession() == null) { // check again to prevent NPE after synchronization
+                    throw new AplException.AplIOException("Websocket session is null for " + which());
+                }
                 try {
                     limiter.runWithTimeout(() -> sendBytes(buf), 5000, TimeUnit.MILLISECONDS);
                 } catch (IllegalStateException e) {

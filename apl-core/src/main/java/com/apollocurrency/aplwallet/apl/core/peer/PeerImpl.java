@@ -147,7 +147,7 @@ public final class PeerImpl implements Peer {
     }
 
     private void initAsyncExecutor() {
-        this.asyncExecutor = new TimeThreadDecoratedThreadPoolExecutor(1, 10, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<>(100), new NamedThreadFactory(getHost() + "-AsyncExecutor"));
+        this.asyncExecutor = new TimeThreadDecoratedThreadPoolExecutor(1, 15, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<>(100), new NamedThreadFactory(getHost() + "-AsyncExecutor"));
     }
 
     @Override
@@ -629,7 +629,7 @@ public final class PeerImpl implements Peer {
         JSONObject response = null;
 
         try {
-            Long resp = p2pTransport.sendRequestNoResponseWaiter(rq);
+            Long resp = p2pTransport.sendRequest(rq);
             if (resp == null) {
                 LOG.trace("Null response from: {}", getHostWithPort());
                 return response;
