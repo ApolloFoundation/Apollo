@@ -82,6 +82,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Singleton
 @Slf4j
@@ -734,6 +735,7 @@ public class PeersService {
     }
 
     public void sendToSomePeers(List<? extends Transaction> transactions) {
+        log.debug("Send transactions to peers, {}", transactions.stream().map(Transaction::getId).map(String::valueOf).collect(Collectors.joining(",")));
         int nextBatchStart = 0;
         while (nextBatchStart < transactions.size()) {
             List<TransactionDTO> transactionsData = new ArrayList<>();
