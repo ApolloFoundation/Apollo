@@ -37,7 +37,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -147,7 +146,7 @@ public final class PeerImpl implements Peer {
     }
 
     private void initAsyncExecutor() {
-        this.asyncExecutor = new TimeThreadDecoratedThreadPoolExecutor(1, 15, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<>(100), new NamedThreadFactory(getHost() + "-AsyncExecutor"));
+        this.asyncExecutor = new TimeThreadDecoratedThreadPoolExecutor(1, Runtime.getRuntime().availableProcessors() / 2, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1000), new NamedThreadFactory(getHost() + "-AsyncExecutor"));
     }
 
     @Override
@@ -195,9 +194,9 @@ public final class PeerImpl implements Peer {
         } else if (newState == PeerState.NON_CONNECTED) {
             peers.notifyListeners(this, PeersService.Event.CHANGED_ACTIVE_PEER);
         }
-        LOG.debug("Peer={} {} oldState={} newState={}, trace: {}", this.getAnnouncedAddress(),
+        LOG.debug("Peer={} {} oldState={} newState={}", this.getAnnouncedAddress(),
             newState != PeerState.CONNECTED && oldState == PeerState.CONNECTED ? "was disconnected" : "",
-            oldState, newState, ThreadUtils.last5Stacktrace());
+            oldState, newState);
     }
 
     @Override
