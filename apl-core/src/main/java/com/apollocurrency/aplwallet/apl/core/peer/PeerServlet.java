@@ -175,50 +175,6 @@ public final class PeerServlet extends WebSocketServlet {
         factory.setCreator(new PeerSocketCreator());
     }
 
-//    /**
-//     * Process HTTP POST request
-//     *
-//     * @param req  HTTP request
-//     * @param resp HTTP response
-//     * @throws IOException I/O error
-//     */
-//    @Override
-//    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-//        JSONStreamAware jsonResponse;
-//        lookupComponents();
-//        //
-//        // Process the peer request
-//        //
-//        PeerAddress pa = new PeerAddress(req.getLocalPort(), req.getRemoteAddr());
-//        Peer peer = peersService.findOrCreatePeer(pa, null, true);
-//
-//        if (peer == null) {
-//            jsonResponse = PeerResponses.UNKNOWN_PEER;
-//        } else {
-//            if (peer.isBlacklisted()) {
-//                jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
-//            } else {
-//                jsonResponse = process(peer, req.getReader());
-//            }
-//        }
-//        //
-//        // Return the response
-//        //
-//        if (jsonResponse == null) { //this is because we got just error message from peer
-//            return;
-//        }
-//        resp.setContentType("text/plain; charset=UTF-8");
-//        try (CountingOutputWriter writer = new CountingOutputWriter(resp.getWriter())) {
-//            JSON.writeJSONString(jsonResponse, writer);
-//        } catch (RuntimeException e) {
-//            processException(peer, e);
-//            LOG.debug("Exception while responding to {}, cause {}", pa.getAddrWithPort(), e.getMessage());
-//            throw e;
-//        } catch (IOException e) {
-//            LOG.debug("Exception while responding to {}, cause {}", pa.getAddrWithPort(), e.getMessage());
-//        }
-//    }
-
     private void processException(Peer peer, Exception e) {
         if (peer != null) {
             //jetty misused this, ignore
@@ -232,7 +188,7 @@ public final class PeerServlet extends WebSocketServlet {
     }
 
     void doPostWebSocket(Peer2PeerTransport transport, Long requestId, String request) {
-        threadPool.execute(() -> doPostTask(transport, requestId, request));
+        threadPool.execute(() -> doPostWS(transport, requestId, request));
     }
 
     /**
@@ -242,7 +198,7 @@ public final class PeerServlet extends WebSocketServlet {
      * @param requestId Request identifier
      * @param request   Request message
      */
-    private void doPostTask(Peer2PeerTransport transport, Long requestId, String request) {
+    private void doPostWS(Peer2PeerTransport transport, Long requestId, String request) {
 
         lookupComponents();
         JSONStreamAware jsonResponse;

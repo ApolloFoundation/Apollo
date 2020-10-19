@@ -14,8 +14,8 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.net.SocketTimeoutException;
 import java.net.URI;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author alukin@gmail.com
@@ -27,12 +27,8 @@ public class Peer2PeerTransport {
     /**
      * map requests to responses
      */
-    private final Cache<Long, ResponseWaiter> requestCache = CacheBuilder.newBuilder()
-        .expireAfterAccess(60, TimeUnit.SECONDS)
-        .expireAfterWrite(60, TimeUnit.SECONDS)
-        .concurrencyLevel(100)
-        .build();
-    private final Random rnd;
+    private final Cache<Long, ResponseWaiter> requestCache;
+    private final AtomicLong requestCounter = new AtomicLong(0);
     private final SoftReference<PeerServlet> peerServlet;
     private final boolean useWebSocket = PeersService.useWebSockets && !PeersService.useProxy;
     private final Object volumeMonitor = new Object();
@@ -49,14 +45,18 @@ public class Peer2PeerTransport {
     public Peer2PeerTransport(Peer peer, PeerServlet peerServlet, TimeLimiter limiter) {
         this.peerReference = new SoftReference<>(peer);
         this.peerServlet = new SoftReference<>(peerServlet);
-        rnd = new Random(System.currentTimeMillis());
         lastActivity = System.currentTimeMillis();
         this.limiter = limiter;
+        this.requestCache = CacheBuilder.newBuilder()
+            .expireAfterAccess(60, TimeUnit.MILLISECONDS)
+            .expireAfterWrite(60, TimeUnit.MILLISECONDS)
+            .concurrencyLevel(100)
+            .build();
     }
 
     //we use random numbers to minimize possible request/response mismatches
     private Long nextRequestId() {
-        return rnd.nextLong();
+        return requestCounter.incrementAndGet();
     }
 
     public Peer getPeer() {
