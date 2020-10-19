@@ -17,12 +17,14 @@ import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author alukin@gmail.com
  */
 @Slf4j
 public class Peer2PeerTransport {
+    private static final AtomicLong counter = new AtomicLong(0);
 
     private final SoftReference<Peer> peerReference;
     /**
@@ -42,6 +44,7 @@ public class Peer2PeerTransport {
     private volatile PeerWebSocketClient outboundWebSocket;
     @Getter
     private long lastActivity;
+    private final long number;
 
     public Peer2PeerTransport(Peer peer, PeerServlet peerServlet, TimeLimiter limiter) {
         this.peerReference = new SoftReference<>(peer);
@@ -57,6 +60,7 @@ public class Peer2PeerTransport {
                 log.trace("Remove waiter: {}, cause - {}", notification.getKey(), cause.name());
             })
             .build();
+        this.number = counter.incrementAndGet();
     }
 
     //we use random numbers to minimize possible request/response mismatches
@@ -119,6 +123,7 @@ public class Peer2PeerTransport {
                 //most likely ge've got request from remote and should process it
                 //but it also can be error response without requestId
                 if (peerServlet.get() != null) {
+                    log.trace("Receive new request {} - transport {}", rqId, number);
                     peerServlet.get().doPostWebSocket(this, rqId, message);
                 } else {
                     log.info("No soft-ref to peerServlet.get()"); // in general we should never see that log
@@ -230,6 +235,7 @@ public class Peer2PeerTransport {
         }
         if (useWebSocket) {
             if (isInbound()) {
+                log.trace("Send request {} - transport {}", requestId, number);
                 sendOK = sendToWebSocket(message, inboundWebSocket, requestId);
 
                 if (!sendOK) {
