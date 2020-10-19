@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -28,8 +29,8 @@ public class Peer2PeerTransport {
     /**
      * map requests to responses
      */
-    private final Cache<Long, ResponseWaiter> requestCache;
-    private final AtomicLong requestCounter = new AtomicLong(0);
+    private final Cache<String, ResponseWaiter> requestCache;
+    private final static AtomicLong requestCounter = new AtomicLong(new SecureRandom().nextLong());
     private final SoftReference<PeerServlet> peerServlet;
     private final boolean useWebSocket = PeersService.useWebSockets && !PeersService.useProxy;
     private final Object volumeMonitor = new Object();
@@ -112,7 +113,8 @@ public class Peer2PeerTransport {
         if (rqId == null) {
             log.debug("Protocol error, requestId=null from {}, message:\n{}\n", which(), message);
         } else {
-            ResponseWaiter wsrw = requestCache.getIfPresent(rqId);
+            String peerRequestId = peerRequestId();
+            ResponseWaiter wsrw = requestCache.getIfPresent(peerRequestId);
             if (wsrw != null) { //this is response we are waiting for
                 wsrw.setResponse(message);
             } else {
@@ -129,10 +131,14 @@ public class Peer2PeerTransport {
         updateDownloadedVolume(message.length());
     }
 
+    private String peerRequestId() {
+        return getHostWithPort() + "-" + nextRequestId();
+    }
+
     public Long sendRequest(String message) {
         Long requestId = sendRequestNoResponseWaiter(message);
         if (requestId != null) {
-            requestCache.put(requestId, new ResponseWaiter());
+            requestCache.put(getHostWithPort() + "-" + requestId, new ResponseWaiter());
         }
         return requestId;
     }
@@ -164,14 +170,15 @@ public class Peer2PeerTransport {
 
     public String getResponse(Long rqId) {
         String res = null;
-        ResponseWaiter wsrw = requestCache.getIfPresent(rqId);
+        String peerRequestId = peerRequestId();
+        ResponseWaiter wsrw = requestCache.getIfPresent(peerRequestId);
         if (wsrw != null) {
             try {
                 res = wsrw.get(PeersService.readTimeout);
             } catch (SocketTimeoutException ex) {
                 log.trace("Timeout exceeded while waiting response from: {} ID: {}", which(), rqId);
             }
-            requestCache.invalidate(rqId);
+            requestCache.invalidate(peerRequestId);
         } else {
             log.error("Waiting for non-existent request. Peer: {}, ID: {}", which(), rqId);
         }
