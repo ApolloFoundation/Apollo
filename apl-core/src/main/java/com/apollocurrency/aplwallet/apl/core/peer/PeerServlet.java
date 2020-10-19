@@ -217,6 +217,7 @@ public final class PeerServlet extends WebSocketServlet {
             if (peer.isBlacklisted()) {
                 jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
             } else {
+                LOG.trace("Process request: " + requestId);
                 jsonResponse = process(peer, new StringReader(request));
             }
         }

@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalCause;
 import com.google.common.util.concurrent.TimeLimiter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +52,10 @@ public class Peer2PeerTransport {
             .expireAfterAccess(60, TimeUnit.MILLISECONDS)
             .expireAfterWrite(60, TimeUnit.MILLISECONDS)
             .concurrencyLevel(100)
+            .removalListener(notification -> {
+                RemovalCause cause = notification.getCause();
+                log.trace("Remove waiter: {}, cause - {}", notification.getKey(), cause.name());
+            })
             .build();
     }
 
