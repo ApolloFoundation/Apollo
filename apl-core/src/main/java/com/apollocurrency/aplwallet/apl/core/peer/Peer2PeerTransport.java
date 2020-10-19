@@ -219,6 +219,7 @@ public class Peer2PeerTransport {
                 log.debug("null websocket");
                 return sendOK;
             }
+            log.trace("Send request {}, transport {}", requestId, number);
             sendOK = ws.send(wsRequest, requestId);
         } catch (IOException ex) {
             log.debug("Can't sent to " + getHostWithPort(), ex);
