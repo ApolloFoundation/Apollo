@@ -50,7 +50,6 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
     private final String defaultSort;
     @Getter
     private final String fullTextSearchColumns;
-//    private Blockchain blockchain;
 
     public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns,
                          DerivedTablesRegistry derivedDbTablesRegistry,
@@ -434,10 +433,4 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
         }
     }
 
-/*    private Blockchain lookupBlockchain() {
-        if (blockchain == null) {
-            blockchain = CDI.current().select(Blockchain.class).get();
-        }
-        return blockchain;
-    }*/
 }
