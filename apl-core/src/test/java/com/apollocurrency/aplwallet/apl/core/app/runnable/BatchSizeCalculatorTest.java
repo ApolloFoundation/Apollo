@@ -17,47 +17,47 @@ class BatchSizeCalculatorTest {
     @Test
     void testEasyCalculations() {
         calculator = new BatchSizeCalculator(10, 5, 20);
-        doTimeOp(11, 15);
+        doTimeOp(0, 11, 15);
         assertEquals(5, calculator.currentBatchSize());
-        doTimeOp(8, 10);
-        doTimeOp(15, 17);
-        doTimeOp(5, 12);
-        doTimeOp(9, 11);
+        doTimeOp(11, 19, 10);
+        doTimeOp(19, 34, 17);
+        doTimeOp(34, 39, 12);
+        doTimeOp(39, 48, 11);
         assertEquals(12, calculator.currentBatchSize());
-        doTimeOp(15, 18);
+        doTimeOp(48, 63, 18);
         assertEquals(12, calculator.currentBatchSize());
-        doTimeOp(5, 15);
-        doTimeOp(7, 20);
-        doTimeOp(10, 30);
-        doTimeOp(9, 24);
+        doTimeOp(63, 68, 15);
+        doTimeOp(68, 75, 20);
+        doTimeOp(75, 85, 30);
+        doTimeOp(85, 94, 24);
         assertEquals(20, calculator.currentBatchSize());
     }
 
     @Test
     void testWideSpread() {
         calculator = new BatchSizeCalculator(20, 10, 100);
-        doTimeOp(15, 22);
-        doTimeOp(22, 25);
-        doTimeOp(50, 35);
-        doTimeOp(20, 20);
-        doTimeOp(18, 20);
+        doTimeOp(0, 15, 22);
+        doTimeOp(15, 37, 25);
+        doTimeOp(40, 90, 35);
+        doTimeOp(100, 120, 20);
+        doTimeOp(120, 138, 20);
         assertEquals(22, calculator.currentBatchSize());
-        doTimeOp(30, 25);
+        doTimeOp(140, 170, 25);
         assertEquals(20, calculator.currentBatchSize());
-        doTimeOp(18, 24);
-        doTimeOp(19, 25);
-        assertEquals(23, calculator.currentBatchSize());
-        doTimeOp(24, 10);
-        doTimeOp(25, 8);
-        doTimeOp(30, 1);
-        doTimeOp(25, 2);
+        doTimeOp(170, 188, 24);
+        doTimeOp(188, 207, 25);
+        assertEquals(207, 230, calculator.currentBatchSize());
+        doTimeOp(230, 254, 10);
+        doTimeOp(254, 279, 8);
+        doTimeOp(279, 309, 1);
+        doTimeOp(309, 334, 2);
         assertEquals(10, calculator.currentBatchSize());
 
     }
 
-    private void doTimeOp(int opTime, int batchSize) {
-        calculator.startTiming(batchSize);
-        ThreadUtils.sleep(opTime);
-        calculator.stopTiming();
+    private void doTimeOp(long startTime, long finishTIme, int batchSize) {
+        calculator.startTiming(startTime, batchSize);
+        ThreadUtils.sleep(finishTIme - startTime);
+        calculator.stopTiming(finishTIme);
     }
 }
