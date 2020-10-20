@@ -24,29 +24,29 @@ import java.util.List;
  */
 @Slf4j
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-public class FullTextTrigger
-//    implements Trigger, TransactionCallback
-{
-/*
-    *//**
+public class FullTextTrigger implements /*Trigger, */TransactionCallback {
+
+    /**
      * Pending table updates
      * We collect index row updates and then commit or rollback it when db transaction was finished or rollbacked
-     *//*
+     */
     private final List<TableUpdate> tableUpdates = new ArrayList<>();
     private DatabaseManager databaseManager;
-    *//**
+    /**
      * Trigger cannot have constructor, so these values will be initialized in
      * {@link FullTextTrigger#init(Connection, String, String, String, boolean, int)} method
-     *//*
+     */
     private FullTextSearchEngine ftl;
     private TableData tableData;
+    private String tableTriggerName;
 
 
     private TableData readTableData(Connection connection, String schema, String tableName) throws SQLException {
+        tableTriggerName = tableName;
         return DbUtils.getTableData(connection, tableName, schema);
     }
 
-    *//**
+    /**
      * Initialize the trigger (Trigger interface)
      *
      * @param conn    Database connection
@@ -56,45 +56,47 @@ public class FullTextTrigger
      * @param before  TRUE if trigger is called before database operation
      * @param type    Trigger type
      * @throws SQLException A SQL error occurred
-     *//*
-    @Override
+     */
+//    @Override
     public void init(Connection conn, String schema, String trigger, String table, boolean before, int type)
         throws SQLException {
         this.tableData = readTableData(conn, schema, table);
     }
 
-    *//**
+    /**
      * Close the trigger (Trigger interface)
      *
      * @throws SQLException A SQL error occurred
-     *//*
-    @Override
-    public void close() throws SQLException {
-    }
+     */
+//    @Override
+//    public void close() throws SQLException {
+//    }
 
-    *//**
+    /**
      * Remove the trigger (Trigger interface)
      *
      * @throws SQLException A SQL error occurred
-     *//*
-    @Override
-    public void remove() throws SQLException {
-    }
+     */
+//    @Override
+//    public void remove() throws SQLException {
+//    }
 
-    *//**
+    /**
      * Trigger has fired (Trigger interface)
      *
      * @param conn   Database connection
      * @param oldRow The old row or null
      * @param newRow The new row or null
      * @throws SQLException A SQL error occurred
-     *//*
-    @Override
+     */
+//    @Override
     public void fire(Connection conn, Object[] oldRow, Object[] newRow) throws SQLException {
         //
         // Commit the change immediately if we are not in a transaction
         //
         TransactionalDataSource dataSource = lookupDatabaseManager().getDataSource();
+        log.debug("tableData = {}, oldRow={}, newRow={} (isInTransaction = {})",
+            tableData, (oldRow != null ? oldRow.length : -1), (newRow != null ? newRow.length : -1), dataSource.isInTransaction());
         if (!dataSource.isInTransaction()) {
             try {
                 lookupFullTextSearchEngine().commitRow(oldRow, newRow, tableData);
@@ -109,6 +111,7 @@ public class FullTextTrigger
         // that the current thread is the application thread performing the update operation.
         //
         synchronized (tableUpdates) {
+            log.debug("BATCH tableData = {}, oldRow={}, newRow={}", tableData, (oldRow != null ? oldRow.length : -1), (newRow != null ? newRow.length : -1));
             tableUpdates.add(new TableUpdate(Thread.currentThread(), oldRow, newRow));
         }
         //
@@ -131,9 +134,9 @@ public class FullTextTrigger
         return ftl;
     }
 
-    *//**
+    /**
      * Commit the table changes for the current transaction (TransactionCallback interface)
-     *//*
+     */
     @Override
     public void commit() {
         Thread thread = Thread.currentThread();
@@ -144,6 +147,7 @@ public class FullTextTrigger
             // by the current thread.
             //
             boolean commit = false;
+            log.debug("COMMIT BATCH tableData = {}", tableUpdates.size());
             synchronized (tableUpdates) {
                 Iterator<TableUpdate> updateIt = tableUpdates.iterator();
                 while (updateIt.hasNext()) {
@@ -166,9 +170,9 @@ public class FullTextTrigger
         }
     }
 
-    *//**
+    /**
      * Discard the table changes for the current transaction (TransactionCallback interface)
-     *//*
+     */
     @Override
     public void rollback() {
         Thread thread = Thread.currentThread();
@@ -177,5 +181,4 @@ public class FullTextTrigger
         }
     }
 
-*/
 }

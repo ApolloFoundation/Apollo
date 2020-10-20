@@ -110,6 +110,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
                 sj.add(data);
             }
             document.add(new TextField("_DATA", sj.toString(), Field.Store.NO));
+            log.debug("INDEX query={} / {}", query, document);
             indexWriter.updateDocument(new Term("_QUERY", query), document);
         } catch (IOException exc) {
             log.error("Unable to index row", exc);
@@ -126,11 +127,14 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     public void commitRow(Object[] oldRow, Object[] newRow, TableData tableData) throws SQLException {
         if (oldRow != null) {
             if (newRow != null) {
+                log.debug("UPDATE: tableData = {}, oldRow={}, newRow={}", tableData, oldRow.length, newRow.length);
                 indexRow(newRow, tableData);
             } else {
+                log.debug("DELETE: tableData = {}, oldRow={}", tableData, oldRow.length);
                 deleteRow(oldRow, tableData);
             }
         } else if (newRow != null) {
+            log.debug("INSERT: tableData = {}, newRow={}", tableData, newRow.length);
             indexRow(newRow, tableData);
         }
     }
@@ -140,6 +144,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             tableData.getTable() + ";" + tableData.getColumnNames().get(tableData.getDbIdColumnPosition()) + ";" + (long) row[tableData.getDbIdColumnPosition()];
         indexLock.readLock().lock();
         try {
+            log.debug("DELETE QUERY: tableData = {}, oldRow={}\nquery={}", tableData, row.length, query);
             indexWriter.deleteDocuments(new Term("_QUERY", query));
         } catch (IOException exc) {
             log.error("Unable to delete indexed row", exc);
