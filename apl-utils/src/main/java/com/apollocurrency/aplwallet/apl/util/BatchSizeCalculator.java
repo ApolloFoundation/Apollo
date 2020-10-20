@@ -29,15 +29,15 @@ public class BatchSizeCalculator {
         this.opEMA = new EMA(5);
     }
 
-    public void startTiming(int batchSize) {
-        this.lastOperation = new TimeOperation(System.currentTimeMillis(), batchSize);
+    public void startTiming(long time, int batchSize) {
+        this.lastOperation = new TimeOperation(time, batchSize);
     }
 
-    public void stopTiming() {
+    public void stopTiming(long time) {
         if (lastOperation == null || lastOperation.isFinished()) {
             throw new IllegalStateException("Unable to finish timing operation, operation was not started");
         }
-        long duration = lastOperation.stopTiming();
+        long duration = lastOperation.stopTiming(time);
         long diff = targetOperationTime - duration;
         double percent = diff * 1.0 / targetOperationTime;
         percent /= 2;
@@ -60,9 +60,9 @@ public class BatchSizeCalculator {
         private final long batchSize;
         private volatile boolean finished;
 
-        public long stopTiming() {
+        public long stopTiming(long time) {
             finished = true;
-            return System.currentTimeMillis() - startTime;
+            return  time - startTime;
         }
 
     }
