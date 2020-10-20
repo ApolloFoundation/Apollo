@@ -20,6 +20,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
 @Singleton
@@ -53,12 +54,17 @@ public class DGSPublicFeedbackTable extends ValuesDbTable<DGSPublicFeedback> {
     @Override
     public void save(Connection con, DGSPublicFeedback feedback) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase_public_feedback (id, public_feedback, "
-            + "height, latest) VALUES (?, ?, ?, TRUE)")) {
+            + "height, latest) VALUES (?, ?, ?, TRUE)", Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             pstmt.setLong(++i, feedback.getId());
             pstmt.setString(++i, feedback.getFeedback());
             pstmt.setInt(++i, feedback.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    feedback.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 

@@ -28,6 +28,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 @Singleton
@@ -74,7 +75,8 @@ public class DGSGoodsTable extends EntityDbTable<DGSGoods> implements Searchable
                 + "ON DUPLICATE KEY UPDATE id = VALUES(id), seller_id = VALUES(seller_id), `name` = VALUES(`name`), "
                 + "description = VALUES(description), tags = VALUES(tags), parsed_tags = VALUES(parsed_tags), "
                 + "`timestamp` = VALUES(`timestamp`), quantity = VALUES(quantity), price = VALUES(price), "
-                + "delisted = VALUES(delisted), has_image = VALUES(has_image), height = VALUES(height), latest = TRUE")
+                + "delisted = VALUES(delisted), has_image = VALUES(has_image), height = VALUES(height), latest = TRUE",
+                Statement.RETURN_GENERATED_KEYS)
         ) {
             int i = 0;
             pstmt.setLong(++i, goods.getId());
@@ -90,6 +92,11 @@ public class DGSGoodsTable extends EntityDbTable<DGSGoods> implements Searchable
             pstmt.setBoolean(++i, goods.hasImage());
             pstmt.setInt(++i, goods.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    goods.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 

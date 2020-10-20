@@ -24,6 +24,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 @Singleton
 public class DGSPurchaseTable extends EntityDbTable<DGSPurchase> {
@@ -70,7 +71,7 @@ public class DGSPurchaseTable extends EntityDbTable<DGSPurchase> {
                 + "goods = VALUES(goods), goods_nonce = VALUES(goods_nonce), goods_is_text = VALUES(goods_is_text), "
                 + "refund_note = VALUES(refund_note), refund_nonce = VALUES(refund_nonce), has_feedback_notes = VALUES(has_feedback_notes), "
                 + "has_public_feedbacks = VALUES(has_public_feedbacks), discount = VALUES(discount), refund = VALUES(refund), "
-                + "height = VALUES(height), latest = TRUE")
+                + "height = VALUES(height), latest = TRUE", Statement.RETURN_GENERATED_KEYS)
         ) {
             int i = 0;
             pstmt.setLong(++i, purchase.getId());
@@ -92,6 +93,11 @@ public class DGSPurchaseTable extends EntityDbTable<DGSPurchase> {
             pstmt.setLong(++i, purchase.getRefundATM());
             pstmt.setInt(++i, purchase.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    purchase.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 
