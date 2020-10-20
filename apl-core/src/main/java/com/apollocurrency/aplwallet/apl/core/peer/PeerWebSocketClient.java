@@ -51,7 +51,11 @@ public class PeerWebSocketClient extends PeerWebSocket {
 
     public static void destroyClient() {
         if (client == null) {
-            return;
+            synchronized (PeerWebSocketClient.class) {
+                if (client == null) {
+                    return;
+                }
+            }
         }
         try {
             //if (client.isRunning()) {
