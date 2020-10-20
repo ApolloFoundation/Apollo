@@ -56,14 +56,14 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         try (Statement qstmt = conn.createStatement();
              Statement stmt = conn.createStatement()) {
             try (ResultSet rs = qstmt.executeQuery(String.format(
-                "SELECT COLUMNS FROM FTL.INDEXES WHERE SCHEMA = '%s' AND \"TABLE\" = '%s'",
+                "SELECT columns FROM ftl_indexes WHERE `table` = '%s'",
                 upperSchema, upperTable))) {
-                if (rs.next()) {
-                    stmt.execute("DROP TRIGGER IF EXISTS FTL_" + upperTable);
-                    stmt.execute(String.format("DELETE FROM FTL.INDEXES WHERE SCHEMA = '%s' AND \"TABLE\" = '%s'",
-                        upperSchema, upperTable));
-                    reindex = true;
-                }
+//                if (rs.next()) {
+//                    stmt.execute("DROP TRIGGER IF EXISTS FTL_" + upperTable);
+//                    stmt.execute(String.format("DELETE FROM ftl_indexes WHERE `table` = '%s'",
+//                        upperSchema, upperTable));
+//                    reindex = true;
+//                }
             }
         }
         //
@@ -86,8 +86,8 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         } catch (IOException e) {
             throw new RuntimeException("Unable to init fulltext engine", e);
         }
-        String triggerClassName = FullTextTrigger.class.getName();
-        log.debug("triggerClassName = {}", triggerClassName);
+        String fullTextTableName = "ftl_indexes";
+        log.debug("fullTextTableName = {}", fullTextTableName);
         try (Connection conn = databaseManager.getDataSource().getConnection();
              Statement stmt = conn.createStatement();
              Statement qstmt = conn.createStatement()) {
@@ -96,11 +96,11 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             //
             boolean alreadyInitialized = true;
             boolean triggersExist = false;
-            try (ResultSet rs = qstmt.executeQuery("SELECT JAVA_CLASS FROM INFORMATION_SCHEMA.TRIGGERS "
-                + "WHERE SUBSTRING(TRIGGER_NAME, 0, 4) = 'FTL_'")) {
+            try (ResultSet rs = qstmt.executeQuery("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES "
+                + "WHERE TABLE_NAME = 'ftl_indexes'")) {
                 while (rs.next()) {
                     triggersExist = true;
-                    if (!rs.getString(1).startsWith(triggerClassName)) {
+                    if (!rs.getString(1).startsWith(fullTextTableName)) {
                         alreadyInitialized = false;
                     }
                 }
@@ -119,40 +119,40 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             // full text search was implemented by using built-in h2 trigger
             // org.h2.fulltext.FullTextLucene.init
             //
-            stmt.execute("DROP ALIAS IF EXISTS FTL_INIT");
-            stmt.execute("DROP ALIAS IF EXISTS FTL_DROP_ALL");
-            stmt.execute("DROP ALIAS IF EXISTS FTL_REINDEX");
-            stmt.execute("DROP ALIAS IF EXISTS FTL_SEARCH_DATA");
+//            stmt.execute("DROP ALIAS IF EXISTS FTL_INIT");
+//            stmt.execute("DROP ALIAS IF EXISTS FTL_DROP_ALL");
+//            stmt.execute("DROP ALIAS IF EXISTS FTL_REINDEX");
+//            stmt.execute("DROP ALIAS IF EXISTS FTL_SEARCH_DATA");
 
             // Drop our fulltext function aliases, we should not depend on stored procedures
             // since it hard wire us with h2
             //
-            stmt.execute("DROP ALIAS IF EXISTS FTL_SEARCH");
-            stmt.execute("DROP ALIAS IF EXISTS FTL_CREATE_INDEX");
-            stmt.execute("DROP ALIAS IF EXISTS FTL_DROP_INDEX");
+//            stmt.execute("DROP ALIAS IF EXISTS FTL_SEARCH");
+//            stmt.execute("DROP ALIAS IF EXISTS FTL_CREATE_INDEX");
+//            stmt.execute("DROP ALIAS IF EXISTS FTL_DROP_INDEX");
 
             log.info("H2 fulltext function aliases dropped");
             //
             // Create our schema and table
             //
-            stmt.execute("CREATE SCHEMA IF NOT EXISTS FTL");
-            stmt.execute("CREATE TABLE IF NOT EXISTS FTL.INDEXES "
-                + "(SCHEMA VARCHAR, \"TABLE\" VARCHAR, COLUMNS VARCHAR, PRIMARY KEY(SCHEMA, \"TABLE\"))");
-            log.info(" fulltext schema created");
+//            stmt.execute("CREATE SCHEMA IF NOT EXISTS FTL");
+            boolean createResult = stmt.execute("CREATE TABLE IF NOT EXISTS ftl_indexes "
+                + "(`schema` VARCHAR(20), `table` VARCHAR(100), columns VARCHAR(200), PRIMARY KEY(`schema`, `table`))");
+            log.info("fulltext table is created = '{}'", createResult);
             //
             // Drop existing triggers and create our triggers.  H2 will initialize the trigger
             // when it is created.  H2 has already initialized the existing triggers and they
             // will be closed when dropped.  The H2 Lucene V3 trigger initialization will work with
             // Lucene V5, so we are able to open the database using the Lucene V5 library files.
             //
-            try (ResultSet rs = qstmt.executeQuery("SELECT * FROM FTL.INDEXES")) {
+            try (ResultSet rs = qstmt.executeQuery("SELECT * FROM ftl_indexes")) {
                 while (rs.next()) {
-                    String schema = rs.getString("SCHEMA");
-                    String table = rs.getString("TABLE");
-                    stmt.execute("DROP TRIGGER IF EXISTS FTL_" + table);
-                    stmt.execute(String.format("CREATE TRIGGER FTL_%s AFTER INSERT,UPDATE,DELETE ON %s.%s "
-                            + "FOR EACH ROW CALL \"%s\"",
-                        table, schema, table, triggerClassName));
+                    String schema = rs.getString("schema");
+                    String table = rs.getString("table");
+//                    stmt.execute("DROP TRIGGER IF EXISTS FTL_" + table);
+//                    stmt.execute(String.format("CREATE TRIGGER FTL_%s AFTER INSERT,UPDATE,DELETE ON %s.%s "
+//                            + "FOR EACH ROW CALL \"%s\"",
+//                        table, schema, table, fullTextTableName));
                 }
             }
             //
@@ -162,7 +162,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
 //            //
 //            // Create our function aliases
 //            //
-            stmt.execute("CREATE ALIAS FTL_SEARCH NOBUFFER FOR \"" + FullTextStoredProcedures.class.getName() + ".search\"");
+//            stmt.execute("CREATE ALIAS FTL_SEARCH NOBUFFER FOR \"" + FullTextStoredProcedures.class.getName() + ".search\"");
             log.info("Fulltext aliases created");
         } catch (SQLException exc) {
             log.error("Unable to initialize fulltext search support", exc);
@@ -180,14 +180,16 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         //
         // Drop existing triggers
         //
-        try (Statement qstmt = conn.createStatement();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = qstmt.executeQuery("SELECT \"TABLE\" FROM FTL.INDEXES")) {
+        try (/*Statement qstmt = conn.createStatement();*/
+             Statement stmt = conn.createStatement()/*;
+             ResultSet rs = qstmt.executeQuery("SELECT `table` FROM ftl_indexes")*/) {
+/*
             while (rs.next()) {
                 String table = rs.getString(1);
                 stmt.execute("DROP TRIGGER IF EXISTS FTL_" + table);
             }
-            stmt.execute("TRUNCATE TABLE FTL.INDEXES");
+*/
+            stmt.execute("TRUNCATE TABLE ftl_indexes");
         }
         //
         // Delete the Lucene index
@@ -219,7 +221,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             return;
         }
         StringBuilder sb = new StringBuilder();
-        sb.append("SELECT DB_ID");
+        sb.append("SELECT db_id");
         for (int index : tableData.getIndexColumns()) {
             sb.append(", ").append(tableData.getColumnNames().get(index));
         }
@@ -290,9 +292,9 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
     ) throws SQLException {
         if (fullTextSearchColumns != null) {
             log.debug("Creating search index on {} ({})", table, fullTextSearchColumns);
-            String table1 = table.toUpperCase();
-            String upperSchema = schemaName.toUpperCase();
-            String upperTable = table1.toUpperCase();
+            String table1 = table.toLowerCase();
+            String upperSchema = schemaName.toLowerCase();
+            String upperTable = table1.toLowerCase();
             String tableName = upperSchema + "." + upperTable;
             //
             // Drop an existing index and the associated database trigger
@@ -302,23 +304,36 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             // Update our schema and create a new database trigger.  Note that the trigger
             // will be initialized when it is created.
             //
+/*
             try (Statement stmt = con.createStatement()) {
-                stmt.execute(String.format("INSERT INTO FTL.INDEXES (schema, \"TABLE\", columns) "
-                        + "VALUES('%s', '%s', '%s')",
-                    upperSchema, upperTable, fullTextSearchColumns.toUpperCase().toUpperCase()));
+                stmt.execute(String.format("INSERT INTO ftl_indexes (`schema`, `table', columns) VALUES('%s', '%s', '%s')",
+                    upperSchema.toLowerCase(), upperTable.toLowerCase(), fullTextSearchColumns.toLowerCase()));
                 stmt.execute(String.format("CREATE TRIGGER FTL_%s AFTER INSERT,UPDATE,DELETE ON %s "
                         + "FOR EACH ROW CALL \"%s\"",
                     upperTable, tableName, FullTextTrigger.class.getName()));
             }
+*/
+            boolean isTableDataExist = false;
+            try (Statement stmt = con.createStatement()) {
+                ResultSet rs = stmt.executeQuery(String.format("SELECT count(*) as count FROM ftl_indexes WHERE `schema` = '%s' AND `table` = '%s'",
+                    upperSchema.toLowerCase(), upperTable.toLowerCase()));
+                if (rs.next()) {
+                    isTableDataExist = rs.getLong("count") > 0;
+                }
+            }
             //
             // Index the table
             //
-            try {
-                reindex(con, upperTable, schemaName);
-                log.info("Lucene search index created for table " + tableName);
-            } catch (SQLException exc) {
-                log.error("Unable to create Lucene search index for table " + tableName);
-                throw new SQLException("Unable to create Lucene search index for table " + tableName, exc);
+            if (!isTableDataExist) {
+                try (Statement stmt = con.createStatement()) {
+                    stmt.execute(String.format("INSERT INTO ftl_indexes VALUES('%s', '%s', '%s')",
+                        upperSchema.toLowerCase(), upperTable.toLowerCase(), fullTextSearchColumns.toLowerCase()));
+                    reindex(con, upperTable, schemaName);
+                    log.info("Lucene search index created for table " + tableName);
+                } catch (SQLException exc) {
+                    log.error("Unable to create Lucene search index for table " + tableName);
+                    throw new SQLException("Unable to create Lucene search index for table " + tableName, exc);
+                }
             }
         }
     }

@@ -199,8 +199,8 @@ INSERT into phasing_poll_linked_transaction
 
 INSERT into version values (355);
 
---INSERT INTO FTL.INDEXES (schema, "TABLE", columns) VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
---INSERT INTO FTL.INDEXES (schema, "TABLE", columns) VALUES('PUBLIC', 'TAGGED_DATA', 'NAME,DESCRIPTION,TAGS');
+-- INSERT INTO ftl_indexes (`schema`, `table`, columns) VALUES('public', 'currency', 'code,name,description');
+-- INSERT INTO ftl_indexes (`schema`, `table`, columns) VALUES('public', 'tagged_data', 'name,description,tags');
 
 
 INSERT INTO genesis_public_key

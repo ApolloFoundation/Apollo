@@ -56,7 +56,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-@Disabled // TODO: YL @full_text_search_fix is needed
 @Slf4j
 @Testcontainers
 @Tag("slow")
@@ -64,6 +63,7 @@ import static org.mockito.Mockito.mock;
 class AssetTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
+//    DbExtension dbExtension = new DbExtension(mariaDBContainer);
     DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("asset", List.of("name,description")));
 
     @Inject
@@ -151,7 +151,9 @@ class AssetTableTest extends DbContainerBaseTest {
         Asset asset = td.ASSET_NEW;
         asset.setDescription(description);
 
-        assertThrows(UndeclaredThrowableException.class, () -> table.insert(td.ASSET_NEW));
+        assertThrows(RuntimeException.class, () -> {
+            DbUtils.checkAndRunInTransaction(dbExtension, (conn) -> table.insert(td.ASSET_NEW));
+        });
     }
 
     @Test

@@ -43,7 +43,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-@Disabled // TODO: YL @full_text_search_fix is needed
 @Slf4j
 @Testcontainers
 @Tag("slow")
@@ -51,6 +50,7 @@ import static org.mockito.Mockito.mock;
 class AccountInfoTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
+//    DbExtension dbExtension = new DbExtension(mariaDBContainer);
     DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("account_info", List.of("name", "description")));
     @Inject
     AccountInfoTable table;
@@ -103,7 +103,8 @@ class AccountInfoTableTest extends DbContainerBaseTest {
         assertEquals(previous.getDescription(), actual.getDescription());
     }
 
-    @Test
+//    @Test
+    @Disabled // TODO: YL @full_text_search_fix is needed
     void searchAccounts() {
         List<AccountInfo> result = toList(table.searchAccounts("CALIG*", 0, Integer.MAX_VALUE));
         assertEquals(List.of(testData.ACC_INFO_1, testData.ACC_INFO_4), result);

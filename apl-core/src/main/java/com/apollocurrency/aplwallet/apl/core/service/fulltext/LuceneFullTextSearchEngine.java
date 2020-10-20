@@ -96,8 +96,8 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             List<String> columnNames = tableData.getColumnNames();
             List<Integer> indexColumns = tableData.getIndexColumns();
             int dbColumn = tableData.getDbIdColumnPosition();
-            String tableName = tableData.getSchema().toUpperCase() + "." + tableData.getTable().toUpperCase();
-            String query = tableName + ";" + columnNames.get(dbColumn) + ";" + (long) row[dbColumn];
+            String tableName = tableData.getSchema().toLowerCase() + "." + tableData.getTable().toLowerCase();
+            String query = tableName + ";" + columnNames.get(dbColumn) + ";" + row[dbColumn];
             Document document = new Document();
             document.add(new StringField("_QUERY", query, Field.Store.YES));
             long now = ntpTime.getTime();

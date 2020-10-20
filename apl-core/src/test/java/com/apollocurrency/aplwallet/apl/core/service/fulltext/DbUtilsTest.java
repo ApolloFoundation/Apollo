@@ -21,7 +21,6 @@ import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collections;
 
-@Disabled // TODO: YL @full_text_search_fix is needed
 @Slf4j
 @Testcontainers
 @Tag("slow")

@@ -183,7 +183,11 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         ftl.init();
         tableWithColumns.forEach((table, columns) -> DbUtils.inTransaction(getDatabaseManager(), (con) -> {
             try {
-                ftl.createSearchIndex(con, table, String.join(",", columns));
+                if (columns.size() > 0) {
+                    ftl.createSearchIndex(con, table, String.join(",", columns));
+                } else {
+                    log.warn("NOTHING for fields... ");
+                }
             } catch (SQLException e) {
                 throw new RuntimeException("Unable to create index for table " + table, e);
             }

@@ -26,6 +26,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * @author al
@@ -72,7 +73,8 @@ public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInf
                 + "(account_id, `name`, description, height, latest, deleted) "
                 + "VALUES (?, ?, ?, ?, TRUE, FALSE) "
                 + "ON DUPLICATE KEY UPDATE account_id = VALUES(account_id), `name` = VALUES(`name`), "
-                + "description = VALUES(description), height = VALUES(height), latest = TRUE, deleted = FALSE")
+                + "description = VALUES(description), height = VALUES(height), latest = TRUE, deleted = FALSE",
+                Statement.RETURN_GENERATED_KEYS)
         ) {
             int i = 0;
             pstmt.setLong(++i, accountInfo.getAccountId());
@@ -80,6 +82,11 @@ public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInf
             DbUtils.setString(pstmt, ++i, accountInfo.getDescription());
             pstmt.setInt(++i, accountInfo.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    accountInfo.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 

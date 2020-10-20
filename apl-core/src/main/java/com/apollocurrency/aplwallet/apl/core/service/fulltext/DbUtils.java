@@ -29,7 +29,7 @@ public class DbUtils {
         List<Integer> columnTypes = new ArrayList<>();
         int dbColumn = -1;
         DatabaseMetaData metaData = connection.getMetaData();
-        ResultSet rs = metaData.getColumns(null, schemaName.toUpperCase(), tableName.toUpperCase(), null);
+        ResultSet rs = metaData.getColumns(null, schemaName.toLowerCase(), tableName.toLowerCase(), null);
         int index = 0;
         while (rs.next()) {
             String columnName = rs.getString("COLUMN_NAME");
@@ -48,11 +48,11 @@ public class DbUtils {
     private static List<Integer> getIndexColumns(Connection con, List<String> columnNames, List<Integer> columnTypes, String schema, String table) {
         List<Integer> indexColumns = new ArrayList<>();
         try (ResultSet rs = con.createStatement().executeQuery(String.format(
-            "SELECT COLUMNS FROM FTL.INDEXES WHERE SCHEMA = '%s' AND \"TABLE\" = '%s'", schema.toUpperCase(), table.toUpperCase()))) {
+            "SELECT columns FROM ftl_indexes WHERE `table` = '%s'", table.toUpperCase()))) {
             if (rs.next()) {
                 String[] columns = rs.getString(1).split(",");
                 for (String column : columns) {
-                    int pos = columnNames.indexOf(column.toUpperCase());
+                    int pos = columnNames.indexOf(column.toLowerCase());
                     if (pos >= 0) {
                         if (Types.VARCHAR == columnTypes.get(pos)) {
                             indexColumns.add(pos);
