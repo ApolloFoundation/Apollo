@@ -70,4 +70,14 @@ public class TableUpdate {
     public Object[] getNewRow() {
         return newRow;
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("TableUpdate{");
+        sb.append("thread=").append(thread.getId() + "-" + thread.getName());
+        sb.append(", oldRow=[").append(oldRow == null ? "null" : oldRow.length).append("]");
+        sb.append(", newRow=[").append(newRow == null ? "null" : newRow.length).append("]");
+        sb.append('}');
+        return sb.toString();
+    }
 }

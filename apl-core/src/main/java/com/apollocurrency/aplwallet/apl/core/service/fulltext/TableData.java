@@ -76,9 +76,9 @@ public class TableData {
             "dbIdColumnPosition=" + dbIdColumnPosition +
             ", table='" + table + '\'' +
             ", schema='" + schema + '\'' +
-            ", columnNames=" + columnNames +
-            ", columnTypes=" + columnTypes +
-            ", indexColumns=" + indexColumns +
+            ", columnNames=[" + (columnNames != null ? columnNames.size() : -1) + "]" +
+            ", columnTypes=[" + (columnTypes != null ? columnTypes.size() : -1) + "]" +
+            ", indexColumns=" + (indexColumns != null ? indexColumns.size() : -1) + "]" +
             '}';
     }
 }
