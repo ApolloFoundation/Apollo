@@ -6,10 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.apl.util.BatchSizeCalculator;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Disabled("Test depends on pc performance.")
 class BatchSizeCalculatorTest {
     BatchSizeCalculator calculator;
     @Test

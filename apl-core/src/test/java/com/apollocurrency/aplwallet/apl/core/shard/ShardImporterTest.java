@@ -32,7 +32,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
-import com.apollocurrency.aplwallet.apl.testutil.BlockchainProducerUnitTests;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -112,7 +111,7 @@ class ShardImporterTest extends DbContainerBaseTest {
     private GenesisImporter genesisImporter;
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(DataTagDao.class, FullTextConfigImpl.class,
-        ValueParserImpl.class, CsvEscaperImpl.class, BlockchainProducerUnitTests.class)
+        ValueParserImpl.class, CsvEscaperImpl.class)
         .addBeans(
             MockBean.of(derivedTablesRegistry, DerivedTablesRegistry.class),
             MockBean.of(blockchainProcessor, BlockchainProcessor.class),
