@@ -33,6 +33,11 @@
       <artifactId>apl-api2</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-db-updater</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <!-- EXT BOM DEPENDENCIES -->
     <dependency>

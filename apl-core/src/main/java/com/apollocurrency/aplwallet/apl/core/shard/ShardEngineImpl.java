@@ -13,9 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
-import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
-import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
@@ -35,6 +32,9 @@ import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.db.updater.AplDBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardAddConstrainsDBUpdater;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -176,12 +176,12 @@ public class ShardEngineImpl implements ShardEngine {
      * {@inheritDoc}
      */
     @Override
-    public MigrateState addOrCreateShard(DbVersion dbVersion, CommandParamInfo commandParamInfo) {
+    public MigrateState addOrCreateShard(DBUpdater dbUpdater, CommandParamInfo commandParamInfo) {
         long start = System.currentTimeMillis();
-        Objects.requireNonNull(dbVersion, "dbVersion is NULL");
-        log.debug("INIT shard db file by schema={}", dbVersion.getClass().getSimpleName());
+        Objects.requireNonNull(dbUpdater, "dbUpdater is NULL");
+        log.debug("INIT shard db file by schema={}", dbUpdater.getClass().getSimpleName());
         try {
-            boolean isConstraintSchema = dbVersion instanceof ShardAddConstraintsSchemaVersion || dbVersion instanceof AplDbVersion;
+            boolean isConstraintSchema = dbUpdater instanceof ShardAddConstrainsDBUpdater || dbUpdater instanceof AplDBUpdater;
             ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(databaseManager.getDataSource());
             if (recovery != null) {
                 if (recovery.getState().getValue() >= SHARD_SCHEMA_FULL.getValue()) {
@@ -198,7 +198,7 @@ public class ShardEngineImpl implements ShardEngine {
             }
 
             // we ALWAYS need to do that STEP to attach to new/existing shard db !!
-            TransactionalDataSource createdShardSource = ((ShardManagement) databaseManager).createOrUpdateShard(commandParamInfo.getShardId(), dbVersion);
+            TransactionalDataSource createdShardSource = ((ShardManagement) databaseManager).createOrUpdateShard(commandParamInfo.getShardId(), dbUpdater);
 
 
             if (isConstraintSchema) {
@@ -226,10 +226,10 @@ public class ShardEngineImpl implements ShardEngine {
             TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
             loadAndRefreshRecovery(sourceDataSource);
             log.debug("INIT shard db={} by schema={} ({}) in {} sec",
-                createdShardSource.getDbIdentity(), dbVersion.getClass().getSimpleName(), state.name(),
+                createdShardSource.getDbIdentity(), dbUpdater.getClass().getSimpleName(), state.name(),
                 (System.currentTimeMillis() - start) / 1000);
         } catch (Exception e) {
-            log.error("Error creation Shard Db with Schema script:" + dbVersion.getClass().getSimpleName(), e);
+            log.error("Error creation Shard Db with Schema script:" + dbUpdater.getClass().getSimpleName(), e);
             state = MigrateState.FAILED;
             durableTaskUpdateByState(state, null, null);
         }

@@ -27,8 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollTable;
-import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
-import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
@@ -76,6 +74,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardAddConstrainsDBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
@@ -315,7 +315,7 @@ class ShardMigrationExecutorTest {
 
 //2.        // create shard db with 'initial' schema
         CreateShardSchemaCommand createShardSchemaCommand = new CreateShardSchemaCommand(4L, shardEngine,
-            new ShardInitTableSchemaVersion(), null, null);
+            new ShardInitDBUpdater(), null, null);
         state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
         assertEquals(SHARD_SCHEMA_CREATED, state);
 
@@ -348,7 +348,7 @@ class ShardMigrationExecutorTest {
 //5.        // create shard db FULL schema
         byte[] shardHash = "0123456780".getBytes(); // just an example
         createShardSchemaCommand = new CreateShardSchemaCommand(4L, shardEngine,
-            new ShardAddConstraintsSchemaVersion(), shardHash, PrevBlockData.builder().generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[]{3, 4}).prevBlockTimestamps(new Integer[]{5, 6}).build());
+            new ShardAddConstrainsDBUpdater(), shardHash, PrevBlockData.builder().generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[]{3, 4}).prevBlockTimestamps(new Integer[]{5, 6}).build());
         state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
         assertEquals(SHARD_SCHEMA_FULL, state);
 

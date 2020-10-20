@@ -27,9 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
-import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
-import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TransactionIndex;
@@ -69,6 +66,9 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
+import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardAddConstrainsDBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -294,7 +294,7 @@ class ShardEngineTest {
         MigrateState state = shardEngine.getCurrentState();
         assertNotNull(state);
         assertEquals(MigrateState.INIT, state);
-        state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), CommandParamInfo.builder().shardId(3L).build());
+        state = shardEngine.addOrCreateShard(new ShardInitDBUpdater(), CommandParamInfo.builder().shardId(3L).build());
         assertEquals(SHARD_SCHEMA_CREATED, state);
 
         checkDbVersion(5, 3);
@@ -344,8 +344,7 @@ class ShardEngineTest {
             .prevBlockTimeouts(timeouts)
             .generatorIds(generators)
             .build();
-        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(),
-            CommandParamInfo.builder().shardHash(shardHash).shardId(3L).prevBlockData(prevBlockData).build());
+        state = shardEngine.addOrCreateShard(new ShardAddConstrainsDBUpdater(), CommandParamInfo.builder().shardHash(shardHash).shardId(3L).prevBlockData(prevBlockData).build());
         assertEquals(SHARD_SCHEMA_FULL, state);
         checkDbVersion(24, 3);
         checkTableExist(new String[]{"block", "option", "transaction"}, 3);
@@ -358,20 +357,20 @@ class ShardEngineTest {
 
     @Test
     void createSchemaShardDbWhenAlreadyCreatedByRecovery() {
-        createShardDbWhenAlreadyCreated(new ShardInitTableSchemaVersion(), SHARD_SCHEMA_CREATED);
+        createShardDbWhenAlreadyCreated(new ShardInitDBUpdater(), SHARD_SCHEMA_CREATED);
     }
 
     @Test
     void createFullShardDbWhenAlreadyCreatedByRecovery() {
-        createShardDbWhenAlreadyCreated(new ShardAddConstraintsSchemaVersion(), SHARD_SCHEMA_FULL);
+        createShardDbWhenAlreadyCreated(new ShardAddConstrainsDBUpdater(), SHARD_SCHEMA_FULL);
     }
 
-    private void createShardDbWhenAlreadyCreated(DbVersion dbVersion, MigrateState state) {
+    private void createShardDbWhenAlreadyCreated(DBUpdater dbUpdater, MigrateState state) {
         DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
         ShardRecovery recovery = new ShardRecovery(state);
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
         shardRecoveryDaoJdbc.saveShardRecovery(dataSource, recovery);
-        MigrateState shardState = shardEngine.addOrCreateShard(dbVersion, CommandParamInfo.builder().shardHash(new byte[32]).build());
+        MigrateState shardState = shardEngine.addOrCreateShard(dbUpdater, CommandParamInfo.builder().shardHash(new byte[32]).build());
         assertEquals(shardState, state);
         ShardRecovery actualRecovery = shardRecoveryDaoJdbc.getLatestShardRecovery(dataSource);
         assertEquals(state, actualRecovery.getState());
@@ -380,8 +379,7 @@ class ShardEngineTest {
     @Test
     void createFullShardDbWhenNoRecoveryPresent() {
         DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
-        MigrateState shardState = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(),
-            CommandParamInfo.builder().shardHash(new byte[32]).build());
+        MigrateState shardState = shardEngine.addOrCreateShard(new ShardAddConstrainsDBUpdater(), CommandParamInfo.builder().shardHash(new byte[32]).build());
         assertEquals(MigrateState.FAILED, shardState);
     }
 
@@ -418,7 +416,7 @@ class ShardEngineTest {
 //        assertTrue(Files.exists(dirProvider.getDbDir().resolve("BACKUP-BEFORE-apl-blockchain-shard-4-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip")));
 
 //2.        // create shard db with 'initial' schema
-        state = shardEngine.addOrCreateShard(new ShardInitTableSchemaVersion(), CommandParamInfo.builder().shardId(4L).build());
+        state = shardEngine.addOrCreateShard(new ShardInitDBUpdater(), CommandParamInfo.builder().shardId(4L).build());
         assertEquals(SHARD_SCHEMA_CREATED, state);
 
         // checks before COPYING blocks / transactions
@@ -464,7 +462,8 @@ class ShardEngineTest {
         assertEquals(td.TRANSACTION_5, transactionDao.findTransaction(td.TRANSACTION_5.getId(), shardDataSource));
 
 //5.        // create shard db FULL schema + add shard hash info
-        state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(),
+//        state = shardEngine.addOrCreateShard(new ShardAddConstrainsDBUpdater(), CommandParamInfo.builder().shardHash(shardHash).shardId(4L).prevBlockData(PrevBlockData.builder().generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[]{3, 4}).prevBlockTimestamps(new Integer[]{5, 6}).build()).build());
+        state = shardEngine.addOrCreateShard(new ShardAddConstrainsDBUpdater(),
             CommandParamInfo.builder().shardHash(shardHash).shardId(4L).prevBlockData(PrevBlockData.builder()
                 .generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[]{3, 4}).prevBlockTimestamps(new Integer[]{5, 6}).build()).build());
         assertEquals(SHARD_SCHEMA_FULL, state);
