@@ -111,7 +111,6 @@ public class PeersService {
     public static int myPort;
     static int readTimeout;
     static int blacklistingPeriod;
-    static boolean useWebSockets;
     static int webSocketIdleTimeout;
     static boolean useProxy;
     static boolean isGzipEnabled;
@@ -264,7 +263,6 @@ public class PeersService {
         enableHallmarkProtection = propertiesHolder.getBooleanProperty("apl.enableHallmarkProtection") && !propertiesHolder.isLightClient();
         pushThreshold = propertiesHolder.getIntProperty("apl.pushThreshold");
         pullThreshold = propertiesHolder.getIntProperty("apl.pullThreshold");
-        useWebSockets = propertiesHolder.getBooleanProperty("apl.useWebSockets");
         webSocketIdleTimeout = propertiesHolder.getIntProperty("apl.webSocketIdleTimeout");
         isGzipEnabled = propertiesHolder.getBooleanProperty("apl.enablePeerServerGZIPFilter");
         blacklistingPeriod = propertiesHolder.getIntProperty("apl.blacklistingPeriod") / 1000;
@@ -275,7 +273,7 @@ public class PeersService {
         cjdnsOnly = propertiesHolder.getBooleanProperty("apl.cjdnsOnly");
         ignorePeerAnnouncedAddress = propertiesHolder.getBooleanProperty("apl.ignorePeerAnnouncedAddress");
 
-        if (useWebSockets && useProxy) {
+        if (useProxy) {
             LOG.info("Using a proxy, will not create outbound websockets.");
         }
 

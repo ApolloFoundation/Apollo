@@ -234,8 +234,8 @@ public class Peer2PeerTransport {
             return sendOK;
         }
         if (useWebSocket) {
+            log.trace("Send request {} - transport {}", requestId, number);
             if (isInbound()) {
-                log.trace("Send request {} - transport {}", requestId, number);
                 sendOK = sendToWebSocket(message, inboundWebSocket, requestId);
 
                 if (!sendOK) {
@@ -279,14 +279,6 @@ public class Peer2PeerTransport {
                 }
             }
         }
-//        else {
-////            // Send the request using HTTP if websockets are disabled
-////            sendOK = sendHttp(message, requestId);
-////            log.debug("Trying to use HTTP requests to {} because websockets failed", getHostWithPort());
-////            if (!sendOK) {
-////                log.debug("Peer: {} Using HTTP. Failed.", getHostWithPort());
-////            }
-//        }
         if (!sendOK) {
             String msg = "Error on sending request";
             Peer p = getPeer();

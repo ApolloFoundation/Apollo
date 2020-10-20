@@ -21,17 +21,21 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class PeerWebSocketClient extends PeerWebSocket {
 
-    private static WebSocketClient client = null;
+    private static volatile WebSocketClient client = null;
     private final Monitor startMonitor = new Monitor();
     private Session session = null;
 
     public PeerWebSocketClient(Peer2PeerTransport peer) {
         super(peer);
         if (client == null) {
-            try {
-                init();
-            } catch (Exception ex) {
-                log.error("Can not start wesocket client", ex);
+            synchronized (PeerWebSocketClient.class) {
+                if (client == null) {
+                    try {
+                        init();
+                    } catch (Exception ex) {
+                        log.error("Can not start wesocket client", ex);
+                    }
+                }
             }
         }
     }
