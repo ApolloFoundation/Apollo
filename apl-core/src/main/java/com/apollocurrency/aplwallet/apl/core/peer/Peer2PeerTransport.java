@@ -30,7 +30,15 @@ public class Peer2PeerTransport {
     /**
      * map requests to responses
      */
-    private final Cache<Long, ResponseWaiter> requestCache;
+    private static final Cache<Long, ResponseWaiter> requestCache = CacheBuilder.newBuilder()
+        .expireAfterAccess(60, TimeUnit.MILLISECONDS)
+            .expireAfterWrite(60, TimeUnit.MILLISECONDS)
+            .concurrencyLevel(100)
+            .removalListener(notification -> {
+        RemovalCause cause = notification.getCause();
+        log.trace("Remove waiter: {}, cause - {}", notification.getKey(), cause.name());
+    })
+        .build();
     private final Random rnd = new Random();
     private final SoftReference<PeerServlet> peerServlet;
     private final boolean useWebSocket = PeersService.useWebSockets && !PeersService.useProxy;
@@ -51,15 +59,6 @@ public class Peer2PeerTransport {
         this.peerServlet = new SoftReference<>(peerServlet);
         lastActivity = System.currentTimeMillis();
         this.limiter = limiter;
-        this.requestCache = CacheBuilder.newBuilder()
-            .expireAfterAccess(60, TimeUnit.MILLISECONDS)
-            .expireAfterWrite(60, TimeUnit.MILLISECONDS)
-            .concurrencyLevel(100)
-            .removalListener(notification -> {
-                RemovalCause cause = notification.getCause();
-                log.trace("Remove waiter: {}, cause - {}", notification.getKey(), cause.name());
-            })
-            .build();
         this.number = counter.incrementAndGet();
     }
 
