@@ -24,17 +24,17 @@ import java.util.Set;
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 public class FullTextSearchServiceImpl implements FullTextSearchService {
     private FullTextSearchEngine ftl;
-    private Set<String> indexTables;
+    private Set<String> fullTextSearchIndexedTables;
     private String schemaName;
     private DatabaseManager databaseManager;
 
     @Inject
     public FullTextSearchServiceImpl(DatabaseManager databaseManager, FullTextSearchEngine ftl,
-                                     @Named(value = "fullTextTables") Set<String> indexTables,
+                                     @Named(value = "fullTextTables") Set<String> fullTextSearchIndexedTables,
                                      @Named(value = "tablesSchema") String schemaName) {
         this.databaseManager = databaseManager;
         this.ftl = ftl;
-        this.indexTables = indexTables;
+        this.fullTextSearchIndexedTables = fullTextSearchIndexedTables;
         this.schemaName = schemaName;
     }
 
@@ -70,7 +70,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         // Rebuild the Lucene index
         //
         if (reindex) {
-            reindexAll(conn, indexTables, schema);
+            reindexAll(conn, fullTextSearchIndexedTables, schema);
         }
     }
 
@@ -248,7 +248,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
     }
 
     public void reindexAll(Connection conn) throws SQLException {
-        reindexAll(conn, indexTables, schemaName);
+        reindexAll(conn, fullTextSearchIndexedTables, schemaName);
     }
 
     private void reindexAll(Connection conn, Set<String> tables, String schema) throws SQLException {

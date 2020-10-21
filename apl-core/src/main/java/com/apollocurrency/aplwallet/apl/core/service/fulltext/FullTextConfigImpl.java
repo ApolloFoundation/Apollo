@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FullTextConfigImpl implements FullTextConfig {
 
     private Set<String> tableNames = ConcurrentHashMap.newKeySet();
-    private String schema = "PUBLIC";
+    private String schema = "public";
     private Path ftlIndexPath;
 
     public FullTextConfigImpl() {

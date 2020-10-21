@@ -41,8 +41,8 @@ public class DbUtils {
             }
             index++;
         }
-        List<Integer> indexColumns = getIndexColumns(connection, columnNames, columnTypes, schemaName, tableName);
-        return new TableData(dbColumn, tableName, schemaName, columnNames, columnTypes, indexColumns);
+        List<Integer> indexedTextSearchColumns = getIndexColumns(connection, columnNames, columnTypes, schemaName, tableName);
+        return new TableData(dbColumn, tableName, schemaName, columnNames, columnTypes, indexedTextSearchColumns);
     }
 
     private static List<Integer> getIndexColumns(Connection con, List<String> columnNames, List<Integer> columnTypes, String schema, String table) {
