@@ -3,10 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.util.ConcurrentSelfCleaningHashMap;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalCause;
 import com.google.common.util.concurrent.TimeLimiter;
 import lombok.Getter;
 import lombok.NonNull;
@@ -16,7 +14,6 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -30,15 +27,7 @@ public class Peer2PeerTransport {
     /**
      * map requests to responses
      */
-    private static final Cache<Long, ResponseWaiter> requestCache = CacheBuilder.newBuilder()
-        .expireAfterAccess(60, TimeUnit.MILLISECONDS)
-            .expireAfterWrite(60, TimeUnit.MILLISECONDS)
-            .concurrencyLevel(100)
-            .removalListener(notification -> {
-        RemovalCause cause = notification.getCause();
-        log.trace("Remove waiter: {}, cause - {}", notification.getKey(), cause.name());
-    })
-        .build();
+    private static final ConcurrentSelfCleaningHashMap<Long, ResponseWaiter> requestMap = new ConcurrentSelfCleaningHashMap<>(60_000, 60_000, ResponseWaiter::isOld);
     private final Random rnd = new Random();
     private final PeerServlet peerServlet;
     private final Object volumeMonitor = new Object();
@@ -111,7 +100,7 @@ public class Peer2PeerTransport {
         if (rqId == null) {
             log.debug("Protocol error, requestId=null from {}, message:\n{}\n", which(), message);
         } else {
-            ResponseWaiter wsrw = requestCache.getIfPresent(rqId);
+            ResponseWaiter wsrw = requestMap.getValue(rqId);
             if (wsrw != null) { //this is response we are waiting for
                 wsrw.setResponse(message);
             } else {
@@ -128,7 +117,7 @@ public class Peer2PeerTransport {
     public Long sendRequest(String message) {
         Long requestId = sendRequestNoResponseWaiter(message);
         if (requestId != null) {
-            requestCache.put(requestId, new ResponseWaiter());
+            requestMap.putValue(requestId, new ResponseWaiter());
         }
         return requestId;
     }
@@ -160,14 +149,14 @@ public class Peer2PeerTransport {
 
     public String getResponse(Long rqId) {
         String res = null;
-        ResponseWaiter wsrw = requestCache.getIfPresent(rqId);
+        ResponseWaiter wsrw = requestMap.getValue(rqId);
         if (wsrw != null) {
             try {
                 res = wsrw.get(PeersService.readTimeout);
             } catch (SocketTimeoutException ex) {
                 log.trace("Timeout exceeded while waiting response from: {} ID: {}", which(), rqId);
             }
-            requestCache.invalidate(rqId);
+            requestMap.remove(rqId);
         } else {
             log.error("Waiting for non-existent request. Peer: {}, ID: {}", which(), rqId);
         }

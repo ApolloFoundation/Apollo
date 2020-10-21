@@ -211,7 +211,12 @@ public final class PeerServlet extends WebSocketServlet {
         if (peer == null) {
             jsonResponse = PeerResponses.UNKNOWN_PEER;
         } else {
-            Thread.currentThread().setName("doPostTask-" + peer.getHostWithPort());
+            String name = Thread.currentThread().getName();
+            int threadNumberStartIndex = name.lastIndexOf("-");
+            if (threadNumberStartIndex != -1 && threadNumberStartIndex <= name.length() - 2) {
+                String threadNumber = name.substring(threadNumberStartIndex + 1);
+                Thread.currentThread().setName("P2P-WS-RequestProcessor-" + peer.getHostWithPort() + "-" + threadNumber);
+            }
             if (peer.isBlacklisted()) {
                 jsonResponse = PeerResponses.getBlackisted(peer.getBlacklistingCause());
             } else {
