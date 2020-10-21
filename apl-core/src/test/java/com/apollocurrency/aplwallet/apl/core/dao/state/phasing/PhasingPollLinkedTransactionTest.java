@@ -44,6 +44,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.sql.SQLException;
@@ -54,6 +55,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+@Testcontainers
 @Tag("slow")
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -62,7 +64,6 @@ public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingP
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
     TransactionTestData td = new TransactionTestData();
-
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(

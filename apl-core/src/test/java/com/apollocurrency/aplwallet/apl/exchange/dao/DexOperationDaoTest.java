@@ -4,15 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.DexOperationTestData;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOperation;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.sql.Timestamp;
@@ -21,10 +25,13 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Slf4j
+@Testcontainers
 @Tag("slow")
-class DexOperationDaoTest {
+class DexOperationDaoTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), "db/dex-operation-data.sql", null);
+    DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/dex-operation-data.sql", null);
     private DexOperationDao dao;
 
     private DexOperationTestData td;
@@ -64,11 +71,26 @@ class DexOperationDaoTest {
     }
 
     @Test
-    void testUniqueConstraint() {
-        DexOperation newOp = new DexOperation(null, td.OP_4.getAccount(), td.OP_4.getStage(), td.OP_4.getEid(), null, null, false, new Timestamp(System.currentTimeMillis()));
+    void testAddMaxDescriptionLength() {
+        String description = RandomStringUtils.randomAlphabetic(1000);
+        DexOperation newOp = new DexOperation(null, "New acc", DexOperation.Stage.APL_CONTRACT_S2, "100", description, null, false, new Timestamp(System.currentTimeMillis()));
+        long dbId = dao.add(newOp);
+
+        assertEquals(1005, dbId);
+        DexOperation savedOp = dao.getBy("New acc", DexOperation.Stage.APL_CONTRACT_S2, "100");
+        newOp.setDbId(1005L);
+        assertEquals(newOp, savedOp);
+    }
+
+    @Test
+    void testAddDescriptionOverLength() {
+        String description = RandomStringUtils.randomAlphabetic(1001);
+        DexOperation newOp = new DexOperation(null, "New acc", DexOperation.Stage.APL_CONTRACT_S2, "100", description, null, false, new Timestamp(System.currentTimeMillis()));
 
         assertThrows(UndeclaredThrowableException.class, () -> dao.add(newOp));
     }
+
+
 
     @Test
     void testDelete() {

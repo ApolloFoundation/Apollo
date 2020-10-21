@@ -217,7 +217,8 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     public int getAllPhasedTransactionsCount() throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
-             PreparedStatement pstmt = con.prepareStatement("select count(*) from (select id from phasing_poll UNION select id from phasing_poll_result)")) {
+             PreparedStatement pstmt = con.prepareStatement(
+                 "select count(*) from (select id from phasing_poll UNION select id from phasing_poll_result) as id_count")) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 rs.next();
                 return rs.getInt(1);
@@ -304,7 +305,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
 
     int blockTimestamp(int height) throws SQLException {
         try (Connection connection = databaseManager.getDataSource().getConnection();
-             PreparedStatement pstm = connection.prepareStatement("SELECT timestamp from block where height = ?")) {
+             PreparedStatement pstm = connection.prepareStatement("SELECT `timestamp` from block where height = ?")) {
             pstm.setInt(1, height);
             try (ResultSet rs = pstm.executeQuery()) {
                 if (rs.next()) {

@@ -114,4 +114,26 @@ Project is entirely on Maven v3 and could be loaded in any IDE that supports Mav
     5) run ./bin/maria-db-init.sh {basedir} {mariadb_apollo_instance.cnf}
         Example: sh ./bin/maria-db-init.sh /../../..../apl-updater2/mariadb-pkg/target/ApolloWallet/apollo-mariadb /..../..../.apl-blockchain/apl-blockchain-db/conf/mariadb_apollo_instance.cnf
    
+
+## DOCKER Installation
+
+#### On Linux
+https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04-ru
+should be completed
+
+Article about MariaDB in docker
+https://mariadb.com/kb/en/installing-and-using-mariadb-via-docker/
+
+### How create local docker image for unit tests
+See [creation local Docker image link](/unit-test-Docker-Image/README.md)
+
+#### Check IP table / firewall settings to access docker
+https://github.com/testcontainers/testcontainers-java/issues/572#issuecomment-517831833
+
+$ sudo iptables -L
+```
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     all  --  172.17.0.0/24        anywhere
+```            
     

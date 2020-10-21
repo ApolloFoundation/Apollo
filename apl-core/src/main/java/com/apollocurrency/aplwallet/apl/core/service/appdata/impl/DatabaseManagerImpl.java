@@ -14,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardDataSourceCreateHelper;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
-import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -261,29 +260,6 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         log.debug("Closed [{}] data source(s)", closedDataSources);
         connectedShardDataSourceMap.clear();
         return closedDataSources;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public TransactionalDataSource createAndAddTemporaryDb(String temporaryDatabaseName) {
-        StringValidator.requireNonBlank(temporaryDatabaseName, "temporary database name");
-        waitAvailability();
-        long start = System.currentTimeMillis();
-        log.debug("Create new SHARD '{}'", temporaryDatabaseName);
-        DbProperties shardDbProperties = baseDbProperties.deepCopy();
-        shardDbProperties.setDbName(temporaryDatabaseName);
-        shardDbProperties.setDbUrl(null); // nullify dbUrl intentionally!;
-        shardDbProperties.setDbIdentity(TEMP_DB_IDENTITY);
-
-        TransactionalDataSource temporaryDataSource = new TransactionalDataSource(shardDbProperties, propertiesHolder);
-        temporaryDataSource.setSystemDataSource(currentTransactionalDataSource.getSystemDataSource());
-
-        temporaryDataSource.init(new AplDbVersion());
-        connectedShardDataSourceMap.put(TEMP_DB_IDENTITY, temporaryDataSource); // put temporary DS with special ID
-        log.debug("new temporaryDataSource '{}' is CREATED in {} ms", temporaryDatabaseName, System.currentTimeMillis() - start);
-        return temporaryDataSource;
     }
 
     @Override

@@ -61,9 +61,9 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
     private volatile long txCount = 0;
     private volatile long statsTime = 0;
     /**
-     * Optional.EMPTY for 'main db', Optional.value 1...xx for shardId, Optional.value NEGATIVE = -1 for temp db only
+     * Optional.EMPTY for 'main db', Optional.value apl_blockchain_XXXXXX_shard_Y for shardId (chainId = XXX, shard Id = Y)
      */
-    private Optional<Long> dbIdentity = Optional.empty();
+    private Optional<String> dbIdentity;
 
     /**
      * Created by CDI with previously initialized properties.
@@ -77,7 +77,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
             propertiesHolder.getIntProperty("apl.statementLogThreshold", 1000),
             propertiesHolder.getIntProperty("apl.transactionLogThreshold", 5000),
             propertiesHolder.getIntProperty("apl.transactionLogInterval", 15) * 60 * 1000,
-            propertiesHolder.getBooleanProperty("apl.enableSqlLogs"));
+            propertiesHolder.getBooleanProperty("apl.enableSqlLogs", false));
     }
 
     public TransactionalDataSource(DbProperties dbProperties, int stmtThreshold, int txThreshold, int txInterval, boolean enableSqlLogs) {
@@ -283,12 +283,13 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
     }
 
     /**
-     * Return db identity value related to database type - main db, shard db, temp db.
-     * Optional.EMPTY, Optional.1-xxx , Optional. -1
+     * Return db identity value related to database type - main db, shard db.
+     * main db examples : Optional.EMPTY
+     * shard db examples: Optional.apl_blockchain_b5d7b6_shard_1, Optional.apl_blockchain_2f2b61_shard_4
      *
-     * @return Optional.EMPTY for main db, Optional.value +1 for shardId, Optional.value NEGATIVE = -1L for temp db
+     * @return Optional.EMPTY for main db, Optional.value for shardId
      */
-    public Optional<Long> getDbIdentity() {
+    public Optional<String> getDbIdentity() {
         return this.dbIdentity;
     }
 

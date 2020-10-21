@@ -34,9 +34,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @EnableWeld
-//@Execution(ExecutionMode.CONCURRENT)
 class DeleteTrimObserverTest {
-
     DatabaseManager databaseManager = mock(DatabaseManager.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
 

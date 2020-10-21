@@ -1,0 +1,2 @@
+TRUNCATE TABLE transaction;
+TRUNCATE TABLE block;

@@ -65,7 +65,14 @@ public abstract class DbVersion {
                 log.debug("Database update may take a while if needed, current db version " + (nextUpdate - 1) + "...");
             } catch (SQLException e) {
                 log.debug("Initializing an empty database");
-                stmt.executeUpdate("CREATE TABLE version (next_update INT NOT NULL) ENGINE=ROCKSDB;");
+                if (log.isTraceEnabled()) {
+                    ResultSet engines = stmt.executeQuery("show engines;");
+                    while (engines.next()) {
+                        String engine = engines.getString(1);
+                        log.trace("engine = {}", engine);
+                    }
+                }
+                stmt.executeUpdate("CREATE TABLE version (next_update INT NOT NULL) ENGINE=ROCKSDB DEFAULT COLLATE=utf8mb4_unicode_ci;");
                 con.commit();
                 stmt.executeUpdate("INSERT INTO version VALUES (1)");
                 con.commit();

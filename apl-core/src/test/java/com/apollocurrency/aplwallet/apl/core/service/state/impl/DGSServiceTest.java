@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSFeedbackTable;
@@ -55,6 +56,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -64,6 +66,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -79,18 +82,21 @@ import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_3_ID;
 import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_0_ID;
 import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_1_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+@Testcontainers
 @Tag("slow")
 @EnableWeld
-public class DGSServiceTest {
+public class DGSServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    DbExtension extension = new DbExtension(mariaDBContainer);
     Blockchain blockchain = mock(Blockchain.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -813,7 +819,7 @@ public class DGSServiceTest {
 
         expected.setDbId(dtd.PUBLIC_FEEDBACK_13.getDbId() + 1);
         List<DGSPublicFeedback> feedbacks = service.getPublicFeedbacks(purchase);
-        assertEquals(List.of(expected), feedbacks);
+        assertIterableEquals(List.of(expected), feedbacks);
     }
 
     @Test
@@ -1329,25 +1335,25 @@ public class DGSServiceTest {
     @Test
     void testGetSellerGoods() {
         List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, false, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_5, dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_10, dtd.GOODS_8), goods);
+        assertIterableEquals(List.of(dtd.GOODS_5, dtd.GOODS_12, dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_10, dtd.GOODS_8, dtd.GOODS_4), goods);
         goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, false, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_2), goods);
+        assertIterableEquals(List.of(dtd.GOODS_2), goods);
     }
 
     @Test
     void testGetSellerGoodsInStock() {
         List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, true, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_11, dtd.GOODS_10), goods);
+        assertIterableEquals(List.of(dtd.GOODS_12, dtd.GOODS_11, dtd.GOODS_10), goods);
         goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, true, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(), goods);
+        assertIterableEquals(List.of(), goods);
     }
 
     @Test
     void testGetSellerGoodsWithPagination() {
         List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, false, 2, 4));
-        assertEquals(List.of(dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11), goods);
+        assertIterableEquals(List.of(dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_10), goods);
         goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, false, 0, 0));
-        assertEquals(List.of(dtd.GOODS_2), goods);
+        assertIterableEquals(List.of(dtd.GOODS_2), goods);
     }
 
     @Test

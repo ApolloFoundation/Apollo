@@ -1,6 +1,6 @@
-DELETE from CURRENCY_MINT;
+DELETE from currency_mint;
 
-INSERT INTO CURRENCY_MINT
+INSERT INTO currency_mint
 (DB_ID, CURRENCY_ID   , ACCOUNT_ID  ,   COUNTER, HEIGHT  , LATEST , DELETED ) VALUES
 (01,    1000,           100,            10,       800,      false , false),
 (11,    1000,           100,            10,       820,      true,   false),

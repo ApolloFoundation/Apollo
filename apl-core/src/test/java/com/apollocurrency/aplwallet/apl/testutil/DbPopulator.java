@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
-import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -23,16 +23,14 @@ import java.sql.Statement;
 import java.util.Objects;
 import java.util.StringTokenizer;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
+@Slf4j
 public class DbPopulator {
-    private static final Logger LOG = getLogger(DbPopulator.class);
 
-    private DataSource basicDataSource;
-    private String schemaScriptPath;
-    private String dataScriptPath;
+    private final TransactionalDataSource basicDataSource;
+    private final String schemaScriptPath;
+    private final String dataScriptPath;
 
-    public DbPopulator(DataSourceWrapper db, String schemaScriptPath, String dataScriptPath) {
+    public DbPopulator(TransactionalDataSource db, String schemaScriptPath, String dataScriptPath) {
         this.basicDataSource = db;
         this.schemaScriptPath = schemaScriptPath;
         this.dataScriptPath = dataScriptPath;
@@ -42,21 +40,37 @@ public class DbPopulator {
         findAndExecute(schemaScriptPath, "Schema");
     }
 
+    public void executeUseDbSql(String shardName) {
+        Objects.requireNonNull(shardName , "shardName is NULL");
+        try (Connection con = basicDataSource.getConnection();
+             Statement stm = con.createStatement()) {
+            stm.executeUpdate(String.format("use %s;", shardName));
+            con.commit();
+        } catch (SQLException e) {
+            log.error("Error executing USE shard command", e);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
     private void loadSqlAndExecute(URI file) {
         byte[] bytes = readAllBytes(file);
 
+        int appliedResults = 0;
         StringTokenizer tokenizer = new StringTokenizer(new String(bytes), ";");
         while (tokenizer.hasMoreElements()) {
             String sqlCommand = tokenizer.nextToken();
             try (Connection con = basicDataSource.getConnection();
                  Statement stm = con.createStatement()) {
-                stm.executeUpdate(sqlCommand);
-                con.commit();
+                if (sqlCommand.trim().length() != 0 && !sqlCommand.trim().startsWith("--")) {
+                    appliedResults += stm.executeUpdate(sqlCommand);
+                    con.commit();
+                }
             } catch (SQLException e) {
+                log.error("Error for: {}", sqlCommand);
                 throw new RuntimeException(e.toString(), e);
             }
         }
-
+        log.trace("Applied '{}' test data commands into db=[{}]", appliedResults, ((TransactionalDataSource)basicDataSource).getDbIdentity());
     }
 
     private byte[] readAllBytes(URI file) {

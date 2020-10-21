@@ -22,10 +22,7 @@ import java.util.Set;
 @Slf4j
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-public class FullTextSearchServiceImpl
-//    implements FullTextSearchService
-{
-/*
+public class FullTextSearchServiceImpl implements FullTextSearchService {
     private FullTextSearchEngine ftl;
     private Set<String> indexTables;
     private String schemaName;
@@ -41,14 +38,14 @@ public class FullTextSearchServiceImpl
         this.schemaName = schemaName;
     }
 
-    *//**
+    /**
      * Drop the fulltext index for a table
      *
      * @param conn   SQL connection
      * @param schema Schema name
      * @param table  Table name
      * @throws SQLException Unable to drop fulltext index
-     *//*
+     */
     public void dropIndex(Connection conn, String schema, String table) throws SQLException {
         String upperSchema = schema.toUpperCase();
         String upperTable = table.toUpperCase();
@@ -77,12 +74,12 @@ public class FullTextSearchServiceImpl
         }
     }
 
-    *//**
+    /**
      * Initialize the fulltext support for a new database
      * <p>
      * This method should be called from AplDbVersion when performing the database version update
      * that enables fulltext search support
-     *//*
+     */
     public void init() {
         try {
             ftl.init();
@@ -90,6 +87,7 @@ public class FullTextSearchServiceImpl
             throw new RuntimeException("Unable to init fulltext engine", e);
         }
         String triggerClassName = FullTextTrigger.class.getName();
+        log.debug("triggerClassName = {}", triggerClassName);
         try (Connection conn = databaseManager.getDataSource().getConnection();
              Statement stmt = conn.createStatement();
              Statement qstmt = conn.createStatement()) {
@@ -172,12 +170,12 @@ public class FullTextSearchServiceImpl
         }
     }
 
-    *//**
+    /**
      * Drop all fulltext indexes
      *
      * @param conn SQL connection
      * @throws SQLException Unable to drop fulltext indexes
-     *//*
+     */
     public void dropAll(Connection conn) throws SQLException {
         //
         // Drop existing triggers
@@ -275,7 +273,7 @@ public class FullTextSearchServiceImpl
     }
 
 
-    *//**
+    /**
      * Creates a new index for table to support fulltext search.
      * Note that a schema is always PUBLIC.
      *
@@ -283,7 +281,7 @@ public class FullTextSearchServiceImpl
      * @param table                 name of table for indexing
      * @param fullTextSearchColumns list of columns for indexing separated by comma
      * @throws SQLException when unable to create index
-     *//*
+     */
     @Override
     public final void createSearchIndex(
         final Connection con,
@@ -324,5 +322,4 @@ public class FullTextSearchServiceImpl
             }
         }
     }
-*/
 }

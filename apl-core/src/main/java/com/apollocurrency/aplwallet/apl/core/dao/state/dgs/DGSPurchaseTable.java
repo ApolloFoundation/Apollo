@@ -102,7 +102,7 @@ public class DGSPurchaseTable extends EntityDbTable<DGSPurchase> {
     @Override
     @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
     public String defaultSort() {
-        return " ORDER BY timestamp DESC, id ASC ";
+        return " ORDER BY `timestamp` DESC, id ASC ";
     }
 
 }

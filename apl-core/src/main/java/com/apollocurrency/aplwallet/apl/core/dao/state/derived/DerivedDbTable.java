@@ -32,6 +32,8 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -188,8 +190,8 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         Objects.requireNonNull(pstmt, "prepared statement is NULL");
         Objects.requireNonNull(minMaxValue, "minMaxValue is NULL");
         try {
-            pstmt.setLong(1, minMaxValue.getMin());
-            pstmt.setLong(2, minMaxValue.getMax());
+            pstmt.setBigDecimal(1, minMaxValue.getMin());
+            pstmt.setBigDecimal(2, minMaxValue.getMax());
             pstmt.setLong(3, limit);
             return pstmt.executeQuery();
         } catch (SQLException e) {
@@ -233,8 +235,8 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         MinMaxValue result = null;
         try (ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
-                long min = rs.getLong("min_id");
-                long max = rs.getLong("max_id");
+                BigDecimal min = rs.getBigDecimal("min_id");
+                BigDecimal max = rs.getBigDecimal("max_id");
                 long rowCount = rs.getLong("count");
                 int height = rs.getInt("max_height");
                 result = new MinMaxValue(

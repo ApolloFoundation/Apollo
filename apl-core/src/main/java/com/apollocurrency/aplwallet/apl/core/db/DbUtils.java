@@ -225,7 +225,10 @@ public final class DbUtils {
     }
 
     public static int calculateLimit(int from, int to) {
-        return to >= 0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
+        return to >= 0
+            && to >= from
+            && to < Integer.MAX_VALUE ?
+            to - from + 1 : 0;
     }
 
     public static String limitsClause(int from, int to) {
@@ -235,7 +238,11 @@ public final class DbUtils {
         } else if (limit > 0) {
             return " LIMIT ? ";
         } else if (from > 0) {
-            return " LIMIT NULL OFFSET ? ";
+            if (to > 0) {
+                return String.format(" LIMIT %d OFFSET ? ", to);
+            } else {
+                return " LIMIT 0 OFFSET ? ";
+            }
         } else {
             return "";
         }

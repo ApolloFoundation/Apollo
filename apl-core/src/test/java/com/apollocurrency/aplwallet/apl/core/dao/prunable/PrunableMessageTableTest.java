@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.prunable;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -19,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.data.PrunableMessageTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -26,22 +28,27 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+@Testcontainers
 @Tag("slow")
 @EnableWeld
-class PrunableMessageTableTest {
+class PrunableMessageTableTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), null, null, "db/prunable-message-data.sql");
+    DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), null, null, "db/prunable-message-data.sql");
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
@@ -120,34 +127,34 @@ class PrunableMessageTableTest {
     void testGetAccountMessages() {
         List<PrunableMessage> prunableMessages = table.getPrunableMessages(data.ALICE_ID, 0, Integer.MAX_VALUE);
         List<PrunableMessage> expected = List.of(data.MESSAGE_11, data.MESSAGE_8, data.MESSAGE_6, data.MESSAGE_5, data.MESSAGE_4, data.MESSAGE_3, data.MESSAGE_2, data.MESSAGE_1);
-        assertEquals(expected, prunableMessages);
+        assertIterableEquals(expected, prunableMessages);
     }
 
     @Test
     void testGetAccountMessagesWithPagination() {
         List<PrunableMessage> prunableMessages = table.getPrunableMessages(data.ALICE_ID, 2, 4);
         List<PrunableMessage> expected = List.of(data.MESSAGE_6, data.MESSAGE_5, data.MESSAGE_4);
-        assertEquals(expected, prunableMessages);
+        assertIterableEquals(expected, prunableMessages);
     }
 
     @Test
     void testGetAccountMutualMessages() {
         List<PrunableMessage> prunableMessages = table.getPrunableMessages(data.BOB_ID, data.ALICE_ID, 0, Integer.MAX_VALUE);
         List<PrunableMessage> expected = List.of(data.MESSAGE_4, data.MESSAGE_3, data.MESSAGE_2, data.MESSAGE_1);
-        assertEquals(expected, prunableMessages);
+        assertIterableEquals(expected, prunableMessages);
     }
 
     @Test
     void testGetAccountMutualMessagesWithPagination() {
         List<PrunableMessage> prunableMessages = table.getPrunableMessages(data.BOB_ID, data.ALICE_ID, 1, 2);
         List<PrunableMessage> expected = List.of(data.MESSAGE_3, data.MESSAGE_2);
-        assertEquals(expected, prunableMessages);
+        assertIterableEquals(expected, prunableMessages);
     }
 
     @Test
     void testGetAllWithDefaultSort() {
         List<PrunableMessage> prunableMessages = CollectionUtil.toList(table.getAll(0, 2));
-        assertEquals(List.of(data.MESSAGE_11, data.MESSAGE_10, data.MESSAGE_9), prunableMessages);
+        assertIterableEquals(List.of(data.MESSAGE_11, data.MESSAGE_10, data.MESSAGE_9), prunableMessages);
     }
 
     @Test

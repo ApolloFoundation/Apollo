@@ -22,6 +22,8 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MariaDBContainer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,30 +44,84 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     private Path dbDir;
     private LuceneFullTextSearchEngine luceneFullTextSearchEngine;
 
+    public DbExtension(GenericContainer jdbcDatabaseContainer,
+                       DbProperties dbProperties,
+                       PropertiesHolder propertiesHolder,
+                       String schemaScriptPath,
+                       String dataScriptPath) {
+        log.trace("JdbcUrl: {}", ((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl());
+
+        log.trace("Username: {}", ((MariaDBContainer)jdbcDatabaseContainer).getUsername());
+        dbProperties.setDbUsername(((MariaDBContainer)jdbcDatabaseContainer).getUsername());
+        log.trace("User pass: {}", ((MariaDBContainer)jdbcDatabaseContainer).getPassword());
+        dbProperties.setDbPassword(((MariaDBContainer)jdbcDatabaseContainer).getPassword());
+        log.trace("DriverClassName: {}", ((MariaDBContainer)jdbcDatabaseContainer).getDriverClassName());
+        log.trace("MappedPort: {}", jdbcDatabaseContainer.getMappedPort(3306));
+        if (jdbcDatabaseContainer.getMappedPort(3306) != null) {
+            dbProperties.setDatabasePort(jdbcDatabaseContainer.getMappedPort(3306));
+        }
+        log.trace("Host: {}", jdbcDatabaseContainer.getHost());
+        dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
+        dbProperties.setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
+
+        log.trace("DockerDaemonInfo: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
+        log.trace("DockerImageName: {}", jdbcDatabaseContainer.getDockerImageName());
+        log.trace("ContainerId: {}", jdbcDatabaseContainer.getContainerId());
+        log.trace("BoundPortNumbers: {}", jdbcDatabaseContainer.getBoundPortNumbers());
+        log.trace("PortBindings: {}", jdbcDatabaseContainer.getPortBindings());
+
+        this.manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
+    }
+
+    public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties dbProperties) {
+        this(jdbcDatabaseContainer, dbProperties, null, null, null);
+    }
+
     public DbExtension(DbProperties dbProperties) {
         this(dbProperties, null, null, null);
     }
 
-    public DbExtension(DbProperties properties, String dataScriptPath, String schemaScriptPath) {
-        manipulator = new DbManipulator(properties, null, dataScriptPath, schemaScriptPath);
+    public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties properties, String dataScriptPath, String schemaScriptPath) {
+        this(jdbcDatabaseContainer, properties, null, dataScriptPath, schemaScriptPath);
     }
 
+    public DbExtension(DbProperties properties, String dataScriptPath, String schemaScriptPath) {
+        this.manipulator = new DbManipulator(properties, null, dataScriptPath, schemaScriptPath);
+    }
 
     public DbExtension(Map<String, List<String>> tableWithColumns) {
         this();
         if (!tableWithColumns.isEmpty()) {
             this.tableWithColumns = tableWithColumns;
-            //createFtl();
+            createFtl();
+        }
+    }
+
+    public DbExtension(GenericContainer jdbcDatabaseContainer, Map<String, List<String>> tableWithColumns) {
+        this(jdbcDatabaseContainer);
+        if (!tableWithColumns.isEmpty()) {
+            this.tableWithColumns = tableWithColumns;
+            createFtl();
         }
     }
 
     public DbExtension(DbProperties dbProperties, PropertiesHolder propertiesHolder, String schemaScriptPath, String dataScriptPath) {
-        manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
+        this.manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
+    }
+
+    public DbExtension(GenericContainer jdbcDatabaseContainer, Path dbDir, String dbName, String dataScript) {
+        this(jdbcDatabaseContainer);
+        this.manipulator = new DbManipulator(DbTestData.getInMemDbProps(), null, dataScript, null);
+        this.dbDir = dbDir;
     }
 
     public DbExtension(Path dbDir, String dbName, String dataScript) {
-        manipulator = new DbManipulator(DbTestData.getDbFileProperties(dbDir.resolve(dbName).toAbsolutePath().toString()), null, dataScript, null);
+        this.manipulator = new DbManipulator(DbTestData.getDbFileProperties(dbDir.resolve(dbName).toAbsolutePath().toString()), null, dataScript, null);
         this.dbDir = dbDir;
+    }
+
+    public DbExtension(GenericContainer jdbcDatabaseContainer) {
+        this(jdbcDatabaseContainer, DbTestData.getInMemDbProps(), null, null, null);
     }
 
     public DbExtension() {
@@ -113,7 +169,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         }
     }
 
-/*    private void createFtl() {
+    private void createFtl() {
         try {
             this.indexDir = Files.createTempDirectory("indexDir");
             this.luceneFullTextSearchEngine = new LuceneFullTextSearchEngine(mock(NtpTime.class), indexDir);
@@ -121,7 +177,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         } catch (IOException e) {
             throw new RuntimeException("Unable to init ftl", e);
         }
-    }*/
+    }
 
     private void initFtl() {
         ftl.init();

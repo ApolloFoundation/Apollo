@@ -11,29 +11,29 @@ public class ShardInitTableSchemaVersion extends DbVersion {
     protected int update(int nextUpdate) {
         switch (nextUpdate) {
             case 1:
-                apply("CREATE TABLE IF NOT EXISTS BLOCK (" +
-                    "DB_ID BIGINT not null, " +
-                    "ID BIGINT not null, " +
-                    "VERSION INTEGER not null, " +
-                    "`TIMESTAMP` INTEGER not null, " +
-                    "PREVIOUS_BLOCK_ID BIGINT, " +
-                    "TOTAL_AMOUNT BIGINT not null, " +
-                    "TOTAL_FEE BIGINT not null, " +
-                    "PAYLOAD_LENGTH INTEGER not null, " +
-                    "PREVIOUS_BLOCK_HASH binary(32), " +
-                    "CUMULATIVE_DIFFICULTY binary not null, " +
-                    "BASE_TARGET BIGINT not null, " +
-                    "NEXT_BLOCK_ID BIGINT, " +
-                    "HEIGHT INTEGER not null, " +
-                    "GENERATION_SIGNATURE binary(64) not null, " +
-                    "BLOCK_SIGNATURE binary(64) not null, " +
-                    "PAYLOAD_HASH binary(32) not null, " +
-                    "GENERATOR_ID BIGINT not null, " +
-                    "TIMEOUT INTEGER default 0 not null" +
+                apply("CREATE TABLE IF NOT EXISTS block (" +
+                    "db_id BIGINT UNSIGNED NOT NULL, " +
+                    "id BIGINT NOT NULL, " +
+                    "version INT NOT NULL, " +
+                    "`TIMESTAMP` INT NOT NULL, " +
+                    "previous_block_id BIGINT, " +
+                    "total_amount BIGINT NOT NULL, " +
+                    "total_fee BIGINT NOT NULL, " +
+                    "payload_length INT NOT NULL, " +
+                    "previous_block_hash BINARY(32), " +
+                    "cumulative_difficulty BLOB NOT NULL, " +
+                    "base_target BIGINT NOT NULL, " +
+                    "next_block_id BIGINT, " +
+                    "height INT NOT NULL, " +
+                    "generation_signature BINARY(32) NOT NULL, " +
+                    "block_signature BINARY(64), " +
+                    "payload_hash BINARY(32) NOT NULL, " +
+                    "generator_id BIGINT NOT NULL, " +
+                    "timeout INT NOT NULL DEFAULT 0" +
                     ") ENGINE=ROCKSDB;");
             case 2:
-                apply("CREATE TABLE IF NOT EXISTS TRANSACTION (" +
-                    "db_id BIGINT not null, " +
+                apply("CREATE TABLE IF NOT EXISTS transaction (" +
+                    "db_id BIGINT UNSIGNED NOT NULL, " +
                     "id BIGINT NOT NULL, " +
                     "deadline SMALLINT NOT NULL, " +
                     "recipient_id BIGINT, " +
@@ -43,9 +43,8 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                     "full_hash BINARY(32) NOT NULL, " +
                     "height INT NOT NULL, " +
                     "block_id BIGINT NOT NULL, " +
-//                        "FOREIGN KEY (block_id) REFERENCES block (id) ON DELETE CASCADE, "
-                    "signature VARBINARY DEFAULT NULL, " +
-                    "timestamp INT NOT NULL, " +
+                    "signature BINARY(64) NOT NULL, " +
+                    "`TIMESTAMP` INT NOT NULL, " +
                     "type TINYINT NOT NULL, " +
                     "subtype TINYINT NOT NULL, " +
                     "sender_id BIGINT NOT NULL, " +
@@ -53,7 +52,7 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                     "block_timestamp INT NOT NULL, " +
                     "referenced_transaction_full_hash BINARY(32), " +
                     "phased BOOLEAN NOT NULL DEFAULT FALSE, " +
-                    "attachment_bytes VARBINARY, " +
+                    "attachment_bytes BLOB, " +
                     "version TINYINT NOT NULL, " +
                     "has_message BOOLEAN NOT NULL DEFAULT FALSE, " +
                     "has_encrypted_message BOOLEAN NOT NULL DEFAULT FALSE, " +
@@ -66,7 +65,7 @@ public class ShardInitTableSchemaVersion extends DbVersion {
                     "has_prunable_attachment BOOLEAN NOT NULL DEFAULT FALSE) ENGINE=ROCKSDB;");
 
             case 3:
-                apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, `VALUE` VARCHAR(250)) ENGINE=ROCKSDB;");
+                apply("CREATE TABLE IF NOT EXISTS option (name VARCHAR(100) not null, `VALUE` VARCHAR(150)) ENGINE=ROCKSDB;");
             case 4:
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS option_name_value_idx ON option(name, `VALUE`)");
             case 5:

@@ -87,9 +87,10 @@ public class BlockDeleteHelper extends AbstractHelper {
                     rsmd = rs.getMetaData();
                     if (ShardConstants.BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
 //                        sqlInsertString.append("delete from BLOCK WHERE DB_ID >= ? AND DB_ID < ? LIMIT ?");
-                        sqlInsertString.append("delete from BLOCK WHERE DB_ID = ?");
+                        sqlInsertString.append("DELETE FROM block WHERE db_id = ?");
                     } else if (ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
-                        sqlInsertString.append("DELETE TX, US from transaction AS TX LEFT JOIN update_status AS US ON TX.id = US.transaction_id WHERE TX.db_id = ?");
+//                        sqlInsertString.append("DELETE tx, us FROM transaction AS tx LEFT JOIN update_status AS us ON tx.id = us.transaction_id WHERE tx.db_id = ?");
+                        sqlInsertString.append("DELETE FROM transaction WHERE db_id = ?");
                     }
                     // precompile sql
                     if (preparedInsertStatement == null) {
@@ -102,7 +103,7 @@ public class BlockDeleteHelper extends AbstractHelper {
                 if (excludeRows // skip transaction db_id
                     && ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName) // only phased transactions
                     && excludeDbIds.contains(paginateResultWrapper.lowerBoundColumnValue)) {
-                    log.trace("Skip excluded '{}' DB_ID = {}", currentTableName, paginateResultWrapper.lowerBoundColumnValue);
+                    log.trace("Skip excluded '{}' db_id = {}", currentTableName, paginateResultWrapper.lowerBoundColumnValue);
                     continue;
                 }
                 try {
@@ -142,22 +143,23 @@ public class BlockDeleteHelper extends AbstractHelper {
     private void assignMainBottomTopSelectSql() throws IllegalAccessException {
         if (ShardConstants.BLOCK_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             sqlToExecuteWithPaging =
-                "select DB_ID from BLOCK where DB_ID > ? AND DB_ID < ? limit ?";
+                "SELECT db_id FROM block WHERE db_id > ? AND db_id < ? LIMIT ?";
             log.trace(sqlToExecuteWithPaging);
-            sqlSelectUpperBound = "SELECT IFNULL(max(DB_ID), 0) as DB_ID from BLOCK where HEIGHT = ?";
+            sqlSelectUpperBound = "SELECT IFNULL(MAX(db_id), 0) as db_id FROM block WHERE height = ?";
             log.trace(sqlSelectUpperBound);
-            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from BLOCK";
+            sqlSelectBottomBound = "SELECT IFNULL(MIN(db_id)-1, 0) as db_id FROM block";
             log.trace(sqlSelectBottomBound);
         } else if (ShardConstants.TRANSACTION_TABLE_NAME.equalsIgnoreCase(currentTableName)) {
             // transaction table queries
-            sqlToExecuteWithPaging = "select * from transaction where DB_ID > ? AND DB_ID < ? limit ?";
+            sqlToExecuteWithPaging = "SELECT * FROM transaction WHERE db_id > ? AND db_id < ? limit ?";
             log.trace(sqlToExecuteWithPaging);
             sqlSelectUpperBound =
-                "select DB_ID + 1 as DB_ID from transaction where block_timestamp < (SELECT `TIMESTAMP` from BLOCK where HEIGHT = ?) order by block_timestamp desc, transaction_index desc limit 1";
+                "SELECT db_id + 1 as db_id FROM transaction WHERE block_timestamp < (SELECT `TIMESTAMP` FROM block where height = ?) ORDER BY block_timestamp DESC, transaction_index DESC LIMIT 1";
             log.trace(sqlSelectUpperBound);
-            sqlSelectBottomBound = "SELECT IFNULL(min(DB_ID)-1, 0) as DB_ID from " + currentTableName;
+            sqlSelectBottomBound = "SELECT IFNULL(MIN(db_id)-1, 0) AS db_id FROM " + currentTableName;
             log.trace(sqlSelectBottomBound);
-            sqlDeleteFromBottomBound = "DELETE TX, US from transaction AS TX LEFT JOIN update_status AS US ON TX.id = US.transaction_id WHERE TX.DB_ID > ? AND TX.DB_ID < ?";
+//            sqlDeleteFromBottomBound = "DELETE tx, us FROM transaction AS tx LEFT JOIN update_status AS us ON tx.id = us.transaction_id WHERE tx.db_id > ? AND tx.db_id < ?";
+            sqlDeleteFromBottomBound = "DELETE FROM transaction WHERE db_id > ? AND db_id < ?";
             log.trace(sqlDeleteFromBottomBound);
         } else {
             throw new IllegalAccessException("Unsupported table. 'Block' is expected. Pls use another Helper class");

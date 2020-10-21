@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.BigIntegerArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.DexCurrenciesFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.IntArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.LongArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.OrderStatusFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.OrderTypeFactory;
@@ -63,7 +64,7 @@ public class DataSourceWrapper implements DataSource {
     private final String dbUrl;
     private final String dbName;
     private final String dbUsername;
-    private final String dbPassword;
+    private String dbPassword; // can be empty for 'apasswordless mode' in docker container
     private final String systemDbUrl;
     private final int maxConnections;
     private final int loginTimeout;
@@ -72,7 +73,6 @@ public class DataSourceWrapper implements DataSource {
     private HikariPoolMXBean jmxBean;
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
-    private DataSource systemDataSource;
 
 
     public DataSourceWrapper(DbProperties dbProperties) {
@@ -86,37 +86,55 @@ public class DataSourceWrapper implements DataSource {
             if (m.find()) {
                 shardId = m.group(); // store shard id
             }
-            dbUrlTemp = String.format(
-                "jdbc:%s://%s:%d/%s?user=%s&password=%s",
-                dbProperties.getDbType(),
-                dbProperties.getDatabaseHost(),
-                dbProperties.getDatabasePort(),
-                dbProperties.getDbName(),
-                dbProperties.getDbUsername(),
-                dbProperties.getDbPassword()
-            );
+            dbUrlTemp = formatJdbcUrlString(dbProperties, false);
             dbProperties.setDbUrl(dbUrlTemp);
         }
 
         if (StringUtils.isBlank(dbProperties.getSystemDbUrl())) {
-            String sysDbUrl = String.format(
-                "jdbc:%s://%s:%d/%s?user=%s&password=%s",
-                dbProperties.getDbType(),
-                dbProperties.getDatabaseHost(),
-                dbProperties.getDatabasePort(),
-                DbProperties.DB_SYSTEM_NAME,
-                dbProperties.getDbUsername(),
-                dbProperties.getDbPassword()
-            );
-            dbProperties.setSystemDbUrl(sysDbUrl);
+            String systemDbUrl = formatJdbcUrlString(dbProperties, true);
+            dbProperties.setSystemDbUrl(systemDbUrl);
         }
 
         this.dbUrl = dbUrlTemp;
         this.dbUsername = dbProperties.getDbUsername();
-        this.dbPassword = dbProperties.getDbPassword();
+        this.dbPassword = StringUtils.isBlank(dbProperties.getDbPassword()) ? null : dbProperties.getDbPassword();
         this.maxConnections = dbProperties.getMaxConnections();
         this.loginTimeout = dbProperties.getLoginTimeout();
         this.systemDbUrl = dbProperties.getSystemDbUrl();
+    }
+
+    private String formatJdbcUrlString(DbProperties dbProperties, boolean isSystemDb) {
+        String finalDbUrl;
+        String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s%s";
+        String passwordlessUrlString = "jdbc:%s://%s:%d/%s?user=%s%s"; // skip password for 'password less mode' (in docker container)
+        String tempDbName = dbProperties.getDbName();
+        if (isSystemDb) {
+            tempDbName = "testdb".equalsIgnoreCase(dbProperties.getDbName()) ?  dbProperties.getDbName() : DbProperties.DB_SYSTEM_NAME;
+        }
+        if (dbProperties.getDbPassword() != null && !dbProperties.getDbPassword().isEmpty()) {
+            finalDbUrl = String.format(
+                fullUrlString,
+                dbProperties.getDbType(),
+                dbProperties.getDatabaseHost(),
+                dbProperties.getDatabasePort(),
+                tempDbName,
+                dbProperties.getDbUsername() != null ? dbProperties.getDbUsername() : "",
+                dbProperties.getDbPassword(),
+                dbProperties.getDbParams() != null ? dbProperties.getDbParams() : ""
+            );
+        } else {
+            // skip password for 'password less mode' (in docker container)
+            finalDbUrl = String.format(
+                passwordlessUrlString,
+                dbProperties.getDbType(),
+                dbProperties.getDatabaseHost(),
+                dbProperties.getDatabasePort(),
+                tempDbName,
+                dbProperties.getDbUsername() != null ? dbProperties.getDbUsername() : "",
+                dbProperties.getDbParams() != null ? dbProperties.getDbParams() : ""
+            );
+        }
+        return finalDbUrl;
     }
 
     @Override
@@ -199,7 +217,9 @@ public class DataSourceWrapper implements DataSource {
         HikariConfig sysDBConf = new HikariConfig();
         sysDBConf.setJdbcUrl(systemDbUrl);
         sysDBConf.setUsername(dbUsername);
-        sysDBConf.setPassword(dbPassword);
+        if (dbPassword != null && !dbPassword.isEmpty()) {
+            sysDBConf.setPassword(dbPassword);
+        }
         sysDBConf.setMaximumPoolSize(5);
         sysDBConf.setPoolName("systemDB");
 
@@ -219,7 +239,9 @@ public class DataSourceWrapper implements DataSource {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
         config.setUsername(dbUsername);
-        config.setPassword(dbPassword);
+        if (dbPassword != null && !dbPassword.isEmpty()) {
+            config.setPassword(dbPassword);
+        }
         config.setMaximumPoolSize(maxConnections);
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
         config.setLeakDetectionThreshold(60_000 * 5); // 5 minutes
@@ -232,12 +254,13 @@ public class DataSourceWrapper implements DataSource {
         log.debug("Attempting to create DataSource by path = {}...", dbUrl);
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
-//            stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
-//            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
 
-            stmt.executeUpdate("set global rocksdb_max_row_locks=1073741824");
-            stmt.executeUpdate("set session rocksdb_max_row_locks=1073741824");
-
+            if (this.dbName != null && !this.dbName.equalsIgnoreCase("testdb")
+                && this.dbUsername != null && this.dbUsername.equalsIgnoreCase("root")) { //skip that for unit tests
+                stmt.executeUpdate("set global rocksdb_max_row_locks=1073741824;");
+                stmt.executeUpdate("set session rocksdb_max_row_locks=1073741824;");
+                stmt.executeUpdate(String.format("use %s;", this.dbName));
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -254,6 +277,7 @@ public class DataSourceWrapper implements DataSource {
         jdbi.registerArgument(new OrderTypeFactory());
         jdbi.registerArgument(new OrderStatusFactory());
         jdbi.registerArgument(new LongArrayArgumentFactory());
+        jdbi.registerArgument(new IntArrayArgumentFactory());
         jdbi.registerArrayType(long.class, "generatorIds");
         jdbi.registerArgument(new ShardStateFactory());
 
@@ -284,33 +308,14 @@ public class DataSourceWrapper implements DataSource {
         if (!initialized) {
             return;
         }
-        try {
-            Connection con = dataSource.getConnection();
-            Statement stmt = con.createStatement();
-//            stmt.execute("SHUTDOWN");
-            shutdown = true;
-            initialized = false;
-            dataSource.close();
-//            dataSource.dispose();
-            log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
-        } catch (SQLException e) {
-            log.info(e.toString(), e);
-        }
+        shutdown = true;
+        initialized = false;
+        dataSource.close();
+        log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
     }
 
     public boolean isShutdown() {
         return shutdown;
-    }
-
-    public void analyzeTables() {
-        try (Connection con = dataSource.getConnection();
-             Statement stmt = con.createStatement()) {
-            log.debug("Start DB 'ANALYZE' on {}", con.getMetaData());
-            stmt.execute("ANALYZE");
-            log.debug("FINISHED DB 'ANALYZE' on {}", con.getMetaData());
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
     }
 
     @Override
@@ -341,14 +346,6 @@ public class DataSourceWrapper implements DataSource {
             }
         }
         return con;
-    }
-
-    public DataSource getSystemDataSource() {
-        return systemDataSource;
-    }
-
-    public void setSystemDataSource(DataSource systemDataSource) {
-        this.systemDataSource = systemDataSource;
     }
 
     public String getUrl() {

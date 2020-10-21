@@ -161,7 +161,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
              @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
              PreparedStatement pstmt =
                  con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
-                     " ORDER BY balance desc " + DbUtils.limitsClause(0, numberOfTopAccounts - 1) + ")")) {
+                     " ORDER BY balance desc " + DbUtils.limitsClause(0, numberOfTopAccounts - 1) + ") as acc_ballance")) {
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
             try (ResultSet rs = pstmt.executeQuery()) {

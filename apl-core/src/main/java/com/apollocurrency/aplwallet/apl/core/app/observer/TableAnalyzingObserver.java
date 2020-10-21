@@ -33,15 +33,11 @@ public class TableAnalyzingObserver {
     public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         if (block.getHeight() % 5000 == 0) {
             log.info("received block " + block.getHeight());
-            if (!lookupBlockchainProcessor().isDownloading() || block.getHeight() % 50000 == 0) {
-                databaseManager.getDataSource().analyzeTables();
-            }
         }
     }
 
     //async
     public void onRescanEnd(@ObservesAsync @BlockEvent(BlockEventType.RESCAN_END) Block block) {
-        databaseManager.getDataSource().analyzeTables();
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {

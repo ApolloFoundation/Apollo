@@ -22,22 +22,22 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
             /*  ---------------------- BLOCK -------------------    */
             case startNumber:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
-                apply("ALTER TABLE block ADD CONSTRAINT IF NOT EXISTS chk_timeout CHECK (timeout >= 0)");
+                apply("ALTER TABLE block ADD CONSTRAINT chk_timeout CHECK (timeout >= 0)");
             case startNumber + 1:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
-                apply("alter table BLOCK add constraint IF NOT EXISTS PRIMARY_KEY_BLOCK_ID primary key (ID)"); // PK + unique index
+                apply("ALTER TABLE block ADD CONSTRAINT primary_key_block_id PRIMARY KEY (id)"); // PK + unique index
             case startNumber + 2:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
-                apply("alter table BLOCK add constraint IF NOT EXISTS BLOCK_TIMESTAMP_IDX unique (TIMESTAMP)");
+                apply("ALTER TABLE block ADD CONSTRAINT block_timestamp_idx unique (`TIMESTAMP` DESC)");
             case startNumber + 3:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
-                apply("alter table BLOCK add constraint IF NOT EXISTS BLOCK_HEIGHT_IDX unique (HEIGHT)");
+                apply("ALTER TABLE block ADD CONSTRAINT block_height_idx unique (height)");
             case startNumber + 4:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
-                apply("create unique index IF NOT EXISTS PRIMARY_KEY_BLOCK_DB_ID_INDEX on BLOCK (DB_ID)");
+                apply("CREATE UNIQUE INDEX IF NOT EXISTS primary_key_block_db_id_index on block (db_id)");
             case startNumber + 5:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
-                apply("create index IF NOT EXISTS BLOCK_GENERATOR_ID_IDX on BLOCK (GENERATOR_ID)");
+                apply("CREATE INDEX IF NOT EXISTS block_generator_id_idx on block (generator_id)");
             case startNumber + 6:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS block_id_idx ON block (id)");
@@ -46,7 +46,8 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS block_height_idx ON block (height)");
             case startNumber + 8:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
-                apply("CREATE INDEX IF NOT EXISTS block_generator_id_idx ON block (generator_id)");
+//                apply("CREATE INDEX IF NOT EXISTS block_generator_id_idx ON block (generator_id)");
+                apply(null);
             case startNumber + 9:
                 log.trace("Starting adding BLOCK constraint = {}", nextUpdate);
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS block_timestamp_idx ON block (timestamp DESC)");
@@ -55,7 +56,7 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
                 apply(null); //left for compatibility with existing dbs
             case startNumber + 11:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
-                apply("alter table TRANSACTION add constraint IF NOT EXISTS PRIMARY_KEY_TRANSACTION_DB_ID primary key (DB_ID)"); // PK + unique index
+                apply("ALTER TABLE transaction ADD CONSTRAINT primary_key_transaction_db_id PRIMARY KEY (DB_ID)"); // PK + unique index
             case startNumber + 12:
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("CREATE UNIQUE INDEX IF NOT EXISTS transaction_id_idx ON transaction (id)");
@@ -69,11 +70,12 @@ public class ShardAddConstraintsSchemaVersion extends ShardInitTableSchemaVersio
                 log.trace("Starting adding TRANSACTION constraint = {}", nextUpdate);
                 apply("CREATE INDEX IF NOT EXISTS transaction_block_timestamp_idx ON transaction (block_timestamp DESC)");
             case startNumber + 16:
-                apply("ALTER TABLE transaction DROP CONSTRAINT IF EXISTS TRANSACTION_ID_IDX");
+                apply("ALTER TABLE transaction DROP CONSTRAINT IF EXISTS transaction_id_idx");
             case startNumber + 17:
                 apply("CREATE UNIQUE INDEX transaction_block_id_transaction_index_idx ON transaction (block_id, transaction_index)");
             case startNumber + 18:
-                apply("ANALYZE");
+//                apply("ANALYZE");
+                apply(null);
             case startNumber + 19:
                 return startNumber + 19;
             default:

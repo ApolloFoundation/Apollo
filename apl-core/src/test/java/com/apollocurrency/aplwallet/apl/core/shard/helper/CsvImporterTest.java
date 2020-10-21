@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
@@ -85,6 +86,9 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ServiceModeDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -97,13 +101,12 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -120,17 +123,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.slf4j.LoggerFactory.getLogger;
 
+@Slf4j
+@Testcontainers
 @Tag("slow")
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
-class CsvImporterTest {
-    private static final Logger log = getLogger(CsvImporterTest.class);
+class CsvImporterTest extends DbContainerBaseTest {
+
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
+    DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
     CsvImporter csvImporter;
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
@@ -142,7 +146,6 @@ class CsvImporterTest {
     BlockSerializer blockSerializer = mock(BlockSerializer.class);
     MemPool memPool = mock(MemPool.class);
     UnconfirmedTransactionProcessingService unconfirmedTransactionProcessingService = mock(UnconfirmedTransactionProcessingService.class);
-
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -203,6 +206,7 @@ class CsvImporterTest {
     private ValueParser valueParser;
     @Inject
     private CsvEscaper translator;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     private Set<String> tables = Set.of("account_info", "account_control_phasing", "phasing_poll", "public_key", "purchase", "shard", "shuffling_data");
 
@@ -345,11 +349,11 @@ class CsvImporterTest {
                 assertEquals(2, countRs.getInt(1));
                 ResultSet allRs = stmt.executeQuery("select * from " + tableName);
                 while (allRs.next()) {
-                    Array data = allRs.getArray("data");// should not fail
+                    String data = allRs.getString("data");// should not fail
                     if (data != null) {
-                        Object[] array = (Object[]) data.getArray();
+                        String[] array = mapper.readValue(data, new TypeReference<>() {});
                         for (int i = 0; i < array.length; i++) {
-                            byte[] bytes = (byte[]) array[i];
+                            byte[] bytes = array[i].getBytes();
                             assertNotNull(bytes);
                         }
                     }
@@ -387,20 +391,20 @@ class CsvImporterTest {
                 log.error("Import error " + tableName, e);
                 throw new RuntimeException(e);
             }
-            assertEquals(14, result);
+            assertEquals(13, result);
             try (Connection con = dataSource.getConnection();
                  Statement stmt = con.createStatement()) {
                 ResultSet countRs = stmt.executeQuery("select count(*) from " + tableName);
                 countRs.next();
-                assertEquals(14, countRs.getInt(1));
+                assertEquals(13, countRs.getInt(1));
                 ResultSet allRs = stmt.executeQuery("select * from " + tableName);
                 while (allRs.next()) {
-                    Array data = allRs.getArray("parsed_tags");// should not fail
+                    String data = allRs.getString("parsed_tags");// should not fail
                     assertNotNull(data);
-                    Object[] array = (Object[]) data.getArray();
+                    String[] array = mapper.readValue(data, String[].class);
                     assertNotNull(array);
                     for (int i = 0; i < array.length; i++) {
-                        String tag = (String) array[i];
+                        String tag = array[i];
                         assertNotNull(tag);
                     }
                 }
@@ -506,8 +510,10 @@ class CsvImporterTest {
                  PreparedStatement pstmt = con.prepareStatement("select GENERATOR_IDS, BLOCK_TIMEOUTS from " + tableName + " order by shard_id")) {
                 ResultSet rs = pstmt.executeQuery();
                 rs.next();
-                assertNotNull(rs.getArray(1).getArray());
-                assertNotNull(rs.getArray(2).getArray());
+                assertNotNull(rs.getString(1));
+                assertTrue(rs.getString(1).length() > 0);
+                assertNotNull(rs.getString(2));
+                assertTrue(rs.getString(2).length() > 0);
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }

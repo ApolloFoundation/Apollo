@@ -9,20 +9,22 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHan
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
-import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -45,22 +47,28 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
+@Slf4j
+@Testcontainers
 @Tag("slow")
 class DatabaseManagerTest {
+    @Container
+    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
+        .withDatabaseName("mysql")
+        .withUsername("root")
+        .withPassword("rootpass")
+        .withExposedPorts(3306)
+        .withLogConsumer(new Slf4jLogConsumer(log));
 
-    @RegisterExtension
-    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     private static PropertiesHolder propertiesHolder = new PropertiesHolder();
-    private String TEMP_FILE_NAME = "apl-temp-utest-db-name";
     private DbProperties baseDbProperties;
     private DatabaseManagerImpl databaseManager;
 
     @BeforeEach
     public void setUp() throws IOException {
-        Path dbFilePath = temporaryFolderExtension.newFolder().toPath().resolve(Constants.APPLICATION_DIR_NAME);
-        baseDbProperties = DbTestData.getDbFileProperties(dbFilePath.toAbsolutePath().toString());
+        baseDbProperties = DbTestData.getDbFileProperties(mariaDBContainer);
+        baseDbProperties.setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
         databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder, new JdbiHandleFactory());
-        DbPopulator dbPopulator = new DbPopulator(databaseManager.getDataSource(), "db/schema.sql", "db/db-manager-data.sql");
+        DbPopulator dbPopulator = new DbPopulator(databaseManager.getDataSource(), "db/schema2_empty.sql", "db/db-manager-data.sql");
         dbPopulator.initDb();
         dbPopulator.populateDb();
         databaseManager.initFullShards(Set.of(2L, 3L));
@@ -73,7 +81,6 @@ class DatabaseManagerTest {
 
     @Test
     void init() {
-
         assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
@@ -93,12 +100,11 @@ class DatabaseManagerTest {
     }
 
     private void checkTablesCreated(Connection newShardDbConnection) throws SQLException {
-        PreparedStatement sqlStatement = newShardDbConnection.prepareStatement("select * from BLOCK");
+        PreparedStatement sqlStatement = newShardDbConnection.prepareStatement("select * from block");
         sqlStatement.execute();
-        sqlStatement = newShardDbConnection.prepareStatement("select * from TRANSACTION");
+        sqlStatement = newShardDbConnection.prepareStatement("select * from transaction");
         sqlStatement.execute();
     }
-
 
     @Test
     void createShardAddConstraintsSchemaVersion() throws Exception {
@@ -128,22 +134,12 @@ class DatabaseManagerTest {
     }
 
     @Test
-    void createTemporaryDb() throws Exception {
-        assertNotNull(databaseManager);
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        assertNotNull(dataSource);
-        TransactionalDataSource temporaryDb = ((ShardManagement) databaseManager).createAndAddTemporaryDb(TEMP_FILE_NAME);
-        assertNotNull(temporaryDb);
-        assertNotNull(temporaryDb.getConnection());
-    }
-
-    @Test
     void testFindFullDatasources() {
         Collection<TransactionalDataSource> fullDatasources = ((ShardManagement) databaseManager).getAllFullDataSources(2L);
         assertEquals(2, fullDatasources.size());
         Iterator<TransactionalDataSource> iterator = fullDatasources.iterator();
-        assertTrue(iterator.next().getUrl().contains("shard-3"), "First datasource should represent full shard with id 3 (sorted by shard id desc)");
-        assertTrue(iterator.next().getUrl().contains("shard-2"), "Second datasource should represent full shard with id 2 (sorted by shard id desc)");
+        assertTrue(iterator.next().getUrl().contains("shard_3"), "First datasource should represent full shard with id 3 (sorted by shard id desc)");
+        assertTrue(iterator.next().getUrl().contains("shard_2"), "Second datasource should represent full shard with id 2 (sorted by shard id desc)");
     }
 
     @Test
@@ -165,7 +161,7 @@ class DatabaseManagerTest {
         TransactionalDataSource dataSource = ((ShardManagement) databaseManager).getOrInitFullShardDataSourceById(2L);
 
         assertNotNull(dataSource, "Shard datasource with shardId=2 should be full, (shard state = 100)");
-        assertTrue(dataSource.getUrl().contains("shard-2"), "Datasource should represent full shard with id 2");
+        assertTrue(dataSource.getUrl().contains("shard_2"), "Datasource should represent full shard with id 2");
     }
 
     @Test
@@ -217,7 +213,7 @@ class DatabaseManagerTest {
         List<TransactionalDataSource> fullDatasources = databaseManager.getAllFullDataSources(3L);
         assertEquals(3, fullDatasources.size());
         for (int i = 0; i < 3; i++) {
-            assertTrue(fullDatasources.get(i).getUrl().contains("shard-" + (3 - i)));
+            assertTrue(fullDatasources.get(i).getUrl().contains("shard_" + (3 - i)));
             checkDatasource(fullDatasources.get(i));
         }
         assertSame(fullDatasources.get(2), databaseManager.getShardDataSourceById(1L));
@@ -227,7 +223,7 @@ class DatabaseManagerTest {
     void testCreateShardDataSourceById() {
         TransactionalDataSource datasource = databaseManager.getOrCreateShardDataSourceById(2L);
         checkDatasource(datasource);
-        assertTrue(datasource.getUrl().contains("shard-2"));
+        assertTrue(datasource.getUrl().contains("shard_2"));
     }
 
     @Test
@@ -235,7 +231,7 @@ class DatabaseManagerTest {
         List<TransactionalDataSource> fullDatasources = databaseManager.getAllFullDataSources(null);
         TransactionalDataSource datasource = databaseManager.getOrCreateShardDataSourceById(2L);
         checkDatasource(datasource);
-        assertTrue(datasource.getUrl().contains("shard-2"));
+        assertTrue(datasource.getUrl().contains("shard_2"));
         assertSame(fullDatasources.get(1), datasource);
     }
 
@@ -244,7 +240,7 @@ class DatabaseManagerTest {
         List<TransactionalDataSource> fullDatasources = databaseManager.getAllFullDataSources(null);
         TransactionalDataSource datasource = databaseManager.getOrCreateShardDataSourceById(3L, new ShardInitTableSchemaVersion());
         checkDatasource(datasource);
-        assertTrue(datasource.getUrl().contains("shard-3"));
+        assertTrue(datasource.getUrl().contains("shard_3"));
         assertSame(fullDatasources.get(0), datasource);
     }
 
@@ -256,7 +252,7 @@ class DatabaseManagerTest {
         assertEquals(1, datasources.size());
         TransactionalDataSource dataSource = datasources.get(0);
         checkDatasource(dataSource);
-        assertTrue(dataSource.getUrl().contains("shard-1"));
+        assertTrue(dataSource.getUrl().contains("shard_1"));
     }
 
     private void checkDatasource(TransactionalDataSource dataSource) {

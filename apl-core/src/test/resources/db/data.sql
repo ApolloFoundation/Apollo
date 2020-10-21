@@ -1,55 +1,53 @@
-DELETE FROM PUBLIC.UPDATE_STATUS;
-delete from trim;
-DELETE FROM PUBLIC.TRANSACTION;
-DELETE FROM PUBLIC.BLOCK;
-DELETE FROM PUBLIC.TWO_FACTOR_AUTH;
-DELETE FROM PUBLIC.ACCOUNT;
-DELETE FROM PUBLIC.VERSION;
-delete from PUBLIC.transaction_shard_index;
-delete from public.block_index;
-delete from FTL.INDEXES;
-delete from public.option;
-delete from public.shard;
-delete from referenced_transaction;
-delete from phasing_poll;
-delete from phasing_poll_result;
-delete from phasing_poll_voter;
-delete from phasing_vote;
-delete from phasing_poll_linked_transaction;
-delete from PUBLIC.GENESIS_PUBLIC_KEY;
-delete from PUBLIC.PUBLIC_KEY;
-delete from PUBLIC.SHARD_RECOVERY;
-delete from PUBLIC.TAGGED_DATA_TIMESTAMP;
-delete from PUBLIC.DATA_TAG;
-delete from PUBLIC.TAGGED_DATA_EXTEND;
-delete from PUBLIC.TAGGED_DATA;
-delete from PUBLIC.GOODS;
-delete from purchase;
-delete from tag;
-delete from purchase_feedback;
-delete from purchase_public_feedback;
-delete from PUBLIC.ACCOUNT_CONTROL_PHASING;
-delete from shuffling_data;
-delete from prunable_message;
-delete from phasing_approval_tx;
-delete from dex_offer;
-delete from mandatory_transaction;
-delete from dex_contract;
-delete from dex_transaction;
-delete from user_error_message;
-delete from ACCOUNT_INFO;
-delete from ASSET;
-delete from ASSET_DELETE;
-delete from ASSET_DIVIDEND;
-delete from ACCOUNT_INFO;
-delete from ASSET_TRANSFER;
-delete from BUY_OFFER;
-delete from SELL_OFFER;
-delete from EXCHANGE;
-delete from EXCHANGE_REQUEST;
+TRUNCATE TABLE update_status;
+TRUNCATE TABLE `trim`;
+TRUNCATE TABLE transaction;
+TRUNCATE TABLE block;
+TRUNCATE TABLE two_factor_auth;
+TRUNCATE TABLE account;
+TRUNCATE TABLE version;
+TRUNCATE TABLE transaction_shard_index;
+TRUNCATE TABLE block_index;
+TRUNCATE TABLE option;
+TRUNCATE TABLE shard;
+TRUNCATE TABLE referenced_transaction;
+TRUNCATE TABLE phasing_poll;
+TRUNCATE TABLE phasing_poll_result;
+TRUNCATE TABLE phasing_poll_voter;
+TRUNCATE TABLE phasing_vote;
+TRUNCATE TABLE phasing_poll_linked_transaction;
+TRUNCATE TABLE genesis_public_key;
+TRUNCATE TABLE public_key;
+TRUNCATE TABLE shard_recovery;
+TRUNCATE TABLE tagged_data_timestamp;
+TRUNCATE TABLE data_tag;
+TRUNCATE TABLE tagged_data_extend;
+TRUNCATE TABLE tagged_data;
+TRUNCATE TABLE goods;
+TRUNCATE TABLE purchase;
+TRUNCATE TABLE tag;
+TRUNCATE TABLE purchase_feedback;
+TRUNCATE TABLE purchase_public_feedback;
+TRUNCATE TABLE account_control_phasing;
+TRUNCATE TABLE shuffling_data;
+TRUNCATE TABLE prunable_message;
+TRUNCATE TABLE phasing_approval_tx;
+TRUNCATE TABLE dex_offer;
+TRUNCATE TABLE mandatory_transaction;
+TRUNCATE TABLE dex_contract;
+TRUNCATE TABLE dex_transaction;
+TRUNCATE TABLE user_error_message;
+TRUNCATE TABLE account_info;
+TRUNCATE TABLE asset;
+TRUNCATE TABLE asset_delete;
+TRUNCATE TABLE asset_dividend;
+TRUNCATE TABLE asset_transfer;
+TRUNCATE TABLE buy_offer;
+TRUNCATE TABLE sell_offer;
+TRUNCATE TABLE exchange;
+TRUNCATE TABLE exchange_request;
 
-INSERT INTO PUBLIC.BLOCK
-(DB_ID,         ID,                HEIGHT,      VERSION,   "TIMESTAMP",  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
+INSERT INTO block
+(DB_ID,         ID,                HEIGHT,      VERSION,   `TIMESTAMP`,  PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
 (1	        ,-107868771406622438   ,0	        ,-1         ,0	        , null                  ,0	            ,0	                ,0          ,X'0000000000000000000000000000000000000000000000000000000000000000'	,X'00'	                ,5124095	    , 8235640967557025109		,X'bc26bb638c9991f88fa52365591e00e22d3e9f9ad721ca4fe1683c8795a037e5'	,X'00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'	,X'0000000000000000000000000000000000000000000000000000000000000000'	, 1739068987193023818	,0   ),
 (104830	    ,-468651855371775066   ,1000	 	,3	        ,9200       , 9108206803338182346   ,0	            ,100000000	        ,1255       ,X'cabec48dd4d9667e562234245d06098f3f51f8dc9881d1959496fd73d7266282'    ,X'026543d9a8161629'    ,9331842	    ,-1868632362992335764	    ,X'002bc5d6612e35e00e0a8141382eab45c20243d9dad4823348bfe85147b95acf'	,X'e920b526c9200ae5e9757049b3b16fcb050b416587b167cb9d5ca0dc71ec970df48c37ce310b6d20b9972951e9844fa817f0ff14399d9e0f82fde807d0957c31'    ,X'37f76b234414e64d33b71db739bd05d2cf3a1f7b344a88009b21c89143a00cd0'	, 9211698109297098287   ,0   ),
 (105015	    ,-7242168411665692630  ,1500	 	,3	        ,13800      ,-3475222224033883190   ,0	            ,100000000	        ,1257       ,X'cadbeabccc87c5cf1cf7d2cf7782eb34a58fb2811c79e1d0a3cc60099557f4e0'    ,X'026601a7a1c313ca'    ,7069966	    , 5841487969085496907		,X'fbf795ff1d4138f11ea3d38842aa319f8a21589eb46ea8cfc71850f8b55508ef'	,X'978b50eb629296b450f5298b61601685cbe965d4995b03707332fdc335a0e708a453bd7969bd9d336fbafcacd89073bf55c3b3395acf6dd0f3204c2a5d4b402e'    ,X'2cba9a6884de01ff23723887e565cbde21a3f5a0a70e276f3633645a97ed14c6'	, 9211698109297098287   ,0   ),
@@ -66,9 +64,11 @@ INSERT INTO PUBLIC.BLOCK
 (1650020	,6282714800700403321   ,517468	    ,5	        ,41571157	,-3194395162061405253	,12000000000    ,23000000000	    ,414	    ,X'bb831a55863aabd3d2622a1692a4c03ba9eb14839902e029a702c58aeea6a935'	,X'3d46b0302ef95c'      ,7686143350	    ,-5966687593234418746       ,X'd60150d67b47f37a90ca0b0c7a0151af1c2d9a69687f3eef75f42d7b5f12c191'	,X'd2c6b60abaf85e17f65f339879fda8de5346415908a9cbb9a21b3c6d24bd1d0454222fb8962ad2aec679da0d8fb7e835b76a35301c33e925b48245a9d24954de'	,X'4555a1d9a7c2226b9a5797e56d245485cb94fdb2495fc8ca31c3297e597c7b68'	,9211698109297098287	,2   ),
 (1800000	,-5966687593234418746	,553326	    ,3	        ,41974339	,-420771891665807004	,0	            ,1000000000	        ,2668	    ,X'6459caa1311e29fa9c60bed5752f161a5e82b77328cac949cb7afbaccacfbb8e'	,X'3de7206ceaebce'	    ,168574215	    , null              	    ,X'dc3b7c24f1e6caba84e39ff7b8f4040be4c614b16b7e697364cedecdd072b6df'	,X'866847568d2518e1c1c6f97ee014b6f15e4197e5ff9041ab449d9087aba343060e746dc56dbc34966d42f6fd326dc5c4b741ae330bd5fa56539022bd75643cd6'	,X'cf8dc4e015626b309ca7518a390e3e1e7b058a83428287ff39dc49b1518df50c'	,-208393164898941117	,0)
   ;
---last block from testnet1
-INSERT INTO PUBLIC.TRANSACTION
-(DB_ID,     ID,                      HEIGHT,      BLOCK_ID,            BLOCK_TIMESTAMP,    DEADLINE, RECIPIENT_ID,     TRANSACTION_INDEX, AMOUNT,             FEE,            FULL_HASH,                                                                     SIGNATURE,                                                                                                                                  TIMESTAMP, TYPE, SUBTYPE, SENDER_ID,                SENDER_PUBLIC_KEY,                                                   REFERENCED_TRANSACTION_FULL_HASH,                                                     PHASED, VERSION, HAS_MESSAGE, HAS_ENCRYPTED_MESSAGE, HAS_PUBLIC_KEY_ANNOUNCEMENT, EC_BLOCK_HEIGHT,   EC_BLOCK_ID,            HAS_ENCRYPTTOSELF_MESSAGE, HAS_PRUNABLE_MESSAGE, HAS_PRUNABLE_ENCRYPTED_MESSAGE, HAS_PRUNABLE_ATTACHMENT, ATTACHMENT_BYTES) VALUES
+
+--last block from testnet1;
+
+INSERT INTO transaction
+(DB_ID,     ID,                      HEIGHT,      BLOCK_ID,            BLOCK_TIMESTAMP,    DEADLINE, RECIPIENT_ID,     TRANSACTION_INDEX, AMOUNT,             FEE,            FULL_HASH,                                                                     SIGNATURE,                                                                                                                                  `TIMESTAMP`, TYPE, SUBTYPE, SENDER_ID,                SENDER_PUBLIC_KEY,                                                   REFERENCED_TRANSACTION_FULL_HASH,                                                     PHASED, VERSION, HAS_MESSAGE, HAS_ENCRYPTED_MESSAGE, HAS_PUBLIC_KEY_ANNOUNCEMENT, EC_BLOCK_HEIGHT,   EC_BLOCK_ID,            HAS_ENCRYPTTOSELF_MESSAGE, HAS_PRUNABLE_MESSAGE, HAS_PRUNABLE_ENCRYPTED_MESSAGE, HAS_PRUNABLE_ATTACHMENT, ATTACHMENT_BYTES) VALUES
   (150      ,3444674909301056677	  ,1000	     ,-468651855371775066       ,9200	       ,1440,	null	                ,0	        ,0	                ,2500000000000	,X'a524974f94f1cd2fcc6f17193477209ca5821d37d391e70ae668dd1c11dd798e'	      ,X'375ef1c05ae59a27ef26336a59afe69014c68b9bf4364d5b1b2fa4ebe302020a868ad365f35f0ca8d3ebaddc469ecd3a7c49dec5e4d2fad41f6728977b7333cc'	    ,35073712	    ,5	   ,0	    ,9211698109297098287	 ,X'bf0ced0472d8ba3df9e21808e98e61b34404aad737e2bae1778cebc698b40f37' ,X'6400000000000000cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e'	                ,FALSE	    ,1	,FALSE	        ,FALSE	            ,FALSE	                        ,14399	        ,-5416619518547901377	,FALSE	                    ,FALSE	                ,FALSE	                        ,FALSE,                 X'01056673646673035145520500667364667301ae150000000000000000000000000000ae150000000000000000000000000000000000000000000001'),
   (175      ,2402544248051582903	  ,1000	     ,-468651855371775066       ,9200	       ,1440,	null	                ,1	        ,0	                ,1000000000000	,X'b7c745ae438d57212270a2b00e3f70fb5d5d8e0da3c7919edd4d3368176e6f2d'	      ,X'fc6f11f396aa20717c9191a1fb25fab0681512cc976c935db1563898aabad90ffc6ced28e1b8b3383d5abb55928bbb122a674dc066ab8b0cc585b9b4cdbd8fac'	    ,35075179	    ,2	   ,0	    ,9211698109297098287	 ,X'bf0ced0472d8ba3df9e21808e98e61b34404aad737e2bae1778cebc698b40f37' ,X'6500000000000000cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e'	                ,FALSE	    ,1	,FALSE	        ,FALSE	            ,FALSE	                        ,14405	        ,-2297016555338476945	,FALSE	                    ,FALSE	                ,FALSE	                        ,FALSE,                 X'01074d5941535345540b00666466736b64666c616c73102700000000000002'),
   (200      ,5373370077664349170	  ,1500	     ,-7242168411665692630      ,13800	       ,1440,	457571885748888948	    ,0	        ,100000000000000000	,100000000	    ,X'f28be5c59d0b924ab96d5e9f64e51c597513717691eeeeaf18a26a864034f62c'	      ,X'8afd3a91d0e3011e505e0353b1f7089c0d401672f8ed5d0ddc2107e0b130aa0bdd17f03b2d75eed8fcc645cda88b5c82ac1b621c142abad9b1bb95df517aa70c'	    ,35078473	    ,0	   ,0	    ,9211698109297098287	 ,X'bf0ced0472d8ba3df9e21808e98e61b34404aad737e2bae1778cebc698b40f37' ,X'b7c745ae438d57212270a2b00e3f70fb5d5d8e0da3c7919edd4d3368176e6f2d'                  ,FALSE		,1	,FALSE	        ,FALSE	            ,FALSE	                        ,14734	        ,2621055931824266697	,FALSE	                    ,FALSE	                ,FALSE	                        ,FALSE,                 null),
@@ -85,8 +85,10 @@ INSERT INTO PUBLIC.TRANSACTION
   (6000 	,4851834545659781120	  ,517468    ,6282714800700403321       ,41571157      ,1440,   7477442401604846627	    ,0	        ,12000000000	    ,23000000000	,X'0020052bd02d5543c4408aed90d98e636fdb21447cbed0c1f1e2db3134e37fbf'		  ,X'7ace0ea75778aebb8363e141da74b4efce571dc73c728de7f3bcd6126fe3ab04fb1b8e3170e6fe4e458f9fd40f8d10ef7bc8caa839ae9c28a2276f02ddccd2ff'	    ,41571172	    ,0	   ,0	    ,9211698109297098287	 ,X'bf0ced0472d8ba3df9e21808e98e61b34404aad737e2bae1778cebc698b40f37' ,null	                                                                                ,TRUE		,1	,TRUE	        ,FALSE	            ,FALSE	                        ,516746	        ,5629144656878115682	,TRUE	                    ,FALSE	                ,TRUE	                        ,FALSE,                 X'010c00008054657374206d65737361676501400000808bb31f0eb60af644d69bad77c5158ceac89bb3b02856542f334de903be92ad354d11f1f5eb876d3e558c40513c813248a879751d03d6446d6c562e04306573f6adcb4a9238585b1f9f1df4c124055da5ba78d76521eb2ace178f552d064a2cf802a83108000232000000000000000a0000000000000002dc3fd47da87a5620983fe492a3968c6c93931ffe397ff94202000000ffffffff019fec636832fa9108934bac4902b7bd9213f4c0f073625dcdc9a2c511cc715fdc'),
   (7000	    ,9175410632340250178	  ,553326	 ,-5966687593234418746	    ,41974339	   ,1440,	null	                ,0	        ,0	                ,1000000000	    ,X'429efb505b9b557f5d2a1d6d506cf75de6c3692ca1a21217ae6160c7658c7312'	      ,X'7ecae5825a24dedc42dd11e2239ced7ad797c6d6c9aedc3d3275204630b7e20832f9543d1063787ea1f32ab0993ea733aa46a52664755d9e54f211cdc3c5c5fd'	    ,41974329	    ,3	   ,0	    ,3705364957971254799	 ,X'39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152' ,null	                                                                                ,FALSE	    ,1	,FALSE	        ,FALSE	            ,FALSE	                        ,552605	        ,4407210215527895706	,FALSE	                    ,TRUE	                ,FALSE	                        ,FALSE,	                X'010c00546573742070726f647563741500546573742070726f6475637420666f722073616c650c007461672074657374646174610200000000e40b540200000001b9dd15475e2f8da755f1b63933051dede676b223c86e70f54c7182b976d2f86d')
 ;
---last tx from testnet1
-INSERT INTO PUBLIC.UPDATE_STATUS (transaction_id, updated) VALUES (
+
+--last tx from testnet1;
+
+INSERT INTO update_status (transaction_id, updated) VALUES (
   -1536976186224925700, TRUE
 );
 
@@ -109,28 +111,29 @@ insert into account
 (150         ,800                           ,40367900000000     ,40367900000000         ,false                  ,0                  ,null               ,141868     ,false    , true )
 ;
 
-INSERT INTO PUBLIC.TWO_FACTOR_AUTH (account, secret, confirmed) VALUES
+INSERT INTO two_factor_auth (account, secret, confirmed) VALUES
 (100, X'a3f312570b65671a7101', true),
-(200, X'f3e0475e0db85a822037', false);
-INSERT into PUBLIC.BLOCK_INDEX (block_id, block_height) VALUES
+(200, X'f3e0475e0db85a822037', false)
+;
+INSERT into block_index (block_id, block_height) VALUES
 (3, 30),
 (1, 1),
 (2, 2)
 ;
-INSERT into Public.TRANSACTION_SHARD_INDEX(transaction_id, partial_transaction_hash, height, transaction_index) VALUES
+INSERT into transaction_shard_index(transaction_id, partial_transaction_hash, height, transaction_index) VALUES
 (100,X'cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e' ,30, 0),
 (101,X'2270a2b00e3f70fb5d5d8e0da3c7919edd4d3368176e6f2d' ,1 , 0),
 (102,X'b96d5e9f64e51c597513717691eeeeaf18a26a864034f62c' ,1 , 1),
 (103,X'cca5a1f825f9b918be00f35406f70b108b6656b299755558' ,1 , 2)
 ;
-INSERT into PUBLIC.SHARD (shard_id, shard_hash, shard_height, shard_state, zip_hash_crc, generator_ids, block_timeouts, block_timestamps, prunable_zip_hash) VALUES
-(1, X'8dd2cb2fcd453c53b3fe53790ac1c104a6a31583e75972ff62bced9047a15176', 2, 0, null, (), (), (), null),
+INSERT into shard (shard_id, shard_hash, shard_height, shard_state, zip_hash_crc, generator_ids, block_timeouts, block_timestamps, prunable_zip_hash) VALUES
+(1, X'8dd2cb2fcd453c53b3fe53790ac1c104a6a31583e75972ff62bced9047a15176', 2, 0, null, '[]', '[]', '[]', null),
 (2, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d', 3, 100, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d',
-    (782179228250, 4821792282200, 7821792282123976600), (0, 1), (45673250, 45673251), X'0729528cd01d03c815e1aaf74e1c8950a411e0f20376881747e6ab667452d909'),
+    '[782179228250, 4821792282200, 7821792282123976600]', '[0, 1]', '[45673250, 45673251]', X'0729528cd01d03c815e1aaf74e1c8950a411e0f20376881747e6ab667452d909'),
 (3, X'931A8011F4BA1CDC0BCAE807032FE18B1E4F0B634F8DA6016E421D06C7E13693', 31, 50, null,
-    (57821792282, 22116981092100, 9211698109297098287), (1, 1), (45673251, 45673252), null)
+    '[57821792282, 22116981092100, 9211698109297098287]', '[1, 1]', '[45673251, 45673252]', null)
 ;
-INSERT into PUBLIC.REFERENCED_TRANSACTION (db_id, transaction_id, referenced_transaction_id, height) VALUES
+INSERT into referenced_transaction (db_id, transaction_id, referenced_transaction_id, height) VALUES
 (10     , 100                    , 101                  ,100    ),
 (20     , 101                    , 102                  ,200    ),
 (30     , 102                    , 103                  ,300    ),
@@ -146,7 +149,7 @@ INSERT into PUBLIC.REFERENCED_TRANSACTION (db_id, transaction_id, referenced_tra
 (130    , -2262365651675616510   , 808614188720864902   ,15456  ),
 (140    , -1536976186224925700   , 808614188720864902   ,15456  )
 ;
-INSERT INTO PUBLIC.PHASING_POLL (
+INSERT INTO phasing_poll (
 DB_ID  	    ,ID  	            ,ACCOUNT_ID  	    ,WHITELIST_SIZE  	,FINISH_HEIGHT  	,VOTING_MODEL  	,QUORUM  	,MIN_BALANCE  	,HOLDING_ID  	        ,MIN_BALANCE_MODEL  ,HASHED_SECRET                                                                 ,ALGORITHM  	,HEIGHT) VALUES
 (10	    , 5471926494854938613	,9211698109297098287	        ,0	        ,4000	            , 5	        ,1	        ,null	        ,null	                ,0		            ,X'be65fff0fd321e40fa5857815c457669d0afdb9c3823445140a9f0a40f9d4414'           ,2	            ,3500),
 (20	    , 808614188720864902	,9211698109297098287	        ,2	        ,10000	            , 0	        ,1	        ,null	        ,null	                ,0		            ,null                                                                          ,0	            ,8000),
@@ -155,7 +158,7 @@ DB_ID  	    ,ID  	            ,ACCOUNT_ID  	    ,WHITELIST_SIZE  	,FINISH_HEIGHT
 (50	    ,-1536976186224925700	,9211698109297098287	        ,1	        ,18000	            , 0	        ,3	        ,null	        ,null	                ,0		            ,null                                                                          ,0	            ,15456),
 (60	    ,4851834545659781120	,9211698109297098287	        ,2	        ,537000	            , 2	        ,50	        ,10	            ,4826028362757542803	,2		            ,null                                                                          ,0	            ,517468)
 ;
-INSERT INTO PUBLIC.PHASING_POLL_RESULT
+INSERT INTO phasing_poll_result
 (DB_ID  	,ID  	          ,RESULT  	,APPROVED  	,HEIGHT  ) VALUES
 (10	    ,100                	,1	    ,TRUE	    ,300     ),
 (20	    ,3444674909301056677	,1	    ,TRUE	    ,1500   ),
@@ -163,7 +166,8 @@ INSERT INTO PUBLIC.PHASING_POLL_RESULT
 (30	    ,808614188720864902 	,0	    ,TRUE	    ,9000   ),
 (40	    ,2083198303623116770	,0	    ,FALSE	    ,9500   )
 ;
-INSERT into PUBLIC.PHASING_POLL_VOTER
+
+INSERT into phasing_poll_voter
 (DB_ID  	,TRANSACTION_ID  	,VOTER_ID  	,HEIGHT) VALUES
 (20   ,808614188720864902	  , 5564664969772495473     ,8000  ),
 (30   ,808614188720864902     , -8315839810807014152	,8000 ),
@@ -174,13 +178,16 @@ INSERT into PUBLIC.PHASING_POLL_VOTER
 (80   ,4851834545659781120	  ,2330184721294966748	    ,517468 ),
 (90   ,4851834545659781120	  ,7821792282123976600	    ,517468 )
 ;
-INSERT into PUBLIC.PHASING_VOTE
+
+INSERT into phasing_vote
 (DB_ID  	,VOTE_ID  	                ,TRANSACTION_ID  	   ,VOTER_ID  	,HEIGHT) VALUES
 (30         ,-2262365651675616510       ,808614188720864902   ,5564664969772495473 ,8500),
 (40         ,9145605905642517648        ,808614188720864902   ,-8315839810807014152	 ,8999)
 ;
---001100100
-INSERT into PUBLIC.PHASING_POLL_LINKED_TRANSACTION
+
+--001100100;
+
+INSERT into phasing_poll_linked_transaction
 (DB_ID  	,TRANSACTION_ID  	    ,LINKED_FULL_HASH  	,LINKED_TRANSACTION_ID  	,HEIGHT ) VALUES
 (10         ,-4081443370478530685, X'6400000000000000cc6f17193477209ca5821d37d391e70ae668dd1c11dd798e', 100                   , 15456),
 (20         ,-4081443370478530685, X'fc23d4474d90abeae5dd6d599381a75a2a06e61f91ff2249067a10e6515d202f', -1536976186224925700  , 15456),
@@ -189,45 +196,54 @@ INSERT into PUBLIC.PHASING_POLL_LINKED_TRANSACTION
 (50         ,100                 , X'faf20df37f7466857d33ddcd841d535fb5b216e93104ec663454210827c155ed',  -8834245526153202950 , 15457),
 (60         ,200                 , X'3a0e1742d06078d5fd2b9f3b90cb2ea861406f0bebfb7c74366c40506a7c9bb1',  -3064593098847351238 , 15458)
 ;
-INSERT into version values (327);
-INSERT INTO FTL.INDEXES (schema, "TABLE", columns) VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
-INSERT INTO FTL.INDEXES (schema, "TABLE", columns) VALUES('PUBLIC', 'TAGGED_DATA', 'NAME,DESCRIPTION,TAGS');
+
+INSERT into version values (355);
+
+--INSERT INTO FTL.INDEXES (schema, "TABLE", columns) VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
+--INSERT INTO FTL.INDEXES (schema, "TABLE", columns) VALUES('PUBLIC', 'TAGGED_DATA', 'NAME,DESCRIPTION,TAGS');
 
 
-INSERT INTO PUBLIC.GENESIS_PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (1, -8446737619314270165, '5E8D43FF197F8B554A59007F9E6F73E10BFF4DDA9906F8389D015F31D0ABC433', 1000, true);
-INSERT INTO PUBLIC.GENESIS_PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (2, -8446683063809540616, '25AE5107A806E561488394ED5B59916D61C2F0110182E67A1AAE19CD6BD86D0E', 1500, true);
-INSERT INTO PUBLIC.GENESIS_PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (3, -8446656647637444484, '7AD7781E9FD7EFD304E516374E816E09356DB8439D8D577DA02A5B3EC55D6274', 2000, true);
-INSERT INTO PUBLIC.GENESIS_PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (4, -8446582139906358620, '58F5675BDE9DC62EC712988E84F336C1859CE672A065706C2D6B53F24809073A', 3500, true);
-INSERT INTO PUBLIC.GENESIS_PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (5, -8446548496587389826, '42EDD0892C113954CC9EFD503E424E79D60D2EC94356F9C65BF7EA651F3A2E6A', 5000, true);
-INSERT INTO PUBLIC.GENESIS_PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (6, -8446473252322443609, '1AB245BBA7D381256999A016F40FE44EC7E3FE15EF598A3F4B089B4EBC40E973', 5000, true);
-INSERT INTO PUBLIC.GENESIS_PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (7, -8446384352342482748, '840544113081FD01265F6881DC4BF0627FD06E3A9D9ABF1F2FC65042AC03145D', 8000, true);
-INSERT INTO PUBLIC.GENESIS_PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (8, -8446347883943983778, '638EA31BC014E00B858D3EAC8CB5B1BED168EA8290B4CBAE6E6DE0498ABAD557', 8000, true);
-INSERT INTO PUBLIC.GENESIS_PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (9, -8446281322521085217, '2308A0680A8390ABD47F3AFE616F604047DCDD5A05E4EB1877DD9332CD56A057', 10000, true);
-INSERT INTO PUBLIC.GENESIS_PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (10, -8446169427786754084, 'AF787EE65F2CE7355D10B3D69390BB48BBD47B725F2EB0C786F9D9E623A1AC51', 15000, true);
+INSERT INTO genesis_public_key
+(DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES
+(1, -8446737619314270165, X'5E8D43FF197F8B554A59007F9E6F73E10BFF4DDA9906F8389D015F31D0ABC433', 1000, true),
+(2, -8446683063809540616, X'25AE5107A806E561488394ED5B59916D61C2F0110182E67A1AAE19CD6BD86D0E', 1500, true),
+(3, -8446656647637444484, X'7AD7781E9FD7EFD304E516374E816E09356DB8439D8D577DA02A5B3EC55D6274', 2000, true),
+(4, -8446582139906358620, X'58F5675BDE9DC62EC712988E84F336C1859CE672A065706C2D6B53F24809073A', 3500, true),
+(5, -8446548496587389826, X'42EDD0892C113954CC9EFD503E424E79D60D2EC94356F9C65BF7EA651F3A2E6A', 5000, true),
+(6, -8446473252322443609, X'1AB245BBA7D381256999A016F40FE44EC7E3FE15EF598A3F4B089B4EBC40E973', 5000, true),
+(7, -8446384352342482748, X'840544113081FD01265F6881DC4BF0627FD06E3A9D9ABF1F2FC65042AC03145D', 8000, true),
+(8, -8446347883943983778, X'638EA31BC014E00B858D3EAC8CB5B1BED168EA8290B4CBAE6E6DE0498ABAD557', 8000, true),
+(9, -8446281322521085217, X'2308A0680A8390ABD47F3AFE616F604047DCDD5A05E4EB1877DD9332CD56A057', 10000, true),
+(10, -8446169427786754084, X'AF787EE65F2CE7355D10B3D69390BB48BBD47B725F2EB0C786F9D9E623A1AC51', 15000, true)
+;
 
 
-INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (1, 2728325718715804811, 'A3C4BF8B2CBB8863C3E30EB4590FB22839311A95CF1FD716C211AE38C7D47B33', 1000, true);
-INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (2, -5554610658583124986, '50D38876803FBB5EFFC9ED968245AA64A7CD217FD26DB6A60A0330E8FEF4BF61', 1500, true);
-INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (3, 7995581942006468815, 'D36B2EC098A9349902213AB19957E544AD3D388A6593C902F5DCE2CC0556B73E', 2000, true);
-INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (4, 4961837675843750471, 'AECFD20DAE056E71AF7273F49994602BB038B35F2CFDD14DCF770725CADF570D', 3500, true);
-INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (5, -8549596671240600704, 'F3B7EF980A1207D55B723144C87C30740FCB4F13134F8758FA03DC2B8B086916', 5000, true);
-INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (6, -960762611966502100, '2FD89F2823B313FFA81E707014733939E97354FA0F69210262BD7EB1FC1E2D28', 5000, true);
-INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (7, -6151359720024440589, 'D6896785B0D0A106B75B5268919B4D361EA32E53F2C6E93C277DB567FF7DB67D', 8000, true);
-INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (8, -6724281675870110558, '3BF91EC2D8ABE04B4BEDB7BF09140E31BA8B4195002D093C3BF32259FEA5A513', 8000, true);
-INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (9, 1344527020205736624, '5C6D82CD66A3328AA9A83C2FC2EC7724EB788A81E78ED67E2A979B127B9A887D', 10000, true);
-INSERT INTO PUBLIC.PUBLIC_KEY (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES (10, -4013722529644937202, '6DFB3D4C9A0BC930B4700DC6C49881B71F5A48F38AFEC702BD8DE8D041CC9023', 15000, true);
+INSERT INTO public_key
+(DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST) VALUES
+(1, 2728325718715804811, X'A3C4BF8B2CBB8863C3E30EB4590FB22839311A95CF1FD716C211AE38C7D47B33', 1000, true),
+(2, -5554610658583124986, X'50D38876803FBB5EFFC9ED968245AA64A7CD217FD26DB6A60A0330E8FEF4BF61', 1500, true),
+(3, 7995581942006468815, X'D36B2EC098A9349902213AB19957E544AD3D388A6593C902F5DCE2CC0556B73E', 2000, true),
+(4, 4961837675843750471, X'AECFD20DAE056E71AF7273F49994602BB038B35F2CFDD14DCF770725CADF570D', 3500, true),
+(5, -8549596671240600704, X'F3B7EF980A1207D55B723144C87C30740FCB4F13134F8758FA03DC2B8B086916', 5000, true),
+(6, -960762611966502100, X'2FD89F2823B313FFA81E707014733939E97354FA0F69210262BD7EB1FC1E2D28', 5000, true),
+(7, -6151359720024440589, X'D6896785B0D0A106B75B5268919B4D361EA32E53F2C6E93C277DB567FF7DB67D', 8000, true),
+(8, -6724281675870110558, X'3BF91EC2D8ABE04B4BEDB7BF09140E31BA8B4195002D093C3BF32259FEA5A513', 8000, true),
+(9, 1344527020205736624, X'5C6D82CD66A3328AA9A83C2FC2EC7724EB788A81E78ED67E2A979B127B9A887D', 10000, true),
+(10, -4013722529644937202, X'6DFB3D4C9A0BC930B4700DC6C49881B71F5A48F38AFEC702BD8DE8D041CC9023', 15000, true),
+(11, -208393164898941117, X'AF888EE65F2CE7355D10B3D69390BB48BBD47B725F2EB0C786F9D9E623A1AC51', 15000, true)
+;
 
-INSERT INTO PUBLIC.SHARD_RECOVERY (SHARD_RECOVERY_ID, STATE, COLUMN_NAME, UPDATED, HEIGHT) VALUES (1, 'INIT', NULL, CURRENT_TIMESTAMP(), 10000);
+INSERT INTO shard_recovery (SHARD_RECOVERY_ID, STATE, COLUMN_NAME, UPDATED, HEIGHT) VALUES (1, 'INIT', NULL, CURRENT_TIMESTAMP(), 10000);
 
 
-INSERT into PUBLIC.TAGGED_DATA_TIMESTAMP
-(DB_ID  	,ID  	             ,  "TIMESTAMP"  , HEIGHT , LATEST ) VALUES
+INSERT into tagged_data_timestamp
+(DB_ID  	,ID  	             ,  `TIMESTAMP`  , HEIGHT , LATEST ) VALUES
 (10         ,-780794814210884355 , 35078473      , 2000 , TRUE),
 (20         ,-9128485677221760321, 35078473      , 3500, TRUE),
 (30         ,3746857886535243786,  35078473      , 3500, TRUE)
 ;
 
-INSERT into PUBLIC.DATA_TAG
+INSERT into data_tag
 (DB_ID  	,TAG      , TAG_COUNT  	,HEIGHT , LATEST) VALUES
 (10         ,'abc',      1         , 1500, TRUE),
 (20         ,'efd',      1         , 2000, FALSE),
@@ -235,16 +251,16 @@ INSERT into PUBLIC.DATA_TAG
 (40         ,'trw' ,     1         , 3500, TRUE)
 ;
 
-INSERT into PUBLIC.TAGGED_DATA
+INSERT into tagged_data
 (DB_ID  	,ID  	             , ACCOUNT_ID  	        , NAME  ,      description  ,tags                          , parsed_tags                 ,data              ,  is_text   ,  block_timestamp ,  transaction_timestamp , HEIGHT ) VALUES
-(10         ,-780794814210884355 , 9211698109297098287  , 'tag1'  , 'tag1 descr'    ,'tag1,tag2,tag3,tag2,sl'      ,('tag1', 'tag2', 'tag3')     ,X'c11dd7986e'     ,   TRUE    ,          18400    ,        35078473        ,   2000 ),
-(20         ,-9128485677221760321, 9211698109297098287  , 'tag2'  , 'tag2 descr'    ,'tag2,tag2,ss'                ,('tag2')                     ,X'c11d86986e'     ,   TRUE    ,          32200    ,        35078473        ,   3500 ),
-(30         ,3746857886535243786 , 9211698109297098287  , 'tag3'  , 'tag3 descr'    ,'tag3,tag4,tag3,newtag'       ,('tag3', 'tag4', 'newtag')   ,X'c11d8344588e'   ,   FALSE  ,          32200    ,      35078473        ,   3500 ),
-(40         ,2083198303623116770 , 9211698109297098287  , 'tag4'  , 'tag4 descr'    ,'tag3,tag3,tag3,tag2,tag2'    ,('tag3', 'tag2')             ,X'c11d1234589e'   ,   TRUE   ,          73600    ,      35078473        ,   3500),
-(50         ,808614188720864902 ,  9211698109297098287  , 'tag5'  , 'tag5 descr'    ,'iambatman'                   ,('iambatman')                ,X'c11d1234586e'   ,   FALSE  ,          73600    ,      35078473        ,   8000)
+(10         ,-780794814210884355 , 9211698109297098287  , 'tag1'  , 'tag1 descr'    ,'tag1,tag2,tag3,tag2,sl'      , '["tag1", "tag2", "tag3"]'     ,X'c11dd7986e'     ,   TRUE    ,          18400    ,        35078473        ,   2000 ),
+(20         ,-9128485677221760321, 9211698109297098287  , 'tag2'  , 'tag2 descr'    ,'tag2,tag2,ss'                , '["tag2"]'                     ,X'c11d86986e'     ,   TRUE    ,          32200    ,        35078473        ,   3500 ),
+(30         ,3746857886535243786 , 9211698109297098287  , 'tag3'  , 'tag3 descr'    ,'tag3,tag4,tag3,newtag'       , '["tag3", "tag4", "newtag"]'   ,X'c11d8344588e'   ,   FALSE  ,          32200    ,      35078473        ,   3500 ),
+(40         ,2083198303623116770 , 9211698109297098287  , 'tag4'  , 'tag4 descr'    ,'tag3,tag3,tag3,tag2,tag2'    , '["tag3", "tag2"]'             ,X'c11d1234589e'   ,   TRUE   ,          73600    ,      35078473        ,   3500),
+(50         ,808614188720864902 ,  9211698109297098287  , 'tag5'  , 'tag5 descr'    ,'iambatman'                   , '["iambatman"]'                ,X'c11d1234586e'   ,   FALSE  ,          73600    ,      35078473        ,   8000)
 ;
 
-INSERT into PUBLIC.TAGGED_DATA_EXTEND
+INSERT into tagged_data_extend
 (DB_ID  	,ID  	             , EXTEND_ID  	,HEIGHT  , LATEST) VALUES
 (10         ,-780794814210884355 ,   1          , 2000, FALSE),
 (20         ,-9128485677221760321,   2          , 3500, FALSE),
@@ -253,28 +269,28 @@ INSERT into PUBLIC.TAGGED_DATA_EXTEND
 (50         ,808614188720864902 ,  2083198303623116770 , 8000, TRUE)
 ;
 
---Digital goods store
+--Digital goods store;
 
-INSERT into PUBLIC.GOODS
-(DB_ID,  	ID,  	            SELLER_ID,  	        NAME,  	                DESCRIPTION,  	            PARSED_TAGS,  	        HAS_IMAGE,  	TAGS,  	                "TIMESTAMP", QUANTITY,  PRICE,  	    DELISTED,  	 HEIGHT,  	LATEST) values
-(54,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,('product','some','ptd')	,TRUE	,'product some ptd test'	,41814871	,2	        ,100000000000	,FALSE	    ,541839	    ,FALSE),
-(55,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,('product','some','ptd')	,TRUE	,'product some ptd test'	,41814871	,1	        ,100000000000	,FALSE	    ,541867	    ,FALSE),
-(56,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,('product','some','ptd')	,TRUE	,'product some ptd test'	,41814871	,0	        ,100000000000	,FALSE	    ,541874	    ,TRUE ),
-(57,	-1443882373390424300	,9211698109297098287	,'Test product'	    ,'Test'	                        ,('tag')	                ,TRUE	,'tag'	                    ,41816306	,1	        ,100000000	    ,FALSE	    ,541986	    ,FALSE),
-(58,	-1443882373390424300	,9211698109297098287	,'Test product'	    ,'Test'	                        ,('tag')	                ,TRUE	,'tag'	                    ,41816306	,0	        ,100000000	    ,FALSE	    ,542026	    ,TRUE ),
-(59,	-2208439159357779035	,9211698109297098287	,'1'		        , null	                        ,()                         ,TRUE	,''	                        ,38796761	,0	        ,100000000	    ,FALSE	    ,542029	    ,TRUE ),
-(60,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,('asdf')	                ,TRUE	,'asdf'	                    ,37965044	,222	    ,400000000	    ,FALSE	    ,542710	    ,FALSE),
-(61,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,('asdf')                   ,TRUE	,'asdf'	                    ,37965044	,2	        ,400000000	    ,FALSE	    ,542712	    ,FALSE),
-(62,	-8243930277887618399	,9211698109297098287	,'test'	            ,'TEST'	                        ,('sport')	                ,TRUE	,'sport'	                ,38188829	,21	        ,44400000000	,TRUE	    ,542717	    ,TRUE ),
-(63,	-2394458469048114141	,9211698109297098287	,'fsf'	            ,'fsdfsd'	                    ,()	                        ,TRUE	,'ff'	                    ,38176323	,1	        ,100000000000	,TRUE	    ,542719	    ,TRUE ),
-(64,	8788482956389726350	    ,9211698109297098287	,'test'	            ,'test'	                        ,('test')	                ,TRUE	,'test'	                    ,38189627	,2	        ,100000000	    ,FALSE	    ,542721	    ,TRUE ),
-(65,	4948091426407579194	    ,9211698109297098287	,'qwe'	            ,'qwe'	                        ,('qwe')	                ,TRUE	,'qwe'	                    ,38039976	,12	        ,100000000  	,FALSE	    ,542725	    ,TRUE ),
-(66,	-9127861922199955586    ,9211698109297098287	,'Another product'	,'Just another produc'	        ,('tag','batman')	        ,TRUE	,'tag batman'	            ,41824604	,3	        ,150000000000	,FALSE	    ,542828	    ,TRUE ),
-(67,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,('asdf')	                ,TRUE	,'asdf'	                    ,37965044	,2	        ,500000000	    ,FALSE	    ,542860	    ,TRUE )
+INSERT into goods
+(DB_ID,  	ID,  	            SELLER_ID,  	        NAME,  	                DESCRIPTION,  	            PARSED_TAGS,  	        HAS_IMAGE,  	TAGS,  	                `TIMESTAMP`, QUANTITY,  PRICE,  	    DELISTED,  	 HEIGHT,  	LATEST) values
+(54,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,'["product","some","ptd","test"]'	,TRUE	,'product some ptd test'	,41814871	,2	        ,100000000000	,FALSE	    ,541839	    ,FALSE),
+(55,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,'["product","some","ptd","test"]'	,TRUE	,'product some ptd test'	,41814871	,1	        ,100000000000	,FALSE	    ,541867	    ,FALSE),
+(56,	350597963087434976	    ,200                	,'Some product'	    ,'Some product Some product'	,'["product","some","ptd","test"]'	,TRUE	,'product some ptd test'	,41814871	,0	        ,100000000000	,FALSE	    ,541874	    ,TRUE ),
+(57,	-1443882373390424300	,9211698109297098287	,'Test product'	    ,'Test'	                        ,'["tag"]'	                ,TRUE	,'tag'	                    ,41816306	,1	        ,100000000	    ,FALSE	    ,541986	    ,FALSE),
+(58,	-1443882373390424300	,9211698109297098287	,'Test product'	    ,'Test'	                        ,'["tag"]'	                ,TRUE	,'tag'	                    ,41816306	,0	        ,100000000	    ,FALSE	    ,542026	    ,TRUE ),
+(59,	-2208439159357779035	,9211698109297098287	    ,'1'		        , null	                        ,'[]'                        ,TRUE	,''	                        ,38796761	,0	        ,100000000	    ,FALSE	    ,542029	    ,TRUE ),
+(60,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,'["asdf"]'	                ,TRUE	,'asdf'	                    ,37965044	,222	    ,400000000	    ,FALSE	    ,542710	    ,FALSE),
+(61,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,'["asdf"]'                  ,TRUE	,'asdf'	                    ,37965044	,2	        ,400000000	    ,FALSE	    ,542712	    ,FALSE),
+(62,	-8243930277887618399	,9211698109297098287	,'test'	            ,'TEST'	                        ,'["sport"]'	             ,TRUE	,'sport'	                ,38188829	,21	        ,44400000000	,TRUE	    ,542717	    ,TRUE ),
+(63,	-2394458469048114141	,9211698109297098287	,'fsf'	            ,'fsdfsd'	                    ,'["ff"]'	                ,TRUE	,'ff'	                    ,38176323	,1	        ,100000000000	,TRUE	    ,542719	    ,TRUE ),
+(64,	8788482956389726350	    ,9211698109297098287	,'test'	            ,'test'	                    ,'["test"]'	                ,TRUE	,'test'	                    ,38189627	,2	        ,100000000	    ,FALSE	    ,542721	    ,TRUE ),
+(65,	4948091426407579194	    ,9211698109297098287	,'qwe'	            ,'qwe'	                    ,'["qwe"]'	                ,TRUE	,'qwe'	                    ,38039976	,12	        ,100000000  	,FALSE	    ,542725	    ,TRUE ),
+(66,	-9127861922199955586    ,9211698109297098287	,'Another product'	,'Just another produc'	    ,'["tag","batman"]'	        ,TRUE	,'tag batman'	            ,41824604	,3	        ,150000000000	,FALSE	    ,542828	    ,TRUE ),
+(67,	-9001112213900824483	,3705364957971254799	,'asdffasdf'	    ,'asdf'	                        ,'["asdf"]'	                ,TRUE	,'asdf'	                    ,37965044	,2	        ,500000000	    ,FALSE	    ,542860	    ,TRUE )
 ;
 
 INSERT INTO purchase
-(DB_ID  	,ID  	        ,BUYER_ID  	            ,GOODS_ID  	            ,SELLER_ID  	    ,QUANTITY  	,PRICE  	,DEADLINE  	,NOTE  	,NONCE  ,"TIMESTAMP",PENDING,GOODS  	                                                                                                                        ,GOODS_NONCE  	                                                    ,GOODS_IS_TEXT  	,REFUND_NOTE  	,REFUND_NONCE  	,HAS_FEEDBACK_NOTES  	,HAS_PUBLIC_FEEDBACKS  	,DISCOUNT  	,REFUND  	,HEIGHT  	,LATEST) VALUES
+(DB_ID  	,ID  	        ,BUYER_ID  	            ,GOODS_ID  	            ,SELLER_ID  	    ,QUANTITY  	,PRICE  	,DEADLINE  	,NOTE  	,NONCE  ,`TIMESTAMP`,PENDING,GOODS  	                                                                                                                        ,GOODS_NONCE  	                                                    ,GOODS_IS_TEXT  	,REFUND_NOTE  	,REFUND_NONCE  	,HAS_FEEDBACK_NOTES  	,HAS_PUBLIC_FEEDBACKS  	,DISCOUNT  	,REFUND  	,HEIGHT  	,LATEST) VALUES
 (50	,7052449049531083429	,3705364957971254799	,350597963087434976	    ,200                	,1	,100000000000	,173056826	,null	,null	,41815212	,FALSE	,X'd0e9017bfa6d02bf823e2cc5973f1ce8146ed7155ac326afb77a41d4ff2737f134a28e29be0c01357aee9660dca00a37'	                                ,X'47d7e125d33917ad2efe5cb34c754816541b3862056cae7672e8faea3fdb6c97'	,TRUE	        ,null	        ,null	        ,FALSE	                ,FALSE	                 ,100000000	,0	        ,541915	    ,FALSE),
 (51	,7938514984365421132	,3705364957971254799	,350597963087434976	    ,200                	,1	,100000000000	,173056760	,null	,null	,41815146	,FALSE	,X'cf07cf9eef82aa48108a0ed23b17178ff7d4c915d589a8adaa9775f50777e47ec3b73067b53c924c0f75c4487351f37e'	                                ,X'53da1333f562e1e33ec6294d050000a538d1ca3471e86cd49f2285aa98057236'	,TRUE	        ,null	        ,null	        ,FALSE	                ,FALSE	                 ,300000000	,0	        ,541918	    ,FALSE),
 (52	,5168710752758706151	,7821792282123976600	,-9127861922199955586	,9211698109297098287	,1	,500000000	    ,171922753	,null	,null	,41282338	,TRUE	,null	                                                                                                                                ,null	                                                                ,FALSE	        ,null	        ,null	        ,FALSE	                ,FALSE	                 ,0	        ,0	        ,541921	    ,TRUE ),
@@ -347,28 +363,28 @@ insert into tag
 (48	        ,'batman'   ,1	                ,1	            ,542828	,TRUE   )
 ;
 
-INSERT INTO PUBLIC.ACCOUNT_CONTROL_PHASING
+INSERT INTO account_control_phasing
 (DB_ID, ACCOUNT_ID,                         WHITELIST,              VOTING_MODEL,   QUORUM, MIN_BALANCE, HOLDING_ID, MIN_BALANCE_MODEL, MAX_FEES,   MIN_DURATION, MAX_DURATION, HEIGHT, LATEST) VALUES
 (10,    7995581942006468815,                    null,                       0,      1,      null,           null,       0,              300000000,  12,         113,            500,    true),
-(20,    2728325718715804811, (-8446656647637444484),            0,      1,      null,           null,       0,              300000000,  12,         113,            1000,   true),
+(20,    2728325718715804811, '[-8446656647637444484]',            0,      1,      null,           null,       0,              300000000,  12,         113,            1000,   true),
 (30,    -8446384352342482748,
-        (2728325718715804811, 1344527020205736624),             0,      1,      null,           null,       0,              300000000,  12,         113,            2000,   true),
+        '[2728325718715804811, 1344527020205736624]',             0,      1,      null,           null,       0,              300000000,  12,         113,            2000,   true),
 (40,    -4013722529644937202,
-    (-8446656647637444484, 1344527020205736624, -6724281675870110558),
+    '[-8446656647637444484, 1344527020205736624, -6724281675870110558]',
                                                                             0,      1,      null,           null,       0,              300000000,  12,         113,            3000,   true)
 ;
 
 INSERT into shuffling_data
 (DB_ID  	,SHUFFLING_ID  	,ACCOUNT_ID  	,DATA  	                                            ,TRANSACTION_TIMESTAMP  	,HEIGHT ) VALUES
-(1          ,100            ,105            ,(X'ff112385a1f832bc', X'ffffff', X'1234567890')    ,150                        ,1),
-(2          ,101            ,110            ,(X'75849274935438')                                ,250                        ,5);
+(1          ,100            ,105            ,'["ff112385a1f832bc", "ffffff", "1234567890"]'    ,150                        ,1),
+(2          ,101            ,110            ,'["75849274935438"]'                                ,250                        ,5);
 
-INSERT into trim
+INSERT into `trim`
 (DB_ID,     HEIGHT,   DONE ) VALUES
 (1    ,      1000,    true);
 
 INSERT into option
-(NAME,     "VALUE") VALUES
+(NAME,     `VALUE`) VALUES
 ('existingKey'    ,      'existingValue'),
 ('existingNullKey'    ,      null),
 ('existingEmptyKey'    ,      '');
@@ -417,16 +433,16 @@ INSERT INTO mandatory_transaction
 
 INSERT INTO dex_contract
 (db_id     , id                     , offer_id               , counter_offer_id         ,     secret_hash                                                       , height    , latest,  deadline_to_reply, status, sender                , recipient             , encrypted_secret                                                                                                                      ,   transfer_tx_id                                                      ,   counter_transfer_tx_id                                              ) VALUES
-(10        , -3625894990594689368   , -5227805726286506078   , -7138882269097972721     , 'F41A9D03745D78C8EFD682B4F6030FD70623E5C38AE2115D53F2C94F483AA121'    , 100       , false , 53497864          , 1     , -582612439131997299   , -582612439131997299   , 'B4F38C90AB6F36FC76013A7A69152186E2C44EF73D188A041770C253D6CCD1B88E24F37AB3C0BFD77FC74A4600C4090AEA1DC1A297A2AA3400A330CB6F670FEC'    , null                                                                  , '0x73949de85a63ed24457fc4188c8876726024a3f67fa673389a7aae47698e61bd'  ),
-(20        , -7277152511870517934   , 4066034979755747272   , 6794334481055229134       , '8E0F875179DD784241BABDC56E1380370620DB1C8AA1B7F765E2B98CD3FC2840'    , 200       , TRUE  , 53499868          , 2     , 7477442401604846627   , 7477442401604846627   , 'E670C46452E18FE2224EDF5FBA888AFFEF6060E0EFEEB10862BCFDEBFCFCF997DC37443B1FF44C79977F484E4B4E2E94404620145EBEEE5BCE7A2F609B453E13'    , '12380311258696115355'                                                , '0xe50bd6b4c62d8fb167de66c11a7a57cbcc97a2e945ddd3829d7cf0f09fda7b14'  ),
-(30        , 8455581613897449491    , 5339180579805180746   , -5842203753269117069      , '509520C8D27B08B9208B38F6AB1735C043263C18D2579A44F2210135CA92B480'    , 300       , TRUE  , 53499882          , 2     , 7477442401604846627   , -582612439131997299   , 'D6E6C72256548595C331C66D0D3FB5B1141B26E2D15946092ACB3E3E46B781F7F52148408A9F0D845333CCCAB9C822F13149EAE2AB5B963C921E4A7E97DABD7F'    , '0x8540339763b19265f394140544fe060711b1e0623860d8b99e21ffc769574f50'  , '4340657620930323843'                                                 ),
+(10        , -3625894990594689368   , -5227805726286506078   , -7138882269097972721     , X'F41A9D03745D78C8EFD682B4F6030FD70623E5C38AE2115D53F2C94F483AA121'    , 100       , false , 53497864          , 1     , -582612439131997299   , -582612439131997299   , X'B4F38C90AB6F36FC76013A7A69152186E2C44EF73D188A041770C253D6CCD1B88E24F37AB3C0BFD77FC74A4600C4090AEA1DC1A297A2AA3400A330CB6F670FEC'    , null                                                                  , '0x73949de85a63ed24457fc4188c8876726024a3f67fa673389a7aae47698e61bd'  ),
+(20        , -7277152511870517934   , 4066034979755747272   , 6794334481055229134       , X'8E0F875179DD784241BABDC56E1380370620DB1C8AA1B7F765E2B98CD3FC2840'    , 200       , TRUE  , 53499868          , 2     , 7477442401604846627   , 7477442401604846627   , X'E670C46452E18FE2224EDF5FBA888AFFEF6060E0EFEEB10862BCFDEBFCFCF997DC37443B1FF44C79977F484E4B4E2E94404620145EBEEE5BCE7A2F609B453E13'    , '12380311258696115355'                                                , '0xe50bd6b4c62d8fb167de66c11a7a57cbcc97a2e945ddd3829d7cf0f09fda7b14'  ),
+(30        , 8455581613897449491    , 5339180579805180746   , -5842203753269117069      , X'509520C8D27B08B9208B38F6AB1735C043263C18D2579A44F2210135CA92B480'    , 300       , TRUE  , 53499882          , 2     , 7477442401604846627   , -582612439131997299   , X'D6E6C72256548595C331C66D0D3FB5B1141B26E2D15946092ACB3E3E46B781F7F52148408A9F0D845333CCCAB9C822F13149EAE2AB5B963C921E4A7E97DABD7F'    , '0x8540339763b19265f394140544fe060711b1e0623860d8b99e21ffc769574f50'  , '4340657620930323843'                                                 ),
 (40        , 7952648026362992483    , 6735355323156389437   , 3332621836748752862       , null                                                                  , 400       , false , 53499983          , 0     , 7477442401604846627   , -582612439131997299   , null                                                                                                                                  ,   null                                                                , null                                                                  ),
-(50        , 7952648026362992483    , 6735355323156389437   , 3332621836748752862       , '509520C8D27B08B9208B38F6AB1735C043263C18D2579A44F2210135CA92B480'    , 401       , true  , 53500038          , 1     , 7477442401604846627   , -582612439131997299   , 'D6E6C72256548595C331C66D0D3FB5B1141B26E2D15946092ACB3E3E46B781F7F52148408A9F0D845333CCCAB9C822F13149EAE2AB5B963C921E4A7E97DABD7F'    ,   null                                                                , '100'                                                                ),
+(50        , 7952648026362992483    , 6735355323156389437   , 3332621836748752862       , X'509520C8D27B08B9208B38F6AB1735C043263C18D2579A44F2210135CA92B480'    , 401       , true  , 53500038          , 1     , 7477442401604846627   , -582612439131997299   , X'D6E6C72256548595C331C66D0D3FB5B1141B26E2D15946092ACB3E3E46B781F7F52148408A9F0D845333CCCAB9C822F13149EAE2AB5B963C921E4A7E97DABD7F'    ,   null                                                                , '100'                                                                ),
 (60        , 8455581613897449491    , -2195048504635381606  , 6188327480147022018       , null                                                                  , 500       , false , 53500042          , 0     , 7477442401604846627   , -582612439131997299   , null                                                                                                                                  ,   null                                                                , null                                                                  ),
 (70        , -6988530272040477515   , -5716376597917953548  , 3332621836748752862       , null                                                                  , 500       , false , 53500057          , 0     , 7477442401604846627   , -582612439131997299   , null                                                                                                                                  ,   null                                                                , null                                                                  ),
 (80        , 4590047955464765433    , 6876238954523300917   , -4688237877525140429      , null                                                                  , 500       , false , 53497715          , 0     , -582612439131997299   , 7477442401604846627   , null                                                                                                                                  ,   null                                                                , null                                                                  ),
-(90        , -1620743079267768652   , -5147790389386504951  , -5517784857671387693      , '2C92403A45334780593A5D0F9E443273CD026ABE43CFAE47FA5D8E69C278C064'    , 600       , TRUE  , 53497244          , 2     , -582612439131997299   , 7477442401604846627   , '22CD2C8D73AB0544A872963F013089017818D158FCB036040D2E411B6C80425A0EB0531252BD686892EA1AD84A54FDD7D5CE97122A903B3F3E536FEB98D01A3A'    , '0xa5c635cb164272ceb29ff055e8a6d0b2061dd886304d8b3f08800e3f4e76d3fa'  , '15853180921951477110'                                                ),
-(100       , 664254800608944568     , -8286957857729261741  , 1767521844898370512       , 'AEC6592AAA4DE756E64451ABA44361327FD766F403892F4C7502659A56D27BB8'    , 700       , TRUE  , 53497244          , 2     , -582612439131997299   , 7477442401604846627   , 'D039BE0CF1318F301A8B908A3B54B1572F0DB3BE40D7CF7D5BB263AC68EAA05AD4F8300870D7BAABAB86C62199E4162C6EEFE1F36B6533D7B48951087015DFF4'    , '6606192650543722486'                                                 , '0xd0349ff2fb66d88d9c6f788b5b80b5c22aeafac349a627e1089c4305210b479d'  ),
+(90        , -1620743079267768652   , -5147790389386504951  , -5517784857671387693      , X'2C92403A45334780593A5D0F9E443273CD026ABE43CFAE47FA5D8E69C278C064'    , 600       , TRUE  , 53497244          , 2     , -582612439131997299   , 7477442401604846627   , X'22CD2C8D73AB0544A872963F013089017818D158FCB036040D2E411B6C80425A0EB0531252BD686892EA1AD84A54FDD7D5CE97122A903B3F3E536FEB98D01A3A'    , '0xa5c635cb164272ceb29ff055e8a6d0b2061dd886304d8b3f08800e3f4e76d3fa'  , '15853180921951477110'                                                ),
+(100       , 664254800608944568     , -8286957857729261741  , 1767521844898370512       , X'AEC6592AAA4DE756E64451ABA44361327FD766F403892F4C7502659A56D27BB8'    , 700       , TRUE  , 53497244          , 2     , -582612439131997299   , 7477442401604846627   , X'D039BE0CF1318F301A8B908A3B54B1572F0DB3BE40D7CF7D5BB263AC68EAA05AD4F8300870D7BAABAB86C62199E4162C6EEFE1F36B6533D7B48951087015DFF4'    , '6606192650543722486'                                                 , '0xd0349ff2fb66d88d9c6f788b5b80b5c22aeafac349a627e1089c4305210b479d'  ),
 (110       , -139104235169499924    , -2946834708490131834  , -6968465014361285240      , null                                                                  , 800       , TRUE  , 53497122          , 3     , -582612439131997299   , 7477442401604846627   , null                                                                                                                                  ,   null                                                                , null                                                                  ),
 (120       , -4808040955344135102   , -7670014354885567965  , -6968465014361285240      , null                                                                  , 800       , TRUE  , 53497141          , 3     , -582612439131997299   , 7477442401604846627   , null                                                                                                                                  ,   null                                                                , null                                                                  ),
 (130       , -4084842872841996828   , -431466151140031473   , -6968465014361285240      , null                                                                  , 800       , TRUE  , 53497194          , 3     , -582612439131997299   , 7477442401604846627   , null                                                                                                                                  ,   null                                                                , null                                                                  ),
@@ -449,7 +465,7 @@ INSERT INTO user_error_message
 (200,            '0x8e96e98b32c56115614B64704bA35feFE9e8f7bC', 'Out of gas'          ,'redeem',   '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 1100),
 (300,            '0x0398E119419E0D7792c53913d3f370f9202Ae137', 'Double spending'     ,'withdraw', '100'                                                              ,1200)
 ;
-INSERT INTO ACCOUNT_INFO (DB_ID, ACCOUNT_ID, NAME, DESCRIPTION, HEIGHT, LATEST) VALUES
+INSERT INTO account_info (DB_ID, ACCOUNT_ID, NAME, DESCRIPTION, HEIGHT, LATEST) VALUES
 (3, 100, 'Madan Reddy', 'Apollo Community tokens', 2331, true),
 (5, 110, 'ZT', null, 3073, true),
 (6, 120, 'CALIGULA', null, 3559, true),
@@ -458,7 +474,7 @@ INSERT INTO ACCOUNT_INFO (DB_ID, ACCOUNT_ID, NAME, DESCRIPTION, HEIGHT, LATEST) 
 (15, 150, 'CALIGULA shubham nitin bhabad', 'abuse brain fright always', 70858, true)
 ;
 
-INSERT INTO ASSET
+INSERT INTO asset
 (DB_ID, ID,                     ACCOUNT_ID,  NAME,       DESCRIPTION,           QUANTITY, DECIMALS, INITIAL_QUANTITY, HEIGHT, LATEST) VALUES
 (1,     -1072880289966859852,   100,        'Assets1.1', 'ThisisSecretCoin1.1',   10,        1,        10,               10,    true),
 (3,     -1698552298114458330,   100,        'Assets1.2', 'ThisisSecretCoin1.2',   20,        3,        20,               30,    true),
@@ -470,8 +486,8 @@ INSERT INTO ASSET
 (10,   -7671470345148527248,    500,        'Assets3.3', 'ThisisSecretCoin3.3',   30,        10,       30,               100,   true)
 ;
 
-INSERT INTO ASSET_DELETE
-(DB_ID,     ID,                         ASSET_ID,               ACCOUNT_ID,         QUANTITY, "TIMESTAMP",  HEIGHT) VALUES
+INSERT INTO asset_delete
+(DB_ID,     ID,                         ASSET_ID,               ACCOUNT_ID,         QUANTITY, `TIMESTAMP`,  HEIGHT) VALUES
 (1,         3444674909301056677,    -1072880289966859852,           100,            5,          45690782,   12),
 (2,         2402544248051582903,    -1698552298114458330,           100,            10,         45690782,   32),
 (3,         5373370077664349170,    -174530643920308495,            100,            10,         45712001,   42),
@@ -482,7 +498,7 @@ INSERT INTO ASSET_DELETE
 (8,         2083198303623116770,    -7671470345148527248,           500,            16,         45712907,   103)
 ;
 
-INSERT INTO ASSET_DIVIDEND
+INSERT INTO asset_dividend
 (DB_ID, ID,                     ASSET_ID,               AMOUNT,     DIVIDEND_HEIGHT, TOTAL_DIVIDEND, NUM_ACCOUNTS, TIMESTAMP, HEIGHT) VALUES
 (1,     7584440193513719551,    8076646017490321411,    1,          61449,           0,              0,             36559619, 61468),
 (2,     -7390004979265954310,   8804302123230545017,    1000,       61449,           0,              0,             36559807, 61487),
@@ -490,8 +506,8 @@ INSERT INTO ASSET_DIVIDEND
 (4,     8033155246743541720,    9065918785929852826,    100,        61449,           0,              0,             36564916, 62007)
 ;
 
-INSERT INTO ASSET_TRANSFER
-(DB_ID, ID,                     ASSET_ID,               SENDER_ID,              RECIPIENT_ID,           QUANTITY, "TIMESTAMP", HEIGHT) VALUES
+INSERT INTO asset_transfer
+(DB_ID, ID,                     ASSET_ID,               SENDER_ID,              RECIPIENT_ID,           QUANTITY, `TIMESTAMP`, HEIGHT) VALUES
 (1,     4942438707784864588,    8180990979457659735,    9211698109297098287,    9211698109297098287,    1,          33613556, 389),
 (2,     -2439044672016971496,   -7671470345148527248,   9211698109297098287,    9211698109297098287,    1,          34842058, 20924),
 (3,     4634268058494636461,    -7671470345148527248,   9211698109297098287,    9211698109297098287,    1,          34842598, 20985),
@@ -503,7 +519,7 @@ INSERT INTO ASSET_TRANSFER
 (9,     -1727926599278750726,   1059195892779923564,    -7316102710792408068,   -208393164898941117,    50,         37168765, 124528)
 ;
 
-INSERT INTO BUY_OFFER
+INSERT INTO buy_offer
 (DB_ID, ID,                     CURRENCY_ID,            ACCOUNT_ID,         RATE, UNIT_LIMIT, SUPPLY, EXPIRATION_HEIGHT, CREATION_HEIGHT, TRANSACTION_INDEX, TRANSACTION_HEIGHT, HEIGHT, LATEST, DELETED) VALUES
 (1,     -5520700017789034517,   9017193931881541951,    -208393164898941117, 1,     999,        1,      999999999,          1383307,        0,                  1383307,         1383308, true, false),
 (2,     3697010724017064611,    -4132128809614485872,   7477442401604846627, 1,     999,        1,      999999999,          1383322,        0,                  1383322,         1383324, true, false),
@@ -516,7 +532,7 @@ INSERT INTO BUY_OFFER
 (9,     -4255505590921443908,   -3205373316822570812,   -208393164898941117, 1,     999,        1,      999999999,          1400579,        0,                  1400579,         1400580, true, false)
 ;
 
-INSERT INTO SELL_OFFER
+INSERT INTO sell_offer
 (DB_ID, ID,                     CURRENCY_ID,            ACCOUNT_ID,         RATE, UNIT_LIMIT, SUPPLY, EXPIRATION_HEIGHT, CREATION_HEIGHT, TRANSACTION_INDEX, TRANSACTION_HEIGHT, HEIGHT, LATEST, DELETED) VALUES
 (1,     -5520700017789034517,   9017193931881541951,    -208393164898941117, 1,     999,        1,      999999999,          1383307,        0,                  1383307,         1383308, true, false),
 (2,     3697010724017064611,    -4132128809614485872,   7477442401604846627, 1,     999,        1,      999999999,          1383322,        0,                  1383322,         1383324, true, false),
@@ -529,7 +545,7 @@ INSERT INTO SELL_OFFER
 (9,     -4255505590921443908,   -3205373316822570812,   -208393164898941117, 1,     999,        1,      999999999,          1400579,        0,                  1400579,         1400580, true, false)
 ;
 
-INSERT INTO EXCHANGE
+INSERT INTO exchange
 (DB_ID, TRANSACTION_ID,         CURRENCY_ID,            BLOCK_ID,               OFFER_ID,               SELLER_ID,              BUYER_ID,               UNITS,      RATE, TIMESTAMP, HEIGHT) VALUES
 (1,     1304688235223891922,    -6000860677406393688,   -2887846745475647200,   8732480699736433017,    3494172333733565977,    3494172333733565977,    5000000000, 1,      45372444, 609481),
 (2,     5294250207343561634,    -6000860677406393688,   -8152571865264379755,   8732480699736433017,    3494172333733565977,    3494172333733565977,    100000000,  1,      45535320, 612120),
@@ -539,7 +555,7 @@ INSERT INTO EXCHANGE
 (6,     4698684103323222902,    1829902366663355623,    6734429651406997110,    3697010724017064611,    7477442401604846627,    9211698109297098287,    400,        1,      59450509, 1383324)
 ;
 
-INSERT INTO EXCHANGE_REQUEST
+INSERT INTO exchange_request
 (DB_ID, ID,                     ACCOUNT_ID,             CURRENCY_ID,            UNITS,  RATE,   IS_BUY, TIMESTAMP, HEIGHT) VALUES
 (1,     1304688235223891922,    3494172333733565977,    -6000860677406393688, 5000000000, 50,   true,   45372444,   609481),
 (2,     5294250207343561634,    3494172333733565977,    -6000860677406393688, 100000000,  1,    true,   45535320,   612120),

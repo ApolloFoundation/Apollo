@@ -36,18 +36,19 @@ public class DbProperties implements Cloneable {
     private int loginTimeout;
     private int defaultLockTimeout;
     private int maxMemoryRows;
-    private Long dbIdentity;
+    private String dbIdentity;
+
     private String databaseHost;
     private Integer databasePort;
     private String systemDbUrl;
 
-    public Optional<Long> getDbIdentity() {
+    public Optional<String> getDbIdentity() {
         return Optional.ofNullable(dbIdentity);
     }
 
 
-    public DbProperties dbIdentity(long shardIdOrTempId) {
-        if (shardIdOrTempId == 0) {
+    public DbProperties dbIdentity(String shardIdOrTempId) {
+        if (shardIdOrTempId == null || shardIdOrTempId.isEmpty()) {
             return this;
         }
         this.dbIdentity = shardIdOrTempId;
