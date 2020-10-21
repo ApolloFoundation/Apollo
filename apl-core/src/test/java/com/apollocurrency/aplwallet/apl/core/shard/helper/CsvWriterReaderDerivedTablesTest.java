@@ -110,7 +110,6 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -137,6 +136,8 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -144,6 +145,7 @@ import java.util.UUID;
 
 import static com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvAbstractBase.CSV_FILE_EXTENSION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -151,7 +153,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-@Disabled // TODO: YL @full_text_search_fix is needed
 @Slf4j
 @Testcontainers
 @Tag("slow")
@@ -181,7 +182,6 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
     MemPool memPool = mock(MemPool.class);
     UnconfirmedTransactionProcessingService unconfirmedTransactionProcessingService = mock(UnconfirmedTransactionProcessingService.class);
     PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
-//    doReturn(new PublicKey(-208393164898941117L, new byte[]{}, 100)).when(publicKeyDao).searchAll(-208393164898941117L);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -266,14 +266,11 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         long accountId = -208393164898941117L;
-//        PublicKey publicKey = new PublicKey(accountId, new byte[]{}, 100);
-//        doReturn(publicKey).when(publicKeyDao).searchAll(accountId);
         // init several derived tables
         AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         accountCurrencyTable.init();
         AccountControlPhasingTable accountControlPhasingTable = new AccountControlPhasingTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         accountControlPhasingTable.init();
-//        PhasingOnly.get(Long.parseLong("-8446384352342482748"));
         AccountAssetTable accountAssetTable = new AccountAssetTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         accountAssetTable.init();
         GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
@@ -529,7 +526,14 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
 
         int processCount = csvExportData.getProcessCount();
         assertEquals(8, processCount);
-        assertEquals(Map.of("public_key", "null", "account_id", "batman", "height", 8000, "latest", Boolean.TRUE, "db_id", 8L), csvExportData.getLastRow());
+        HashMap<String, Object> expectedHashMap = new LinkedHashMap<>(5);
+        expectedHashMap.put("public_key", "null");
+        expectedHashMap.put("db_id", BigInteger.valueOf(8L));
+        expectedHashMap.put("account_id", "batman");
+        expectedHashMap.put("height", 8000);
+        expectedHashMap.put("latest", Boolean.TRUE);
+        assertEquals(expectedHashMap.keySet(), csvExportData.getLastRow().keySet());
+        assertIterableEquals(expectedHashMap.values(), csvExportData.getLastRow().values());
 
         CsvReader csvReader = new CsvReaderImpl(dirProvider.getDataExportDir(), translator);
         ResultSet rs = csvReader.read("public_key", null, null);
