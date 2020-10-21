@@ -120,10 +120,13 @@ RUN set -ex; \
 
 VOLUME /var/lib/mysql
 
-COPY docker-entrypoint.sh /usr/local/bin/
+# APOLLO copy docker-entrypoint.sh and PUT root's exec permissions to it
+USER root
+COPY --chown=root:root docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # APOLLO addition START (set max_connections to = 1024)
-COPY --chown=mysql:mysql my_conf.cnf /etc/mysql/my.cnf
 USER mysql
+COPY --chown=mysql:mysql my_conf.cnf /etc/mysql/my.cnf
 RUN chmod -R 0444 /etc/mysql/my.cnf
 # APOLLO addition END
 ENTRYPOINT ["docker-entrypoint.sh"]

@@ -40,7 +40,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadin
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
-import com.apollocurrency.aplwallet.apl.testutil.BlockchainProducerUnitTests;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.weld.junit.MockBean;
@@ -86,7 +85,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     private final PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, BlockchainProducerUnitTests.class,
+        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
         GlobalSyncImpl.class,
         PhasingPollResultTable.class,
         PhasingPollTable.class,

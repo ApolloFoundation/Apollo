@@ -47,7 +47,6 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
-import com.apollocurrency.aplwallet.apl.testutil.BlockchainProducerUnitTests;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
@@ -129,7 +128,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
         AccountTable.class, AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
         AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
         FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
-        ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class, BlockchainProducerUnitTests.class,
+        ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class,
         TransactionRowMapper.class, TwoTablesPublicKeyDao.class,
         TransactionBuilder.class,
         TransactionDaoImpl.class, BlockchainImpl.class,

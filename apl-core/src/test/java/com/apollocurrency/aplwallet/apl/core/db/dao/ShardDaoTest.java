@@ -29,7 +29,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.testutil.BlockchainProducerUnitTests;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
@@ -75,7 +74,7 @@ class ShardDaoTest extends DbContainerBaseTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, ShardDao.class, BlockchainProducerUnitTests.class,
+        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, ShardDao.class,
         GlobalSyncImpl.class,
         TransactionRowMapper.class,
         TransactionBuilder.class,

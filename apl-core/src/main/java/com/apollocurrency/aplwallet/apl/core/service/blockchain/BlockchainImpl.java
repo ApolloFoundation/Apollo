@@ -51,7 +51,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -88,7 +87,6 @@ public class BlockchainImpl implements Blockchain {
 
     private final AtomicReference<Block> lastBlock;
     private final AtomicReference<Block> shardInitialBlock;
-    private final boolean isPostConstruct;
 
     @Inject
     public BlockchainImpl(BlockDao blockDao,
@@ -102,8 +100,7 @@ public class BlockchainImpl implements Blockchain {
                           ShardDao shardDao,
                           ShardRecoveryDao shardRecoveryDao,
                           PrunableLoadingService prunableService,
-                          PublicKeyDao publicKeyDao,
-                          @Named(value = "isPostConstruct") boolean isPostConstruct) {
+                          PublicKeyDao publicKeyDao) {
         this.blockDao = blockDao;
         this.transactionDao = transactionDao;
         this.blockchainConfig = blockchainConfig;
@@ -118,7 +115,6 @@ public class BlockchainImpl implements Blockchain {
         this.publicKeyDao = publicKeyDao;
         this.lastBlock = new AtomicReference<>();
         this.shardInitialBlock = new AtomicReference<>();
-        this.isPostConstruct = isPostConstruct;
     }
 
     @Override
@@ -134,12 +130,10 @@ public class BlockchainImpl implements Blockchain {
     @PostConstruct
     @Override
     public void update() {
-        if (isPostConstruct) { // for unit tests !
-            this.lastBlock.set(findLastBlock());
-            this.shardInitialBlock.set(findFirstBlock());
-            ((ShardManagement) this.databaseManager).initFullShards(
-                shardDao.getAllCompletedShards().stream().map(Shard::getShardId).collect(Collectors.toList()));
-        }
+        this.lastBlock.set(findLastBlock());
+        this.shardInitialBlock.set(findFirstBlock());
+        ((ShardManagement) this.databaseManager).initFullShards(
+            shardDao.getAllCompletedShards().stream().map(Shard::getShardId).collect(Collectors.toList()));
     }
 
     @Override
