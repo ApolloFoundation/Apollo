@@ -12,7 +12,7 @@ public class AplDBUpdater implements DBUpdater {
         Flyway flyway =
             Flyway.configure()
                 .dataSource(url, user, password)
-                .locations("filesystem:apl-db-updater/src/main/resources/db/migration/apl")
+                .locations("classpath:db/migration/apl")
                 .load();
 
         MigrateResult migrateResult = flyway.migrate();

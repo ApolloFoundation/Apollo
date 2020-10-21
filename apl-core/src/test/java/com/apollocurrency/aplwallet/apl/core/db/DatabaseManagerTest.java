@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHan
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
-import com.apollocurrency.aplwallet.apl.db.updater.ShardAddConstrainsDBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
@@ -113,7 +113,7 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardAddConstrainsDBUpdater());
+        TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardAllScriptsDBUpdater());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -128,7 +128,7 @@ class DatabaseManagerTest {
         TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardInitDBUpdater());
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
-        newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardAddConstrainsDBUpdater());
+        newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardAllScriptsDBUpdater());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);

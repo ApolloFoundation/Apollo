@@ -34,7 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.db.updater.AplDBUpdater;
 import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
-import com.apollocurrency.aplwallet.apl.db.updater.ShardAddConstrainsDBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -181,7 +181,7 @@ public class ShardEngineImpl implements ShardEngine {
         Objects.requireNonNull(dbUpdater, "dbUpdater is NULL");
         log.debug("INIT shard db file by schema={}", dbUpdater.getClass().getSimpleName());
         try {
-            boolean isConstraintSchema = dbUpdater instanceof ShardAddConstrainsDBUpdater || dbUpdater instanceof AplDBUpdater;
+            boolean isConstraintSchema = dbUpdater instanceof ShardAllScriptsDBUpdater || dbUpdater instanceof AplDBUpdater;
             ShardRecovery recovery = shardRecoveryDaoJdbc.getLatestShardRecovery(databaseManager.getDataSource());
             if (recovery != null) {
                 if (recovery.getState().getValue() >= SHARD_SCHEMA_FULL.getValue()) {

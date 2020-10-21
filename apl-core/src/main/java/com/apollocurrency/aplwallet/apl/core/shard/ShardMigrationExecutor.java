@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEvent;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeStateEventBinding;
-import com.apollocurrency.aplwallet.apl.db.updater.ShardAddConstrainsDBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
 import org.slf4j.Logger;
 
@@ -133,7 +133,7 @@ public class ShardMigrationExecutor {
                 log.debug("SHARD HASH = {}", hash.length);
                 PrevBlockData prevBlockData = prevBlockInfoExtractor.extractPrevBlockData(height, 3);
                 CreateShardSchemaCommand createShardConstraintsCommand = new CreateShardSchemaCommand(shardId, shardEngine,
-                    new ShardAddConstrainsDBUpdater(), /*hash should be correct value*/ hash, prevBlockData);
+                    new ShardAllScriptsDBUpdater(), /*hash should be correct value*/ hash, prevBlockData);
                 this.addOperation(createShardConstraintsCommand);
             case SHARD_SCHEMA_FULL:
             case SECONDARY_INDEX_STARTED:

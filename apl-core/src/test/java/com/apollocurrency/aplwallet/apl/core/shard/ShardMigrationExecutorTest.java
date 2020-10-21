@@ -74,7 +74,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
-import com.apollocurrency.aplwallet.apl.db.updater.ShardAddConstrainsDBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
@@ -348,7 +348,7 @@ class ShardMigrationExecutorTest {
 //5.        // create shard db FULL schema
         byte[] shardHash = "0123456780".getBytes(); // just an example
         createShardSchemaCommand = new CreateShardSchemaCommand(4L, shardEngine,
-            new ShardAddConstrainsDBUpdater(), shardHash, PrevBlockData.builder().generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[]{3, 4}).prevBlockTimestamps(new Integer[]{5, 6}).build());
+            new ShardAllScriptsDBUpdater(), shardHash, PrevBlockData.builder().generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[]{3, 4}).prevBlockTimestamps(new Integer[]{5, 6}).build());
         state = shardMigrationExecutor.executeOperation(createShardSchemaCommand);
         assertEquals(SHARD_SCHEMA_FULL, state);
 

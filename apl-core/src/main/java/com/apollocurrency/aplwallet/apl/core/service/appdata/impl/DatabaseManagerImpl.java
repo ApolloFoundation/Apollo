@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardDataSourceC
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.db.updater.AplDBUpdater;
 import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
-import com.apollocurrency.aplwallet.apl.db.updater.ShardAddConstrainsDBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -225,12 +225,12 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         if (numberOfShards != null) {
             dataSources = fullShardIds.stream().limit(numberOfShards).sorted(
                 Comparator.reverseOrder()).map(id -> getOrCreateShardDataSourceById(
-                id, new ShardAddConstrainsDBUpdater())).collect(Collectors.toList());
+                id, new ShardAllScriptsDBUpdater())).collect(Collectors.toList());
         } else {
             fullShardIds = findAllFullShardId();
             dataSources = fullShardIds.stream().sorted(
                 Comparator.reverseOrder()).map(id -> getOrCreateShardDataSourceById(
-                id, new ShardAddConstrainsDBUpdater())).collect(Collectors.toList());
+                id, new ShardAllScriptsDBUpdater())).collect(Collectors.toList());
         }
         return dataSources;
     }
@@ -243,7 +243,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         Set<Long> allFullShards = findAllFullShardId();
         Iterator<TransactionalDataSource> dataSourcesIterator = allFullShards.stream().sorted(
             Comparator.reverseOrder()).map(id -> getOrCreateShardDataSourceById(
-            id, new ShardAddConstrainsDBUpdater())).iterator();
+            id, new ShardAllScriptsDBUpdater())).iterator();
         return dataSourcesIterator;
     }
 
@@ -309,7 +309,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         waitAvailability();
         Set<Long> fullShards = findAllFullShardId();
         if (fullShards.contains(shardId)) {
-            return getOrCreateShardDataSourceById(shardId, new ShardAddConstrainsDBUpdater());
+            return getOrCreateShardDataSourceById(shardId, new ShardAllScriptsDBUpdater());
         } else {
             return null;
         }

@@ -6,14 +6,14 @@ import org.flywaydb.core.api.output.MigrateOutput;
 import org.flywaydb.core.api.output.MigrateResult;
 
 @Slf4j
-public class ShardAddConstrainsDBUpdater implements DBUpdater {
+public class ShardAllScriptsDBUpdater implements DBUpdater {
 
     @Override
     public void update(String url, String user, String password) {
         Flyway flyway =
             Flyway.configure()
                 .dataSource(url, user, password)
-                .locations("filesystem:apl-db-updater/src/main/resources/db/migration/shard")
+                .locations("classpath:db/migration/shard")
                 .load();
 
         MigrateResult migrateResult = flyway.migrate();

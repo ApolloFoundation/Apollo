@@ -13,7 +13,7 @@ public class ShardInitDBUpdater implements DBUpdater {
         Flyway flyway =
             Flyway.configure()
                 .dataSource(url, user, password)
-                .locations("filesystem:apl-db-updater/src/main/resources/db/migration/shard")
+                .locations("classpath:db/migration/shard")
                 .target(MigrationVersion.fromVersion("1.0"))
                 .load();
 
