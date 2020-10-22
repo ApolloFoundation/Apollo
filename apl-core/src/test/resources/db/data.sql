@@ -4,7 +4,6 @@ TRUNCATE TABLE transaction;
 TRUNCATE TABLE block;
 TRUNCATE TABLE two_factor_auth;
 TRUNCATE TABLE account;
-TRUNCATE TABLE version;
 TRUNCATE TABLE transaction_shard_index;
 TRUNCATE TABLE block_index;
 TRUNCATE TABLE option;
@@ -196,11 +195,6 @@ INSERT into phasing_poll_linked_transaction
 (50         ,100                 , X'faf20df37f7466857d33ddcd841d535fb5b216e93104ec663454210827c155ed',  -8834245526153202950 , 15457),
 (60         ,200                 , X'3a0e1742d06078d5fd2b9f3b90cb2ea861406f0bebfb7c74366c40506a7c9bb1',  -3064593098847351238 , 15458)
 ;
-
-INSERT into version values (355);
-
---INSERT INTO FTL.INDEXES (schema, "TABLE", columns) VALUES('PUBLIC', 'CURRENCY', 'code,name,description');
---INSERT INTO FTL.INDEXES (schema, "TABLE", columns) VALUES('PUBLIC', 'TAGGED_DATA', 'NAME,DESCRIPTION,TAGS');
 
 
 INSERT INTO genesis_public_key

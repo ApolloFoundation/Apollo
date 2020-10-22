@@ -46,6 +46,8 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
@@ -55,7 +57,7 @@ import static org.mockito.Mockito.verify;
 class DatabaseManagerTest {
     @Container
     public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-        .withDatabaseName("mysql")
+        .withDatabaseName("testdb")
         .withUsername("root")
         .withPassword("rootpass")
         .withExposedPorts(3306)
@@ -78,7 +80,9 @@ class DatabaseManagerTest {
 
     @AfterEach
     public void tearDown() {
-        databaseManager.shutdown();
+        if(databaseManager!=null) {
+            databaseManager.shutdown();
+        }
     }
 
     @Test
@@ -281,7 +285,7 @@ class DatabaseManagerTest {
         for (int i = 0; i < 20; i++) {
             futures.get(i).get();
         }
-        verify(spyDbManager).createOrUpdateShard(1L, new ShardInitDBUpdater());
+        verify(spyDbManager).createOrUpdateShard(anyLong(), any(ShardInitDBUpdater.class));
 
     }
 

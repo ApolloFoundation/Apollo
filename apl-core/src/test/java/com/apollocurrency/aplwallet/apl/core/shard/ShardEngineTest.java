@@ -297,7 +297,7 @@ class ShardEngineTest {
         state = shardEngine.addOrCreateShard(new ShardInitDBUpdater(), CommandParamInfo.builder().shardId(3L).build());
         assertEquals(SHARD_SCHEMA_CREATED, state);
 
-        checkDbVersion(5, 3);
+        checkDbVersion("1.0", 3);
         checkTableExist(new String[]{"block", "option", "transaction"}, 3);
     }
 
@@ -315,14 +315,14 @@ class ShardEngineTest {
         }
     }
 
-    private void checkDbVersion(int version, int shardId) {
+    private void checkDbVersion(String version, int shardId) {
         TransactionalDataSource dataSource = ((ShardManagement) extension.getDatabaseManager()).getShardDataSourceById(shardId);
         assertNotNull(dataSource, "Shard datasource should be initialized");
         DbUtils.inTransaction(dataSource, (con) -> {
-            try (PreparedStatement pstmt = con.prepareStatement("select * from version");
+            try (PreparedStatement pstmt = con.prepareStatement("select max(version) from flyway_schema_history");
                  ResultSet rs = pstmt.executeQuery()) {
                 assertTrue(rs.next(), "Version table should contain rows");
-                assertEquals(version, rs.getInt(1));
+                assertEquals(version, rs.getString(1));
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             }
@@ -346,7 +346,7 @@ class ShardEngineTest {
             .build();
         state = shardEngine.addOrCreateShard(new ShardAllScriptsDBUpdater(), CommandParamInfo.builder().shardHash(shardHash).shardId(3L).prevBlockData(prevBlockData).build());
         assertEquals(SHARD_SCHEMA_FULL, state);
-        checkDbVersion(24, 3);
+        checkDbVersion("1.1", 3);
         checkTableExist(new String[]{"block", "option", "transaction"}, 3);
         Shard lastShard = shardDao.getLastShard();
         assertArrayEquals(generators, Convert.toArray(lastShard.getGeneratorIds()));

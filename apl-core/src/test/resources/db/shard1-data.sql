@@ -2,7 +2,6 @@ CREATE DATABASE IF NOT EXISTS apl_blockchain_b5d7b6_shard_1 CHARACTER SET utf8mb
 use apl_blockchain_b5d7b6_shard_1;
 TRUNCATE TABLE transaction;
 TRUNCATE TABLE block;
-TRUNCATE TABLE version;
 
 INSERT INTO block
 (DB_ID,         ID,                HEIGHT,      VERSION,   `TIMESTAMP`, PREVIOUS_BLOCK_ID,  TOTAL_AMOUNT,        TOTAL_FEE,   PAYLOAD_LENGTH,   PREVIOUS_BLOCK_HASH,                                                   CUMULATIVE_DIFFICULTY,  BASE_TARGET,    NEXT_BLOCK_ID,               GENERATION_SIGNATURE,                                                   BLOCK_SIGNATURE,                                                                                                                        PAYLOAD_HASH,                                                           GENERATOR_ID,       TIMEOUT) VALUES
@@ -21,4 +20,3 @@ INSERT INTO transaction
   (200      ,5373370077664349170	  ,2995	     ,-7242168411665692630      ,13800	       ,1440,	457571885748888948	    ,0	        ,100000000000000000	,100000000	    ,X'f28be5c59d0b924ab96d5e9f64e51c597513717691eeeeaf18a26a864034f62c'	      ,X'8afd3a91d0e3011e505e0353b1f7089c0d401672f8ed5d0ddc2107e0b130aa0bdd17f03b2d75eed8fcc645cda88b5c82ac1b621c142abad9b1bb95df517aa70c'	    ,35078473	    ,0	   ,1	    ,9211698109297098287	 ,X'bf0ced0472d8ba3df9e21808e98e61b34404aad737e2bae1778cebc698b40f37' ,X'b7c745ae438d57212270a2b00e3f70fb5d5d8e0da3c7919edd4d3368176e6f2d'                  ,FALSE		,1	,FALSE	        ,FALSE	            ,FALSE	                        ,14734	        ,2621055931824266697	,FALSE	                    ,FALSE	                ,FALSE	                        ,FALSE,                 null),
   (500      ,-780794814210884355	  ,2996	     ,-6746699668324916965      ,18400	       ,1440,	6110033502865709882	    ,1	        ,100000000000000000	,100000000	    ,X'fd3c7ed8400f2af5cca5a1f825f9b918be00f35406f70b108b6656b299755558'	      ,X'240b0a1ee9f63f5c3cb914b42584da1388b9d048a981f1651ac85dd12f12660c29782100c03cbe8491bdc831aa27f6fd3a546345b3da7860c56e6ba431550517'	    ,35078473	    ,0	   ,1	    ,9211698109297098287	 ,X'bf0ced0472d8ba3df9e21808e98e61b34404aad737e2bae1778cebc698b40f37' ,X'f28be5c59d0b924ab96d5e9f64e51c597513717691eeeeaf18a26a864034f62c'	                ,FALSE		,1	,FALSE	        ,FALSE	            ,FALSE	                        ,14734	        ,2621055931824266697	,FALSE	                    ,FALSE	                ,FALSE	                        ,FALSE,                 null)
 ;
-INSERT into version values (24);
