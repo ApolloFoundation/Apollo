@@ -29,8 +29,6 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -42,6 +40,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
+import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.stream.Stream;
 
@@ -90,22 +89,25 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      * {@inheritDoc}
      */
     @Override
-    public void indexRow(Object[] row, TableData tableData) throws SQLException {
+//    public void indexRow(Object[] row, TableData tableData) throws SQLException {
+    public void indexRow(FullTextOperationData row, TableData tableData) throws SQLException {
         indexLock.readLock().lock();
         try {
             List<String> columnNames = tableData.getColumnNames();
             List<Integer> indexColumns = tableData.getIndexColumns();
-            int dbColumn = tableData.getDbIdColumnPosition();
-            String tableName = tableData.getSchema().toLowerCase() + "." + tableData.getTable().toLowerCase();
-            String query = tableName + ";" + columnNames.get(dbColumn) + ";" + row[dbColumn];
+//            int dbColumn = tableData.getDbIdColumnPosition();
+//            String tableName = tableData.getSchema().toLowerCase() + "." + tableData.getTable().toLowerCase();
+            String query = row.getTableKey();
             Document document = new Document();
             document.add(new StringField("_QUERY", query, Field.Store.YES));
             long now = ntpTime.getTime();
             document.add(new TextField("_MODIFIED", DateTools.timeToString(now, DateTools.Resolution.SECOND), Field.Store.NO));
-            document.add(new TextField("_TABLE", tableName, Field.Store.NO));
+            document.add(new TextField("_TABLE", row.getTableName(), Field.Store.NO));
             StringJoiner sj = new StringJoiner(" ");
             for (int index : indexColumns) {
-                String data = (row[index] != null ? (String) row[index] : "NULL");
+//                String data = (row.[index] != null ? (String) row[index] : "NULL");
+                String data = row.getColumnsWithData().get(index) != null ?
+                    (String) row.getColumnsWithData().get(index) : "NULL";
                 document.add(new TextField(columnNames.get(index), data, Field.Store.NO));
                 sj.add(data);
             }
@@ -124,27 +126,24 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      * {@inheritDoc}
      */
     @Override
-    public void commitRow(Object[] oldRow, Object[] newRow, TableData tableData) throws SQLException {
-        if (oldRow != null) {
-            if (newRow != null) {
-                log.debug("UPDATE: tableData = {}, oldRow={}, newRow={}", tableData, oldRow.length, newRow.length);
-                indexRow(newRow, tableData);
-            } else {
-                log.debug("DELETE: tableData = {}, oldRow={}", tableData, oldRow.length);
-                deleteRow(oldRow, tableData);
-            }
-        } else if (newRow != null) {
-            log.debug("INSERT: tableData = {}, newRow={}", tableData, newRow.length);
+//    public void commitRow(Object[] oldRow, Object[] newRow, TableData tableData) throws SQLException {
+    public void commitRow(FullTextOperationData newRow, TableData tableData) throws SQLException {
+        Objects.requireNonNull(newRow, "newRow data is NULL");
+        if (newRow.getOperationType() == FullTextOperationData.OperationType.INSERT_UPDATE) {
+            log.debug("INSERT/UPDATE: tableData = {}, newRow={}", tableData, newRow);
             indexRow(newRow, tableData);
+        } else {
+            log.debug("DELETE: tableData = {}, newRow={}", tableData, newRow);
+            deleteRow(newRow, tableData);
         }
     }
 
-    private void deleteRow(Object[] row, TableData tableData) throws SQLException {
-        String query =
-            tableData.getTable() + ";" + tableData.getColumnNames().get(tableData.getDbIdColumnPosition()) + ";" + (long) row[tableData.getDbIdColumnPosition()];
+//    private void deleteRow(Object[] row, TableData tableData) throws SQLException {
+    private void deleteRow(FullTextOperationData row, TableData tableData) throws SQLException {
+        String query = row.getTableKey();
         indexLock.readLock().lock();
         try {
-            log.debug("DELETE QUERY: tableData = {}, oldRow={}\nquery={}", tableData, row.length, query);
+            log.debug("DELETE QUERY: tableData = {}, oldRow={}\nquery={}", tableData, row, query);
             indexWriter.deleteDocuments(new Term("_QUERY", query));
         } catch (IOException exc) {
             log.error("Unable to delete indexed row", exc);
@@ -165,7 +164,10 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             obtainedUpdateLock = true;
         }
         try {
-
+            if (indexWriter != null && indexSearcher != null) {
+                log.debug("SKIP second initialization...");
+                return;
+            }
             indexLock.writeLock().lock();
             try {
                 IndexWriterConfig config = new IndexWriterConfig(analyzer);
@@ -282,11 +284,11 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
                 Document document = indexSearcher.doc(hits[i].doc);
                 String[] indexParts = document.get("_QUERY").split(";");
                 String[] nameParts = indexParts[0].split("\\.");
-                result.addRow(nameParts[0],
-                    nameParts[1],
-                    new String[]{indexParts[1]},
-                    new Long[]{Long.parseLong(indexParts[2])},
-                    hits[i].score);
+                result.addRow(nameParts[0], // schema name
+                    nameParts[1], // table name
+                    new String[]{indexParts[1]}, // columns
+                    new Long[]{Long.parseLong(indexParts[2])}, // keys (DB_ID?)
+                    hits[i].score); // score
             }
         } catch (ParseException exc) {
             log.debug("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());

@@ -4,42 +4,65 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
+import java.util.Objects;
 
 import static com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil.toList;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 @Singleton
 public class AccountInfoServiceImpl implements AccountInfoService {
 
     private final Blockchain blockchain;
     private final AccountInfoTable accountInfoTable;
+    private Event<FullTextOperationData> fullTextOperationDataEvent;
 
     @Inject
-    public AccountInfoServiceImpl(Blockchain blockchain, AccountInfoTable accountInfoTable) {
+    public AccountInfoServiceImpl(Blockchain blockchain,
+                                  AccountInfoTable accountInfoTable,
+                                  Event<FullTextOperationData> fullTextOperationDataEvent) {
         this.blockchain = blockchain;
         this.accountInfoTable = accountInfoTable;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
     }
 
     @Override
     public void update(AccountInfo accountInfo) {
+        Objects.requireNonNull(accountInfo);
+        // prepare Event instance with data
+        FullTextOperationData operationData = new FullTextOperationData(
+            accountInfoTable.getTableName() + ";DB_ID;" + accountInfo.getDbId(), accountInfoTable.getTableName());
+
         if (accountInfo.getName() != null || accountInfo.getDescription() != null) {
             accountInfoTable.insert(accountInfo);
+            // put relevant data into Event instance
+            operationData.setOperationType(FullTextOperationData.OperationType.INSERT_UPDATE);
+            operationData.addColumnData(accountInfo.getName()).addColumnData(accountInfo.getDescription());
         } else {
             accountInfoTable.deleteAtHeight(accountInfo, blockchain.getHeight());
+            operationData.setOperationType(FullTextOperationData.OperationType.DELETE);
         }
+        // fire event to send data into Lucene index component
+        log.debug("Fire lucene index update by data = {}", operationData);
+        fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
     }
 
     @Override

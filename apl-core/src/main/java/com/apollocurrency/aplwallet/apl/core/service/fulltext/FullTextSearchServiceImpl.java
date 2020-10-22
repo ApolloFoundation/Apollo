@@ -189,7 +189,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                 stmt.execute("DROP TRIGGER IF EXISTS FTL_" + table);
             }
 */
-            stmt.execute("TRUNCATE TABLE ftl_indexes");
+            stmt.execute("DROP TABLE ftl_indexes");
         }
         //
         // Delete the Lucene index
@@ -226,19 +226,24 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             sb.append(", ").append(tableData.getColumnNames().get(index));
         }
         sb.append(" FROM ").append(tableName);
-        Object[] row = new Object[tableData.getColumnNames().size()];
+//        Object[] row = new Object[tableData.getColumnNames().size()];
         //
         // Index each row in the table
         //
+        FullTextOperationData operationData = new FullTextOperationData(
+            FullTextOperationData.OperationType.INSERT_UPDATE, tableName);
         try (Statement qstmt = conn.createStatement();
              ResultSet rs = qstmt.executeQuery(sb.toString())) {
             while (rs.next()) {
-                row[tableData.getDbIdColumnPosition()] = rs.getObject(1);
+                Object dbId = rs.getObject(1);
+                operationData.setTableKey(tableName + ";DB_ID;" + dbId);
                 int i = 2;
                 for (int index : tableData.getIndexColumns()) {
-                    row[index] = rs.getObject(i++);
+                    Object indexedColumnValue = rs.getObject(i++);
+                    operationData.addColumnData(indexedColumnValue);
                 }
-                ftl.indexRow(row, tableData);
+                log.debug("Index data = {}", operationData);
+                ftl.indexRow(operationData, tableData);
             }
         }
         //
