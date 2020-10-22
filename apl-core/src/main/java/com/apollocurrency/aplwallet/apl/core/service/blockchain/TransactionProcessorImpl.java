@@ -119,7 +119,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public void printMemPoolStat() {
-        log.trace("Txs: {}, pending broadcast - {}", memPool.allProcessedCount(), memPool.pendingBroadcastQueueSize());
+        log.trace("Txs: {}, pending broadcast - {}, cache size - {}", memPool.allProcessedCount(), memPool.pendingBroadcastQueueSize(), memPool.currentCacheSize());
     }
 
     @Override
@@ -405,6 +405,24 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         if (!exceptions.isEmpty()) {
             throw new AplException.NotValidException("Peer sends invalid transactions: " + exceptions.toString());
         }
+    }
+
+
+    @Override
+    public boolean isFullyValidTransaction(Transaction tx) {
+        UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(tx);
+        boolean isValid = validationResult.isOk();
+        if (isValid) {
+            try {
+                transactionValidator.validateSignatureWithTxFee(tx);
+                transactionValidator.validateFully(tx);
+                isValid = true;
+            } catch (AplException.ValidationException e) {
+                isValid = false;
+                log.trace("Tx {} is not valid", tx.getId());
+            }
+        }
+        return isValid;
     }
 
     /**

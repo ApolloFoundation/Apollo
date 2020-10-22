@@ -215,6 +215,10 @@ public class MemPool {
         }
     }
 
+    public int currentCacheSize() {
+        return memoryState.txCacheSize();
+    }
+
     public boolean removeProcessedTransaction(long id) {
         boolean deleted = table.deleteById(id);
         if (deleted) {

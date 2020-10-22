@@ -31,7 +31,6 @@ public class TransactionProcessingTaskScheduler {
     private final Blockchain blockchain;
     private final MemPool memPool;
     private final PeersService peersService;
-    private final GlobalSync globalSync;
     private final TransactionProcessor transactionProcessor;
     private final BlockchainConfig blockchainConfig;
     private final TransactionTypeFactory transactionTypeFactory;
@@ -43,12 +42,11 @@ public class TransactionProcessingTaskScheduler {
     private final BatchSizeCalculator batchSizeCalculator;
 
     @Inject
-    public TransactionProcessingTaskScheduler(PropertiesHolder propertiesHolder, TimeService timeService, Blockchain blockchain, MemPool memPool, PeersService peersService, GlobalSync globalSync, TransactionProcessor transactionProcessor, BlockchainConfig blockchainConfig, TransactionTypeFactory transactionTypeFactory, DatabaseManager databaseManager, TaskDispatchManager taskDispatchManager, TransactionValidator transactionValidator, UnconfirmedTransactionProcessingService processingService, BatchSizeCalculator batchSizeCalculator) {
+    public TransactionProcessingTaskScheduler(PropertiesHolder propertiesHolder, TimeService timeService, Blockchain blockchain, MemPool memPool, PeersService peersService, TransactionProcessor transactionProcessor, BlockchainConfig blockchainConfig, TransactionTypeFactory transactionTypeFactory, DatabaseManager databaseManager, TaskDispatchManager taskDispatchManager, TransactionValidator transactionValidator, UnconfirmedTransactionProcessingService processingService, BatchSizeCalculator batchSizeCalculator) {
         this.timeService = timeService;
         this.blockchain = blockchain;
         this.memPool = memPool;
         this.peersService = peersService;
-        this.globalSync = globalSync;
         this.transactionProcessor = transactionProcessor;
         this.blockchainConfig = blockchainConfig;
         this.transactionTypeFactory = transactionTypeFactory;
@@ -97,9 +95,9 @@ public class TransactionProcessingTaskScheduler {
             }
             dispatcher.schedule(Task.builder()
                 .name("RemoveUnconfirmedTransactions")
-                .delay(7000)
+                .delay(5000)
                 .task(new RemoveUnconfirmedTransactionsThread(
-                    this.databaseManager, transactionProcessor, this.timeService, memPool, this.globalSync))
+                    this.databaseManager, transactionProcessor, this.timeService, memPool))
                 .build());
             dispatcher.schedule(Task.builder()
                 .name("ProcessWaitingTransactions")

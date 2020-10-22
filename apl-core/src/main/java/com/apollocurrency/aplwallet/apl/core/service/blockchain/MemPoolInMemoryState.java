@@ -134,6 +134,10 @@ public class MemPoolInMemoryState {
         processLaterQueue.clear();
     }
 
+    public int txCacheSize() {
+        return transactionCache.size();
+    }
+
     public UnconfirmedTransaction getFromCacheSorted(long id) {
         return transactionCache.get(id);
     }

@@ -51,6 +51,8 @@ public interface TransactionProcessor {
 
     void processPeerTransactions(List<Transaction> transactions) throws AplException.NotValidException;
 
+    boolean isFullyValidTransaction(Transaction tx);
+
     List<Transaction> restorePrunableData(JSONArray transactions) throws AplException.NotValidException;
 
 }
