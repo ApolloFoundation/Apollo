@@ -121,6 +121,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public void printMemPoolStat() {
+        if (memPool.getAllProcessedStream().count() < memPool.allProcessedCount()) {
+            log.warn("Insynch for cache");
+        }
         log.trace("Txs: {}, pending broadcast - {}, cache size - {}, processLaterQueue - {}", memPool.allProcessedCount(), memPool.pendingBroadcastQueueSize(), memPool.currentCacheSize(), memPool.processLaterQueueSize());
     }
 

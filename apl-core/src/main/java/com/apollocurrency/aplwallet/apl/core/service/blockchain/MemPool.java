@@ -111,6 +111,7 @@ public class MemPool {
         boolean canSaveTxs = allProcessedCount() < maxUnconfirmedTransactions;
         if (canSaveTxs) {
             table.insert(tx);
+            memoryState.putInCache(tx);
             currentNumberOfUnconfirmedTxs.incrementAndGet();
         }
         return canSaveTxs;
