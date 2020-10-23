@@ -160,6 +160,10 @@ public class MemPool {
     public Iterator<UnconfirmedTransaction> processLaterQueueIterator() {
         return memoryState.processLaterQueueIterator();
     }
+
+    public int processLaterQueueSize() {
+        return memoryState.processLaterQueueSize();
+    }
 //
 //    public Collection<UnconfirmedTransaction> getWaitingTransactionsUnmodifiedCollection() {
 //        return Collections.unmodifiableCollection(waitingTransactions);

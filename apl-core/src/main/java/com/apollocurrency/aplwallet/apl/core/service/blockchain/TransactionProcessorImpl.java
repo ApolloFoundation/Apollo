@@ -43,6 +43,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.util.MultiLock;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -79,6 +80,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final MemPool memPool;
     private final DatabaseManager databaseManager;
     private final UnconfirmedTransactionProcessingService processingService;
+    private final MultiLock multiLock = new MultiLock(1000);
 
     @Inject
     public TransactionProcessorImpl(TransactionValidator validator,
@@ -119,7 +121,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public void printMemPoolStat() {
-        log.trace("Txs: {}, pending broadcast - {}, cache size - {}", memPool.allProcessedCount(), memPool.pendingBroadcastQueueSize(), memPool.currentCacheSize());
+        log.trace("Txs: {}, pending broadcast - {}, cache size - {}, processLaterQueue - {}", memPool.allProcessedCount(), memPool.pendingBroadcastQueueSize(), memPool.currentCacheSize(), memPool.processLaterQueueSize());
     }
 
     @Override
@@ -144,8 +146,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             if (!validationResult.isOk()) {
                 throw new AplException.NotValidException(validationResult.getErrorDescription());
             }
-            if (!processingService.addNewUnconfirmedTransaction(unconfirmedTransaction)) {
+            TxSavingStatus status = saveUnconfirmedTransaction(unconfirmedTransaction);
+            if (status == TxSavingStatus.NOT_SAVED) {
                 throw new RuntimeException("Unable to broadcast tx " + unconfirmedTransaction.getId() + ", mempool is full");
+            }
+            if (status == TxSavingStatus.ALREADY_EXIST) {
+                throw new RuntimeException("Transaction " + transaction.getId() + " was already broadcasted");
             }
             //                log.debug("Accepted new transaction {}", transaction.getStringId());
             List<Transaction> acceptedTransactions = Collections.singletonList(unconfirmedTransaction);
@@ -167,10 +173,11 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             for (UnconfirmedTransaction tx : toBroadcast) {
                 try {
                     if (processingService.validateBeforeProcessing(tx).isOk()) {
-                        if (!processingService.addNewUnconfirmedTransaction(tx)) {
+                        TxSavingStatus status = saveUnconfirmedTransaction(tx);
+                        if (status == TxSavingStatus.NOT_SAVED) {
                             log.debug("Limit of mempool is reached, will return to pending queue tx {}", tx.getId());
                             returned.add(tx);
-                        } else {
+                        } else if (status == TxSavingStatus.SAVED) {
                             processed.add(tx);
                         }
                     }
@@ -251,7 +258,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     Transaction tx = txToProcess.getTransaction();
                     if (requireBroadcast(tx)) {
                         if (processingService.validateBeforeProcessing(tx).isOk()) {
-                            if (!processingService.addNewUnconfirmedTransaction(txToProcess)) {
+                            TxSavingStatus savingStatus = saveUnconfirmedTransaction(txToProcess);
+                            if (savingStatus == TxSavingStatus.NOT_SAVED) {
                                 break;
                             }
                         }
@@ -285,70 +293,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         }
     }
 
-//    public void processWaitingTransactions() {
-//        globalSync.writeLock();
-//        try {
-//            if (memPool.getWaitingTransactionsQueueSize() > 0) {
-//                int currentTime = timeService.getEpochTime();
-//                List<Transaction> addedUnconfirmedTransactions = new ArrayList<>();
-//                Iterator<UnconfirmedTransaction> iterator =
-//                    memPool.getWaitingTransactionsQueueIterator();
-//                while (iterator.hasNext()) {
-//                    UnconfirmedTransaction unconfirmedTransaction = iterator.next();
-//                    try {
-////                        log.trace("Process waiting tx {}", unconfirmedTransaction.getId());
-//                        transactionValidator.validate(unconfirmedTransaction);
-//                        UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
-//                        if (!validationResult.isOk()) {
-//                            processValidationResult(validationResult, unconfirmedTransaction, iterator);
-//                        } else {
-//                            processingService.processTransaction(unconfirmedTransaction);
-//                            iterator.remove();
-//                            addedUnconfirmedTransactions.add(unconfirmedTransaction.getTransaction());
-//                        }
-//                    } catch (AplException.ExistingTransactionException e) {
-//                        iterator.remove();
-////                        log.trace("Tx processing error " + unconfirmedTransaction.getId(), e);
-//                    } catch (AplException.NotCurrentlyValidException e) {
-//                            processNotCurrentlyValidTx(unconfirmedTransaction, currentTime, iterator);
-////                        log.trace("Tx is not valid currently " + unconfirmedTransaction.getId(), e);
-//                    } catch (AplException.ValidationException | RuntimeException e) {
-//                        if (e instanceof TransactionHelper.DbTransactionExecutionException && e.getCause() instanceof AplException.NotCurrentlyValidException) {
-//                            processNotCurrentlyValidTx(unconfirmedTransaction, currentTime, iterator);
-//                        } else {
-//                            iterator.remove();
-//                        }
-////                        log.trace("Validation tx processing error " + unconfirmedTransaction.getId(), e);
-//                    }
-//                }
-//                if (addedUnconfirmedTransactions.size() > 0) {
-//                    txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(addedUnconfirmedTransactions);
-//                }
-//            }
-//        } finally {
-//            globalSync.writeUnlock();
-//        }
-//    }
-//
-//    private void processNotCurrentlyValidTx(UnconfirmedTransaction unconfirmedTransaction, int currentTime, Iterator<UnconfirmedTransaction> iterator) {
-//        if (unconfirmedTransaction.getExpiration() < currentTime
-//            || currentTime - Convert2.toEpochTime(unconfirmedTransaction.getArrivalTimestamp()) > 3600) {
-//            iterator.remove();
-//        }
-//    }
-//
-//    private void processValidationResult(UnconfirmedTxValidationResult result, UnconfirmedTransaction tx, Iterator<UnconfirmedTransaction> iterator) {
-//        long currentTime = timeService.getEpochTime();
-//        if (result.getError() == UnconfirmedTxValidationResult.Error.ALREADY_PROCESSED || result.getError() == UnconfirmedTxValidationResult.Error.NOT_VALID) {
-//            iterator.remove();
-//        }
-//        if (result.getError() == UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID) {
-//            if (tx.getExpiration() < currentTime || currentTime - Convert2.toEpochTime(tx.getArrivalTimestamp()) > 3600) {
-//                iterator.remove();
-//            }
-//        }
-//    }
-
     @Override
     public int getUnconfirmedTxCount() {
         return memPool.allProcessedCount();
@@ -375,8 +319,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 if (validationResult.isOk()) {
                     transactionValidator.validateSignatureWithTxFee(transaction);
                     transactionValidator.validateLightly(transaction);
-                    if (!processingService.addNewUnconfirmedTransaction(unconfirmedTransaction)) {
+                    TxSavingStatus status = saveUnconfirmedTransaction(unconfirmedTransaction);
+                    if (status == TxSavingStatus.NOT_SAVED) {
                         break;
+                    }
+                    if (status == TxSavingStatus.ALREADY_EXIST) {
+                        continue;
                     }
                     if (memPool.isAlreadyBroadcasted(transaction)) {
 //                    log.debug("Received back transaction " + transaction.getStringId()
@@ -405,6 +353,16 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         if (!exceptions.isEmpty()) {
             throw new AplException.NotValidException("Peer sends invalid transactions: " + exceptions.toString());
         }
+    }
+
+    private TxSavingStatus saveUnconfirmedTransaction(UnconfirmedTransaction unconfirmedTransaction) {
+        return multiLock.inLockFor(unconfirmedTransaction, () -> {
+            if (memPool.hasUnconfirmedTransaction(unconfirmedTransaction.getId())) {
+                return TxSavingStatus.ALREADY_EXIST;
+            }
+            boolean saved = processingService.addNewUnconfirmedTransaction(unconfirmedTransaction);
+            return saved ? TxSavingStatus.SAVED : TxSavingStatus.NOT_SAVED;
+        });
     }
 
 
@@ -511,5 +469,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             throw new AplException.NotValidException("Invalid transaction signature for transaction " + transaction.getId());
         }
         return transaction;
+    }
+
+    private enum TxSavingStatus {
+        SAVED, ALREADY_EXIST, NOT_SAVED
     }
 }

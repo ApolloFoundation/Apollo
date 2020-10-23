@@ -27,6 +27,7 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
     private final TransactionProcessor transactionProcessor;
     private final TimeService timeService;
     private final MemPool memPool;
+    private volatile int counter = 0;
 
     public RemoveUnconfirmedTransactionsThread(DatabaseManager databaseManager,
                                                TransactionProcessor transactionProcessor,
@@ -46,8 +47,12 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
                 if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
+                counter++;
                 removeExpiredTransactions();
-                removeNotValidTransactions();
+                if (counter % 10 == 0) {
+                    removeNotValidTransactions();
+                    counter = 0;
+                }
             } catch (Exception e) {
                 log.info("Error removing unconfirmed transactions", e);
             }
@@ -59,13 +64,11 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
     }
 
     private void removeNotValidTransactions() {
-        TransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
-            memPool.getAllProcessedStream().limit(100).forEach(e -> {
-                if (!transactionProcessor.isFullyValidTransaction(e)) {
-                    transactionProcessor.removeUnconfirmedTransaction(e);
-                }
-            });
-        });
+        TransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> memPool.getAllProcessedStream().forEach(e -> {
+            if (!transactionProcessor.isFullyValidTransaction(e)) {
+                transactionProcessor.removeUnconfirmedTransaction(e);
+            }
+        }));
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {

@@ -183,6 +183,10 @@ public class MemPoolInMemoryState {
         return 1.0 * broadcastPendingTransactions.size() / maxPendingBroadcastQueueSize;
     }
 
+    public int processLaterQueueSize() {
+        return processLaterQueue.size();
+    }
+
     @Data
     private static class TxWithArrivalTimestamp {
         private final long arrivalTime = System.currentTimeMillis();
