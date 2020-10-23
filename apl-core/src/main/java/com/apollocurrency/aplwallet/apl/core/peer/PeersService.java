@@ -94,7 +94,7 @@ public class PeersService {
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 200;
     private static final Logger LOG = LoggerFactory.getLogger(PeersService.class);
     private static final Version MAX_VERSION = Constants.VERSION;
-    private static final int sendTransactionsBatchSize = 500;
+    private static final int sendTransactionsBatchSize = 200;
     private final static String BACKGROUND_SERVICE_NAME = "PeersService";
     public static int DEFAULT_CONNECT_TIMEOUT = 2000; //2s default websocket connect timeout
     public static int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
@@ -730,7 +730,7 @@ public class PeersService {
     public void sendToSomePeers(Block block) {
         ProcessBlockRequest request = new ProcessBlockRequest(blockConverter.convert(block), blockchainConfig.getChain().getChainId());
         LOG.debug("Send to some peers the block: {} at height: {}, trace - {}", block.getId(), block.getHeight(), ThreadUtils.lastNStacktrace(8));
-        sendToSomePeersAsync(request);
+        sendToSomePeers(request);
     }
 
     public void sendToSomePeers(List<? extends Transaction> transactions) {

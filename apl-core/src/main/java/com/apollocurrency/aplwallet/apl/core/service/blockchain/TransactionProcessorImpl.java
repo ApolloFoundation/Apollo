@@ -305,6 +305,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         if (CollectionUtil.isEmpty(transactions)) {
             return;
         }
+        long startTime = System.currentTimeMillis();
         long arrivalTimestamp = timeService.systemTimeMillis();
         List<Transaction> receivedTransactions = new ArrayList<>();
         List<Transaction> sendToPeersTransactions = new ArrayList<>();
@@ -350,6 +351,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(addedUnconfirmedTransactions);
         }
         memPool.removeFromBroadcasted(receivedTransactions);
+        log.trace("Processing time of {} txs - {}", transactions.size(), System.currentTimeMillis() - startTime);
         if (!exceptions.isEmpty()) {
             throw new AplException.NotValidException("Peer sends invalid transactions: " + exceptions.toString());
         }
