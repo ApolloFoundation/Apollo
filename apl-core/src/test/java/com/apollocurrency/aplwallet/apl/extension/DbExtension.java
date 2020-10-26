@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -173,7 +175,16 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         try {
             this.indexDir = Files.createTempDirectory("indexDir");
             this.luceneFullTextSearchEngine = new LuceneFullTextSearchEngine(mock(NtpTime.class), indexDir);
-            this.ftl = new FullTextSearchServiceImpl(manipulator.getDatabaseManager(), luceneFullTextSearchEngine, tableWithColumns.keySet(), "PUBLIC");
+            Map<String, String> tableColumnsMap = new HashMap<>(5);
+            Iterator<String> iterator = tableWithColumns.keySet().iterator();
+            while (iterator.hasNext()) {
+                String tableName = iterator.next();
+                List<String> columns = tableWithColumns.get(tableName);
+                String columnsJoined = String.join(",", columns);
+                tableColumnsMap.put(tableName, columnsJoined);
+            }
+            this.ftl = new FullTextSearchServiceImpl(manipulator.getDatabaseManager(),
+                luceneFullTextSearchEngine, tableColumnsMap, "public");
         } catch (IOException e) {
             throw new RuntimeException("Unable to init ftl", e);
         }
@@ -184,7 +195,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         tableWithColumns.forEach((table, columns) -> DbUtils.inTransaction(getDatabaseManager(), (con) -> {
             try {
                 if (columns.size() > 0) {
-                    ftl.createSearchIndex(con, table, String.join(",", columns));
+                    ftl.createSearchIndex(con, table,  String.join(",", columns));
                 } else {
                     log.warn("NOTHING for fields... ");
                 }
