@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
@@ -11,14 +11,13 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 public class FullTextConfigImpl implements FullTextConfig {
 
-    private Set<String> tableNames = ConcurrentHashMap.newKeySet();
+    private ConcurrentHashMap tableNames = new ConcurrentHashMap();
     private String schema = "public";
     private Path ftlIndexPath;
 
@@ -29,15 +28,15 @@ public class FullTextConfigImpl implements FullTextConfig {
         this.ftlIndexPath = ftlIndexPath;
     }
 
-    public synchronized void registerTable(String tableName) {
+    public synchronized void registerTable(String tableName, String indexedColumns) {
         StringValidator.requireNonBlank(tableName, "Table name");
-        tableNames.add(tableName);
+        tableNames.put(tableName, indexedColumns);
     }
 
     @Produces
     @Named("fullTextTables")
-    public synchronized Set<String> getTableNames() {
-        return Collections.unmodifiableSet(tableNames);
+    public synchronized Map<String, String> getTableNames() {
+        return tableNames;
     }
 
     @Produces

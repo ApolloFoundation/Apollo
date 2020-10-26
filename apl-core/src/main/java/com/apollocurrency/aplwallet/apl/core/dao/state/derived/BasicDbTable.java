@@ -42,8 +42,9 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                            DerivedTablesRegistry derivedDbTablesRegistry,
                            DatabaseManager databaseManager,
                            FullTextConfig fullTextConfig,
-                           Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(table, derivedDbTablesRegistry, databaseManager, fullTextConfig);
+                           Event<DeleteOnTrimData> deleteOnTrimDataEvent,
+                           String fullTextSearchColumns) {
+        super(table, derivedDbTablesRegistry, databaseManager, fullTextConfig, fullTextSearchColumns);
         this.keyFactory = keyFactory;
         this.multiversion = multiversion;
         this.deleteOnTrimDataEvent = deleteOnTrimDataEvent;

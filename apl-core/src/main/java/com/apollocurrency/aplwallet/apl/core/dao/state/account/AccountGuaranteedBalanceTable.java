@@ -52,7 +52,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable<AccountGuarant
                                          PropertiesHolder propertiesHolder,
                                          DerivedTablesRegistry derivedDbTablesRegistry,
                                          DatabaseManager databaseManager) {
-        super(TABLE_NAME, derivedDbTablesRegistry, databaseManager, null);
+        super(TABLE_NAME, derivedDbTablesRegistry, databaseManager, null, null);
         this.blockchainConfig = blockchainConfig;
         this.batchCommitSize = propertiesHolder.BATCH_COMMIT_SIZE();
     }

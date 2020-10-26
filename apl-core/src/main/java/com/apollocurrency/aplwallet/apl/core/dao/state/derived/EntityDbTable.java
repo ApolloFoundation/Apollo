@@ -48,17 +48,15 @@ import static org.slf4j.LoggerFactory.getLogger;
 public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTable<T> implements EntityDbTableInterface<T> {
     private static final Logger log = getLogger(EntityDbTable.class);
     private final String defaultSort;
-    @Getter
-    private final String fullTextSearchColumns;
 
     public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns,
                          DerivedTablesRegistry derivedDbTablesRegistry,
                          DatabaseManager databaseManager,
                          FullTextConfig fullTextConfig,
                          Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(table, dbKeyFactory, multiversion, derivedDbTablesRegistry, databaseManager, fullTextConfig, deleteOnTrimDataEvent);
+        super(table, dbKeyFactory, multiversion, derivedDbTablesRegistry, databaseManager,
+            fullTextConfig, deleteOnTrimDataEvent, fullTextSearchColumns);
         this.defaultSort = " ORDER BY " + (multiversion ? dbKeyFactory.getPKColumns() : " height DESC, db_id DESC ");
-        this.fullTextSearchColumns = fullTextSearchColumns;
     }
 
     /***

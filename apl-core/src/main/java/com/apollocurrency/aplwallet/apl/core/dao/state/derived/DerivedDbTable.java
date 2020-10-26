@@ -29,11 +29,11 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -50,11 +50,14 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     protected final DatabaseManager databaseManager;
     private final DerivedTablesRegistry derivedDbTablesRegistry;
     private FullTextConfig fullTextConfig;
+    @Getter
+    private final String fullTextSearchColumns;
 
     protected DerivedDbTable(String table,
                              DerivedTablesRegistry derivedDbTablesRegistry,
                              DatabaseManager databaseManager,
-                             FullTextConfig fullTextConfig) {
+                             FullTextConfig fullTextConfig,
+                             String fullTextSearchColumns) {
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
         this.derivedDbTablesRegistry = Objects.requireNonNull(derivedDbTablesRegistry, "derivedDbTablesRegistry is NULL");
@@ -62,7 +65,7 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         if (fullTextConfig != null) { // CAN BE NULL for some tables
             this.fullTextConfig = fullTextConfig;
         }
-        init();
+        this.fullTextSearchColumns = fullTextSearchColumns;
     }
 
     public String getTableName() {
@@ -77,13 +80,7 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     }
 
     @Override
-    public void trim(int height, boolean isSharding) {
-/*
-        // default implementation for most of derived successor
-        // 'Vote' is only one exception in that case
-        this.trim(height, isSharding);
-*/
-    }
+    public void trim(int height, boolean isSharding) { }
 
     @PostConstruct
     public void init() {
@@ -92,7 +89,7 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         if (this instanceof SearchableTableInterface) {
             log.debug("Register SearchableTable derived class: {}", this.getClass().getName());
             if (fullTextConfig != null) {
-                fullTextConfig.registerTable(table);
+                fullTextConfig.registerTable(table, this.getFullTextSearchColumns());
             } else {
                 String error = "ERROR registering 'SearchableTable' table without supplied 'fullTextConfig' instance !!!";
                 log.error(error);

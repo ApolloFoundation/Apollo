@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
-import java.util.Set;
+import java.util.Map;
 
 public interface FullTextConfig {
-    void registerTable(String tableName);
+    void registerTable(String tableName, String indexedColumns);
 
-    Set<String> getTableNames();
+    Map<String, String> getTableNames();
 
     String getSchema();
 
