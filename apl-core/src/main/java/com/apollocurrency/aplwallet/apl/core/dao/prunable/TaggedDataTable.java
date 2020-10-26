@@ -31,6 +31,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -163,7 +164,8 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
                 + "description = VALUES(description), tags = VALUES(tags), parsed_tags = VALUES(parsed_tags), "
                 + "`type` = VALUES(`type`), channel = VALUES(channel), `data` = VALUES(`data`), is_text = VALUES(is_text), "
                 + "filename = VALUES(filename), block_timestamp = VALUES(block_timestamp), "
-                + "transaction_timestamp = VALUES(transaction_timestamp), height = VALUES(height), latest = TRUE")
+                + "transaction_timestamp = VALUES(transaction_timestamp), height = VALUES(height), latest = TRUE",
+                Statement.RETURN_GENERATED_KEYS)
         ) {
             int i = 0;
             pstmt.setLong(++i, taggedData.getId());
@@ -181,6 +183,11 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
             pstmt.setInt(++i, taggedData.getTransactionTimestamp());
             pstmt.setInt(++i, taggedData.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    taggedData.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 

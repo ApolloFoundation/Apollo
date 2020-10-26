@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -73,7 +74,8 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> imp
                 + "reserve_supply = VALUES(reserve_supply), max_supply = VALUES(max_supply), creation_height = VALUES(creation_height), "
                 + "issuance_height = VALUES(issuance_height), min_reserve_per_unit_atm = VALUES(min_reserve_per_unit_atm), "
                 + "min_difficulty = VALUES(min_difficulty), max_difficulty = VALUES(max_difficulty), ruleset = VALUES(ruleset), "
-                + "algorithm = VALUES(algorithm), decimals = VALUES(decimals), height = VALUES(height), latest = TRUE, deleted = FALSE")
+                + "algorithm = VALUES(algorithm), decimals = VALUES(decimals), height = VALUES(height), latest = TRUE, deleted = FALSE",
+                Statement.RETURN_GENERATED_KEYS)
         ) {
             final String name = currency.getName();
             Objects.requireNonNull(name);
@@ -99,6 +101,11 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> imp
             pstmt.setByte(++i, currency.getDecimals());
             pstmt.setInt(++i, currency.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    currency.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 

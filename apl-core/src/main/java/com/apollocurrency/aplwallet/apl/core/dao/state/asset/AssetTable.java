@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
@@ -67,7 +68,8 @@ public class AssetTable extends VersionedDeletableEntityDbTable<Asset> implement
                 + "ON DUPLICATE KEY UPDATE id = VALUES(id), account_id = VALUES(account_id), `name` = VALUES(`name`), "
                 + "description = VALUES(description), initial_quantity = VALUES(initial_quantity),"
                 + "quantity = VALUES(quantity), decimals = VALUES(decimals), height = VALUES(height), "
-                + "latest = TRUE , deleted = FALSE ")
+                + "latest = TRUE , deleted = FALSE ",
+                Statement.RETURN_GENERATED_KEYS)
         ) {
             int i = 0;
             pstmt.setLong(++i, asset.getId());
@@ -79,6 +81,11 @@ public class AssetTable extends VersionedDeletableEntityDbTable<Asset> implement
             pstmt.setByte(++i, asset.getDecimals());
             pstmt.setInt(++i, asset.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    asset.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 
