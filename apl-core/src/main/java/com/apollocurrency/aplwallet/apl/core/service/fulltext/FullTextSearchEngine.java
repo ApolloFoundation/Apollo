@@ -24,6 +24,8 @@ public interface FullTextSearchEngine {
      */
     void shutdown();
 
+    boolean isIndexFolderEmpty() throws IOException;
+
     /**
      * Index one row of indexed columns for table
      *

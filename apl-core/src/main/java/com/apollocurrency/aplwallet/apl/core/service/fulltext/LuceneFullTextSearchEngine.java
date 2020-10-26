@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
@@ -34,6 +34,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.ResultSet;
@@ -85,6 +86,17 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         }
     }
 
+    @Override
+    public boolean isIndexFolderEmpty() throws IOException {
+        boolean indexFolderExists = Files.exists(this.indexDirPath);
+        if (indexFolderExists) {
+            try(DirectoryStream<Path> dirStream = Files.newDirectoryStream(this.indexDirPath)) {
+                return !dirStream.iterator().hasNext();
+            }
+        }
+        return false;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -104,16 +116,22 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             document.add(new TextField("_MODIFIED", DateTools.timeToString(now, DateTools.Resolution.SECOND), Field.Store.NO));
             document.add(new TextField("_TABLE", row.getTableName(), Field.Store.NO));
             StringJoiner sj = new StringJoiner(" ");
-            for (int index : indexColumns) {
-//                String data = (row.[index] != null ? (String) row[index] : "NULL");
-                String data = row.getColumnsWithData().get(index) != null ?
-                    (String) row.getColumnsWithData().get(index) : "NULL";
-                document.add(new TextField(columnNames.get(index), data, Field.Store.NO));
-                sj.add(data);
+            for (int i = 0; i < row.getColumnsWithData().size(); i++) {
+                for (int index : indexColumns) {
+                    String data = row.getColumnsWithData().get(i) != null ?
+                        (String) row.getColumnsWithData().get(i) : "NULL";
+                    document.add(new TextField(columnNames.get(index), data, Field.Store.NO));
+                    sj.add(data);
+                }
             }
             document.add(new TextField("_DATA", sj.toString(), Field.Store.NO));
             log.debug("INDEX query={} / {}", query, document);
-            indexWriter.updateDocument(new Term("_QUERY", query), document);
+            if (document.getFields().size() > 4) {
+                // put/update Index when there are real data
+                indexWriter.updateDocument(new Term("_QUERY", query), document);
+            } else {
+                log.trace("SKIPPED indexing not full data set in lucene...");
+            }
         } catch (IOException exc) {
             log.error("Unable to index row", exc);
             throw new SQLException("Unable to index row", exc);
@@ -158,16 +176,17 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      */
     @Override
     public void init() throws IOException {
+        log.debug("init...");
         boolean obtainedUpdateLock = false;
         if (!indexLock.writeLock().hasLock()) {
             indexLock.updateLock().lock();
             obtainedUpdateLock = true;
         }
         try {
-            if (indexWriter != null && indexSearcher != null) {
+/*            if (indexWriter != null && indexSearcher != null) {
                 log.debug("SKIP second initialization...");
                 return;
-            }
+            }*/
             indexLock.writeLock().lock();
             try {
                 IndexWriterConfig config = new IndexWriterConfig(analyzer);
@@ -201,7 +220,9 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     public void commitIndex() throws SQLException {
         indexLock.writeLock().lock();
         try {
-            indexWriter.commit();
+            if (indexWriter.isOpen()) {
+                indexWriter.commit();
+            }
             DirectoryReader newReader = DirectoryReader.openIfChanged(indexReader);
             if (newReader != null) {
                 indexReader.close();

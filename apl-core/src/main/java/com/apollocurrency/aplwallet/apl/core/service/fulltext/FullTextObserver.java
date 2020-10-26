@@ -4,19 +4,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.FullTextSearchDataEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -50,20 +50,30 @@ public class FullTextObserver implements TransactionCallback {
         this.fullTextSearchEngine = Objects.requireNonNull(fullTextSearchEngine, "ftl is NULL");
         this.fullTextSearchService = Objects.requireNonNull(fullTextSearchService, "ftl is NULL");
         this.fullTextConfig = Objects.requireNonNull(fullTextConfig, "ft config is NULL");
+        log.debug("Constructor FullTextObserver");
     }
 
     /**
      * Initialize some data.
      */
+    @PostConstruct
     public void init() {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        log.debug("init = (isInTransaction = {})", dataSource.isInTransaction());
+        dataSource.registerCallback(this);
+
         fullTextSearchService.init();
         if (this.fullTextConfig.getTableNames().size() > 0) {
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
             try( Connection con = dataSource.getConnection();) {
-                while (fullTextConfig.getTableNames().iterator().hasNext()) {
-                    String tableName =  fullTextConfig.getTableNames().iterator().next();
-                    TableData tableData = readTableData(con, "public", tableName);
-                    this.tableDataMap.put(tableName, tableData);
+                Iterator<String> iterator = fullTextConfig.getTableNames().keySet().iterator();
+                while (iterator.hasNext()) {
+                    String tableName =  iterator.next();
+                    try {
+                        TableData tableData = this.readTableData(con, fullTextConfig.getSchema(), tableName);
+                        this.tableDataMap.put(tableName, tableData);
+                    } catch (SQLException throwables) {
+                        log.error("Reading table '{}'", tableName);
+                    }
                 }
             } catch (SQLException e) {
                 log.error("Connection error", e);
@@ -79,13 +89,16 @@ public class FullTextObserver implements TransactionCallback {
     /**
      * Observes change event
      */
-    public void onFullTextOperationData(@ObservesAsync @TrimEvent() FullTextOperationData operationData) {
+    public void onFullTextOperationData(@ObservesAsync @FullTextSearchDataEvent() FullTextOperationData operationData) {
+/*
         if (tableDataMap.size() == 0) {
             init(); // lazy init
         }
+*/
         //
         // Commit the change immediately if we are not in a transaction
         //
+/*
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         log.debug("operationData = {}, (isInTransaction = {})", operationData, dataSource.isInTransaction());
         if (!dataSource.isInTransaction()) {
@@ -97,6 +110,7 @@ public class FullTextObserver implements TransactionCallback {
             }
             return;
         }
+*/
         //
         // Save the table update until the update is committed or rolled back.  Note
         // that the current thread is the application thread performing the update operation.
@@ -108,7 +122,7 @@ public class FullTextObserver implements TransactionCallback {
         //
         // Register our transaction callback
         //
-        dataSource.registerCallback(this);
+//        dataSource.registerCallback(this);
     }
 
 /*    private DatabaseManager lookupDatabaseManager() {
@@ -143,11 +157,11 @@ public class FullTextObserver implements TransactionCallback {
                 Iterator<FullTextOperationData> updateIt = tableUpdates.values().iterator();
                 while (updateIt.hasNext()) {
                     FullTextOperationData operationData = updateIt.next();
-//                    if (update.getThread() == thread) {
+                    if (operationData.getThread().equalsIgnoreCase(Thread.currentThread().getName())) {
                         fullTextSearchEngine.commitRow(operationData, tableDataMap.get(operationData.getTableName()));
                         updateIt.remove();
                         commit = true;
-//                    }
+                    }
                 }
             }
             //
