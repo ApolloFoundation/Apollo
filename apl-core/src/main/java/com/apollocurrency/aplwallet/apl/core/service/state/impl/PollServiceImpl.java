@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.FullTextSearchDataEvent;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable;
@@ -32,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollOptionResultService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
@@ -39,6 +41,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollC
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
@@ -54,6 +58,7 @@ public class PollServiceImpl implements PollService {
     private final PollOptionResultService pollOptionResultService;
     private final VoteTable voteTable;
     private final BlockchainImpl blockchain;
+    private final Event<FullTextOperationData> fullTextOperationDataEvent;
 
     /**
      * Constructor for unit tests.
@@ -71,7 +76,8 @@ public class PollServiceImpl implements PollService {
         final IteratorToStreamConverter<Poll> converter,
         final PollOptionResultService pollOptionResultService,
         final VoteTable voteTable,
-        BlockchainImpl blockchain
+        BlockchainImpl blockchain,
+        Event<FullTextOperationData> fullTextOperationDataEvent
     ) {
         this.blockChainInfoService = blockChainInfoService;
         this.pollTable = pollTable;
@@ -80,6 +86,7 @@ public class PollServiceImpl implements PollService {
         this.pollOptionResultService = pollOptionResultService;
         this.voteTable = voteTable;
         this.blockchain = blockchain;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
     }
 
     @Inject
@@ -90,7 +97,8 @@ public class PollServiceImpl implements PollService {
         final PollResultTable pollResultTable,
         final PollOptionResultService pollOptionResultService,
         final VoteTable voteTable,
-        final BlockchainImpl blockchain
+        final BlockchainImpl blockchain,
+        final Event<FullTextOperationData> fullTextOperationDataEvent
         ) {
         this.blockChainInfoService = blockChainInfoService;
         this.pollTable = pollTable;
@@ -99,6 +107,7 @@ public class PollServiceImpl implements PollService {
         this.pollOptionResultService = pollOptionResultService;
         this.voteTable = voteTable;
         this.blockchain = blockchain;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
     }
 
     @Override
@@ -194,11 +203,26 @@ public class PollServiceImpl implements PollService {
 
     @Override
     public void addPoll(Transaction transaction, MessagingPollCreation attachment) {
-        pollTable.addPoll(transaction, attachment, blockChainInfoService.getLastBlockTimestamp(), blockChainInfoService.getHeight());
+        Poll poll = pollTable.addPoll(transaction, attachment,
+            blockChainInfoService.getLastBlockTimestamp(), blockChainInfoService.getHeight());
+        createAndFireFullTextSearchDataEvent(poll, FullTextOperationData.OperationType.INSERT_UPDATE);
     }
 
     @Override
     public boolean isFinished(final int finishHeight) {
         return finishHeight <= blockChainInfoService.getHeight();
     }
+
+    private void createAndFireFullTextSearchDataEvent(Poll poll, FullTextOperationData.OperationType operationType) {
+        FullTextOperationData operationData = new FullTextOperationData(
+            pollTable.getTableName() + ";DB_ID;" + poll.getDbId(), pollTable.getTableName());
+        operationData.setThread(Thread.currentThread().getName());
+        // put relevant data into Event instance
+        operationData.setOperationType(operationType);
+        operationData.addColumnData(poll.getName()).addColumnData(poll.getDescription());
+        // fire event to send data into Lucene index component
+        log.debug("Fire lucene index update by data = {}", operationData);
+        fullTextOperationDataEvent.select(new AnnotationLiteral<FullTextSearchDataEvent>() {}).fireAsync(operationData);
+    }
+
 }

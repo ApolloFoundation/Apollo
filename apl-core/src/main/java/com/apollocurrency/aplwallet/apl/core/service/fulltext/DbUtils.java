@@ -52,7 +52,7 @@ public class DbUtils {
             if (rs.next()) {
                 String[] columns = rs.getString(1).split(",");
                 for (String column : columns) {
-                    int pos = columnNames.indexOf(column.toLowerCase());
+                    int pos = columnNames.indexOf(column.trim().toLowerCase());
                     if (pos >= 0) {
                         if (Types.VARCHAR == columnTypes.get(pos)) {
                             indexColumns.add(pos);

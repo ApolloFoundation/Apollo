@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.FullTextSearchDataEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataTable;
@@ -20,12 +21,15 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataExten
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataTimestamp;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
 import javax.enterprise.inject.spi.CDI;
+import javax.enterprise.util.AnnotationLiteral;
 import javax.enterprise.util.TypeLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -36,7 +40,7 @@ import java.util.stream.Collectors;
 @Singleton
 public class TaggedDataServiceImpl implements TaggedDataService {
 
-    private static LongKeyFactory<UnconfirmedTransaction> keyFactory;// = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>(){}).get();
+    private static LongKeyFactory<UnconfirmedTransaction> keyFactory;
     private BlockchainConfig blockchainConfig;
     private Blockchain blockchain;
     private TaggedDataTable taggedDataTable;
@@ -44,11 +48,17 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     private TaggedDataTimestampDao taggedDataTimestampDao;
     private TaggedDataExtendDao taggedDataExtendDao;
     private TimeService timeService;
+    private Event<FullTextOperationData> fullTextOperationDataEvent;
 
     @Inject
-    public TaggedDataServiceImpl(TaggedDataTable taggedDataTable, DataTagDao dataTagDao,
-                                 BlockchainConfig blockchainConfig, Blockchain blockchain,
-                                 TaggedDataTimestampDao taggedDataTimestampDao, TaggedDataExtendDao taggedDataExtendDao, TimeService timeService) {
+    public TaggedDataServiceImpl(TaggedDataTable taggedDataTable,
+                                 DataTagDao dataTagDao,
+                                 BlockchainConfig blockchainConfig,
+                                 Blockchain blockchain,
+                                 TaggedDataTimestampDao taggedDataTimestampDao,
+                                 TaggedDataExtendDao taggedDataExtendDao,
+                                 TimeService timeService,
+                                 Event<FullTextOperationData> fullTextOperationDataEvent) {
         this.taggedDataTable = taggedDataTable;
         this.timeService = timeService;
         this.dataTagDao = dataTagDao;
@@ -56,6 +66,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         this.blockchain = blockchain;
         this.taggedDataTimestampDao = taggedDataTimestampDao;
         this.taggedDataExtendDao = taggedDataExtendDao;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
     }
 
     @Override
@@ -78,6 +89,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
                 log.trace("add TaggedDataUpload: insert new = {}", taggedData);
                 taggedDataTable.insert(taggedData);
                 dataTagDao.add(taggedData);
+                createAndFireFullTextSearchDataEvent(taggedData, FullTextOperationData.OperationType.INSERT_UPDATE);
             } else {
                 log.trace("add TaggedDataUpload: skipped = {}", taggedData);
             }
@@ -131,6 +143,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
                 taggedData.setHeight(blockchainHeight);
                 log.trace("extend TaggedData: insert taggedData = {}", taggedData);
                 taggedDataTable.insert(taggedData);
+                createAndFireFullTextSearchDataEvent(taggedData, FullTextOperationData.OperationType.INSERT_UPDATE);
             } else {
                 log.trace("extend TaggedData: skipped = {}", taggedData);
             }
@@ -166,6 +179,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
             log.trace("restore TaggedData: taggedData = {}", extendTransaction);
             taggedDataTable.insert(taggedData);
         }
+        createAndFireFullTextSearchDataEvent(taggedData, FullTextOperationData.OperationType.INSERT_UPDATE);
     }
 
     @Override
@@ -216,4 +230,17 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     public List<TaggedDataExtend> getExtendTransactionIds(long taggedDataId) {
         return taggedDataExtendDao.getExtendTransactionIds(taggedDataId);
     }
+
+    private void createAndFireFullTextSearchDataEvent(TaggedData taggedData, FullTextOperationData.OperationType operationType) {
+        FullTextOperationData operationData = new FullTextOperationData(
+            taggedDataTable.getTableName() + ";DB_ID;" + taggedData.getDbId(), taggedDataTable.getTableName());
+        operationData.setThread(Thread.currentThread().getName());
+        // put relevant data into Event instance
+        operationData.setOperationType(operationType);
+        operationData.addColumnData(taggedData.getName()).addColumnData(taggedData.getDescription());
+        // fire event to send data into Lucene index component
+        log.debug("Fire lucene index update by data = {}", operationData);
+        fullTextOperationDataEvent.select(new AnnotationLiteral<FullTextSearchDataEvent>() {}).fireAsync(operationData);
+    }
+
 }

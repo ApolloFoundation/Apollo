@@ -47,8 +47,8 @@ public class FullTextObserver implements TransactionCallback {
                             FullTextSearchService fullTextSearchService,
                             FullTextConfig fullTextConfig) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
-        this.fullTextSearchEngine = Objects.requireNonNull(fullTextSearchEngine, "ftl is NULL");
-        this.fullTextSearchService = Objects.requireNonNull(fullTextSearchService, "ftl is NULL");
+        this.fullTextSearchEngine = Objects.requireNonNull(fullTextSearchEngine, "fullTextSearchEngine is NULL");
+        this.fullTextSearchService = Objects.requireNonNull(fullTextSearchService, "fullTextSearchService is NULL");
         this.fullTextConfig = Objects.requireNonNull(fullTextConfig, "ft config is NULL");
         log.debug("Constructor FullTextObserver");
     }

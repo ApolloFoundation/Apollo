@@ -1,10 +1,10 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.FullTextSearchDataEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -50,6 +50,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
         // prepare Event instance with data
         FullTextOperationData operationData = new FullTextOperationData(
             accountInfoTable.getTableName() + ";DB_ID;" + accountInfo.getDbId(), accountInfoTable.getTableName());
+        operationData.setThread(Thread.currentThread().getName());
 
         if (accountInfo.getName() != null || accountInfo.getDescription() != null) {
             accountInfoTable.insert(accountInfo);
@@ -62,7 +63,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
         }
         // fire event to send data into Lucene index component
         log.debug("Fire lucene index update by data = {}", operationData);
-        fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {}).fireAsync(operationData);
+        fullTextOperationDataEvent.select(new AnnotationLiteral<FullTextSearchDataEvent>() {}).fireAsync(operationData);
     }
 
     @Override

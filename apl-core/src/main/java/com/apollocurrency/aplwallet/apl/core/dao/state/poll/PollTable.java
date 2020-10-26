@@ -207,7 +207,7 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
         return getCount();
     }
 
-    public void addPoll(
+    public Poll addPoll(
         final Transaction transaction,
         final MessagingPollCreation attachment,
         final int timestamp,
@@ -217,6 +217,7 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
         log.trace("addPoll = {}, height = {}, blockId={}", poll, transaction.getHeight(), transaction.getBlockId());
         poll.setHeight(height);
         insert(poll);
+        return poll;
     }
 
     public DbKey getDbKey(final Poll poll) {
