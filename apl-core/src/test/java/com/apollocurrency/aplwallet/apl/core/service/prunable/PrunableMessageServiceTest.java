@@ -40,7 +40,6 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -54,7 +53,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 class PrunableMessageServiceTest extends DbContainerBaseTest {

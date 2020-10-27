@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -23,7 +22,7 @@ import java.util.Collections;
 
 @Disabled // TODO: YL @full_text_search_fix is needed
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 public class DbUtilsTest extends DbContainerBaseTest {
 

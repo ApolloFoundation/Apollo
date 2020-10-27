@@ -53,7 +53,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -95,7 +94,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-@Testcontainers
 @Tag("slow")
 @EnableWeld
 @Slf4j
@@ -110,6 +108,8 @@ class BlockchainTest {
             .withPassword("rootpass")
             .withExposedPorts(3306)
             .withLogConsumer(new Slf4jLogConsumer(log));
+
+        mariaDBContainer.start();
     }
 
     static DbExtension extension;// init later in manual mode

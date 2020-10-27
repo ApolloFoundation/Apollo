@@ -118,7 +118,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -153,7 +152,7 @@ import static org.mockito.Mockito.mock;
 
 @Disabled // TODO: YL @full_text_search_fix is needed
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)

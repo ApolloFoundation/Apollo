@@ -66,7 +66,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.function.Executable;
 import org.mockito.Mockito;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -89,7 +88,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@Testcontainers
 @Tag("slow")
 @Slf4j
 @EnableWeld

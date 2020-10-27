@@ -24,7 +24,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -52,7 +51,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 class DatabaseManagerTest {
     @Container
@@ -62,6 +61,10 @@ class DatabaseManagerTest {
         .withPassword("rootpass")
         .withExposedPorts(3306)
         .withLogConsumer(new Slf4jLogConsumer(log));
+
+    static {
+        mariaDBContainer.start();
+    }
 
     private static PropertiesHolder propertiesHolder = new PropertiesHolder();
     private DbProperties baseDbProperties;

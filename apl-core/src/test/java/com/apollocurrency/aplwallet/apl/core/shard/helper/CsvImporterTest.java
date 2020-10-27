@@ -101,7 +101,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -125,7 +124,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)

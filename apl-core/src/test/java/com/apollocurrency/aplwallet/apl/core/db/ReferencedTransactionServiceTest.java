@@ -49,7 +49,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -61,7 +60,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 public class ReferencedTransactionServiceTest extends DbContainerBaseTest {

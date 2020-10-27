@@ -66,7 +66,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -90,7 +89,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 public class DGSServiceTest extends DbContainerBaseTest {

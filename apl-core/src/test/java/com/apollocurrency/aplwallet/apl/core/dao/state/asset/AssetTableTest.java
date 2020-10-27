@@ -37,7 +37,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -58,7 +57,7 @@ import static org.mockito.Mockito.mock;
 
 @Disabled // TODO: YL @full_text_search_fix is needed
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 class AssetTableTest extends DbContainerBaseTest {

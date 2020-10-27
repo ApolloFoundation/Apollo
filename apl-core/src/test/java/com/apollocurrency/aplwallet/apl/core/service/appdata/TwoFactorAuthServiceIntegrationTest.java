@@ -28,7 +28,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.security.GeneralSecurityException;
 import java.util.Random;
@@ -44,7 +43,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 public class TwoFactorAuthServiceIntegrationTest extends DbContainerBaseTest {

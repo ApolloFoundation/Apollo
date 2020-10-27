@@ -21,14 +21,13 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 class ShardDataSourceCreateHelperTest extends DbContainerBaseTest {

@@ -94,7 +94,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
@@ -136,7 +135,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 class ShardEngineTest {
@@ -147,6 +146,10 @@ class ShardEngineTest {
         .withPassword("rootpass")
         .withExposedPorts(3306)
         .withLogConsumer(new Slf4jLogConsumer(log));
+
+    static {
+        mariaDBContainer.start();
+    }
 
     static final String GOODS_TABLE_NAME = "goods";
     static final String PHASING_POLL_TABLE_NAME = "phasing_poll";
