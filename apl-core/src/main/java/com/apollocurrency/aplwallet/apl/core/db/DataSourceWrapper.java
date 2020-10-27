@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.LongArrayArgume
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.OrderStatusFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.OrderTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.ShardStateFactory;
+import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -199,7 +200,7 @@ public class DataSourceWrapper implements DataSource {
      *
      * @param dbVersion database version related information
      */
-    public Jdbi initWithJdbi(DbVersion dbVersion) {
+    public Jdbi initWithJdbi(DBUpdater dbVersion) {
         initDatasource(dbVersion);
         Jdbi jdbi = initJdbi();
         setInitialzed();
@@ -211,7 +212,7 @@ public class DataSourceWrapper implements DataSource {
         shutdown = false;
     }
 
-    private void initDatasource(DbVersion dbVersion) {
+    private void initDatasource(DBUpdater dbUpdater) {
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
 
         HikariConfig sysDBConf = new HikariConfig();
@@ -264,8 +265,9 @@ public class DataSourceWrapper implements DataSource {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        log.debug("Before starting Db schema init {}...", dbVersion);
-        dbVersion.init(this);
+
+        log.debug("Before starting Db schema init {}...", dbUpdater);
+        dbUpdater.update(dbUrl, dbUsername, dbPassword);
     }
 
     private Jdbi initJdbi() {
@@ -294,13 +296,13 @@ public class DataSourceWrapper implements DataSource {
         return jdbi;
     }
 
-    public void init(DbVersion dbVersion) {
-        initDatasource(dbVersion);
+    public void init(DBUpdater dbUpdater) {
+        initDatasource(dbUpdater);
         setInitialzed();
     }
 
-    public void update(DbVersion dbVersion) {
-        dbVersion.init(this);
+    public void update(DBUpdater dbUpdater) {
+        dbUpdater.update(dbUrl, dbUsername, dbPassword);
     }
 
     public void shutdown() {

@@ -42,6 +42,7 @@
     <module>apl-bom</module>
     <module>apl-conf</module>
     <module>apl-exec</module>
+    <module>apl-db-updater</module>
   </modules>
 
   <properties>
@@ -61,7 +62,7 @@
     <antifraud.version>1.0.11</antifraud.version>
 
     <!-- We have to define this property and change it accordingly for correct version of packages -->
-    <apl-bom-ext.version>1.0.2</apl-bom-ext.version>
+    <apl-bom-ext.version>1.0.3</apl-bom-ext.version>
     <base-dist-dir>ApolloWallet/apollo-blockchain</base-dist-dir>
 
     <build-helper-maven-plugin.version>1.9.1</build-helper-maven-plugin.version>
