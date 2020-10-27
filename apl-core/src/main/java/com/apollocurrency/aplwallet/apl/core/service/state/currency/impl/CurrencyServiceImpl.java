@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.FullTextSearchDataEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyMintTable;
@@ -25,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySuppl
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
@@ -45,8 +45,6 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
@@ -79,7 +77,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     private final ShufflingService shufflingService;
     private final BlockchainConfig blockchainConfig;
     private final TransactionValidationHelper validationHelper;
-    private final Event<FullTextOperationData> fullTextOperationDataEvent;
+    private final FullTextSearchUpdater fullTextSearchUpdater;
 
     @Inject
     public CurrencyServiceImpl(CurrencySupplyTable currencySupplyTable,
@@ -96,7 +94,7 @@ public class CurrencyServiceImpl implements CurrencyService {
                                ShufflingService shufflingService,
                                BlockchainConfig blockchainConfig,
                                TransactionValidationHelper transactionValidationHelper,
-                               Event<FullTextOperationData> fullTextOperationDataEvent) {
+                               FullTextSearchUpdater fullTextSearchUpdater) {
         this.currencySupplyTable = currencySupplyTable;
         this.currencyTable = currencyTable;
         this.currencyMintTable = currencyMintTable;
@@ -112,7 +110,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         this.currencyTransferService = currencyTransferService;
         this.shufflingService = shufflingService;
         this.blockchainConfig = blockchainConfig;
-        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
+        this.fullTextSearchUpdater = fullTextSearchUpdater;
     }
 
     @Override
@@ -520,9 +518,9 @@ public class CurrencyServiceImpl implements CurrencyService {
         // put relevant data into Event instance
         operationData.setOperationType(operationType);
         operationData.addColumnData(currency.getName()).addColumnData(currency.getDescription());
-        // fire event to send data into Lucene index component
-        log.debug("Fire lucene index update by data = {}", operationData);
-        fullTextOperationDataEvent.select(new AnnotationLiteral<FullTextSearchDataEvent>() {}).fireAsync(operationData);
+        // send data into Lucene index component
+        log.trace("Put lucene index update data = {}", operationData);
+        fullTextSearchUpdater.putFullTextOperationData(operationData);
     }
 
 }

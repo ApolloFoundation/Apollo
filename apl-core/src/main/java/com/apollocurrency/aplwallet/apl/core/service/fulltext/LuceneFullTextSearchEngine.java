@@ -101,13 +101,11 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      * {@inheritDoc}
      */
     @Override
-//    public void indexRow(Object[] row, TableData tableData) throws SQLException {
     public void indexRow(FullTextOperationData row, TableData tableData) throws SQLException {
         indexLock.readLock().lock();
         try {
             List<String> columnNames = tableData.getColumnNames();
             List<Integer> indexColumns = tableData.getIndexColumns();
-//            int dbColumn = tableData.getDbIdColumnPosition();
             String schemaTableName = tableData.getSchema().toLowerCase() + "." + tableData.getTable().toLowerCase();
             String query = row.getTableKey();
             Document document = new Document();
@@ -125,12 +123,12 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
                 }
             }
             document.add(new TextField("_DATA", sj.toString(), Field.Store.NO));
-            log.debug("INDEX query={} / {}", query, document);
+            log.trace("INDEX query={} / {}", query, document);
             if (document.getFields().size() > 4) {
                 // put/update Index when there are real data
                 indexWriter.updateDocument(new Term("_QUERY", query), document);
             } else {
-                log.trace("SKIPPED indexing not full data set in lucene...");
+                log.warn("SKIPPED FTS indexing for incomplete data set = {}", row);
             }
         } catch (IOException exc) {
             log.error("Unable to index row", exc);
@@ -144,11 +142,10 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      * {@inheritDoc}
      */
     @Override
-//    public void commitRow(Object[] oldRow, Object[] newRow, TableData tableData) throws SQLException {
     public void commitRow(FullTextOperationData newRow, TableData tableData) throws SQLException {
         Objects.requireNonNull(newRow, "newRow data is NULL");
         if (newRow.getOperationType() == FullTextOperationData.OperationType.INSERT_UPDATE) {
-            log.debug("INSERT/UPDATE: tableData = {}, newRow={}", tableData, newRow);
+            log.trace("INSERT/UPDATE: tableData = {}, newRow={}", tableData, newRow);
             indexRow(newRow, tableData);
         } else {
             log.debug("DELETE: tableData = {}, newRow={}", tableData, newRow);
@@ -156,12 +153,11 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         }
     }
 
-//    private void deleteRow(Object[] row, TableData tableData) throws SQLException {
     private void deleteRow(FullTextOperationData row, TableData tableData) throws SQLException {
         String query = tableData.getSchema().toLowerCase() + "." + row.getTableKey();
         indexLock.readLock().lock();
         try {
-            log.debug("DELETE QUERY: tableData = {}, oldRow={}\nquery={}", tableData, row, query);
+            log.trace("DELETE QUERY: tableData = {}, oldRow={}\nquery={}", tableData, row, query);
             indexWriter.deleteDocuments(new Term("_QUERY", query));
         } catch (IOException exc) {
             log.error("Unable to delete indexed row", exc);
@@ -176,17 +172,13 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      */
     @Override
     public void init() throws IOException {
-        log.debug("init...");
+        log.trace("LuceneFullTextSearchEngine init...");
         boolean obtainedUpdateLock = false;
         if (!indexLock.writeLock().hasLock()) {
             indexLock.updateLock().lock();
             obtainedUpdateLock = true;
         }
         try {
-/*            if (indexWriter != null && indexSearcher != null) {
-                log.debug("SKIP second initialization...");
-                return;
-            }*/
             indexLock.writeLock().lock();
             try {
                 IndexWriterConfig config = new IndexWriterConfig(analyzer);
@@ -202,7 +194,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             } finally {
                 indexLock.writeLock().unlock();
             }
-
+            log.debug("LuceneFullTextSearchEngine init DONE");
         } catch (IOException exc) {
             log.error("Unable to access the Lucene index", exc);
             throw new IOException("Unable to access the Lucene index", exc);
@@ -328,6 +320,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      */
     @Override
     public void shutdown() {
+        log.trace("LuceneFullTextSearchEngine shutdown start...");
         indexLock.writeLock().lock();
         try {
             commitIndex();
@@ -337,6 +330,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             if (indexWriter != null) {
                 indexWriter.close();
             }
+            log.debug("LuceneFullTextSearchEngine shutdown DONE...");
         } catch (IOException | SQLException exc) {
             log.error("Unable to remove Lucene index access", exc);
         } finally {

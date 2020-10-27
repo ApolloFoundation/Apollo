@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDeleteService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
@@ -47,11 +48,14 @@ class AssetServiceTest {
     private AssetDeleteService assetDeleteService;
     @Mock
     private IteratorToStreamConverter<Asset> assetIteratorToStreamConverter;
+    @Mock
+    private FullTextSearchUpdater fullTextSearchUpdater;
 
     @BeforeEach
     void setUp() {
         td = new AssetTestData();
-        service = new AssetServiceImpl(table, blockChainInfoService, assetDeleteService, assetIteratorToStreamConverter);
+        service = new AssetServiceImpl(table, blockChainInfoService, assetDeleteService,
+            assetIteratorToStreamConverter, fullTextSearchUpdater);
     }
 
     @Test

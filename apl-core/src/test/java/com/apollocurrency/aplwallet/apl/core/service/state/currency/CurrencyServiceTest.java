@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
@@ -69,8 +69,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-
-import javax.enterprise.event.Event;
 
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
@@ -128,7 +126,7 @@ class CurrencyServiceTest {
     @Mock
     CurrencyMintTable currencyMintTable;
     @Mock
-    private Event<FullTextOperationData> fullTextOperationDataEvent;
+    private FullTextSearchUpdater fullTextSearchUpdater;
 
     @Mock
     TransactionValidationHelper transactionValidationHelper;
@@ -138,7 +136,7 @@ class CurrencyServiceTest {
         td = new CurrencyTestData();
         service = new CurrencyServiceImpl(currencySupplyTable, currencyTable, currencyMintTable, monetaryCurrencyMintingService, blockChainInfoService,
             accountService, accountCurrencyService, currencyExchangeOfferFacade, currencyFounderService,
-            exchangeService, currencyTransferService, shufflingService, blockchainConfig, transactionValidationHelper, fullTextOperationDataEvent);
+            exchangeService, currencyTransferService, shufflingService, blockchainConfig, transactionValidationHelper, fullTextSearchUpdater);
     }
 
     @Test

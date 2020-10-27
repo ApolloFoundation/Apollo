@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.FullTextSearchDataEvent;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataTable;
@@ -21,15 +20,14 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataExten
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataTimestamp;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
 import javax.enterprise.inject.spi.CDI;
-import javax.enterprise.util.AnnotationLiteral;
 import javax.enterprise.util.TypeLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -48,7 +46,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     private TaggedDataTimestampDao taggedDataTimestampDao;
     private TaggedDataExtendDao taggedDataExtendDao;
     private TimeService timeService;
-    private Event<FullTextOperationData> fullTextOperationDataEvent;
+    private FullTextSearchUpdater fullTextSearchUpdater;
 
     @Inject
     public TaggedDataServiceImpl(TaggedDataTable taggedDataTable,
@@ -58,7 +56,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
                                  TaggedDataTimestampDao taggedDataTimestampDao,
                                  TaggedDataExtendDao taggedDataExtendDao,
                                  TimeService timeService,
-                                 Event<FullTextOperationData> fullTextOperationDataEvent) {
+                                 FullTextSearchUpdater fullTextSearchUpdater) {
         this.taggedDataTable = taggedDataTable;
         this.timeService = timeService;
         this.dataTagDao = dataTagDao;
@@ -66,7 +64,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         this.blockchain = blockchain;
         this.taggedDataTimestampDao = taggedDataTimestampDao;
         this.taggedDataExtendDao = taggedDataExtendDao;
-        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
+        this.fullTextSearchUpdater = fullTextSearchUpdater;
     }
 
     @Override
@@ -238,9 +236,9 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         // put relevant data into Event instance
         operationData.setOperationType(operationType);
         operationData.addColumnData(taggedData.getName()).addColumnData(taggedData.getDescription());
-        // fire event to send data into Lucene index component
-        log.debug("Fire lucene index update by data = {}", operationData);
-        fullTextOperationDataEvent.select(new AnnotationLiteral<FullTextSearchDataEvent>() {}).fireAsync(operationData);
+        // send data into Lucene index component
+        log.trace("Put lucene index update data = {}", operationData);
+        fullTextSearchUpdater.putFullTextOperationData(operationData);
     }
 
 }

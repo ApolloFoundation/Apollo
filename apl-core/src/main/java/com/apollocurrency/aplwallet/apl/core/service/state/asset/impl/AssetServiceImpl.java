@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.asset.impl;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.FullTextSearchDataEvent;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -12,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDeleteService;
@@ -21,8 +21,6 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.stream.Stream;
@@ -36,19 +34,19 @@ public class AssetServiceImpl implements AssetService {
     private final BlockChainInfoService blockChainInfoService;
     private final AssetDeleteService assetDeleteService;
     private IteratorToStreamConverter<Asset> assetIteratorToStreamConverter;
-    private Event<FullTextOperationData> fullTextOperationDataEvent;
+    private final FullTextSearchUpdater fullTextSearchUpdater;
 
     @Inject
     public AssetServiceImpl(AssetTable assetTable,
                             BlockChainInfoService blockChainInfoService,
                             AssetDeleteService assetDeleteService,
-                            Event<FullTextOperationData> fullTextOperationDataEvent
+                            FullTextSearchUpdater fullTextSearchUpdater
     ) {
         this.assetTable = assetTable;
         this.blockChainInfoService = blockChainInfoService;
         this.assetDeleteService = assetDeleteService;
         this.assetIteratorToStreamConverter = new IteratorToStreamConverter<>();
-        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
+        this.fullTextSearchUpdater = fullTextSearchUpdater;
     }
 
     /**
@@ -57,7 +55,8 @@ public class AssetServiceImpl implements AssetService {
     public AssetServiceImpl(AssetTable assetTable,
                             BlockChainInfoService blockChainInfoService,
                             AssetDeleteService assetDeleteService,
-                            IteratorToStreamConverter<Asset> assetIteratorToStreamConverter // for unit tests mostly
+                            IteratorToStreamConverter<Asset> assetIteratorToStreamConverter, // for unit tests mostly
+                            FullTextSearchUpdater fullTextSearchUpdater
     ) {
         this.assetTable = assetTable;
         this.blockChainInfoService = blockChainInfoService;
@@ -67,6 +66,7 @@ public class AssetServiceImpl implements AssetService {
         } else {
             this.assetIteratorToStreamConverter = new IteratorToStreamConverter<>();
         }
+        this.fullTextSearchUpdater = fullTextSearchUpdater;
     }
 
     @Override
@@ -146,9 +146,9 @@ public class AssetServiceImpl implements AssetService {
         // put relevant data into Event instance
         operationData.setOperationType(operationType);
         operationData.addColumnData(asset.getName()).addColumnData(asset.getDescription());
-        // fire event to send data into Lucene index component
-        log.debug("Fire lucene index update by data = {}", operationData);
-        fullTextOperationDataEvent.select(new AnnotationLiteral<FullTextSearchDataEvent>() {}).fireAsync(operationData);
+        // send data into Lucene index component
+        log.trace("Put lucene index update data = {}", operationData);
+        fullTextSearchUpdater.putFullTextOperationData(operationData);
     }
 
 }

@@ -4,19 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.FullTextSearchDataEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
@@ -33,15 +31,15 @@ public class AccountInfoServiceImpl implements AccountInfoService {
 
     private final Blockchain blockchain;
     private final AccountInfoTable accountInfoTable;
-    private Event<FullTextOperationData> fullTextOperationDataEvent;
+    private final FullTextSearchUpdater fullTextSearchUpdater;
 
     @Inject
     public AccountInfoServiceImpl(Blockchain blockchain,
                                   AccountInfoTable accountInfoTable,
-                                  Event<FullTextOperationData> fullTextOperationDataEvent) {
+                                  FullTextSearchUpdater fullTextSearchUpdater) {
         this.blockchain = blockchain;
         this.accountInfoTable = accountInfoTable;
-        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
+        this.fullTextSearchUpdater = fullTextSearchUpdater;
     }
 
     @Override
@@ -61,9 +59,9 @@ public class AccountInfoServiceImpl implements AccountInfoService {
             accountInfoTable.deleteAtHeight(accountInfo, blockchain.getHeight());
             operationData.setOperationType(FullTextOperationData.OperationType.DELETE);
         }
-        // fire event to send data into Lucene index component
-        log.debug("Fire lucene index update by data = {}", operationData);
-        fullTextOperationDataEvent.select(new AnnotationLiteral<FullTextSearchDataEvent>() {}).fireAsync(operationData);
+        // send data into Lucene index component
+        log.trace("Put lucene index update data = {}", operationData);
+        fullTextSearchUpdater.putFullTextOperationData(operationData);
     }
 
     @Override

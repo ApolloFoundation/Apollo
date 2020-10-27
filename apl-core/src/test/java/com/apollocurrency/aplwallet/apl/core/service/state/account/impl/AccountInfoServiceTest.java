@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,19 +24,17 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import javax.enterprise.event.Event;
-
 class AccountInfoServiceTest {
     AccountInfoService accountInfoService;
     AccountTestData testData;
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private AccountInfoTable accountInfoTable = mock(AccountInfoTable.class);
-    private Event<FullTextOperationData> fullTextOperationDataEvent = mock(Event.class);
+    private FullTextSearchUpdater fullTextSearchUpdater = mock(FullTextSearchUpdater.class);
 
     @BeforeEach
     void setUp() {
         testData = new AccountTestData();
-        accountInfoService = spy(new AccountInfoServiceImpl(blockchain, accountInfoTable, fullTextOperationDataEvent));
+        accountInfoService = spy(new AccountInfoServiceImpl(blockchain, accountInfoTable, fullTextSearchUpdater));
     }
 
     @Test
