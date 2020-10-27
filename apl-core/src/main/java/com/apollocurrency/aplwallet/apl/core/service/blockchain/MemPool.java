@@ -36,7 +36,7 @@ public class MemPool {
     private final TransactionValidator validator;
     private final boolean enableRebroadcasting;
     private final int maxUnconfirmedTransactions;
-    private final AtomicInteger currentNumberOfUnconfirmedTxs = new AtomicInteger(0);
+    private final AtomicInteger currentNumberOfUnconfirmedTxs = new AtomicInteger(-1);
 
     @Inject
     public MemPool(MemPoolUnconfirmedTransactionTable table,
@@ -124,10 +124,7 @@ public class MemPool {
     }
 
     public int allProcessedCount() {
-        if (currentNumberOfUnconfirmedTxs.get() == 0) {
-            currentNumberOfUnconfirmedTxs.set(table.getCount());
-        }
-        return currentNumberOfUnconfirmedTxs.get();
+        return currentNumberOfUnconfirmedTxs.compareAndExchange(-1, table.getCount());
     }
 //
     public void removeOutdatedBroadcastedTransactions(Transaction transaction) {
