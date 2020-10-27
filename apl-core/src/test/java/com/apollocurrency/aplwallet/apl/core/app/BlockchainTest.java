@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.apl.core.cache.NullCacheProducerForTests;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DBContainerRootTest;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
@@ -49,10 +50,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.junit.jupiter.Container;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -97,21 +94,7 @@ import static org.mockito.Mockito.spy;
 @Tag("slow")
 @EnableWeld
 @Slf4j
-class BlockchainTest {
-
-    @Container
-    public static GenericContainer mariaDBContainer;
-    static {
-        mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-            .withDatabaseName("testdb")
-            .withUsername("root")
-            .withPassword("rootpass")
-            .withExposedPorts(3306)
-            .withLogConsumer(new Slf4jLogConsumer(log));
-
-        mariaDBContainer.start();
-    }
-
+class BlockchainTest extends DBContainerRootTest {
     static DbExtension extension;// init later in manual mode
     static DbPopulator shard1Populator;
     static DbPopulator shard2Populator;
