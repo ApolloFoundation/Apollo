@@ -98,9 +98,13 @@ public class FullTextObserver implements TransactionCallback {
         //
         // Commit the change immediately if we are not in a transaction
         //
-/*
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         log.debug("operationData = {}, (isInTransaction = {})", operationData, dataSource.isInTransaction());
+        //
+        // Register our transaction callback
+        //
+        dataSource.registerCallback(this);
+/*
         if (!dataSource.isInTransaction()) {
             try {
                 fullTextSearchEngine.commitRow(operationData, tableDataMap.get(operationData.getTableName()));
@@ -119,10 +123,6 @@ public class FullTextObserver implements TransactionCallback {
             log.debug("BATCH tableData = {}, operationData = {}", tableDataMap.get(operationData.getTableName()), operationData);
             tableUpdates.put(operationData.getTableKey(), operationData);
         }
-        //
-        // Register our transaction callback
-        //
-//        dataSource.registerCallback(this);
     }
 
 /*    private DatabaseManager lookupDatabaseManager() {
