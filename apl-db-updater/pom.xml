@@ -13,12 +13,18 @@
 
   <dependencies>
 
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-bom-ext</artifactId>
+      <version>1.0.3</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
 
     <!-- Flyway   -->
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
-      <version>7.0.2</version>
     </dependency>
 
 
@@ -31,6 +37,13 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
+    </dependency>
+
+
+    <dependency>
+      <groupId>org.jboss.weld</groupId>
+      <artifactId>weld-junit5</artifactId>
+      <scope>test</scope>
     </dependency>
 
   </dependencies>
