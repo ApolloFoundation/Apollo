@@ -157,7 +157,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
         try {
             Connection con = getPooledConnection();
             con.setAutoCommit(false);
-            DbConnectionWrapper wcon = new DbConnectionWrapper(con, factory, localConnection, transactionCallback);
+            DbConnectionWrapper wcon = new DbConnectionWrapper(con, this.factory, this.localConnection, this.transactionCallback);
             wcon.setTxStart(System.currentTimeMillis());
             localConnection.set(wcon);
             return wcon;
@@ -227,7 +227,7 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
     }
 
     private void cleanupTransactionCallback(Consumer<TransactionCallback> consumer) {
-        Set<TransactionCallback> callbacks = transactionCallback.get();
+        Set<TransactionCallback> callbacks = this.transactionCallback.get();
         if (callbacks != null) {
             callbacks.forEach(consumer);
             transactionCallback.set(null);

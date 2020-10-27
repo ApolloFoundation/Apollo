@@ -64,7 +64,7 @@ public class DataSourceWrapper implements DataSource {
     private final String dbUrl;
     private final String dbName;
     private final String dbUsername;
-    private String dbPassword; // can be empty for 'apasswordless mode' in docker container
+    private String dbPassword; // can be empty for a 'passwordless mode' in docker container
     private final String systemDbUrl;
     private final int maxConnections;
     private final int loginTimeout;

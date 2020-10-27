@@ -267,7 +267,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             while (rs.next()) {
                 int i = 0;
                 Object dbId = rs.getObject(i+1);
-                operationData.setTableKey(tableName + ";DB_ID;" + dbId);
+                operationData.setTableKey(schemaName + "." + tableName + ";DB_ID;" + dbId);
                 i++;
                 Iterator it = tableData.getIndexColumns().iterator();
                 while (it.hasNext()) {

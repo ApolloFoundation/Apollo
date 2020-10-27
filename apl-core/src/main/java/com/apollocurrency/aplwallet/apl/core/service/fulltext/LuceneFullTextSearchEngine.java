@@ -108,13 +108,13 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             List<String> columnNames = tableData.getColumnNames();
             List<Integer> indexColumns = tableData.getIndexColumns();
 //            int dbColumn = tableData.getDbIdColumnPosition();
-//            String tableName = tableData.getSchema().toLowerCase() + "." + tableData.getTable().toLowerCase();
+            String schemaTableName = tableData.getSchema().toLowerCase() + "." + tableData.getTable().toLowerCase();
             String query = row.getTableKey();
             Document document = new Document();
             document.add(new StringField("_QUERY", query, Field.Store.YES));
             long now = ntpTime.getTime();
             document.add(new TextField("_MODIFIED", DateTools.timeToString(now, DateTools.Resolution.SECOND), Field.Store.NO));
-            document.add(new TextField("_TABLE", row.getTableName(), Field.Store.NO));
+            document.add(new TextField("_TABLE", schemaTableName, Field.Store.NO));
             StringJoiner sj = new StringJoiner(" ");
             for (int i = 0; i < row.getColumnsWithData().size(); i++) {
                 for (int index : indexColumns) {
@@ -158,7 +158,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
 
 //    private void deleteRow(Object[] row, TableData tableData) throws SQLException {
     private void deleteRow(FullTextOperationData row, TableData tableData) throws SQLException {
-        String query = row.getTableKey();
+        String query = tableData.getSchema().toLowerCase() + "." + row.getTableKey();
         indexLock.readLock().lock();
         try {
             log.debug("DELETE QUERY: tableData = {}, oldRow={}\nquery={}", tableData, row, query);
