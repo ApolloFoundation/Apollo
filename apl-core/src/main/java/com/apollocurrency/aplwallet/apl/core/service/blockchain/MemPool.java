@@ -120,7 +120,7 @@ public class MemPool {
 
 
     public Stream<UnconfirmedTransaction> getAllProcessedStream() {
-        return streamConverter.apply(table.getAll(0, -1));
+        return CollectionUtil.toList(table.getAll(0, -1)).stream();
     }
 
     public int allProcessedCount() {
@@ -145,7 +145,7 @@ public class MemPool {
     public List<Transaction> allPendingTransactions() {
         return memoryState.allPendingTransactions();
     }
-//
+
     public boolean isProcessedTxPoolFull() {
         return allProcessedCount() >= maxUnconfirmedTransactions;
     }
