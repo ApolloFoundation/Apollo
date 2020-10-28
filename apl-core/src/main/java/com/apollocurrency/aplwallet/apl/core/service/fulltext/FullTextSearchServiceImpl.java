@@ -260,19 +260,20 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         //
         // Index each row in the table
         //
-        FullTextOperationData operationData = new FullTextOperationData(
-            FullTextOperationData.OperationType.INSERT_UPDATE, tableName);
         try (Statement qstmt = conn.createStatement();
              ResultSet rs = qstmt.executeQuery(sb.toString())) {
             while (rs.next()) {
+                // create full text search data set for every row fetched from DB
+                FullTextOperationData operationData = new FullTextOperationData(
+                    FullTextOperationData.OperationType.INSERT_UPDATE, tableName);
                 int i = 0;
-                Object dbId = rs.getObject(i+1);
-                operationData.setTableKey(schemaName + "." + tableName + ";DB_ID;" + dbId);
+                Object dbId = rs.getObject(i+1); // put DB_ID value
+                operationData.setTableKey(schemaName + "." + tableName + ";DB_ID;" + dbId); // compose lucene key
                 i++;
                 Iterator it = tableData.getIndexColumns().iterator();
                 while (it.hasNext()) {
-                    Object indexedColumnValue = rs.getObject(i+1);
-                    operationData.addColumnData(indexedColumnValue);
+                    Object indexedColumnValue = rs.getObject(i+1); // value from table can be null here
+                    operationData.addColumnData(indexedColumnValue); // when it's null, we'll add "NULL" as data
                     it.next(); // move forward
                     i++;
                 }

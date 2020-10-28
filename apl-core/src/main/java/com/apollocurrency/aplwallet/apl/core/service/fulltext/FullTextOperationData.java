@@ -48,8 +48,11 @@ public class FullTextOperationData {
     }
 
     public FullTextOperationData addColumnData(Object data) {
-        Objects.requireNonNull(data);
-        columnsWithData.add(data);
+        if (data == null) {
+            columnsWithData.add("NULL");
+        } else {
+            columnsWithData.add(data);
+        }
         return this;
     }
 

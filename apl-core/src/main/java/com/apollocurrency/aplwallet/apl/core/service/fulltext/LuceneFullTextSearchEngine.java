@@ -115,12 +115,11 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             document.add(new TextField("_TABLE", schemaTableName, Field.Store.NO));
             StringJoiner sj = new StringJoiner(" ");
             for (int i = 0; i < row.getColumnsWithData().size(); i++) {
-                for (int index : indexColumns) {
-                    String data = row.getColumnsWithData().get(i) != null ?
-                        (String) row.getColumnsWithData().get(i) : "NULL";
-                    document.add(new TextField(columnNames.get(index), data, Field.Store.NO));
-                    sj.add(data);
-                }
+                String data = row.getColumnsWithData().get(i) != null ?
+                    (String) row.getColumnsWithData().get(i) : "NULL";
+                String columnName = columnNames.get(indexColumns.get(i)); // get indexed column name by i
+                document.add(new TextField(columnName, data, Field.Store.NO));
+                sj.add(data);
             }
             document.add(new TextField("_DATA", sj.toString(), Field.Store.NO));
             log.trace("INDEX query={} / {}", query, document);
