@@ -56,6 +56,14 @@ public class QuantityChangeTransactionType extends DigitalGoodsTransactionType {
     }
 
     @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        DigitalGoodsQuantityChange attachment = (DigitalGoodsQuantityChange) transaction.getAttachment();
+        if (attachment.getDeltaQuantity() < -Constants.MAX_DGS_LISTING_QUANTITY || attachment.getDeltaQuantity() > Constants.MAX_DGS_LISTING_QUANTITY) {
+            throw new AplException.NotValidException("Invalid digital goods quantity change: " + attachment.getJSONObject());
+        }
+    }
+
+    @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DigitalGoodsQuantityChange attachment = (DigitalGoodsQuantityChange) transaction.getAttachment();
         dgsService.changeQuantity(attachment.getGoodsId(), attachment.getDeltaQuantity());
@@ -65,7 +73,7 @@ public class QuantityChangeTransactionType extends DigitalGoodsTransactionType {
     public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
         DigitalGoodsQuantityChange attachment = (DigitalGoodsQuantityChange) transaction.getAttachment();
         DGSGoods goods = dgsService.getGoods(attachment.getGoodsId());
-        if (attachment.getDeltaQuantity() < -Constants.MAX_DGS_LISTING_QUANTITY || attachment.getDeltaQuantity() > Constants.MAX_DGS_LISTING_QUANTITY || (goods != null && transaction.getSenderId() != goods.getSellerId())) {
+        if (goods != null && transaction.getSenderId() != goods.getSellerId()) {
             throw new AplException.NotValidException("Invalid digital goods quantity change: " + attachment.getJSONObject());
         }
         if (goods == null || goods.isDelisted()) {

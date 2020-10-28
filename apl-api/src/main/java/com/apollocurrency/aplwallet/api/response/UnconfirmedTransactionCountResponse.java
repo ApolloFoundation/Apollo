@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 public class UnconfirmedTransactionCountResponse {
     private final int processed;
-    private final int waiting;
+    private final int pending;
 }
 
 

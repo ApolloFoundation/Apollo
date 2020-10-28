@@ -20,6 +20,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.UUID;
  * @author alukin@gmail.com
  */
 @Slf4j
+@Singleton
 public class GetShardingInfo extends PeerRequestHandler {
 
     private final ShardDao shardDao;

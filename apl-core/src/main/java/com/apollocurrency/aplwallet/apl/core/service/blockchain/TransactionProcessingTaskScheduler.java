@@ -5,9 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.app.runnable.PendingBroadcastTask;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessLaterTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTxsToBroadcastWhenConfirmed;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessWaitingTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RebroadcastTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RemoveUnconfirmedTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
@@ -22,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -32,7 +31,6 @@ public class TransactionProcessingTaskScheduler {
     private final Blockchain blockchain;
     private final MemPool memPool;
     private final PeersService peersService;
-    private final GlobalSync globalSync;
     private final TransactionProcessor transactionProcessor;
     private final BlockchainConfig blockchainConfig;
     private final TransactionTypeFactory transactionTypeFactory;
@@ -44,12 +42,11 @@ public class TransactionProcessingTaskScheduler {
     private final BatchSizeCalculator batchSizeCalculator;
 
     @Inject
-    public TransactionProcessingTaskScheduler(PropertiesHolder propertiesHolder, TimeService timeService, Blockchain blockchain, MemPool memPool, PeersService peersService, GlobalSync globalSync, TransactionProcessor transactionProcessor, BlockchainConfig blockchainConfig, TransactionTypeFactory transactionTypeFactory, DatabaseManager databaseManager, TaskDispatchManager taskDispatchManager, TransactionValidator transactionValidator, UnconfirmedTransactionProcessingService processingService, BatchSizeCalculator batchSizeCalculator) {
+    public TransactionProcessingTaskScheduler(PropertiesHolder propertiesHolder, TimeService timeService, Blockchain blockchain, MemPool memPool, PeersService peersService, TransactionProcessor transactionProcessor, BlockchainConfig blockchainConfig, TransactionTypeFactory transactionTypeFactory, DatabaseManager databaseManager, TaskDispatchManager taskDispatchManager, TransactionValidator transactionValidator, UnconfirmedTransactionProcessingService processingService, BatchSizeCalculator batchSizeCalculator) {
         this.timeService = timeService;
         this.blockchain = blockchain;
         this.memPool = memPool;
         this.peersService = peersService;
-        this.globalSync = globalSync;
         this.transactionProcessor = transactionProcessor;
         this.blockchainConfig = blockchainConfig;
         this.transactionTypeFactory = transactionTypeFactory;
@@ -59,12 +56,9 @@ public class TransactionProcessingTaskScheduler {
         this.transactionValidator = transactionValidator;
         this.processingService = processingService;
         this.batchSizeCalculator = batchSizeCalculator;
-    }
-
-    @PostConstruct
-    public void init() {
         configureBackgroundTasks();
     }
+
 
     private void configureBackgroundTasks() {
         if (!propertiesHolder.isLightClient()) {
@@ -82,9 +76,9 @@ public class TransactionProcessingTaskScheduler {
                     .delay(1000)
                     .task(transactionProcessor::printMemPoolStat)
                     .build());
-                dispatcher.invokeAfter(Task.builder()
+                dispatcher.schedule(Task.builder()
                     .name("PendingBroadcaster")
-                    .initialDelay(2000)
+                    .delay(125)
                     .task(new PendingBroadcastTask( transactionProcessor,  memPool, batchSizeCalculator, transactionValidator, processingService))
                     .build());
                 dispatcher.invokeAfter(Task.builder()
@@ -101,14 +95,14 @@ public class TransactionProcessingTaskScheduler {
             }
             dispatcher.schedule(Task.builder()
                 .name("RemoveUnconfirmedTransactions")
-                .delay(7000)
+                .delay(5000)
                 .task(new RemoveUnconfirmedTransactionsThread(
-                    this.databaseManager, transactionProcessor, this.timeService, memPool, this.globalSync))
+                    this.databaseManager, transactionProcessor, this.timeService, memPool))
                 .build());
             dispatcher.schedule(Task.builder()
-                .name("ProcessWaitingTransactions")
-                .delay(333)
-                .task(new ProcessWaitingTransactionsThread(transactionProcessor))
+                .name("ProcessLaterTransactions")
+                .delay(3000)
+                .task(new ProcessLaterTransactionsThread(transactionProcessor))
                 .build());
             dispatcher.schedule(Task.builder()
                 .name("ProcessTransactionsToBroadcastWhenConfirmed")

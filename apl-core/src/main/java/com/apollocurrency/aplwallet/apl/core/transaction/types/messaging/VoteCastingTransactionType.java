@@ -67,11 +67,8 @@ public class VoteCastingTransactionType extends MessagingTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         MessagingVoteCasting attachment = (MessagingVoteCasting) transaction.getAttachment();
-        if (attachment.getPollId() == 0 || attachment.getPollVote() == null || attachment.getPollVote().length > Constants.MAX_POLL_OPTION_COUNT) {
-            throw new AplException.NotValidException("Invalid vote casting attachment: " + attachment.getJSONObject());
-        }
         long pollId = attachment.getPollId();
         Poll poll = pollService.getPoll(pollId);
         if (poll == null) {
@@ -95,6 +92,14 @@ public class VoteCastingTransactionType extends MessagingTransactionType {
         }
         if (positiveCount < poll.getMinNumberOfOptions() || positiveCount > poll.getMaxNumberOfOptions()) {
             throw new AplException.NotValidException(String.format("Invalid num of choices %d, number of choices must be between %d and %d", positiveCount, poll.getMinNumberOfOptions(), poll.getMaxNumberOfOptions()));
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        MessagingVoteCasting attachment = (MessagingVoteCasting) transaction.getAttachment();
+        if (attachment.getPollId() == 0 || attachment.getPollVote() == null || attachment.getPollVote().length > Constants.MAX_POLL_OPTION_COUNT) {
+            throw new AplException.NotValidException("Invalid vote casting attachment: " + attachment.getJSONObject());
         }
     }
 

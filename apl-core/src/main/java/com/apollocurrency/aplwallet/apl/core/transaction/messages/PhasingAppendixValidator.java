@@ -34,17 +34,14 @@ public class PhasingAppendixValidator implements AppendixValidator<PhasingAppend
     }
 
     @Override
-    public  void validate(Transaction transaction, PhasingAppendix appendix, int height) throws AplException.ValidationException {
-        generalValidation(transaction, appendix);
-
-        validateFinishHeight(appendix.getFinishHeight(), appendix);
+    public  void validateStateDependent(Transaction transaction, PhasingAppendix appendix, int height) throws AplException.ValidationException {
+        generalValidationStateDependent(transaction, appendix);
     }
 
-    public void generalValidation(Transaction transaction, PhasingAppendix appendix) throws AplException.ValidationException {
+    public void generalValidationStateIndependent(PhasingAppendix appendix) throws AplException.ValidationException {
         PhasingParams params = appendix.getParams();
-        phasingPollService.validate(params);
+        phasingPollService.validateStateIndependent(params);
 
-        int currentHeight = blockchain.getHeight();
         byte[][] linkedFullHashes = appendix.getLinkedFullHashes();
         if (params.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
             if (linkedFullHashes.length == 0 || linkedFullHashes.length > Constants.MAX_PHASING_LINKED_TRANSACTIONS) {
@@ -58,7 +55,6 @@ public class PhasingAppendixValidator implements AppendixValidator<PhasingAppend
                 if (!linkedTransactionIds.add(Convert.fullHashToId(hash))) {
                     throw new AplException.NotValidException("Duplicate linked transaction ids");
                 }
-                checkLinkedTransaction(hash, currentHeight, transaction.getHeight());
             }
             if (params.getQuorum() > linkedFullHashes.length) {
                 throw new AplException.NotValidException("Quorum of " + params.getQuorum() + " cannot be achieved in by-transaction voting with "
@@ -92,6 +88,21 @@ public class PhasingAppendixValidator implements AppendixValidator<PhasingAppend
         }
     }
 
+    public void generalValidationStateDependent(Transaction transaction, PhasingAppendix appendix) throws AplException.ValidationException {
+        PhasingParams params = appendix.getParams();
+        phasingPollService.validateStateDependent(params);
+
+        int currentHeight = blockchain.getHeight();
+        byte[][] linkedFullHashes = appendix.getLinkedFullHashes();
+        if (params.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
+            for (byte[] hash : linkedFullHashes) {
+                checkLinkedTransaction(hash, currentHeight, transaction.getHeight());
+            }
+        }
+    }
+
+
+
     public void validateFinishHeight(Integer finishHeight, PhasingAppendix appendix) throws AplException.NotCurrentlyValidException {
         Block lastBlock = blockchain.getLastBlock();
         int currentHeight = lastBlock.getHeight();
@@ -120,6 +131,12 @@ public class PhasingAppendixValidator implements AppendixValidator<PhasingAppend
     @Override
     public void validateAtFinish(Transaction transaction, PhasingAppendix phasingAppendix, int blockHeight) throws AplException.ValidationException {
         phasingPollService.checkApprovable(phasingAppendix.getParams());
+    }
+
+    @Override
+    public void validateStateIndependent(Transaction transaction, PhasingAppendix appendix, int validationHeight) throws AplException.ValidationException {
+        generalValidationStateIndependent(appendix);
+        validateFinishHeight(appendix.getFinishHeight(), appendix);
     }
 
 }

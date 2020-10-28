@@ -48,7 +48,11 @@ public abstract class UpdateTransactionType extends TransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         UpdateAttachment attachment = (UpdateAttachment) transaction.getAttachment();
         if (attachment.getUrl().getFirst().length != Constants.UPDATE_URL_PART_LENGTH || attachment.getUrl().getSecond().length != Constants.UPDATE_URL_PART_LENGTH || attachment.getHash().length > Constants.MAX_UPDATE_HASH_LENGTH) {
             throw new AplException.NotValidException("Invalid update transaction attachment:" + attachment.getJSONObject());

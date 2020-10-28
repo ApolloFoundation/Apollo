@@ -60,6 +60,23 @@ public class PurchaseTransactionType extends DigitalGoodsTransactionType {
     }
 
     @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        DigitalGoodsPurchase attachment = (DigitalGoodsPurchase) transaction.getAttachment();
+        if (attachment.getQuantity() <= 0
+            || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
+            || attachment.getPriceATM() <= 0
+            || attachment.getPriceATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
+            throw new AplException.NotValidException("Invalid digital goods purchase: " + attachment.getJSONObject());
+        }
+        if (transaction.getEncryptedMessage() != null && !transaction.getEncryptedMessage().isText()) {
+            throw new AplException.NotValidException("Only text encrypted messages allowed");
+        }
+        if (attachment.getDeliveryDeadlineTimestamp() <= blockchain.getLastBlockTimestamp()) {
+            throw new AplException.NotCurrentlyValidException("Delivery deadline has already expired: " + attachment.getDeliveryDeadlineTimestamp());
+        }
+    }
+
+    @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         DigitalGoodsPurchase attachment = (DigitalGoodsPurchase) transaction.getAttachment();
         if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM())) {
@@ -85,24 +102,14 @@ public class PurchaseTransactionType extends DigitalGoodsTransactionType {
     public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
         DigitalGoodsPurchase attachment = (DigitalGoodsPurchase) transaction.getAttachment();
         DGSGoods goods = dgsService.getGoods(attachment.getGoodsId());
-        if (attachment.getQuantity() <= 0
-            || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
-            || attachment.getPriceATM() <= 0
-            || attachment.getPriceATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
-            || (goods != null && goods.getSellerId() != transaction.getRecipientId())) {
+        if (goods != null && goods.getSellerId() != transaction.getRecipientId()) {
             throw new AplException.NotValidException("Invalid digital goods purchase: " + attachment.getJSONObject());
-        }
-        if (transaction.getEncryptedMessage() != null && !transaction.getEncryptedMessage().isText()) {
-            throw new AplException.NotValidException("Only text encrypted messages allowed");
         }
         if (goods == null || goods.isDelisted()) {
             throw new AplException.NotCurrentlyValidException("Goods " + Long.toUnsignedString(attachment.getGoodsId()) + "not yet listed or already delisted");
         }
         if (attachment.getQuantity() > goods.getQuantity() || attachment.getPriceATM() != goods.getPriceATM()) {
             throw new AplException.NotCurrentlyValidException("Goods price or quantity changed: " + attachment.getJSONObject());
-        }
-        if (attachment.getDeliveryDeadlineTimestamp() <= blockchain.getLastBlockTimestamp()) {
-            throw new AplException.NotCurrentlyValidException("Delivery deadline has already expired: " + attachment.getDeliveryDeadlineTimestamp());
         }
     }
 

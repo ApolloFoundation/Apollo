@@ -12,11 +12,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * @author alukin@gmail.com
  */
 @Slf4j
+@Singleton
 public class GetFileDownloadInfo extends PeerRequestHandler {
 
     private DownloadableFilesManager downloadableFilesManager;

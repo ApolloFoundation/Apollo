@@ -5,15 +5,11 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.dex;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
@@ -64,7 +60,7 @@ public class DexContractTransaction extends DexTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
 
         DexOrder order = dexService.getOrder(attachment.getOrderId());
@@ -82,18 +78,6 @@ public class DexContractTransaction extends DexTransactionType {
             if (contract != null) {
                 throw new AplException.NotCurrentlyValidException("Contract was created earlier");
             }
-            if (attachment.getEncryptedSecret() != null) {
-                throw new AplException.NotValidException("Encrypted secret should not present at step1");
-            }
-            if (attachment.getTransferTxId() != null) {
-                throw new AplException.NotValidException("TransferTxId should not present at step1");
-            }
-            if (attachment.getCounterTransferTxId() != null) {
-                throw new AplException.NotValidException("CounterTransferTxId should not present at step1");
-            }
-            if (transaction.getSenderId() != order.getAccountId()) {
-                throw new AplException.NotValidException("Contract step1 can be send only by order creator");
-            }
             if (counterOrder.getStatus() != OrderStatus.OPEN) {
                 throw new AplException.NotCurrentlyValidException("Unable to create contract matched to counterOrder with status " + counterOrder.getStatus() + ", expected status OPEN");
             }
@@ -108,24 +92,6 @@ public class DexContractTransaction extends DexTransactionType {
             }
             if (contract.getContractStatus() != ExchangeContractStatus.STEP_1) {
                 throw new AplException.NotCurrentlyValidException("Incorrect status of contract, expected step1, got " + contract.getContractStatus());
-            }
-            if (attachment.getEncryptedSecret() == null) {
-                throw new AplException.NotValidException("Encrypted secret should be specified");
-            }
-            if (attachment.getEncryptedSecret().length != 64) {
-                throw new AplException.NotValidException("Encrypted secret length is " + attachment.getEncryptedSecret().length + ", expected 64");
-            }
-            if (attachment.getSecretHash() == null) {
-                throw new AplException.NotValidException("Secret hash should be specified");
-            }
-            if (attachment.getSecretHash().length != 32) {
-                throw new AplException.NotValidException("Secret hash length is " + attachment.getSecretHash().length + ", expected 32");
-            }
-            if (attachment.getCounterTransferTxId() == null) {
-                throw new AplException.NotValidException("Counter transfer tx id dont present");
-            }
-            if (attachment.getTransferTxId() != null) {
-                throw new AplException.NotValidException("Transfer tx id not allowed for step2");
             }
             if (transaction.getSenderId() != counterOrder.getAccountId()) {
                 throw new AplException.NotValidException("Contract step2 can be send only by counterOrder creator");
@@ -145,6 +111,47 @@ public class DexContractTransaction extends DexTransactionType {
             if (contract.getContractStatus() != ExchangeContractStatus.STEP_2) {
                 throw new AplException.NotCurrentlyValidException("Incorrect status of contract, expected step2, got " + contract.getContractStatus());
             }
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        DexContractAttachment attachment = (DexContractAttachment) transaction.getAttachment();
+
+        if (attachment.getContractStatus().isStep1()) {
+            if (attachment.getEncryptedSecret() != null) {
+                throw new AplException.NotValidException("Encrypted secret should not present at step1");
+            }
+            if (attachment.getTransferTxId() != null) {
+                throw new AplException.NotValidException("TransferTxId should not present at step1");
+            }
+            if (attachment.getCounterTransferTxId() != null) {
+                throw new AplException.NotValidException("CounterTransferTxId should not present at step1");
+            }
+        }
+        if (attachment.getContractStatus().isStep2()) {
+
+            if (attachment.getEncryptedSecret() == null) {
+                throw new AplException.NotValidException("Encrypted secret should be specified");
+            }
+            if (attachment.getEncryptedSecret().length != 64) {
+                throw new AplException.NotValidException("Encrypted secret length is " + attachment.getEncryptedSecret().length + ", expected 64");
+            }
+            if (attachment.getSecretHash() == null) {
+                throw new AplException.NotValidException("Secret hash should be specified");
+            }
+            if (attachment.getSecretHash().length != 32) {
+                throw new AplException.NotValidException("Secret hash length is " + attachment.getSecretHash().length + ", expected 32");
+            }
+            if (attachment.getCounterTransferTxId() == null) {
+                throw new AplException.NotValidException("Counter transfer tx id dont present");
+            }
+            if (attachment.getTransferTxId() != null) {
+                throw new AplException.NotValidException("Transfer tx id not allowed for step2");
+            }
+        }
+
+        if (attachment.getContractStatus().isStep3()) {
             if (attachment.getEncryptedSecret() != null) {
                 throw new AplException.NotValidException("Encrypted secret should not be specified");
             }

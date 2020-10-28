@@ -77,7 +77,7 @@ public class ShufflingRecipientsTransactionType extends ShufflingTransactionType
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         ShufflingRecipientsAttachment attachment = (ShufflingRecipientsAttachment) transaction.getAttachment();
         Shuffling shuffling = shufflingService.getShuffling(attachment.getShufflingId());
         if (shuffling == null) {
@@ -112,6 +112,12 @@ public class ShufflingRecipientsTransactionType extends ShufflingTransactionType
         if (recipientPublicKeys.length != shuffling.getParticipantCount() && recipientPublicKeys.length != 0) {
             throw new AplException.NotValidException(String.format("Invalid number of recipient public keys %d", recipientPublicKeys.length));
         }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        ShufflingRecipientsAttachment attachment = (ShufflingRecipientsAttachment) transaction.getAttachment();
+        byte[][] recipientPublicKeys = attachment.getRecipientPublicKeys();
         Set<Long> recipientAccounts = new HashSet<>(recipientPublicKeys.length);
         for (byte[] recipientPublicKey : recipientPublicKeys) {
             if (!Crypto.isCanonicalPublicKey(recipientPublicKey)) {

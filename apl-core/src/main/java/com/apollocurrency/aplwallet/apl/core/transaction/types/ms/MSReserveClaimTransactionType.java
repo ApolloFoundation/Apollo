@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
@@ -57,13 +56,18 @@ public class MSReserveClaimTransactionType extends MonetarySystemTransactionType
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
+        currencyService.validate(currency, transaction);
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemReserveClaim attachment = (MonetarySystemReserveClaim) transaction.getAttachment();
         if (attachment.getUnits() <= 0) {
             throw new AplException.NotValidException("Reserve claim number of units must be positive: " + attachment.getUnits());
         }
-        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
-        currencyService.validate(currency, transaction);
     }
 
     @Override

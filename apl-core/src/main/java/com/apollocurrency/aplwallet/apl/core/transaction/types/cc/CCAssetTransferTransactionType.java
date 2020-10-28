@@ -3,11 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
@@ -95,7 +93,19 @@ public class CCAssetTransferTransactionType extends ColoredCoinsTransactionType 
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
+        Asset asset = assetService.getAsset(attachment.getAssetId());
+        if (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU()) {
+            throw new AplException.NotValidException("Invalid asset transfer asset or quantity: " + attachment.getJSONObject());
+        }
+        if (asset == null) {
+            throw new AplException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId()) + " does not exist yet");
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         ColoredCoinsAssetTransfer attachment = (ColoredCoinsAssetTransfer) transaction.getAttachment();
         if (transaction.getAmountATM() != 0 || attachment.getAssetId() == 0) {
             throw new AplException.NotValidException("Invalid asset transfer amount or asset: " + attachment.getJSONObject());
@@ -103,12 +113,8 @@ public class CCAssetTransferTransactionType extends ColoredCoinsTransactionType 
         if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
             throw new AplException.NotValidException("Asset transfer to Genesis not allowed, " + "use asset delete attachment instead");
         }
-        Asset asset = assetService.getAsset(attachment.getAssetId());
-        if (attachment.getQuantityATU() <= 0 || (asset != null && attachment.getQuantityATU() > asset.getInitialQuantityATU())) {
-            throw new AplException.NotValidException("Invalid asset transfer asset or quantity: " + attachment.getJSONObject());
-        }
-        if (asset == null) {
-            throw new AplException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId()) + " does not exist yet");
+        if (attachment.getQuantityATU() <= 0) {
+            throw new AplException.NotValidException("Invalid asset quantity: " + attachment.getQuantityATU());
         }
     }
 

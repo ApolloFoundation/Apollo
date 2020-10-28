@@ -54,6 +54,19 @@ public class FeedbackTransactionType extends DigitalGoodsTransactionType {
     }
 
     @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        if (transaction.getEncryptedMessage() == null && transaction.getMessage() == null) {
+            throw new AplException.NotValidException("Missing feedback message");
+        }
+        if (transaction.getEncryptedMessage() != null && !transaction.getEncryptedMessage().isText()) {
+            throw new AplException.NotValidException("Only text encrypted messages allowed");
+        }
+        if (transaction.getMessage() != null && !transaction.getMessage().isText()) {
+            throw new AplException.NotValidException("Only text public messages allowed");
+        }
+    }
+
+    @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DigitalGoodsFeedback attachment = (DigitalGoodsFeedback) transaction.getAttachment();
         dgsService.feedback(attachment.getPurchaseId(), transaction.getEncryptedMessage(), transaction.getMessage());
@@ -65,15 +78,6 @@ public class FeedbackTransactionType extends DigitalGoodsTransactionType {
         DGSPurchase purchase = dgsService.getPurchase(attachment.getPurchaseId());
         if (purchase != null && (purchase.getSellerId() != transaction.getRecipientId() || transaction.getSenderId() != purchase.getBuyerId())) {
             throw new AplException.NotValidException("Invalid digital goods feedback: " + attachment.getJSONObject());
-        }
-        if (transaction.getEncryptedMessage() == null && transaction.getMessage() == null) {
-            throw new AplException.NotValidException("Missing feedback message");
-        }
-        if (transaction.getEncryptedMessage() != null && !transaction.getEncryptedMessage().isText()) {
-            throw new AplException.NotValidException("Only text encrypted messages allowed");
-        }
-        if (transaction.getMessage() != null && !transaction.getMessage().isText()) {
-            throw new AplException.NotValidException("Only text public messages allowed");
         }
         if (purchase == null || purchase.getEncryptedGoods() == null) {
             throw new AplException.NotCurrentlyValidException("Purchase does not exist yet or not yet delivered");

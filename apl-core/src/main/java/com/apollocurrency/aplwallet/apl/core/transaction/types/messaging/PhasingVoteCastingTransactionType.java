@@ -81,24 +81,15 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
         byte[] revealedSecret = attachment.getRevealedSecret();
-        if (revealedSecret.length > Constants.MAX_PHASING_REVEALED_SECRET_LENGTH) {
-            throw new AplException.NotValidException("Invalid revealed secret length " + revealedSecret.length);
-        }
         byte[] hashedSecret = null;
         byte algorithm = 0;
         List<byte[]> hashes = attachment.getTransactionFullHashes();
-        if (hashes.size() > Constants.MAX_PHASING_VOTE_TRANSACTIONS) {
-            throw new AplException.NotValidException("No more than " + Constants.MAX_PHASING_VOTE_TRANSACTIONS + " votes allowed for two-phased multi-voting");
-        }
         long voterId = transaction.getSenderId();
         for (byte[] hash : hashes) {
             long phasedTransactionId = Convert.fullHashToId(hash);
-            if (phasedTransactionId == 0) {
-                throw new AplException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
-            };
             PhasingPollResult result = phasingPollService.getResult(phasedTransactionId);
             if (result != null) {
                 throw new AplException.NotCurrentlyValidException("Phasing poll " + phasedTransactionId + " is already finished");
@@ -124,7 +115,7 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
                 if (algorithm != 0 && algorithm != poll.getAlgorithm()) {
                     throw new AplException.NotValidException("Phased transaction " + Long.toUnsignedString(phasedTransactionId) + " is using a different hashedSecretAlgorithm");
                 }
-                if (hashedSecret == null && !phasingPollService.verifySecret(poll, revealedSecret)) {
+                if (hashedSecret == null && !PhasingPollService.verifySecret(poll, revealedSecret)) {
                     throw new AplException.NotValidException("Revealed secret does not match phased transaction hashed secret");
                 }
                 hashedSecret = poll.getHashedSecret();
@@ -144,6 +135,25 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
                 throw new AplException.NotCurrentlyValidException(String.format("Phased transaction finishes at timestamp %d which is not after approval transaction timestamp %d", poll.getFinishTime(), transaction.getTimestamp()));
             }
 
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
+        byte[] revealedSecret = attachment.getRevealedSecret();
+        if (revealedSecret.length > Constants.MAX_PHASING_REVEALED_SECRET_LENGTH) {
+            throw new AplException.NotValidException("Invalid revealed secret length " + revealedSecret.length);
+        }
+        List<byte[]> hashes = attachment.getTransactionFullHashes();
+        if (hashes.size() > Constants.MAX_PHASING_VOTE_TRANSACTIONS) {
+            throw new AplException.NotValidException("No more than " + Constants.MAX_PHASING_VOTE_TRANSACTIONS + " votes allowed for two-phased multi-voting");
+        }
+        for (byte[] hash : hashes) {
+            long phasedTransactionId = Convert.fullHashToId(hash);
+            if (phasedTransactionId == 0) {
+                throw new AplException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
+            }
         }
     }
 

@@ -31,8 +31,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.inject.Singleton;
+
 @Slf4j
 @NoArgsConstructor
+@Singleton
 public final class ProcessBlock extends PeerRequestHandler {
 
     @Override

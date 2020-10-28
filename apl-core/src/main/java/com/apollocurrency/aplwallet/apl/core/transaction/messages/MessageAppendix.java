@@ -101,7 +101,12 @@ public class MessageAppendix extends AbstractAppendix {
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
+    }
+
+    @Override
+    public void performLightweightValidation(Transaction transaction, int blockcHeight) throws AplException.ValidationException {
         throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
     }
 

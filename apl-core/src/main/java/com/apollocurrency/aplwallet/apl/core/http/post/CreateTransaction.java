@@ -247,7 +247,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
             if (txRequest.isBroadcast()) {
                 lookupTransactionProcessor().broadcast(transaction);
             } else if (txRequest.isValidate()) {
-                validator.validate(transaction);
+                validator.validateFully(transaction);
             }
         } catch (AplException.NotYetEnabledException e) {
             throw new AplException.NotValidException(FEATURE_NOT_AVAILABLE);
