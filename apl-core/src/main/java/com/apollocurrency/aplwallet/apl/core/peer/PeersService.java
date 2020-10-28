@@ -184,7 +184,8 @@ public class PeersService {
         this.timeLimiterService = timeLimiterService;
         this.accountService = accountService;
         this.transactionConverter = transactionConverter;
-        this.blockConverter = blockConverter;
+        this.blockConverter = new BlockConverter(blockchain, transactionConverter, null, accountService);
+        this.blockConverter.setAddTransactions(true);
         int asyncTxSendingPoolSize = propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30);
 //        this.txSendingDispatcher = new ThreadPoolExecutor(5, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(asyncTxSendingPoolSize), new NamedThreadFactory("P2PTxSendingPool", true));
 
