@@ -78,7 +78,7 @@ public class TransactionProcessingTaskScheduler {
                     .build());
                 dispatcher.schedule(Task.builder()
                     .name("PendingBroadcaster")
-                    .delay(250)
+                    .delay(125)
                     .task(new PendingBroadcastTask( transactionProcessor,  memPool, batchSizeCalculator, transactionValidator, processingService))
                     .build());
                 dispatcher.invokeAfter(Task.builder()
@@ -100,7 +100,7 @@ public class TransactionProcessingTaskScheduler {
                     this.databaseManager, transactionProcessor, this.timeService, memPool))
                 .build());
             dispatcher.schedule(Task.builder()
-                .name("ProcessWaitingTransactions")
+                .name("ProcessLaterTransactions")
                 .delay(3000)
                 .task(new ProcessLaterTransactionsThread(transactionProcessor))
                 .build());

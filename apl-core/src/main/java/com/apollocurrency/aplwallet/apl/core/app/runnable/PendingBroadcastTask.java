@@ -43,15 +43,11 @@ public class PendingBroadcastTask implements Runnable {
     }
 
     void broadcastPendingQueue() {
-            try {
-//                if (memPool.pendingBroadcastQueueLoad() > 0.05) {
-                    broadcastBatch();
-//                } else {
-//                    broadcastOnePending();
-//                }
-            } catch (Exception e) {
-                log.error("Unknown error during broadcasting pending queue", e);
-            }
+        try {
+            broadcastBatch();
+        } catch (Exception e) {
+            log.error("Unknown error during broadcasting pending queue", e);
+        }
     }
 
     void broadcastBatch() {
