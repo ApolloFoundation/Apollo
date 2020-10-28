@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
@@ -148,12 +149,14 @@ class CurrencyServiceTest {
         doReturn("ANY_CODE").when(attach).getCode();
         doReturn("ANY_NAME").when(attach).getName();
         doReturn(null).doReturn(null).when(currencyTable).getBy(any(DbClause.StringClause.class));
+        doReturn("currency").when(currencyTable).getTableName();
 
         //WHEN
         service.addCurrency(LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), tr, account, attach);
 
         //THEN
         verify(currencyTable).insert(any(Currency.class));
+        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
     }
 
     @Test
@@ -232,7 +235,7 @@ class CurrencyServiceTest {
         Stream<CurrencyBuyOffer> buyOffers = Stream.of(mock(CurrencyBuyOffer.class));
         doReturn(buyOffers).when(buyOfferService).getOffersStream(td.CURRENCY_3, 0, -1);
         doReturn(buyOfferService).when(currencyExchangeOfferFacade).getCurrencyBuyOfferService();
-
+        doReturn("currency").when(currencyTable).getTableName();
         //WHEN
         service.delete(td.CURRENCY_3, LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), account);
         //THEN
@@ -240,6 +243,7 @@ class CurrencyServiceTest {
         verify(accountCurrencyService).addToUnconfirmedCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
         verify(accountCurrencyService).addToCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
         verify(currencyTable).deleteAtHeight(any(Currency.class), anyInt());
+        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
     }
 
     @Test

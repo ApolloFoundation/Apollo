@@ -211,7 +211,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     public void commitIndex() throws SQLException {
         indexLock.writeLock().lock();
         try {
-            if (indexWriter.isOpen()) {
+            if (indexWriter != null && indexWriter.isOpen()) {
                 indexWriter.commit();
             }
             DirectoryReader newReader = DirectoryReader.openIfChanged(indexReader);

@@ -459,6 +459,7 @@ public class DGSServiceImpl implements DGSService {
         return goodsTable.search(query, new SellerDbClause(sellerId, inStockOnly), from, to,
             " ORDER BY ft.score DESC, goods.name ASC, goods.timestamp DESC ");
     }
+
     private void createAndFireFullTextSearchDataEvent(DGSGoods goods, FullTextOperationData.OperationType operationType) {
         FullTextOperationData operationData = new FullTextOperationData(
             goodsTable.getTableName() + ";DB_ID;" + goods.getDbId(), goodsTable.getTableName());

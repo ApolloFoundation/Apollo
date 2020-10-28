@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDeleteService;
@@ -41,7 +42,7 @@ class AssetServiceTest {
     AssetService service;
     AssetTestData td;
     @Mock
-    private AssetTable table;
+    private AssetTable assetTable;
     @Mock
     private BlockChainInfoService blockChainInfoService;
     @Mock
@@ -54,7 +55,7 @@ class AssetServiceTest {
     @BeforeEach
     void setUp() {
         td = new AssetTestData();
-        service = new AssetServiceImpl(table, blockChainInfoService, assetDeleteService,
+        service = new AssetServiceImpl(assetTable, blockChainInfoService, assetDeleteService,
             assetIteratorToStreamConverter, fullTextSearchUpdater);
     }
 
@@ -62,7 +63,7 @@ class AssetServiceTest {
     void getAllAssets() {
         //GIVEN
         DbIterator<Asset> dbIt = mock(DbIterator.class);
-        doReturn(dbIt).when(table).getAll(eq(0), eq(10));
+        doReturn(dbIt).when(assetTable).getAll(eq(0), eq(10));
         Stream<Asset> expected = Stream.of(td.ASSET_0, td.ASSET_1, td.ASSET_2);
         doReturn(expected).when(assetIteratorToStreamConverter).apply(dbIt);
 
@@ -71,54 +72,54 @@ class AssetServiceTest {
         assertEquals(expected, result);
 
         //THEN
-        verify(table).getAll(eq(0), eq(10));
+        verify(assetTable).getAll(eq(0), eq(10));
         verify(assetIteratorToStreamConverter).apply(dbIt);
     }
 
     @Test
     void getCount() {
         //GIVEN
-        doReturn(10).when(table).getCount();
+        doReturn(10).when(assetTable).getCount();
 
         //WHEN
         int result = service.getCount();
         assertEquals(10, result);
 
         //THEN
-        verify(table).getCount();
+        verify(assetTable).getCount();
     }
 
     @Test
     void getAsset() {
         //GIVEN
-        doReturn(td.ASSET_0).when(table).get(any(DbKey.class));
+        doReturn(td.ASSET_0).when(assetTable).get(any(DbKey.class));
 
         //WHEN
         Asset result = service.getAsset(td.ASSET_0.getId());
         assertNotNull(result);
 
         //THEN
-        verify(table).get(any(DbKey.class));
+        verify(assetTable).get(any(DbKey.class));
     }
 
     @Test
     void testGetAsset_with_height() {
         //GIVEN
-        doReturn(td.ASSET_0).when(table).get(any(DbKey.class), any(Integer.class));
+        doReturn(td.ASSET_0).when(assetTable).get(any(DbKey.class), any(Integer.class));
 
         //WHEN
         Asset result = service.getAsset(td.ASSET_0.getId(), 10);
         assertNotNull(result);
 
         //THEN
-        verify(table).get(any(DbKey.class), any(Integer.class));
+        verify(assetTable).get(any(DbKey.class), any(Integer.class));
     }
 
     @Test
     void getAssetsIssuedBy() {
         //GIVEN
         DbIterator<Asset> dbIt = mock(DbIterator.class);
-        doReturn(dbIt).when(table).getManyBy(any(DbClause.class), eq(0), eq(10));
+        doReturn(dbIt).when(assetTable).getManyBy(any(DbClause.class), eq(0), eq(10));
         Stream<Asset> expected = Stream.of(td.ASSET_0, td.ASSET_1, td.ASSET_2);
         doReturn(expected).when(assetIteratorToStreamConverter).apply(dbIt);
 
@@ -127,7 +128,7 @@ class AssetServiceTest {
         assertEquals(expected, result);
 
         //THEN
-        verify(table).getManyBy(any(DbClause.class), eq(0), eq(10));
+        verify(assetTable).getManyBy(any(DbClause.class), eq(0), eq(10));
         verify(assetIteratorToStreamConverter).apply(dbIt);
     }
 
@@ -135,7 +136,7 @@ class AssetServiceTest {
     void searchAssets() {
         //GIVEN
         DbIterator<Asset> dbIt = mock(DbIterator.class);
-        doReturn(dbIt).when(table).search(any(String.class), any(DbClause.class), eq(0), eq(10), any(String.class));
+        doReturn(dbIt).when(assetTable).search(any(String.class), any(DbClause.class), eq(0), eq(10), any(String.class));
         Stream<Asset> expected = Stream.of(td.ASSET_0, td.ASSET_1, td.ASSET_2);
         doReturn(expected).when(assetIteratorToStreamConverter).apply(dbIt);
 
@@ -144,7 +145,7 @@ class AssetServiceTest {
         assertEquals(expected, result);
 
         //THEN
-        verify(table).search(any(String.class), any(DbClause.class), eq(0), eq(10), any(String.class));
+        verify(assetTable).search(any(String.class), any(DbClause.class), eq(0), eq(10), any(String.class));
         verify(assetIteratorToStreamConverter).apply(dbIt);
     }
 
@@ -153,31 +154,35 @@ class AssetServiceTest {
         //GIVEN
         Transaction tr = mock(Transaction.class);
         ColoredCoinsAssetIssuance attach = mock(ColoredCoinsAssetIssuance.class);
-        doNothing().when(table).insert(any(Asset.class));
+        doNothing().when(assetTable).insert(any(Asset.class));
+        doReturn("asset").when(assetTable).getTableName();
 
         //WHEN
         service.addAsset(tr, attach);
 
         //THEN
-        verify(table).insert(any(Asset.class));
+        verify(assetTable).insert(any(Asset.class));
+        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
     }
 
     @Test
     void deleteAsset() {
         //GIVEN
         Transaction tr = mock(Transaction.class);
-        doReturn(td.ASSET_0).when(table).get(any(DbKey.class));
-        doNothing().when(table).insert(any(Asset.class));
+        doReturn(td.ASSET_0).when(assetTable).get(any(DbKey.class));
+        doNothing().when(assetTable).insert(any(Asset.class));
         AssetDelete assetDelete = mock(AssetDelete.class);
         doReturn(assetDelete).when(assetDeleteService).addAssetDelete(tr, td.ASSET_0.getId(), 10);
         doReturn(100).when(blockChainInfoService).getHeight();
+        doReturn("asset").when(assetTable).getTableName();
 
         //WHEN
         service.deleteAsset(tr, td.ASSET_0.getId(), 10L);
 
         //THEN
-        verify(table).get(any(DbKey.class));
-        verify(table).insert(any(Asset.class));
+        verify(assetTable).get(any(DbKey.class));
+        verify(assetTable).insert(any(Asset.class));
         verify(assetDeleteService).addAssetDelete(tr, td.ASSET_0.getId(), 10);
+        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
     }
 }

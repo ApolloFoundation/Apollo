@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollOptionResultService;
@@ -31,6 +32,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -267,12 +270,17 @@ class PollServiceImplTest {
         when(blockChainInfoService.getLastBlockTimestamp()).thenReturn(timestamp);
         final int height = 1000;
         when(blockChainInfoService.getHeight()).thenReturn(height);
+        doReturn("poll").when(pollTable).getTableName();
+        Poll poll = mock(Poll.class);
+        doReturn(10L).when(poll).getDbId();
+        doReturn(poll).when(pollTable).addPoll(transaction, attachment, timestamp, height);
 
         //WHEN
         pollService.addPoll(transaction, attachment);
 
         //THEN
         verify(pollTable).addPoll(transaction, attachment, timestamp, height);
+        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
     }
 
     @ParameterizedTest

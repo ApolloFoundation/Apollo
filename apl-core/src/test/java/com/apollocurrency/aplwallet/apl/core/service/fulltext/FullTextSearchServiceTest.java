@@ -70,7 +70,7 @@ class FullTextSearchServiceTest extends DbContainerBaseTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-        TaggedDataServiceImpl.class,
+        TaggedDataServiceImpl.class, FullTextSearchUpdater.class,
         GlobalSyncImpl.class,
         TransactionRowMapper.class,
         TransactionBuilder.class,
