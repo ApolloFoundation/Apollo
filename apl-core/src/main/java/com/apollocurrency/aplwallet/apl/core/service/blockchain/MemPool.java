@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -36,7 +35,7 @@ public class MemPool {
     private final TransactionValidator validator;
     private final boolean enableRebroadcasting;
     private final int maxUnconfirmedTransactions;
-    private final AtomicInteger currentNumberOfUnconfirmedTxs = new AtomicInteger(-1);
+//    private final AtomicInteger currentNumberOfUnconfirmedTxs = new AtomicInteger(-1);
 
     @Inject
     public MemPool(MemPoolUnconfirmedTransactionTable table,
@@ -51,18 +50,13 @@ public class MemPool {
         this.memoryState = memoryState;
         this.globalSync = globalSync;
         this.validator = validator;
-        allProcessedCount();
+//        allProcessedCount();
     }
 
     public Transaction getUnconfirmedTransaction(long id) {
-        globalSync.readLock();
-        try {
-            Transaction transaction = memoryState.getFromCacheSorted(id);
-            if (transaction != null) {
-                return transaction;
-            }
-        } finally {
-            globalSync.readUnlock();
+        Transaction transaction = memoryState.getFromCacheSorted(id);
+        if (transaction != null) {
+            return transaction;
         }
         return table.getById(id);
     }
@@ -112,7 +106,6 @@ public class MemPool {
         if (canSaveTxs) {
             table.insert(tx);
             memoryState.putInCache(tx);
-            currentNumberOfUnconfirmedTxs.incrementAndGet();
         }
         return canSaveTxs;
     }
@@ -124,7 +117,8 @@ public class MemPool {
     }
 
     public int allProcessedCount() {
-        return currentNumberOfUnconfirmedTxs.compareAndExchange(-1, table.getCount());
+//        return currentNumberOfUnconfirmedTxs.compareAndExchange(-1, table.getCount());
+        return table.getCount();
     }
 //
     public void removeOutdatedBroadcastedTransactions(Transaction transaction) {
@@ -162,30 +156,6 @@ public class MemPool {
     public int processLaterQueueSize() {
         return memoryState.processLaterQueueSize();
     }
-//
-//    public Collection<UnconfirmedTransaction> getWaitingTransactionsUnmodifiedCollection() {
-//        return Collections.unmodifiableCollection(waitingTransactions);
-//    }
-//
-//    public Map<Transaction, Transaction> getTxToBroadcastWhenConfirmed() {
-//        return txToBroadcastWhenConfirmed;
-//    }
-//
-//    public Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> getUnconfirmedDuplicates() {
-//        return unconfirmedDuplicates;
-//    }
-//
-//    public Set<Transaction> getBroadcastedTransactions() {
-//        return broadcastedTransactions;
-//    }
-//
-//    public int getBroadcastedTransactionsSize() {
-//        return broadcastedTransactions.size();
-//    }
-//
-//    public Map<Long, UnconfirmedTransaction> getTransactionCache() {
-//        return transactionCache;
-//    }
 
     public boolean softBroadcast(Transaction uncTx) throws AplException.ValidationException {
         validator.validateLightly(uncTx);
@@ -195,7 +165,6 @@ public class MemPool {
     public void clear() {
         memoryState.clear();
         table.truncate();
-        currentNumberOfUnconfirmedTxs.set(0);
     }
 
     public Transaction nextSoftBroadcastTransaction() throws InterruptedException {
@@ -206,8 +175,6 @@ public class MemPool {
         globalSync.writeLock();
         try {
             getAllProcessedStream().forEach(e -> {
-//                if (memoryState.isDuplicate(e.getTransaction())) {
-//                    log.debug("Skipping duplicate unconfirmed transaction {}", e.getId());
                 if (enableRebroadcasting) {
                     memoryState.addToBroadcasted(e.getTransaction());
                 }
@@ -223,11 +190,7 @@ public class MemPool {
 
     public boolean removeProcessedTransaction(long id) {
         boolean deleted = table.deleteById(id);
-        if (deleted) {
-            currentNumberOfUnconfirmedTxs.decrementAndGet();
-            memoryState.removeFromCache(id);
-
-        }
+        memoryState.removeFromCache(id);
         return deleted;
     }
 

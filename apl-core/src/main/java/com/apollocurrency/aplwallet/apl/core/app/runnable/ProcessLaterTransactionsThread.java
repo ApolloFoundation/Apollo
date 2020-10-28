@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.util.BatchSizeCalculator;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -14,19 +15,24 @@ import lombok.extern.slf4j.Slf4j;
 public class ProcessLaterTransactionsThread implements Runnable {
 
     private final TransactionProcessor processor;
+    private final BatchSizeCalculator batchSizeCalculator;
 
     public ProcessLaterTransactionsThread(TransactionProcessor processor) {
         this.processor = processor;
+        this.batchSizeCalculator = new BatchSizeCalculator(1000, 16, 1024);
         log.info("Created 'ProcessLaterTransactionsThread' instance");
     }
 
     @Override
     public void run() {
         try {
+            batchSizeCalculator.startTiming(batchSizeCalculator.currentBatchSize());
             try {
-                processor.processDelayedTxs(100);
+                processor.processDelayedTxs(batchSizeCalculator.currentBatchSize());
             } catch (Exception e) {
                 log.info("Error processing unconfirmed transactions", e);
+            } finally {
+                batchSizeCalculator.stopTiming();
             }
         } catch (Throwable t) {
             log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString());
