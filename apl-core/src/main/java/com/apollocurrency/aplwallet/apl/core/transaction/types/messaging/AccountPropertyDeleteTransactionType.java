@@ -56,7 +56,7 @@ public class AccountPropertyDeleteTransactionType extends MessagingTransactionTy
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         MessagingAccountPropertyDelete attachment = (MessagingAccountPropertyDelete) transaction.getAttachment();
         AccountProperty accountProperty = propertyService.getProperty(attachment.getPropertyId());
         if (accountProperty == null) {
@@ -68,6 +68,10 @@ public class AccountPropertyDeleteTransactionType extends MessagingTransactionTy
         if (accountProperty.getRecipientId() != transaction.getRecipientId()) {
             throw new AplException.NotValidException("Account property " + Long.toUnsignedString(attachment.getPropertyId()) + " does not belong to " + Long.toUnsignedString(transaction.getRecipientId()));
         }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         if (transaction.getAmountATM() != 0) {
             throw new AplException.NotValidException("Account property transaction cannot be used to send " + getBlockchainConfig().getCoinSymbol());
         }

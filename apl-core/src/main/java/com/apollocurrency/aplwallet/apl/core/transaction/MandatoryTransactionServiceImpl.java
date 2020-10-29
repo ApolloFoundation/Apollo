@@ -104,7 +104,7 @@ public class MandatoryTransactionServiceImpl implements MandatoryTransactionServ
     }
 
     private void validateAndBroadcast(Transaction tx) throws AplException.ValidationException {
-        txValidator.validate(tx);
+        txValidator.validateFully(tx);
         txProcessor.broadcast(tx);
     }
 

@@ -44,6 +44,7 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
@@ -514,21 +515,21 @@ public class PhasingPollServiceTest {
 
     @Test
     void testVerifyRevealedSecret() {
-        boolean verified = service.verifySecret(ptd.POLL_0, "fasfas".getBytes());
+        boolean verified = PhasingPollService.verifySecret(ptd.POLL_0, "fasfas".getBytes());
 
         assertTrue(verified);
     }
 
     @Test
     void testVerifyRevealedSecretForWrongPhasingPoll() {
-        boolean verified = service.verifySecret(ptd.POLL_1, "fasfas".getBytes());
+        boolean verified = PhasingPollService.verifySecret(ptd.POLL_1, "fasfas".getBytes());
 
         assertFalse(verified);
     }
 
     @Test
     void testVerifyWrongRevealedSecret() {
-        boolean verified = service.verifySecret(ptd.POLL_0, "fasfa".getBytes());
+        boolean verified = PhasingPollService.verifySecret(ptd.POLL_0, "fasfa".getBytes());
 
         assertFalse(verified);
     }

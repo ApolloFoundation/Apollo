@@ -245,6 +245,11 @@ public class EntityProducer {
             }
 
             @Override
+            public void sendAsync(BaseP2PRequest request) {
+
+            }
+
+            @Override
             public boolean isOutbound() {
                 return false;
             }

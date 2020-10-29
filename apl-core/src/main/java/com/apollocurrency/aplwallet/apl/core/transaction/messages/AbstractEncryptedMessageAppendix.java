@@ -86,7 +86,7 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
         throw new UnsupportedOperationException("Validation for encrypted message appendix is not supported");
     }
 

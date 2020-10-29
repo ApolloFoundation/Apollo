@@ -29,7 +29,11 @@ import org.json.simple.JSONStreamAware;
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
+/**
+ * Do nothing. 'Requeue' operation is not available for new mempool impl
+ */
 @Vetoed
+@Deprecated
 public final class RequeueUnconfirmedTransactions extends AbstractAPIRequestHandler {
 
     public RequeueUnconfirmedTransactions() {
@@ -40,7 +44,7 @@ public final class RequeueUnconfirmedTransactions extends AbstractAPIRequestHand
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
         try {
-            lookupTransactionProcessor().requeueAllUnconfirmedTransactions();
+//            lookupTransactionProcessor().requeueAllUnconfirmedTransactions();
             response.put("done", true);
         } catch (RuntimeException e) {
             JSONData.putException(response, e);

@@ -5,13 +5,10 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.dex;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -70,7 +67,7 @@ public class DexCloseOrderTransaction extends DexTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction tx) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction tx) throws AplException.ValidationException {
         DexCloseOrderAttachment attachment = (DexCloseOrderAttachment) tx.getAttachment();
         ExchangeContract dexContract = dexService.getDexContractById(attachment.getContractId());
         if (dexContract == null) {
@@ -115,6 +112,11 @@ public class DexCloseOrderTransaction extends DexTransactionType {
         if (phasingPollService.getPoll(transferId) == null && phasingPollService.getResult(transferId) == null) {
             throw new AplException.NotCurrentlyValidException("Transfer tx " + transferId + " was not phased");
         }
+
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
 
     }
 

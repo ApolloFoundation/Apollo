@@ -73,15 +73,8 @@ public class DeliveryTransactionType extends DigitalGoodsTransactionType {
     }
 
     @Override
-    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) transaction.getAttachment();
-        dgsService.deliver(transaction, attachment);
-    }
-
-    @Override
-    public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
-        DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) transaction.getAttachment();
-        DGSPurchase purchase = dgsService.getPendingPurchase(attachment.getPurchaseId());
         if (attachment.getGoodsDataLength() > Constants.MAX_DGS_GOODS_LENGTH) {
             throw new AplException.NotValidException("Invalid digital goods delivery data length: " + attachment.getGoodsDataLength());
         }
@@ -91,10 +84,24 @@ public class DeliveryTransactionType extends DigitalGoodsTransactionType {
             }
         }
         if (attachment.getDiscountATM() < 0
-            || attachment.getDiscountATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
-            || (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId()
+            || attachment.getDiscountATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
+            throw new AplException.NotValidException("Invalid digital goods delivery: " + attachment.getJSONObject());
+        }
+    }
+
+    @Override
+    public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) transaction.getAttachment();
+        dgsService.deliver(transaction, attachment);
+    }
+
+    @Override
+    public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
+        DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) transaction.getAttachment();
+        DGSPurchase purchase = dgsService.getPendingPurchase(attachment.getPurchaseId());
+        if (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId()
             || transaction.getSenderId() != purchase.getSellerId()
-            || attachment.getDiscountATM() > Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity())))) {
+            || attachment.getDiscountATM() > Math.multiplyExact(purchase.getPriceATM(), (long) purchase.getQuantity()))) {
             throw new AplException.NotValidException("Invalid digital goods delivery: " + attachment.getJSONObject());
         }
         if (purchase == null || purchase.getEncryptedGoods() != null) {

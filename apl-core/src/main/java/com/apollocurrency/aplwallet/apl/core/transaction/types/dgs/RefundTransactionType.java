@@ -54,6 +54,18 @@ class RefundTransactionType extends DigitalGoodsTransactionType {
     }
 
     @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
+        if (attachment.getRefundATM() < 0
+            || attachment.getRefundATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
+            throw new AplException.NotValidException("Invalid digital goods refund: " + attachment.getJSONObject());
+        }
+        if (transaction.getEncryptedMessage() != null && !transaction.getEncryptedMessage().isText()) {
+            throw new AplException.NotValidException("Only text encrypted messages allowed");
+        }
+    }
+
+    @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
         if (senderAccount.getUnconfirmedBalanceATM() >= attachment.getRefundATM()) {
@@ -79,14 +91,9 @@ class RefundTransactionType extends DigitalGoodsTransactionType {
     public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
         DigitalGoodsRefund attachment = (DigitalGoodsRefund) transaction.getAttachment();
         DGSPurchase purchase = dgsService.getPurchase(attachment.getPurchaseId());
-        if (attachment.getRefundATM() < 0
-            || attachment.getRefundATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
-            || (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId()
-            || transaction.getSenderId() != purchase.getSellerId()))) {
+        if (purchase != null && (purchase.getBuyerId() != transaction.getRecipientId()
+            || transaction.getSenderId() != purchase.getSellerId())) {
             throw new AplException.NotValidException("Invalid digital goods refund: " + attachment.getJSONObject());
-        }
-        if (transaction.getEncryptedMessage() != null && !transaction.getEncryptedMessage().isText()) {
-            throw new AplException.NotValidException("Only text encrypted messages allowed");
         }
         if (purchase == null || purchase.getEncryptedGoods() == null || purchase.getRefundATM() != 0) {
             throw new AplException.NotCurrentlyValidException("Purchase does not exist or is not delivered or is already refunded");

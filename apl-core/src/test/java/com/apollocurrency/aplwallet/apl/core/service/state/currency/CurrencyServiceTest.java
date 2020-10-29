@@ -263,7 +263,8 @@ class CurrencyServiceTest {
         doReturn("APL").when(blockchainConfig).getCoinSymbol();
 
         //WHEN
-        service.validateCurrencyNaming(td.CURRENCY_3.getAccountId(), issuance);
+        service.validateCurrencyNamingStateDependent(td.CURRENCY_3.getAccountId(), issuance);
+        service.validateCurrencyNamingStateIndependent(issuance);
     }
 
 

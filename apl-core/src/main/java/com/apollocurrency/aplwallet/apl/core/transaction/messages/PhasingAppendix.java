@@ -158,8 +158,13 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
         throw new UnsupportedOperationException("Validation for phasing appendix is not supported, use separate class");
+    }
+
+    @Override
+    public void performLightweightValidation(Transaction transaction, int blockcHeight) throws AplException.ValidationException {
+        throw new UnsupportedOperationException("Validation for phasing appendix is not supported, use separate validator");
     }
 
     public int getFinishHeight() {

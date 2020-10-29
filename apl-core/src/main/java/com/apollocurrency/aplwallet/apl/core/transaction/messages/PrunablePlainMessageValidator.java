@@ -25,7 +25,11 @@ public class PrunablePlainMessageValidator extends AbstractAppendixValidator<Pru
     }
 
     @Override
-    public void validate(Transaction transaction, PrunablePlainMessageAppendix appendix, int validationHeight) throws AplException.ValidationException {
+    public void validateStateDependent(Transaction transaction, PrunablePlainMessageAppendix appendix, int validationHeight) throws AplException.ValidationException {
+    }
+
+    @Override
+    public void validateStateIndependent(Transaction transaction, PrunablePlainMessageAppendix appendix, int validationHeight) throws AplException.ValidationException {
         if (transaction.getMessage() != null) {
             throw new AplException.NotValidException("Cannot have both message and prunable message attachments");
         }

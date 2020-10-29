@@ -77,6 +77,26 @@ public class ListingTransactionType extends DigitalGoodsTransactionType {
     }
 
     @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
+        if (attachment.getName().length() == 0 || attachment.getName().length() > Constants.MAX_DGS_LISTING_NAME_LENGTH || attachment.getDescription().length() > Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH || attachment.getTags().length() > Constants.MAX_DGS_LISTING_TAGS_LENGTH || attachment.getQuantity() < 0 || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
+            throw new AplException.NotValidException("Invalid digital goods listing: " + attachment.getJSONObject());
+        }
+        PrunablePlainMessageAppendix prunablePlainMessage = transaction.getPrunablePlainMessage();
+        if (prunablePlainMessage != null) {
+//            prunableLoadingService.loadPrunable(transaction, prunablePlainMessage, false);
+            byte[] image = prunablePlainMessage.getMessage();
+            if (image != null) {
+                String mediaTypeName = Search.detectMimeType(image);
+                String mediaType = mediaTypeName.substring(0, mediaTypeName.indexOf("/"));
+                if (StringUtils.isBlank(mediaType) || !"image".equals(mediaType)) {
+                    throw new AplException.NotValidException("Only image attachments allowed for DGS listing, media type is " + mediaType);
+                }
+            }
+        }
+    }
+
+    @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
         dgsService.listGoods(transaction, attachment);
@@ -84,23 +104,7 @@ public class ListingTransactionType extends DigitalGoodsTransactionType {
 
     @Override
     public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
-        DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
-        if (attachment.getName().length() == 0 || attachment.getName().length() > Constants.MAX_DGS_LISTING_NAME_LENGTH || attachment.getDescription().length() > Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH || attachment.getTags().length() > Constants.MAX_DGS_LISTING_TAGS_LENGTH || attachment.getQuantity() < 0 || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
-            throw new AplException.NotValidException("Invalid digital goods listing: " + attachment.getJSONObject());
-        }
-        PrunablePlainMessageAppendix prunablePlainMessage = transaction.getPrunablePlainMessage();
-        if (prunablePlainMessage != null) {
-            prunableLoadingService.loadPrunable(transaction, prunablePlainMessage, false);
-            byte[] image = prunablePlainMessage.getMessage();
-            if (image != null) {
 
-                    String mediaTypeName = Search.detectMimeType(image);
-                String mediaType = mediaTypeName.substring(0, mediaTypeName.indexOf("/"));
-                if (StringUtils.isBlank(mediaType) || !"image".equals(mediaType)) {
-                    throw new AplException.NotValidException("Only image attachments allowed for DGS listing, media type is " + mediaType);
-                }
-            }
-        }
     }
 
     @Override

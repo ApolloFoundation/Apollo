@@ -129,7 +129,12 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        throw new UnsupportedOperationException("Validation is not supported, use separate class");
+    }
+
+    @Override
+    public void performLightweightValidation(Transaction transaction, int blockcHeight) throws AplException.ValidationException {
         throw new UnsupportedOperationException("Validation is not supported, use separate class");
     }
 

@@ -13,6 +13,7 @@ public abstract class AbstractAppendixValidator<T extends Appendix> implements A
         if (!phasingAppendix.isPhased(transaction)) {
             return;
         }
-        validate(transaction, phasingAppendix, blockHeight);
+        validateStateIndependent(transaction, phasingAppendix, blockHeight);
+        validateStateDependent(transaction, phasingAppendix, blockHeight);
     }
 }

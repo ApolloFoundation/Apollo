@@ -6,13 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.util.BatchSizeCalculator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTxValidationResult;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.BatchSizeCalculator;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,16 +43,10 @@ public class PendingBroadcastTask implements Runnable {
     }
 
     void broadcastPendingQueue() {
-        while (true) {
-            try {
-                if (memPool.pendingBroadcastQueueLoad() > 0.05) {
-                    broadcastBatch();
-                } else {
-                    broadcastOnePending();
-                }
-            } catch (Exception e) {
-                log.error("Unknown error during broadcasting pending queue", e);
-            }
+        try {
+            broadcastBatch();
+        } catch (Exception e) {
+            log.error("Unknown error during broadcasting pending queue", e);
         }
     }
 
@@ -61,20 +54,19 @@ public class PendingBroadcastTask implements Runnable {
         int batchSize = batchSize();
         List<Transaction> transactions = collectBatch(batchSize);
         if (!transactions.isEmpty()) {
-            batchSizeCalculator.startTiming(batchSize);
+            batchSizeCalculator.startTiming(System.currentTimeMillis(), batchSize);
             try {
                 log.debug("Pending processing batch size {}, transactions {}", batchSize, transactions.size());
                 txProcessor.broadcast(transactions);
             } finally {
-                batchSizeCalculator.stopTiming();
+                batchSizeCalculator.stopTiming(System.currentTimeMillis());
             }
         }
-        ThreadUtils.sleep(100);
     }
 
     int batchSize() {
         int batchSize = batchSizeCalculator.currentBatchSize();
-        log.debug("Load factor {}, batch size {}", memPool.pendingBroadcastQueueLoad(), batchSize);
+        log.trace("Load factor {}, batch size {}", memPool.pendingBroadcastQueueLoad(), batchSize);
         return batchSize;
     }
 
@@ -105,7 +97,7 @@ public class PendingBroadcastTask implements Runnable {
         try {
             if (memPool.pendingBroadcastQueueSize() > 0) { // try to not lock
                 Transaction tx = memPool.nextSoftBroadcastTransaction();
-                validator.validate(tx);
+                validator.validateLightly(tx);
                 UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(tx);
                 if (!validationResult.isOk()) {
                     return new NextPendingTx(null, true);
@@ -134,7 +126,6 @@ public class PendingBroadcastTask implements Runnable {
 
     void broadcastOnePending() {
         doBroadcastOnePendingTx();
-        ThreadUtils.sleep(50);
     }
 
 

@@ -123,6 +123,8 @@ public interface Peer extends Comparable<Peer> {
 
     PeerTrustLevel getTrustLevel();
 
+    void sendAsync(BaseP2PRequest request);
+
     long getServices();
 
     long getLastActivityTime();

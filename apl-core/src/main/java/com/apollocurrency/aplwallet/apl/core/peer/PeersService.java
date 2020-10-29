@@ -48,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.util.Listener;
 import com.apollocurrency.aplwallet.apl.util.Listeners;
 import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
@@ -76,16 +77,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Singleton
 @Slf4j
@@ -96,7 +98,7 @@ public class PeersService {
     static final int MAX_ANNOUNCED_ADDRESS_LENGTH = 200;
     private static final Logger LOG = LoggerFactory.getLogger(PeersService.class);
     private static final Version MAX_VERSION = Constants.VERSION;
-    private static final int sendTransactionsBatchSize = 100;
+    private static final int sendTransactionsBatchSize = 200;
     private final static String BACKGROUND_SERVICE_NAME = "PeersService";
     public static final int DEFAULT_CONNECT_TIMEOUT = 2000; //2s default websocket connect timeout
     public static int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
@@ -113,7 +115,6 @@ public class PeersService {
     public static int myPort;
     static int readTimeout;
     static int blacklistingPeriod;
-    static boolean useWebSockets;
     static int webSocketIdleTimeout;
     static boolean useProxy;
     static boolean isGzipEnabled;
@@ -146,7 +147,7 @@ public class PeersService {
      * be added to connectablePeers
      */
     private final ConcurrentMap<String, Peer> inboundPeers = new ConcurrentHashMap<>();
-    private final ExecutorService sendingService = Executors.newFixedThreadPool(10, new NamedThreadFactory("PeersSendingService"));
+    private final ThreadPoolExecutor sendingService;
     private final TimeLimiterService timeLimiterService;
     private final PropertiesHolder propertiesHolder;
     private final Blockchain blockchain;
@@ -168,7 +169,7 @@ public class PeersService {
     private final PeerDao peerDao;
     private final TransactionConverter transactionConverter;
     private final BlockConverter blockConverter;
-    private final ExecutorService txSendingDispatcher;
+//    private final ExecutorService txSendingDispatcher;
 
     @Inject
     public PeersService(PropertiesHolder propertiesHolder,
@@ -195,16 +196,13 @@ public class PeersService {
         this.identityService = identityService;
         this.peerDao = peerDao; 
         this.transactionConverter = transactionConverter;
-        this.blockConverter = blockConverter;
-        this.txSendingDispatcher = new ThreadPoolExecutor(5,
-                propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30), 
-                60000, TimeUnit.MILLISECONDS, 
-                new ArrayBlockingQueue<>(500), 
-                new NamedThreadFactory("P2PTxSendingPool", true)
-        );
+        this.blockConverter = new BlockConverter(blockchain, transactionConverter, null, accountService);
+        this.blockConverter.setAddTransactions(true);
+        int asyncTxSendingPoolSize = propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30);
+//        this.txSendingDispatcher = new ThreadPoolExecutor(5, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(asyncTxSendingPoolSize), new NamedThreadFactory("P2PTxSendingPool", true));
 
-
-        isLightClient = propertiesHolder.isLightClient();
+        this.sendingService = new TimeTraceDecoratedThreadPoolExecutor(10, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(1000), new NamedThreadFactory("PeersSendingService"));
+    isLightClient = propertiesHolder.isLightClient();
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -278,7 +276,6 @@ public class PeersService {
         enableHallmarkProtection = propertiesHolder.getBooleanProperty("apl.enableHallmarkProtection") && !propertiesHolder.isLightClient();
         pushThreshold = propertiesHolder.getIntProperty("apl.pushThreshold");
         pullThreshold = propertiesHolder.getIntProperty("apl.pullThreshold");
-        useWebSockets = propertiesHolder.getBooleanProperty("apl.useWebSockets");
         webSocketIdleTimeout = propertiesHolder.getIntProperty("apl.webSocketIdleTimeout");
         isGzipEnabled = propertiesHolder.getBooleanProperty("apl.enablePeerServerGZIPFilter");
         blacklistingPeriod = propertiesHolder.getIntProperty("apl.blacklistingPeriod") / 1000;
@@ -289,7 +286,7 @@ public class PeersService {
         cjdnsOnly = propertiesHolder.getBooleanProperty("apl.cjdnsOnly");
         ignorePeerAnnouncedAddress = propertiesHolder.getBooleanProperty("apl.ignorePeerAnnouncedAddress");
 
-        if (useWebSockets && useProxy) {
+        if (useProxy) {
             LOG.info("Using a proxy, will not create outbound websockets.");
         }
 
@@ -751,11 +748,12 @@ public class PeersService {
 
     public void sendToSomePeers(Block block) {
         ProcessBlockRequest request = new ProcessBlockRequest(blockConverter.convert(block), blockchainConfig.getChain().getChainId());
-        LOG.debug("Send to some peers the block: {} at height: {}", block.getId(), block.getHeight());
+        LOG.debug("Send to some peers the block: {} at height: {}, trace - {}", block.getId(), block.getHeight(), ThreadUtils.lastNStacktrace(8));
         sendToSomePeers(request);
     }
 
     public void sendToSomePeers(List<? extends Transaction> transactions) {
+        log.debug("Send transactions to peers, {} - {}", transactions.stream().map(Transaction::getId).map(String::valueOf).collect(Collectors.joining(",")), ThreadUtils.lastNStacktrace(10));
         int nextBatchStart = 0;
         while (nextBatchStart < transactions.size()) {
             List<TransactionDTO> transactionsData = new ArrayList<>();
@@ -763,7 +761,11 @@ public class PeersService {
                 transactionsData.add(transactionConverter.convert(transactions.get(i)));
             }
             BaseP2PRequest request = new ProcessTransactionsRequest(transactionsData, blockchainConfig.getChain().getChainId());
-            sendToSomePeers(request);
+            try {
+                sendToSomePeersAsync(request);
+            } catch (RejectedExecutionException e) {
+                log.debug("Unable to send async batch, skip it");
+            }
             nextBatchStart += sendTransactionsBatchSize;
         }
     }
@@ -776,7 +778,7 @@ public class PeersService {
         }
     }
     public void sendToSomePeersAsync(BaseP2PRequest request) {
-        txSendingDispatcher.submit(() -> {
+        sendingService.submit(() -> {
             long time = System.nanoTime();
             checkP2PUp();
             Set<Peer> peers = new HashSet<>(getPeers(PeerState.CONNECTED));
@@ -790,14 +792,16 @@ public class PeersService {
                     && peer.getBlockchainState() != BlockchainState.LIGHT_CLIENT
                 ) {
                     counterOfPeersToSend--;
-                    txSendingDispatcher.submit(() -> {
+                    try {
+                        peer.sendAsync(request);
+                    } catch (RejectedExecutionException e) {
                         try {
-                            long startSendingTime = System.nanoTime();
+                            log.debug("Failed to send to peer {} asynchronously, will send synchronously", peer.getHost());
                             peer.send(request);
-                            log.trace("Time to send to peer {} async {}", peer.getHost(), (System.nanoTime() - startSendingTime));
-                        } catch (PeerNotConnectedException ignored) {}
-
-                    });
+                        } catch (PeerNotConnectedException peerNotConnectedException) {
+                            log.debug("Peer not connected, failed to send request {}", peerNotConnectedException.getMessage());
+                        }
+                    }
                 }
             }
             log.trace("Time to send to peers async {}", (System.nanoTime() - time));
@@ -808,6 +812,7 @@ public class PeersService {
 
     private void sendToSomePeers(BaseP2PRequest request) {
         checkP2PUp();
+        log.debug("Sending Service STATS: current running {}, waiting {}", sendingService.getActiveCount(), sendingService.getQueue().size());
         sendingService.submit(() -> {
             int successful = 0;
             List<Future<JSONObject>> expectedResponses = new ArrayList<>();

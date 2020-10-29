@@ -105,7 +105,11 @@ public class CCAssetIssuanceTransactionType extends ColoredCoinsTransactionType 
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) {
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         ColoredCoinsAssetIssuance attachment = (ColoredCoinsAssetIssuance) transaction.getAttachment();
         if (attachment.getName().length() < Constants.MIN_ASSET_NAME_LENGTH
             || attachment.getName().length() > Constants.MAX_ASSET_NAME_LENGTH

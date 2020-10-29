@@ -69,7 +69,29 @@ public class ShufflingCreationTransactionType extends ShufflingTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
+        HoldingType holdingType = attachment.getHoldingType();
+        long amount = attachment.getAmount();
+        if (holdingType == HoldingType.ASSET) {
+            Asset asset = assetService.getAsset(attachment.getHoldingId());
+            if (asset == null) {
+                throw new AplException.NotCurrentlyValidException("Unknown asset " + Long.toUnsignedString(attachment.getHoldingId()));
+            }
+            if (amount > asset.getInitialQuantityATU()) {
+                throw new AplException.NotValidException("Invalid asset quantity " + amount);
+            }
+        } else if (holdingType == HoldingType.CURRENCY) {
+            Currency currency = currencyService.getCurrency(attachment.getHoldingId());
+            currencyService.validate(currency, transaction);
+            if (!currencyService.isActive(currency)) {
+                throw new AplException.NotCurrentlyValidException("Currency is not active: " + currency.getCode());
+            }
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         ShufflingCreation attachment = (ShufflingCreation) transaction.getAttachment();
         HoldingType holdingType = attachment.getHoldingType();
         long amount = attachment.getAmount();
@@ -80,19 +102,10 @@ public class ShufflingCreationTransactionType extends ShufflingTransactionType {
                     + ", minimum is " + blockchainConfig.getShufflingDepositAtm());
             }
         } else if (holdingType == HoldingType.ASSET) {
-            Asset asset = assetService.getAsset(attachment.getHoldingId());
-            if (asset == null) {
-                throw new AplException.NotCurrentlyValidException("Unknown asset " + Long.toUnsignedString(attachment.getHoldingId()));
-            }
-            if (amount <= 0 || amount > asset.getInitialQuantityATU()) {
+            if (amount <= 0) {
                 throw new AplException.NotValidException("Invalid asset quantity " + amount);
             }
         } else if (holdingType == HoldingType.CURRENCY) {
-            Currency currency = currencyService.getCurrency(attachment.getHoldingId());
-            currencyService.validate(currency, transaction);
-            if (!currencyService.isActive(currency)) {
-                throw new AplException.NotCurrentlyValidException("Currency is not active: " + currency.getCode());
-            }
             if (amount <= 0 || amount > Math.multiplyExact(getBlockchainConfig().getInitialSupply(), getBlockchainConfig().getOneAPL())) {
                 throw new AplException.NotValidException("Invalid currency amount " + amount);
             }
