@@ -102,6 +102,8 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
      */
     @Override
     public void indexRow(FullTextOperationData row, TableData tableData) throws SQLException {
+        Objects.requireNonNull(row, "row is NULL");
+        Objects.requireNonNull(tableData, "tableData is NULL");
         indexLock.readLock().lock();
         try {
             List<String> columnNames = tableData.getColumnNames();

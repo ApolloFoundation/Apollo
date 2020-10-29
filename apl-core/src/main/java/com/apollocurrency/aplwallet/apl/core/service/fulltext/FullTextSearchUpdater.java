@@ -14,7 +14,9 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -64,22 +66,20 @@ public class FullTextSearchUpdater implements TransactionCallback {
         log.debug("init = (isInTransaction = {})", dataSource.isInTransaction());
         dataSource.registerCallback(this);
 
-        fullTextSearchService.init();
-        if (this.fullTextConfig.getTableNames().size() > 0) {
-            try( Connection con = dataSource.getConnection();) {
-                Iterator<String> iterator = fullTextConfig.getTableNames().keySet().iterator();
-                while (iterator.hasNext()) {
-                    String tableName =  iterator.next();
-                    try {
-                        TableData tableData = this.readTableData(con, fullTextConfig.getSchema(), tableName);
-                        this.tableDataMap.put(tableName, tableData);
-                    } catch (SQLException throwables) {
-                        log.error("Reading table '{}'", tableName);
-                    }
+        fullTextSearchService.init(); // tables and their indexed columns should be in DB after init() call
+        try (Connection con = dataSource.getConnection();
+            ResultSet rs = con.createStatement().executeQuery("SELECT `table` FROM ftl_indexes")) {
+            while (rs.next()) {
+                String tableName =  rs.getString("table");
+                try { // initialize map structure for future use
+                    TableData tableData = this.readTableData(con, fullTextConfig.getSchema(), tableName);
+                    this.tableDataMap.put(tableName.toLowerCase(), tableData);
+                } catch (SQLException throwables) {
+                    log.error("Reading table '{}'", tableName);
                 }
-            } catch (SQLException e) {
-                log.error("Connection error", e);
             }
+        } catch (SQLException e) {
+            log.error("Cannot initialize index table", e);
         }
         log.debug("Fetched info for = [{}] = {}", this.tableDataMap.size(), this.tableDataMap);
     }
@@ -138,7 +138,24 @@ public class FullTextSearchUpdater implements TransactionCallback {
                 while (updateIt.hasNext()) {
                     FullTextOperationData operationData = updateIt.next();
                     if (operationData.getThread().equalsIgnoreCase(Thread.currentThread().getName())) {
-                        fullTextSearchEngine.commitRow(operationData, tableDataMap.get(operationData.getTableName()));
+                        TableData tableDataFromMap = null;
+                        String key = operationData.getTableName().toLowerCase();
+                        if (tableDataMap.containsKey(key)) {
+                            tableDataFromMap = tableDataMap.get(key);
+                        } else {
+                            try (Connection conn = databaseManager.getDataSource().getConnection();
+                                 Statement stmt = conn.createStatement()) {
+                                // lazily persist table's data for future use
+                                fullTextSearchService.initTableLazyIfNotPresent(conn, stmt, key);
+                                // fetch data and store in map
+                                tableDataFromMap = this.readTableData(conn, fullTextConfig.getSchema(), key);
+                                this.tableDataMap.put(key, tableDataFromMap);
+                            } catch (SQLException e) {
+                                log.error("Error updating FTS data table", e);
+                                throw new RuntimeException(e);
+                            }
+                        }
+                        fullTextSearchEngine.commitRow(operationData, tableDataFromMap);
                         updateIt.remove();
                         commit = true;
                     }
