@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTable;
@@ -12,8 +13,10 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSTagTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.dbclause.LongDGSPurchasesClause;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.dbclause.SellerBuyerDGSPurchasesClause;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.dbclause.SellerDbClause;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -24,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPublicFeedback;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSTag;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
@@ -41,8 +45,13 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,6 +70,7 @@ public class DGSServiceImpl implements DGSService {
     private DGSTagTable tagTable;
     private AccountService accountService;
     private final FullTextSearchUpdater fullTextSearchUpdater;
+    private FullTextSearchService fullTextSearchService;
 
     @Inject
     public DGSServiceImpl(DGSPublicFeedbackTable publicFeedbackTable,
@@ -70,7 +80,8 @@ public class DGSServiceImpl implements DGSService {
                           DGSGoodsTable goodsTable,
                           DGSTagTable tagTable,
                           AccountService accountService,
-                          FullTextSearchUpdater fullTextSearchUpdater) {
+                          FullTextSearchUpdater fullTextSearchUpdater/*,
+                          FullTextSearchService fullTextSearchService*/) {
         this.publicFeedbackTable = publicFeedbackTable;
         this.purchaseTable = purchaseTable;
         this.feedbackTable = feedbackTable;
@@ -79,6 +90,7 @@ public class DGSServiceImpl implements DGSService {
         this.tagTable = tagTable;
         this.accountService = accountService;
         this.fullTextSearchUpdater = fullTextSearchUpdater;
+//        this.fullTextSearchService = fullTextSearchService;
     }
 
     public int getPurchaseCount() {
@@ -249,6 +261,7 @@ public class DGSServiceImpl implements DGSService {
         DGSGoods goods = new DGSGoods(transaction, attachment, blockchain.getLastBlockTimestamp());
         addTag(goods);
         goodsTable.insert(goods);
+        createAndFireFullTextSearchDataEvent(goods, FullTextOperationData.OperationType.INSERT_UPDATE);
     }
 
     public int getTagsCount() {
@@ -450,9 +463,67 @@ public class DGSServiceImpl implements DGSService {
         createAndFireFullTextSearchDataEvent(goods, FullTextOperationData.OperationType.INSERT_UPDATE);
     }
 
+    public FullTextSearchService lookupFullTextSearchService() {
+        if (fullTextSearchService == null) {
+            this.fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
+        }
+        return this.fullTextSearchService;
+    }
+
     public DbIterator<DGSGoods> searchGoods(String query, boolean inStockOnly, int from, int to) {
-        return goodsTable.search(query, inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE, from, to,
-            " ORDER BY ft.score DESC, goods.timestamp DESC ");
+        StringBuffer inRange = new StringBuffer("(");
+        int index = 0;
+        try {
+            ResultSet rs = lookupFullTextSearchService().search("public", goodsTable.getTableName(), query, Integer.MAX_VALUE, 0);
+            while (rs.next()) {
+                long DB_ID = rs.getLong(5);
+                if (index == 0) {
+                    inRange.append(DB_ID);
+                } else {
+                    inRange.append(",").append(DB_ID);
+                }
+                index++;
+            }
+            inRange.append(")");
+        } catch (SQLException e) {
+            log.error("FTS failed", e);
+            throw new RuntimeException(e);
+        }
+//        return goodsTable.search(query, inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE, from, to,
+//            " ORDER BY ft.score DESC, goods.timestamp DESC ");
+
+        DbClause dbClause = inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE;
+        String sort = " ORDER BY /*ft.score DESC, */goods.timestamp DESC ";
+        Connection con = null;
+        TransactionalDataSource dataSource = goodsTable.getDatabaseManager().getDataSource();
+        final boolean doCache = dataSource.isInTransaction();
+        try {
+            con = dataSource.getConnection();
+            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
+            PreparedStatement pstmt = con.prepareStatement(
+//                "SELECT " + goodsTable.getTableName() + ".*, ft.score FROM " + table +
+                "SELECT " + goodsTable.getTableName() + ".* FROM " + goodsTable.getTableName()
+//                ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
+//                + " WHERE " + goodsTable.getTableName() + ".db_id = ft.keys[1] "
+                + " WHERE " + goodsTable.getTableName() + ".db_id in " + inRange.toString()
+                + (goodsTable.isMultiversion() ? " AND " + goodsTable.getTableName() + ".latest = TRUE " : " ")
+                + " AND " + dbClause.getClause() + sort
+                + DbUtils.limitsClause(from, to));
+            int i = 0;
+            pstmt.setString(++i, query);
+            i = dbClause.set(pstmt, ++i);
+            i = DbUtils.setLimits(i, pstmt, from, to);
+            return new DbIterator<>(con, pstmt, (connection, rs) -> {
+                DbKey dbKey = null;
+                if (doCache) {
+                    dbKey = goodsTable.getDbKeyFactory().newKey(rs);
+                }
+                return goodsTable.load(connection, rs, dbKey);
+            });
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     public DbIterator<DGSGoods> searchSellerGoods(String query, long sellerId, boolean inStockOnly, int from, int to) {

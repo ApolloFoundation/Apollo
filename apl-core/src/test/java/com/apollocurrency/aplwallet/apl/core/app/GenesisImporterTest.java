@@ -142,7 +142,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-        .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(aplAppStatus, AplAppStatus.class))
         .addBeans(MockBean.of(genesisImporterProducer, GenesisImporterProducer.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))

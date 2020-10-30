@@ -40,7 +40,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     private static final Logger log = LoggerFactory.getLogger(DbExtension.class);
     private DbManipulator manipulator;
     private boolean staticInit = false;
-    private FullTextSearchService ftl;
+    private FullTextSearchService fullTextSearchService;
     private Map<String, List<String>> tableWithColumns;
     private Path indexDir;
     private Path dbDir;
@@ -130,8 +130,8 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         manipulator = new DbManipulator(DbTestData.getInMemDbProps());
     }
 
-    public FullTextSearchService getFtl() {
-        return ftl;
+    public FullTextSearchService getFullTextSearchService() {
+        return fullTextSearchService;
     }
 
     public LuceneFullTextSearchEngine getLuceneFullTextSearchEngine() {
@@ -151,8 +151,8 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     private void shutdownDbAndDelete() throws IOException {
         manipulator.shutdown();
-        if (ftl != null) {
-            ftl.shutdown();
+        if (fullTextSearchService != null) {
+            fullTextSearchService.shutdown();
             FileUtils.deleteDirectory(indexDir.toFile());
         }
         if (dbDir != null) {
@@ -166,7 +166,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
             manipulator.init();
         }
         manipulator.populate();
-        if (!staticInit && ftl != null) {
+        if (!staticInit && fullTextSearchService != null) {
             initFtl();
         }
     }
@@ -183,7 +183,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
                 String columnsJoined = String.join(",", columns);
                 tableColumnsMap.put(tableName, columnsJoined);
             }
-            this.ftl = new FullTextSearchServiceImpl(manipulator.getDatabaseManager(),
+            this.fullTextSearchService = new FullTextSearchServiceImpl(manipulator.getDatabaseManager(),
                 luceneFullTextSearchEngine, tableColumnsMap, "public");
         } catch (IOException e) {
             throw new RuntimeException("Unable to init ftl", e);
@@ -191,11 +191,11 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     }
 
     private void initFtl() {
-        ftl.init();
+        fullTextSearchService.init();
         tableWithColumns.forEach((table, columns) -> DbUtils.inTransaction(getDatabaseManager(), (con) -> {
             try {
                 if (columns.size() > 0) {
-                    ftl.createSearchIndex(con, table,  String.join(",", columns));
+                    fullTextSearchService.createSearchIndex(con, table,  String.join(",", columns));
                 } else {
                     log.warn("NOTHING for fields... ");
                 }
@@ -215,7 +215,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     public void beforeAll(ExtensionContext context) {
         staticInit = true;
         manipulator.init();
-        if (ftl != null) {
+        if (fullTextSearchService != null) {
             initFtl();
         }
     }

@@ -6,7 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
 /**
  * Table update
+ * @deprecated
  */
+@Deprecated
 public class TableUpdate {
 
     /**

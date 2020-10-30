@@ -140,9 +140,10 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                 }
             }
 
-            if (recordCount == 0) { // skip if table if filled with initial data
-                String tableName = null;
-                initTableLazyIfNotPresent(conn, stmt, tableName);
+            if (recordCount == 0 && this.fullTextSearchIndexedTables != null) { // skip if table if filled with initial data
+                for (String tableName : this.fullTextSearchIndexedTables.keySet()) {
+                    initTableLazyIfNotPresent(conn, stmt, tableName); // try to create something if it's present
+                }
             }
             //
             // Rebuild the Lucene index since the Lucene V3 index is not compatible with Lucene V5

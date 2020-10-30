@@ -41,7 +41,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -91,7 +90,7 @@ class AssetTableTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
         .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
         .addBeans(MockBean.of(dbExtension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-        .addBeans(MockBean.of(dbExtension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(dbExtension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
         .build();
 
