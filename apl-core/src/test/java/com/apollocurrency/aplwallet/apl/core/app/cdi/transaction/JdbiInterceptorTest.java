@@ -42,7 +42,8 @@ import static org.mockito.Mockito.verify;
 public class JdbiInterceptorTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
+
     JdbiHandleFactory factory = spy(new JdbiHandleFactory());
     private Weld weld = AbstractWeldInitiator.createWeld();
     @WeldSetup

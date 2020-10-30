@@ -33,7 +33,7 @@ import static org.mockito.Mockito.mock;
 class ShardDataSourceCreateHelperTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(

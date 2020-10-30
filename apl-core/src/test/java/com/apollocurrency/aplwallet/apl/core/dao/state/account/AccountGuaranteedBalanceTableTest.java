@@ -42,7 +42,7 @@ import static org.mockito.Mockito.mock;
 class AccountGuaranteedBalanceTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
     @Inject
     AccountGuaranteedBalanceTable table;
     AccountTestData testData = new AccountTestData();

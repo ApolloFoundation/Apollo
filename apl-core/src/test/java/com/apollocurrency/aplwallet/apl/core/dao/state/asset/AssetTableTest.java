@@ -63,7 +63,7 @@ import static org.mockito.Mockito.mock;
 class AssetTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("asset", List.of("name,description")));
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("asset", List.of("name,description")));
 
     @Inject
     AssetTable table;

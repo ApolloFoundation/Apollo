@@ -24,6 +24,7 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -49,7 +50,7 @@ import static org.mockito.Mockito.spy;
 public class TwoFactorAuthServiceIntegrationTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer);
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @WeldSetup
@@ -58,6 +59,11 @@ public class TwoFactorAuthServiceIntegrationTest extends DbContainerBaseTest {
     private TwoFactorAuthRepository dbRepository = new TwoFactorAuthRepositoryImpl(dbExtension.getDatabaseManager().getDataSource());
     private TwoFactorAuthRepository fileRepository = new TwoFactorAuthFileSystemRepository(temporaryFolderExtension.getRoot().toPath());
     private TwoFactorAuthService service;// = new TwoFactorAuthServiceImpl(repository, "test", targetFileRepository);
+
+    @AfterEach
+    void tearDown() {
+        dbExtension.cleanAndPopulateDb();
+    }
 
     @Test
     public void testEnable() {

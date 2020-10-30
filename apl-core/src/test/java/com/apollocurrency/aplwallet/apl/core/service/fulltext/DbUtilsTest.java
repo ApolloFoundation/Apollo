@@ -50,7 +50,7 @@ public class DbUtilsTest extends DbContainerBaseTest {
         Collections.emptyList());
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer);
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
 
     @Test
     public void testGetDbInfoForIndexedTable() throws SQLException {

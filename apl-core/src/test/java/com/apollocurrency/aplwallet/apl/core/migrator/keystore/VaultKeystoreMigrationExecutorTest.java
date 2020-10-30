@@ -16,7 +16,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 @Tag("slow")
 public class VaultKeystoreMigrationExecutorTest extends AbstractMigrationExecutorTest {
     @RegisterExtension
-    TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     public VaultKeystoreMigrationExecutorTest() {
         super("apl.migrator.vaultkeystore.deleteAfterMigration", "vaultkeystoreMigrationRequired-0", "./keystore", "apl.keystoreDir");

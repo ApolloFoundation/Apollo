@@ -54,7 +54,7 @@ import static org.mockito.Mockito.mock;
 class AssetDeleteTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer);
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
 
     @Inject
     AssetDeleteTable table;

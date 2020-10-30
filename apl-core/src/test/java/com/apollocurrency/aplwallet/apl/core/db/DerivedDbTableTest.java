@@ -36,14 +36,13 @@ import static org.mockito.Mockito.mock;
 public abstract class DerivedDbTableTest<T extends DerivedEntity> extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
 
     DerivedDbTable<T> derivedDbTable;
     Class<T> clazz;
 
     public DerivedDbTableTest(Class<T> clazz) {
         this.clazz = clazz;
-
     }
 
     @BeforeEach

@@ -82,7 +82,7 @@ public class ChildAccountTransactionTypeApplyTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("txApplierDb").toAbsolutePath().toString()));
+    static DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("txApplierDb").toAbsolutePath().toString()));
 
     @Mock
     HeightConfig heightConfig;
@@ -189,7 +189,7 @@ public class ChildAccountTransactionTypeApplyTest {
 */
     }
 
-    private Path createPath(String fileName) {
+    private static Path createPath(String fileName) {
         try {
             return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
         } catch (IOException e) {

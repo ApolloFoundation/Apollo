@@ -144,7 +144,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
     private final Path dataExportDirPath = createPath("targetDb");
     private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
 
     private TransactionProcessor transactionProcessor = mock(TransactionProcessorImpl.class);
     private TaskDispatchManager taskDispatchManager = mock(TaskDispatchManager.class);
@@ -269,11 +269,11 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         Iterator<TransactionalDataSource> fullDataSources = ((ShardManagement)extension.getDatabaseManager()).getAllFullDataSourcesIterator();
         while (fullDataSources.hasNext()) {
             TransactionalDataSource dataSource = fullDataSources.next();
-            DbPopulator dbPopulator = new DbPopulator(dataSource, "db/schema2_empty.sql", "db/cleanup_shard_data.sql");
-            dbPopulator.executeUseDbSql(dataSource.getDbIdentity()
-                .orElseThrow(() -> new RuntimeException("shard id is not defined in unit test! Check test pls..."))); // switch to shard db explicitly
-            dbPopulator.populateDb(); // execute clean up in shard tables
+            DbPopulator dbPopulator = new DbPopulator("db/schema2_empty.sql", "db/cleanup_shard_data.sql");
+            dbPopulator.executeUseDbSql(dataSource); // switch to shard db explicitly
+            dbPopulator.populateDb(dataSource); // execute clean up in shard tables
         }
+        extension.cleanAndPopulateDb();
     }
 
     @Test

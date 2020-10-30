@@ -42,6 +42,7 @@ public abstract class AbstractTwoFactorAuthRepositoryTest extends DbContainerBas
         this.repository = repository;
     }
 
+
     @Test
     public void testGet() {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();

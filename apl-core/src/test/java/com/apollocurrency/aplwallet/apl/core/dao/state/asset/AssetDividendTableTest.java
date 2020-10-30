@@ -51,7 +51,7 @@ import static org.mockito.Mockito.mock;
 class AssetDividendTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer);
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
 
     @Inject
     AssetDividendTable table;

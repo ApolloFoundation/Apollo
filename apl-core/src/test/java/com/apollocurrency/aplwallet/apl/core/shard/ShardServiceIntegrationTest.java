@@ -52,9 +52,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class ShardServiceIntegrationTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    TemporaryFolderExtension folder = new TemporaryFolderExtension();
+    static TemporaryFolderExtension folder = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     ShardService shardService;
     @Mock
     BlockchainProcessor blockchainProcessor;

@@ -51,7 +51,7 @@ class TransactionDaoTest extends DbContainerBaseTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
@@ -272,6 +272,7 @@ class TransactionDaoTest extends DbContainerBaseTest {
 
     @Test
     void testGetTransactionsWithPagination() {
+        extension.cleanAndPopulateDb();
         List<Transaction> transactions = dao.getTransactions((byte) -1, (byte) -1, 2, 4);
         assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11, td.TRANSACTION_10), transactions);
     }

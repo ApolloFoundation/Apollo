@@ -46,7 +46,7 @@ import static org.mockito.Mockito.mock;
 class CurrencyBuyOfferTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer);
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
 
     @Inject
     CurrencyBuyOfferTable table;

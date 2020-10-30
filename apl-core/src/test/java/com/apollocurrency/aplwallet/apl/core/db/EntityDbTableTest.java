@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.Filter;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,6 +65,11 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         super.setUp();
         table = (EntityDbTable<T>) getDerivedDbTable();
         getBlockchain().setLastBlock(new BlockTestData().LAST_BLOCK);
+    }
+
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
     }
 
     @Test

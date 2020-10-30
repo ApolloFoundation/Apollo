@@ -153,7 +153,7 @@ class ShardEngineTest extends DBContainerRootTest {
     private final Path dataExportDirPath = createPath("targetDb");
     private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = mock(TimeService.class);
@@ -246,7 +246,7 @@ class ShardEngineTest extends DBContainerRootTest {
     public ShardEngineTest() throws Exception {
     }
 
-    private Path createPath(String fileName) {
+    private static Path createPath(String fileName) {
         try {
             Path path = temporaryFolderExtension.newFolder().toPath().resolve(fileName);
             Files.createDirectories(path);

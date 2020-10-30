@@ -61,7 +61,7 @@ import static org.mockito.Mockito.mock;
 public class DGSServiceSearchTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer, Map.of("goods", List.of("name", "description", "tags")));
+    static DbExtension extension = new DbExtension(mariaDBContainer, Map.of("goods", List.of("name", "description", "tags")));
     Blockchain blockchain = mock(Blockchain.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(

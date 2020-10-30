@@ -68,7 +68,7 @@ class ShardPrunableZipHashCalculatorTest extends DbContainerBaseTest {
     @RegisterExtension
     TemporaryFolderExtension tempFolder = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer);
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(PrunableMessageTable.class,
         Event.class,

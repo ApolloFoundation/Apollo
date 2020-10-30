@@ -83,7 +83,7 @@ import static org.mockito.Mockito.mock;
 class TaggedDataServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer, Map.of("tagged_data", List.of("name", "description", "tags")));
+    static DbExtension extension = new DbExtension(mariaDBContainer, Map.of("tagged_data", List.of("name", "description", "tags")));
     @Inject
     TaggedDataService taggedDataService;
     @Inject

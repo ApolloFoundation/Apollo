@@ -43,6 +43,7 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -67,7 +68,7 @@ import static org.mockito.Mockito.mock;
 class TaggedDataTimestampDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
@@ -104,6 +105,10 @@ class TaggedDataTimestampDaoTest extends DbContainerBaseTest {
     TaggedDataTimestampDao dataTimestampDao;
     TaggedTestData tagtd;
 
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
+    }
 
     @BeforeEach
     void setUp() throws Exception {

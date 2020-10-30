@@ -79,14 +79,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @Slf4j
-
 @Tag("slow")
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
 class ShardImporterTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     @RegisterExtension
     TemporaryFolderExtension folder = new TemporaryFolderExtension();
 

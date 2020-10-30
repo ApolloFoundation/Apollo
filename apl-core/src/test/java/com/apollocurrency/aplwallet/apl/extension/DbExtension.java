@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.extension;
 
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchServiceImpl;
@@ -82,7 +83,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     }
 
     public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties properties, String dataScriptPath, String schemaScriptPath) {
-        this(jdbcDatabaseContainer, properties, null, dataScriptPath, schemaScriptPath);
+        this(jdbcDatabaseContainer, properties, null, schemaScriptPath, dataScriptPath);
     }
 
     public DbExtension(DbProperties properties, String dataScriptPath, String schemaScriptPath) {
@@ -142,12 +143,9 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     @Override
     public void afterEach(ExtensionContext context) throws Exception {
-        if (!staticInit) {
-            shutdownDbAndDelete();
-        }
     }
 
-    private void shutdownDbAndDelete() throws IOException {
+    public void shutdownDbAndDelete() throws IOException {
         manipulator.shutdown();
         if (ftl != null) {
             ftl.shutdown();
@@ -160,10 +158,6 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     @Override
     public void beforeEach(ExtensionContext context) {
-        if (!staticInit) {
-            manipulator.init();
-        }
-        manipulator.populate();
         if (!staticInit && ftl != null) {
             initFtl();
         }
@@ -198,10 +192,19 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     @Override
     public void beforeAll(ExtensionContext context) {
-        staticInit = true;
-        manipulator.init();
+        manipulator.getDatabaseManager().getDataSource();
+        manipulator.populate();
         if (ftl != null) {
             initFtl();
         }
+    }
+
+    public void cleanAndPopulateDb() {
+        TransactionalDataSource dataSource = manipulator.getDatabaseManager().getDataSource();
+        if (dataSource.isInTransaction()) {
+            dataSource.commit();
+        }
+
+        manipulator.populate();
     }
 }

@@ -56,7 +56,7 @@ import static org.mockito.Mockito.mock;
 class ReferencedTransactionMigratorTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer);
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
     TransactionTestData td = new TransactionTestData();
 
     @WeldSetup

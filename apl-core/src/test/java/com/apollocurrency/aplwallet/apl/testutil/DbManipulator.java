@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
-import java.io.IOException;
 import java.util.Objects;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -35,7 +34,7 @@ public class DbManipulator {
         dataScriptPath = StringUtils.isBlank(dataScriptPath) ? DEFAULT_DATA_SCRIPT_PATH : dataScriptPath;
         schemaScriptPath = StringUtils.isBlank(schemaScriptPath) ? DEFAULT_SCHEMA_SCRIPT_PATH : schemaScriptPath;
         // sometimes it can be helpful to skip test data load
-        this.populator = new DbPopulator(databaseManager.getDataSource(), schemaScriptPath, dataScriptPath);
+        this.populator = new DbPopulator(schemaScriptPath, dataScriptPath);
     }
 
     public DbManipulator(DbProperties dbProperties) {
@@ -43,15 +42,15 @@ public class DbManipulator {
     }
 
     public void init() {
-        populator.initDb();
+        populator.initDb(databaseManager.getDataSource());
     }
 
-    public void shutdown() throws IOException {
+    public void shutdown() {
         databaseManager.shutdown();
     }
 
     public void populate() {
-        populator.populateDb();
+        populator.populateDb(databaseManager.getDataSource());
     }
 
     public DatabaseManager getDatabaseManager() {

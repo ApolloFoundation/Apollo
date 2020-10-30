@@ -81,7 +81,7 @@ import static org.mockito.Mockito.mock;
 class ReferencedTransactionDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
@@ -125,6 +125,8 @@ class ReferencedTransactionDaoTest extends DbContainerBaseTest {
 
     @Test
     void testGetAll() {
+        extension.cleanAndPopulateDb();
+
         List<Long> allReferencedTransactionIds = dao.getAllReferencedTransactionIds();
         TransactionTestData td = new TransactionTestData();
         Set<Long> expectedIds = td.REFERENCED_TRANSACTIONS.stream().map(ReferencedTransaction::getReferencedTransactionId).collect(Collectors.toSet());

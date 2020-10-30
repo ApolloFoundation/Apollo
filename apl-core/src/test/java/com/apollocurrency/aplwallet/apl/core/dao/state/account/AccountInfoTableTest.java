@@ -50,7 +50,7 @@ import static org.mockito.Mockito.mock;
 class AccountInfoTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("account_info", List.of("name", "description")));
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("account_info", List.of("name", "description")));
     @Inject
     AccountInfoTable table;
     AccountTestData testData = new AccountTestData();

@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -56,7 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BlockDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
 
     private BlockDao blockDao;
     private TransactionDaoImpl transactionDao;
@@ -70,6 +71,11 @@ class BlockDaoTest extends DbContainerBaseTest {
         txd = new TransactionTestData();
         blockDao = new BlockDaoImpl(extension.getDatabaseManager());
         transactionDao = new TransactionDaoImpl(extension.getDatabaseManager(), txd.getTransactionTypeFactory(), new TransactionRowMapper(txd.getTransactionTypeFactory(), new TransactionBuilder(txd.getTransactionTypeFactory())));
+    }
+
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
     }
 
 

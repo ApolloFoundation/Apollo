@@ -101,7 +101,6 @@ public class DGSFeedbackTableTest extends ValuesDbTableTest<DGSFeedback> {
         super.setUp();
     }
 
-
     @Override
     protected List<DGSFeedback> dataToInsert() {
         return List.of(dtd.NEW_FEEDBACK_0, dtd.NEW_FEEDBACK_1, dtd.NEW_FEEDBACK_2);

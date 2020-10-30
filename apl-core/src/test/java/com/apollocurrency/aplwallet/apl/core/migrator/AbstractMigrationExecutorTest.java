@@ -66,6 +66,7 @@ public abstract class AbstractMigrationExecutorTest extends DbContainerBaseTest 
     public void tearDown() {
         OptionDAO optionDAO = new OptionDAO(databaseManager);
         optionDAO.deleteAll();
+
         databaseManager.shutdown();
     }
 

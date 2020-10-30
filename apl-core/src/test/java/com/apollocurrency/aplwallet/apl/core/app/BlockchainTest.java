@@ -153,16 +153,16 @@ class BlockchainTest extends DBContainerRootTest {
         if (shardId == 1 && extension == null) {
             DbProperties inMemDbProps = DbTestData.getInMemDbProps();
             inMemDbProps.setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
-            extension = new DbExtension(mariaDBContainer, inMemDbProps, "db/schema.sql", "db/shard-main-data.sql");
+            extension = new DbExtension(mariaDBContainer, inMemDbProps, "db/shard-main-data.sql", "db/schema.sql");
             TransactionalDataSource mainDb = extension.getDatabaseManager().getDataSource();
             extension.beforeEach(null); // execute initial schema script
         }
 
-        TransactionalDataSource shardDb = ((ShardManagement)extension.getDatabaseManager()).getOrCreateShardDataSourceById(shardId);
+        TransactionalDataSource shardDb = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(shardId);
 
-        DbPopulator dbPopulator = new DbPopulator(shardDb, "db/schema2_empty.sql", dataScriptPath);
-        dbPopulator.initDb();
-        dbPopulator.populateDb();
+        DbPopulator dbPopulator = new DbPopulator("db/schema2_empty.sql", dataScriptPath);
+        dbPopulator.initDb(shardDb);
+        dbPopulator.populateDb(shardDb);
         return dbPopulator;
     }
 
@@ -171,6 +171,7 @@ class BlockchainTest extends DBContainerRootTest {
         txd = new TransactionTestData();
         btd = new BlockTestData();
         extension.beforeEach(null); // init main db again !!
+        extension.cleanAndPopulateDb();
         shard1Populator = initDb("db/shard1-data.sql", 1); // init shard 1 again
         shard2Populator = initDb("db/shard2-data.sql", 2); // init shard 2 again
     }

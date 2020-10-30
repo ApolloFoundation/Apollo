@@ -16,7 +16,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 @Tag("slow")
 public class TwoFactorAuthMigrationExecutorTest extends AbstractMigrationExecutorTest {
     @RegisterExtension
-    TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     public TwoFactorAuthMigrationExecutorTest() {
         super("apl.migrator.2fa.deleteAfterMigration", "2faMigrationRequired-0", "./keystore/2fa", "apl.dir2FA");
