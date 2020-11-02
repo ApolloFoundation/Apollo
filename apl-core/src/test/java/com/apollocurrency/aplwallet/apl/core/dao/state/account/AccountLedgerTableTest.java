@@ -126,6 +126,8 @@ class AccountLedgerTableTest extends DbContainerBaseTest {
 
     @Test
     void testTrim_on_height() {
+        dbExtension.cleanAndPopulateDb();
+
         doReturn(Integer.MAX_VALUE).when(propertiesHolder).BATCH_COMMIT_SIZE();
         doReturn(testData.LEDGER_HEIGHT - 1 + TRIM_KEEP).when(blockchain).getHeight();
         DbUtils.inTransaction(dbExtension, (con) -> table.trim(testData.LEDGER_HEIGHT, true));
@@ -141,6 +143,8 @@ class AccountLedgerTableTest extends DbContainerBaseTest {
 
     @Test
     void getEntry() {
+        dbExtension.cleanAndPopulateDb();
+
         LedgerEntry expected = testData.ACC_LEDGER_0;
 
         LedgerEntry actual = table.getEntry(testData.ACC_LEDGER_0.getDbId(), true);

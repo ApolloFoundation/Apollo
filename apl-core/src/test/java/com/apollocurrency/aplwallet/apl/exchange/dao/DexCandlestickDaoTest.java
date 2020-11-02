@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexCandlestick;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,11 @@ class DexCandlestickDaoTest extends DbContainerBaseTest {
         dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(
             extension.getDatabaseManager().getJdbiHandleFactory(), DexCandlestickDao.class);
         td = new DexTradingTestData();
+    }
+
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
     }
 
     @Test

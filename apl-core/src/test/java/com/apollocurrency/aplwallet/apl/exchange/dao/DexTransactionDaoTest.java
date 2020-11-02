@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.data.DexTestData;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexTransaction;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,10 @@ class DexTransactionDaoTest extends DbContainerBaseTest {
         td = new DexTestData();
     }
 
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
+    }
 
     @Test
     void testGet() {

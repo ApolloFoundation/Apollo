@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
@@ -103,7 +104,6 @@ import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -238,25 +238,6 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
     }
 
-    private static PropertiesHolder initPropertyHolder() {
-        PropertiesHolder propertiesHolder = new PropertiesHolder();
-        Properties properties = new Properties();
-        properties.put("apl.trimDerivedTables", true);
-        properties.put("apl.maxRollback", 21600);
-
-        propertiesHolder.init(properties);
-        return propertiesHolder;
-
-    }
-
-    private Path createPath(String fileName) {
-        try {
-            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-        } catch (IOException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
     @BeforeEach
     void setUp() {
         blockchain.setLastBlock(new BlockTestData().LAST_BLOCK);
@@ -265,14 +246,10 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
 
     @AfterEach
     void tearDown() {
-        // clean up data in shard db from previous run
-        Iterator<TransactionalDataSource> fullDataSources = ((ShardManagement)extension.getDatabaseManager()).getAllFullDataSourcesIterator();
-        while (fullDataSources.hasNext()) {
-            TransactionalDataSource dataSource = fullDataSources.next();
-            DbPopulator dbPopulator = new DbPopulator("db/schema2_empty.sql", "db/cleanup_shard_data.sql");
-            dbPopulator.executeUseDbSql(dataSource); // switch to shard db explicitly
-            dbPopulator.populateDb(dataSource); // execute clean up in shard tables
-        }
+        DbPopulator dbPopulator = new DbPopulator(null, "db/drop_shard_data.sql");
+        dbPopulator.populateDb(extension.getDatabaseManager().getDataSource());
+        ((DatabaseManagerImpl) extension.getDatabaseManager()).closeAllShardDataSources();
+
         extension.cleanAndPopulateDb();
     }
 
@@ -409,14 +386,34 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         assertEquals(ShardState.FULL, lastShard.getShardState());
     }
 
+    @Test
+    void executeAll() {
+        executeFrom(8000, 4L, MigrateState.INIT);
+    }
+
     private void executeFrom(int height, long shardId, MigrateState state) {
         shardMigrationExecutor.createAllCommands(height, shardId, state);
         MigrateState result = shardMigrationExecutor.executeAllOperations();
         assertEquals(COMPLETED, result);
     }
 
-    @Test
-    void executeAll() {
-        executeFrom(8000, 4L, MigrateState.INIT);
+    private static PropertiesHolder initPropertyHolder() {
+        PropertiesHolder propertiesHolder = new PropertiesHolder();
+        Properties properties = new Properties();
+        properties.put("apl.trimDerivedTables", true);
+        properties.put("apl.maxRollback", 21600);
+
+        propertiesHolder.init(properties);
+        return propertiesHolder;
+
     }
+
+    private Path createPath(String fileName) {
+        try {
+            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
+        } catch (IOException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
 }

@@ -76,6 +76,8 @@ class AccountGuaranteedBalanceTableTest extends DbContainerBaseTest {
 
     @Test
     void testGetSumOfAdditions() {
+        dbExtension.cleanAndPopulateDb();
+
         long accountId = testData.ACC_BALANCE_1.getAccountId();
         int height1 = testData.ACC_BALANCE_1.getHeight();
         int height2 = height1 + 1000;
@@ -107,6 +109,8 @@ class AccountGuaranteedBalanceTableTest extends DbContainerBaseTest {
 
     @Test
     void addToGuaranteedBalanceATM() {
+        dbExtension.cleanAndPopulateDb();
+
         long amountATM = 10000L;
         long expectedSum = testData.ACC_BALANCE_3.getAdditions() + amountATM;
 

@@ -82,6 +82,8 @@ class AccountCurrencyTableTest extends DbContainerBaseTest {
 
     @Test
     void testLoad_ifNotExist_thenReturnNull() {
+        dbExtension.cleanAndPopulateDb();
+
         AccountCurrency accountCurrency = table.get(table.getDbKeyFactory().newKey(testData.newCurrency));
         assertNull(accountCurrency);
     }
@@ -118,6 +120,8 @@ class AccountCurrencyTableTest extends DbContainerBaseTest {
 
     @Test
     void testDefaultSort() {
+        dbExtension.cleanAndPopulateDb();
+
         assertNotNull(table.defaultSort());
         List<AccountCurrency> expectedAll = testData.ALL_CURRENCY.stream()
             .sorted(currencyComparator)

@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOperation;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,11 @@ class DexOperationDaoTest extends DbContainerBaseTest {
         dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(
             extension.getDatabaseManager().getJdbiHandleFactory(), DexOperationDao.class);
         td = new DexOperationTestData();
+    }
+
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
     }
 
     @Test

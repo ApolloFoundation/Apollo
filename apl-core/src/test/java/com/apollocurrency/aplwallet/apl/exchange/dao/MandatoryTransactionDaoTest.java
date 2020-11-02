@@ -65,6 +65,8 @@ class MandatoryTransactionDaoTest extends DbContainerBaseTest {
 
     @Test
     void testGetAll() {
+        extension.cleanAndPopulateDb();
+
         List<MandatoryTransaction> all = dao.getAll(0L, 3);
 
         assertEquals(List.of(cancelTx, orderTx), all);
@@ -79,6 +81,8 @@ class MandatoryTransactionDaoTest extends DbContainerBaseTest {
 
     @Test
     void testInsert() {
+        extension.cleanAndPopulateDb();
+
         Transaction tx = mock(Transaction.class);
         doReturn(1L).when(tx).getId();
         doReturn(orderTx.getTransactionBytes()).when(tx).getCopyTxBytes();

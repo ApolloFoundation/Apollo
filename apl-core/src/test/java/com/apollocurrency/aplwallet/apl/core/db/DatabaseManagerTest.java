@@ -59,7 +59,7 @@ class DatabaseManagerTest extends DBContainerRootTest {
         baseDbProperties = DbTestData.getDbFileProperties(mariaDBContainer);
         baseDbProperties.setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
         databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder, new JdbiHandleFactory());
-        DbPopulator dbPopulator = new DbPopulator("db/schema2_empty.sql", "db/db-manager-data.sql");
+        DbPopulator dbPopulator = new DbPopulator(null, "db/db-manager-data.sql");
         dbPopulator.initDb(databaseManager.getDataSource());
         dbPopulator.populateDb(databaseManager.getDataSource());
         databaseManager.initFullShards(Set.of(2L, 3L));

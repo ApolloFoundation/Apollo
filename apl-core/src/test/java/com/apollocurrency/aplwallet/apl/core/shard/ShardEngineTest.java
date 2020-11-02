@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
@@ -72,6 +73,7 @@ import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
@@ -87,6 +89,7 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jboss.weld.literal.NamedLiteral;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -241,6 +244,15 @@ class ShardEngineTest extends DBContainerRootTest {
     @BeforeEach
     void setUp() {
         shardEngine.prepare();
+    }
+
+    @AfterEach
+    void tearDown() {
+        DbPopulator dbPopulator = new DbPopulator(null, "db/drop_shard_data.sql");
+        dbPopulator.populateDb(extension.getDatabaseManager().getDataSource());
+        ((DatabaseManagerImpl) extension.getDatabaseManager()).closeAllShardDataSources();
+
+        extension.cleanAndPopulateDb();
     }
 
     public ShardEngineTest() throws Exception {

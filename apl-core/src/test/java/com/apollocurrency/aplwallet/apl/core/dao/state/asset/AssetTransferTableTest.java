@@ -89,6 +89,8 @@ class AssetTransferTableTest extends DbContainerBaseTest {
 
     @Test
     void testLoad_returnNull_ifNotExist() {
+        dbExtension.cleanAndPopulateDb();
+
         AssetTransfer asset = table.get(table.getDbKeyFactory().newKey(td.ASSET_TRANSFER_NEW));
         assertNull(asset);
     }

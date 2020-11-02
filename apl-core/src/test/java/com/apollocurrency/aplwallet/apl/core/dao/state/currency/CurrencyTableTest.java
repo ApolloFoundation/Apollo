@@ -84,6 +84,8 @@ class CurrencyTableTest extends DbContainerBaseTest {
 
     @Test
     void testLoad_returnNull_ifNotExist() {
+        dbExtension.cleanAndPopulateDb();
+
         Currency currencySupply = table.get(table.getDbKeyFactory().newKey(td.CURRENCY_NEW));
         assertNull(currencySupply);
     }

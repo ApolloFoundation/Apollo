@@ -2,7 +2,6 @@ DELETE FROM account;
 DELETE FROM account_asset;
 DELETE FROM account_currency;
 DELETE FROM account_guaranteed_balance;
---DELETE FROM FTL.INDEXES;
 DELETE FROM account_ledger;
 DELETE FROM account_property;
 DELETE FROM account_lease;

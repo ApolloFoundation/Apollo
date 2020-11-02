@@ -83,6 +83,8 @@ class CurrencySellOfferTableTest extends DbContainerBaseTest {
 
     @Test
     void testLoad_returnNull_ifNotExist() {
+        dbExtension.cleanAndPopulateDb();
+
         CurrencySellOffer offer = table.get(table.getDbKeyFactory().newKey(td.OFFER_NEW));
         assertNull(offer);
     }
@@ -118,6 +120,8 @@ class CurrencySellOfferTableTest extends DbContainerBaseTest {
 
     @Test
     void test_getCount() {
+        dbExtension.cleanAndPopulateDb();
+
         int result = table.getCount();
         assertEquals(9, result);
     }

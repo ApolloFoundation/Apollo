@@ -88,6 +88,8 @@ class CurrencyTransferTableTest extends DbContainerBaseTest {
 
     @Test
     void testLoad_returnNull_ifNotExist() {
+        dbExtension.cleanAndPopulateDb();
+
         CurrencyTransfer transfer = table.get(table.getDbKeyFactory().newKey(td.TRANSFER_NEW));
         assertNull(transfer);
     }

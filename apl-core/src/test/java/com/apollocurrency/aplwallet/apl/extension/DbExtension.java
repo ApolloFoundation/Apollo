@@ -151,9 +151,6 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
             ftl.shutdown();
             FileUtils.deleteDirectory(indexDir.toFile());
         }
-        if (dbDir != null) {
-            FileUtils.deleteDirectory(dbDir.toFile());
-        }
     }
 
     @Override
@@ -186,13 +183,13 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
 
     @Override
     public void afterAll(ExtensionContext context) throws Exception {
+
         shutdownDbAndDelete();
         staticInit = false;
     }
 
     @Override
     public void beforeAll(ExtensionContext context) {
-        manipulator.getDatabaseManager().getDataSource();
         manipulator.populate();
         if (ftl != null) {
             initFtl();
@@ -206,5 +203,9 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         }
 
         manipulator.populate();
+    }
+
+    private void removeShards() {
+
     }
 }

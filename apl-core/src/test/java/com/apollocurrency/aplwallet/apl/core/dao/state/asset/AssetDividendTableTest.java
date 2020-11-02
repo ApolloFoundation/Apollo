@@ -94,6 +94,8 @@ class AssetDividendTableTest extends DbContainerBaseTest {
 
     @Test
     void testLoad_returnNull_ifNotExist() {
+        dbExtension.cleanAndPopulateDb();
+
         AssetDividend assetDividend = table.get(table.getDbKeyFactory().newKey(td.ASSET_DIVIDEND_NEW));
         assertNull(assetDividend);
     }

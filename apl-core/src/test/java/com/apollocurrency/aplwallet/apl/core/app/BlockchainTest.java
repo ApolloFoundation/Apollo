@@ -160,7 +160,7 @@ class BlockchainTest extends DBContainerRootTest {
 
         TransactionalDataSource shardDb = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(shardId);
 
-        DbPopulator dbPopulator = new DbPopulator("db/schema2_empty.sql", dataScriptPath);
+        DbPopulator dbPopulator = new DbPopulator(null, dataScriptPath);
         dbPopulator.initDb(shardDb);
         dbPopulator.populateDb(shardDb);
         return dbPopulator;

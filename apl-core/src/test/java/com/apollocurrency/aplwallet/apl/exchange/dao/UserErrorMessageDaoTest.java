@@ -58,6 +58,8 @@ public class UserErrorMessageDaoTest extends DbContainerBaseTest {
 
     @Test
     void testGetAll() {
+        extension.cleanAndPopulateDb();
+
         List<UserErrorMessage> all = dao.getAll(Long.MAX_VALUE, 3);
 
         assertEquals(List.of(td.ERROR_3, td.ERROR_2, td.ERROR_1), all);
@@ -96,6 +98,8 @@ public class UserErrorMessageDaoTest extends DbContainerBaseTest {
 
     @Test
     void testDeleteByTimestamp() {
+        extension.cleanAndPopulateDb();
+
         dao.deleteByTimestamp(td.ERROR_2.getTimestamp() + 1);
 
         List<UserErrorMessage> all = dao.getAll(Long.MAX_VALUE, 100);

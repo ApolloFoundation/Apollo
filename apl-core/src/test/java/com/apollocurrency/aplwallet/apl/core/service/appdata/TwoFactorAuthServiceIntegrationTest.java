@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.TwoFactorAuthFileSystemRepository;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.TwoFactorAuthRepositoryImpl;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TwoFactorAuthServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
@@ -162,6 +163,8 @@ public class TwoFactorAuthServiceIntegrationTest extends DbContainerBaseTest {
         int fakeNumber = new Random().nextInt();
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
+        fileRepository.add(new TwoFactorAuthEntity(td.ACC_1.getId(), td.ACCOUNT1_2FA_SECRET_BYTES, true));
+
         Status2FA status2FA = service.tryAuth(td.ACC_1.getId(), fakeNumber);
         assertEquals(Status2FA.INCORRECT_CODE, status2FA);
     }

@@ -104,6 +104,8 @@ class AccountLeaseTableTest extends DbContainerBaseTest {
 
     @Test
     void getAccountLeaseCount() {
+        dbExtension.cleanAndPopulateDb();
+
         int expected = testData.ALL_LEASE.size();
         expected--; //one record doesn't have 'latest' indicator;
         int actual = table.getAccountLeaseCount();
@@ -118,6 +120,8 @@ class AccountLeaseTableTest extends DbContainerBaseTest {
 
     @Test
     void getLeaseChangingAccounts() {
+        dbExtension.cleanAndPopulateDb();
+
         List<AccountLease> accounts = table.getLeaseChangingAccountsAtHeight(testData.ACC_LEAS_0.getHeight());
         List<AccountLease> expected = testData.ALL_LEASE.stream()
             .filter(accountLease -> accountLease.getCurrentLeasingHeightFrom() == testData.ACC_LEAS_0.getHeight()
