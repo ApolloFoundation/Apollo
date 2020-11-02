@@ -15,14 +15,11 @@ import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.apache.commons.io.FileUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.AfterAllCallback;
-import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MariaDBContainer;
 
@@ -35,14 +32,12 @@ import java.util.Map;
 
 import static org.mockito.Mockito.mock;
 
-public class DbExtension implements BeforeEachCallback, AfterEachCallback, AfterAllCallback, BeforeAllCallback {
-    private static final Logger log = LoggerFactory.getLogger(DbExtension.class);
+@Slf4j
+public class DbExtension implements BeforeEachCallback, AfterAllCallback, BeforeAllCallback {
     private DbManipulator manipulator;
-    private boolean staticInit = false;
     private FullTextSearchService ftl;
     private Map<String, List<String>> tableWithColumns;
     private Path indexDir;
-    private Path dbDir;
     private LuceneFullTextSearchEngine luceneFullTextSearchEngine;
 
     public DbExtension(GenericContainer jdbcDatabaseContainer,
@@ -79,23 +74,11 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     }
 
     public DbExtension(DbProperties dbProperties) {
-        this(dbProperties, null, null, null);
+        this.manipulator = new DbManipulator(dbProperties, null, null, null);
     }
 
     public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties properties, String dataScriptPath, String schemaScriptPath) {
         this(jdbcDatabaseContainer, properties, null, schemaScriptPath, dataScriptPath);
-    }
-
-    public DbExtension(DbProperties properties, String dataScriptPath, String schemaScriptPath) {
-        this.manipulator = new DbManipulator(properties, null, dataScriptPath, schemaScriptPath);
-    }
-
-    public DbExtension(Map<String, List<String>> tableWithColumns) {
-        this();
-        if (!tableWithColumns.isEmpty()) {
-            this.tableWithColumns = tableWithColumns;
-            createFtl();
-        }
     }
 
     public DbExtension(GenericContainer jdbcDatabaseContainer, Map<String, List<String>> tableWithColumns) {
@@ -106,57 +89,43 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         }
     }
 
-    public DbExtension(DbProperties dbProperties, PropertiesHolder propertiesHolder, String schemaScriptPath, String dataScriptPath) {
-        this.manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
-    }
-
-    public DbExtension(GenericContainer jdbcDatabaseContainer, Path dbDir, String dbName, String dataScript) {
-        this(jdbcDatabaseContainer);
-        this.manipulator = new DbManipulator(DbTestData.getInMemDbProps(), null, dataScript, null);
-        this.dbDir = dbDir;
-    }
-
-    public DbExtension(Path dbDir, String dbName, String dataScript) {
-        this.manipulator = new DbManipulator(DbTestData.getDbFileProperties(dbDir.resolve(dbName).toAbsolutePath().toString()), null, dataScript, null);
-        this.dbDir = dbDir;
-    }
-
     public DbExtension(GenericContainer jdbcDatabaseContainer) {
         this(jdbcDatabaseContainer, DbTestData.getInMemDbProps(), null, null, null);
     }
 
-    public DbExtension() {
-        manipulator = new DbManipulator(DbTestData.getInMemDbProps());
-    }
-
-    public FullTextSearchService getFtl() {
-        return ftl;
-    }
-
-    public LuceneFullTextSearchEngine getLuceneFullTextSearchEngine() {
-        return luceneFullTextSearchEngine;
-    }
-
-    public DatabaseManager getDatabaseManager() {
-        return manipulator.getDatabaseManager();
+    @Override
+    public void beforeEach(ExtensionContext context) {
+        if (ftl != null) {
+            initFtl();
+        }
     }
 
     @Override
-    public void afterEach(ExtensionContext context) throws Exception {
+    public void afterAll(ExtensionContext context) throws Exception {
+        shutdownDbAndDelete();
+    }
+
+    @Override
+    public void beforeAll(ExtensionContext context) {
+        manipulator.populate();
+        if (ftl != null) {
+            initFtl();
+        }
+    }
+
+    public void cleanAndPopulateDb() {
+        TransactionalDataSource dataSource = manipulator.getDatabaseManager().getDataSource();
+        if (dataSource.isInTransaction()) {
+            dataSource.commit();
+        }
+
+        manipulator.populate();
     }
 
     public void shutdownDbAndDelete() throws IOException {
         manipulator.shutdown();
         if (ftl != null) {
             ftl.shutdown();
-            FileUtils.deleteDirectory(indexDir.toFile());
-        }
-    }
-
-    @Override
-    public void beforeEach(ExtensionContext context) {
-        if (!staticInit && ftl != null) {
-            initFtl();
         }
     }
 
@@ -181,31 +150,16 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         }));
     }
 
-    @Override
-    public void afterAll(ExtensionContext context) throws Exception {
 
-        shutdownDbAndDelete();
-        staticInit = false;
+    public FullTextSearchService getFtl() {
+        return ftl;
     }
 
-    @Override
-    public void beforeAll(ExtensionContext context) {
-        manipulator.populate();
-        if (ftl != null) {
-            initFtl();
-        }
+    public LuceneFullTextSearchEngine getLuceneFullTextSearchEngine() {
+        return luceneFullTextSearchEngine;
     }
 
-    public void cleanAndPopulateDb() {
-        TransactionalDataSource dataSource = manipulator.getDatabaseManager().getDataSource();
-        if (dataSource.isInTransaction()) {
-            dataSource.commit();
-        }
-
-        manipulator.populate();
-    }
-
-    private void removeShards() {
-
+    public DatabaseManager getDatabaseManager() {
+        return manipulator.getDatabaseManager();
     }
 }

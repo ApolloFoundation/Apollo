@@ -37,10 +37,6 @@ public class DbManipulator {
         this.populator = new DbPopulator(schemaScriptPath, dataScriptPath);
     }
 
-    public DbManipulator(DbProperties dbProperties) {
-        this(dbProperties, null, null, null);
-    }
-
     public void init() {
         populator.initDb(databaseManager.getDataSource());
     }

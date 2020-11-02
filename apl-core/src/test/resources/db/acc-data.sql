@@ -2,7 +2,6 @@ TRUNCATE TABLE account;
 TRUNCATE TABLE account_asset;
 TRUNCATE TABLE account_currency;
 TRUNCATE TABLE account_guaranteed_balance;
---DELETE FROM FTL.INDEXES;
 TRUNCATE TABLE account_ledger;
 TRUNCATE TABLE account_property;
 TRUNCATE TABLE account_lease;

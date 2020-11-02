@@ -49,22 +49,21 @@ public class DbPopulator {
     }
 
     private void loadSqlAndExecute(TransactionalDataSource dataSource, URI file) {
-        byte[] bytes = readAllBytes(file);
-
         int appliedResults = 0;
-        StringTokenizer tokenizer = new StringTokenizer(new String(bytes), ";");
-        while (tokenizer.hasMoreElements()) {
-            String sqlCommand = tokenizer.nextToken();
-            try (Connection con = dataSource.getConnection();
-                 Statement stm = con.createStatement()) {
-                if (sqlCommand.trim().length() != 0 && !sqlCommand.trim().startsWith("--")) {
-                    appliedResults += stm.executeUpdate(sqlCommand);
-                    con.commit();
+        StringTokenizer tokenizer = new StringTokenizer(new String(readAllBytes(file)), ";");
+
+        try (Connection con = dataSource.getConnection();
+             Statement stm = con.createStatement()) {
+            while (tokenizer.hasMoreElements()) {
+                String sqlCommand = tokenizer.nextToken();
+                if (sqlCommand.trim().length() != 0) {
+                    stm.addBatch(sqlCommand);
                 }
-            } catch (SQLException e) {
-                log.error("Error for: {}", sqlCommand);
-                throw new RuntimeException(e.toString(), e);
             }
+            stm.executeBatch();
+            con.commit();
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
         }
         log.trace("Applied '{}' test data commands into db=[{}]", appliedResults, (dataSource).getDbIdentity());
     }

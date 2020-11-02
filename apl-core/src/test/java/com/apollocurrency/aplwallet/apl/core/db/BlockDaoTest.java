@@ -52,7 +52,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-
 @Tag("slow")
 class BlockDaoTest extends DbContainerBaseTest {
 
