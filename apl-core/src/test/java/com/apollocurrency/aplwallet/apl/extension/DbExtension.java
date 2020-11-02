@@ -145,6 +145,14 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     @Override
     public void afterEach(ExtensionContext context) throws Exception {
         if (!staticInit) {
+            // remove data from 'flt_indexes' table for next unit test method run
+            DbUtils.checkAndRunInTransaction(getDatabaseManager(), (con) -> {
+                try {
+                    fullTextSearchService.dropAll(con);
+                } catch (SQLException e) {
+                    log.error("FTS drop all error", e);
+                }
+            });
             shutdownDbAndDelete();
         }
     }
@@ -154,6 +162,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
         if (fullTextSearchService != null) {
             fullTextSearchService.shutdown();
             FileUtils.deleteDirectory(indexDir.toFile());
+            fullTextSearchService = null; // for next unit test run
         }
         if (dbDir != null) {
             FileUtils.deleteDirectory(dbDir.toFile());

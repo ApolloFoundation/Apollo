@@ -275,7 +275,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         result.addColumn("table", Types.VARCHAR, 0, 0);
         result.addColumn("columns", Types.VARCHAR, 0, 0);
         result.addColumn("score", Types.FLOAT, 0, 0);
-        result.addColumn("keys", Types.ARRAY, 0, 0);
+        result.addColumn("keys", Types.BIGINT, 0, 0);
         //
         // Perform the search
         //
@@ -289,7 +289,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             QueryParser parser = new QueryParser("_DATA", analyzer);
             parser.setDateResolution("_MODIFIED", DateTools.Resolution.SECOND);
             parser.setDefaultOperator(QueryParser.Operator.AND);
-            Query query = parser.parse("_TABLE:" + schema.toUpperCase() + "." + table.toUpperCase() + " AND (" + queryText + ")");
+            Query query = parser.parse("_TABLE:" + schema.toLowerCase() + "." + table.toLowerCase() + " AND (" + queryText + ")");
             TopDocs documents = indexSearcher.search(query, limit);
             ScoreDoc[] hits = documents.scoreDocs;
             int resultCount = Math.min(hits.length, (limit == 0 ? hits.length : limit));
@@ -303,7 +303,8 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
                     nameParts[1], // table name
                     indexParts[1], // columns
                     hits[i].score, // score
-                    new Long[]{Long.parseLong(indexParts[2])} // keys (DB_ID?)
+//                    new Long[]{Long.parseLong(indexParts[2])} // keys (DB_ID?)
+                    Long.parseLong(indexParts[2]) // keys (DB_ID?)
                 );
             }
         } catch (ParseException exc) {

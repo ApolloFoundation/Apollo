@@ -476,7 +476,7 @@ public class DGSServiceImpl implements DGSService {
         try {
             ResultSet rs = lookupFullTextSearchService().search("public", goodsTable.getTableName(), query, Integer.MAX_VALUE, 0);
             while (rs.next()) {
-                long DB_ID = rs.getLong(5);
+                Long DB_ID = rs.getLong(5);
                 if (index == 0) {
                     inRange.append(DB_ID);
                 } else {
@@ -485,6 +485,7 @@ public class DGSServiceImpl implements DGSService {
                 index++;
             }
             inRange.append(")");
+            log.debug("{}", inRange.toString());
         } catch (SQLException e) {
             log.error("FTS failed", e);
             throw new RuntimeException(e);
@@ -492,8 +493,14 @@ public class DGSServiceImpl implements DGSService {
 //        return goodsTable.search(query, inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE, from, to,
 //            " ORDER BY ft.score DESC, goods.timestamp DESC ");
 
+        if (inRange.length() == 2) {
+            // no DB_ID were fetched from Lucene index, return empty
+            return DbIterator.EmptyDbIterator();
+        }
+
         DbClause dbClause = inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE;
-        String sort = " ORDER BY /*ft.score DESC, */goods.timestamp DESC ";
+//        String sort = " ORDER BY ft.score DESC, goods.timestamp DESC ";
+        String sort = " ORDER BY goods.timestamp DESC ";
         Connection con = null;
         TransactionalDataSource dataSource = goodsTable.getDatabaseManager().getDataSource();
         final boolean doCache = dataSource.isInTransaction();
@@ -510,7 +517,7 @@ public class DGSServiceImpl implements DGSService {
                 + " AND " + dbClause.getClause() + sort
                 + DbUtils.limitsClause(from, to));
             int i = 0;
-            pstmt.setString(++i, query);
+//            pstmt.setString(++i, query);
             i = dbClause.set(pstmt, ++i);
             i = DbUtils.setLimits(i, pstmt, from, to);
             return new DbIterator<>(con, pstmt, (connection, rs) -> {

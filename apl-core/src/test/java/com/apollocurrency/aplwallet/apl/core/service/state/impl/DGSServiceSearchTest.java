@@ -53,9 +53,9 @@ import java.util.Map;
 
 import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_0_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.mockito.Mockito.mock;
 
-@Disabled // TODO: YL @full_text_search_fix is needed
 @Slf4j
 @Testcontainers
 @Tag("slow")
@@ -106,19 +106,19 @@ public class DGSServiceSearchTest extends DbContainerBaseTest {
     @Test
     void testSearchGoods() {
         List<DGSGoods> goods = CollectionUtil.toList(service.searchGoods("tes*", false, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_4, dtd.GOODS_2, dtd.GOODS_10, dtd.GOODS_8), goods);
+        assertIterableEquals(List.of(dtd.GOODS_4, dtd.GOODS_2, dtd.GOODS_10, dtd.GOODS_8), goods);
     }
 
     @Test
     void testSearchGoodsWithPagination() {
         List<DGSGoods> goods = CollectionUtil.toList(service.searchGoods("tes*", false, 1, 2));
-        assertEquals(List.of(dtd.GOODS_2, dtd.GOODS_10), goods);
+        assertIterableEquals(List.of(dtd.GOODS_2, dtd.GOODS_10), goods);
     }
 
     @Test
     void testSearchGoodsByTag() {
         List<DGSGoods> goods = CollectionUtil.toList(service.searchGoods("prod*", false, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_2), goods);
+        assertIterableEquals(List.of(dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_2), goods);
     }
 
     @Test

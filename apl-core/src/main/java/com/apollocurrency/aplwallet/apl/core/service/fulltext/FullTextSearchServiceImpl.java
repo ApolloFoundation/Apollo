@@ -238,9 +238,9 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             sb.append(", ").append(tableData.getColumnNames().get(index));
         }
         sb.append(" FROM ").append(tableName);
-//        Object[] row = new Object[tableData.getColumnNames().size()];
 
         boolean isIndexAppended = false;
+        int insertedDocsCount = 0;
         //
         // Index each row in the table
         //
@@ -264,6 +264,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                 if (operationData.getColumnsWithData().size() > 0) {
                     log.debug("Index data = {}", operationData);
                     fullTextSearchEngine.indexRow(operationData, tableData);
+                    insertedDocsCount++;
                     isIndexAppended = true;
                 }
             }
@@ -273,6 +274,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         //
         if (isIndexAppended) {
             fullTextSearchEngine.commitIndex();
+            log.debug("'{}' inserted Docs from table '{}'", insertedDocsCount, tableName);
         }
     }
 

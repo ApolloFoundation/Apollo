@@ -36,6 +36,14 @@ public final class DbIterator<T> implements Iterator<T>, Iterable<T>, AutoClosea
     private boolean hasNext;
     private boolean iterated;
 
+    /**
+     * For unit tests only
+     * @return empty db iterator
+     */
+    public static DbIterator EmptyDbIterator() {
+        return new DbIterator(null, null, null);
+    }
+
     public DbIterator(Connection con, PreparedStatement pstmt, ResultSetReader<T> rsReader) {
         this.con = con;
         this.pstmt = pstmt;
@@ -51,8 +59,10 @@ public final class DbIterator<T> implements Iterator<T>, Iterable<T>, AutoClosea
 
     @Override
     public boolean hasNext() {
-        if (!hasNext) {
-            DbUtils.close(rs, pstmt, con);
+        if (rs != null || pstmt != null || con != null) {
+            if (!hasNext) {
+                DbUtils.close(rs, pstmt, con);
+            }
         }
         return hasNext;
     }
