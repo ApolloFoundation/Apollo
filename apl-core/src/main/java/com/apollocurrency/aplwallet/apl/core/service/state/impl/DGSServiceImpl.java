@@ -54,6 +54,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
@@ -471,6 +472,47 @@ public class DGSServiceImpl implements DGSService {
     }
 
     public DbIterator<DGSGoods> searchGoods(String query, boolean inStockOnly, int from, int to) {
+//        return goodsTable.search(query, inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE, from, to,
+//            " ORDER BY ft.score DESC, goods.timestamp DESC ");
+        StringBuffer inRange = createDbIdRangeFromLuceneData(query);
+        if (inRange.length() == 2) {
+            // no DB_ID were fetched from Lucene index, return empty
+            return DbIterator.EmptyDbIterator();
+        }
+
+        DbClause dbClause = inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE;
+        String sort = " ORDER BY goods.timestamp DESC ";
+        Connection con = null;
+        TransactionalDataSource dataSource = goodsTable.getDatabaseManager().getDataSource();
+        final boolean doCache = dataSource.isInTransaction();
+        try {
+            con = dataSource.getConnection();
+            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
+            PreparedStatement pstmt = con.prepareStatement(
+                "SELECT " + goodsTable.getTableName() + ".* FROM " + goodsTable.getTableName()
+                + " WHERE " + goodsTable.getTableName() + ".db_id in " + inRange.toString()
+                + (goodsTable.isMultiversion() ? " AND " + goodsTable.getTableName() + ".latest = TRUE " : " ")
+                + " AND " + dbClause.getClause() + sort
+                + DbUtils.limitsClause(from, to));
+            int i = 0;
+            i = dbClause.set(pstmt, ++i);
+            i = DbUtils.setLimits(i, pstmt, from, to);
+            return new DbIterator<>(con, pstmt, (connection, rs) -> {
+                DbKey dbKey = null;
+                if (doCache) {
+                    dbKey = goodsTable.getDbKeyFactory().newKey(rs);
+                }
+                return goodsTable.load(connection, rs, dbKey);
+            });
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    public StringBuffer createDbIdRangeFromLuceneData(String query) {
+        Objects.requireNonNull(query, "query is empty");
+
         StringBuffer inRange = new StringBuffer("(");
         int index = 0;
         try {
@@ -490,17 +532,21 @@ public class DGSServiceImpl implements DGSService {
             log.error("FTS failed", e);
             throw new RuntimeException(e);
         }
-//        return goodsTable.search(query, inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE, from, to,
-//            " ORDER BY ft.score DESC, goods.timestamp DESC ");
+        return inRange;
+    }
 
+    public DbIterator<DGSGoods> searchSellerGoods(String query, long sellerId, boolean inStockOnly, int from, int to) {
+//        return goodsTable.search(query, new SellerDbClause(sellerId, inStockOnly), from, to,
+//            " ORDER BY ft.score DESC, goods.name ASC, goods.timestamp DESC ");
+
+        StringBuffer inRange = createDbIdRangeFromLuceneData(query);
         if (inRange.length() == 2) {
             // no DB_ID were fetched from Lucene index, return empty
             return DbIterator.EmptyDbIterator();
         }
 
         DbClause dbClause = inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE;
-//        String sort = " ORDER BY ft.score DESC, goods.timestamp DESC ";
-        String sort = " ORDER BY goods.timestamp DESC ";
+        String sort = " ORDER BY goods.name ASC, goods.timestamp DESC ";
         Connection con = null;
         TransactionalDataSource dataSource = goodsTable.getDatabaseManager().getDataSource();
         final boolean doCache = dataSource.isInTransaction();
@@ -508,16 +554,12 @@ public class DGSServiceImpl implements DGSService {
             con = dataSource.getConnection();
             @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
             PreparedStatement pstmt = con.prepareStatement(
-//                "SELECT " + goodsTable.getTableName() + ".*, ft.score FROM " + table +
                 "SELECT " + goodsTable.getTableName() + ".* FROM " + goodsTable.getTableName()
-//                ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
-//                + " WHERE " + goodsTable.getTableName() + ".db_id = ft.keys[1] "
-                + " WHERE " + goodsTable.getTableName() + ".db_id in " + inRange.toString()
-                + (goodsTable.isMultiversion() ? " AND " + goodsTable.getTableName() + ".latest = TRUE " : " ")
-                + " AND " + dbClause.getClause() + sort
-                + DbUtils.limitsClause(from, to));
+                    + " WHERE " + goodsTable.getTableName() + ".db_id in " + inRange.toString()
+                    + (goodsTable.isMultiversion() ? " AND " + goodsTable.getTableName() + ".latest = TRUE " : " ")
+                    + " AND " + dbClause.getClause() + sort
+                    + DbUtils.limitsClause(from, to));
             int i = 0;
-//            pstmt.setString(++i, query);
             i = dbClause.set(pstmt, ++i);
             i = DbUtils.setLimits(i, pstmt, from, to);
             return new DbIterator<>(con, pstmt, (connection, rs) -> {
@@ -531,11 +573,6 @@ public class DGSServiceImpl implements DGSService {
             DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
-    }
-
-    public DbIterator<DGSGoods> searchSellerGoods(String query, long sellerId, boolean inStockOnly, int from, int to) {
-        return goodsTable.search(query, new SellerDbClause(sellerId, inStockOnly), from, to,
-            " ORDER BY ft.score DESC, goods.name ASC, goods.timestamp DESC ");
     }
 
     private void createAndFireFullTextSearchDataEvent(DGSGoods goods, FullTextOperationData.OperationType operationType) {

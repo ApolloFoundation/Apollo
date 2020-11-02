@@ -124,13 +124,13 @@ public class DGSServiceSearchTest extends DbContainerBaseTest {
     @Test
     void testSearchSellerGoods() {
         List<DGSGoods> dgsGoods = CollectionUtil.toList(service.searchSellerGoods("bat*", SELLER_0_ID, true, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_12), dgsGoods);
+        assertIterableEquals(List.of(dtd.GOODS_12), dgsGoods);
     }
 
     @Test
     void testSearchSellerGoodsWithPagination() {
         List<DGSGoods> dgsGoods = CollectionUtil.toList(service.searchSellerGoods("ta*", SELLER_0_ID, false, 1, 2));
-        assertEquals(List.of(dtd.GOODS_4), dgsGoods);
+        assertIterableEquals(List.of(dtd.GOODS_4), dgsGoods);
     }
 
 }
