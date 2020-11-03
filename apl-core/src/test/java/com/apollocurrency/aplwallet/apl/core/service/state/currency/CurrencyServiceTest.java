@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
@@ -128,6 +129,8 @@ class CurrencyServiceTest {
     CurrencyMintTable currencyMintTable;
     @Mock
     private FullTextSearchUpdater fullTextSearchUpdater;
+    @Mock
+    private FullTextSearchService fullTextSearchService;
 
     @Mock
     TransactionValidationHelper transactionValidationHelper;
@@ -137,7 +140,8 @@ class CurrencyServiceTest {
         td = new CurrencyTestData();
         service = new CurrencyServiceImpl(currencySupplyTable, currencyTable, currencyMintTable, monetaryCurrencyMintingService, blockChainInfoService,
             accountService, accountCurrencyService, currencyExchangeOfferFacade, currencyFounderService,
-            exchangeService, currencyTransferService, shufflingService, blockchainConfig, transactionValidationHelper, fullTextSearchUpdater);
+            exchangeService, currencyTransferService, shufflingService, blockchainConfig,
+            transactionValidationHelper, fullTextSearchUpdater, fullTextSearchService);
     }
 
     @Test

@@ -7,11 +7,14 @@ package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyMintTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
@@ -24,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySuppl
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
@@ -47,6 +51,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -78,6 +86,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     private final BlockchainConfig blockchainConfig;
     private final TransactionValidationHelper validationHelper;
     private final FullTextSearchUpdater fullTextSearchUpdater;
+    private final FullTextSearchService fullTextSearchService;
 
     @Inject
     public CurrencyServiceImpl(CurrencySupplyTable currencySupplyTable,
@@ -94,7 +103,9 @@ public class CurrencyServiceImpl implements CurrencyService {
                                ShufflingService shufflingService,
                                BlockchainConfig blockchainConfig,
                                TransactionValidationHelper transactionValidationHelper,
-                               FullTextSearchUpdater fullTextSearchUpdater) {
+                               FullTextSearchUpdater fullTextSearchUpdater,
+                               FullTextSearchService fullTextSearchService
+    ) {
         this.currencySupplyTable = currencySupplyTable;
         this.currencyTable = currencyTable;
         this.currencyMintTable = currencyMintTable;
@@ -111,6 +122,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         this.shufflingService = shufflingService;
         this.blockchainConfig = blockchainConfig;
         this.fullTextSearchUpdater = fullTextSearchUpdater;
+        this.fullTextSearchService = fullTextSearchService;
     }
 
     @Override
@@ -151,13 +163,21 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     @Override
     public DbIterator<Currency> searchCurrencies(String query, int from, int to) {
-        return currencyTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC, currency.creation_height DESC ");
+//        return currencyTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC, currency.creation_height DESC ");
+        StringBuffer inRangeClause = createDbIdInRangeFromLuceneData(query);
+        if (inRangeClause.length() == 2) {
+            // no DB_ID were fetched from Lucene index, return empty db iterator
+            return DbIterator.EmptyDbIterator();
+        }
+        DbClause dbClause = DbClause.EMPTY_CLAUSE;
+        String sort = " ORDER BY currency.creation_height DESC ";
+        return fetchCurrencyByParams(from, to, inRangeClause, dbClause, sort);
     }
 
     @Override
     public Stream<Currency> searchCurrenciesStream(String query, int from, int to) {
         return iteratorToStreamConverter.apply(
-            currencyTable.search(query, DbClause.EMPTY_CLAUSE, from, to, " ORDER BY ft.score DESC, currency.creation_height DESC ")
+            this.searchCurrencies(query, from, to)
         );
     }
 
@@ -510,6 +530,73 @@ public class CurrencyServiceImpl implements CurrencyService {
             currencyMintTable.deleteAtHeight(c, currentHeight);
         });
     }
+
+    /**
+     * compose db_id list for in (id,..id) SQL luceneQuery
+     * @param luceneQuery lucene language luceneQuery pattern
+     * @return composed sql luceneQuery part
+     */
+    private StringBuffer createDbIdInRangeFromLuceneData(String luceneQuery) {
+        Objects.requireNonNull(luceneQuery, "luceneQuery is empty");
+        StringBuffer inRange = new StringBuffer("(");
+        int index = 0;
+        try {
+            ResultSet rs = fullTextSearchService.search("public", currencyTable.getTableName(), luceneQuery, Integer.MAX_VALUE, 0);
+            while (rs.next()) {
+                Long DB_ID = rs.getLong(5);
+                if (index == 0) {
+                    inRange.append(DB_ID);
+                } else {
+                    inRange.append(",").append(DB_ID);
+                }
+                index++;
+            }
+            inRange.append(")");
+            log.debug("{}", inRange.toString());
+        } catch (SQLException e) {
+            log.error("FTS failed", e);
+            throw new RuntimeException(e);
+        }
+        return inRange;
+    }
+
+    public DbIterator<Currency> fetchCurrencyByParams(int from, int to,
+                                                      StringBuffer inRangeClause,
+                                                      DbClause dbClause,
+                                                      String sort) {
+        Objects.requireNonNull(inRangeClause, "inRangeClause is NULL");
+        Objects.requireNonNull(dbClause, "dbClause is NULL");
+        Objects.requireNonNull(sort, "sort is NULL");
+
+        Connection con = null;
+        TransactionalDataSource dataSource = currencyTable.getDatabaseManager().getDataSource();
+        final boolean doCache = dataSource.isInTransaction();
+        try {
+            con = dataSource.getConnection();
+            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
+            PreparedStatement pstmt = con.prepareStatement(
+                // select and load full entities from mariadb using prefetched DB_ID list from lucene
+                "SELECT " + currencyTable.getTableName() + ".* FROM " + currencyTable.getTableName()
+                    + " WHERE " + currencyTable.getTableName() + ".db_id in " + inRangeClause.toString()
+                    + (currencyTable.isMultiversion() ? " AND " + currencyTable.getTableName() + ".latest = TRUE " : " ")
+                    + " AND " + dbClause.getClause() + sort
+                    + DbUtils.limitsClause(from, to));
+            int i = 0;
+            i = dbClause.set(pstmt, ++i);
+            DbUtils.setLimits(i, pstmt, from, to);
+            return new DbIterator<>(con, pstmt, (connection, rs) -> {
+                DbKey dbKey = null;
+                if (doCache) {
+                    dbKey = currencyTable.getDbKeyFactory().newKey(rs);
+                }
+                return currencyTable.load(connection, rs, dbKey);
+            });
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
 
     private void createAndFireFullTextSearchDataEvent(Currency currency, FullTextOperationData.OperationType operationType) {
         FullTextOperationData operationData = new FullTextOperationData(
