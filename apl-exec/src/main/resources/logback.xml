@@ -134,6 +134,9 @@
           additivity="false">
     <appender-ref ref="tp-file"/>
   </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.util.QueuedThreadPool" level="trace">
+    <appender-ref ref="tp-file"/>
+  </logger>
 <!--  <logger name="com.apollocurrency.aplwallet.apl.core.peer.endpoint" level="trace" additivity="false">-->
 <!--    <appender-ref ref="tp-file"/>-->
 <!--  </logger>-->
