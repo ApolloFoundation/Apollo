@@ -72,7 +72,7 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
         this.blockchainConfig = blockchainConfig;
     }
 
-    private static DbClause getDbClause(String channel, long accountId) {
+    public static DbClause getDbClause(String channel, long accountId) {
         DbClause dbClause = DbClause.EMPTY_CLAUSE;
         if (channel != null) {
             dbClause = new DbClause.StringClause("channel", channel);
@@ -147,11 +147,6 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
         return super.getManyBy(getDbClause(channel, accountId), from, to);
     }
 
-    public DbIterator<TaggedData> searchData(String query, String channel, long accountId, int from, int to) {
-        return search(query, getDbClause(channel, accountId), from, to,
-            " ORDER BY ft.score DESC, tagged_data.block_timestamp DESC, tagged_data.db_id DESC ");
-    }
-
     @Override
     public void save(Connection con, TaggedData taggedData) throws SQLException {
         try (
@@ -208,33 +203,21 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
         }
     }
 
+    public DbIterator<TaggedData> searchData(String query, String channel, long accountId, int from, int to) {
+//        return search(query, getDbClause(channel, accountId), from, to,
+//            " ORDER BY ft.score DESC, tagged_data.block_timestamp DESC, tagged_data.db_id DESC ");
+        throw new UnsupportedOperationException("Call service, should be implemented by service");
+    }
+
     @Override
     public final DbIterator<TaggedData> search(String query, DbClause dbClause, int from, int to) {
-        return search(query, dbClause, from, to, " ORDER BY ft.score DESC ");
+//        return search(query, dbClause, from, to, " ORDER BY ft.score DESC ");
+        throw new UnsupportedOperationException("Call service, should be implemented by service");
     }
 
     @Override
     public final DbIterator<TaggedData> search(String query, DbClause dbClause, int from, int to, String sort) {
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-            PreparedStatement pstmt = con.prepareStatement("SELECT " + table + ".*, ft.score FROM " + table +
-                ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
-                + " WHERE " + table + ".db_id = ft.keys[1] "
-                + (multiversion ? " AND " + table + ".latest = TRUE " : " ")
-                + " AND " + dbClause.getClause() + sort
-                + DbUtils.limitsClause(from, to));
-            int i = 0;
-            pstmt.setString(++i, query);
-            i = dbClause.set(pstmt, ++i);
-            i = DbUtils.setLimits(i, pstmt, from, to);
-            return getManyBy(con, pstmt, true);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
+        throw new UnsupportedOperationException("Call service, should be implemented by service");
     }
 
 }

@@ -5,13 +5,16 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
@@ -20,18 +23,26 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataExten
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataTimestamp;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.util.TypeLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -47,6 +58,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     private TaggedDataExtendDao taggedDataExtendDao;
     private TimeService timeService;
     private FullTextSearchUpdater fullTextSearchUpdater;
+    private final FullTextSearchService fullTextSearchService;
 
     @Inject
     public TaggedDataServiceImpl(TaggedDataTable taggedDataTable,
@@ -56,7 +68,8 @@ public class TaggedDataServiceImpl implements TaggedDataService {
                                  TaggedDataTimestampDao taggedDataTimestampDao,
                                  TaggedDataExtendDao taggedDataExtendDao,
                                  TimeService timeService,
-                                 FullTextSearchUpdater fullTextSearchUpdater) {
+                                 FullTextSearchUpdater fullTextSearchUpdater,
+                                 FullTextSearchService fullTextSearchService) {
         this.taggedDataTable = taggedDataTable;
         this.timeService = timeService;
         this.dataTagDao = dataTagDao;
@@ -65,6 +78,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         this.taggedDataTimestampDao = taggedDataTimestampDao;
         this.taggedDataExtendDao = taggedDataExtendDao;
         this.fullTextSearchUpdater = fullTextSearchUpdater;
+        this.fullTextSearchService = fullTextSearchService;
     }
 
     @Override
@@ -202,7 +216,14 @@ public class TaggedDataServiceImpl implements TaggedDataService {
 
     @Override
     public DbIterator<TaggedData> searchData(String query, String channel, long accountId, int from, int to) {
-        return taggedDataTable.searchData(query, channel, accountId, from, to);
+        StringBuffer inRangeClause = createDbIdInRangeFromLuceneData(query);
+        if (inRangeClause.length() == 2) {
+            // no DB_ID were fetched from Lucene index, return empty db iterator
+            return DbIterator.EmptyDbIterator();
+        }
+        DbClause dbClause = TaggedDataTable.getDbClause(channel, accountId);
+        String sort = " ORDER BY tagged_data.block_timestamp DESC, tagged_data.db_id DESC ";
+        return fetchTaggedDataByParams(from, to, inRangeClause, dbClause, sort);
     }
 
     public DbIterator<TaggedData> getAll(int from, int to) {
@@ -227,6 +248,72 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     @Override
     public List<TaggedDataExtend> getExtendTransactionIds(long taggedDataId) {
         return taggedDataExtendDao.getExtendTransactionIds(taggedDataId);
+    }
+
+    /**
+     * compose db_id list for in (id,..id) SQL luceneQuery
+     * @param luceneQuery lucene language luceneQuery pattern
+     * @return composed sql luceneQuery part
+     */
+    private StringBuffer createDbIdInRangeFromLuceneData(String luceneQuery) {
+        Objects.requireNonNull(luceneQuery, "luceneQuery is NULL");
+        StringBuffer inRange = new StringBuffer("(");
+        int index = 0;
+        try {
+            ResultSet rs = fullTextSearchService.search("public", taggedDataTable.getTableName(), luceneQuery, Integer.MAX_VALUE, 0);
+            while (rs.next()) {
+                Long DB_ID = rs.getLong(5);
+                if (index == 0) {
+                    inRange.append(DB_ID);
+                } else {
+                    inRange.append(",").append(DB_ID);
+                }
+                index++;
+            }
+            inRange.append(")");
+            log.debug("{}", inRange.toString());
+        } catch (SQLException e) {
+            log.error("FTS failed", e);
+            throw new RuntimeException(e);
+        }
+        return inRange;
+    }
+
+    public DbIterator<TaggedData> fetchTaggedDataByParams(int from, int to,
+                                                      StringBuffer inRangeClause,
+                                                      DbClause dbClause,
+                                                      String sort) {
+        Objects.requireNonNull(inRangeClause, "inRangeClause is NULL");
+        Objects.requireNonNull(dbClause, "dbClause is NULL");
+        Objects.requireNonNull(sort, "sort is NULL");
+
+        Connection con = null;
+        TransactionalDataSource dataSource = taggedDataTable.getDatabaseManager().getDataSource();
+        final boolean doCache = dataSource.isInTransaction();
+        try {
+            con = dataSource.getConnection();
+            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
+            PreparedStatement pstmt = con.prepareStatement(
+                // select and load full entities from mariadb using prefetched DB_ID list from lucene
+                "SELECT " + taggedDataTable.getTableName() + ".* FROM " + taggedDataTable.getTableName()
+                    + " WHERE " + taggedDataTable.getTableName() + ".db_id in " + inRangeClause.toString()
+                    + (taggedDataTable.isMultiversion() ? " AND " + taggedDataTable.getTableName() + ".latest = TRUE " : " ")
+                    + " AND " + dbClause.getClause() + sort
+                    + DbUtils.limitsClause(from, to));
+            int i = 0;
+            i = dbClause.set(pstmt, ++i);
+            DbUtils.setLimits(i, pstmt, from, to);
+            return new DbIterator<>(con, pstmt, (connection, rs) -> {
+                DbKey dbKey = null;
+                if (doCache) {
+                    dbKey = taggedDataTable.getDbKeyFactory().newKey(rs);
+                }
+                return taggedDataTable.load(connection, rs, dbKey);
+            });
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     private void createAndFireFullTextSearchDataEvent(TaggedData taggedData, FullTextOperationData.OperationType operationType) {
