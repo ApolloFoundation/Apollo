@@ -26,8 +26,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,12 +40,11 @@ public class MemPoolInMemoryState {
             .thenComparingLong(UnconfirmedTransaction::getArrivalTimestamp) // Sort by arrival_timestamp ASC
             .thenComparingLong(UnconfirmedTransaction::getId); // Sort by transaction ID ASC
 
-    private final Map<Long, UnconfirmedTransaction> transactionCache = new HashMap<>();
+    private final Map<Long, UnconfirmedTransaction> transactionCache = new ConcurrentHashMap<>();
     private final Map<Transaction, Transaction> txToBroadcastWhenConfirmed = new ConcurrentHashMap<>();
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final PriorityBlockingQueue<TxWithArrivalTimestamp> broadcastPendingTransactions;
     private final PriorityBlockingQueue<UnconfirmedTransaction> processLaterQueue;
-    private final ReadWriteLock cacheLock = new ReentrantReadWriteLock();
 
     @Getter
     private volatile boolean cacheInitialized;
@@ -99,57 +96,38 @@ public class MemPoolInMemoryState {
     }
 
     public void putInCache(UnconfirmedTransaction unconfirmedTransaction) {
-        cacheLock.writeLock().lock();
-        try {
-            if (transactionCache.size() < maxCachedTransactions) {
-                transactionCache.put(unconfirmedTransaction.getId(), unconfirmedTransaction);
-            }
-        } finally {
-            cacheLock.writeLock().unlock();
+        if (transactionCache.size() < maxCachedTransactions) {
+            transactionCache.put(unconfirmedTransaction.getId(), unconfirmedTransaction);
         }
     }
 
     public void initializeCache(Stream<UnconfirmedTransaction> unconfirmedTransactionStream) {
         if (cacheInitialized) {
-            unconfirmedTransactionStream.forEach(e-> {});
+            unconfirmedTransactionStream.forEach(e -> {});
             return;
         }
-        cacheLock.writeLock().lock();
-        try {
+        synchronized (this) {
             if (cacheInitialized) {
-                unconfirmedTransactionStream.forEach(e -> {
-                });
+                unconfirmedTransactionStream.forEach(e -> {});
                 return;
             }
             unconfirmedTransactionStream.forEach(e -> transactionCache.put(e.getId(), e));
-        } finally {
-            cacheLock.writeLock().unlock();
         }
         cacheInitialized = true;
     }
 
     public Set<UnconfirmedTransaction> getFromCacheSorted(List<String> exclude) {
         TreeSet<UnconfirmedTransaction> sortedUnconfirmedTransactions = new TreeSet<>(cachedUnconfirmedTransactionComparator);
-        cacheLock.readLock().lock();
-        try {
-            transactionCache.values().forEach(transaction -> {
-                if (Collections.binarySearch(exclude, transaction.getStringId()) < 0) {
-                    sortedUnconfirmedTransactions.add(transaction);
-                }
-            });
-        } finally {
-            cacheLock.readLock().unlock();
-        }
+        transactionCache.values().forEach(transaction -> {
+            if (Collections.binarySearch(exclude, transaction.getStringId()) < 0) {
+                sortedUnconfirmedTransactions.add(transaction);
+            }
+        });
         return sortedUnconfirmedTransactions;
     }
 
     public void clear() {
-        cacheLock.writeLock().lock();
-        try {
-            transactionCache.clear();
-        } finally {
-            cacheLock.writeLock().unlock();
-        }
+        transactionCache.clear();
         txToBroadcastWhenConfirmed.clear();
         broadcastedTransactions.clear();
         broadcastPendingTransactions.clear();
@@ -157,21 +135,11 @@ public class MemPoolInMemoryState {
     }
 
     public int txCacheSize() {
-        cacheLock.readLock().lock();
-        try {
-            return transactionCache.size();
-        } finally {
-            cacheLock.readLock().unlock();
-        }
+        return transactionCache.size();
     }
 
     public UnconfirmedTransaction getFromCacheSorted(long id) {
-        cacheLock.readLock().lock();
-        try {
-            return transactionCache.get(id);
-        } finally {
-            cacheLock.readLock().unlock();
-        }
+        return transactionCache.get(id);
     }
 
     public void broadcastLater(Transaction tx) {
@@ -179,12 +147,7 @@ public class MemPoolInMemoryState {
     }
 
     public void removeFromCache(long id) {
-        cacheLock.writeLock().lock();
-        try {
-            transactionCache.remove(id);
-        } finally {
-            cacheLock.writeLock().unlock();
-        }
+        transactionCache.remove(id);
     }
 
     public boolean isBroadcasted(Transaction transaction) {
