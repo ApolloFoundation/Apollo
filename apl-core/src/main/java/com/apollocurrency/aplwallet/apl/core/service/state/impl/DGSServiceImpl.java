@@ -45,7 +45,6 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -63,15 +62,15 @@ public class DGSServiceImpl implements DGSService {
     private final DbClause inStockOnlyClause = new DbClause.IntClause("in_stock_count", DbClause.Op.GT, 0);
     private final DbClause inStockClause = new DbClause.BooleanClause("goods.delisted", false)
         .and(new DbClause.LongClause("goods.quantity", DbClause.Op.GT, 0));
-    private DGSPublicFeedbackTable publicFeedbackTable;
-    private DGSPurchaseTable purchaseTable;
-    private DGSFeedbackTable feedbackTable;
-    private Blockchain blockchain;
-    private DGSGoodsTable goodsTable;
-    private DGSTagTable tagTable;
-    private AccountService accountService;
+    private final DGSPublicFeedbackTable publicFeedbackTable;
+    private final DGSPurchaseTable purchaseTable;
+    private final DGSFeedbackTable feedbackTable;
+    private final Blockchain blockchain;
+    private final DGSGoodsTable goodsTable;
+    private final DGSTagTable tagTable;
+    private final AccountService accountService;
     private final FullTextSearchUpdater fullTextSearchUpdater;
-    private FullTextSearchService fullTextSearchService;
+    private final FullTextSearchService fullTextSearchService;
 
     @Inject
     public DGSServiceImpl(DGSPublicFeedbackTable publicFeedbackTable,
@@ -81,8 +80,8 @@ public class DGSServiceImpl implements DGSService {
                           DGSGoodsTable goodsTable,
                           DGSTagTable tagTable,
                           AccountService accountService,
-                          FullTextSearchUpdater fullTextSearchUpdater/*,
-                          FullTextSearchService fullTextSearchService*/) {
+                          FullTextSearchUpdater fullTextSearchUpdater,
+                          FullTextSearchService fullTextSearchService) {
         this.publicFeedbackTable = publicFeedbackTable;
         this.purchaseTable = purchaseTable;
         this.feedbackTable = feedbackTable;
@@ -91,7 +90,7 @@ public class DGSServiceImpl implements DGSService {
         this.tagTable = tagTable;
         this.accountService = accountService;
         this.fullTextSearchUpdater = fullTextSearchUpdater;
-//        this.fullTextSearchService = fullTextSearchService;
+        this.fullTextSearchService = fullTextSearchService;
     }
 
     public int getPurchaseCount() {
@@ -368,12 +367,9 @@ public class DGSServiceImpl implements DGSService {
         long totalWithoutDiscount = Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM());
         Account buyer = accountService.getAccount(purchase.getBuyerId());
         long transactionId = transaction.getId();
-        //buyer.addToBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,Math.subtractExact(attachment.getDiscountATM(), totalWithoutDiscount));
         accountService.addToBalanceATM(buyer, LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, Math.subtractExact(attachment.getDiscountATM(), totalWithoutDiscount));
-        //buyer.addToUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, attachment.getDiscountATM());
         accountService.addToUnconfirmedBalanceATM(buyer, LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, attachment.getDiscountATM());
         Account seller = accountService.getAccount(transaction.getSenderId());
-        //seller.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, Math.subtractExact(totalWithoutDiscount, attachment.getDiscountATM()));
         accountService.addToBalanceAndUnconfirmedBalanceATM(seller, LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, Math.subtractExact(totalWithoutDiscount, attachment.getDiscountATM()));
         setEncryptedGoods(purchase, attachment.getGoods(), attachment.goodsIsText());
         setDiscountATM(purchase, attachment.getDiscountATM());
@@ -464,59 +460,28 @@ public class DGSServiceImpl implements DGSService {
         createAndFireFullTextSearchDataEvent(goods, FullTextOperationData.OperationType.INSERT_UPDATE);
     }
 
-    public FullTextSearchService lookupFullTextSearchService() {
-        if (fullTextSearchService == null) {
-            this.fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
-        }
-        return this.fullTextSearchService;
-    }
-
     public DbIterator<DGSGoods> searchGoods(String query, boolean inStockOnly, int from, int to) {
-//        return goodsTable.search(query, inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE, from, to,
-//            " ORDER BY ft.score DESC, goods.timestamp DESC ");
-        StringBuffer inRange = createDbIdRangeFromLuceneData(query);
-        if (inRange.length() == 2) {
-            // no DB_ID were fetched from Lucene index, return empty
+        StringBuffer inRangeClause = createDbIdInRangeFromLuceneData(query);
+        if (inRangeClause.length() == 2) {
+            // no DB_ID were fetched from Lucene index, return empty db iterator
             return DbIterator.EmptyDbIterator();
         }
-
         DbClause dbClause = inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE;
         String sort = " ORDER BY goods.timestamp DESC ";
-        Connection con = null;
-        TransactionalDataSource dataSource = goodsTable.getDatabaseManager().getDataSource();
-        final boolean doCache = dataSource.isInTransaction();
-        try {
-            con = dataSource.getConnection();
-            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-            PreparedStatement pstmt = con.prepareStatement(
-                "SELECT " + goodsTable.getTableName() + ".* FROM " + goodsTable.getTableName()
-                + " WHERE " + goodsTable.getTableName() + ".db_id in " + inRange.toString()
-                + (goodsTable.isMultiversion() ? " AND " + goodsTable.getTableName() + ".latest = TRUE " : " ")
-                + " AND " + dbClause.getClause() + sort
-                + DbUtils.limitsClause(from, to));
-            int i = 0;
-            i = dbClause.set(pstmt, ++i);
-            i = DbUtils.setLimits(i, pstmt, from, to);
-            return new DbIterator<>(con, pstmt, (connection, rs) -> {
-                DbKey dbKey = null;
-                if (doCache) {
-                    dbKey = goodsTable.getDbKeyFactory().newKey(rs);
-                }
-                return goodsTable.load(connection, rs, dbKey);
-            });
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
+        return fetchDgsGoodsByParams(from, to, inRangeClause, dbClause, sort);
     }
 
-    public StringBuffer createDbIdRangeFromLuceneData(String query) {
-        Objects.requireNonNull(query, "query is empty");
-
+    /**
+     * compose db_id list for in (id,..id) SQL luceneQuery
+     * @param luceneQuery lucene language luceneQuery pattern
+     * @return composed sql luceneQuery part
+     */
+    private StringBuffer createDbIdInRangeFromLuceneData(String luceneQuery) {
+        Objects.requireNonNull(luceneQuery, "luceneQuery is empty");
         StringBuffer inRange = new StringBuffer("(");
         int index = 0;
         try {
-            ResultSet rs = lookupFullTextSearchService().search("public", goodsTable.getTableName(), query, Integer.MAX_VALUE, 0);
+            ResultSet rs = fullTextSearchService.search("public", goodsTable.getTableName(), luceneQuery, Integer.MAX_VALUE, 0);
             while (rs.next()) {
                 Long DB_ID = rs.getLong(5);
                 if (index == 0) {
@@ -536,17 +501,24 @@ public class DGSServiceImpl implements DGSService {
     }
 
     public DbIterator<DGSGoods> searchSellerGoods(String query, long sellerId, boolean inStockOnly, int from, int to) {
-//        return goodsTable.search(query, new SellerDbClause(sellerId, inStockOnly), from, to,
-//            " ORDER BY ft.score DESC, goods.name ASC, goods.timestamp DESC ");
-
-        StringBuffer inRange = createDbIdRangeFromLuceneData(query);
-        if (inRange.length() == 2) {
-            // no DB_ID were fetched from Lucene index, return empty
+        StringBuffer inRangeClause = createDbIdInRangeFromLuceneData(query);
+        if (inRangeClause.length() == 2) {
+            // no DB_ID were fetched from Lucene index, return empty db iterator
             return DbIterator.EmptyDbIterator();
         }
-
         DbClause dbClause = inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE;
         String sort = " ORDER BY goods.name ASC, goods.timestamp DESC ";
+        return fetchDgsGoodsByParams(from, to, inRangeClause, dbClause, sort);
+    }
+
+    public DbIterator<DGSGoods> fetchDgsGoodsByParams(int from, int to,
+                                                      StringBuffer inRangeClause,
+                                                      DbClause dbClause,
+                                                      String sort) {
+        Objects.requireNonNull(inRangeClause, "inRangeClause is NULL");
+        Objects.requireNonNull(dbClause, "dbClause is NULL");
+        Objects.requireNonNull(sort, "sort is NULL");
+
         Connection con = null;
         TransactionalDataSource dataSource = goodsTable.getDatabaseManager().getDataSource();
         final boolean doCache = dataSource.isInTransaction();
@@ -554,14 +526,15 @@ public class DGSServiceImpl implements DGSService {
             con = dataSource.getConnection();
             @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
             PreparedStatement pstmt = con.prepareStatement(
+                // select and load full entities from mariadb using prefetched DB_ID list from lucene
                 "SELECT " + goodsTable.getTableName() + ".* FROM " + goodsTable.getTableName()
-                    + " WHERE " + goodsTable.getTableName() + ".db_id in " + inRange.toString()
+                    + " WHERE " + goodsTable.getTableName() + ".db_id in " + inRangeClause.toString()
                     + (goodsTable.isMultiversion() ? " AND " + goodsTable.getTableName() + ".latest = TRUE " : " ")
                     + " AND " + dbClause.getClause() + sort
                     + DbUtils.limitsClause(from, to));
             int i = 0;
             i = dbClause.set(pstmt, ++i);
-            i = DbUtils.setLimits(i, pstmt, from, to);
+            DbUtils.setLimits(i, pstmt, from, to);
             return new DbIterator<>(con, pstmt, (connection, rs) -> {
                 DbKey dbKey = null;
                 if (doCache) {
