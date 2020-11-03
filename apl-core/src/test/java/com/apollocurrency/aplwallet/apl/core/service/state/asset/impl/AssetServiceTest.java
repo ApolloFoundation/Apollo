@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDeleteService;
@@ -25,15 +26,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -51,12 +57,14 @@ class AssetServiceTest {
     private IteratorToStreamConverter<Asset> assetIteratorToStreamConverter;
     @Mock
     private FullTextSearchUpdater fullTextSearchUpdater;
+    @Mock
+    private FullTextSearchService fullTextSearchService;
 
     @BeforeEach
     void setUp() {
         td = new AssetTestData();
         service = new AssetServiceImpl(assetTable, blockChainInfoService, assetDeleteService,
-            assetIteratorToStreamConverter, fullTextSearchUpdater);
+            assetIteratorToStreamConverter, fullTextSearchUpdater, fullTextSearchService);
     }
 
     @Test
@@ -133,20 +141,23 @@ class AssetServiceTest {
     }
 
     @Test
-    void searchAssets() {
+    void searchAssets() throws SQLException {
         //GIVEN
         DbIterator<Asset> dbIt = mock(DbIterator.class);
-        doReturn(dbIt).when(assetTable).search(any(String.class), any(DbClause.class), eq(0), eq(10), any(String.class));
-        Stream<Asset> expected = Stream.of(td.ASSET_0, td.ASSET_1, td.ASSET_2);
-        doReturn(expected).when(assetIteratorToStreamConverter).apply(dbIt);
+        doReturn("asset").when(assetTable).getTableName();
+        Stream<Asset> expected = Stream.of();
+        ResultSet rs = mock(ResultSet.class);
+        doReturn(rs).when(fullTextSearchService)
+            .search("public", "asset", "searchQuery", Integer.MAX_VALUE, 0);
 
         //WHEN
-        Stream<Asset> result = service.searchAssetsStream("seqrchQuery", 0, 10);
-        assertEquals(expected, result);
+        Stream<Asset> result = service.searchAssetsStream("searchQuery", 0, 10);
+        assertNotNull(result);
 
         //THEN
-        verify(assetTable).search(any(String.class), any(DbClause.class), eq(0), eq(10), any(String.class));
-        verify(assetIteratorToStreamConverter).apply(dbIt);
+        verify(assetTable, never()).search(any(String.class), any(DbClause.class), eq(0), eq(10), any(String.class));
+        verify(assetIteratorToStreamConverter, never()).apply(dbIt);
+        verify(fullTextSearchService).search("public", "asset", "searchQuery", Integer.MAX_VALUE, 0);
     }
 
     @Test
