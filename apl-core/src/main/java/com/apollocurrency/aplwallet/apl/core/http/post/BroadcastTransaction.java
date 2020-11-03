@@ -34,8 +34,6 @@ import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The purpose of broadcast transaction is to support client side signing of transactions.
@@ -60,7 +58,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Vetoed
 @Slf4j
 public final class BroadcastTransaction extends AbstractAPIRequestHandler {
-    private final Map<Long, Transaction> txs = new ConcurrentHashMap<>();
     public BroadcastTransaction() {
         super(new APITag[]{APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
@@ -76,10 +73,6 @@ public final class BroadcastTransaction extends AbstractAPIRequestHandler {
         try {
             Transaction.Builder builder = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
             Transaction transaction = builder.build();
-            if (txs.containsKey(transaction.getId())) {
-                throw new RuntimeException("Duplicate transaction: " + transaction.getId());
-            }
-            txs.put(transaction.getId(), transaction);
 
             boolean broadcasted = lookupMemPool().softBroadcast(transaction);
             if (!broadcasted) {

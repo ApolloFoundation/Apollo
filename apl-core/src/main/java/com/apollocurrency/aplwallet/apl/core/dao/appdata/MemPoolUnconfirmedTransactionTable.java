@@ -38,6 +38,9 @@ public class MemPoolUnconfirmedTransactionTable extends DbTableWrapper<Unconfirm
         return table.countExpiredTransactions(epochTime);
     }
 
+    public Stream<UnconfirmedTransaction> getAllUnconfirmedTransactionsStream() {
+        return table.getAllUnconfirmedTransactions();
+    }
     @Override
     public int rollback(int height) {
         return 0;

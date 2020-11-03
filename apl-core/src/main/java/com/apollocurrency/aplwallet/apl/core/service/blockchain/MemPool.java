@@ -110,14 +110,14 @@ public class MemPool {
 
 
     public Stream<UnconfirmedTransaction> getAllProcessedStream() {
-        return CollectionUtil.toList(table.getAll(0, -1)).stream();
+        return table.getAllUnconfirmedTransactionsStream();
     }
 
     public int allProcessedCount() {
         return currentNumberOfUnconfirmedTxs.compareAndExchange(-1, table.getCount());
     }
-//
-    public void removeOutdatedBroadcastedTransactions(Transaction transaction) {
+
+    public void removeBroadcastedTransaction(Transaction transaction) {
         memoryState.removeBroadcasted(List.of(transaction));
     }
 
