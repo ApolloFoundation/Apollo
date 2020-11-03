@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
@@ -31,11 +32,12 @@ class AccountInfoServiceTest {
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private AccountInfoTable accountInfoTable = mock(AccountInfoTable.class);
     private FullTextSearchUpdater fullTextSearchUpdater = mock(FullTextSearchUpdater.class);
+    private FullTextSearchService fullTextSearchService = mock(FullTextSearchService.class);
 
     @BeforeEach
     void setUp() {
         testData = new AccountTestData();
-        accountInfoService = spy(new AccountInfoServiceImpl(blockchain, accountInfoTable, fullTextSearchUpdater));
+        accountInfoService = spy(new AccountInfoServiceImpl(blockchain, accountInfoTable, fullTextSearchUpdater, fullTextSearchService));
         doReturn("account_info").when(accountInfoTable).getTableName();
     }
 
