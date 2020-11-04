@@ -296,15 +296,13 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             int resultOffset = Math.min(offset, resultCount);
             log.debug("HITS length = [{}], resultCount={}, resultOffset={}", hits.length, resultCount, resultOffset);
             for (int i = resultOffset; i < resultCount; i++) {
-                Document document = indexSearcher.doc(hits[i].doc);
-                String[] indexParts = document.get("_QUERY").split(";");
-                String[] nameParts = indexParts[0].split("\\.");
-                result.addRow(nameParts[0], // schema name
-                    nameParts[1], // table name
-                    indexParts[1], // columns
+                Document document = indexSearcher.doc(hits[i].doc); // _QUERY EXAMPLE = public.account_info;DB_ID;1
+                String[] indexParts = document.get("_QUERY").split(";"); // split to: public.account_info + DB_ID + 1
+                String[] nameParts = indexParts[0].split("\\.");// split to : public + account_info
+                result.addRow(nameParts[0], // schema name = public
+                    nameParts[1], // table name = account_info
                     hits[i].score, // score
-//                    new Long[]{Long.parseLong(indexParts[2])} // keys (DB_ID?)
-                    Long.parseLong(indexParts[2]) // keys (DB_ID?)
+                    Long.parseLong(indexParts[2]) // DB_ID key value = 1
                 );
             }
         } catch (ParseException exc) {

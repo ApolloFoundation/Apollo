@@ -33,6 +33,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
 import static com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil.toList;
 
 /**
@@ -63,6 +64,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
         Objects.requireNonNull(accountInfo);
         // prepare Event instance with data
         FullTextOperationData operationData = new FullTextOperationData(
+            DEFAULT_SCHEMA + "." +
             accountInfoTable.getTableName() + ";DB_ID;" + accountInfo.getDbId(), accountInfoTable.getTableName());
         operationData.setThread(Thread.currentThread().getName());
 
@@ -106,7 +108,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
         StringBuffer inRangeClause = createDbIdInRangeFromLuceneData(query);
         if (inRangeClause.length() == 2) {
             // no DB_ID were fetched from Lucene index, return empty db iterator
-            return toList(DbIterator.EmptyDbIterator());
+            return List.of();
         }
         DbClause dbClause = DbClause.EMPTY_CLAUSE;
         String sort = " ";

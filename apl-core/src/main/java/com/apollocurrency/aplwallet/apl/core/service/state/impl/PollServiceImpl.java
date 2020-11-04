@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import static com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable.FINISH_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
@@ -305,7 +306,8 @@ public class PollServiceImpl implements PollService {
 
     private void createAndFireFullTextSearchDataEvent(Poll poll, FullTextOperationData.OperationType operationType) {
         FullTextOperationData operationData = new FullTextOperationData(
-            pollTable.getTableName() + ";DB_ID;" + poll.getDbId(), pollTable.getTableName());
+            DEFAULT_SCHEMA + "." +
+                pollTable.getTableName() + ";DB_ID;" + poll.getDbId(), pollTable.getTableName());
         operationData.setThread(Thread.currentThread().getName());
         // put relevant data into Event instance
         operationData.setOperationType(operationType);

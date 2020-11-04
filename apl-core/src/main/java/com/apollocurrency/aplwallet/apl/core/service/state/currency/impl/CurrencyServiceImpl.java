@@ -64,6 +64,7 @@ import java.util.stream.Stream;
 import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.CLAIMABLE;
 import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.MINTABLE;
 import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.RESERVABLE;
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
 
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 @Slf4j
@@ -600,7 +601,8 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     private void createAndFireFullTextSearchDataEvent(Currency currency, FullTextOperationData.OperationType operationType) {
         FullTextOperationData operationData = new FullTextOperationData(
-            currencyTable.getTableName() + ";DB_ID;" + currency.getDbId(), currencyTable.getTableName());
+            DEFAULT_SCHEMA + "." +
+                currencyTable.getTableName() + ";DB_ID;" + currency.getDbId(), currencyTable.getTableName());
         operationData.setThread(Thread.currentThread().getName());
         // put relevant data into Event instance
         operationData.setOperationType(operationType);

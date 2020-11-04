@@ -49,8 +49,12 @@ public final class DbIterator<T> implements Iterator<T>, Iterable<T>, AutoClosea
         this.pstmt = pstmt;
         this.rsReader = rsReader;
         try {
-            this.rs = pstmt.executeQuery();
-            this.hasNext = rs.next();
+            if (pstmt != null) { // prevent NPE in tests
+                this.rs = pstmt.executeQuery();
+                this.hasNext = rs.next();
+            } else {
+                this.rs = null;
+            }
         } catch (SQLException e) {
             DbUtils.close(pstmt, con);
             throw new RuntimeException(e.toString(), e);

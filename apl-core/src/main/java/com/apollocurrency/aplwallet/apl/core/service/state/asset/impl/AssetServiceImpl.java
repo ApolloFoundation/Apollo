@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.asset.impl;
 
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
+
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTable;
@@ -237,7 +239,8 @@ public class AssetServiceImpl implements AssetService {
 
     private void createAndFireFullTextSearchDataEvent(Asset asset, FullTextOperationData.OperationType operationType) {
         FullTextOperationData operationData = new FullTextOperationData(
-            assetTable.getTableName() + ";DB_ID;" + asset.getDbId(), assetTable.getTableName());
+            DEFAULT_SCHEMA + "." +
+                assetTable.getTableName() + ";DB_ID;" + asset.getDbId(), assetTable.getTableName());
         operationData.setThread(Thread.currentThread().getName());
         // put relevant data into Event instance
         operationData.setOperationType(operationType);

@@ -42,7 +42,7 @@ public class DbUtils {
             index++;
         }
         List<Integer> indexedTextSearchColumns = getIndexColumns(connection, columnNames, columnTypes, schemaName, tableName);
-        return new TableData(dbColumn, tableName, schemaName, columnNames, columnTypes, indexedTextSearchColumns);
+        return new TableData(dbColumn, tableName.toLowerCase(), schemaName.toLowerCase(), columnNames, columnTypes, indexedTextSearchColumns);
     }
 
     private static List<Integer> getIndexColumns(Connection con, List<String> columnNames, List<Integer> columnTypes, String schema, String table) {

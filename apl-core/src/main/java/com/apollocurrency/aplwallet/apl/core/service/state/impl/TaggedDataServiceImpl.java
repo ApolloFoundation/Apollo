@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
+
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
@@ -318,7 +320,8 @@ public class TaggedDataServiceImpl implements TaggedDataService {
 
     private void createAndFireFullTextSearchDataEvent(TaggedData taggedData, FullTextOperationData.OperationType operationType) {
         FullTextOperationData operationData = new FullTextOperationData(
-            taggedDataTable.getTableName() + ";DB_ID;" + taggedData.getDbId(), taggedDataTable.getTableName());
+            DEFAULT_SCHEMA + "." +
+                taggedDataTable.getTableName() + ";DB_ID;" + taggedData.getDbId(), taggedDataTable.getTableName());
         operationData.setThread(Thread.currentThread().getName());
         // put relevant data into Event instance
         operationData.setOperationType(operationType);

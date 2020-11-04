@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
+
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
@@ -550,7 +552,8 @@ public class DGSServiceImpl implements DGSService {
 
     private void createAndFireFullTextSearchDataEvent(DGSGoods goods, FullTextOperationData.OperationType operationType) {
         FullTextOperationData operationData = new FullTextOperationData(
-            goodsTable.getTableName() + ";DB_ID;" + goods.getDbId(), goodsTable.getTableName());
+            DEFAULT_SCHEMA + "." +
+                goodsTable.getTableName() + ";DB_ID;" + goods.getDbId(), goodsTable.getTableName());
         operationData.setThread(Thread.currentThread().getName());
         // put relevant data into Event instance
         operationData.setOperationType(operationType);

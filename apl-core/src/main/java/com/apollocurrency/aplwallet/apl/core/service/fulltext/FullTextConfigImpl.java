@@ -17,8 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class FullTextConfigImpl implements FullTextConfig {
 
-    private ConcurrentHashMap tableNames = new ConcurrentHashMap();
-    private String schema = "public";
+    private ConcurrentHashMap<String, String> tableNames = new ConcurrentHashMap<>();
+    private String schema = DEFAULT_SCHEMA;
     private Path ftlIndexPath;
 
     public FullTextConfigImpl() {
