@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -36,7 +35,6 @@ public class MemPool {
     private final TransactionValidator validator;
     private final boolean enableRebroadcasting;
     private final int maxUnconfirmedTransactions;
-    private final AtomicInteger currentNumberOfUnconfirmedTxs = new AtomicInteger(-1);
 
     @Inject
     public MemPool(MemPoolUnconfirmedTransactionTable table,
@@ -51,7 +49,6 @@ public class MemPool {
         this.memoryState = memoryState;
         this.globalSync = globalSync;
         this.validator = validator;
-        allProcessedCount();
     }
 
     public Transaction getUnconfirmedTransaction(long id) {
@@ -102,7 +99,6 @@ public class MemPool {
         if (canSaveTxs) {
             table.insert(tx);
             memoryState.putInCache(tx);
-            currentNumberOfUnconfirmedTxs.incrementAndGet();
         }
         return canSaveTxs;
     }
@@ -114,7 +110,7 @@ public class MemPool {
     }
 
     public int allProcessedCount() {
-        return currentNumberOfUnconfirmedTxs.compareAndExchange(-1, table.getCount());
+        return table.getCount();
     }
 
     public void removeBroadcastedTransaction(Transaction transaction) {
@@ -182,7 +178,6 @@ public class MemPool {
     public boolean removeProcessedTransaction(long id) {
         boolean deleted = table.deleteById(id);
         memoryState.removeFromCache(id);
-        currentNumberOfUnconfirmedTxs.decrementAndGet();
         return deleted;
     }
 

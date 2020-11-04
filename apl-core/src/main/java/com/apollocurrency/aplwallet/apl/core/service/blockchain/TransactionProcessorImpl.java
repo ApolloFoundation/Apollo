@@ -61,7 +61,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -129,20 +128,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     public void printMemPoolStat() {
         int memPoolSize = memPool.allProcessedCount();
         int cacheSize = memPool.currentCacheSize();
-        if (memPoolSize < cacheSize) {
-            log.warn("Decsync for cache, {} in cache - {}", cacheSize, memPoolSize);
-            globalSync.writeLock();
-            try {
-                Set<UnconfirmedTransaction> cached = memPool.getCachedUnconfirmedTransactions(List.of());
-                for (UnconfirmedTransaction unconfirmedTransaction : cached) {
-                    multiLock.inLockFor(unconfirmedTransaction, ()-> {
-                        log.trace("Tx from cache {}: valid {} , in blockchain - {}, in pool - {}", unconfirmedTransaction.getId(), isFullyValidTransaction(unconfirmedTransaction), blockchain.hasTransaction(unconfirmedTransaction.getId()), memPool.hasUnconfirmedTransaction(unconfirmedTransaction.getId()));
-                    });
-                }
-            } finally {
-                globalSync.writeUnlock();
-            }
-        }
+
         log.trace("Txs: {}, pending broadcast - {}, cache size - {}, processLaterQueue - {}", memPoolSize, memPool.pendingBroadcastQueueSize(), cacheSize, memPool.processLaterQueueSize());
     }
 
