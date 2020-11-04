@@ -66,7 +66,7 @@ mvnw -v
 
 Final artefact is in deirectory `apl-exec/target` named  `apollo-blockchain-1.44.3.zip`.
 
-Unzip it to any directory and run by scripts in the deirectory `ApolloWallet/bin/` 
+Unzip it to any directory and run by scripts in the directory `ApolloWallet/bin/` 
 
 ## IDE
 
