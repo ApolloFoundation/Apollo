@@ -71,3 +71,4 @@ Unzip it to any directory and run by scripts in the directory `ApolloWallet/bin/
 ## IDE
 
 Project is entirely on Maven v3 and could be loaded in any IDE that supports Maven. Main module is `apl-exec`
+
