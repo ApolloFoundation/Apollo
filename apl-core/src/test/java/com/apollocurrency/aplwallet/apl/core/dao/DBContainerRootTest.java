@@ -19,7 +19,8 @@ public abstract class DBContainerRootTest {
             .withPassword("rootpass")
             .withExposedPorts(3306)
             .withReuse(true)
-            .withLogConsumer(new Slf4jLogConsumer(log));
+            .withLogConsumer(new Slf4jLogConsumer(log))
+            .withCommand(MariaDBConfigs.getEnvs());
 
         mariaDBContainer.start();
     }
