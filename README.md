@@ -57,7 +57,7 @@ mvnw -v
 ## Linux/MacOS
    * Clone repository using git command `git clone` or download archive file of source code
    * go to source directory
-   * run `./mvnw clean install` (or `mwnw clena install -DskipTests` for skipping tests)
+   * run `./mvnw clean install` (or `mwnw clean install -DskipTests` for skipping tests)
 
 ## Windows
    * Clone repository using git command `git clone` or download archive file of source code
