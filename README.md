@@ -7,20 +7,14 @@ This repository contains core classes of Apollo blockchain platform. For executa
 ## Requirements
 Java 11 is required to run the desktop clients.
 
-##Other modules required to build Apollo components
-
-    1. Apollo-bom-ext
-    2. Apollo-web-ui
-    3. Apollo-exec
-    
-
 # Build instruction #
 
 If you have already installed ___jdk 11___, you can skip __"Preparation steps" section__, but its recommended to __review__ 
 your software versions using instructions from __"Preparation steps" section__
 
 ## Preparation steps ##
-   1. Download [Java Development Kit (jdk), version 11](https://www.oracle.com/technetwork/java/javase/downloads/jdk11-downloads-5066655.html)
+   1. Download [Java Development Kit (jdk), version 11](https://www.oracle.com/technetwork/java/javase/downloads/jdk11-downloads-5066655.html). OpenJDK 11 is OK also.
+      Versions 11.0.2 - 11.0.9 are OK.  
    2. Setup `JAVA_HOME` variable to point on unpacked jdk if not set
    3. Add to `PATH` variable path to java binaries -> `$JAVA_HOME/bin`
       > NOTE: if your computer has jdk 8, jdk 9 or jdk 10, you should remove path from `PATH` variable
@@ -63,13 +57,17 @@ mvnw -v
 ## Linux/MacOS
    * Clone repository using git command `git clone` or download archive file of source code
    * go to source directory
-   * run `./build-all.sh` (or `./build-all.sh -DskipTests` for skipping tests)
+   * run `./mvnw clean install` (or `mwnw clena install -DskipTests` for skipping tests)
 
 ## Windows
    * Clone repository using git command `git clone` or download archive file of source code
    * go to source directory
-   * run `build-all.bat` (or `build-all.bat -DskipTests` for skipping tests)  
+   * run `mvnw.cmd clean install` (or `mvnw clean install -DskipTests` for skipping tests)  
+
+Final artefact is in deirectory `apl-exec/target` named  `apollo-blockchain-1.44.3.zip`.
+
+Unzip it to any directory and run by scripts in the deirectory `ApolloWallet/bin/` 
 
 ## IDE
 
-Project is entirely on Maven v3 and could be loaded in any IDE that supports Maven.
+Project is entirely on Maven v3 and could be loaded in any IDE that supports Maven. Main module is `apl-exec`
