@@ -155,10 +155,10 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     }
 
     private void deleteRow(FullTextOperationData row, TableData tableData) throws SQLException {
-        String query = tableData.getSchema().toLowerCase() + "." + row.getTableKey();
+        String query = row.getTableKey();
         indexLock.readLock().lock();
         try {
-            log.trace("DELETE QUERY: tableData = {}, oldRow={}\nquery={}", tableData, row, query);
+            log.trace("DELETE QUERY: query={}\n{}, oldRow={}\n", query, tableData, row);
             indexWriter.deleteDocuments(new Term("_QUERY", query));
         } catch (IOException exc) {
             log.error("Unable to delete indexed row", exc);
