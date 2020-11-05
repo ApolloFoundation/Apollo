@@ -1,3 +1,12 @@
+# Disclaimer.
+
+Apollo team is actively working on modularity of Apollo blockhain so build scripts and sourse structure is subject of changes.
+Apollo project consists of several modules written in different programming languages.
+If you are not an expert in Java and Maven, JavaScript, NodeJs, npm, yarn, C/C++ and Cmakle please use our release builds at: URL_OF BUILDS
+
+If you feel like an expert, please use build instructions below. But also please note that instructions may be slightly outdated, escpecially in "development"
+branches of the Apollo project repositroies.
+
 # Apollo Blockchain Platform  Core
 
 Apollo is being developed by the Apollo Foundation and supporting members of the community.
@@ -57,14 +66,12 @@ mvnw -v
 ## Linux/MacOS
    * Clone repository using git command `git clone` or download archive file of source code
    * go to source directory
-   * run `./build.sh`
-   
+   * `./build.sh`, In this case Apollo blockchain will be builded in directory build/ApolloWallet (unpacked) or packed ApolloWallet-...-tar.gz archive can be used.
+
 ## Windows
    * Clone repository using git command `git clone` or download archive file of source code
    * go to source directory
    * run `mvnw.cmd clean install` (or `mvnw clean install -DskipTests` for skipping tests)  
-
-Apollo blockchain will be builded in directory build/ApolloWallet (unpacked) or packed ApolloWallet-...-tar.gz archive can be used.
 
 Unzip it to any directory and run by scripts in the directory `ApolloWallet/bin/` 
 
