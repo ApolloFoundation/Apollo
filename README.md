@@ -57,18 +57,37 @@ mvnw -v
 ## Linux/MacOS
    * Clone repository using git command `git clone` or download archive file of source code
    * go to source directory
-   * run `./mvnw clean install` (or `mwnw clean install -DskipTests` for skipping tests)
-
+   * run `./build.sh`
+   
 ## Windows
    * Clone repository using git command `git clone` or download archive file of source code
    * go to source directory
    * run `mvnw.cmd clean install` (or `mvnw clean install -DskipTests` for skipping tests)  
 
-Final artefact is in deirectory `apl-exec/target` named  `apollo-blockchain-1.44.3.zip`.
+Apollo blockchain will be builded in directory build/ApolloWallet (unpacked) or packed ApolloWallet-...-tar.gz archive can be used.
 
 Unzip it to any directory and run by scripts in the directory `ApolloWallet/bin/` 
 
 ## IDE
 
 Project is entirely on Maven v3 and could be loaded in any IDE that supports Maven. Main module is `apl-exec`
+
+# Running App #
+
+## Linux/MacOS
+
+Copy build/ApolloWallet to any directory (Apollo Installation Directory, eg /opt/ApolloFoundation/Apollo)
+In terminal change directory to <Apollo Installation Directory>
+```
+cd <Apollo Installation Directory>
+```
+run application in terminal  (logging to console):
+```
+bin/bash bin/apl-run.sh
+```
+or 
+```
+bin/bash bin/apl-start.sh
+```
+(logs to file)
 
