@@ -26,8 +26,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,7 +45,6 @@ public class MemPoolInMemoryState {
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final PriorityBlockingQueue<TxWithArrivalTimestamp> broadcastPendingTransactions;
     private final PriorityBlockingQueue<UnconfirmedTransaction> processLaterQueue;
-    private final ReadWriteLock cacheLock = new ReentrantReadWriteLock();
 
     @Getter
     private volatile boolean cacheInitialized;
