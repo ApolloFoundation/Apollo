@@ -2,7 +2,7 @@
 
 Apollo team is actively working on modularity of Apollo blockhain so build scripts and sourse structure is subject of changes.
 Apollo project consists of several modules written in different programming languages.
-If you are not an expert in Java and Maven, JavaScript, NodeJs, npm, yarn, C/C++ and Cmakle please use our release builds at: URL_OF BUILDS
+If you are not an expert in Java and Maven, JavaScript, NodeJs, npm, yarn, C/C++ and Cmakle please use our release builds at: https://github.com/ApolloFoundation/Apollo/edit/master/README.md
 
 If you feel like an expert, please use build instructions below. But also please note that instructions may be slightly outdated, escpecially in "development"
 branches of the Apollo project repositroies.
