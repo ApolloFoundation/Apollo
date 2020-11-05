@@ -52,7 +52,7 @@ public class MemPool {
     }
 
     public Transaction getUnconfirmedTransaction(long id) {
-        Transaction transaction = memoryState.getFromCacheSorted(id);
+        Transaction transaction = memoryState.getFromCache(id);
         if (transaction != null) {
             return transaction;
         }
@@ -83,7 +83,7 @@ public class MemPool {
         if (!memoryState.isCacheInitialized()) {
             memoryState.initializeCache(streamConverter.apply(table.getAll(0, -1)));
         }
-        return memoryState.getFromCacheSorted(exclude);
+        return memoryState.getFromCache(exclude);
     }
 
     public void addToBroadcastedTransactions(Transaction tx) {

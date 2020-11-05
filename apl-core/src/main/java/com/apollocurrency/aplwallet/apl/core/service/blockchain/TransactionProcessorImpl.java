@@ -172,12 +172,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     @Override
     public void broadcast(Collection<Transaction> transactions) {
         List<Transaction> returned = new ArrayList<>();
-        List<UnconfirmedTransaction> toBroadcast = transactions.stream()
-            .filter(this::requireBroadcast)
-            .map(e -> new UnconfirmedTransaction(e, timeService.systemTimeMillis()))
-            .collect(Collectors.toList());
         List<UnconfirmedTransaction> processed = new ArrayList<>();
         TransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
+            List<UnconfirmedTransaction> toBroadcast = transactions.stream()
+                .filter(this::requireBroadcast)
+                .map(e -> new UnconfirmedTransaction(e, timeService.systemTimeMillis()))
+                .collect(Collectors.toList());
             for (UnconfirmedTransaction tx : toBroadcast) {
                 try {
                     if (processingService.validateBeforeProcessing(tx).isOk()) {
@@ -286,7 +286,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         executor.submit(
-            ()-> TransactionHelper.executeInTransaction(databaseManager.getDataSource(),
+            ()->    TransactionHelper.executeInTransaction(databaseManager.getDataSource(),
                 () -> block.getTransactions().forEach(this::removeUnconfirmedTransaction)));
     }
 
@@ -323,40 +323,40 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         List<Transaction> sendToPeersTransactions = new ArrayList<>();
         List<Transaction> addedUnconfirmedTransactions = new ArrayList<>();
         List<Exception> exceptions = new ArrayList<>();
-        TransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
-        for (Transaction transaction : transactions) {
-            try {
-                receivedTransactions.add(transaction);
-                UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, arrivalTimestamp);
-                UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
-                if (validationResult.isOk()) {
-                    transactionValidator.validateSignatureWithTxFee(transaction);
-                    transactionValidator.validateLightly(transaction);
-                    TxSavingStatus status = saveUnconfirmedTransaction(unconfirmedTransaction);
-                    if (status == TxSavingStatus.NOT_SAVED) {
-                        log.trace("Mempool is full, skip broadcasted txs processing {}", transactions.size() - receivedTransactions.size());
-                        break;
-                    }
-                    if (status == TxSavingStatus.ALREADY_EXIST) {
-                        continue;
-                    }
-                    if (memPool.isAlreadyBroadcasted(transaction)) {
+        TransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
+            for (Transaction transaction : transactions) {
+                try {
+                    receivedTransactions.add(transaction);
+                    UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, arrivalTimestamp);
+                    UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
+                    if (validationResult.isOk()) {
+                        transactionValidator.validateSignatureWithTxFee(transaction);
+                        transactionValidator.validateLightly(transaction);
+                        TxSavingStatus status = saveUnconfirmedTransaction(unconfirmedTransaction);
+                        if (status == TxSavingStatus.NOT_SAVED) {
+                            log.trace("Mempool is full, skip broadcasted txs processing {}", transactions.size() - receivedTransactions.size());
+                            break;
+                        }
+                        if (status == TxSavingStatus.ALREADY_EXIST) {
+                            continue;
+                        }
+                        if (memPool.isAlreadyBroadcasted(transaction)) {
 //                    log.debug("Received back transaction " + transaction.getStringId()
 //                        + " that we broadcasted, will not forward again to peers");
-                    } else {
-                        sendToPeersTransactions.add(unconfirmedTransaction);
+                        } else {
+                            sendToPeersTransactions.add(unconfirmedTransaction);
+                        }
+                        addedUnconfirmedTransactions.add(transaction);
+                    } else if (validationResult.getError() == UnconfirmedTxValidationResult.Error.NOT_VALID) {
+                        exceptions.add(new AplException.NotValidException(validationResult.getErrorDescription()));
                     }
-                    addedUnconfirmedTransactions.add(transaction);
-                } else if (validationResult.getError() == UnconfirmedTxValidationResult.Error.NOT_VALID) {
-                    exceptions.add(new AplException.NotValidException(validationResult.getErrorDescription()));
+                } catch (AplException.NotCurrentlyValidException e) {
+                    log.trace("Not valid tx " + transaction.getId(), e);
+                } catch (AplException.ValidationException | RuntimeException e) {
+                    log.warn(String.format("Invalid transaction from peer: %s", JSONData.unconfirmedTransaction(transaction)), e);
+                    exceptions.add(e);
                 }
-            } catch (AplException.NotCurrentlyValidException e) {
-                log.trace("Not valid tx " +  transaction.getId(), e);
-            } catch (AplException.ValidationException | RuntimeException e) {
-                log.warn(String.format("Invalid transaction from peer: %s", JSONData.unconfirmedTransaction(transaction)), e);
-                exceptions.add(e);
             }
-        }
         });
         if (!sendToPeersTransactions.isEmpty()) {
             peers.sendToSomePeers(sendToPeersTransactions);
@@ -377,6 +377,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 return TxSavingStatus.ALREADY_EXIST;
             }
             boolean saved = processingService.addNewUnconfirmedTransaction(unconfirmedTransaction);
+            if (saved) {
+                log.trace("Tx {} was saved", unconfirmedTransaction.getId());
+            }
             return saved ? TxSavingStatus.SAVED : TxSavingStatus.NOT_SAVED;
         });
     }

@@ -203,7 +203,7 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
 
     @Override
     public byte[] referencedTransactionFullHash() {
-        return transaction.getReferencedTransactionFullHash().getBytes();
+        return transaction.referencedTransactionFullHash();
     }
 
     @Override
