@@ -128,7 +128,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
         try {
             ResultSet rs = fullTextSearchService.search("public", accountInfoTable.getTableName(), luceneQuery, Integer.MAX_VALUE, 0);
             while (rs.next()) {
-                Long DB_ID = rs.getLong(5);
+                Long DB_ID = rs.getLong(4);
                 if (index == 0) {
                     inRange.append(DB_ID);
                 } else {

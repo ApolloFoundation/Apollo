@@ -124,7 +124,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
                 sj.add(data);
             }
             document.add(new TextField("_DATA", sj.toString(), Field.Store.NO));
-            log.trace("INDEX query={} / {}", query, document);
+            log.debug("INDEX query={}\n{}", query, document);
             if (document.getFields().size() > 4) {
                 // put/update Index when there are real data
                 indexWriter.updateDocument(new Term("_QUERY", query), document);
@@ -146,7 +146,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     public void commitRow(FullTextOperationData newRow, TableData tableData) throws SQLException {
         Objects.requireNonNull(newRow, "newRow data is NULL");
         if (newRow.getOperationType() == FullTextOperationData.OperationType.INSERT_UPDATE) {
-            log.trace("INSERT/UPDATE: tableData = {}, newRow={}", tableData, newRow);
+            log.debug("INSERT/UPDATE: tableData = {}, newRow={}", tableData, newRow);
             indexRow(newRow, tableData);
         } else {
             log.debug("DELETE: tableData = {}, newRow={}", tableData, newRow);
@@ -158,7 +158,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         String query = row.getTableKey();
         indexLock.readLock().lock();
         try {
-            log.trace("DELETE QUERY: query={}\n{}, oldRow={}\n", query, tableData, row);
+            log.debug("DELETE QUERY: query={}\n{}, oldRow={}\n", query, tableData, row);
             indexWriter.deleteDocuments(new Term("_QUERY", query));
         } catch (IOException exc) {
             log.error("Unable to delete indexed row", exc);
@@ -273,7 +273,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
         SimpleResultSet result = new SimpleResultSet();
         result.addColumn("schema", Types.VARCHAR, 0, 0);
         result.addColumn("table", Types.VARCHAR, 0, 0);
-        result.addColumn("columns", Types.VARCHAR, 0, 0);
+//        result.addColumn("columns", Types.VARCHAR, 0, 0);
         result.addColumn("score", Types.FLOAT, 0, 0);
         result.addColumn("keys", Types.BIGINT, 0, 0);
         //
@@ -294,7 +294,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             ScoreDoc[] hits = documents.scoreDocs;
             int resultCount = Math.min(hits.length, (limit == 0 ? hits.length : limit));
             int resultOffset = Math.min(offset, resultCount);
-            log.debug("HITS length = [{}], resultCount={}, resultOffset={}", hits.length, resultCount, resultOffset);
+            log.debug("HITS length = [{}], resultCount={}, resultOffset={}, query={}", hits.length, resultCount, resultOffset, query);
             for (int i = resultOffset; i < resultCount; i++) {
                 Document document = indexSearcher.doc(hits[i].doc); // _QUERY EXAMPLE = public.account_info;DB_ID;1
                 String[] indexParts = document.get("_QUERY").split(";"); // split to: public.account_info + DB_ID + 1
