@@ -39,6 +39,7 @@ import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.util.TypeLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -320,11 +321,9 @@ public class TaggedDataServiceImpl implements TaggedDataService {
 
     private void createAndFireFullTextSearchDataEvent(TaggedData taggedData, FullTextOperationData.OperationType operationType) {
         FullTextOperationData operationData = new FullTextOperationData(
-            DEFAULT_SCHEMA + "." +
-                taggedDataTable.getTableName() + ";DB_ID;" + taggedData.getDbId(), taggedDataTable.getTableName());
-        operationData.setThread(Thread.currentThread().getName());
-        // put relevant data into Event instance
+            DEFAULT_SCHEMA, taggedDataTable.getTableName(), Thread.currentThread().getName());
         operationData.setOperationType(operationType);
+        operationData.setDbIdValue(BigInteger.valueOf(taggedData.getDbId()));
         operationData.addColumnData(taggedData.getName()).addColumnData(taggedData.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);

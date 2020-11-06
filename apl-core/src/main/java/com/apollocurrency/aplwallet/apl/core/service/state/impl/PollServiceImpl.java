@@ -52,6 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -306,11 +307,9 @@ public class PollServiceImpl implements PollService {
 
     private void createAndFireFullTextSearchDataEvent(Poll poll, FullTextOperationData.OperationType operationType) {
         FullTextOperationData operationData = new FullTextOperationData(
-            DEFAULT_SCHEMA + "." +
-                pollTable.getTableName() + ";DB_ID;" + poll.getDbId(), pollTable.getTableName());
-        operationData.setThread(Thread.currentThread().getName());
-        // put relevant data into Event instance
+            DEFAULT_SCHEMA, pollTable.getTableName(), Thread.currentThread().getName());
         operationData.setOperationType(operationType);
+        operationData.setDbIdValue(BigInteger.valueOf(poll.getDbId()));
         operationData.addColumnData(poll.getName()).addColumnData(poll.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);

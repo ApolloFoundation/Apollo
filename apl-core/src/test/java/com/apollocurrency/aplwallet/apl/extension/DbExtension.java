@@ -183,7 +183,7 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
     private void createFtl() {
         try {
             this.indexDir = Files.createTempDirectory("indexDir");
-            this.luceneFullTextSearchEngine = new LuceneFullTextSearchEngine(mock(NtpTime.class), indexDir);
+            this.luceneFullTextSearchEngine = new LuceneFullTextSearchEngine(mock(NtpTime.class), indexDir, null);
             Map<String, String> tableColumnsMap = new HashMap<>(5);
             Iterator<String> iterator = tableWithColumns.keySet().iterator();
             while (iterator.hasNext()) {

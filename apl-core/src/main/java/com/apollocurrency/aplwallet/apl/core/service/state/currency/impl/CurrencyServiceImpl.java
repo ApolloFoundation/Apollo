@@ -51,6 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -601,11 +602,9 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     private void createAndFireFullTextSearchDataEvent(Currency currency, FullTextOperationData.OperationType operationType) {
         FullTextOperationData operationData = new FullTextOperationData(
-            DEFAULT_SCHEMA + "." +
-                currencyTable.getTableName() + ";DB_ID;" + currency.getDbId(), currencyTable.getTableName());
-        operationData.setThread(Thread.currentThread().getName());
-        // put relevant data into Event instance
+            DEFAULT_SCHEMA, currencyTable.getTableName(), Thread.currentThread().getName());
         operationData.setOperationType(operationType);
+        operationData.setDbIdValue(BigInteger.valueOf(currency.getDbId()));
         operationData.addColumnData(currency.getName()).addColumnData(currency.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);

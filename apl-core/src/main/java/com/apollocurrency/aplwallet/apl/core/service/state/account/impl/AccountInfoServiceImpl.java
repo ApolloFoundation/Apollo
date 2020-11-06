@@ -13,7 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
-import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
@@ -26,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -64,17 +64,17 @@ public class AccountInfoServiceImpl implements AccountInfoService {
         Objects.requireNonNull(accountInfo);
         // prepare Event instance with data
         FullTextOperationData operationData = new FullTextOperationData(
-            DEFAULT_SCHEMA + "." +
-            accountInfoTable.getTableName() + ";DB_ID;" + accountInfo.getDbId(), accountInfoTable.getTableName());
-        operationData.setThread(Thread.currentThread().getName());
+            DEFAULT_SCHEMA, accountInfoTable.getTableName(), Thread.currentThread().getName());
 
         if (accountInfo.getName() != null || accountInfo.getDescription() != null) {
             accountInfoTable.insert(accountInfo);
             // put relevant data into Event instance
             operationData.setOperationType(FullTextOperationData.OperationType.INSERT_UPDATE);
+            operationData.setDbIdValue(BigInteger.valueOf(accountInfo.getDbId()));
             operationData.addColumnData(accountInfo.getName()).addColumnData(accountInfo.getDescription());
         } else {
             accountInfoTable.deleteAtHeight(accountInfo, blockchain.getHeight());
+            operationData.setDbIdValue(BigInteger.valueOf(accountInfo.getDbId()));
             operationData.setOperationType(FullTextOperationData.OperationType.DELETE);
         }
         // send data into Lucene index component

@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -239,11 +240,9 @@ public class AssetServiceImpl implements AssetService {
 
     private void createAndFireFullTextSearchDataEvent(Asset asset, FullTextOperationData.OperationType operationType) {
         FullTextOperationData operationData = new FullTextOperationData(
-            DEFAULT_SCHEMA + "." +
-                assetTable.getTableName() + ";DB_ID;" + asset.getDbId(), assetTable.getTableName());
-        operationData.setThread(Thread.currentThread().getName());
-        // put relevant data into Event instance
+            DEFAULT_SCHEMA, assetTable.getTableName(), Thread.currentThread().getName());
         operationData.setOperationType(operationType);
+        operationData.setDbIdValue(BigInteger.valueOf(asset.getDbId()));
         operationData.addColumnData(asset.getName()).addColumnData(asset.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
