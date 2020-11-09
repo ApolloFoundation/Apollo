@@ -168,7 +168,7 @@ public class AssetServiceImpl implements AssetService {
         asset.setHeight(blockChainInfoService.getHeight());
         assetTable.insert(asset);
         assetDeleteService.addAssetDelete(transaction, assetId, quantityATU);
-        createAndFireFullTextSearchDataEvent(asset, FullTextOperationData.OperationType.DELETE);
+        createAndFireFullTextSearchDataEvent(asset, FullTextOperationData.OperationType.INSERT_UPDATE);
     }
 
     /**
