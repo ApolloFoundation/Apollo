@@ -157,7 +157,7 @@
   <!--    <appender-ref ref="generator-file"/>-->
   <!--  </logger>-->
 
-
+  <logger name="com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService" level="trace" additivity="false"/>
   <logger name="com.apollocurrency.aplwallet" level="INFO"/>
   <!--Uncomment next line to enable trim duration logging-->
   <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedDeletableEntityDbTable" level="trace"/>-->
