@@ -35,7 +35,6 @@ public class MemPool {
     private final TransactionValidator validator;
     private final boolean enableRebroadcasting;
     private final int maxUnconfirmedTransactions;
-//    private final AtomicInteger currentNumberOfUnconfirmedTxs = new AtomicInteger(-1);
 
     @Inject
     public MemPool(MemPoolUnconfirmedTransactionTable table,
@@ -50,11 +49,10 @@ public class MemPool {
         this.memoryState = memoryState;
         this.globalSync = globalSync;
         this.validator = validator;
-//        allProcessedCount();
     }
 
     public Transaction getUnconfirmedTransaction(long id) {
-        Transaction transaction = memoryState.getFromCacheSorted(id);
+        Transaction transaction = memoryState.getFromCache(id);
         if (transaction != null) {
             return transaction;
         }
@@ -79,18 +77,13 @@ public class MemPool {
     }
 
     public Set<UnconfirmedTransaction> getCachedUnconfirmedTransactions(List<String> exclude) {
-        globalSync.readLock();
-        try {
-            //
-            // Initialize the unconfirmed transaction cache if it hasn't been done yet
-            //
-            if (!memoryState.isCacheInitialized()) {
-                memoryState.initializeCache(streamConverter.apply(table.getAll(0, -1)));
-            }
-            return memoryState.getFromCacheSorted(exclude);
-        } finally {
-            globalSync.readUnlock();
+        //
+        // Initialize the unconfirmed transaction cache if it hasn't been done yet
+        //
+        if (!memoryState.isCacheInitialized()) {
+            memoryState.initializeCache(streamConverter.apply(table.getAll(0, -1)));
         }
+        return memoryState.getFromCache(exclude);
     }
 
     public void addToBroadcastedTransactions(Transaction tx) {
@@ -113,15 +106,14 @@ public class MemPool {
 
 
     public Stream<UnconfirmedTransaction> getAllProcessedStream() {
-        return CollectionUtil.toList(table.getAll(0, -1)).stream();
+        return table.getAllUnconfirmedTransactionsStream();
     }
 
     public int allProcessedCount() {
-//        return currentNumberOfUnconfirmedTxs.compareAndExchange(-1, table.getCount());
         return table.getCount();
     }
-//
-    public void removeOutdatedBroadcastedTransactions(Transaction transaction) {
+
+    public void removeBroadcastedTransaction(Transaction transaction) {
         memoryState.removeBroadcasted(List.of(transaction));
     }
 
@@ -172,16 +164,11 @@ public class MemPool {
     }
 
     public void rebroadcastAllUnconfirmedTransactions() {
-        globalSync.writeLock();
-        try {
-            getAllProcessedStream().forEach(e -> {
-                if (enableRebroadcasting) {
-                    memoryState.addToBroadcasted(e.getTransaction());
-                }
-            });
-        } finally {
-            globalSync.writeUnlock();
-        }
+        getAllProcessedStream().forEach(e -> {
+            if (enableRebroadcasting) {
+                memoryState.addToBroadcasted(e.getTransaction());
+            }
+        });
     }
 
     public int currentCacheSize() {
