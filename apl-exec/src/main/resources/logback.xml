@@ -39,12 +39,11 @@
           </encoder>
       </appender>
   -->
-  <!--
-    <appender name="poll-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
-      <file>${LOGDIR}/apl-poll.log</file>
+    <appender name="fts-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <file>${LOGDIR}/apl-fts.log</file>
       <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-        &lt;!&ndash; rollover daily &ndash;&gt;
-        <fileNamePattern>${LOGDIR}/apl-poll-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
+        <!-- rollover daily -->
+        <fileNamePattern>${LOGDIR}/apl-fts-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
         <maxHistory>30</maxHistory>
         <maxFileSize>100MB</maxFileSize>
         <totalSizeCap>3GB</totalSizeCap>
@@ -173,9 +172,12 @@
   -->
   <logger name="com.apollocurrency.aplwallet.apl.core.rest.v2" level="TRACE"/>
 
-  <!--    <logger name="com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling" level="trace" additivity="false">-->
-  <!--        <appender-ref ref="shuffling-file"/>-->
-  <!--    </logger>-->
+      <logger name="com.apollocurrency.aplwallet.apl.core.service.fulltext" level="trace" additivity="false">
+          <appender-ref ref="fts-file"/>
+      </logger>
+      <logger name="com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountInfoServiceImpl" level="trace" additivity="false">
+          <appender-ref ref="fts-file"/>
+      </logger>
   <!--
       <logger name="com.apollocurrency.aplwallet.apl.core.service.state.PollService" level="trace" additivity="false">
           <appender-ref ref="poll-file"/>

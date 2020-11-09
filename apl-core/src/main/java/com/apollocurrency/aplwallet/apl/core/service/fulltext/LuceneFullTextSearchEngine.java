@@ -149,7 +149,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
     @Override
     public void commitRow(FullTextOperationData newRow, TableData tableData) throws SQLException {
         Objects.requireNonNull(newRow, "newRow data is NULL");
-        log.debug("COMMIT row at {}: \n{}\n{}\n{}", (this.blockchain != null ? this.blockchain.getHeight() : -1), newRow, tableData);
+        log.debug("COMMIT row at {}: \n{}\n{}", (this.blockchain != null ? this.blockchain.getHeight() : -1), newRow, tableData);
         if (newRow.getOperationType() == FullTextOperationData.OperationType.INSERT_UPDATE) {
 //            log.debug("INSERT/UPDATE: tableData = {}, newRow={}", tableData, newRow);
             indexRow(newRow, tableData);
@@ -295,18 +295,17 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
             QueryParser parser = new QueryParser("_DATA", analyzer);
             parser.setDateResolution("_MODIFIED", DateTools.Resolution.SECOND);
             parser.setDefaultOperator(QueryParser.Operator.AND);
-            String queryStr = "_TABLE:" + schema.toUpperCase() + "." + table.toUpperCase() + " AND (" + queryText + ")";
+            String queryStr = "_TABLE:" + schema.toLowerCase() + "." + table.toLowerCase() + " AND (" + queryText + ")";
             Query query = parser.parse(queryStr);
             TopDocs documents = indexSearcher.search(query, limit);
             ScoreDoc[] hits = documents.scoreDocs;
             int resultCount = Math.min(hits.length, (limit == 0 ? hits.length : limit));
             int resultOffset = Math.min(offset, resultCount);
-            log.debug("HITS length = [{}], resultCount={}, resultOffset={}, query={}", hits.length, resultCount, resultOffset, queryStr);
             for (int i = resultOffset; i < resultCount; i++) {
                 Document document = indexSearcher.doc(hits[i].doc); // _QUERY EXAMPLE = public.account_info;DB_ID;1
                 String[] indexParts = document.get("_QUERY").split(";"); // split to: public.account_info + DB_ID + 1
                 String[] nameParts = indexParts[0].split("\\.");// split to : public + account_info
-                log.debug("create ROW indexParts[{}]={}, nameParts[{}]={}", indexParts.length, nameParts.length, indexParts, nameParts);
+                log.debug("create ROW nameParts[{}]={}, indexParts[{}]={}", nameParts.length, nameParts, indexParts.length, indexParts);
                 result.addRow(nameParts[0], // schema name = public
                     nameParts[1], // table name = account_info
                     new String[]{indexParts[1]}, // columns ?
@@ -314,7 +313,8 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
                     Long.parseLong(indexParts[2]) // DB_ID key value = 1
                 );
             }
-            log.debug("RESULT by query = {} | {} / {}", queryStr, documents, hits);
+            log.debug("HITS length = [{}], resultCount={}, resultOffset={}, query={}", hits.length, resultCount, resultOffset, queryStr);
+            log.debug("RESULT = {}\n{}", hits, documents);
         } catch (ParseException exc) {
             log.debug("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());
             throw new SQLException("Lucene parse exception for query: " + queryText + "\n" + exc.getMessage());

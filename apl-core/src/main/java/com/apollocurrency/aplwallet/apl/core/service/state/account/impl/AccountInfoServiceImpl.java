@@ -67,11 +67,13 @@ public class AccountInfoServiceImpl implements AccountInfoService {
             DEFAULT_SCHEMA, accountInfoTable.getTableName(), Thread.currentThread().getName());
 
         if (accountInfo.getName() != null || accountInfo.getDescription() != null) {
+            log.debug("1. {}", accountInfo);
             accountInfoTable.insert(accountInfo);
             // put relevant data into Event instance
             operationData.setOperationType(FullTextOperationData.OperationType.INSERT_UPDATE);
             operationData.setDbIdValue(BigInteger.valueOf(accountInfo.getDbId()));
             operationData.addColumnData(accountInfo.getName()).addColumnData(accountInfo.getDescription());
+            log.debug("2. {}", accountInfo);
         } else {
             accountInfoTable.deleteAtHeight(accountInfo, blockchain.getHeight());
             operationData.setDbIdValue(BigInteger.valueOf(accountInfo.getDbId()));
