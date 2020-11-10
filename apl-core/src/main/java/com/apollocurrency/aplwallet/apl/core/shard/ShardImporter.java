@@ -167,7 +167,9 @@ public class ShardImporter {
                 log.debug("start importing '{}'...", table);
                 aplAppStatus.durableTaskUpdate(genesisTaskId, "Loading '" + table + "'", 0.6);
                 long rowsImported;
-                if (ShardConstants.ACCOUNT_TABLE_NAME.equalsIgnoreCase(table) || ShardConstants.ACCOUNT_ASSET_TABLE_NAME.equalsIgnoreCase(table) || ShardConstants.ACCOUNT_CURRENCY_TABLE_NAME.equalsIgnoreCase(table)) {
+                if (ShardConstants.ACCOUNT_TABLE_NAME.equalsIgnoreCase(table)
+                    || ShardConstants.ACCOUNT_ASSET_TABLE_NAME.equalsIgnoreCase(table)
+                    || ShardConstants.ACCOUNT_CURRENCY_TABLE_NAME.equalsIgnoreCase(table)) {
                     rowsImported = csvImporter.importCsvWithDefaultParams(table, 100, true,
                         Map.of("height", blockchain.findFirstBlock().getHeight()));
                 } else if (ShardConstants.TAGGED_DATA_TABLE_NAME.equalsIgnoreCase(table)) {

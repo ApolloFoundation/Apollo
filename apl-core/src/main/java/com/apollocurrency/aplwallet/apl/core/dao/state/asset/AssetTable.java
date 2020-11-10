@@ -46,7 +46,7 @@ public class AssetTable extends VersionedDeletableEntityDbTable<Asset> implement
                       DatabaseManager databaseManager,
                       FullTextConfig fullTextConfig,
                       Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super("asset", assetDbKeyFactory, "name, description",
+        super("asset", assetDbKeyFactory, "name,description",
             derivedDbTablesRegistry, databaseManager, fullTextConfig, deleteOnTrimDataEvent);
     }
 
