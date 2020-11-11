@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.commands;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardEngine;
 import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
+import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
 import org.slf4j.Logger;
 
 import java.util.Objects;
@@ -23,7 +23,7 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(CreateShardSchemaCommand.class);
 
     private ShardEngine shardEngine;
-    private DbVersion dbVersion;
+    private DBUpdater dbUpdater;
     private byte[] shardHash; // shardHash can be NULL in one case
     private PrevBlockData prevBlockData;
     private long shardId;
@@ -31,11 +31,11 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
     public CreateShardSchemaCommand(
         long shardId,
         ShardEngine shardEngine,
-        DbVersion dbVersion,
+        DBUpdater dbUpdater,
         byte[] shardHash, PrevBlockData prevBlockData) { // shardHash can be NULL
         this.shardEngine = Objects.requireNonNull(
             shardEngine, "shardEngine is NULL");
-        this.dbVersion = Objects.requireNonNull(dbVersion, "dbVersion is NULL");
+        this.dbUpdater = Objects.requireNonNull(dbUpdater, "dbVersion is NULL");
         this.shardHash = shardHash;
         this.prevBlockData = prevBlockData;
         this.shardId = shardId;
@@ -47,7 +47,7 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
     @Override
     public MigrateState execute() {
         log.debug("Create Shard Schema Command execute...");
-        return shardEngine.addOrCreateShard(dbVersion, CommandParamInfo.builder()
+        return shardEngine.addOrCreateShard(dbUpdater, CommandParamInfo.builder()
             .shardHash(shardHash)
             .prevBlockData(prevBlockData)
             .shardId(shardId)
@@ -56,7 +56,7 @@ public class CreateShardSchemaCommand implements DataMigrateOperation {
 
     @Override
     public String toString() {
-        return "CreateShardSchemaCommand{" + "dbVersion=" + dbVersion +
+        return "CreateShardSchemaCommand{" + "dbVersion=" + dbUpdater +
             '}';
     }
 }

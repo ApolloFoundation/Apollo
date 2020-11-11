@@ -599,12 +599,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         long lockAquireTime = System.currentTimeMillis() - startTime;
         try {
             Block previousLastBlock = null;
-            byte[] generatorPublicKey = null;
+            byte[] generatorPublicKey;
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             dataSource.begin();
             try {
                 previousLastBlock = blockchain.getLastBlock();
-//                byte[] generatorPublicKey = previousLastBlock.getGeneratorPublicKey();
                 if (!previousLastBlock.hasGeneratorPublicKey()) {
                     generatorPublicKey = accountService.getPublicKeyByteArray(previousLastBlock.getGeneratorId());
                     if (generatorPublicKey != null) {
@@ -614,7 +613,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     generatorPublicKey = previousLastBlock.getGeneratorPublicKey();
                 }
 //                generatorPublicKey = block.getGeneratorPublicKey();
-                if (generatorPublicKey == null) { // second attempt (in shard archive case)
+                if (generatorPublicKey == null) { // second attempt
                     generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
                     block.setGeneratorPublicKey(generatorPublicKey);
                 }

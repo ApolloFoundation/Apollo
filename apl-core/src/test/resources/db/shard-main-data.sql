@@ -1,7 +1,6 @@
 use testdb;
 TRUNCATE TABLE transaction;
 TRUNCATE TABLE block;
-TRUNCATE TABLE version;
 TRUNCATE TABLE transaction_shard_index;
 TRUNCATE TABLE block_index;
 -- TRUNCATE TABLE ftl_indexes;
@@ -56,5 +55,3 @@ INSERT into shard (shard_id, shard_state, shard_hash, shard_height, zip_hash_crc
 (2, 100, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d', 15456, null, '[7821792282123976600]'),
 (3, 99, X'a3015d38155ea3fd95fe8952f579791e4ce7f5e1e21b4ca4e0c490553d94fb7d', 500000, null, '[57821792282, 22116981092100, 9211698109297098287]')
 ;
-
-INSERT into version values (279);

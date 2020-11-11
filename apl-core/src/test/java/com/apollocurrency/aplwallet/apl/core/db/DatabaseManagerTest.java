@@ -9,6 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHan
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -44,6 +46,8 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
@@ -53,7 +57,7 @@ import static org.mockito.Mockito.verify;
 class DatabaseManagerTest {
     @Container
     public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-        .withDatabaseName("mysql")
+        .withDatabaseName("testdb")
         .withUsername("root")
         .withPassword("rootpass")
         .withExposedPorts(3306)
@@ -76,7 +80,9 @@ class DatabaseManagerTest {
 
     @AfterEach
     public void tearDown() {
-        databaseManager.shutdown();
+        if(databaseManager!=null) {
+            databaseManager.shutdown();
+        }
     }
 
     @Test
@@ -92,7 +98,7 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardInitTableSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardInitDBUpdater());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -111,7 +117,7 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardAddConstraintsSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardAllScriptsDBUpdater());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -123,10 +129,10 @@ class DatabaseManagerTest {
         assertNotNull(databaseManager);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
-        TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardInitTableSchemaVersion());
+        TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardInitDBUpdater());
         assertNotNull(newShardDb);
         assertNotNull(newShardDb.getConnection());
-        newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardAddConstraintsSchemaVersion());
+        newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardAllScriptsDBUpdater());
         assertNotNull(newShardDb);
         Connection newShardDbConnection = newShardDb.getConnection();
         assertNotNull(newShardDbConnection);
@@ -238,7 +244,7 @@ class DatabaseManagerTest {
     @Test
     void testGetExistingShardDataSourceByIdWithVersion() {
         List<TransactionalDataSource> fullDatasources = databaseManager.getAllFullDataSources(null);
-        TransactionalDataSource datasource = databaseManager.getOrCreateShardDataSourceById(3L, new ShardInitTableSchemaVersion());
+        TransactionalDataSource datasource = databaseManager.getOrCreateShardDataSourceById(3L, new ShardInitDBUpdater());
         checkDatasource(datasource);
         assertTrue(datasource.getUrl().contains("shard_3"));
         assertSame(fullDatasources.get(0), datasource);
@@ -279,7 +285,7 @@ class DatabaseManagerTest {
         for (int i = 0; i < 20; i++) {
             futures.get(i).get();
         }
-        verify(spyDbManager).createOrUpdateShard(1L, new ShardInitTableSchemaVersion());
+        verify(spyDbManager).createOrUpdateShard(anyLong(), any(ShardInitDBUpdater.class));
 
     }
 
