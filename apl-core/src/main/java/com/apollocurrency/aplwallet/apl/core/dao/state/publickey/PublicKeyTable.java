@@ -74,4 +74,8 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
         }
     }
 
+    public void init() {
+        // that is needed for 'manual' derived table registration
+        super.init();
+    }
 }

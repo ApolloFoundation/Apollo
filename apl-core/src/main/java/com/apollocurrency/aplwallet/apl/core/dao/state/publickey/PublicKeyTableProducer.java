@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.publickey;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.CachedTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
@@ -75,6 +76,8 @@ public class PublicKeyTableProducer {
         } else {
             log.info("'{}' is TURNED OFF...", PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
         }
+        // IMPORTANT! 'manual' derived table registration
+        ((DerivedDbTable)this.publicKeyTable).init();
     }
 
     @Produces
