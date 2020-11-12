@@ -29,5 +29,6 @@ public abstract class DbContainerBaseTest {
         ;
 
         mariaDBContainer.start();
+        Runtime.getRuntime().addShutdownHook(new Thread(mariaDBContainer::stop));
     }
 }
