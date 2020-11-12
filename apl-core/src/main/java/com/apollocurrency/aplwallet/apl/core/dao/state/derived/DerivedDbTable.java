@@ -66,6 +66,7 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
             this.fullTextConfig = fullTextConfig;
         }
         this.fullTextSearchColumns = fullTextSearchColumns;
+        init(); // reverted back for usage
     }
 
     public String getTableName() {
@@ -82,7 +83,7 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     @Override
     public void trim(int height, boolean isSharding) { }
 
-    @PostConstruct
+//    @PostConstruct // can be used, but keep eyes on 'PublicKeyTable' which is not gets into derivedDbTablesRegistry
     public void init() {
         derivedDbTablesRegistry.registerDerivedTable(this);
         log.debug("Register derived class: {}", this.getClass().getName());
