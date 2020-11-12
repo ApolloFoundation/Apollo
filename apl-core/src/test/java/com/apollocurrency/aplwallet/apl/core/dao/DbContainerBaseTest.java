@@ -22,8 +22,11 @@ public abstract class DbContainerBaseTest {
             .withPassword("testpass")
             .withExposedPorts(3306)
             .withReuse(true)
+            .withNetwork(null)
+            .withLabel("com.apollocurrency.aplwallet.apl", "testcontainer")
             .withLogConsumer(new Slf4jLogConsumer(log))
-            .withCommand(MariaDBConfigs.getEnvs());
+            .withCommand(MariaDBConfigs.getEnvs())
+        ;
 
         mariaDBContainer.start();
     }
