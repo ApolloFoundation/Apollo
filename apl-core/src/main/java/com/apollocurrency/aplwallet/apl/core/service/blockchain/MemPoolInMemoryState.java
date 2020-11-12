@@ -103,20 +103,21 @@ public class MemPoolInMemoryState {
 
     public void initializeCache(Stream<UnconfirmedTransaction> unconfirmedTransactionStream) {
         if (cacheInitialized) {
-            unconfirmedTransactionStream.forEach(e-> {});
+            unconfirmedTransactionStream.forEach(e -> {});
             return;
         }
-        synchronized (transactionCache) {
+        synchronized (this) {
             if (cacheInitialized) {
-                unconfirmedTransactionStream.forEach(e-> {});
+                unconfirmedTransactionStream.forEach(e -> {
+                });
                 return;
             }
-            unconfirmedTransactionStream.forEach(e-> transactionCache.put(e.getId(), e));
+            unconfirmedTransactionStream.forEach(e -> transactionCache.put(e.getId(), e));
         }
         cacheInitialized = true;
     }
 
-    public Set<UnconfirmedTransaction> getFromCacheSorted(List<String> exclude) {
+    public Set<UnconfirmedTransaction> getFromCache(List<String> exclude) {
         TreeSet<UnconfirmedTransaction> sortedUnconfirmedTransactions = new TreeSet<>(cachedUnconfirmedTransactionComparator);
         transactionCache.values().forEach(transaction -> {
             if (Collections.binarySearch(exclude, transaction.getStringId()) < 0) {
@@ -138,7 +139,7 @@ public class MemPoolInMemoryState {
         return transactionCache.size();
     }
 
-    public UnconfirmedTransaction getFromCacheSorted(long id) {
+    public UnconfirmedTransaction getFromCache(long id) {
         return transactionCache.get(id);
     }
 

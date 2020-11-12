@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -55,8 +56,8 @@ import javax.servlet.http.HttpServletRequest;
  * Prunable appendages are classes implementing the {@link com.apollocurrency.aplwallet.apl} interface.
  */
 @Vetoed
+@Slf4j
 public final class BroadcastTransaction extends AbstractAPIRequestHandler {
-
     public BroadcastTransaction() {
         super(new APITag[]{APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
@@ -72,6 +73,7 @@ public final class BroadcastTransaction extends AbstractAPIRequestHandler {
         try {
             Transaction.Builder builder = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
             Transaction transaction = builder.build();
+
             boolean broadcasted = lookupMemPool().softBroadcast(transaction);
             if (!broadcasted) {
                 throw new RuntimeException("Broadcast queue is full. Please try again later.");
