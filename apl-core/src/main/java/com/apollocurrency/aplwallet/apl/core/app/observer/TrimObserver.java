@@ -88,12 +88,14 @@ public class TrimObserver {
 
     @PostConstruct
     void init() {
-        if (this.blockchainConfig.getCurrentConfig().isShardingEnabled()
-            && this.blockchainConfig.getCurrentConfig().getShardingFrequency() > 0 && this.trimFrequency > 0
-            && this.blockchainConfig.getCurrentConfig().getShardingFrequency() < this.trimFrequency) {
+        HeightConfig currentConfig = this.blockchainConfig.getCurrentConfig();
+        int shardingFrequency = currentConfig.getShardingFrequency();
+        if (currentConfig.isShardingEnabled()
+            && shardingFrequency > 0 && this.trimFrequency > 0
+            && shardingFrequency < this.trimFrequency) {
             String error = String.format(
                 "SHARDING FREQUENCY ERROR: configured 'shard frequency value'=%d is LOWER then 'DEFAULT_TRIM_FREQUENCY'=%d",
-                this.blockchainConfig.getCurrentConfig().getShardingFrequency(), this.trimFrequency);
+                shardingFrequency, this.trimFrequency);
             log.error(error);
             throw new RuntimeException(error);
         }
@@ -191,9 +193,10 @@ public class TrimObserver {
                 }
                 // the boolean - if shard is possible by trim height
                 boolean isShardingOnTrimHeight = (Math.max(trimHeight, 0)) % shardingFrequency == 0;
-
-                // generate pseudo random for 'trim height divergence'
-                randomTrimHeightIncrease = generatePositiveIntBiggerThenZero(trimFrequency);
+                if (!isShardingOnTrimHeight) {
+                    // generate pseudo random for 'trim height divergence'
+                    randomTrimHeightIncrease = generatePositiveIntBiggerThenZero(trimFrequency);
+                }
                 log.debug("Schedule next trim for rndIncrease={}, height/trimHeight = {} / {}, shardFreq={} ({}}), isShardingOnTrimHeight={}",
                     randomTrimHeightIncrease, trimHeight, block.getHeight(), shardingFrequency, isConfigJustUpdated, isShardingOnTrimHeight);
             }
