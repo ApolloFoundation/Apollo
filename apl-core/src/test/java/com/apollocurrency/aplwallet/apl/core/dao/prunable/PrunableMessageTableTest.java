@@ -28,7 +28,6 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -42,13 +41,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 class PrunableMessageTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), null, null, "db/prunable-message-data.sql");
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), null, null, "db/prunable-message-data.sql");
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
@@ -114,6 +113,8 @@ class PrunableMessageTableTest extends DbContainerBaseTest {
 
     @Test
     void testInsertWithEncryptedData() {
+        extension.cleanAndPopulateDb();
+
         data.NEW_MESSAGE.setEncryptedData(data.DATA_1_ABTC);
         data.NEW_MESSAGE.setMessage(null);
         DbUtils.inTransaction(extension, (con) -> table.insert(data.NEW_MESSAGE));
@@ -132,6 +133,8 @@ class PrunableMessageTableTest extends DbContainerBaseTest {
 
     @Test
     void testGetAccountMessagesWithPagination() {
+        extension.cleanAndPopulateDb();
+
         List<PrunableMessage> prunableMessages = table.getPrunableMessages(data.ALICE_ID, 2, 4);
         List<PrunableMessage> expected = List.of(data.MESSAGE_6, data.MESSAGE_5, data.MESSAGE_4);
         assertIterableEquals(expected, prunableMessages);
@@ -153,6 +156,8 @@ class PrunableMessageTableTest extends DbContainerBaseTest {
 
     @Test
     void testGetAllWithDefaultSort() {
+        extension.cleanAndPopulateDb();
+
         List<PrunableMessage> prunableMessages = CollectionUtil.toList(table.getAll(0, 2));
         assertIterableEquals(List.of(data.MESSAGE_11, data.MESSAGE_10, data.MESSAGE_9), prunableMessages);
     }

@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.ValuesDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -53,6 +54,11 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDb
         table = getTable();
         assertNotNull(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 2));
         assertNotNull(getEntryWithListOfSize(getAllLatest(), table.getDbKeyFactory(), 3));
+    }
+
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
     }
 
     @Test

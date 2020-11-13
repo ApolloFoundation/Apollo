@@ -111,7 +111,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -127,7 +126,7 @@ import static org.mockito.Mockito.mock;
 
 @Disabled // TODO: YL @full_text_search_fix is needed
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
@@ -136,7 +135,7 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer, Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
+    static DbExtension extension = new DbExtension(mariaDBContainer, Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
     @Inject
     GlobalSync globalSync;
     @Inject

@@ -24,26 +24,23 @@ import java.util.StringTokenizer;
 
 @Slf4j
 public class DbPopulator {
-
-    private final TransactionalDataSource basicDataSource;
     private final String schemaScriptPath;
     private final String dataScriptPath;
 
-    public DbPopulator(TransactionalDataSource db, String schemaScriptPath, String dataScriptPath) {
-        this.basicDataSource = db;
+    public DbPopulator(String schemaScriptPath, String dataScriptPath) {
         this.schemaScriptPath = schemaScriptPath;
         this.dataScriptPath = dataScriptPath;
     }
 
-    public void initDb() {
-        findAndExecute(schemaScriptPath, "Schema");
+    public void initDb(TransactionalDataSource db) {
+        findAndExecute(db, schemaScriptPath, "Schema");
     }
 
-    public void executeUseDbSql(String shardName) {
-        Objects.requireNonNull(shardName , "shardName is NULL");
-        try (Connection con = basicDataSource.getConnection();
+    public void executeUseDbSql(TransactionalDataSource dataSource) {
+        Objects.requireNonNull(dataSource.getDbIdentity(), "shardName is NULL");
+        try (Connection con = dataSource.getConnection();
              Statement stm = con.createStatement()) {
-            stm.executeUpdate(String.format("use %s;", shardName));
+            stm.executeUpdate(String.format("use %s;", dataSource.getDbIdentity().get()));
             con.commit();
         } catch (SQLException e) {
             log.error("Error executing USE shard command", e);
@@ -51,25 +48,24 @@ public class DbPopulator {
         }
     }
 
-    private void loadSqlAndExecute(URI file) {
-        byte[] bytes = readAllBytes(file);
-
+    private void loadSqlAndExecute(TransactionalDataSource dataSource, URI file) {
         int appliedResults = 0;
-        StringTokenizer tokenizer = new StringTokenizer(new String(bytes), ";");
-        while (tokenizer.hasMoreElements()) {
-            String sqlCommand = tokenizer.nextToken();
-            try (Connection con = basicDataSource.getConnection();
-                 Statement stm = con.createStatement()) {
-                if (sqlCommand.trim().length() != 0 && !sqlCommand.trim().startsWith("--")) {
-                    appliedResults += stm.executeUpdate(sqlCommand);
-                    con.commit();
+        StringTokenizer tokenizer = new StringTokenizer(new String(readAllBytes(file)), ";");
+
+        try (Connection con = dataSource.getConnection();
+             Statement stm = con.createStatement()) {
+            while (tokenizer.hasMoreElements()) {
+                String sqlCommand = tokenizer.nextToken();
+                if (sqlCommand.trim().length() != 0) {
+                    stm.addBatch(sqlCommand);
                 }
-            } catch (SQLException e) {
-                log.error("Error for: {}", sqlCommand);
-                throw new RuntimeException(e.toString(), e);
             }
+            stm.executeBatch();
+            con.commit();
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
         }
-        log.trace("Applied '{}' test data commands into db=[{}]", appliedResults, ((TransactionalDataSource)basicDataSource).getDbIdentity());
+        log.trace("Applied '{}' test data commands into db=[{}]", appliedResults, (dataSource).getDbIdentity());
     }
 
     private byte[] readAllBytes(URI file) {
@@ -81,14 +77,14 @@ public class DbPopulator {
     }
 
 
-    public void populateDb() {
-        findAndExecute(dataScriptPath, "Data");
+    public void populateDb(TransactionalDataSource dataSource) {
+        findAndExecute(dataSource, dataScriptPath, "Data");
     }
 
-    public void findAndExecute(String resource, String name) {
+    public void findAndExecute(TransactionalDataSource db, String resource, String name) {
         if (StringUtils.isNotBlank(resource)) {
             URI resourceUri = findResource(resource, name);
-            loadSqlAndExecute(resourceUri);
+            loadSqlAndExecute(db, resourceUri);
         }
     }
 

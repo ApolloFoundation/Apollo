@@ -5,16 +5,13 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.junit.jupiter.Container;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -24,18 +21,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-public abstract class AbstractTwoFactorAuthRepositoryTest {
-
-    @Container
-    public static GenericContainer mariaDBContainer;
+public abstract class AbstractTwoFactorAuthRepositoryTest extends DbContainerBaseTest {
 
     static {
-        mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-            .withDatabaseName("testdb")
-            .withUsername("testuser")
-            .withPassword("testpass")
-            .withExposedPorts(3306)
-            .withLogConsumer(new Slf4jLogConsumer(log));
         BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
         doReturn("APL").when(blockchainConfig).getAccountPrefix();
         Convert2.init(blockchainConfig);
@@ -53,6 +41,7 @@ public abstract class AbstractTwoFactorAuthRepositoryTest {
     public void setRepository(TwoFactorAuthRepository repository) {
         this.repository = repository;
     }
+
 
     @Test
     public void testGet() {

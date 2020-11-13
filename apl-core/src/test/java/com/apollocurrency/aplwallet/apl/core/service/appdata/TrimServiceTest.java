@@ -17,12 +17,12 @@ import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
@@ -44,12 +44,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @Slf4j
-@Testcontainers
 @Tag("slow")
 class TrimServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     DatabaseManager databaseManager = spy(extension.getDatabaseManager());
     TrimDao trimDao = mock(TrimDao.class);
 
@@ -65,6 +64,11 @@ class TrimServiceTest extends DbContainerBaseTest {
     @BeforeEach
     void setUp() {
         trimService = new TrimService(databaseManager, registry, /*globalSync,*/ timeService, /*event, */trimConfigEvent, trimDao, 1000);
+    }
+
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
     }
 
     @Test

@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.dao.DBContainerRootTest;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
@@ -20,11 +21,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -52,17 +48,8 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 @Slf4j
-@Testcontainers
 @Tag("slow")
-class DatabaseManagerTest {
-    @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-        .withDatabaseName("testdb")
-        .withUsername("root")
-        .withPassword("rootpass")
-        .withExposedPorts(3306)
-        .withLogConsumer(new Slf4jLogConsumer(log));
-
+class DatabaseManagerTest extends DBContainerRootTest {
     private static PropertiesHolder propertiesHolder = new PropertiesHolder();
     private DbProperties baseDbProperties;
     private DatabaseManagerImpl databaseManager;
@@ -72,9 +59,9 @@ class DatabaseManagerTest {
         baseDbProperties = DbTestData.getDbFileProperties(mariaDBContainer);
         baseDbProperties.setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
         databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder, new JdbiHandleFactory());
-        DbPopulator dbPopulator = new DbPopulator(databaseManager.getDataSource(), "db/schema2_empty.sql", "db/db-manager-data.sql");
-        dbPopulator.initDb();
-        dbPopulator.populateDb();
+        DbPopulator dbPopulator = new DbPopulator(null, "db/db-manager-data.sql");
+        dbPopulator.initDb(databaseManager.getDataSource());
+        dbPopulator.populateDb(databaseManager.getDataSource());
         databaseManager.initFullShards(Set.of(2L, 3L));
     }
 

@@ -22,7 +22,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -30,13 +29,13 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 public class UserErrorMessageDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
 
     @WeldSetup
     WeldInitiator weld = WeldUtils.from(List.of(UserErrorMessageDao.class, DaoConfig.class), List.of())
@@ -59,6 +58,8 @@ public class UserErrorMessageDaoTest extends DbContainerBaseTest {
 
     @Test
     void testGetAll() {
+        extension.cleanAndPopulateDb();
+
         List<UserErrorMessage> all = dao.getAll(Long.MAX_VALUE, 3);
 
         assertEquals(List.of(td.ERROR_3, td.ERROR_2, td.ERROR_1), all);
@@ -97,6 +98,8 @@ public class UserErrorMessageDaoTest extends DbContainerBaseTest {
 
     @Test
     void testDeleteByTimestamp() {
+        extension.cleanAndPopulateDb();
+
         dao.deleteByTimestamp(td.ERROR_2.getTimestamp() + 1);
 
         List<UserErrorMessage> all = dao.getAll(Long.MAX_VALUE, 100);

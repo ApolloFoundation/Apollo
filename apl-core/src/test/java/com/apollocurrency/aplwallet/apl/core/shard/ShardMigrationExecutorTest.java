@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.config.UtilComponentConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DBContainerRootTest;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDao;
@@ -37,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
@@ -97,17 +99,11 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -134,20 +130,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-@Testcontainers
 @Slf4j
 @Tag("slow")
 @EnableWeld
-class ShardMigrationExecutorTest {
-
-    @Container
-    public static final GenericContainer mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-        .withDatabaseName("testdb")
-        .withUsername("root")
-        .withPassword("rootpass")
-        .withExposedPorts(3306)
-        .withLogConsumer(new Slf4jLogConsumer(log));
-
+class ShardMigrationExecutorTest extends DBContainerRootTest {
     private static final String SHA_512 = "SHA-512";
 
     @RegisterExtension
@@ -158,7 +144,7 @@ class ShardMigrationExecutorTest {
     private final Path dataExportDirPath = createPath("targetDb");
     private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
 
     private TransactionProcessor transactionProcessor = mock(TransactionProcessorImpl.class);
     private TaskDispatchManager taskDispatchManager = mock(TaskDispatchManager.class);
@@ -252,25 +238,6 @@ class ShardMigrationExecutorTest {
         Mockito.doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
     }
 
-    private static PropertiesHolder initPropertyHolder() {
-        PropertiesHolder propertiesHolder = new PropertiesHolder();
-        Properties properties = new Properties();
-        properties.put("apl.trimDerivedTables", true);
-        properties.put("apl.maxRollback", 21600);
-
-        propertiesHolder.init(properties);
-        return propertiesHolder;
-
-    }
-
-    private Path createPath(String fileName) {
-        try {
-            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-        } catch (IOException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
     @BeforeEach
     void setUp() {
         blockchain.setLastBlock(new BlockTestData().LAST_BLOCK);
@@ -279,15 +246,11 @@ class ShardMigrationExecutorTest {
 
     @AfterEach
     void tearDown() {
-        // clean up data in shard db from previous run
-        Iterator<TransactionalDataSource> fullDataSources = ((ShardManagement)extension.getDatabaseManager()).getAllFullDataSourcesIterator();
-        while (fullDataSources.hasNext()) {
-            TransactionalDataSource dataSource = fullDataSources.next();
-            DbPopulator dbPopulator = new DbPopulator(dataSource, "db/schema2_empty.sql", "db/cleanup_shard_data.sql");
-            dbPopulator.executeUseDbSql(dataSource.getDbIdentity()
-                .orElseThrow(() -> new RuntimeException("shard id is not defined in unit test! Check test pls..."))); // switch to shard db explicitly
-            dbPopulator.populateDb(); // execute clean up in shard tables
-        }
+        DbPopulator dbPopulator = new DbPopulator(null, "db/drop_shard_data.sql");
+        dbPopulator.populateDb(extension.getDatabaseManager().getDataSource());
+        ((DatabaseManagerImpl) extension.getDatabaseManager()).closeAllShardDataSources();
+
+        extension.cleanAndPopulateDb();
     }
 
     @Test
@@ -423,14 +386,34 @@ class ShardMigrationExecutorTest {
         assertEquals(ShardState.FULL, lastShard.getShardState());
     }
 
+    @Test
+    void executeAll() {
+        executeFrom(8000, 4L, MigrateState.INIT);
+    }
+
     private void executeFrom(int height, long shardId, MigrateState state) {
         shardMigrationExecutor.createAllCommands(height, shardId, state);
         MigrateState result = shardMigrationExecutor.executeAllOperations();
         assertEquals(COMPLETED, result);
     }
 
-    @Test
-    void executeAll() {
-        executeFrom(8000, 4L, MigrateState.INIT);
+    private static PropertiesHolder initPropertyHolder() {
+        PropertiesHolder propertiesHolder = new PropertiesHolder();
+        Properties properties = new Properties();
+        properties.put("apl.trimDerivedTables", true);
+        properties.put("apl.maxRollback", 21600);
+
+        propertiesHolder.init(properties);
+        return propertiesHolder;
+
     }
+
+    private Path createPath(String fileName) {
+        try {
+            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
+        } catch (IOException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
 }

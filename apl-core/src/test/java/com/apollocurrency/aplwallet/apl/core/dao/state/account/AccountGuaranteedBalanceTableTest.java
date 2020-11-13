@@ -25,7 +25,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.sql.SQLException;
@@ -37,13 +36,13 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 class AccountGuaranteedBalanceTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
     @Inject
     AccountGuaranteedBalanceTable table;
     AccountTestData testData = new AccountTestData();
@@ -77,6 +76,8 @@ class AccountGuaranteedBalanceTableTest extends DbContainerBaseTest {
 
     @Test
     void testGetSumOfAdditions() {
+        dbExtension.cleanAndPopulateDb();
+
         long accountId = testData.ACC_BALANCE_1.getAccountId();
         int height1 = testData.ACC_BALANCE_1.getHeight();
         int height2 = height1 + 1000;
@@ -108,6 +109,8 @@ class AccountGuaranteedBalanceTableTest extends DbContainerBaseTest {
 
     @Test
     void addToGuaranteedBalanceATM() {
+        dbExtension.cleanAndPopulateDb();
+
         long amountATM = 10000L;
         long expectedSum = testData.ACC_BALANCE_3.getAdditions() + amountATM;
 

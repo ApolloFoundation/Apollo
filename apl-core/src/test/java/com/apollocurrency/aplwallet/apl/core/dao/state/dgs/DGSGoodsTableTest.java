@@ -46,7 +46,6 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -56,7 +55,7 @@ import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.mock;
 
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 public class DGSGoodsTableTest extends EntityDbTableTest<DGSGoods> {
