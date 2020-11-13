@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
@@ -32,6 +33,7 @@ import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -39,7 +41,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -68,9 +69,13 @@ class TrimObserverTest {
     @Inject
     TrimObserver observer;
 
-    {
+
+    public TrimObserverTest() {
         doReturn(config).when(blockchainConfig).getCurrentConfig();
-        doReturn(12).doReturn(809).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random
+        doReturn(12).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random
+        doReturn(2000).when(propertiesHolder).getIntProperty("apl.maxRollback", 720);
+        doReturn(200).when(propertiesHolder).getIntProperty("apl.trimProcessingDelay", 2000);
+
     }
 
     @BeforeEach
@@ -134,43 +139,54 @@ class TrimObserverTest {
 
     @Test
     void testOnBlockPushed() {
-        doReturn(5000).when(config).getShardingFrequency();
+        doReturn(3000).when(config).getShardingFrequency();
 
         fireBlockPushed(4999); // skippped
-        fireBlockPushed(5000); // accepted
-        fireBlockPushed(6000); // accepted
+        fireBlockPushed(5000); // accepted, no random height increase
+        fireBlockPushed(6000); // accepted, + random height increase
         fireBlockPushed(6001); // skipped
-//        waitTrim(List.of(5000, 5190)); // doesn't work, test hangs here
+        CompletableFuture.runAsync(() -> {
+            doReturn(5000).when(blockchain).getHeight();
+            ThreadUtils.sleep(100);
+            doReturn(6000).when(blockchain).getHeight();
+            ThreadUtils.sleep(100);
+            doReturn(6014).when(blockchain).getHeight();
+        });
+        waitTrim(List.of(5000, 6013)); // doesn't work, test hangs here
     }
 
     @Test
     void testOnBlockPushedWithDisabledTrim() throws InterruptedException {
         doReturn(5000).when(config).getShardingFrequency();
+        doAnswer(invocation -> {
+            trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
+            }).fire(new TrimConfig(false, false));
+            return null;
+        }).when(trimService).trimDerivedTables(5013, true);
 
         fireBlockPushed(4998);
         fireBlockPushed(4999);
         fireBlockPushed(5000);
         fireBlockPushed(6000);
-        assertEquals(2, observer.getTrimHeights().size());
-        doAnswer(invocation -> {
-            trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
-            }).fire(new TrimConfig(false, false));
-            return null;
-        }).when(trimService).trimDerivedTables(5000, true);
-//        waitTrim(List.of(5000)); // doesn't work, test hangs here
-//        assertFalse(observer.isTrimDerivedTables());
-        Thread.sleep(4000);
-        verify(trimService, never()).isTrimming();
+        CompletableFuture.runAsync(() -> {
+            doReturn(5000).when(blockchain).getHeight();
+            ThreadUtils.sleep(100);
+            doReturn(6000).when(blockchain).getHeight();
+        });
+        waitTrim(List.of(5013)); // doesn't work, test hangs here
+        assertFalse(observer.isTrimDerivedTablesEnabled());
+        fireBlockPushed(7000);
+        doReturn(7001).when(blockchain).getHeight();
         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
         }).fire(new TrimConfig(true, false));
-//        waitTrim(List.of(5190));
+        waitTrim(List.of(6013, 7000));
     }
 
     private void waitTrim(List<Integer> heights) {
         log.trace("WAIT for heights = [{}]", heights.size());
         while (true) {
             try {
-                Thread.sleep(500);
+                Thread.sleep(10);
                 for (Integer height : heights) {
                     verify(trimService).trimDerivedTables(height, true);
                 }
