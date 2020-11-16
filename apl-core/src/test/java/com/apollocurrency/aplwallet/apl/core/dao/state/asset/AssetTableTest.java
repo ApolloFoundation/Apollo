@@ -55,13 +55,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-
 @Tag("slow")
 @EnableWeld
 class AssetTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("asset", List.of("name,description")));
+    DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("asset", List.of("name,description")));
 
     @Inject
     AssetTable table;
@@ -189,9 +188,4 @@ class AssetTableTest extends DbContainerBaseTest {
         assertEquals(2, expected.size());
     }
 
-    @Disabled // TODO: YL @full_text_search_fix is needed
-    void test_searchAssets() {
-        List<Asset> expected = toList(table.search("This", DbClause.EMPTY_CLAUSE, 0, 3, " ORDER BY ft.score DESC "));
-        assertEquals(4, expected.size());
-    }
 }

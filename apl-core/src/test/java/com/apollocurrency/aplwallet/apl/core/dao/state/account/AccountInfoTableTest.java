@@ -49,7 +49,7 @@ import static org.mockito.Mockito.mock;
 class AccountInfoTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("account_info", List.of("name", "description")));
+    DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("account_info", List.of("name", "description")));
     @Inject
     AccountInfoTable table;
     AccountTestData testData = new AccountTestData();
@@ -101,8 +101,7 @@ class AccountInfoTableTest extends DbContainerBaseTest {
         assertEquals(previous.getDescription(), actual.getDescription());
     }
 
-//    @Test
-    @Disabled // TODO: YL @full_text_search_fix is needed
+    @Test
     void searchAccounts() {
         List<AccountInfo> result = toList(table.searchAccounts("CALIG*", 0, Integer.MAX_VALUE));
         assertEquals(List.of(testData.ACC_INFO_1, testData.ACC_INFO_4), result);

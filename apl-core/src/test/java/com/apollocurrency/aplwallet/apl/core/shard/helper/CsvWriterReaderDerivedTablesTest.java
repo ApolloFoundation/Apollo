@@ -61,6 +61,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
@@ -212,6 +213,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
         .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
