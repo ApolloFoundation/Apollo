@@ -8,22 +8,27 @@ import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TrimEntry;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 class TrimDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     TrimDao dao = new TrimDao(extension.getDatabaseManager());
+
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
+    }
 
     @Test
     void testInsert() {

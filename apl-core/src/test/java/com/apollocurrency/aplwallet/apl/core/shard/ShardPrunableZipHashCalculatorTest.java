@@ -33,7 +33,6 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -54,7 +53,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 class ShardPrunableZipHashCalculatorTest extends DbContainerBaseTest {
@@ -69,7 +68,7 @@ class ShardPrunableZipHashCalculatorTest extends DbContainerBaseTest {
     @RegisterExtension
     TemporaryFolderExtension tempFolder = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer);
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(PrunableMessageTable.class,
         Event.class,

@@ -30,7 +30,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.util.Comparator;
@@ -46,13 +45,12 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
 @Tag("slow")
 @EnableWeld
 class AccountCurrencyTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
     @Inject
     AccountCurrencyTable table;
     AccountTestData testData = new AccountTestData();
@@ -84,6 +82,8 @@ class AccountCurrencyTableTest extends DbContainerBaseTest {
 
     @Test
     void testLoad_ifNotExist_thenReturnNull() {
+        dbExtension.cleanAndPopulateDb();
+
         AccountCurrency accountCurrency = table.get(table.getDbKeyFactory().newKey(testData.newCurrency));
         assertNull(accountCurrency);
     }
@@ -120,6 +120,8 @@ class AccountCurrencyTableTest extends DbContainerBaseTest {
 
     @Test
     void testDefaultSort() {
+        dbExtension.cleanAndPopulateDb();
+
         assertNotNull(table.defaultSort());
         List<AccountCurrency> expectedAll = testData.ALL_CURRENCY.stream()
             .sorted(currencyComparator)

@@ -1,11 +1,10 @@
-TRUNCATE TABLE account;
-TRUNCATE TABLE account_asset;
-TRUNCATE TABLE account_currency;
-TRUNCATE TABLE account_guaranteed_balance;
--- TRUNCATE TABLE ftl_indexes;
-TRUNCATE TABLE account_ledger;
-TRUNCATE TABLE account_property;
-TRUNCATE TABLE account_lease;
+DELETE FROM account;
+DELETE FROM account_asset;
+DELETE FROM account_currency;
+DELETE FROM account_guaranteed_balance;
+DELETE FROM account_ledger;
+DELETE FROM account_property;
+DELETE FROM account_lease;
 
 
 INSERT INTO account

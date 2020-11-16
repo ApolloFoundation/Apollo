@@ -4,6 +4,7 @@ import com.apollocurrency.aplwallet.apl.core.cache.NullCacheProducerForTests;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DBContainerRootTest;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
@@ -49,11 +50,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -95,23 +91,10 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-@Testcontainers
 @Tag("slow")
 @EnableWeld
 @Slf4j
-class BlockchainTest {
-
-    @Container
-    public static GenericContainer mariaDBContainer;
-    static {
-        mariaDBContainer = new MariaDBContainer("mariadb:10.5")
-            .withDatabaseName("testdb")
-            .withUsername("root")
-            .withPassword("rootpass")
-            .withExposedPorts(3306)
-            .withLogConsumer(new Slf4jLogConsumer(log));
-    }
-
+class BlockchainTest extends DBContainerRootTest {
     static DbExtension extension;// init later in manual mode
     static DbPopulator shard1Populator;
     static DbPopulator shard2Populator;
@@ -170,16 +153,16 @@ class BlockchainTest {
         if (shardId == 1 && extension == null) {
             DbProperties inMemDbProps = DbTestData.getInMemDbProps();
             inMemDbProps.setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
-            extension = new DbExtension(mariaDBContainer, inMemDbProps, "db/schema.sql", "db/shard-main-data.sql");
+            extension = new DbExtension(mariaDBContainer, inMemDbProps, "db/shard-main-data.sql", "db/schema.sql");
             TransactionalDataSource mainDb = extension.getDatabaseManager().getDataSource();
             extension.beforeEach(null); // execute initial schema script
         }
 
-        TransactionalDataSource shardDb = ((ShardManagement)extension.getDatabaseManager()).getOrCreateShardDataSourceById(shardId);
+        TransactionalDataSource shardDb = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(shardId);
 
-        DbPopulator dbPopulator = new DbPopulator(shardDb, "db/schema2_empty.sql", dataScriptPath);
-        dbPopulator.initDb();
-        dbPopulator.populateDb();
+        DbPopulator dbPopulator = new DbPopulator(null, dataScriptPath);
+        dbPopulator.initDb(shardDb);
+        dbPopulator.populateDb(shardDb);
         return dbPopulator;
     }
 
@@ -188,6 +171,7 @@ class BlockchainTest {
         txd = new TransactionTestData();
         btd = new BlockTestData();
         extension.beforeEach(null); // init main db again !!
+        extension.cleanAndPopulateDb();
         shard1Populator = initDb("db/shard1-data.sql", 1); // init shard 1 again
         shard2Populator = initDb("db/shard2-data.sql", 2); // init shard 2 again
     }

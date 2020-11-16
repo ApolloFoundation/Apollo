@@ -121,10 +121,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -155,16 +152,15 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
-@Execution(ExecutionMode.CONCURRENT)
 class CsvExporterTest extends DbContainerBaseTest {
 
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
     @Inject
     ShardDao shardDao;
     @Inject
@@ -302,7 +298,7 @@ class CsvExporterTest extends DbContainerBaseTest {
     public CsvExporterTest() throws Exception {
     }
 
-    private Path createPath(String fileName) {
+    private static Path createPath(String fileName) {
         try {
             Path folder = temporaryFolderExtension.newFolder().toPath().resolve(fileName);
             Files.createDirectories(folder);
@@ -381,6 +377,8 @@ class CsvExporterTest extends DbContainerBaseTest {
 
     @Test
     void testExportShardTable() throws Exception {
+        extension.cleanAndPopulateDb();
+
         String tableName = "shard";
         int targetHeight = 3;
         int batchLimit = 1; // used for pagination and partial commit
@@ -531,6 +529,7 @@ class CsvExporterTest extends DbContainerBaseTest {
 
     @Test
     void testExportShardTableIgnoringLastHashes() throws IOException, URISyntaxException {
+        extension.cleanAndPopulateDb();
 
         long exportedRows = csvExporter.exportShardTableIgnoringLastZipHashes(4, 1);
 

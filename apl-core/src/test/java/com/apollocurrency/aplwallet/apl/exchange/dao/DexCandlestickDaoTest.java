@@ -13,11 +13,11 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexCandlestick;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -26,12 +26,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 class DexCandlestickDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/dex-candlestick-data.sql", null);
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/dex-candlestick-data.sql", null);
     private DexCandlestickDao dao;
 
     private DexTradingTestData td;
@@ -41,6 +41,11 @@ class DexCandlestickDaoTest extends DbContainerBaseTest {
         dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(
             extension.getDatabaseManager().getJdbiHandleFactory(), DexCandlestickDao.class);
         td = new DexTradingTestData();
+    }
+
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
     }
 
     @Test

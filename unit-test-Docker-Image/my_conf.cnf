@@ -26,6 +26,7 @@ socket = /run/mysqld/mysqld.sock
 
 [mysqld]
 max_connections        = 1024
+default-storage-engine = rocksdb
 
 # Import all .cnf files from configuration directory
 !includedir /etc/mysql/conf.d/

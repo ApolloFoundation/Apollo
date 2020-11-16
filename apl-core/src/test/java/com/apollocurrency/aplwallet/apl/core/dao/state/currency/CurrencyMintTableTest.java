@@ -32,7 +32,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.sql.SQLException;
@@ -46,13 +45,13 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 class CurrencyMintTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/currency_mint-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/currency_mint-data.sql", "db/schema.sql");
     @Inject
     CurrencyMintTable table;
     CurrencyMintTestData td;
@@ -87,6 +86,8 @@ class CurrencyMintTableTest extends DbContainerBaseTest {
 
     @Test
     void testLoad_ifNotExist_thenReturnNull() {
+        dbExtension.cleanAndPopulateDb();
+
         CurrencyMint result = table.get(table.getDbKeyFactory().newKey(td.CURRENCY_MINT_NEW));
         assertNull(result);
     }

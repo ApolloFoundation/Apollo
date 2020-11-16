@@ -58,7 +58,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -76,13 +75,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 class ReferencedTransactionDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
@@ -126,6 +125,8 @@ class ReferencedTransactionDaoTest extends DbContainerBaseTest {
 
     @Test
     void testGetAll() {
+        extension.cleanAndPopulateDb();
+
         List<Long> allReferencedTransactionIds = dao.getAllReferencedTransactionIds();
         TransactionTestData td = new TransactionTestData();
         Set<Long> expectedIds = td.REFERENCED_TRANSACTIONS.stream().map(ReferencedTransaction::getReferencedTransactionId).collect(Collectors.toSet());

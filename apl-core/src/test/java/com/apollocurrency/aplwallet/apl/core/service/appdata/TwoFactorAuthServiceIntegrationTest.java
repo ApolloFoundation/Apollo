@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.TwoFactorAuthFileSystemRepository;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.TwoFactorAuthRepositoryImpl;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TwoFactorAuthServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
@@ -24,11 +25,11 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.security.GeneralSecurityException;
 import java.util.Random;
@@ -44,13 +45,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 public class TwoFactorAuthServiceIntegrationTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer);
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @WeldSetup
@@ -59,6 +60,11 @@ public class TwoFactorAuthServiceIntegrationTest extends DbContainerBaseTest {
     private TwoFactorAuthRepository dbRepository = new TwoFactorAuthRepositoryImpl(dbExtension.getDatabaseManager().getDataSource());
     private TwoFactorAuthRepository fileRepository = new TwoFactorAuthFileSystemRepository(temporaryFolderExtension.getRoot().toPath());
     private TwoFactorAuthService service;// = new TwoFactorAuthServiceImpl(repository, "test", targetFileRepository);
+
+    @AfterEach
+    void tearDown() {
+        dbExtension.cleanAndPopulateDb();
+    }
 
     @Test
     public void testEnable() {
@@ -157,6 +163,8 @@ public class TwoFactorAuthServiceIntegrationTest extends DbContainerBaseTest {
         int fakeNumber = new Random().nextInt();
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         service = new TwoFactorAuthServiceImpl(dbRepository, "test", fileRepository);
+        fileRepository.add(new TwoFactorAuthEntity(td.ACC_1.getId(), td.ACCOUNT1_2FA_SECRET_BYTES, true));
+
         Status2FA status2FA = service.tryAuth(td.ACC_1.getId(), fakeNumber);
         assertEquals(Status2FA.INCORRECT_CODE, status2FA);
     }

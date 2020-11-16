@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
@@ -38,13 +37,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @Slf4j
-@Testcontainers
 @Tag("slow")
 @EnableWeld
 public class JdbiInterceptorTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
+
     JdbiHandleFactory factory = spy(new JdbiHandleFactory());
     private Weld weld = AbstractWeldInitiator.createWeld();
     @WeldSetup

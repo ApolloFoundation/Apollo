@@ -22,20 +22,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 class PhasingApprovedResultTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(

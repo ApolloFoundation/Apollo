@@ -6,11 +6,8 @@ import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
 
-/**
- * An attempt to reuse existing container for multiple tests.
- */
- @Slf4j
-public abstract class DbContainerBaseTest {
+@Slf4j
+public abstract class DBContainerRootTest {
 
     @Container
     public static final GenericContainer mariaDBContainer;
@@ -18,16 +15,19 @@ public abstract class DbContainerBaseTest {
     static {
         mariaDBContainer = new MariaDBContainer("mariadb:10.5")
             .withDatabaseName("testdb")
-            .withUsername("testuser")
-            .withPassword("testpass")
+            .withUsername("root")
+            .withPassword("rootpass")
             .withExposedPorts(3306)
             .withReuse(true)
             .withNetwork(null)
             .withLabel("com.apollocurrency.aplwallet.apl", "testcontainer")
             .withLogConsumer(new Slf4jLogConsumer(log))
-            .withCommand(MariaDBConfigs.getEnvs());
+            .withCommand(MariaDBConfigs.getEnvs())
+        ;
 
         mariaDBContainer.start();
+
         Runtime.getRuntime().addShutdownHook(new Thread(mariaDBContainer::stop));
     }
+
 }

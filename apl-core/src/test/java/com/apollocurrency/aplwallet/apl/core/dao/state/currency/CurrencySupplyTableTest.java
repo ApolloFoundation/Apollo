@@ -29,7 +29,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 
@@ -40,13 +39,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 class CurrencySupplyTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/currency_supply-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/currency_supply-data.sql", "db/schema.sql");
 
     @Inject
     CurrencySupplyTable table;
@@ -82,6 +81,8 @@ class CurrencySupplyTableTest extends DbContainerBaseTest {
 
     @Test
     void testLoad_returnNull_ifNotExist() {
+        dbExtension.cleanAndPopulateDb();
+
         CurrencySupply currencySupply = table.get(table.getDbKeyFactory().newKey(td.CURRENCY_SUPPLY_NEW));
         assertNull(currencySupply);
     }

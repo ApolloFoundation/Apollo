@@ -31,7 +31,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.util.Comparator;
@@ -45,13 +44,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+//
 @Tag("slow")
 @EnableWeld
 class AccountLeaseTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
     @Inject
     AccountLeaseTable table;
     AccountTestData testData = new AccountTestData();
@@ -105,6 +104,8 @@ class AccountLeaseTableTest extends DbContainerBaseTest {
 
     @Test
     void getAccountLeaseCount() {
+        dbExtension.cleanAndPopulateDb();
+
         int expected = testData.ALL_LEASE.size();
         expected--; //one record doesn't have 'latest' indicator;
         int actual = table.getAccountLeaseCount();
@@ -119,6 +120,8 @@ class AccountLeaseTableTest extends DbContainerBaseTest {
 
     @Test
     void getLeaseChangingAccounts() {
+        dbExtension.cleanAndPopulateDb();
+
         List<AccountLease> accounts = table.getLeaseChangingAccountsAtHeight(testData.ACC_LEAS_0.getHeight());
         List<AccountLease> expected = testData.ALL_LEASE.stream()
             .filter(accountLease -> accountLease.getCurrentLeasingHeightFrom() == testData.ACC_LEAS_0.getHeight()

@@ -11,13 +11,12 @@ import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-@Testcontainers
+
 @Tag("slow")
 public class VaultKeystoreMigrationExecutorTest extends AbstractMigrationExecutorTest {
     @RegisterExtension
-    TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     public VaultKeystoreMigrationExecutorTest() {
         super("apl.migrator.vaultkeystore.deleteAfterMigration", "vaultkeystoreMigrationRequired-0", "./keystore", "apl.keystoreDir");

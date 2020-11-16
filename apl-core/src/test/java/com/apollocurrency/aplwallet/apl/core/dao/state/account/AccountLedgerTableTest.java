@@ -31,7 +31,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -47,14 +46,14 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 class AccountLedgerTableTest extends DbContainerBaseTest {
 
     public static final int TRIM_KEEP = 300;
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
     @Inject
     AccountLedgerTable table;
     AccountTestData testData = new AccountTestData();
@@ -127,6 +126,8 @@ class AccountLedgerTableTest extends DbContainerBaseTest {
 
     @Test
     void testTrim_on_height() {
+        dbExtension.cleanAndPopulateDb();
+
         doReturn(Integer.MAX_VALUE).when(propertiesHolder).BATCH_COMMIT_SIZE();
         doReturn(testData.LEDGER_HEIGHT - 1 + TRIM_KEEP).when(blockchain).getHeight();
         DbUtils.inTransaction(dbExtension, (con) -> table.trim(testData.LEDGER_HEIGHT, true));
@@ -142,6 +143,8 @@ class AccountLedgerTableTest extends DbContainerBaseTest {
 
     @Test
     void getEntry() {
+        dbExtension.cleanAndPopulateDb();
+
         LedgerEntry expected = testData.ACC_LEDGER_0;
 
         LedgerEntry actual = table.getEntry(testData.ACC_LEDGER_0.getDbId(), true);

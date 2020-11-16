@@ -74,9 +74,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.sql.Connection;
@@ -97,14 +94,13 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
-@Execution(ExecutionMode.CONCURRENT)
 public class PhasingPollServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
@@ -191,6 +187,8 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
 
     @Test
     void testGetActivePhasingDbIdWhenHeightIsMax() {
+        extension.cleanAndPopulateDb();
+
         List<TransactionDbInfo> transactionDbInfoList = service.getActivePhasedTransactionDbInfoAtHeight(ttd.TRANSACTION_12.getHeight() + 1);
         assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_12, ttd.TRANSACTION_12.getId()), new TransactionDbInfo(ttd.DB_ID_11, ttd.TRANSACTION_11.getId())), transactionDbInfoList);
     }
@@ -234,6 +232,8 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
 
     @Test
     void testGetAllPhasedTransactionsCount() {
+        extension.cleanAndPopulateDb();
+
         int count = service.getAllPhasedTransactionsCount();
 
         assertEquals(ptd.NUMBER_OF_PHASED_TRANSACTIONS, count);
@@ -248,6 +248,8 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
 
     @Test
     void testGetResultForNonFinishedPoll() {
+        extension.cleanAndPopulateDb();
+
         PhasingPollResult result = service.getResult(ptd.POLL_3.getId());
 
         assertNull(result);
@@ -321,6 +323,8 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
 
     @Test
     void testGetAccountPhasedTransactionsCount() {
+        extension.cleanAndPopulateDb();
+
         int count = service.getAccountPhasedTransactionCount(ttd.TRANSACTION_0.getSenderId());
 
         assertEquals(3, count);
@@ -345,6 +349,8 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
 
     @Test
     void testFinishPollApprovedByLinkedTransactions() throws SQLException {
+        extension.cleanAndPopulateDb();
+
         blockchain.setLastBlock(btd.LAST_BLOCK);
         inTransaction(con -> service.finish(ptd.POLL_3, ptd.POLL_3.getQuorum()));
         PhasingPollResult result = service.getResult(ptd.POLL_3.getId());
@@ -355,6 +361,8 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
 
     @Test
     void testCountVotesForPollWithLinkedTransactions() {
+        extension.cleanAndPopulateDb();
+
         BlockTestData blockTestData = new BlockTestData();
         blockchain.setLastBlock(blockTestData.LAST_BLOCK);
         long votes = service.countVotes(ptd.POLL_3);
@@ -374,6 +382,8 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
 
     @Test
     void testGetVoteCount() {
+        extension.cleanAndPopulateDb();
+
         long votes = service.getVoteCount(ptd.POLL_1.getId());
 
         assertEquals(2, votes);
@@ -507,6 +517,8 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
 
     @Test
     void testGetSenderPhasedTransactionFees() throws SQLException {
+        extension.cleanAndPopulateDb();
+
         blockchain.setLastBlock(btd.GENESIS_BLOCK);
         long actualFee = service.getSenderPhasedTransactionFees(ptd.POLL_0.getAccountId());
         long expectedFee = ttd.TRANSACTION_13.getFeeATM() + ttd.TRANSACTION_12.getFeeATM() + ttd.TRANSACTION_11.getFeeATM();

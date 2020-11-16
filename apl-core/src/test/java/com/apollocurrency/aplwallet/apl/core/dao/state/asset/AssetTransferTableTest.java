@@ -30,7 +30,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.util.Comparator;
@@ -43,13 +42,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 @EnableWeld
 class AssetTransferTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer);
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
 
     @Inject
     AssetTransferTable table;
@@ -90,6 +89,8 @@ class AssetTransferTableTest extends DbContainerBaseTest {
 
     @Test
     void testLoad_returnNull_ifNotExist() {
+        dbExtension.cleanAndPopulateDb();
+
         AssetTransfer asset = table.get(table.getDbKeyFactory().newKey(td.ASSET_TRANSFER_NEW));
         assertNull(asset);
     }

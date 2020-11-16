@@ -39,7 +39,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -51,13 +50,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
 @Tag("slow")
 @EnableWeld
 class ShardRecoveryDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
@@ -113,6 +111,8 @@ class ShardRecoveryDaoTest extends DbContainerBaseTest {
 
     @Test
     void testInsert() {
+        extension.cleanAndPopulateDb();
+
         ShardRecovery recovery = new ShardRecovery(
             MigrateState.INIT, "BLOCK", "DB_ID", 1L, "DB_ID");
 

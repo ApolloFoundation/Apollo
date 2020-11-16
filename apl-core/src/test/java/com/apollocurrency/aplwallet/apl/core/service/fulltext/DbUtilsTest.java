@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -23,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@Testcontainers
+
 @Tag("slow")
 public class DbUtilsTest extends DbContainerBaseTest {
 
@@ -52,7 +51,7 @@ public class DbUtilsTest extends DbContainerBaseTest {
         Collections.emptyList());
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("currency", List.of("code", "name", "description")));
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("currency", List.of("code", "name", "description")));
 
     @Test
     public void testGetDbInfoForIndexedTable() throws SQLException {

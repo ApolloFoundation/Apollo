@@ -29,7 +29,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -45,7 +44,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-@Testcontainers
 @Tag("slow")
 @EnableWeld
 class TransactionDaoTest extends DbContainerBaseTest {
@@ -53,7 +51,7 @@ class TransactionDaoTest extends DbContainerBaseTest {
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer);
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
@@ -274,6 +272,7 @@ class TransactionDaoTest extends DbContainerBaseTest {
 
     @Test
     void testGetTransactionsWithPagination() {
+        extension.cleanAndPopulateDb();
         List<Transaction> transactions = dao.getTransactions((byte) -1, (byte) -1, 2, 4);
         assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11, td.TRANSACTION_10), transactions);
     }
