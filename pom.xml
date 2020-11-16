@@ -54,6 +54,7 @@
     <maven.compiler.target>11</maven.compiler.target>
     <surefire-plugin.version>2.22.2</surefire-plugin.version>
     <compile-plugin.version>3.8.1</compile-plugin.version>
+    <quarkus-plugin.version>1.9.2.Final</quarkus-plugin.version>
     <!-- cross-platform zip distribution -->
     <zip-file-name>apollo-blockchain</zip-file-name>
     <zip-format>zip</zip-format>
@@ -62,7 +63,7 @@
     <antifraud.version>1.0.11</antifraud.version>
 
     <!-- We have to define this property and change it accordingly for correct version of packages -->
-    <apl-bom-ext.version>1.0.3</apl-bom-ext.version>
+    <apl-bom-ext.version>1.0.5</apl-bom-ext.version>
     <base-dist-dir>ApolloWallet/apollo-blockchain</base-dist-dir>
 
     <build-helper-maven-plugin.version>1.9.1</build-helper-maven-plugin.version>
@@ -94,6 +95,40 @@
         <excludeTestTags/>
       </properties>
     </profile>
+    <profile>
+      <id>native</id>
+      <activation>
+        <property>
+          <name>native</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <version>${surefire-plugin.version}</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+                <configuration>
+                  <systemPropertyVariables>
+                    <native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
+                    <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                    <maven.home>${maven.home}</maven.home>
+                  </systemPropertyVariables>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+      <properties>
+        <quarkus.package.type>native</quarkus.package.type>
+      </properties>
+    </profile>
   </profiles>
 
   <dependencyManagement>
@@ -123,11 +158,15 @@
           <configuration>
             <useSystemClassLoader>false</useSystemClassLoader>
             <excludedGroups>${excludeTestTags}</excludedGroups>
-            <!--
-                        <properties>
-                          <includeTags>${includeTestTags}</includeTags>
-                        </properties>
-            -->
+<!--
+            <properties>
+              <includeTags>${includeTestTags}</includeTags>
+            </properties>
+-->
+            <systemPropertyVariables>
+              <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+              <maven.home>${maven.home}</maven.home>
+            </systemPropertyVariables>
           </configuration>
           <dependencies>
             <dependency>
@@ -194,6 +233,20 @@
           <artifactId>jsonpath-maven-plugin</artifactId>
           <version>1.2.0</version>
         </plugin>
+        <plugin>
+          <groupId>io.quarkus</groupId>
+          <artifactId>quarkus-maven-plugin</artifactId>
+          <version>${quarkus-plugin.version}</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>build</goal>
+                <goal>generate-code</goal>
+                <goal>generate-code-tests</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -208,6 +261,10 @@
         <configuration>
           <showDeprecation>false</showDeprecation>
         </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire-plugin.version}</version>
       </plugin>
     </plugins>
   </build>
