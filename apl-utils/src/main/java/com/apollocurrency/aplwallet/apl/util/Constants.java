@@ -24,7 +24,7 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.47.2");
+    public static final Version VERSION = new Version("1.47.3");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
