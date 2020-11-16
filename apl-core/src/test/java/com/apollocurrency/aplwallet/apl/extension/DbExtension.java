@@ -148,7 +148,9 @@ public class DbExtension implements BeforeEachCallback, AfterEachCallback, After
             // remove data from 'flt_indexes' table for next unit test method run
             DbUtils.checkAndRunInTransaction(getDatabaseManager(), (con) -> {
                 try {
-                    fullTextSearchService.dropAll(con);
+                    if (fullTextSearchService != null) {
+                        fullTextSearchService.dropAll(con);
+                    }
                 } catch (SQLException e) {
                     log.error("FTS drop all error", e);
                 }
