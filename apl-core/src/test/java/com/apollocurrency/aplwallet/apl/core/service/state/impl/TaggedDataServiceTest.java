@@ -138,19 +138,21 @@ class TaggedDataServiceTest extends DbContainerBaseTest {
         tagTd = new TaggedTestData();
     }
 
-
+    @Tag("skip-fts-init")
     @Test
     void getTaggedDataCount() {
         int result = taggedDataService.getTaggedDataCount();
         assertEquals(5, result);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void getDataTagCount() {
         int result = taggedDataService.getDataTagCount();
         assertEquals(2, result);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void getAllTags() {
         DbIterator<DataTag> result = taggedDataService.getAllTags(0, 1);
@@ -163,6 +165,7 @@ class TaggedDataServiceTest extends DbContainerBaseTest {
         assertEquals(2, count);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void getTagsLike() {
         DbIterator<DataTag> result = taggedDataService.getTagsLike("trw", 0, 1);
@@ -175,6 +178,7 @@ class TaggedDataServiceTest extends DbContainerBaseTest {
         assertEquals(1, count);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void addDataUploadAttach() {
         blockchain.setLastBlock(btd.LAST_BLOCK);
@@ -194,6 +198,7 @@ class TaggedDataServiceTest extends DbContainerBaseTest {
         assertEquals(new TaggedDataTimestamp(ttd.TRANSACTION_8.getId(), ttd.TRANSACTION_8.getTimestamp(), btd.LAST_BLOCK.getHeight()), dataTimestamp);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void restore() {
         DbUtils.inTransaction(extension, (con) -> {
@@ -209,6 +214,7 @@ class TaggedDataServiceTest extends DbContainerBaseTest {
         assertEquals(5, count);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void extend() {
         blockchain.setLastBlock(btd.LAST_BLOCK);

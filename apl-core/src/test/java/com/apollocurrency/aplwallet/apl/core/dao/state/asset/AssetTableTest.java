@@ -60,7 +60,7 @@ import static org.mockito.Mockito.mock;
 class AssetTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("asset", List.of("name,description")));
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("asset", List.of("name,description")));
 
     @Inject
     AssetTable table;
@@ -96,8 +96,10 @@ class AssetTableTest extends DbContainerBaseTest {
     void setUp() {
         td = new AssetTestData();
         accountTestData = new AccountTestData();
+        dbExtension.cleanAndPopulateDb();
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testLoad() {
         Asset asset = table.get(table.getDbKeyFactory().newKey(td.ASSET_0));
@@ -105,12 +107,14 @@ class AssetTableTest extends DbContainerBaseTest {
         assertEquals(td.ASSET_0, asset);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testLoad_returnNull_ifNotExist() {
         Asset asset = table.get(table.getDbKeyFactory().newKey(td.ASSET_NEW));
         assertNull(asset);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSave_insert_new_entity() {//SQL MERGE -> INSERT
         Asset previous = table.get(table.getDbKeyFactory().newKey(td.ASSET_NEW));
@@ -125,7 +129,7 @@ class AssetTableTest extends DbContainerBaseTest {
         assertEquals(td.ASSET_NEW.getId(), actual.getId());
     }
 
-
+    @Tag("skip-fts-init")
     @Test
     void testSave_MaxDescriptionLength() {
         String description = RandomStringUtils.randomAlphabetic(MAX_ASSET_DESCRIPTION_LENGTH);
@@ -141,6 +145,7 @@ class AssetTableTest extends DbContainerBaseTest {
         assertEquals(td.ASSET_NEW.getId(), actual.getId());
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSave_OverDescriptionLength() {
         String description = RandomStringUtils.randomAlphabetic(MAX_ASSET_DESCRIPTION_LENGTH + 1);
@@ -152,6 +157,7 @@ class AssetTableTest extends DbContainerBaseTest {
         });
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
         Asset previous = table.get(table.getDbKeyFactory().newKey(td.ASSET_1));
@@ -167,6 +173,7 @@ class AssetTableTest extends DbContainerBaseTest {
         assertEquals(previous.getId(), actual.getId());
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testDefaultSort() {
         assertNotNull(table.defaultSort());
@@ -175,12 +182,14 @@ class AssetTableTest extends DbContainerBaseTest {
         assertEquals(expectedAll, actualAll);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testGetAssetCount() {
         long count = table.getCount();
         assertEquals(8, count);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void getAssetsIssuedBy() {
         List<Asset> expected = toList(table.getManyBy(

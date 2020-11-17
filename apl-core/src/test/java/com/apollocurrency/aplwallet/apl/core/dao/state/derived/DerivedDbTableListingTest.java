@@ -253,6 +253,7 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
         purchaseTable.init();
     }
 
+    @Tag("skip-fts-init")
     @DisplayName("Loop over derived table list and get Min/Max/Count values")
     @Test
     void testMinMaxValues() {

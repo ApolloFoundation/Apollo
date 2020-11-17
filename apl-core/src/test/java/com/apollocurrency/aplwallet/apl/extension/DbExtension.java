@@ -104,38 +104,17 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
 
     @Override
     public void beforeEach(ExtensionContext context) {
-/*
-        if (!staticInit) {
-            manipulator.init();
-        }
-        manipulator.populate();
-        if (!staticInit && fullTextSearchService != null) {
-            initFtl();
-        }
-*/
-        if (fullTextSearchService != null) {
-            initFtl();
+        if (context != null && context.getTags().contains("skip-fts-init")) {
+            // skip init for some tests
+            if (fullTextSearchService == null) {
+                initFtl();
+            }
+        } else {
+            if (fullTextSearchService != null) {
+                initFtl();
+            }
         }
     }
-
-/*
-    @Override
-    public void afterEach(ExtensionContext context) throws Exception {
-        if (!staticInit) {
-            // remove data from 'flt_indexes' table for next unit test method run
-            DbUtils.checkAndRunInTransaction(getDatabaseManager(), (con) -> {
-                try {
-                    if (fullTextSearchService != null) {
-                        fullTextSearchService.dropAll(con);
-                    }
-                } catch (SQLException e) {
-                    log.error("FTS drop all error", e);
-                }
-            });
-            shutdownDbAndDelete();
-        }
-    }
-*/
 
     @Override
     public void afterAll(ExtensionContext context) throws Exception {

@@ -288,6 +288,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         registry.registerDerivedTable(dexOrderTable);
     }
 
+    @Tag("skip-fts-init")
     @DisplayName("Gather all derived tables, export data up to height = 8000," +
         " delete rows up to height = 8000, import data back into db table")
     @Test
@@ -472,7 +473,8 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
             pstmt.setBigDecimal(1, minDbValue);
             pstmt.setBigDecimal(2, maxDbValue);
             int deleted = pstmt.executeUpdate();
-            log.debug("Table = {}, deleted = {} by MIN = {} / MAX = {}", itemName.toString(), deleted, minDbValue, maxDbValue);
+            con.commit();
+            log.debug("Table = {}, deleted = {} by MIN = {} / MAX = {}", itemName, deleted, minDbValue, maxDbValue);
             return deleted;
         } catch (SQLException e) {
             log.error("Exception", e);
@@ -480,6 +482,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         return -1;
     }
 
+    @Tag("skip-fts-init")
     @Test
     void incorrectParamsSuppliedToReader() {
         DirProvider dirProvider = mock(DirProvider.class);
@@ -502,6 +505,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         });
     }
 
+    @Tag("skip-fts-init")
     @Test
     void incorrectParamsSuppliedToWriter() {
         DirProvider dirProvider = mock(DirProvider.class);
@@ -518,6 +522,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         assertThrows(NullPointerException.class, () -> csvWriter.write(tableName + CSV_FILE_EXTENSION, null));
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testAppendWithDefaultParameters() throws SQLException {
         DirProvider dirProvider = mock(DirProvider.class);

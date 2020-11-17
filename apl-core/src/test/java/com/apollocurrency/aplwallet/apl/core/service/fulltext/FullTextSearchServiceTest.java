@@ -99,7 +99,7 @@ class FullTextSearchServiceTest extends DbContainerBaseTest {
     public FullTextSearchServiceTest() throws IOException {
     }
 
-
+    @Tag("skip-fts-init")
     @Test
     void reindexAll() throws Exception {
         ftl.reindexAll(extension.getDatabaseManager().getDataSource().begin());

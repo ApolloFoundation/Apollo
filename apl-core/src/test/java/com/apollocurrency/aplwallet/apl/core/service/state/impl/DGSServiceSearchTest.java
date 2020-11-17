@@ -99,31 +99,35 @@ public class DGSServiceSearchTest extends DbContainerBaseTest {
         dtd = new DGSTestData();
     }
 
-
+    @Tag("skip-fts-init")
     @Test
     void testSearchGoods() {
         List<DGSGoods> goods = CollectionUtil.toList(service.searchGoods("tes*", false, 0, Integer.MAX_VALUE));
         assertIterableEquals(List.of(dtd.GOODS_4, dtd.GOODS_2, dtd.GOODS_10, dtd.GOODS_8), goods);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSearchGoodsWithPagination() {
         List<DGSGoods> goods = CollectionUtil.toList(service.searchGoods("tes*", false, 1, 2));
         assertIterableEquals(List.of(dtd.GOODS_2, dtd.GOODS_10), goods);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSearchGoodsByTag() {
         List<DGSGoods> goods = CollectionUtil.toList(service.searchGoods("prod*", false, 0, Integer.MAX_VALUE));
         assertIterableEquals(List.of(dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_2), goods);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSearchSellerGoods() {
         List<DGSGoods> dgsGoods = CollectionUtil.toList(service.searchSellerGoods("bat*", SELLER_0_ID, true, 0, Integer.MAX_VALUE));
         assertIterableEquals(List.of(dtd.GOODS_12), dgsGoods);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSearchSellerGoodsWithPagination() {
         List<DGSGoods> dgsGoods = CollectionUtil.toList(service.searchSellerGoods("ta*", SELLER_0_ID, false, 1, 2));

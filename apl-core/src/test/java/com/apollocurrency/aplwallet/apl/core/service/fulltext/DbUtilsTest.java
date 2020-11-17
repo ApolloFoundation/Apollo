@@ -53,6 +53,7 @@ public class DbUtilsTest extends DbContainerBaseTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(mariaDBContainer, Map.of("currency", List.of("code", "name", "description")));
 
+    @Tag("skip-fts-init")
     @Test
     public void testGetDbInfoForIndexedTable() throws SQLException {
         DataSource db = dbExtension.getDatabaseManager().getDataSource();
@@ -62,6 +63,7 @@ public class DbUtilsTest extends DbContainerBaseTest {
         }
     }
 
+    @Tag("skip-fts-init")
     @Test
     public void testGetDbInfoForNonIndexedTable() throws SQLException {
         DataSource db = dbExtension.getDatabaseManager().getDataSource();
