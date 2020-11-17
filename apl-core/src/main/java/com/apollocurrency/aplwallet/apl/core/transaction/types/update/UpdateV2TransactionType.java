@@ -34,7 +34,11 @@ public class UpdateV2TransactionType extends UpdateTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.NotValidException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.NotValidException {
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         UpdateV2Attachment attachment = (UpdateV2Attachment) transaction.getAttachment();
         Version version = attachment.getReleaseVersion();
         if (version.getMinorVersion() > Short.MAX_VALUE || version.getIntermediateVersion() > Short.MAX_VALUE || version.getMajorVersion() > Short.MAX_VALUE) {

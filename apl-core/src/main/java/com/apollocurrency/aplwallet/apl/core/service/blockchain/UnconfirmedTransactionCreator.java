@@ -2,7 +2,7 @@
  *  Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.dao.appdata;
+package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;

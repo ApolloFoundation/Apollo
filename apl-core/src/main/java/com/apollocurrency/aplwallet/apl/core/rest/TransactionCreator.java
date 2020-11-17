@@ -175,7 +175,7 @@ public class TransactionCreator {
             if (txRequest.isBroadcast()) {
                 processor.broadcast(transaction);
             } else if (txRequest.isValidate()) {
-                validator.validate(transaction);
+                validator.validateFully(transaction);
             }
             tcd.setTx(transaction);
         } catch (AplException.NotYetEnabledException e) {

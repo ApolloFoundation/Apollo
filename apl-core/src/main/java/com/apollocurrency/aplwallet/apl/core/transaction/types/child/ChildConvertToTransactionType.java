@@ -26,8 +26,8 @@ public class ChildConvertToTransactionType extends ChildAccountTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.NotValidException {
-        super.validateAttachment(transaction);
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        super.doStateIndependentValidation(transaction);
         ChildAccountAttachment attachment = (ChildAccountAttachment) transaction.getAttachment();
         if (attachment.getChildCount() != 1) {
             throw new AplException.NotValidException("Wrong value of the child count value, only one account can be converted at once.");

@@ -430,8 +430,9 @@ public class CurrencyServiceImpl implements CurrencyService {
         }
     }
 
+
     @Override
-    public void validateCurrencyNaming(long issuerAccountId, MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException {
+    public void validateCurrencyNamingStateIndependent(MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException {
         String name = attachment.getName();
         String code = attachment.getCode();
         String description = attachment.getDescription();
@@ -455,6 +456,12 @@ public class CurrencyServiceImpl implements CurrencyService {
         if (code.contains(blockchainConfig.getCoinSymbol()) || blockchainConfig.getCoinSymbol().toLowerCase().equals(normalizedName)) {
             throw new AplException.NotValidException("Currency name already used: " + code);
         }
+    }
+    @Override
+    public void validateCurrencyNamingStateDependent(long issuerAccountId, MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException {
+        String name = attachment.getName();
+        String code = attachment.getCode();
+        String normalizedName = name.toLowerCase();
         Currency currency;
         if ((currency = this.getCurrencyByName(normalizedName)) != null
             && !this.canBeDeletedBy(currency, issuerAccountId)) {

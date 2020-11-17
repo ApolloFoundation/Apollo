@@ -189,7 +189,7 @@ public class ChildAccountTransactionTypeTest {
         when(heightConfig.getMaxPayloadLength()).thenReturn(255 * Constants.MIN_TRANSACTION_SIZE);
 
         //WHEN
-        txValidator.validate(tx);
+        txValidator.validateFully(tx);
 
         verify(accountControlPhasingService).checkTransaction(tx);
     }
@@ -220,7 +220,7 @@ public class ChildAccountTransactionTypeTest {
 
         //WHEN
         try {
-            txValidator.validate(tx);
+            txValidator.validateFully(tx);
             fail("Unexpected flow.");
         } catch (AplException.ValidationException e) {
             //THEN
@@ -256,7 +256,7 @@ public class ChildAccountTransactionTypeTest {
 
         //WHEN
         try {
-            txValidator.validate(tx);
+            txValidator.validateFully(tx);
             fail("Unexpected flow.");
         } catch (AplException.ValidationException e) {
             //THEN
@@ -290,7 +290,7 @@ public class ChildAccountTransactionTypeTest {
 
         //WHEN
         try {
-            txValidator.validate(tx);
+            txValidator.validateFully(tx);
             fail("Unexpected flow.");
         } catch (AplException.ValidationException e) {
             //THEN
@@ -324,7 +324,7 @@ public class ChildAccountTransactionTypeTest {
 
         //WHEN
         try {
-            txValidator.validate(tx);
+            txValidator.validateFully(tx);
             fail("Unexpected flow.");
         } catch (AplException.ValidationException e) {
             //THEN

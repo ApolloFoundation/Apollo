@@ -51,11 +51,16 @@ public class EncryptedMessageAppendix extends AbstractEncryptedMessageAppendix {
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        super.validate(transaction, blockHeight);
+    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        super.performFullValidation(transaction, blockHeight);
         if (transaction.getRecipientId() == 0) {
             throw new AplException.NotValidException("Encrypted messages cannot be attached to transactions with no recipient");
         }
+    }
+
+    @Override
+    public void performLightweightValidation(Transaction transaction, int blockcHeight) {
+        throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
     }
 
 }

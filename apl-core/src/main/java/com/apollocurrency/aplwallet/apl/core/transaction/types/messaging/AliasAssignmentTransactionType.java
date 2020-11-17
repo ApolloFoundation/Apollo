@@ -88,7 +88,17 @@ public class AliasAssignmentTransactionType extends MessagingTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        MessagingAliasAssignment attachment = (MessagingAliasAssignment) transaction.getAttachment();
+        String normalizedAlias = attachment.getAliasName().toLowerCase();
+        Alias alias = aliasService.getAliasByName(normalizedAlias);
+        if (alias != null && alias.getAccountId() != transaction.getSenderId()) {
+            throw new AplException.NotCurrentlyValidException("Alias already owned by another account: " + normalizedAlias);
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         MessagingAliasAssignment attachment = (MessagingAliasAssignment) transaction.getAttachment();
         if (attachment.getAliasName().length() == 0 || attachment.getAliasName().length() > Constants.MAX_ALIAS_LENGTH || attachment.getAliasURI().length() > Constants.MAX_ALIAS_URI_LENGTH) {
             throw new AplException.NotValidException("Invalid alias assignment: " + attachment.getJSONObject());
@@ -98,10 +108,6 @@ public class AliasAssignmentTransactionType extends MessagingTransactionType {
             if (Constants.ALPHABET.indexOf(normalizedAlias.charAt(i)) < 0) {
                 throw new AplException.NotValidException("Invalid alias name: " + normalizedAlias);
             }
-        }
-        Alias alias = aliasService.getAliasByName(normalizedAlias);
-        if (alias != null && alias.getAccountId() != transaction.getSenderId()) {
-            throw new AplException.NotCurrentlyValidException("Alias already owned by another account: " + normalizedAlias);
         }
     }
 

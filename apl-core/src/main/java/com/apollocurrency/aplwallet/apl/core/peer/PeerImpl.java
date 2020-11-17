@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
@@ -62,6 +63,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -104,6 +108,7 @@ public final class PeerImpl implements Peer {
     private TimeService timeService;
     @Getter
     private volatile int failedConnectAttempts = 0;
+    private volatile ThreadPoolExecutor asyncExecutor;
 
     PeerImpl(PeerAddress addrByFact,
              PeerAddress announcedAddress,
@@ -140,6 +145,10 @@ public final class PeerImpl implements Peer {
         this.accountService = accountService;
     }
 
+    private void initAsyncExecutor() {
+        this.asyncExecutor = new TimeTraceDecoratedThreadPoolExecutor(1, Runtime.getRuntime().availableProcessors() / 2, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1000), new NamedThreadFactory(getHost() + "-AsyncExecutor"));
+    }
+
     @Override
     public String getHost() {
         return host;
@@ -166,7 +175,14 @@ public final class PeerImpl implements Peer {
         try {
             if (newState != PeerState.CONNECTED) {
                 p2pTransport.disconnect();
+                if (asyncExecutor != null) {
+                    asyncExecutor.shutdownNow();
+                }
                 // limiter.runWithTimeout(p2pTransport::disconnect, 1000, TimeUnit.MILLISECONDS);
+            }  else {
+                if (asyncExecutor == null || asyncExecutor.isShutdown() || asyncExecutor.isTerminated() || asyncExecutor.isTerminating()) {
+                    initAsyncExecutor();
+                }
             }
         } finally {
             //we have to change state anyway
@@ -411,7 +427,7 @@ public final class PeerImpl implements Peer {
         blacklistingCause = cause;
         deactivate("Blacklisting because of: " + cause);
         peers.notifyListeners(this, PeersService.Event.BLACKLIST);
-        LOG.debug("Peer {} blackisted. Cause: {}", getHostWithPort(), cause);
+        LOG.debug("Peer {} blacklisted. Cause: {}", getHostWithPort(), cause);
     }
 
     @Override
@@ -500,32 +516,53 @@ public final class PeerImpl implements Peer {
             LOG.debug(errMsg);
             throw new PeerNotConnectedException(errMsg);
         } else {
-            return sendJSON(request);
+            return sendJSON(request, false);
         }
     }
 
     @Override
     public <R> R send(BaseP2PRequest request, JsonReqRespParser<R> parser) throws PeerNotConnectedException {
+        checkConnectedStatus();
+        try {
+            JSONObject response = sendJSON(mapper.writeValueAsString(request));
+
+            if (response == null) {
+                LOG.debug("Response is null.");
+                return null;
+            }
+            if (parser == null) {
+                return null;
+            }
+            return parser.parse(response);
+        } catch (JsonProcessingException e) {
+            LOG.debug("Can not deserialize request");
+            return null;
+        }
+    }
+
+    @Override
+    public void sendAsync(BaseP2PRequest request) {
+        asyncExecutor.submit(() -> {
+            try {
+                checkConnectedStatus();
+            } catch (PeerNotConnectedException e) {
+                LOG.debug("Peer is not connected " + getHostWithPort());
+                return;
+            }
+            try {
+                sendJSONAsync(mapper.writeValueAsString(request));
+            } catch (JsonProcessingException e) {
+                LOG.debug("Can not deserialize request");
+            }
+        });
+
+    }
+
+    private void checkConnectedStatus() throws PeerNotConnectedException {
         if (getState() != PeerState.CONNECTED) {
             String errMsg = "send() called before handshake(). Handshaking to: " + getHostWithPort();
             LOG.debug(errMsg);
             throw new PeerNotConnectedException(errMsg);
-        } else {
-            try {
-                JSONObject response = sendJSON(mapper.writeValueAsString(request));
-
-                if (response == null) {
-                    LOG.debug("Response is null.");
-                    return null;
-                }
-                if (parser == null) {
-                    return null;
-                }
-                return parser.parse(response);
-            } catch (JsonProcessingException e) {
-                LOG.debug("Can not deserialize request");
-                return null;
-            }
         }
     }
 
@@ -534,7 +571,19 @@ public final class PeerImpl implements Peer {
         return send(request, json -> json);
     }
 
-    private JSONObject sendJSON(JSONStreamAware request) {
+    private JSONObject sendJSON(JSONStreamAware request, boolean async) {
+        String stringRequest = requestToString(request);
+        if (StringUtils.isBlank(stringRequest)) {
+            return null;
+        }
+        if (async) {
+            return sendJSONAsync(stringRequest);
+        } else {
+            return sendJSON(stringRequest);
+        }
+    }
+
+    private String requestToString(JSONStreamAware request) {
         StringWriter wsWriter = new StringWriter(PeersService.MAX_REQUEST_SIZE);
         try {
             request.writeJSONString(wsWriter);
@@ -542,8 +591,7 @@ public final class PeerImpl implements Peer {
             LOG.debug("Can not deserialize request");
             return null;
         }
-
-        return sendJSON(wsWriter.toString());
+        return wsWriter.toString();
     }
 
     private JSONObject sendJSON(String rq) {
@@ -569,6 +617,23 @@ public final class PeerImpl implements Peer {
                 }
             }
         } catch (RuntimeException | ParseException e) {
+            LOG.debug("Exception while sending request to '{}'", getHostWithPort(), e);
+            deactivate("Exception while sending request: " + e.getMessage());
+        }
+        return response;
+    }
+
+
+    private JSONObject sendJSONAsync(String rq) {
+        JSONObject response = null;
+
+        try {
+            Long resp = p2pTransport.sendRequest(rq);
+            if (resp == null) {
+                LOG.trace("Null response from: {}", getHostWithPort());
+                return response;
+            }
+        } catch (RuntimeException e) {
             LOG.debug("Exception while sending request to '{}'", getHostWithPort(), e);
             deactivate("Exception while sending request: " + e.getMessage());
         }
@@ -614,7 +679,7 @@ public final class PeerImpl implements Peer {
         LOG.trace("Start handshake  to chainId = {}...", targetChainId);
         lastConnectAttempt = timeService.getEpochTime();
         try {
-            JSONObject response = sendJSON(peers.getMyPeerInfoRequest());
+            JSONObject response = sendJSON(peers.getMyPeerInfoRequest(), false);
             if (response != null) {
                 LOG.trace("handshake Response = '{}'", response != null ? response.toJSONString() : "NULL");
                 if (processError(response)) {

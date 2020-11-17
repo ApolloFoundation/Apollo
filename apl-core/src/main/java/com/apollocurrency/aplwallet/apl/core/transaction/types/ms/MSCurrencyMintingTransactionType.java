@@ -60,7 +60,7 @@ public class MSCurrencyMintingTransactionType extends MonetarySystemTransactionT
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemCurrencyMinting attachment = (MonetarySystemCurrencyMinting) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         currencyService.validate(currency, transaction);
@@ -80,6 +80,11 @@ public class MSCurrencyMintingTransactionType extends MonetarySystemTransactionT
         if (!monetaryCurrencyMintingService.meetsTarget(transaction.getSenderId(), currency, attachment)) {
             throw new AplException.NotCurrentlyValidException(String.format("Hash doesn't meet target %s", attachment.getJSONObject()));
         }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+
     }
 
     @Override

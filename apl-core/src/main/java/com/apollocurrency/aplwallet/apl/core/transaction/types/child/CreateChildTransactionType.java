@@ -33,8 +33,8 @@ public class CreateChildTransactionType extends ChildAccountTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.NotValidException {
-        super.validateAttachment(transaction);
+    public void doStateDependentValidation(Transaction transaction) throws AplException.NotValidException {
+        super.doStateDependentValidation(transaction);
         ChildAccountAttachment attachment = (ChildAccountAttachment) transaction.getAttachment();
         for (byte[] childPublicKey : attachment.getChildPublicKey()) {
             if (isAccountExists(childPublicKey)) {

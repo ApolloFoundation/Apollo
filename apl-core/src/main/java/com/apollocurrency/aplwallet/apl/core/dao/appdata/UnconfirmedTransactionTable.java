@@ -131,6 +131,11 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
         return streamConverter.convert(this.getAll(0, -1));
     }
 
+    @Override
+    public int rollback(int height) {
+        return 0;
+    }
+
     public List<Long> getAllUnconfirmedTransactionIds() {
         List<Long> result = new ArrayList<>();
         try (Connection con = databaseManager.getDataSource().getConnection();
