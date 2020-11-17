@@ -40,7 +40,11 @@ public abstract class ChildAccountTransactionType extends TransactionType {
 
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.NotValidException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.NotValidException {
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         ChildAccountAttachment attachment = (ChildAccountAttachment) transaction.getAttachment();
         if (transaction.getAmountATM() != 0 ) {
             throw new AplException.NotValidException("Wrong value of the transaction amount "+transaction.getAmountATM());

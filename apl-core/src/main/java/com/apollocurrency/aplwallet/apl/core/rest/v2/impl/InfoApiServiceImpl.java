@@ -71,7 +71,7 @@ public class InfoApiServiceImpl implements InfoApiService {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         HealthResponse response = new HealthResponse();
         response.setMaxUnconfirmedTxCount(propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions"));
-        response.setUnconfirmedTxCacheSize(transactionProcessor.getWaitingTransactionsQueueSize());
+        response.setUnconfirmedTxCacheSize(transactionProcessor.getUnconfirmedTxCount());
         response.setBlockchainHeight(blockChainInfoService.getHeight());
 
         int totalConnections = -1;

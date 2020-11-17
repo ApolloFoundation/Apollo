@@ -9,9 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -73,7 +71,7 @@ public class MSCurrencyDeletionTransactionType extends MonetarySystemTransaction
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemCurrencyDeletion attachment = (MonetarySystemCurrencyDeletion) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         currencyService.validate(currency, transaction);
@@ -81,6 +79,11 @@ public class MSCurrencyDeletionTransactionType extends MonetarySystemTransaction
             throw new AplException.NotCurrentlyValidException(
                 "Currency " + currency.getId() + " cannot be deleted by account " + transaction.getSenderId());
         }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+
     }
 
     @Override

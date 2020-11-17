@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import org.json.simple.JSONObject;
 
@@ -35,6 +36,11 @@ public class EncryptToSelfMessageAppendix extends AbstractEncryptedMessageAppend
             throw new RuntimeException("Unencrypted message to self is not supported");
         }
         return new EncryptToSelfMessageAppendix(attachmentData);
+    }
+
+    @Override
+    public void performLightweightValidation(Transaction transaction, int blockcHeight) {
+        throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
     }
 
     @Override

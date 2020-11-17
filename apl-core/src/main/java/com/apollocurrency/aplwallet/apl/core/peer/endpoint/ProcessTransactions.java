@@ -32,10 +32,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
+@Singleton
 public final class ProcessTransactions extends PeerRequestHandler {
     private final ProcessTransactionsRequestParser responseParser = new ProcessTransactionsRequestParser();
     private final TransactionDTOConverter dtoConverter;
@@ -71,7 +73,7 @@ public final class ProcessTransactions extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 
 }

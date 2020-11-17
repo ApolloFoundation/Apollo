@@ -29,10 +29,12 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class GetNextBlocks extends PeerRequestHandler {
+@Singleton
+public class GetNextBlocks extends PeerRequestHandler {
 
     static final JSONStreamAware TOO_MANY_BLOCKS_REQUESTED;
     static final JSONStreamAware NO_BLOCK_ID_LIST;

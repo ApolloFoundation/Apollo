@@ -265,7 +265,7 @@ class TransactionCreatorTest {
         assertTrue(tx.getAttachment() instanceof EmptyAttachment);
 
         verify(processor, never()).broadcast(tx);
-        verify(validator).validate(tx);
+        verify(validator ).validateFully(tx);
     }
 
     @Test
@@ -346,7 +346,7 @@ class TransactionCreatorTest {
         assertEquals(TransactionCreator.TransactionCreationData.ErrorType.INCORRECT_EC_BLOCK, data.getErrorType());
 
         verify(processor, never()).broadcast(any(Transaction.class));
-        verify(validator, never()).validate(any(Transaction.class));
+        verify(validator, never()).validateFully(any(Transaction.class));
     }
 
 
@@ -375,17 +375,22 @@ class TransactionCreatorTest {
         }
 
         @Override
-        public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        public AbstractAttachment parseAttachment(ByteBuffer buffer) {
             return null;
         }
 
         @Override
-        public AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        public AbstractAttachment parseAttachment(JSONObject attachmentData) {
             return null;
         }
 
         @Override
-        public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+        public void doStateDependentValidation(Transaction transaction) {
+
+        }
+
+        @Override
+        public void doStateIndependentValidation(Transaction transaction) {
 
         }
 

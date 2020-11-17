@@ -58,7 +58,8 @@ public class GetPollResult extends AbstractAPIRequestHandler {
             long minBalance = HttpParameterParserUtil.getLong(req, "minBalance", 0, Long.MAX_VALUE, false);
             byte minBalanceModel = HttpParameterParserUtil.getByte(req, "minBalanceModel", (byte) 0, (byte) 3, false);
             voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
-            voteWeighting.validate();
+            voteWeighting.validateStateDependent();
+            voteWeighting.validateStateIndependent();
             pollResults = pollOptionResultService.getResultsByVoteWeightingAndPoll(voteWeighting, poll);
         }
         if (pollResults == null) {

@@ -77,7 +77,7 @@ class PendingBroadcastTaskTest {
                 }
                 return null;
             }
-        }).when(validator).validate(tx);
+        }).when(validator).validateLightly(tx);
         doReturn(tx).when(memPool).nextSoftBroadcastTransaction();
         doAnswer(new Answer<UnconfirmedTxValidationResult>() {
             int iter;

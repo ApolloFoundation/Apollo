@@ -63,7 +63,7 @@ public class ShufflingVerificationTransactionType extends ShufflingTransactionTy
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         ShufflingVerificationAttachment attachment = (ShufflingVerificationAttachment) transaction.getAttachment();
         Shuffling shuffling = shufflingService.getShuffling(attachment.getShufflingId());
         if (shuffling == null) {
@@ -88,6 +88,10 @@ public class ShufflingVerificationTransactionType extends ShufflingTransactionTy
         if (shufflingStateHash == null || !Arrays.equals(shufflingStateHash, attachment.getShufflingStateHash())) {
             throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
         }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
     }
 
     @Override

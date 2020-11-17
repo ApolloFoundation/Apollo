@@ -354,11 +354,6 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         return cumulativeWeight;
     }
 
-    public boolean verifySecret(PhasingPoll poll, byte[] revealedSecret) {
-        HashFunction hashFunction = PhasingPollService.getHashFunction(poll.getAlgorithm());
-        return hashFunction != null && Arrays.equals(poll.getHashedSecret(), hashFunction.hash(revealedSecret));
-    }
-
     @Override
     public DbIterator<PhasingVote> getVotes(long phasedTransactionId, int from, int to) {
         return phasingVoteTable.getManyBy(new DbClause.LongClause("transaction_id", phasedTransactionId), from, to);
@@ -416,8 +411,64 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         }
     }
 
+
+
     @Override
-    public void validate(PhasingParams phasingParams) throws AplException.ValidationException {
+    public void validateStateDependent(PhasingParams phasingParams) throws AplException.ValidationException {
+        VoteWeighting voteWeighting = phasingParams.getVoteWeighting();
+
+        voteWeighting.validateStateDependent();
+
+        long quorum = phasingParams.getQuorum();
+        if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.CURRENCY) {
+            Currency currency = currencyService.getCurrency(voteWeighting.getHoldingId());
+            if (currency == null) {
+                throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
+            }
+            if (quorum > currency.getMaxSupply()) {
+                throw new AplException.NotCurrentlyValidException("Quorum of " + quorum
+                    + " exceeds max currency supply " + currency.getMaxSupply());
+            }
+            if (voteWeighting.getMinBalance() > currency.getMaxSupply()) {
+                throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
+                    + " exceeds max currency supply " + currency.getMaxSupply());
+            }
+        } else if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.ASSET) {
+            AssetService assetService = CDI.current().select(AssetService.class).get();
+            Asset asset = assetService.getAsset(voteWeighting.getHoldingId());
+            if (quorum > asset.getInitialQuantityATU()) {
+                throw new AplException.NotCurrentlyValidException("Quorum of " + quorum
+                    + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
+            }
+            if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
+                throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
+                    + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
+            }
+        } else if (voteWeighting.getMinBalance() > 0) {
+            if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
+                AssetService assetService = CDI.current().select(AssetService.class).get();
+                Asset asset = assetService.getAsset(voteWeighting.getHoldingId());
+                if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
+                    throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
+                        + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
+                }
+            } else if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
+                Currency currency = currencyService.getCurrency(voteWeighting.getHoldingId());
+                if (currency == null) {
+                    throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
+                }
+                if (voteWeighting.getMinBalance() > currency.getMaxSupply()) {
+                    throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
+                        + " exceeds max currency supply " + currency.getMaxSupply());
+                }
+            }
+        }
+    }
+
+
+
+    @Override
+    public void validateStateIndependent(PhasingParams phasingParams) throws AplException.ValidationException {
         long[] whitelist = phasingParams.getWhitelist();
         if (whitelist.length > Constants.MAX_PHASING_WHITELIST_SIZE) {
             throw new AplException.NotValidException("Whitelist is too big");
@@ -455,52 +506,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
             throw new AplException.NotValidException("Quorum of " + quorum + " cannot be achieved in by-account voting with whitelist of length "
                 + whitelist.length);
         }
-
-        voteWeighting.validate();
-        AssetService assetService = CDI.current().select(AssetService.class).get();
-
-        if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.CURRENCY) {
-            Currency currency = currencyService.getCurrency(voteWeighting.getHoldingId());
-            if (currency == null) {
-                throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
-            }
-            if (quorum > currency.getMaxSupply()) {
-                throw new AplException.NotCurrentlyValidException("Quorum of " + quorum
-                    + " exceeds max currency supply " + currency.getMaxSupply());
-            }
-            if (voteWeighting.getMinBalance() > currency.getMaxSupply()) {
-                throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                    + " exceeds max currency supply " + currency.getMaxSupply());
-            }
-        } else if (voteWeighting.getVotingModel() == VoteWeighting.VotingModel.ASSET) {
-            Asset asset = assetService.getAsset(voteWeighting.getHoldingId());
-            if (quorum > asset.getInitialQuantityATU()) {
-                throw new AplException.NotCurrentlyValidException("Quorum of " + quorum
-                    + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
-            }
-            if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
-                throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                    + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
-            }
-        } else if (voteWeighting.getMinBalance() > 0) {
-            if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.ASSET) {
-                Asset asset = assetService.getAsset(voteWeighting.getHoldingId());
-                if (voteWeighting.getMinBalance() > asset.getInitialQuantityATU()) {
-                    throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                        + " exceeds total initial asset quantity " + asset.getInitialQuantityATU());
-                }
-            } else if (voteWeighting.getMinBalanceModel() == VoteWeighting.MinBalanceModel.CURRENCY) {
-                Currency currency = currencyService.getCurrency(voteWeighting.getHoldingId());
-                if (currency == null) {
-                    throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
-                }
-                if (voteWeighting.getMinBalance() > currency.getMaxSupply()) {
-                    throw new AplException.NotCurrentlyValidException("MinBalance of " + voteWeighting.getMinBalance()
-                        + " exceeds max currency supply " + currency.getMaxSupply());
-                }
-            }
-        }
-
+        voteWeighting.validateStateIndependent();
     }
 
     @Override

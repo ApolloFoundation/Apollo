@@ -14,6 +14,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Base64;
@@ -22,6 +23,7 @@ import java.util.Base64;
  * @author alukin@gmail.com
  */
 @Slf4j
+@Singleton
 public class GetFileChunk extends PeerRequestHandler {
     private DownloadableFilesManager downloadableFilesManager;
 

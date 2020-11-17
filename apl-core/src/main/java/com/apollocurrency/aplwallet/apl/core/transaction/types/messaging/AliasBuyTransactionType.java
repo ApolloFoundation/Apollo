@@ -72,7 +72,7 @@ public class AliasBuyTransactionType extends MessagingTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         final MessagingAliasBuy attachment = (MessagingAliasBuy) transaction.getAttachment();
         final String aliasName = attachment.getAliasName();
         final Alias alias = aliasService.getAliasByName(aliasName);
@@ -92,6 +92,11 @@ public class AliasBuyTransactionType extends MessagingTransactionType {
         if (offer.getBuyerId() != 0 && offer.getBuyerId() != transaction.getSenderId()) {
             throw new AplException.NotCurrentlyValidException("Wrong buyer for " + aliasName + ": " + Long.toUnsignedString(transaction.getSenderId()) + " expected: " + Long.toUnsignedString(offer.getBuyerId()));
         }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+
     }
 
     @Override

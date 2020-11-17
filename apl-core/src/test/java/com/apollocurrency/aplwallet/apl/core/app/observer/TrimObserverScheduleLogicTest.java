@@ -65,6 +65,7 @@ class TrimObserverScheduleLogicTest {
 
     {
         doReturn(config).when(blockchainConfig).getCurrentConfig();
+        doReturn(100).when(propertiesHolder).getIntProperty("apl.trimProcessingDelay", 2000);
     }
 
     @BeforeEach

@@ -45,6 +45,7 @@ import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKN
 
 public final class JSON {
     public final static JSONStreamAware emptyJSON = prepare(new JSONObject());
+    public final static String emptyJSONString = "{}";
     private static final ObjectMapper MAPPER = new ObjectMapper();
     /**
      * String escape pattern

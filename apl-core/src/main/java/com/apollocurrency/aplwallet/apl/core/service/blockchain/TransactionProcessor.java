@@ -37,23 +37,21 @@ public interface TransactionProcessor {
 
     void clearUnconfirmedTransactions();
 
-    void requeueAllUnconfirmedTransactions();
-
     void rebroadcastAllUnconfirmedTransactions();
 
     void removeUnconfirmedTransaction(Transaction transaction);
 
     void broadcast(Transaction transaction) throws AplException.ValidationException;
 
+    void processDelayedTxs(int number);
+
     void processLater(Collection<Transaction> transactions);
-
-    void processWaitingTransactions();
-
-    int getWaitingTransactionsQueueSize();
 
     int getUnconfirmedTxCount();
 
     void processPeerTransactions(List<Transaction> transactions) throws AplException.NotValidException;
+
+    boolean isFullyValidTransaction(Transaction tx);
 
     List<Transaction> restorePrunableData(JSONArray transactions) throws AplException.NotValidException;
 

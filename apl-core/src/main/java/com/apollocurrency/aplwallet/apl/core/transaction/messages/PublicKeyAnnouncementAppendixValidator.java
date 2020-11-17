@@ -25,7 +25,15 @@ public class PublicKeyAnnouncementAppendixValidator extends AbstractAppendixVali
     }
 
     @Override
-    public void validate(Transaction transaction, PublicKeyAnnouncementAppendix appendix, int validationHeight) throws AplException.ValidationException {
+    public void validateStateDependent(Transaction transaction, PublicKeyAnnouncementAppendix appendix, int validationHeight) throws AplException.ValidationException {
+        byte[] recipientPublicKey = accountPublicKeyService.getPublicKeyByteArray(transaction.getRecipientId());
+        if (recipientPublicKey != null && !Arrays.equals(appendix.getPublicKey(), recipientPublicKey)) {
+            throw new AplException.NotCurrentlyValidException("A different public key for this account has already been announced");
+        }
+    }
+
+    @Override
+    public void validateStateIndependent(Transaction transaction, PublicKeyAnnouncementAppendix appendix, int validationHeight) throws AplException.ValidationException {
         if (transaction.getRecipientId() == 0) {
             throw new AplException.NotValidException("PublicKeyAnnouncement cannot be attached to transactions with no recipient");
         }
@@ -36,10 +44,6 @@ public class PublicKeyAnnouncementAppendixValidator extends AbstractAppendixVali
         long recipientId = transaction.getRecipientId();
         if (AccountService.getId(publicKey) != recipientId) {
             throw new AplException.NotValidException("Announced public key does not match recipient accountId");
-        }
-        byte[] recipientPublicKey = accountPublicKeyService.getPublicKeyByteArray(recipientId);
-        if (recipientPublicKey != null && !Arrays.equals(publicKey, recipientPublicKey)) {
-            throw new AplException.NotCurrentlyValidException("A different public key for this account has already been announced");
         }
     }
 }

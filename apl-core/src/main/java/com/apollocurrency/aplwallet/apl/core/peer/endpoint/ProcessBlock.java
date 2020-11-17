@@ -31,8 +31,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.inject.Singleton;
+
 @Slf4j
 @NoArgsConstructor
+@Singleton
 public final class ProcessBlock extends PeerRequestHandler {
 
     @Override
@@ -52,7 +55,10 @@ public final class ProcessBlock extends PeerRequestHandler {
             lookupPeersService().peersExecutorService.submit(() -> {
                 try {
                     log.debug("API: need to process better peer block");
-                    lookupBlockchainProcessor().processPeerBlock(request);
+                    Object blockObject = request.get("block");
+                    if (blockObject != null) {
+                        lookupBlockchainProcessor().processPeerBlock((JSONObject) blockObject);
+                    }
                 } catch (AplException | RuntimeException e) {
                     if (peer != null) {
                         peer.blacklist(e);

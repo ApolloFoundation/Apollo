@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -38,6 +39,11 @@ public interface PhasingPollService {
         } catch (IllegalArgumentException ignore) {
         }
         return null;
+    }
+
+    static boolean verifySecret(PhasingPoll poll, byte[] revealedSecret) {
+        HashFunction hashFunction = PhasingPollService.getHashFunction(poll.getAlgorithm());
+        return hashFunction != null && Arrays.equals(poll.getHashedSecret(), hashFunction.hash(revealedSecret));
     }
 
     PhasingPollResult getResult(long id);
@@ -91,11 +97,11 @@ public interface PhasingPollService {
 
     int getAllPhasedTransactionsCount();
 
-    boolean verifySecret(PhasingPoll poll, byte[] revealedSecret);
-
     boolean isTransactionPhased(long id);
 
-    void validate(PhasingParams phasingParams) throws AplException.ValidationException;
+    void validateStateDependent(PhasingParams phasingParams) throws AplException.ValidationException;
+
+    void validateStateIndependent(PhasingParams phasingParams) throws AplException.ValidationException;
 
     void checkApprovable(PhasingParams phasingParams) throws AplException.NotCurrentlyValidException;
 }

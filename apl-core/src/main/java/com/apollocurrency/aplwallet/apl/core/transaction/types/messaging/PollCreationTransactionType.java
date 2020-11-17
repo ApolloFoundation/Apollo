@@ -93,7 +93,13 @@ public class PollCreationTransactionType extends MessagingTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        MessagingPollCreation attachment = (MessagingPollCreation) transaction.getAttachment();
+        attachment.getVoteWeighting().validateStateDependent();
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         MessagingPollCreation attachment = (MessagingPollCreation) transaction.getAttachment();
         int optionsCount = attachment.getPollOptions().length;
         if (attachment.getPollName().length() > Constants.MAX_POLL_NAME_LENGTH || attachment.getPollName().isEmpty() || attachment.getPollDescription().length() > Constants.MAX_POLL_DESCRIPTION_LENGTH || optionsCount > Constants.MAX_POLL_OPTION_COUNT || optionsCount == 0) {
@@ -120,7 +126,7 @@ public class PollCreationTransactionType extends MessagingTransactionType {
         if (!attachment.getVoteWeighting().acceptsVotes() || attachment.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.HASH) {
             throw new AplException.NotValidException("VotingModel " + attachment.getVoteWeighting().getVotingModel() + " not valid for regular polls");
         }
-        attachment.getVoteWeighting().validate();
+        attachment.getVoteWeighting().validateStateIndependent();
     }
 
     @Override

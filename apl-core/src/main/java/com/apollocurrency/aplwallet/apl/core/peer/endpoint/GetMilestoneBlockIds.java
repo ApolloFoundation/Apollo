@@ -29,9 +29,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
+import javax.inject.Singleton;
+
 import static org.slf4j.LoggerFactory.getLogger;
 
-public final class GetMilestoneBlockIds extends PeerRequestHandler {
+@Singleton
+public class GetMilestoneBlockIds extends PeerRequestHandler {
     private static final Logger LOG = getLogger(GetMilestoneBlockIds.class);
 
     public GetMilestoneBlockIds() {

@@ -5,15 +5,11 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.dex;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderCancelAttachment;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
@@ -59,7 +55,7 @@ public class DexCancelOrderTransaction extends DexTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         DexOrderCancelAttachment attachment = (DexOrderCancelAttachment) transaction.getAttachment();
         long orderTransactionId = attachment.getOrderId();
 
@@ -76,6 +72,11 @@ public class DexCancelOrderTransaction extends DexTransactionType {
             throw new AplException.NotCurrentlyValidException("Can cancel only Open orders. Order Id/Tx: " + order.getId() + "/" + Long.toUnsignedString(order.getId())
                 + ", order status: " + order.getStatus() + " , Cancel Tx dbId:" + Long.toUnsignedString(transaction.getId()) + ", BlockId: " + Long.toUnsignedString(transaction.getECBlockId()));
         }
+
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
 
     }
 

@@ -79,7 +79,7 @@ public class ShufflingProcessingTransactionType extends ShufflingTransactionType
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment) transaction.getAttachment();
         Shuffling shuffling = shufflingService.getShuffling(attachment.getShufflingId());
         if (shuffling == null) {
@@ -111,19 +111,29 @@ public class ShufflingProcessingTransactionType extends ShufflingTransactionType
             throw new AplException.NotCurrentlyValidException("Shuffling state hash doesn't match");
         }
         byte[][] data = attachment.getData();
-        if (data == null && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
-        }
         if (data != null) {
             if (data.length != participant.getIndex() + 1 && data.length != 0) {
                 throw new AplException.NotValidException(String.format("Invalid number of encrypted data %d for participant number %d",
                     data.length, participant.getIndex()));
             }
-            byte[] previous = null;
             for (byte[] bytes : data) {
                 if (bytes.length != 32 + 64 * (shuffling.getParticipantCount() - participant.getIndex() - 1)) {
                     throw new AplException.NotValidException("Invalid encrypted data length " + bytes.length);
                 }
+            }
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        ShufflingProcessingAttachment attachment = (ShufflingProcessingAttachment) transaction.getAttachment();
+        byte[][] data = attachment.getData();
+        if (data == null && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
+            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
+        }
+        if (data != null) {
+            byte[] previous = null;
+            for (byte[] bytes : data) {
                 if (previous != null && Convert.byteArrayComparator.compare(previous, bytes) >= 0) {
                     throw new AplException.NotValidException("Duplicate or unsorted encrypted data");
                 }

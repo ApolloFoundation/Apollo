@@ -60,18 +60,24 @@ public class TaggedDataExtendTransactionType extends DataTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         TaggedDataExtendAttachment attachment = (TaggedDataExtendAttachment) transaction.getAttachment();
         BlockchainConfig blockchainConfig = getBlockchainConfig();
-        if ((attachment.jsonIsPruned() || attachment.getData() == null) && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
-        }
         if (!blockchain.hasTransaction(attachment.getTaggedDataId(), blockchain.getHeight())) {
             throw new AplException.NotCurrentlyValidException("No such tagged data upload " + Long.toUnsignedString(attachment.getTaggedDataId()));
         }
         TaggedData taggedData = taggedDataService.getData(attachment.getTaggedDataId());
         if (taggedData != null && taggedData.getTransactionTimestamp() > timeService.getEpochTime() + 6 * blockchainConfig.getMinPrunableLifetime()) {
             throw new AplException.NotCurrentlyValidException("Data already extended, timestamp is " + taggedData.getTransactionTimestamp());
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        TaggedDataExtendAttachment attachment = (TaggedDataExtendAttachment) transaction.getAttachment();
+        BlockchainConfig blockchainConfig = getBlockchainConfig();
+        if ((attachment.jsonIsPruned() || attachment.getData() == null) && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
+            throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");
         }
     }
 

@@ -207,7 +207,6 @@ class BlockchainTest extends DBContainerRootTest {
         assertEquals(txd.TRANSACTION_1.getId(), transaction.getId());
     }
 
-
     @Test
     void testGetHeight() {
         blockchain.setLastBlock(btd.BLOCK_13);

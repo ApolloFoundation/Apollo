@@ -72,7 +72,11 @@ public class AccountPropertyTransactionType extends MessagingTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         MessagingAccountProperty attachment = (MessagingAccountProperty) transaction.getAttachment();
         if (attachment.getProperty().length() > Constants.MAX_ACCOUNT_PROPERTY_NAME_LENGTH || attachment.getProperty().length() == 0 || attachment.getValue().length() > Constants.MAX_ACCOUNT_PROPERTY_VALUE_LENGTH) {
             throw new AplException.NotValidException("Invalid account property: " + attachment.getJSONObject());

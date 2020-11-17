@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.response.UnconfirmedTransactionCountResponse;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import io.swagger.v3.oas.annotations.Operation;
 
 import javax.annotation.security.PermitAll;
@@ -18,11 +18,11 @@ import javax.ws.rs.core.Response;
 
 @Path("/txs")
 public class UnconfirmedTransactionController {
-    private TransactionProcessor processor;
+    private MemPool memPool;
 
     @Inject
-    public UnconfirmedTransactionController(TransactionProcessor processor) {
-        this.processor = processor;
+    public UnconfirmedTransactionController(MemPool memPool) {
+        this.memPool = memPool;
     }
 
     public UnconfirmedTransactionController() {
@@ -32,9 +32,9 @@ public class UnconfirmedTransactionController {
     @Path("/unconfirmed-count")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"mempool"}, summary = "Unconfirmed transaction quantity",
-        description = "Return current number of unconfirmed transsactions in waiting and processed states  ")
+        description = "Return current number of unconfirmed transsactions  ")
     @PermitAll
     public Response getUnconfirmedTransactionCount() {
-        return Response.ok(new UnconfirmedTransactionCountResponse(processor.getUnconfirmedTxCount(), processor.getWaitingTransactionsQueueSize())).build();
+        return Response.ok(new UnconfirmedTransactionCountResponse(memPool.allProcessedCount(), memPool.pendingBroadcastQueueSize())).build();
     }
 }

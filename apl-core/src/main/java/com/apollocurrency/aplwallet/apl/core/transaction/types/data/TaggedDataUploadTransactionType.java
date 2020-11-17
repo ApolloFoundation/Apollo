@@ -12,8 +12,8 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -57,7 +57,12 @@ public class TaggedDataUploadTransactionType extends DataTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         TaggedDataUploadAttachment attachment = (TaggedDataUploadAttachment) transaction.getAttachment();
         if (attachment.getData() == null && timeService.getEpochTime() - transaction.getTimestamp() < getBlockchainConfig().getMinPrunableLifetime()) {
             throw new AplException.NotCurrentlyValidException("Data has been pruned prematurely");

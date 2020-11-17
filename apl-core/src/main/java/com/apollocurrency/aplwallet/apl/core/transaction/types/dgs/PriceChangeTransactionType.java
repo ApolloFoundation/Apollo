@@ -55,6 +55,15 @@ public class PriceChangeTransactionType extends DigitalGoodsTransactionType {
     }
 
     @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        DigitalGoodsPriceChange attachment = (DigitalGoodsPriceChange) transaction.getAttachment();
+        if (attachment.getPriceATM() <= 0
+            || attachment.getPriceATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
+            throw new AplException.NotValidException("Invalid digital goods price change: " + attachment.getJSONObject());
+        }
+    }
+
+    @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DigitalGoodsPriceChange attachment = (DigitalGoodsPriceChange) transaction.getAttachment();
         dgsService.changePrice(attachment.getGoodsId(), attachment.getPriceATM());
@@ -64,9 +73,7 @@ public class PriceChangeTransactionType extends DigitalGoodsTransactionType {
     public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
         DigitalGoodsPriceChange attachment = (DigitalGoodsPriceChange) transaction.getAttachment();
         DGSGoods goods = dgsService.getGoods(attachment.getGoodsId());
-        if (attachment.getPriceATM() <= 0
-            || attachment.getPriceATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
-            || (goods != null && transaction.getSenderId() != goods.getSellerId())) {
+        if ((goods != null && transaction.getSenderId() != goods.getSellerId())) {
             throw new AplException.NotValidException("Invalid digital goods price change: " + attachment.getJSONObject());
         }
         if (goods == null || goods.isDelisted()) {

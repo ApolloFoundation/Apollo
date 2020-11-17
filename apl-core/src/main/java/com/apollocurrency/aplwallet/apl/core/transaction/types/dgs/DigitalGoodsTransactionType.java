@@ -31,7 +31,7 @@ public abstract class DigitalGoodsTransactionType extends TransactionType {
     }
 
     @Override
-    public final void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public final void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         if (transaction.getAmountATM() != 0) {
             throw new AplException.NotValidException("Invalid digital goods transaction");
         }

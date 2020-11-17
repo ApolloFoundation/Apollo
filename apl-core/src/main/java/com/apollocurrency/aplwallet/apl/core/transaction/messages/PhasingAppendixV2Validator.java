@@ -51,9 +51,13 @@ public class PhasingAppendixV2Validator implements AppendixValidator<PhasingAppe
     }
 
     @Override
-    public void validate(Transaction transaction, PhasingAppendixV2 appendix, int validationHeight) throws AplException.ValidationException {
-        phasingAppendixValidator.generalValidation(transaction, appendix);
+    public void validateStateDependent(Transaction transaction, PhasingAppendixV2 appendix, int validationHeight) throws AplException.ValidationException {
+        phasingAppendixValidator.generalValidationStateDependent(transaction, appendix);
+    }
 
+    @Override
+    public void validateStateIndependent(Transaction transaction, PhasingAppendixV2 appendix, int validationHeight) throws AplException.ValidationException {
+        phasingAppendixValidator.generalValidationStateIndependent(appendix);
         validateFinishHeightAndTime(validationHeight, appendix.getFinishTime(), appendix);
     }
 

@@ -58,7 +58,12 @@ public class ArbitraryMessageTransactionType extends MessagingTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         Attachment attachment = transaction.getAttachment();
         if (transaction.getAmountATM() != 0) {
             throw new AplException.NotValidException("Invalid arbitrary message: " + attachment.getJSONObject());

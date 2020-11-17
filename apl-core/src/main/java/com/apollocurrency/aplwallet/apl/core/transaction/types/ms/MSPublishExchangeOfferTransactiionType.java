@@ -6,13 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
@@ -66,7 +62,17 @@ public class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransa
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
+        currencyService.validate(currency, transaction);
+        if (!currencyService.isActive(currency)) {
+            throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
         if (attachment.getBuyRateATM() <= 0 || attachment.getSellRateATM() <= 0 || attachment.getBuyRateATM() > attachment.getSellRateATM()) {
             throw new AplException.NotValidException(String.format("Invalid exchange offer, buy rate %d and sell rate %d has to be larger than 0, buy rate cannot be larger than sell rate", attachment.getBuyRateATM(), attachment.getSellRateATM()));
@@ -85,11 +91,6 @@ public class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransa
         }
         if (attachment.getExpirationHeight() <= transactionValidator.getFinishValidationHeight(transaction, attachment)) {
             throw new AplException.NotCurrentlyValidException("Expiration height must be after transaction execution height");
-        }
-        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
-        currencyService.validate(currency, transaction);
-        if (!currencyService.isActive(currency)) {
-            throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
         }
     }
 

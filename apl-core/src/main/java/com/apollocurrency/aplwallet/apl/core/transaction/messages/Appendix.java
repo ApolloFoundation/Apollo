@@ -56,7 +56,9 @@ public interface Appendix {
 
     void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException;
 
-    void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException;
+    void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException;
+
+    void performLightweightValidation(Transaction transaction, int blockcHeight) throws AplException.ValidationException;
 
     default String getAppendixName() {
         return null;

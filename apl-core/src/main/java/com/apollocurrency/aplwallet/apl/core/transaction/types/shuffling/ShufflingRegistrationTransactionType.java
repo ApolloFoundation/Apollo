@@ -69,7 +69,7 @@ public class ShufflingRegistrationTransactionType extends ShufflingTransactionTy
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         ShufflingRegistration attachment = (ShufflingRegistration) transaction.getAttachment();
         Shuffling shuffling = shufflingService.getShuffling(attachment.getShufflingId());
         if (shuffling == null) {
@@ -89,6 +89,10 @@ public class ShufflingRegistrationTransactionType extends ShufflingTransactionTy
         if (blockchain.getHeight() + shuffling.getBlocksRemaining() <= validator.getFinishValidationHeight(transaction, attachment)) {
             throw new AplException.NotCurrentlyValidException("Shuffling registration finishes in " + shuffling.getBlocksRemaining() + " blocks");
         }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
     }
 
     @Override

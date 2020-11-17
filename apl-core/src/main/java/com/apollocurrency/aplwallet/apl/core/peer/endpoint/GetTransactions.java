@@ -30,10 +30,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 
 /**
  * Get the transactions
  */
+@Singleton
 public class GetTransactions extends PeerRequestHandler {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private static TransactionSerializer transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
@@ -69,6 +71,6 @@ public class GetTransactions extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 }

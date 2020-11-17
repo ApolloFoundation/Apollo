@@ -5,7 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
-import com.google.common.util.concurrent.Monitor;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.google.common.util.concurrent.TimeLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
@@ -40,7 +40,6 @@ public class PeerWebSocket extends WebSocketAdapter {
      */
     private static final int FLAG_COMPRESSED = 1;
     protected final TimeLimiter limiter;
-    private final Monitor sendMonitor;
     /**
      * we use reference here to avoid memory leaks
      */
@@ -54,7 +53,6 @@ public class PeerWebSocket extends WebSocketAdapter {
     public PeerWebSocket(Peer2PeerTransport peer) {
         peerReference = new SoftReference<>(peer);
         lastActivityTime = System.currentTimeMillis();
-        sendMonitor = new Monitor();
         this.limiter = peer.getLimiter();
     }
 
@@ -100,6 +98,7 @@ public class PeerWebSocket extends WebSocketAdapter {
 
     @Override
     public void onWebSocketClose(int statusCode, String reason) {
+
         super.onWebSocketClose(statusCode, reason);
         log.trace("Peer: {} WebSocket close: {}", which(), statusCode);
         Peer2PeerTransport p = peerReference.get();
@@ -169,8 +168,7 @@ public class PeerWebSocket extends WebSocketAdapter {
         Session s = getSession();
         if (s != null) {
             if (log.isTraceEnabled()) {
-                String msg = message.length() > 28 ? message.substring(28, Math.min(message.length(), 60)) : message;
-                log.trace("Send [{} ...] to PeerWebSocket={} from {}", msg, this.getTransport().getPeer().getAnnouncedAddress(), getSession().getLocalAddress().toString());
+                log.trace("Send {} - [{} ...] to PeerWebSocket={} from {} -- trace {}", requestId, message, this.getTransport().getPeer().getAnnouncedAddress(), getSession().getLocalAddress().toString(), ThreadUtils.lastNStacktrace(10));
                 //log.trace("Send {} PeerWebSocket={} jettySession={}", message.substring(32), this, sessionToString(getSession()));
             }
             byte[] requestBytes = message.getBytes(StandardCharsets.UTF_8);
@@ -195,22 +193,24 @@ public class PeerWebSocket extends WebSocketAdapter {
                 throw new ProtocolException("POST request length exceeds max message size");
             }
             //synchronizing here
-            sendMonitor.enter();
-            try {
-                limiter.runWithTimeout(() -> sendBytes(buf), 5000, TimeUnit.MILLISECONDS);
-            } catch (IllegalStateException e) {
-                log.error("Can't send to {}, cause {}", s.getRemoteAddress(), e.getMessage());
-                throw new IOException("Websocket session for " + which(), e);
-            } catch (RuntimeException e) {
-                throw new AplException.AplIOException("Can't send to " + s.getRemote(), e);
-            } catch (InterruptedException e) {
-                log.trace("Can't send to " + s.getRemote() + ", interrupted.");
-                Thread.currentThread().interrupt();
-                throw new AplException.AplIOException(e.getMessage());
-            } catch (TimeoutException e) {
-                throw new AplException.AplIOException("Can't send to " + s.getRemote() + ", time limit is reached.");
-            } finally {
-                sendMonitor.leave();
+            synchronized (this) {
+                if (getSession() == null) { // check again to prevent NPE after synchronization
+                    throw new AplException.AplIOException("Websocket session is null for " + which());
+                }
+                try {
+                    limiter.runWithTimeout(() -> sendBytes(buf), 5000, TimeUnit.MILLISECONDS);
+                } catch (IllegalStateException e) {
+                    log.error("Can't send to {}, cause {}", s.getRemoteAddress(), e.getMessage());
+                    throw new IOException("Websocket session for " + which(), e);
+                } catch (RuntimeException e) {
+                    throw new AplException.AplIOException("Can't send to " + s.getRemote(), e);
+                } catch (InterruptedException e) {
+                    log.trace("Can't send to " + s.getRemote() + ", interrupted.");
+                    Thread.currentThread().interrupt();
+                    throw new AplException.AplIOException(e.getMessage());
+                } catch (TimeoutException e) {
+                    throw new AplException.AplIOException("Can't send to " + s.getRemote() + ", time limit is reached.");
+                }
             }
         } else {
             throw new AplException.AplIOException("Websocket session is null for " + which());

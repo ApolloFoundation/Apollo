@@ -124,7 +124,13 @@ public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransaction
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+        currencyService.validateCurrencyNamingStateDependent(transaction.getSenderId(), attachment);
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
         if (attachment.getMaxSupply() > Math.multiplyExact(getBlockchainConfig().getInitialSupply(), getBlockchainConfig().getOneAPL())
             || attachment.getMaxSupply() <= 0 || attachment.getInitialSupply() < 0
@@ -144,7 +150,8 @@ public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransaction
             t <<= 1;
         }
         currencyService.validate(attachment.getType(), transaction);
-        currencyService.validateCurrencyNaming(transaction.getSenderId(), attachment);
+        currencyService.validateCurrencyNamingStateIndependent(attachment);
+
     }
 
     @Override

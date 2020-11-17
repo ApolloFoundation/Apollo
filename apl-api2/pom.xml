@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.46.2</version>
+    <version>1.47.3</version>
   </parent>
 
   <artifactId>apl-api2</artifactId>
@@ -31,6 +31,12 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <!-- to resolve swagger codegen issue on windows -->
+          <excludes>
+            <exclude>com/apollocurrency/aplwallet/api/impl/v2/*</exclude>
+          </excludes>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>

@@ -281,8 +281,11 @@ public class ShardObserverTest {
             // 3. newShardHeight - we expect shard to be created at that height !!
             // 4. isShardingCalled - check if sharding was really executed
             // 5. mocked random Value - simulate random divergence
-            arguments(200000, 204100, 202000, true, 79),
-            arguments(204000, 208109, 206000, true, 79)
+            arguments(200000, 204076, 202000, false, 78),
+            arguments(200000, 204078, 202000, false, 78),
+            arguments(200000, 204079, 202000, true, 78), // only one exact match for division on frequency will trigger
+            arguments(200000, 204100, 202000, false, 78),
+            arguments(204000, 208109, 206000, true, 78)
         );
     }
 

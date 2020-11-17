@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -60,8 +59,13 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+    public void performFullValidation(Transaction transaction, int blockHeight) {
         throw new UnsupportedOperationException("Validation is not supported, use separate class");
+    }
+
+    @Override
+    public void performLightweightValidation(Transaction transaction, int blockcHeight) {
+        throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
     }
 
     @Override

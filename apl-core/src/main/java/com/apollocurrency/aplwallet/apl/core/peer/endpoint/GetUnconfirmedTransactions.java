@@ -31,11 +31,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.util.List;
 import java.util.Set;
 @Slf4j
+@Singleton
 public final class GetUnconfirmedTransactions extends PeerRequestHandler {
-    private TransactionSerializer transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
+    private final TransactionSerializer transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
 
     public GetUnconfirmedTransactions() {
     }
@@ -53,7 +55,7 @@ public final class GetUnconfirmedTransactions extends PeerRequestHandler {
         log.trace("Return {} txs to peer {}", transactionSet.size(), peer.getHost());
         JSONArray transactionsData = new JSONArray();
         for (Transaction transaction : transactionSet) {
-            if (transactionsData.size() >= 100) {
+            if (transactionsData.size() >= 200) {
                 break;
             }
             transactionsData.add(transactionSerializer.toJson(transaction));
@@ -66,7 +68,7 @@ public final class GetUnconfirmedTransactions extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 
 }

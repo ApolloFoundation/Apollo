@@ -10,10 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -21,12 +17,10 @@ import java.util.stream.Stream;
 @Slf4j
 public class MemPoolUnconfirmedTransactionTable extends DbTableWrapper<UnconfirmedTransaction> {
     private final UnconfirmedTransactionTable table;
-    private final MemPoolInMemoryState memPoolInMemoryState;
     @Inject
-    public MemPoolUnconfirmedTransactionTable(UnconfirmedTransactionTable table, MemPoolInMemoryState memPoolInMemoryState) {
+    public MemPoolUnconfirmedTransactionTable(UnconfirmedTransactionTable table) {
         super(table);
         this.table = table;
-        this.memPoolInMemoryState = memPoolInMemoryState;
     }
 
     public UnconfirmedTransaction getById(long id) {
@@ -44,31 +38,8 @@ public class MemPoolUnconfirmedTransactionTable extends DbTableWrapper<Unconfirm
         return table.countExpiredTransactions(epochTime);
     }
 
-    @Override
-    public int rollback(int height) {
-        int rc;
-        try (Connection con = table.getDatabaseManager().getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM unconfirmed_transaction WHERE height > ?")) {
-            pstmt.setInt(1, height);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    UnconfirmedTransaction unconfirmedTransaction = table.load(con, rs, null);
-                    memPoolInMemoryState.backToWaiting(unconfirmedTransaction);
-                    log.trace("Revert to waiting tx {}", unconfirmedTransaction.getId());
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-        rc = super.rollback(height);
-        memPoolInMemoryState.resetUnconfirmedDuplicates();
-        return rc;
-    }
-
-    @Override
-    public void insert(UnconfirmedTransaction entity) {
-        super.insert(entity);
-        memPoolInMemoryState.putInCache(entity);
+    public Stream<UnconfirmedTransaction> getAllUnconfirmedTransactionsStream() {
+        return table.getAllUnconfirmedTransactions();
     }
 
     public Stream<UnconfirmedTransaction> getExpiredTxsStream(int epochTime) {
