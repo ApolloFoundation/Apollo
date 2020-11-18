@@ -39,7 +39,7 @@
     <module>apl-utils</module>
     <module>apl-core</module>
     <module>apl-updater</module>
-    <module>apl-bom</module>
+    <!--<module>apl-bom</module>-->
     <module>apl-conf</module>
     <module>apl-exec</module>
     <module>apl-db-updater</module>
@@ -104,7 +104,7 @@
       </activation>
       <build>
         <plugins>
-          <plugin>
+          <!--<plugin>
             <artifactId>maven-failsafe-plugin</artifactId>
             <version>${surefire-plugin.version}</version>
             <executions>
@@ -122,7 +122,7 @@
                 </configuration>
               </execution>
             </executions>
-          </plugin>
+          </plugin>-->
         </plugins>
       </build>
       <properties>
@@ -241,8 +241,8 @@
             <execution>
               <goals>
                 <goal>build</goal>
-                <goal>generate-code</goal>
-                <goal>generate-code-tests</goal>
+<!--                <goal>generate-code</goal>
+                <goal>generate-code-tests</goal>-->
               </goals>
             </execution>
           </executions>

@@ -46,6 +46,7 @@
     <artifact.basedir>${project.basedir}</artifact.basedir>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
+    <quarkus-plugin.version>1.9.2.Final</quarkus-plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -53,7 +54,7 @@
       <dependency>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apl-bom-ext</artifactId>
-        <version>1.0.4</version>
+        <version>1.0.5</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -89,4 +90,24 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+        <version>${quarkus-plugin.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>build</goal>
+              <goal>generate-code</goal>
+              <goal>generate-code-tests</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
 </project>
