@@ -114,7 +114,7 @@ class TransactionApiServiceImplTest {
         //GIVEN
         TxRequest request = new TxRequest();
         request.setTx(SIGNED_TX_1_HEX);
-        doReturn(true).when(memPool).isWaitingTransactionsQueueFull();
+        doReturn(true).when(memPool).canSafelyAcceptTransactions(1);
         //WHEN
         Response response = transactionApiService.broadcastTx(request, securityContext);
         //THEN

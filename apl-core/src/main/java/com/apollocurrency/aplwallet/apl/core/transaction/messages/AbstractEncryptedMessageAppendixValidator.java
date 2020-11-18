@@ -17,7 +17,11 @@ public abstract class AbstractEncryptedMessageAppendixValidator<T extends Abstra
     }
 
     @Override
-    public void validate(Transaction transaction, T appendix, int validationHeight) throws AplException.ValidationException {
+    public void validateStateDependent(Transaction transaction, T appendix, int validationHeight) throws AplException.ValidationException {
+    }
+
+    @Override
+    public void validateStateIndependent(Transaction transaction, T appendix, int validationHeight) throws AplException.ValidationException {
         if (appendix.getEncryptedDataLength() > config.getCurrentConfig().getMaxEncryptedMessageLength()) {
             throw new AplException.NotValidException("Max encrypted message length exceeded");
         }

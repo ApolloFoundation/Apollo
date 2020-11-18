@@ -122,10 +122,10 @@
   <logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE" additivity="false">
     <appender-ref ref="p2p-file"/>
   </logger>
-  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksThread" level="TRACE"
-          additivity="false">
-    <appender-ref ref="p2p-file"/>
-  </logger>
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksThread" level="TRACE"-->
+<!--          additivity="false">-->
+<!--    <appender-ref ref="p2p-file"/>-->
+<!--  </logger>-->
 
   <!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable" level="trace" additivity="false">-->
   <!--    <appender-ref ref="tp-file"/>-->
@@ -134,13 +134,16 @@
           additivity="false">
     <appender-ref ref="tp-file"/>
   </logger>
-  <logger name="com.apollocurrency.aplwallet.apl.core.peer.endpoint" level="trace" additivity="false">
+  <logger name="com.apollocurrency.aplwallet.apl.util.QueuedThreadPool" level="trace">
     <appender-ref ref="tp-file"/>
   </logger>
-  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTransactionsThread" level="trace"
-          additivity="false">
-    <appender-ref ref="tp-file"/>
-  </logger>
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.peer.endpoint" level="trace" additivity="false">-->
+<!--    <appender-ref ref="tp-file"/>-->
+<!--  </logger>-->
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTransactionsThread" level="trace"-->
+<!--          additivity="false">-->
+<!--    <appender-ref ref="tp-file"/>-->
+<!--  </logger>-->
   <!--  <logger name="com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable" level="trace" additivity="false">-->
   <!--    <appender-ref ref="tp-file"/>-->
   <!--  </logger>-->
@@ -154,7 +157,7 @@
   <!--    <appender-ref ref="generator-file"/>-->
   <!--  </logger>-->
 
-
+  <logger name="com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService" level="trace" additivity="false"/>
   <logger name="com.apollocurrency.aplwallet" level="INFO"/>
   <!--Uncomment next line to enable trim duration logging-->
   <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedDeletableEntityDbTable" level="trace"/>-->
@@ -171,7 +174,7 @@
       <logger name="com.apollocurrency.aplwallet.apl.core.signature" level="DEBUG"/>
       <logger name="com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl" level="DEBUG"/>
   -->
-  <logger name="com.apollocurrency.aplwallet.apl.core.rest.v2" level="TRACE"/>
+<!--  <logger name="com.apollocurrency.aplwallet.apl.core.rest.v2" level="TRACE"/>-->
 
   <!--    <logger name="com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling" level="trace" additivity="false">-->
   <!--        <appender-ref ref="shuffling-file"/>-->

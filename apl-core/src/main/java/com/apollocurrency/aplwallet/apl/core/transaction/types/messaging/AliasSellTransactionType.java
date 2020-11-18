@@ -72,7 +72,19 @@ public class AliasSellTransactionType extends MessagingTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        final MessagingAliasSell attachment = (MessagingAliasSell) transaction.getAttachment();
+        final String aliasName = attachment.getAliasName();
+        final Alias alias = aliasService.getAliasByName(aliasName);
+        if (alias == null) {
+            throw new AplException.NotCurrentlyValidException("No such alias: " + aliasName);
+        } else if (alias.getAccountId() != transaction.getSenderId()) {
+            throw new AplException.NotCurrentlyValidException("Alias doesn't belong to sender: " + aliasName);
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         if (transaction.getAmountATM() != 0) {
             throw new AplException.NotValidException("Invalid sell alias transaction: " + transaction.getId() + " amount is 0");
         }
@@ -92,15 +104,10 @@ public class AliasSellTransactionType extends MessagingTransactionType {
                 throw new AplException.NotValidException("Missing alias transfer recipient");
             }
         }
-        final Alias alias = aliasService.getAliasByName(aliasName);
-        if (alias == null) {
-            throw new AplException.NotCurrentlyValidException("No such alias: " + aliasName);
-        } else if (alias.getAccountId() != transaction.getSenderId()) {
-            throw new AplException.NotCurrentlyValidException("Alias doesn't belong to sender: " + aliasName);
-        }
         if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
             throw new AplException.NotValidException("Selling alias to Genesis not allowed");
         }
+
     }
 
     @Override

@@ -71,7 +71,11 @@ public class AccountInfoTransactionType extends MessagingTransactionType {
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         MessagingAccountInfo attachment = (MessagingAccountInfo) transaction.getAttachment();
         if (attachment.getName().length() > Constants.MAX_ACCOUNT_NAME_LENGTH || attachment.getDescription().length() > Constants.MAX_ACCOUNT_DESCRIPTION_LENGTH) {
             throw new AplException.NotValidException("Invalid account info issuance: " + attachment.getJSONObject());

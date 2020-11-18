@@ -70,7 +70,7 @@ class CCAskOrderCancellationTransactionType extends ColoredCoinsOrderCancellatio
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         ColoredCoinsAskOrderCancellation attachment = (ColoredCoinsAskOrderCancellation) transaction.getAttachment();
         AskOrder ask = askOrderService.getOrder(attachment.getOrderId());
         if (ask == null) {
@@ -79,6 +79,10 @@ class CCAskOrderCancellationTransactionType extends ColoredCoinsOrderCancellatio
         if (ask.getAccountId() != transaction.getSenderId()) {
             throw new AplException.NotValidException("Order " + Long.toUnsignedString(attachment.getOrderId()) + " was created by account " + Long.toUnsignedString(ask.getAccountId()));
         }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) {
     }
 
 }

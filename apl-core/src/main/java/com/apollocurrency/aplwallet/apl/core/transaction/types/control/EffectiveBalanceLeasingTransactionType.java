@@ -63,7 +63,15 @@ public class EffectiveBalanceLeasingTransactionType extends AccountControlTransa
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        byte[] recipientPublicKey = getAccountService().getPublicKeyByteArray(transaction.getRecipientId());
+        if (recipientPublicKey == null) {
+            throw new AplException.NotCurrentlyValidException("Invalid effective balance leasing: " + " recipient account " + Long.toUnsignedString(transaction.getRecipientId()) + " not found or no public key published");
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         AccountControlEffectiveBalanceLeasing attachment = (AccountControlEffectiveBalanceLeasing) transaction.getAttachment();
         if (transaction.getSenderId() == transaction.getRecipientId()) {
             throw new AplException.NotValidException("Account cannot lease balance to itself");
@@ -73,10 +81,6 @@ public class EffectiveBalanceLeasingTransactionType extends AccountControlTransa
         }
         if (attachment.getPeriod() < getBlockchainConfig().getLeasingDelay() || attachment.getPeriod() > 65535) {
             throw new AplException.NotValidException("Invalid effective balance leasing period: " + attachment.getPeriod());
-        }
-        byte[] recipientPublicKey = getAccountService().getPublicKeyByteArray(transaction.getRecipientId());
-        if (recipientPublicKey == null) {
-            throw new AplException.NotCurrentlyValidException("Invalid effective balance leasing: " + " recipient account " + Long.toUnsignedString(transaction.getRecipientId()) + " not found or no public key published");
         }
         if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
             throw new AplException.NotValidException("Leasing to Genesis account not allowed");

@@ -10,17 +10,11 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
 import org.json.simple.JSONObject;
 
@@ -67,7 +61,17 @@ public class MSCurrencyTransferTransactionType extends MonetarySystemTransaction
     }
 
     @Override
-    public void validateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
+        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
+        currencyService.validate(currency, transaction);
+        if (!currencyService.isActive(currency)) {
+            throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
+        }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemCurrencyTransfer attachment = (MonetarySystemCurrencyTransfer) transaction.getAttachment();
         if (attachment.getUnits() <= 0) {
             throw new AplException.NotValidException("Invalid currency transfer: " + attachment.getJSONObject());
@@ -75,11 +79,7 @@ public class MSCurrencyTransferTransactionType extends MonetarySystemTransaction
         if (transaction.getRecipientId() == GenesisImporter.CREATOR_ID) {
             throw new AplException.NotValidException("Currency transfer to genesis account not allowed");
         }
-        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
-        currencyService.validate(currency, transaction);
-        if (!currencyService.isActive(currency)) {
-            throw new AplException.NotCurrentlyValidException("Currency not currently active: " + attachment.getJSONObject());
-        }
+
     }
 
     @Override

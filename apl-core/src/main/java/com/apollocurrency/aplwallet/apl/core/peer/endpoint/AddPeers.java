@@ -26,7 +26,10 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-public final class AddPeers extends PeerRequestHandler {
+import javax.inject.Singleton;
+
+@Singleton
+public class AddPeers extends PeerRequestHandler {
 
     public AddPeers() {
     }

@@ -16,13 +16,19 @@ import java.util.UUID;
 @NoArgsConstructor
 public class ProcessBlockRequest extends BaseP2PRequest {
     public BlockDTO block;
+    public String previousBlock;
+    public int timestamp;
+    public int timeout;
 
-    public ProcessBlockRequest(UUID chainId) {
+    ProcessBlockRequest(UUID chainId) {
         super("processBlock", chainId);
     }
 
     public ProcessBlockRequest(BlockDTO block, UUID chainId) {
         this(chainId);
         this.block = block;
+        this.timestamp = block.getTimestamp();
+        this.timeout = block.getTimeout();
+        this.previousBlock = block.getPreviousBlock();
     }
 }

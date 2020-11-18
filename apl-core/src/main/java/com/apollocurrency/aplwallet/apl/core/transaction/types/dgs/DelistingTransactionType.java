@@ -54,6 +54,10 @@ public class DelistingTransactionType extends DigitalGoodsTransactionType {
     }
 
     @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+    }
+
+    @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         DigitalGoodsDelisting attachment = (DigitalGoodsDelisting) transaction.getAttachment();
         dgsService.delistGoods(attachment.getGoodsId());

@@ -36,9 +36,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrency.aplwallet.apl.util.Constants.LONG_TIME_FIVE_SECONDS;
-import static com.apollocurrency.aplwallet.apl.util.Constants.LONG_TIME_TWO_SECONDS;
-
 @Singleton
 public class TrimObserver {
     private static final Logger log = LoggerFactory.getLogger(TrimObserver.class);
@@ -54,6 +51,7 @@ public class TrimObserver {
     private final Blockchain blockchain;
     private final Random random;
     private final boolean isShardingOff;
+    private final long scheduledTrimProcessingDelay;
     /**
      * Callable task for method to run. Next run is scheduled as soon as previous has finished
      */
@@ -66,16 +64,17 @@ public class TrimObserver {
                 // Reschedule next new Callable with next random delay within 5 sec range
                 executorService.schedule(this,
                     ThreadLocalRandom.current().nextLong(
-                        LONG_TIME_FIVE_SECONDS - 1L) + 1L, TimeUnit.MILLISECONDS);
+                        scheduledTrimProcessingDelay - 1L) + 1L, TimeUnit.MILLISECONDS);
             }
             return null;
         }
     };
 
+
     @Inject
-    public TrimObserver(TrimService trimService, BlockchainConfig blockchainConfig,
-                        PropertiesHolder propertiesHolder, Random random,
-                        Blockchain blockchain) {
+    public TrimObserver (TrimService trimService, BlockchainConfig blockchainConfig,
+    PropertiesHolder propertiesHolder, Random random,
+    Blockchain blockchain) {
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
@@ -84,22 +83,26 @@ public class TrimObserver {
         this.isShardingOff = this.propertiesHolder.getBooleanProperty("apl.noshardcreate", false);
         this.random = Objects.requireNonNullElseGet(random, Random::new);
         this.maxRollback = this.propertiesHolder.getIntProperty("apl.maxRollback", 720);
+        this.scheduledTrimProcessingDelay = this.propertiesHolder.getIntProperty("apl.trimProcessingDelay", 2000);
     }
+
 
     @PostConstruct
     void init() {
-        if (this.blockchainConfig.getCurrentConfig().isShardingEnabled()
-            && this.blockchainConfig.getCurrentConfig().getShardingFrequency() > 0 && this.trimFrequency > 0
-            && this.blockchainConfig.getCurrentConfig().getShardingFrequency() < this.trimFrequency) {
+        HeightConfig currentConfig = this.blockchainConfig.getCurrentConfig();
+        int shardingFrequency = currentConfig.getShardingFrequency();
+        if (currentConfig.isShardingEnabled()
+            && shardingFrequency > 0 && this.trimFrequency > 0
+            && shardingFrequency < this.trimFrequency) {
             String error = String.format(
                 "SHARDING FREQUENCY ERROR: configured 'shard frequency value'=%d is LOWER then 'DEFAULT_TRIM_FREQUENCY'=%d",
-                this.blockchainConfig.getCurrentConfig().getShardingFrequency(), this.trimFrequency);
+                shardingFrequency, this.trimFrequency);
             log.error(error);
             throw new RuntimeException(error);
         }
         // schedule first run with random delay in 2 sec range
         executorService.schedule(taskToCall, ThreadLocalRandom.current().nextLong(
-            LONG_TIME_TWO_SECONDS - 1L) + 1L, TimeUnit.MILLISECONDS);
+             scheduledTrimProcessingDelay - 1L) + 1L, TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy
@@ -119,6 +122,7 @@ public class TrimObserver {
             synchronized (lock) {
                 if (trimDerivedTablesEnabled) {
                     trimHeight = trimHeights.peek();
+                    log.info("" + trimHeight);
                     performTrim = trimHeight != null && trimHeight <= blockchain.getHeight();
                     if (performTrim) {
                         trimHeights.remove();
@@ -191,9 +195,10 @@ public class TrimObserver {
                 }
                 // the boolean - if shard is possible by trim height
                 boolean isShardingOnTrimHeight = (Math.max(trimHeight, 0)) % shardingFrequency == 0;
-
-                // generate pseudo random for 'trim height divergence'
-                randomTrimHeightIncrease = generatePositiveIntBiggerThenZero(trimFrequency);
+                if (!isShardingOnTrimHeight) {
+                    // generate pseudo random for 'trim height divergence'
+                    randomTrimHeightIncrease = generatePositiveIntBiggerThenZero(trimFrequency);
+                }
                 log.debug("Schedule next trim for rndIncrease={}, height/trimHeight = {} / {}, shardFreq={} ({}}), isShardingOnTrimHeight={}",
                     randomTrimHeightIncrease, trimHeight, block.getHeight(), shardingFrequency, isConfigJustUpdated, isShardingOnTrimHeight);
             }

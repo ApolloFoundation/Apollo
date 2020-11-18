@@ -93,7 +93,7 @@ public abstract class AbstractAppendix implements Appendix {
         if (!isPhased(transaction)) {
             return;
         }
-        validate(transaction, blockHeight);
+        performFullValidation(transaction, blockHeight);
     }
 
     public abstract void apply(Transaction transaction, Account senderAccount, Account recipientAccount);

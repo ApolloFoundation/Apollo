@@ -122,6 +122,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -165,12 +166,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final ShardDao shardDao;
     private final PrunableLoadingService prunableService;
     private final TransactionSerializer transactionSerializer;
-    private PeersService peersService;
-    private BlockchainConfigUpdater blockchainConfigUpdater;
-//    private FullTextSearchService fullTextSearchProvider;
-    private TaskDispatchManager taskDispatchManager;
-    private Blockchain blockchain;
-    private TransactionProcessor transactionProcessor;
+    private final PeersService peersService;
+    private final BlockchainConfigUpdater blockchainConfigUpdater;
+//    private final FullTextSearchService fullTextSearchProvider;
+    private final TaskDispatchManager taskDispatchManager;
+    private final Blockchain blockchain;
+    private final TransactionProcessor transactionProcessor;
     private final TimeService timeService;
     private final PrunableRestorationService prunableRestorationService;
     private final BlockchainProcessorState blockchainProcessorState;
@@ -490,7 +491,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             List<Transaction> phasedTransactions = phasingPollService.getFinishingTransactions(blockchain.getHeight() + 1);
             for (Transaction phasedTransaction : phasedTransactions) {
                 try {
-                    transactionValidator.validate(phasedTransaction);
+                    transactionValidator.validateFully(phasedTransaction);
                     // prefetch data for duplicate validation
                     Account senderAccount = accountService.getAccount(phasedTransaction.getSenderId());
                     Set<AccountControlType> senderAccountControls = senderAccount.getControls();
@@ -636,7 +637,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 block.assignTransactionsIndex(); // IMPORTANT step !!!
                 log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.BEFORE_BLOCK_ACCEPT.name());
                 blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(block);
-                transactionProcessor.requeueAllUnconfirmedTransactions();
                 addBlock(block);
 
                 accept(block, validPhasedTransactions, invalidPhasedTransactions, duplicates);
@@ -667,7 +667,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         if (block.getTimestamp() >= curTime - 600) {
             log.debug("From pushBlock, Send block to peers: height: {} id: {} generator:{}", block.getHeight(), Long.toUnsignedString(block.getId()),
                 Convert2.rsAccount(block.getGeneratorId()));
-            peersService.sendToSomePeers(block);
+            try {
+                peersService.sendToSomePeers(block);
+            } catch (RejectedExecutionException e) {
+
+            }
         }
         log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), Long.toUnsignedString(block.getId()), BlockEventType.BLOCK_PUSHED.name());
         blockEvent.select(literal(BlockEventType.BLOCK_PUSHED)).fire(block); // send sync event to TrimObserver component
@@ -718,7 +722,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 continue;
             }
             try {
-                transactionValidator.validate(phasedTransaction);
+                transactionValidator.validateFully(phasedTransaction);
                 // prefetch data for duplicate validation
                 Account senderAccount = accountService.getAccount(phasedTransaction.getSenderId());
                 Set<AccountControlType> senderAccountControls = senderAccount.getControls();
@@ -791,7 +795,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         "Invalid transaction id 0", transaction, blockSerializer.getJSONObject(block));
                 }
                 try {
-                    transactionValidator.validate(transaction);
+                    transactionValidator.validateFully(transaction);
                 } catch (AplException.ValidationException e) {
                     throw new TransactionNotAcceptedException(e.getMessage(),
                         transaction, blockSerializer.getJSONObject(block));
@@ -926,7 +930,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 // checked before
                 //                if (phasingPollService.getResult(transaction.getId()) == null) {
                 try {
-                    transactionValidator.validate(transaction);
+                    transactionValidator.validateFully(transaction);
                     phasingPollService.tryCountVotes(transaction, duplicates);
                 } catch (AplException.ValidationException e) {
                     log.debug("At height " + block.getHeight() + " phased transaction " + transaction.getStringId()
@@ -1167,7 +1171,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     continue;
                 }
                 try {
-                    transactionValidator.validate(unconfirmedTransaction.getTransaction());
+                    transactionValidator.validateFully(unconfirmedTransaction.getTransaction());
                 } catch (AplException.ValidationException e) {
                     continue;
                 }
@@ -1200,7 +1204,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         phasedTransactions.addAll(phasingPollService.getFinishingTransactionsByTime(previousBlock.getTimestamp(), blockTimestamp));
         for (Transaction phasedTransaction : phasedTransactions) {
             try {
-                transactionValidator.validate(phasedTransaction);
+                transactionValidator.validateFully(phasedTransaction);
                 // prefetch data for duplicate validation
                 Account senderAccount = accountService.getAccount(phasedTransaction.getSenderId());
                 Set<AccountControlType> senderAccountControls = senderAccount.getControls();
@@ -1211,7 +1215,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
         }
 //        validate and insert in unconfirmed_transaction db table all waiting transaction
-        transactionProcessor.processWaitingTransactions();
         SortedSet<UnconfirmedTransaction> sortedTransactions = selectUnconfirmedTransactions(duplicates, previousBlock, blockTimestamp, limit);
         return sortedTransactions;
     }
@@ -1251,15 +1254,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 + " at height " + block.getHeight() + " timestamp " + block.getTimestamp() + " fee " + ((float) block.getTotalFeeATM()) / blockchainConfig.getOneAPL());
         } catch (TransactionNotAcceptedException e) {
             log.debug("Generate block failed: " + e.getMessage());
-            transactionProcessor.processWaitingTransactions();
             Transaction transaction = e.getTransaction();
             log.debug("Removing invalid transaction: " + transaction.getStringId());
-            globalSync.writeLock();
-            try {
-                transactionProcessor.removeUnconfirmedTransaction(transaction);
-            } finally {
-                globalSync.writeUnlock();
-            }
+            transactionProcessor.removeUnconfirmedTransaction(transaction);
             throw e;
         } catch (BlockNotAcceptedException e) {
             log.debug("Generate block failed: " + e.getMessage());

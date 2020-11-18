@@ -86,7 +86,9 @@ public interface CurrencyService {
 
     void validate(Currency currency, int type, Transaction transaction) throws AplException.ValidationException;
 
-    void validateCurrencyNaming(long issuerAccountId, MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException;
+    void validateCurrencyNamingStateIndependent(MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException;
+
+    void validateCurrencyNamingStateDependent(long issuerAccountId, MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException;
 
     void mintCurrency(LedgerEvent event, long eventId, Account account,
                       MonetarySystemCurrencyMinting attachment);

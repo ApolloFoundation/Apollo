@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.util;
 
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -37,12 +38,13 @@ import java.util.concurrent.TimeUnit;
  * available.  Threads that are idle for 60 seconds are terminated if the
  * pool size is greater than the core size.
  */
+@Slf4j
 public class QueuedThreadPool extends ThreadPoolExecutor {
 
     /**
      * Pending task queue
      */
-    private final LinkedBlockingQueue<Runnable> pendingQueue = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<RunnableContainer> pendingQueue = new LinkedBlockingQueue<>();
     /**
      * Core pool size
      */
@@ -117,7 +119,7 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
             throw new NullPointerException("Null runnable passed to execute()");
         try {
             if (getActiveCount() >= maxSize) {
-                pendingQueue.put(task);
+                pendingQueue.put(new RunnableContainer(task));
             } else {
                 super.execute(task);
             }
@@ -186,13 +188,27 @@ public class QueuedThreadPool extends ThreadPoolExecutor {
     @Override
     protected void afterExecute(Runnable task, Throwable exc) {
         super.afterExecute(task, exc);
-        Runnable newTask = pendingQueue.poll();
-        if (newTask != null)
-            super.execute(newTask);
+        RunnableContainer newTask = pendingQueue.poll();
+        if (newTask != null) {
+            log.trace("Execute pending task, waiting time - {}", System.currentTimeMillis() - newTask.creationTime);
+            super.execute(newTask.runnable);
+
+        }
     }
 
     @Override
     public boolean isShutdown() {
         return super.isShutdown();
     }
+
+    private static class RunnableContainer {
+        private final Runnable runnable;
+        private final long creationTime;
+
+        private RunnableContainer(Runnable runnable) {
+            this.runnable = runnable;
+            this.creationTime = System.currentTimeMillis();
+        }
+    }
+
 }

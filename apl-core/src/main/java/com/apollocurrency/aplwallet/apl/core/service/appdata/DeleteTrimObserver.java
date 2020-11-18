@@ -141,7 +141,7 @@ public class DeleteTrimObserver {
                     }
                 }
 //                int[] result = pstmtDeleteById.executeBatch();
-                dataSource.commit(false);
+                dataSource.commit(!inTransaction);
 //                deleted += Arrays.stream(result).asLongStream().sum();
             } catch (Exception e) {
                 log.error("Batch delete error on table {}", deleteOnTrimData.getTableName(), e);

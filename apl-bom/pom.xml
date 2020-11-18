@@ -5,7 +5,7 @@
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apl-bom</artifactId>
-  <version>1.46.2</version>
+  <version>1.47.3</version>
   <packaging>pom</packaging>
   <name>apl-bom</name>
 
@@ -40,20 +40,6 @@
       <name>arti.firstbridge.work-stage</name>
       <url>https://arti.firstbridge.work/artifactory/apl-stage</url>
     </repository>
-    <repository>
-      <id>zpl-stage</id>
-      <name>arti.firstbridge.work-zpl</name>
-      <url>https://arti.firstbridge.work/artifactory/zpl-stage/apl-stage</url>
-    </repository>
-    <repository>
-      <id>aplsys</id>
-      <name>Artifactory APLSYS</name>
-      <layout>default</layout>
-      <url>https://arti.firstbridge.work/artifactory/aplsys</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
   </repositories>
 
   <properties>
@@ -67,7 +53,7 @@
       <dependency>
         <groupId>com.apollocurrency</groupId>
         <artifactId>apl-bom-ext</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

@@ -26,9 +26,11 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.inject.Singleton;
 import java.util.List;
 
-public final class GetNextBlockIds extends PeerRequestHandler {
+@Singleton
+public class GetNextBlockIds extends PeerRequestHandler {
 
     public GetNextBlockIds() {
     }
