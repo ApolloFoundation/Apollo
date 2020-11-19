@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author alukin@gmailk.com
  */
 @Slf4j
+@Singleton
 public class ShardInfoDownloader {
 
     public static final String SHARD_ID_ENV = "APOLLO_DOWNLOAD_SHARD_ID";

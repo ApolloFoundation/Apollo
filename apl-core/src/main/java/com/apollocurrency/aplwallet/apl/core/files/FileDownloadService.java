@@ -10,6 +10,7 @@ import javax.enterprise.event.Event;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +20,7 @@ import java.util.Set;
  * @author alukin@gmail.com
  */
 @Slf4j
+@Singleton
 public class FileDownloadService {
 
     private final Instance<FileDownloader> fileDownloaders;

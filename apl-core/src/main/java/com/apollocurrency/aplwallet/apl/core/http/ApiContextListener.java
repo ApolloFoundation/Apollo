@@ -7,9 +7,11 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +20,15 @@ import java.util.concurrent.TimeUnit;
 public class ApiContextListener implements ServletContextListener {
 
     // TODO: YL remove static instance later
-    private static PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+    private PropertiesHolder propertiesLoader;// = CDI.current().select(PropertiesHolder.class).get();
+
+    public ApiContextListener() {
+    }
+
+    @Inject
+    public ApiContextListener(PropertiesHolder propertiesLoader) {
+        this.propertiesLoader = Objects.requireNonNull(propertiesLoader);
+    }
 
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {

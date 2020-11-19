@@ -4,9 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.api.dto.account.VoteWeightingDTO;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 
+@Singleton
 public class VoteWeightingConverter implements Converter<VoteWeighting, VoteWeightingDTO> {
 
     @Override

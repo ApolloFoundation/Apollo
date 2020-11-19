@@ -12,12 +12,14 @@ import java.util.UUID;
 import static com.apollocurrency.aplwallet.apl.util.Constants.APPLICATION_DB_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.inject.Singleton;
+
 /**
  * Class for mapping shard_id into shard file name as String.
  *
  * @author yuriy.larin
  */
-
+@Singleton
 public class ShardNameHelper {
     private static final Logger log = getLogger(ShardNameHelper.class);
 

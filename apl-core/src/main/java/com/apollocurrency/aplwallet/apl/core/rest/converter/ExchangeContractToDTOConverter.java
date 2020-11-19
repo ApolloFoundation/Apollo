@@ -1,10 +1,13 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 
+@Singleton
 public class ExchangeContractToDTOConverter implements Converter<ExchangeContract, ExchangeContractDTO> {
     @Override
     public ExchangeContractDTO apply(ExchangeContract exchangeContract) {

@@ -4,12 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.api.dto.account.PhasingParamsDTO;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Singleton
 public class PhasingParamsConverter implements Converter<PhasingParams, PhasingParamsDTO> {
 
     @Override

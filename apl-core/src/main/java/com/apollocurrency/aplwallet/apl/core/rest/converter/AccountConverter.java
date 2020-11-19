@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
 /**
  * @author <andrew.zinchenko@gmail.com>
  */
+@Singleton
 public class AccountConverter implements Converter<Account, AccountDTO> {
 
     private final AccountService accountService;

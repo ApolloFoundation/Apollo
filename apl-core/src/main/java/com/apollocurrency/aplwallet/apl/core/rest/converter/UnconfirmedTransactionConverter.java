@@ -16,8 +16,10 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Map;
 
+@Singleton
 public class UnconfirmedTransactionConverter implements Converter<Transaction, UnconfirmedTransactionDTO> {
     private final PrunableLoadingService prunableLoadingService;
 

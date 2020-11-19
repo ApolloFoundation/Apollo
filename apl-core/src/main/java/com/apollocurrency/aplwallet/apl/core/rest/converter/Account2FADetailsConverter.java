@@ -4,10 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.api.dto.account.Account2FADetailsDTO;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 
+@Singleton
 public class Account2FADetailsConverter implements Converter<TwoFactorAuthDetails, Account2FADetailsDTO> {
 
     @Override

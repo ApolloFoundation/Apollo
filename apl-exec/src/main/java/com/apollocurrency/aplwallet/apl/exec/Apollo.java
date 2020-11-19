@@ -36,6 +36,9 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocati
 import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
+import io.quarkus.runtime.Quarkus;
+import io.quarkus.runtime.QuarkusApplication;
+import io.quarkus.runtime.annotations.QuarkusMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +59,7 @@ import java.util.UUID;
  *
  * @author alukin@gmail.com
  */
-// @Singleton
+@QuarkusMain
 public class Apollo {
 
     //    System properties to load by PropertiesConfigLoader
@@ -146,10 +149,18 @@ public class Apollo {
         );
     }
 
-    /**
-     * @param argv the command line arguments
-     */
-    public static void main(String[] argv) {
+    public static void main(String... args) {
+        Quarkus.run(MyApp.class, args);
+    }
+
+    public static class MyApp implements QuarkusApplication {
+
+        /**
+         * @param argv the command line arguments
+         */
+        @Override
+        public int run(String... argv) throws Exception {
+//    public static void main(String[] argv) {
         System.out.println("Initializing Apollo");
         Apollo app = new Apollo();
 
@@ -308,6 +319,9 @@ public class Apollo {
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();
+        }
+            Quarkus.waitForExit();
+            return 0;
         }
     }
 

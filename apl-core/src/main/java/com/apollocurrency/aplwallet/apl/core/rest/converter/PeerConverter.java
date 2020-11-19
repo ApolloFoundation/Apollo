@@ -4,12 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Singleton
 public class PeerConverter implements Converter<Peer, PeerDTO> {
 
     @Override

@@ -15,10 +15,12 @@ import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Singleton
 public class BlockConverter implements Converter<Block, BlockDTO> {
 
     private final Blockchain blockchain;

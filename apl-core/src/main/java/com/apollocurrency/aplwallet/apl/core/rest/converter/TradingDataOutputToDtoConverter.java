@@ -3,12 +3,15 @@
  */
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 
 /**
  * @author Serhiy Lymar
  */
+@Singleton
 public class TradingDataOutputToDtoConverter implements Converter<TradingDataOutput, TradingDataOutputDTO> {
 
     @Override

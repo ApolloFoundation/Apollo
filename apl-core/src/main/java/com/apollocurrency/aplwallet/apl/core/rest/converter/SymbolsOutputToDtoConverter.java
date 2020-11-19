@@ -3,12 +3,15 @@
  */
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.api.dto.SymbolsOutputDTO;
 import com.apollocurrency.aplwallet.api.trading.SymbolsOutput;
 
 /**
  * @author Serhiy Lymar
  */
+@Singleton
 public class SymbolsOutputToDtoConverter implements Converter<SymbolsOutput, SymbolsOutputDTO> {
 
     @Override

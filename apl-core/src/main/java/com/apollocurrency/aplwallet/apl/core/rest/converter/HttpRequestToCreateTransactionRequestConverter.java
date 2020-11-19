@@ -12,8 +12,10 @@ import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 
+@Singleton
 public class HttpRequestToCreateTransactionRequestConverter {
 
     public static CreateTransactionRequest convert(

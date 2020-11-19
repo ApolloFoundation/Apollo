@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
@@ -11,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import java.util.Arrays;
 
+@Singleton
 public class ShardToDtoConverter implements Converter<Shard, ShardDTO> {
 
     @Override

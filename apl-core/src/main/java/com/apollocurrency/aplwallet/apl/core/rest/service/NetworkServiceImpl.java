@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 /**
  * @see NetworkService
  */
+@Singleton
 public class NetworkServiceImpl implements NetworkService {
     private final PeersService peersService;
 

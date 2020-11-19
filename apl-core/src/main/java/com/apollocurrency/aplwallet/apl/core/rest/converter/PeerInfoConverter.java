@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
@@ -7,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import java.util.ArrayList;
 import java.util.List;
 
+@Singleton
 public class PeerInfoConverter implements Converter<PeerInfo, PeerDTO> {
 
     @Override

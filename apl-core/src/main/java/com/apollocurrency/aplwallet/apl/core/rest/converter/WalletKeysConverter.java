@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.api.dto.AplWalletDTO;
 import com.apollocurrency.aplwallet.api.dto.AplWalletKeyDTO;
 import com.apollocurrency.aplwallet.api.dto.EthWalletKeyDTO;
@@ -12,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
+@Singleton
 public class WalletKeysConverter implements Converter<WalletKeysInfo, WalletKeysInfoDTO> {
 
     @Override

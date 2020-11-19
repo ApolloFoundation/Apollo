@@ -21,6 +21,7 @@ import javax.annotation.PreDestroy;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -44,6 +45,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author alukin@gmail.com
  */
 @Slf4j
+@Singleton
 public class FileDownloader {
 
 

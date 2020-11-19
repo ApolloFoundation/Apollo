@@ -9,7 +9,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class TransactionConverter implements Converter<Transaction, TransactionDTO> {
 
     private final Blockchain blockchain;

@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.api.dto.account.AccountControlPhasingDTO;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
@@ -11,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import java.util.ArrayList;
 import java.util.List;
 
+@Singleton
 public class AccountControlPhasingConverter implements Converter<AccountControlPhasing, AccountControlPhasingDTO> {
 
 //    private PhasingParamsConverter phasingParamsConverter = new PhasingParamsConverter(); // not needed now

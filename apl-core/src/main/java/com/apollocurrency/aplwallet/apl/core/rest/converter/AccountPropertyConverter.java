@@ -4,9 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.api.dto.AccountPropertyDTO;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountProperty;
 
+@Singleton
 public class AccountPropertyConverter implements Converter<AccountProperty, AccountPropertyDTO> {
 
     @Override
