@@ -89,7 +89,7 @@ public class ChildAccountTransactionTypeTest {
     AppendixApplierRegistry applierRegistry = mock(AppendixApplierRegistry.class);
     AppendixValidatorRegistry validatorRegistry = mock(AppendixValidatorRegistry.class);
 
-    CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService);
+    CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain);
     TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(type)));
     TransactionVersionValidator txVersionValidator = new TransactionVersionValidator(blockchainConfig, blockchain);
     TransactionApplier txApplier = new TransactionApplier(blockchainConfig, referencedTransactionDao, accountService, accountPublicKeyService, prunableLoadingService, applierRegistry);
