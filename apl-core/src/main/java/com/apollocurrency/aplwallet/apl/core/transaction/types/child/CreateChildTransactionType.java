@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -25,11 +26,13 @@ import java.nio.ByteBuffer;
 @Slf4j
 public class CreateChildTransactionType extends ChildAccountTransactionType {
     private final AccountPublicKeyService accountPublicKeyService;
+    private final Blockchain blockchain;
 
     @Inject
-    public CreateChildTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AccountPublicKeyService accountPublicKeyService) {
+    public CreateChildTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AccountPublicKeyService accountPublicKeyService, Blockchain blockchain) {
         super(blockchainConfig, accountService);
         this.accountPublicKeyService = accountPublicKeyService;
+        this.blockchain = blockchain;
     }
 
     @Override
@@ -42,6 +45,14 @@ public class CreateChildTransactionType extends ChildAccountTransactionType {
                     + Convert.toHexString(childPublicKey));
             }
         }
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        if (getBlockchainConfig().isTransactionV2ActiveAtHeight(blockchain.getHeight())) {
+            throw new AplException.NotYetEnabledException("Transactions of Type 'CreateChildAccount' are not yet enabled");
+        }
+        super.doStateIndependentValidation(transaction);
     }
 
     @Override
