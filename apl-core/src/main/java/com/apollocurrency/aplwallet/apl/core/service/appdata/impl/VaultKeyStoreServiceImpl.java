@@ -13,9 +13,9 @@
  import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
  import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
  import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+ import com.apollocurrency.aplwallet.apl.core.utils.FbWalletUtil;
  import com.apollocurrency.aplwallet.apl.crypto.Convert;
  import com.apollocurrency.aplwallet.apl.crypto.Crypto;
- import com.apollocurrency.aplwallet.apl.eth.utils.FbWalletUtil;
  import com.apollocurrency.aplwallet.apl.util.JSON;
  import com.apollocurrency.aplwallet.apl.util.NtpTime;
  import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;

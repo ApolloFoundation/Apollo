@@ -4,8 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
+import com.apollocurrency.aplwallet.apl.eth.dao.EthGasStationInfoDao;
+import com.apollocurrency.aplwallet.apl.eth.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;

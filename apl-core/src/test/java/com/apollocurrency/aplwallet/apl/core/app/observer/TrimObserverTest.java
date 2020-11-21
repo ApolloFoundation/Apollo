@@ -24,8 +24,6 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 
 import javax.enterprise.event.Event;
@@ -46,7 +44,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 @Slf4j
 @EnableWeld
-@Execution(ExecutionMode.CONCURRENT)
 class TrimObserverTest {
     TrimService trimService = mock(TrimService.class);
     BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);

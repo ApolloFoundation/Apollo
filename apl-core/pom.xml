@@ -20,25 +20,31 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.apollocurrency</groupId>
-      <artifactId>apl-api</artifactId>
-      <version>${project.version}</version>
+        <groupId>com.apollocurrency</groupId>
+        <artifactId>apl-api</artifactId>
+        <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>com.apollocurrency</groupId>
-      <artifactId>apl-api2</artifactId>
-      <version>${project.version}</version>
-    </dependency>
+      <dependency>
+          <groupId>com.apollocurrency</groupId>
+          <artifactId>apl-api2</artifactId>
+          <version>${project.version}</version>
+      </dependency>
 
-    <!-- EXT BOM DEPENDENCIES -->
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-    </dependency>
+      <dependency>
+          <groupId>com.apollocurrency</groupId>
+          <artifactId>apl-dex</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+
+      <!-- EXT BOM DEPENDENCIES -->
+      <dependency>
+          <groupId>ch.qos.logback</groupId>
+          <artifactId>logback-classic</artifactId>
+      </dependency>
+      <dependency>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+      </dependency>
 
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>

@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.cache;
 
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexSmartContractService;
 import com.google.common.cache.CacheLoader;

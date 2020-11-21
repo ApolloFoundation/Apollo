@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedRe
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -69,17 +70,18 @@ class DexServiceIntegrationTest {
         TransactionProcessor.class,
         DexSmartContractService.class,
         SecureStorageService.class,
-        DexContractTable.class,
-        MandatoryTransactionDao.class,
-        DexOrderTransactionCreator.class,
-        TimeService.class,
-        DexContractDao.class,
-        Blockchain.class,
-        IDexMatcherInterface.class,
-        PhasingApprovedResultTable.class,
-        BlockchainConfig.class,
-        DexConfig.class,
-        BlockchainImpl.class))
+            DexContractTable.class,
+            MandatoryTransactionDao.class,
+            DexOrderTransactionCreator.class,
+            TimeService.class,
+            DexContractDao.class,
+            Blockchain.class,
+            IDexMatcherInterface.class,
+            PhasingApprovedResultTable.class,
+            BlockchainConfig.class,
+            DexConfig.class,
+            KeyStoreService.class,
+            BlockchainImpl.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
         .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
