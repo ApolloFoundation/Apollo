@@ -51,7 +51,7 @@ public class PhasingAppendix extends AbstractAppendix {
 
     public PhasingAppendix(JSONObject attachmentData) {
         super(attachmentData);
-        Long phasingFinishHeight = (Long) attachmentData.get("phasingFinishHeight");
+        Number phasingFinishHeight = (Number) attachmentData.get("phasingFinishHeight");
 
         this.finishHeight = phasingFinishHeight != null ? phasingFinishHeight.intValue() : -1;
         params = new PhasingParams(attachmentData);
