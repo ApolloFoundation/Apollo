@@ -79,7 +79,9 @@ public class BlockParserImpl implements BlockParser {
 
     private Transaction parseTransaction(JSONObject jsonObject) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
         TransactionImpl tx = transactionBuilder.newTransactionBuilder(jsonObject).build();
-        transactionValidator.validateSignatureWithTxFee(tx);
+        if (!transactionValidator.checkSignature(null, tx)) {
+            throw new AplException.NotValidException("Invalid signature of tx: " + tx.getStringId());
+        }
         return tx;
     }
 
