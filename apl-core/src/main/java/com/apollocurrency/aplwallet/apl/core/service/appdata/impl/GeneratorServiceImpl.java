@@ -288,8 +288,9 @@ public class GeneratorServiceImpl implements GeneratorService {
         if (!suspendForging) {
             globalSync.updateLock();
             suspendForging = true;
+            generateBlocksTask.setSuspendForging(suspendForging);
             globalSync.updateUnlock();
-            log.info("Block generation was suspended");
+            log.info("Block generation was suspended = {}", suspendForging);
         }
     }
 
@@ -298,8 +299,9 @@ public class GeneratorServiceImpl implements GeneratorService {
         if (suspendForging) {
             globalSync.updateLock();
             suspendForging = false;
+            generateBlocksTask.setSuspendForging(suspendForging);
             globalSync.updateUnlock();
-            log.debug("Forging was resumed");
+            log.debug("Forging was resumed = {}", !suspendForging);
         }
     }
 
