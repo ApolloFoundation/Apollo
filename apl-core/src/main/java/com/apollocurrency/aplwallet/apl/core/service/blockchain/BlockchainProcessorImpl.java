@@ -1156,44 +1156,53 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int payloadLength = 0;
         int maxPayloadLength = blockchainConfig.getCurrentConfig().getMaxPayloadLength();
-        txSelectLoop:
-        while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
-            int prevNumberOfNewTransactions = sortedTransactions.size();
-            for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
-                int transactionLength = unconfirmedTransaction.getTransaction().getFullSize();
-                if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > maxPayloadLength) {
-                    continue;
+        TransactionalDataSource.StartedConnection startedConnection = databaseManager.getDataSource().beginTransactionIfNotStarted();
+        try {
+            txSelectLoop:
+            while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
+                int prevNumberOfNewTransactions = sortedTransactions.size();
+                for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
+                    int transactionLength = unconfirmedTransaction.getTransaction().getFullSize();
+                    if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > maxPayloadLength) {
+                        continue;
+                    }
+                    if (!isValidTransactionVersion(unconfirmedTransaction.getVersion(), previousBlock.getHeight())) {
+                        continue;
+                    }
+                    if (blockTimestamp > 0 && (unconfirmedTransaction.getTimestamp() > blockTimestamp + Constants.MAX_TIMEDRIFT
+                        || unconfirmedTransaction.getExpiration() < blockTimestamp)) {
+                        continue;
+                    }
+                    try {
+                        transactionValidator.validateFully(unconfirmedTransaction.getTransaction());
+                    } catch (AplException.ValidationException e) {
+                        continue;
+                    }
+                    if (!transactionApplier.applyUnconfirmed(unconfirmedTransaction.getTransaction())) { // persist tx changes and validate against updated state
+                        continue;
+                    }
+                    // prefetch data for duplicate validation
+                    Account senderAccount = accountService.getAccount(unconfirmedTransaction.getTransaction().getSenderId());
+                    Set<AccountControlType> senderAccountControls = senderAccount.getControls();
+                    AccountControlPhasing accountControlPhasing = accountControlPhasingService.get(
+                        unconfirmedTransaction.getTransaction().getSenderId());
+                    if (unconfirmedTransaction.getTransaction().attachmentIsDuplicate(
+                        duplicates, true, senderAccountControls, accountControlPhasing)) {
+                        continue;
+                    }
+                    sortedTransactions.add(unconfirmedTransaction);
+                    if (sortedTransactions.size() == limit) {
+                        break txSelectLoop;
+                    }
+                    payloadLength += transactionLength;
                 }
-                if (!isValidTransactionVersion(unconfirmedTransaction.getVersion(), previousBlock.getHeight())) {
-                    continue;
+                if (sortedTransactions.size() == prevNumberOfNewTransactions) {
+                    break;
                 }
-                if (blockTimestamp > 0 && (unconfirmedTransaction.getTimestamp() > blockTimestamp + Constants.MAX_TIMEDRIFT
-                    || unconfirmedTransaction.getExpiration() < blockTimestamp)) {
-                    continue;
-                }
-                try {
-                    transactionValidator.validateFully(unconfirmedTransaction.getTransaction());
-                } catch (AplException.ValidationException e) {
-                    continue;
-                }
-                // prefetch data for duplicate validation
-                Account senderAccount = accountService.getAccount(unconfirmedTransaction.getTransaction().getSenderId());
-                Set<AccountControlType> senderAccountControls = senderAccount.getControls();
-                AccountControlPhasing accountControlPhasing = accountControlPhasingService.get(
-                    unconfirmedTransaction.getTransaction().getSenderId());
-                if (unconfirmedTransaction.getTransaction().attachmentIsDuplicate(
-                    duplicates, true, senderAccountControls, accountControlPhasing)) {
-                    continue;
-                }
-                sortedTransactions.add(unconfirmedTransaction);
-                if (sortedTransactions.size() == limit) {
-                    break txSelectLoop;
-                }
-                payloadLength += transactionLength;
             }
-            if (sortedTransactions.size() == prevNumberOfNewTransactions) {
-                break;
-            }
+        } finally {
+            // do not apply changes for applyUnconfirmed
+            databaseManager.getDataSource().rollback(!startedConnection.isAlreadyStarted());
         }
         return sortedTransactions;
     }
@@ -1221,10 +1230,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     public void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException {
-
         Block previousBlock = blockchain.getLastBlock();
         SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp, Integer.MAX_VALUE);
-        transactionProcessor.printMemPoolStat();
         List<Transaction> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
         long totalAmountATM = 0;

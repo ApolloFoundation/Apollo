@@ -261,7 +261,7 @@ public class TransactionValidator {
     public boolean checkSignature(Transaction transaction) {
         return checkSignature(accountService.getAccount(transaction.getSenderId()), transaction);
     }
-    private boolean checkSignature(Account sender, Transaction transaction) {
+    public boolean checkSignature(Account sender, Transaction transaction) {
         if (transaction.hasValidSignature()) {
             return true;
         }

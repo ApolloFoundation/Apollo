@@ -42,8 +42,8 @@ public class ChildAccountAttachment extends AbstractAttachment {
 
     public ChildAccountAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        this.addressScope = AddressScope.from(((Long) attachmentData.get("addressScope")).intValue());
-        this.childCount = (short) (((Long) attachmentData.get("childCount")).intValue());
+        this.addressScope = AddressScope.from(((Number) attachmentData.get("addressScope")).intValue());
+        this.childCount = (short) (((Number) attachmentData.get("childCount")).intValue());
         childPublicKey = new LinkedList<>();
         List<?> keys = (List<?>) attachmentData.get("childPublicKeys");
         for (Object publicKey : keys) {
