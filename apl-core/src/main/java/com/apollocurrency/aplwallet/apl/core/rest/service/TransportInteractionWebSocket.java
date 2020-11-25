@@ -14,14 +14,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
+/*import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
-import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.eclipse.jetty.websocket.client.WebSocketClient;*/
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 @Slf4j
-@WebSocket(maxTextMessageSize = 64 * 1024, maxIdleTime = Integer.MAX_VALUE)
+//@WebSocket(maxTextMessageSize = 64 * 1024, maxIdleTime = Integer.MAX_VALUE)
 public class TransportInteractionWebSocket {
     public static final int CONNECTION_WAIT_MS = 300;
     private static Random rand = new Random();
@@ -52,9 +52,11 @@ public class TransportInteractionWebSocket {
     private int uniquePort = -1;
     private String logPath = "/var/log";
     @SuppressWarnings("unused")
-    private Session session;
+//    private Session session;
+    private Object session;
     private SecureTransportStatus secureTransportStatus;
-    private WebSocketClient client;
+//    private WebSocketClient client;
+    private Object client;
     private CountDownLatch closeLatch;
 
     /**
@@ -69,11 +71,11 @@ public class TransportInteractionWebSocket {
             cleanupComParams();
 
             this.closeLatch = new CountDownLatch(1);
-            this.client = getWebSocketClient(propertiesHolder);
+/*            this.client = getWebSocketClient(propertiesHolder);
 
             client.start();
             ClientUpgradeRequest request = new ClientUpgradeRequest();
-            client.connect(this, endpointURI, request);
+            client.connect(this, endpointURI, request);*/
             log.debug("Connecting to : {} ", endpointURI);
             awaitClose(CONNECTION_WAIT_MS, TimeUnit.MILLISECONDS);
 
@@ -83,7 +85,7 @@ public class TransportInteractionWebSocket {
 
     }
 
-    private WebSocketClient getWebSocketClient(PropertiesHolder propertiesHolder) {
+/*    private WebSocketClient getWebSocketClient(PropertiesHolder propertiesHolder) {
 
         final WebSocketClient socketClient = new WebSocketClient();
         socketClient.setMaxIdleTimeout(Long.MAX_VALUE);
@@ -97,7 +99,7 @@ public class TransportInteractionWebSocket {
         }
 
         return socketClient;
-    }
+    }*/
 
     /**
      * Template for JSON processing
@@ -134,11 +136,13 @@ public class TransportInteractionWebSocket {
      *
      * @param userSession the userSession which is opened.
      */
+/*
     @OnWebSocketConnect
     public void onOpen(Session userSession) throws IOException {
         log.debug("TransportInteractionWebSocket: onOpen");
         this.session = userSession;
     }
+*/
 
     /**
      * Callback hook for Connection close events.
@@ -146,18 +150,18 @@ public class TransportInteractionWebSocket {
      * @param statusCode code of error in case of problems
      * @param reason     the reason for connection close
      */
-    @OnWebSocketClose
+/*    @OnWebSocketClose
     public void onClose(int statusCode, String reason) {
         log.debug("TransportInteractionWebSocket: onClose, code: {}, reason: {} ", statusCode, reason);
         this.session = null;
-    }
+    }*/
 
-    /**
-     * Callback hook for Message Events. This method will be invoked when a client send a message.
-     *
-     * @param message The text message
-     */
-    @OnWebSocketMessage
+//    /**
+//     * Callback hook for Message Events. This method will be invoked when a client send a message.
+//     *
+//     * @param message The text message
+//     */
+//    @OnWebSocketMessage
     public void onMessage(String message) {
         log.debug("onMessage: {}", message);
 
@@ -226,6 +230,7 @@ public class TransportInteractionWebSocket {
      * @param message
      */
     public void sendMessage(String message) {
+/*
         try {
             Future<Void> fut;
             fut = session.getRemote().sendStringByFuture(message);
@@ -234,6 +239,7 @@ public class TransportInteractionWebSocket {
         } catch (InterruptedException | ExecutionException | TimeoutException ex) {
             log.error("sendMessage Exception: {}", ex.getMessage().toString());
         }
+*/
 
     }
 

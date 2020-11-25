@@ -10,15 +10,15 @@ import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.MyNetworkInterfaces;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.gzip.GzipHandler;
-import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.DoSFilter;
-import org.jboss.weld.environment.servlet.Listener;
+//import org.eclipse.jetty.server.Connector;
+//import org.eclipse.jetty.server.Server;
+//import org.eclipse.jetty.server.ServerConnector;
+//import org.eclipse.jetty.server.handler.gzip.GzipHandler;
+//import org.eclipse.jetty.servlet.FilterHolder;
+//import org.eclipse.jetty.servlet.ServletContextHandler;
+//import org.eclipse.jetty.servlet.ServletHolder;
+//import org.eclipse.jetty.servlets.DoSFilter;
+//import org.jboss.weld.environment.servlet.Listener;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -40,7 +40,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  *
  * @author alukin@gmail.com
  */
-@Singleton
+//@Singleton
 public class PeerHttpServer {
 
     public static final int MAX_PLATFORM_LENGTH = 30;
@@ -51,7 +51,8 @@ public class PeerHttpServer {
     private final int myPeerServerPortTLS;
     private final boolean useTLS;
     private final String myPlatform;
-    private final Server peerServer;
+//    private final Server peerServer;
+    private Object peerServer;
     private final UPnP upnp;
     private final String host;
     private final int idleTimeout;
@@ -87,7 +88,7 @@ public class PeerHttpServer {
         if (myAddress != null) {
             myExtAddress = new PeerAddress(myPeerServerPort, myAddress);
         }
-        if (shareMyAddress) {
+/*        if (shareMyAddress) {
             peerServer = new Server();
 
             conCreator.addHttpConnector(host, myPeerServerPort, peerServer, idleTimeout);
@@ -150,7 +151,7 @@ public class PeerHttpServer {
         } else {
             peerServer = null;
             LOG.info("shareMyAddress is disabled, will not start peer networking server");
-        }
+        }*/
     }
 
     public boolean isShareMyAddress() {
@@ -183,7 +184,7 @@ public class PeerHttpServer {
             .task(() -> {
                 try {
                     if (peerServer != null) { // prevent NPE in offLine mode
-                        peerServer.start();
+//                        peerServer.start();
                         LOG.info("Started peer networking server at " + host + ":" + myPeerServerPort);
                     } else {
                         LOG.warn("Peer networking server NOT STARTED (offLine mode?)");
@@ -208,7 +209,7 @@ public class PeerHttpServer {
                         upnp.deletePort(extPort);
                     }
                 }
-                peerServer.stop();
+//                peerServer.stop();
             } catch (Exception e) {
                 LOG.info("Failed to stop peer server", e);
             }
@@ -219,7 +220,7 @@ public class PeerHttpServer {
         boolean res = false;
         if (peerServer != null) {
             try {
-                peerServer.stop();
+//                peerServer.stop();
                 captureReservedPorts(); // hold p2p ports until server will be resumed
                 res = true;
             } catch (Exception e) {
@@ -250,7 +251,7 @@ public class PeerHttpServer {
             try {
                 releaseReservedPorts(); // finish p2p ports reserve
                 LOG.debug("Starting peer server");
-                peerServer.start();
+//                peerServer.start();
                 LOG.debug("peer server started");
                 res = true;
             } catch (Exception e) {

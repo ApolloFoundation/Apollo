@@ -23,13 +23,13 @@ package com.apollocurrency.aplwallet.apl.core.http;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import org.eclipse.jetty.client.HttpClient;
+/*import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.proxy.AsyncMiddleManServlet;
 import org.eclipse.jetty.util.MultiMap;
-import org.eclipse.jetty.util.UrlEncoded;
+import org.eclipse.jetty.util.UrlEncoded;*/
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
 
@@ -49,7 +49,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.ERROR_NOT
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Vetoed
-public final class APIProxyServlet extends AsyncMiddleManServlet {
+public final class APIProxyServlet /*extends AsyncMiddleManServlet*/ {
     static final int PROXY_IDLE_TIMEOUT_DELTA = 5000;
     private static final Logger LOG = getLogger(APIProxyServlet.class);
     private static final String REMOTE_URL = APIProxyServlet.class.getName() + ".remoteUrl";
@@ -59,13 +59,13 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
     public APIProxyServlet() {
     }
 
-    @Override
+//    @Override
     public void init(ServletConfig config) throws ServletException {
-        super.init(config);
+//        super.init(config);
         config.getServletContext().setAttribute("apiServlet", new APIServlet());
     }
 
-    @Override
+//    @Override
     protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         JSONStreamAware responseJson = null;
         try {
@@ -73,6 +73,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
                 responseJson = ERROR_NOT_ALLOWED;
                 return;
             }
+/*
             MultiMap<String> parameters = getRequestParameters(request);
             String requestType = getRequestType(parameters);
             if (APIProxy.isActivated() && isForwardable(requestType)) {
@@ -88,8 +89,9 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
                 APIServlet apiServlet = (APIServlet) request.getServletContext().getAttribute("apiServlet");
                 apiServlet.service(request, response);
             }
-        } catch (ParameterException e) {
-            responseJson = e.getErrorResponse();
+*/
+//        } catch (ParameterException e) {
+//            responseJson = e.getErrorResponse();
         } finally {
             if (responseJson != null) {
                 try {
@@ -103,6 +105,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
         }
     }
 
+/*
     private MultiMap<String> getRequestParameters(HttpServletRequest request) {
         MultiMap<String> parameters = new MultiMap<>();
         String queryString = request.getQueryString();
@@ -111,7 +114,9 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
         }
         return parameters;
     }
+*/
 
+/*
     @Override
     protected void addProxyHeaders(HttpServletRequest clientRequest, Request proxyRequest) {
 
@@ -169,6 +174,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
         }
         return requestType;
     }
+*/
 
     private boolean initRemoteRequest(HttpServletRequest clientRequest, String requestType) {
         StringBuilder uri;
@@ -200,6 +206,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
                 && !APIProxy.NOT_FORWARDED_REQUESTS.contains(requestType);
     }
 
+/*
     @Override
     protected Response.Listener newProxyResponseListener(HttpServletRequest request, HttpServletResponse response) {
         return new APIProxyResponseListener(request, response);
@@ -218,6 +225,7 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
             }
         }
     }
+*/
 
     @Vetoed
     private static class PasswordDetectedException extends RuntimeException {
@@ -258,8 +266,8 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
         }
     }
 
-    @Vetoed
-    private static class PasswordFilteringContentTransformer implements AsyncMiddleManServlet.ContentTransformer {
+//    @Vetoed
+/*    private static class PasswordFilteringContentTransformer implements AsyncMiddleManServlet.ContentTransformer {
 
         private ByteArrayOutputStream os;
 
@@ -305,5 +313,5 @@ public final class APIProxyServlet extends AsyncMiddleManServlet {
             LOG.error("proxy failed", failure);
             APIProxy.getInstance().blacklistHost(response.getRequest().getHost());
         }
-    }
+    }*/
 }

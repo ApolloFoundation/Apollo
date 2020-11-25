@@ -33,11 +33,12 @@ import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -57,13 +58,13 @@ import static org.mockito.Mockito.mock;
 @Slf4j
 
 @Tag("slow")
-@EnableWeld
+@QuarkusTest
 public class DGSServiceSearchTest extends DbContainerBaseTest {
 
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer, Map.of("goods", List.of("name", "description", "tags")));
     Blockchain blockchain = mock(Blockchain.class);
-    @WeldSetup
+/*    @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         FullTextConfigImpl.class,
         DGSPublicFeedbackTable.class,
@@ -87,7 +88,7 @@ public class DGSServiceSearchTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
         .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
-        .build();
+        .build();*/
     @Inject
     DGSService service;
 

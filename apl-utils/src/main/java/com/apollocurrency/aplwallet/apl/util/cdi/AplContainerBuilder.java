@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.util.cdi;
 
+import io.quarkus.arc.ArcContainer;
+import io.quarkus.arc.impl.ArcContainerImpl;
 import org.jboss.weld.bootstrap.spi.BeanDiscoveryMode;
 import org.jboss.weld.config.ConfigurationKey;
 import org.jboss.weld.environment.se.Weld;
@@ -76,37 +78,39 @@ public class AplContainerBuilder {
     public AplContainer build() {
         log.debug("Apollo DI container build()...");
 
-        Weld weld = new Weld();
+        ArcContainer newContainer = new ArcContainerImpl();
+/*
         if (containerId != null && !containerId.isEmpty()) {
-            weld.containerId(containerId);
+            newContainer.containerId(containerId);
         }
 
         if (annotatedDiscoveryMode != null && annotatedDiscoveryMode) {
-            weld.setBeanDiscoveryMode(BeanDiscoveryMode.ANNOTATED);
+            newContainer.setBeanDiscoveryMode(BeanDiscoveryMode.ANNOTATED);
         }
 
         if (disableDiscovery != null && disableDiscovery) {
-            weld.disableDiscovery();
+            newContainer.disableDiscovery();
         }
 
         if (interceptors != null && !interceptors.isEmpty()) {
-            interceptors.forEach(weld::addInterceptor);
+            interceptors.forEach(newContainer::addInterceptor);
         }
 
         if (devMode) {
-            weld.enableDevMode();
+            newContainer.enableDevMode();
         }
 
         if (concurrentDeploymentDisabled) {
-            weld.property(ConfigurationKey.CONCURRENT_DEPLOYMENT.get(), "false");
+            newContainer.property(ConfigurationKey.CONCURRENT_DEPLOYMENT.get(), "false");
         }
+*/
+        newContainer.beanManager();
+        ((ArcContainerImpl)newContainer).init();
 
-        WeldContainer newContainer = weld.initialize();
-
-        if (newContainer.isUnsatisfied()) {
+        if (newContainer.isRunning()) {
             log.error("Weld container is unsatisfied!");
         }
-        log.debug("Apollo DI container - {}", !newContainer.isUnsatisfied() ? "DONE" : "ERROR");
+        log.debug("Apollo DI container - {}", !newContainer.isRunning() ? "DONE" : "ERROR");
 
         return new AplContainer(newContainer);
     }

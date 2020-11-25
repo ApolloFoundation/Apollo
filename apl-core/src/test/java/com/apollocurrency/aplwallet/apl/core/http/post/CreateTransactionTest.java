@@ -27,10 +27,11 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -42,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
-@EnableWeld
+@QuarkusTest
 class CreateTransactionTest {
 
     BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
@@ -51,6 +52,7 @@ class CreateTransactionTest {
     private TimeService timeService = Mockito.mock(TimeService.class);
     private DatabaseManager databaseManager = Mockito.mock(DatabaseManager.class);
     TransactionTestData td = new TransactionTestData();
+/*
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
         PropertiesHolder.class, DaoConfig.class, JdbiHandleFactory.class,
@@ -66,6 +68,7 @@ class CreateTransactionTest {
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .build();
+*/
     private Block block = Mockito.mock(Block.class);
     private int lastBlockHeight = 1000;
     private int currentTime = 11000;

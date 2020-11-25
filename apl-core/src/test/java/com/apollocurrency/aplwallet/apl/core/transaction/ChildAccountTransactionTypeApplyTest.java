@@ -45,9 +45,9 @@ import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -99,7 +99,7 @@ public class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
     TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
 
 
-    @WeldSetup
+/*    @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(
         GlobalSyncImpl.class, DaoConfig.class,
         AccountTable.class, AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
@@ -123,7 +123,7 @@ public class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
         .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class, AccountControlPhasingServiceImpl.class))
         .addBeans(MockBean.of(calculator, FeeCalculator.class))
-        .build();
+        .build();*/
 
     @Inject
     TransactionApplier txApplier;

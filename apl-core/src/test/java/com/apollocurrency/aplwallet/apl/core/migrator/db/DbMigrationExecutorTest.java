@@ -37,10 +37,11 @@ import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
@@ -60,7 +61,7 @@ import java.util.Properties;
 
 import static org.mockito.Mockito.mock;
 
-@EnableWeld
+@QuarkusTest
 public class DbMigrationExecutorTest {
 
 /*    @RegisterExtension

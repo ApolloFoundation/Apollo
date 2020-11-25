@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
+import com.apollocurrency.aplwallet.apl.core.cache.InMemoryCDICacheFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -14,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.DoubleSpendingException;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -22,10 +24,13 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDi
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusMock;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.QuarkusTestExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +38,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.enterprise.event.Event;
+import javax.inject.Inject;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -52,8 +58,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@EnableWeld
-@ExtendWith(MockitoExtension.class)
+//@QuarkusTest
+@ExtendWith({MockitoExtension.class, QuarkusTestExtension.class})
 class AccountAssetServiceTest {
 
     AccountAssetServiceImpl accountAssetService;
@@ -69,13 +75,10 @@ class AccountAssetServiceTest {
     @Mock
     private AssetDividendService assetDividendService;
     @Mock
-    private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
-    @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class
-    )
-        .addBeans(MockBean.of(blockChainInfoService, BlockchainImpl.class))
-        .build();
+    private BlockChainInfoService blockChainInfoService;// = mock(BlockChainInfoService.class);
+    @Mock
+    private Blockchain blockchain;// = mock(BlockchainImpl.class);
+
     private Event accountEvent = mock(Event.class);
     private Event accountAssetEvent = mock(Event.class);
     private Event ledgerEvent = mock(Event.class);
@@ -97,6 +100,8 @@ class AccountAssetServiceTest {
         assetId = 50L;
         event = LedgerEvent.ASSET_DIVIDEND_PAYMENT;
         eventId = 10L;
+        QuarkusMock.installMockForInstance(blockChainInfoService, BlockChainInfoService.class);
+        QuarkusMock.installMockForInstance(blockchain, Blockchain.class);
     }
 
     @Test

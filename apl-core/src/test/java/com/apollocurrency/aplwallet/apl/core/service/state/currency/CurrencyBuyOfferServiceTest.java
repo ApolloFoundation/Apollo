@@ -25,11 +25,12 @@ import com.apollocurrency.aplwallet.apl.data.CurrencyBuyOfferTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencySupplyTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -46,7 +47,7 @@ import static org.mockito.Mockito.mock;
 @Slf4j
 
 @Tag("slow")
-@EnableWeld
+@QuarkusTest
 class CurrencyBuyOfferServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
@@ -64,6 +65,7 @@ class CurrencyBuyOfferServiceTest extends DbContainerBaseTest {
     private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
 
+/*
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         PropertiesHolder.class, CurrencyBuyOfferTable.class, CurrencyBuyOfferServiceImpl.class
@@ -77,6 +79,7 @@ class CurrencyBuyOfferServiceTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
         .addBeans(MockBean.of(blockChainInfoService, BlockChainInfoService.class))
         .build();
+*/
 
     @BeforeEach
     void setUp() {

@@ -20,11 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
+//import org.eclipse.jetty.client.HttpClient;
+//import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 public class HttpUtil {
 
+/*
     public static HttpClient newHttpClient() {
         SslContextFactory sslContextFactory = new SslContextFactory();
         sslContextFactory.addExcludeCipherSuites("SSL_RSA_WITH_DES_CBC_SHA", "SSL_DHE_RSA_WITH_DES_CBC_SHA",
@@ -38,4 +39,5 @@ public class HttpUtil {
         httpClient.setAddressResolutionTimeout(300 * 1000);
         return httpClient;
     }
+*/
 }

@@ -6,9 +6,10 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
-import org.jboss.weld.junit5.EnableWeld;
+/*import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -23,16 +24,16 @@ import java.util.logging.Logger;
  */
 
 @Disabled
-@EnableWeld
+@QuarkusTest
 public class EthGasStationInfoDaoTest {
 
     private static int nTests = 10;
 
-    @WeldSetup
+/*    @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         DexEthService.class,
         EthGasStationInfoDao.class)
-        .build();
+        .build();*/
     @Inject
     DexEthService dexEthService;
     Logger logger = Logger.getLogger(EthGasStationInfoDaoTest.class.getName());

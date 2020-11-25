@@ -38,10 +38,11 @@ import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencyBuyOfferTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencySellOfferTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,7 +62,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@EnableWeld
+@QuarkusTest
 @ExtendWith(MockitoExtension.class)
 class CurrencyExchangeOfferFacadeTest {
 
@@ -71,7 +72,7 @@ class CurrencyExchangeOfferFacadeTest {
     private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
 
-    @WeldSetup
+/*    @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         CurrencyBuyOfferTable.class, CurrencyBuyOfferServiceImpl.class
     )
@@ -85,7 +86,7 @@ class CurrencyExchangeOfferFacadeTest {
         .addBeans(MockBean.of(Mockito.mock(PropertiesHolder.class), PropertiesHolder.class))
         .addBeans(MockBean.of(Mockito.mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(databaseManager, DatabaseManager.class))
-        .build();
+        .build();*/
 
     @Mock
     CurrencyBuyOfferService currencyBuyOfferService;

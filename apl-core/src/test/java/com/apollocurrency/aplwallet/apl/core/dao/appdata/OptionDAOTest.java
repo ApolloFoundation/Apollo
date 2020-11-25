@@ -7,11 +7,12 @@ package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -27,17 +28,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Tag("slow")
 @Slf4j
-@EnableWeld
+@QuarkusTest
 class OptionDAOTest extends DbContainerBaseTest {
 
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer);
 
-    @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(OptionDAO.class)
-        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-        .build();
+//    @WeldSetup
+//    public WeldInitiator weld = WeldInitiator.from(OptionDAO.class)
+//        .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
+//        .build();
 
+    @Inject
+    private DatabaseManager databaseManager = extension.getDatabaseManager();
 
     @Inject
     private OptionDAO optionDAO;

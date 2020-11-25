@@ -7,10 +7,11 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -36,17 +37,19 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 
-@EnableWeld
+@QuarkusTest
 @Execution(ExecutionMode.SAME_THREAD)
 class DeleteTrimObserverTest {
     DatabaseManager databaseManager = mock(DatabaseManager.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
 
+/*
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(DeleteTrimObserver.class)
         .addBeans(MockBean.of(databaseManager, DatabaseManager.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .build();
+*/
 
     @Inject
     Event<DeleteOnTrimData> trimEvent;

@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -18,6 +20,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Singleton
 public class ChainsConfigLoader extends AbstractConfigLoader<Map<UUID, Chain>> {
     private static final ObjectMapper MAPPER = JSON.getMapper();
     private static final String DEFAULT_CHAINS_FILENAME = "chains.json";

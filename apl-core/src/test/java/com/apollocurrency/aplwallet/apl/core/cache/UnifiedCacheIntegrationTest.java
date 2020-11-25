@@ -9,9 +9,10 @@ import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheLoader;
-import org.jboss.weld.junit5.EnableWeld;
+/*import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,11 +25,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 
-@EnableWeld
+@QuarkusTest
 public class UnifiedCacheIntegrationTest {
 
-    @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(AplCacheConfig.class, InMemoryCDICacheFactory.class, CacheLoaderProducer.class).build();
+//    @WeldSetup
+//    WeldInitiator weld = WeldInitiator.from(AplCacheConfig.class, InMemoryCDICacheFactory.class, CacheLoaderProducer.class).build();
 
     @Inject
     @CacheProducer
@@ -65,7 +66,7 @@ public class UnifiedCacheIntegrationTest {
     }
 
     private static class CacheLoaderProducer {
-        @Produces
+//        @Produces
         public CacheLoader<Long, OrderFreezing> loader() {
             return mock(CacheLoader.class);
         }

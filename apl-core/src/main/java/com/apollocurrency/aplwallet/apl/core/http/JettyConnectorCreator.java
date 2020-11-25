@@ -5,14 +5,14 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.eclipse.jetty.http.HttpVersion;
+/*import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.ssl.SslContextFactory;*/
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,12 +21,12 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.file.Paths;
 
-/**
- * Utility class to prepare HTTP or HTTPS connectors for Jetty server
- *
- * @author alukin@gmail.com
- */
-@Singleton
+///**
+// * Utility class to prepare HTTP or HTTPS connectors for Jetty server
+// *
+// * @author alukin@gmail.com
+// */
+//@Singleton
 public class JettyConnectorCreator {
 
     private static final Logger LOG = LoggerFactory.getLogger(JettyConnectorCreator.class);
@@ -44,7 +44,9 @@ public class JettyConnectorCreator {
         keyStoreAlias = propertiesHolder.getStringProperty("apl.keyStoreAlias", "jetty", true);
     }
 
-    public boolean addHttpConnector(String host, int port, Server apiServer, int idleTimeout) {
+//    public boolean addHttpConnector(String host, int port, Server apiServer, int idleTimeout) {
+    public boolean addHttpConnector(String host, int port, Object apiServer, int idleTimeout) {
+/*
         ServerConnector connector;
         HttpConfiguration configuration = new HttpConfiguration();
         configuration.setSendDateHeader(false);
@@ -58,11 +60,14 @@ public class JettyConnectorCreator {
         apiServer.addConnector(connector);
         String proto = connector.getDefaultProtocol();
         LOG.debug("API protocol: {} configured", proto);
+*/
         return true;
     }
 
-    public boolean addHttpSConnector(String host, int port, Server apiServer, int idleTimeout) {
+//    public boolean addHttpSConnector(String host, int port, Server apiServer, int idleTimeout) {
+    public boolean addHttpSConnector(String host, int port, Object apiServer, int idleTimeout) {
 
+/*
         ServerConnector connector;
         HttpConfiguration https_config = new HttpConfiguration();
         https_config.setSendDateHeader(false);
@@ -91,6 +96,7 @@ public class JettyConnectorCreator {
         apiServer.addConnector(connector);
         String proto = connector.getDefaultProtocol();
         LOG.debug("API protocol: {} configured", proto);
+*/
         return true;
     }
 }

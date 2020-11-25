@@ -85,11 +85,13 @@ import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import io.quarkus.test.junit.QuarkusMock;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.jboss.weld.literal.NamedLiteral;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
@@ -132,7 +134,7 @@ import static org.mockito.Mockito.mock;
 
 @Slf4j
 @Tag("slow")
-@EnableWeld
+@QuarkusTest
 class ShardMigrationExecutorTest extends DBContainerRootTest {
     private static final String SHA_512 = "SHA-512";
 
@@ -142,7 +144,8 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
     private static BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private static HeightConfig heightConfig = mock(HeightConfig.class);
     private final Path dataExportDirPath = createPath("targetDb");
-    private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
+//    private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
+//    private final Bean<Path> dataExportDir = QuarkusMock.installMockForType(dataExportDirPath.toAbsolutePath(), Path.class);
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer);
 
@@ -155,6 +158,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
     private GeneratorService generatorService = mock(GeneratorService.class);
     private TransactionTestData td = new TransactionTestData();
 
+/*
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
         BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class,
@@ -199,6 +203,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
         .build();
+*/
     @Inject
     private ShardEngine shardEngine;
     @Inject
@@ -228,7 +233,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
 
     {
         // return the same dir for both CDI components
-        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
+//        dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
         doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
     }
 

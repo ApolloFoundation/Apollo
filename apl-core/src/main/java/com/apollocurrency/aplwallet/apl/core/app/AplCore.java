@@ -189,6 +189,7 @@ public final class AplCore {
             //TODO: move to application level this UPnP initialization
             boolean enablePeerUPnP = propertiesHolder.getBooleanProperty("apl.enablePeerUPnP");
             boolean enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
+/*
             if (enableAPIUPnP || enablePeerUPnP) {
                 UPnP.TIMEOUT = propertiesHolder.getIntProperty("apl.upnpDiscoverTimeout", 3000);
                 UPnP upnp = CDI.current().select(UPnP.class).get();
@@ -196,11 +197,12 @@ public final class AplCore {
                 upnp.init();
                 aplAppStatus.durableTaskFinished(upnpTid, false, "UPnP init done");
             }
+*/
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 1.0, "API initialization");
             TxInitializer txInitializer = CDI.current().select(TxInitializer.class).get();
             //try to start API as early as possible
-            apiServer = CDI.current().select(API.class).get();
-            apiServer.start();
+//            apiServer = CDI.current().select(API.class).get();
+//            apiServer.start();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 5.0, "API initialization done");
 
 
@@ -248,7 +250,7 @@ public final class AplCore {
 
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 60.0, "Apollo Account ledger initialization done");
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 61.0, "Apollo Peer services initialization started");
-            APIProxy.init();
+//            APIProxy.init();
 //            Generator.init();
             AddOns.init();
             Helper2FA.init(databaseManager);
@@ -290,9 +292,11 @@ public final class AplCore {
             log.info("Copyright © 2016-2017 Jelurida IP B.V..");
             log.info("Copyright © 2017-2020 Apollo Foundation.");
             log.info("See LICENSE.txt for more information");
+/*
             if (API.getWelcomePageUri() != null) {
                 log.info("Client UI is at " + API.getWelcomePageUri());
             }
+*/
             aplAppStatus.durableTaskFinished(initCoreTaskID, false, "AplCore initialized successfully");
         } catch (final RuntimeException e) {
             if (e.getMessage() == null || !e.getMessage().contains(SQLException.class.getName())) {

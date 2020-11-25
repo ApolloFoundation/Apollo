@@ -256,12 +256,12 @@ public class Peer2PeerTransport {
     }
 
     boolean isInbound() {
-        boolean res = inboundWebSocket != null && inboundWebSocket.isConnected();
+        boolean res = inboundWebSocket != null/* && inboundWebSocket.isConnected()*/;
         return res;
     }
 
     boolean isOutbound() {
-        boolean res = outboundWebSocket != null && outboundWebSocket.isConnected();
+        boolean res = outboundWebSocket != null /*&& outboundWebSocket.isConnected()*/;
         return res;
     }
 

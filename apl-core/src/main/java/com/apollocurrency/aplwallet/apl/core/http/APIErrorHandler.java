@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import org.apache.commons.io.IOUtils;
-import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
+//import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -15,11 +15,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 
-public class APIErrorHandler extends ErrorPageErrorHandler {
+public class APIErrorHandler /*extends ErrorPageErrorHandler*/ {
 
 
-    @Override
-    public void handle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+//    @Override
+//    public void handle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    public void handle(String target, Object baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         if (response.getStatus() == HttpURLConnection.HTTP_NOT_FOUND) {
             String apiResourceBase = API.findWebUiDir();
 //propertiesLoader.getStringProperty("apl.apiResourceBase");
@@ -32,7 +33,7 @@ public class APIErrorHandler extends ErrorPageErrorHandler {
             PrintWriter out = response.getWriter();
             out.print(IOUtils.toString(new FileReader(apiResourceBase + "/" + apiWelcomePage)));
         } else {
-            super.handle(target, baseRequest, request, response);
+//            super.handle(target, baseRequest, request, response);
         }
     }
 }

@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 
 import java.io.IOException;
@@ -10,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+@Singleton
 public class PropertiesConfigLoader extends AbstractConfigLoader<Properties> {
     private static final String DEFAULT_PROPERTIES_FILENAME = "apl-blockchain.properties";
 

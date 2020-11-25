@@ -38,13 +38,14 @@ import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderSer
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.Setter;
 import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.mock.MockHttpResponse;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -59,7 +60,7 @@ import static org.jboss.resteasy.mock.MockHttpRequest.post;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-@EnableWeld
+@QuarkusTest
 @Disabled
 class AccountEndpointTest extends AbstractEndpointTest {
 
@@ -71,7 +72,7 @@ class AccountEndpointTest extends AbstractEndpointTest {
 
     OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService = mock(AskOrderServiceImpl.class);
 
-    @WeldSetup
+/*    @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         PropertiesHolder.class, PropertyProducer.class,
         Account2FAHelper.class,
@@ -98,7 +99,7 @@ class AccountEndpointTest extends AbstractEndpointTest {
         .addBeans(MockBean.of(mock(Account2FAConverter.class), Account2FAConverter.class))
         .addBeans(MockBean.<OrderService>builder().types(AskOrderServiceImpl.class).creating(orderService).addQualifier(AskOrderService.Literal.INSTANCE).build())
         .addBeans(MockBean.of(mock(AccountStatisticsService.class), AccountStatisticsService.class))
-        .build();
+        .build();*/
 
     @Inject
     @Setter

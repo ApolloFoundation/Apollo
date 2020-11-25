@@ -149,18 +149,20 @@ public class Apollo {
         );
     }
 
-    public static void main(String... args) {
-        Quarkus.run(MyApp.class, args);
-    }
-
-    public static class MyApp implements QuarkusApplication {
-
-        /**
-         * @param argv the command line arguments
-         */
-        @Override
-        public int run(String... argv) throws Exception {
-//    public static void main(String[] argv) {
+//    public static void main(String... args) {
+//        Quarkus.run(MyApp.class, args);
+//    }
+//
+//    public static class MyApp implements QuarkusApplication {
+//        public int run(String... argv) throws Exception {
+//        }
+//    }
+//
+//        /**
+//         * @param argv the command line arguments
+//         */
+    public static void main(String[] argv) {
+//    public static void main(String... argv) {
         System.out.println("Initializing Apollo");
         Apollo app = new Apollo();
 
@@ -268,6 +270,7 @@ public class Apollo {
         }
 
         //Configure CDI Container builder
+/*
         AplContainerBuilder aplContainerBuilder = AplContainer.builder().containerId("MAIN-APL-CDI")
             // do not use recursive scan because it violates the restriction to
             // deploy one bean for all deployment archives
@@ -282,13 +285,15 @@ public class Apollo {
         if (args.disableWeldConcurrentDeployment) {
             //It's very helpful when the application is stuck during the Weld Container building.
             log.info("The concurrent deployment of Weld container is disabled.");
-            aplContainerBuilder.disableConcurrentDeployment();
+//            aplContainerBuilder.disableConcurrentDeployment();
         }
 
         //init CDI container
         container = aplContainerBuilder.build();
 
         log.debug("Weld CDI container build done");
+*/
+        Quarkus.run(argv);
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         app.propertiesHolder.init(props);
@@ -320,14 +325,12 @@ public class Apollo {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();
         }
-            Quarkus.waitForExit();
-            return 0;
-        }
+        Quarkus.waitForExit();
     }
 
     public static void shutdownWeldContainer() {
         try {
-            container.shutdown();
+//            container.shutdown();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
         }

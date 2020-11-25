@@ -65,11 +65,12 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -97,7 +98,7 @@ import static org.mockito.Mockito.mock;
 @Slf4j
 
 @Tag("slow")
-@EnableWeld
+@QuarkusTest
 public class PhasingPollServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
@@ -115,6 +116,7 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
         doReturn(blockTestData.BLOCK_3).when(blockDao).findFirstBlock();
     }
 
+/*
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
@@ -155,6 +157,7 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(CurrencyService.class), CurrencyService.class))
         .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
         .build();
+*/
     @Inject
     PhasingPollServiceImpl service;
     @Inject

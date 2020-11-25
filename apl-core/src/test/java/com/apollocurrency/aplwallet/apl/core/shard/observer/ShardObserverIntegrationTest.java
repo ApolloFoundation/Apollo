@@ -9,10 +9,11 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -28,7 +29,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-@EnableWeld
+@QuarkusTest
 public class ShardObserverIntegrationTest {
     static final int DEFAULT_SHARDING_FREQUENCY = 100;
     private final ShardService shardService = mock(ShardService.class);
@@ -36,6 +37,7 @@ public class ShardObserverIntegrationTest {
     HeightConfig heightConfig;
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     Random random = mock(Random.class);
+/*
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(ShardObserver.class)
         .addBeans(MockBean.of(shardService, ShardService.class))
@@ -43,6 +45,7 @@ public class ShardObserverIntegrationTest {
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(random, Random.class))
         .build();
+*/
     @Inject
     Event<TrimData> trimEvent;
 

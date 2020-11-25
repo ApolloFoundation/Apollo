@@ -15,10 +15,11 @@ import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 //TODO implement tests.
 
-@EnableWeld
+@QuarkusTest
 @ExtendWith(MockitoExtension.class)
 public class KeyStoreServiceTest {
 
@@ -68,11 +69,11 @@ public class KeyStoreServiceTest {
     private NtpTime time = mock(NtpTime.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
 
-    @WeldSetup
+/*    @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
         .addBeans(MockBean.of(time, NtpTime.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
-        .build();
+        .build();*/
     private byte[] secretBytes = generateSecretBytes();
     private byte[] nonce = new byte[16];
     private Path tempDirectory;

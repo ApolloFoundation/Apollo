@@ -25,11 +25,12 @@ import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -55,7 +56,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @Slf4j
 
 @Tag("slow")
-@EnableWeld
+@QuarkusTest
 class ShardPrunableZipHashCalculatorTest extends DbContainerBaseTest {
 
     DerivedTablesRegistry registry = mock(DerivedTablesRegistry.class);
@@ -69,7 +70,7 @@ class ShardPrunableZipHashCalculatorTest extends DbContainerBaseTest {
     TemporaryFolderExtension tempFolder = new TemporaryFolderExtension();
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(mariaDBContainer);
-    @WeldSetup
+/*    @WeldSetup
     WeldInitiator weld = WeldInitiator.from(PrunableMessageTable.class,
         Event.class,
         ShardPrunableZipHashCalculator.class,
@@ -83,7 +84,7 @@ class ShardPrunableZipHashCalculatorTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(dirProvider, DirProvider.class))
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-        .build();
+        .build();*/
     @Inject
     PrunableMessageTable prunableMessageTable;
     @Inject

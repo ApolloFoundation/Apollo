@@ -32,11 +32,12 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -56,7 +57,7 @@ import static org.mockito.Mockito.mock;
 @Slf4j
 
 @Tag("slow")
-@EnableWeld
+@QuarkusTest
 class PrunableMessageServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
@@ -66,7 +67,7 @@ class PrunableMessageServiceTest extends DbContainerBaseTest {
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
 
-    @WeldSetup
+/*    @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
         PrunableMessageTable.class,
         DerivedDbTablesRegistryImpl.class,
@@ -86,7 +87,7 @@ class PrunableMessageServiceTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
-        .build();
+        .build();*/
     @Inject
     PrunableMessageService service;
     @Inject

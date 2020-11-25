@@ -39,10 +39,11 @@ import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 
 import javax.enterprise.event.Event;
@@ -56,10 +57,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-@EnableWeld
+@QuarkusTest
 class DexServiceIntegrationTest {
     TransactionTestData td = new TransactionTestData();
-    @WeldSetup
+//    @WeldSetup
+/*
     WeldInitiator weld = WeldUtils.from(List.of(TransactionRowMapper.class,
         TransactionBuilder.class,TransactionSerializerImpl.class,
         DexService.class, CacheProducer.class),
@@ -85,6 +87,7 @@ class DexServiceIntegrationTest {
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .build();
+*/
     @Inject
     DexService dexService;
     @Inject
@@ -127,9 +130,9 @@ class DexServiceIntegrationTest {
         verifyNoInteractions(phasingPollService, approvedResultTable);
     }
 
-    @Singleton
+//    @Singleton
     static class CacheProducer {
-        @Produces
+//        @Produces
         private LoadingCache<Long, OrderFreezing> createCache() {
             return CacheBuilder.newBuilder().build(CacheLoader.from(ord -> new OrderFreezing(1, true)));
         }

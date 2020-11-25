@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
 import javax.enterprise.inject.Vetoed;
+import javax.inject.Singleton;
 
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;

@@ -48,10 +48,11 @@ import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencyMintTestData;
 import com.apollocurrency.aplwallet.apl.data.CurrencyTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -69,7 +70,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-@EnableWeld
+@QuarkusTest
 @ExtendWith(MockitoExtension.class)
 class CurrencyServiceTest {
 
@@ -81,6 +82,7 @@ class CurrencyServiceTest {
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private HeightConfig config = Mockito.mock(HeightConfig.class);
 
+/*
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         PropertiesHolder.class, CurrencyBuyOfferTable.class, CurrencyBuyOfferServiceImpl.class
@@ -94,6 +96,7 @@ class CurrencyServiceTest {
         .addBeans(MockBean.of(blockChainInfoService, BlockChainInfoService.class))
         .addBeans(MockBean.of(databaseManager, DatabaseManager.class))
         .build();
+*/
 
     CurrencyService service;
     CurrencyTestData td;

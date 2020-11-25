@@ -38,10 +38,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadin
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -56,7 +57,7 @@ import static org.mockito.Mockito.mock;
 
 
 @Tag("slow")
-@EnableWeld
+@QuarkusTest
 public class DGSPurchaseTableTest extends EntityDbTableTest<DGSPurchase> {
 
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
@@ -64,7 +65,7 @@ public class DGSPurchaseTableTest extends EntityDbTableTest<DGSPurchase> {
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
     TransactionTestData td = new TransactionTestData();
 
-    @WeldSetup
+/*    @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
         GlobalSyncImpl.class,
@@ -89,7 +90,7 @@ public class DGSPurchaseTableTest extends EntityDbTableTest<DGSPurchase> {
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
-        .build();
+        .build();*/
     @Inject
     DGSPurchaseTable table;
     @Inject

@@ -103,11 +103,12 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ServiceModeDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.google.common.base.Throwables;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -154,7 +155,7 @@ import static org.mockito.Mockito.mock;
 @Slf4j
 
 @Tag("slow")
-@EnableWeld
+@QuarkusTest
 @Execution(ExecutionMode.CONCURRENT)
 class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
 
@@ -182,7 +183,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
     PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
 //    doReturn(new PublicKey(-208393164898941117L, new byte[]{}, 100)).when(publicKeyDao).searchAll(-208393164898941117L);
 
-    @WeldSetup
+/*    @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainImpl.class, DaoConfig.class,
         PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
@@ -236,7 +237,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
         .addBeans(MockBean.of(unconfirmedTransactionProcessingService, UnconfirmedTransactionProcessingService.class))
         .addBeans(MockBean.of(memPool, MemPool.class))
-        .build();
+        .build();*/
 
     @Inject
     private Blockchain blockchain;

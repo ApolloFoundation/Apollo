@@ -11,13 +11,14 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.environment.se.Weld;
-import org.jboss.weld.junit.AbstractWeldInitiator;
+/*import org.jboss.weld.junit.AbstractWeldInitiator;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -38,25 +39,24 @@ import static org.mockito.Mockito.verify;
 
 @Slf4j
 @Tag("slow")
-@EnableWeld
+@QuarkusTest
 public class JdbiInterceptorTest extends DbContainerBaseTest {
 
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer);
 
     JdbiHandleFactory factory = spy(new JdbiHandleFactory());
-    private Weld weld = AbstractWeldInitiator.createWeld();
+/*    private Weld weld = AbstractWeldInitiator.createWeld();
     @WeldSetup
     public WeldInitiator weldInitiator = WeldInitiator.from(weld)
-        .addBeans(MockBean.of(factory, JdbiHandleFactory.class)).build();
+        .addBeans(MockBean.of(factory, JdbiHandleFactory.class)).build();*/
     @Inject
     private TransactionTestClass testClass;
 
     {
         factory.setJdbi(extension.getDatabaseManager().getJdbi());
-        weld.addInterceptor(JdbiTransactionalInterceptor.class);
-
-        weld.addBeanClasses(JdbiTransactionalInterceptor.class, TransactionTestClass.class, AnotherTransactionTestClass.class);
+//        weld.addInterceptor(JdbiTransactionalInterceptor.class);
+//        weld.addBeanClasses(JdbiTransactionalInterceptor.class, TransactionTestClass.class, AnotherTransactionTestClass.class);
     }
 
     @Test

@@ -308,10 +308,12 @@ public class APITestServlet extends HttpServlet {
         resp.setDateHeader("Expires", 0);
         resp.setContentType("text/html; charset=UTF-8");
 
+/*
         if (!API.isAllowed(req.getRemoteHost())) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
+*/
 
         try (PrintWriter writer = resp.getWriter()) {
             writer.print(HEADER1);

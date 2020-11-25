@@ -12,10 +12,11 @@ import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.FeaturesHeightRequirement;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -38,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-@EnableWeld
+@QuarkusTest
 public class BlockchainConfigTest {
     private static final BlockchainProperties bp0 = new BlockchainProperties(0, 0, 160, 0, 1, 2, 0, 100L);
     private static final BlockchainProperties bp1 = new BlockchainProperties(100, 0, 160, 0, 1, 2, 0, 100L);
@@ -67,9 +68,9 @@ public class BlockchainConfigTest {
     @Inject
     Event<Block> blockEvent;
     private BlockDao blockDao = mock(BlockDao.class);
-    @WeldSetup
+/*    @WeldSetup
     private WeldInitiator weld =
-        WeldInitiator.from(BlockchainConfig.class, BlockchainConfigUpdater.class).addBeans(MockBean.of(blockDao, BlockDao.class)).build();
+        WeldInitiator.from(BlockchainConfig.class, BlockchainConfigUpdater.class).addBeans(MockBean.of(blockDao, BlockDao.class)).build();*/
 
     @Test
     public void testInitBlockchainConfig() {

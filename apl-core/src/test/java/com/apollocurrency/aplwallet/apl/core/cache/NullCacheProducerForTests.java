@@ -11,10 +11,10 @@ import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Singleton;
 
-@Singleton
+//@Singleton
 public class NullCacheProducerForTests {
-    @Produces
-    @CacheProducer
+//    @Produces
+//    @CacheProducer
     public <K, V> Cache<K, V> acquireCache(InjectionPoint injectionPoint) {
         return null;
     }

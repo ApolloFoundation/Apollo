@@ -5,8 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
 import com.apollocurrency.aplwallet.apl.testutil.ResourceFileLoader;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit5.EnableWeld;
+//import org.jboss.weld.junit5.EnableWeld;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
@@ -18,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-@EnableWeld
+@QuarkusTest
 class CsvReaderTest {
 
     private CsvEscaper translator = new CsvEscaperImpl();

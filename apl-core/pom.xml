@@ -49,6 +49,7 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
 
+<!--
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-json-org</artifactId>
@@ -65,6 +66,7 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
+-->
     <!-- json-simple should be gone after new REST completion -->
     <dependency>
       <groupId>com.googlecode.json-simple</groupId>
@@ -73,6 +75,7 @@
     <!-- json-simple should be gone after new REST completion -->
 
     <!-- REST:  Need to put api here because strange things happens without it  -->
+<!--
     <dependency>
       <groupId>javax.ws.rs</groupId>
       <artifactId>javax.ws.rs-api</artifactId>
@@ -82,11 +85,14 @@
       <groupId>org.jboss.weld.servlet</groupId>
       <artifactId>weld-servlet-shaded</artifactId>
     </dependency>
+-->
     <!-- RESTEasy runtime dependencies -->
+<!--
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-servlet-initializer</artifactId>
     </dependency>
+-->
 
     <dependency>
       <groupId>commons-fileupload</groupId>
@@ -108,21 +114,6 @@
       <artifactId>resteasy-multipart-provider</artifactId>
     </dependency>
 
-    <!--
-        <dependency> &lt;!&ndash; may be NEEDED by FAT JAR in run-time &ndash;&gt;
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-jaxrs</artifactId>
-        </dependency>
-        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-tracing-api</artifactId>
-        </dependency>
-        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
-          <groupId>org.apache.httpcomponents</groupId>
-          <artifactId>httpcore-nio</artifactId>
-        </dependency>
-    -->
-
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-cdi</artifactId>
@@ -139,8 +130,25 @@
       <groupId>org.jboss.logging</groupId>
       <artifactId>jboss-logging-processor</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-vertx-http</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus.http</groupId>
+      <artifactId>quarkus-http-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus.http</groupId>
+      <artifactId>quarkus-http-servlet</artifactId>
+    </dependency>
 
     <!--Validation dependencies-->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-validator</artifactId>
+    </dependency>
+<!--
     <dependency>
       <groupId>javax.validation</groupId>
       <artifactId>validation-api</artifactId>
@@ -149,12 +157,14 @@
       <groupId>org.hibernate.validator</groupId>
       <artifactId>hibernate-validator-cdi</artifactId>
     </dependency>
+-->
     <dependency>
       <groupId>com.thoughtworks.paranamer</groupId>
       <artifactId>paranamer</artifactId>
     </dependency>
 
     <!-- This stuff is used by hibernate-validator dynamically in runtime -->
+<!--
     <dependency>
       <groupId>javax.el</groupId>
       <artifactId>javax.el-api</artifactId>
@@ -163,6 +173,7 @@
       <groupId>org.glassfish.web</groupId>
       <artifactId>javax.el</artifactId>
     </dependency>
+-->
 
     <!-- Swagger runtime dependencies -->
     <!-- Swagger annotation for API auto-documenting -->
@@ -188,10 +199,13 @@
       <artifactId>mariadb-java-client</artifactId>
     </dependency>
 
+<!--
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
     </dependency>
+-->
+<!--
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-proxy</artifactId>
@@ -220,6 +234,11 @@
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlets</artifactId>
+    </dependency>
+-->
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
     </dependency>
 
     <dependency>
@@ -261,9 +280,21 @@
       <artifactId>junit-jupiter-params</artifactId>
       <scope>test</scope>
     </dependency>
+<!--
     <dependency>
       <groupId>org.jboss.weld</groupId>
       <artifactId>weld-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+-->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5-mockito</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -453,6 +484,10 @@
             </fileset>
           </filesets>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

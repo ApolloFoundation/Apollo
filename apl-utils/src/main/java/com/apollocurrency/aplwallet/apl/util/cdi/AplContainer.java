@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.util.cdi;
 
-import org.jboss.weld.environment.se.WeldContainer;
+import io.quarkus.arc.ArcContainer;
+import io.quarkus.arc.impl.ArcContainerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,9 +12,9 @@ public class AplContainer {
 
     private static final Logger log = LoggerFactory.getLogger(AplContainer.class);
 
-    private final WeldContainer container;
+    private final ArcContainer container;
 
-    public AplContainer(WeldContainer container) {
+    public AplContainer(ArcContainer container) {
         this.container = container;
     }
 
@@ -24,11 +25,11 @@ public class AplContainer {
     public void shutdown() {
         log.debug("Apollo DI container shutdown()...");
         if (container.isRunning()) {
-            container.shutdown();
+            ((ArcContainerImpl)container).shutdown();
         }
     }
 
-    public WeldContainer getContainer() {
+    public ArcContainer getContainer() {
         return container;
     }
 }

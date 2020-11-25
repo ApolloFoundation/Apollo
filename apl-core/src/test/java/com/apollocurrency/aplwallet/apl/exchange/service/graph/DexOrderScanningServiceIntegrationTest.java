@@ -14,10 +14,11 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderScan;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 
 import javax.enterprise.event.Event;
@@ -35,7 +36,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-@EnableWeld
+@QuarkusTest
 class DexOrderScanningServiceIntegrationTest {
 
     Blockchain blockchain = mock(Blockchain.class);
@@ -48,7 +49,7 @@ class DexOrderScanningServiceIntegrationTest {
     private ScanPerformer scanPerformer = mock(ScanPerformer.class);
     private OrderScanDao orderScanDao = mock(OrderScanDao.class);
     private DexCandlestickDao candlestickDao = mock(DexCandlestickDao.class);
-    @WeldSetup
+/*    @WeldSetup
     WeldInitiator weld = WeldInitiator.from(DexOrderScanningService.class)
         .addBeans(
             MockBean.of(orderDao, DexOrderDao.class)
@@ -57,7 +58,7 @@ class DexOrderScanningServiceIntegrationTest {
             , MockBean.of(blockchain, Blockchain.class)
             , MockBean.of(dispatchManager, TaskDispatchManager.class)
             , MockBean.of(candlestickDao, DexCandlestickDao.class))
-        .build();
+        .build();*/
 
     {
         doReturn(mock(TaskDispatcher.class)).when(dispatchManager).newScheduledDispatcher(SERVICE_NAME);

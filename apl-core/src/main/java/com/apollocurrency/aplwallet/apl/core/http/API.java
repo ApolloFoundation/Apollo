@@ -40,7 +40,7 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jetty.security.ConstraintMapping;
+/*import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.server.Connector;
@@ -57,10 +57,10 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.security.Constraint;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;*/
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
-import org.jboss.weld.environment.servlet.Listener;
+//import org.jboss.weld.environment.servlet.Listener;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -84,7 +84,7 @@ import java.util.StringJoiner;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-@Singleton
+//@Singleton
 @Slf4j
 public final class API {
 
@@ -104,7 +104,8 @@ public final class API {
     static boolean enableAPIUPnP;
     private static Set<String> allowedBotHosts;
     private static List<NetworkAddress> allowedBotNets;
-    private static Server apiServer;
+//    private static Server apiServer;
+    private static Object apiServer;
 
     private static URI welcomePageUri;
     private static URI serverRootUri;
@@ -117,13 +118,14 @@ public final class API {
     final int minThreadPoolSize;
     final boolean enableSSL;
     private final UPnP upnp;
-    private final JettyConnectorCreator jettyConnectorCreator;
+//    private final JettyConnectorCreator jettyConnectorCreator;
 
     @Inject
-    public API(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator jettyConnectorCreator) {
+//    public API(PropertiesHolder propertiesHolder, UPnP upnp, JettyConnectorCreator jettyConnectorCreator) {
+    public API(PropertiesHolder propertiesHolder, UPnP upnp, Object jettyConnectorCreator) {
         this.propertiesHolder = propertiesHolder;
         this.upnp = upnp;
-        this.jettyConnectorCreator = jettyConnectorCreator;
+//        this.jettyConnectorCreator = jettyConnectorCreator;
         maxRecords = propertiesHolder.getIntProperty("apl.maxAPIRecords");
         enableAPIUPnP = propertiesHolder.getBooleanProperty("apl.enableAPIUPnP");
         apiServerIdleTimeout = propertiesHolder.getIntProperty("apl.apiServerIdleTimeout");
@@ -241,6 +243,7 @@ public final class API {
     @SneakyThrows
     public final void start() {
 
+/*
         if (enableAPIServer) {
 
             final QueuedThreadPool threadPool = getQueuedThreadPool();
@@ -411,9 +414,11 @@ public final class API {
             isOpenAPI = false;
             LOG.info("API server not enabled");
         }
+*/
 
     }
 
+/*
     private QueuedThreadPool getQueuedThreadPool() {
         int minThreadPoolSizeLocal;
         int maxThreadPoolSizeLocal;
@@ -430,11 +435,12 @@ public final class API {
         threadPool.setName("APIThreadPool");
         return threadPool;
     }
+*/
 
     public final void shutdown() {
         if (apiServer != null) {
             try {
-                apiServer.stop();
+//                apiServer.stop();
                 for (int extPort : externalPorts) {
                     upnp.deletePort(extPort);
                 }
@@ -444,6 +450,7 @@ public final class API {
         }
     }
 
+/*
     private void disableHttpMethods(ServletContextHandler servletContext) {
         SecurityHandler securityHandler = servletContext.getSecurityHandler();
         if (securityHandler == null) {
@@ -479,6 +486,7 @@ public final class API {
         mapping.setMethod(httpMethod);
         securityHandler.addConstraintMapping(mapping);
     }
+*/
 
     public URI getServerRootUri() {
         return serverRootUri;

@@ -40,16 +40,18 @@ import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -92,15 +94,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 @Tag("slow")
-@EnableWeld
+@QuarkusTest
 @Slf4j
 class BlockchainTest extends DBContainerRootTest {
     static DbExtension extension;// init later in manual mode
     static DbPopulator shard1Populator;
     static DbPopulator shard2Populator;
+    @Mock
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    @Mock
     PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
+    @Mock
     TimeService timeService = mock(TimeService.class);
+    @Mock
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     TransactionTestData td = new TransactionTestData();
 
@@ -108,7 +114,7 @@ class BlockchainTest extends DBContainerRootTest {
         initPublicKeyDao();
     }
 
-    @WeldSetup
+/*    @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(TransactionDaoImpl.class, BlockchainImpl.class, BlockDaoImpl.class,
         TransactionIndexDao.class, DaoConfig.class, JdbiTransactionalInterceptor.class,
         TransactionRowMapper.class,
@@ -127,7 +133,7 @@ class BlockchainTest extends DBContainerRootTest {
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
-        .build();
+        .build();*/
     @Inject
     private Blockchain blockchain;
     private TransactionTestData txd;

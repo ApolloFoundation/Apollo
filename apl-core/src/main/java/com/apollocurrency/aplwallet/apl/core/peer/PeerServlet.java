@@ -48,11 +48,11 @@ import com.apollocurrency.aplwallet.apl.util.QueuedThreadPool;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.io.CountingInputReader;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
+/*import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
-import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;*/
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
@@ -69,7 +69,7 @@ import java.io.StringWriter;
 import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.ExecutorService;
 @Slf4j
-public final class PeerServlet extends WebSocketServlet {
+public final class PeerServlet /*extends WebSocketServlet*/ {
     @Inject
     private PropertiesHolder propertiesHolder;
     @Inject
@@ -87,9 +87,9 @@ public final class PeerServlet extends WebSocketServlet {
 
     private ExecutorService threadPool;
 
-    @Override
+//    @Override
     public void init() throws ServletException {
-        super.init();
+//        super.init();
         lookupComponents();
         threadPool = new QueuedThreadPool(
             Runtime.getRuntime().availableProcessors(),
@@ -166,12 +166,12 @@ public final class PeerServlet extends WebSocketServlet {
      *
      * @param factory WebSocket factory
      */
-    @Override
+/*    @Override
     public void configure(WebSocketServletFactory factory) {
         factory.getPolicy().setIdleTimeout(PeersService.webSocketIdleTimeout);
         factory.getPolicy().setMaxBinaryMessageSize(PeersService.MAX_MESSAGE_SIZE);
         factory.setCreator(new PeerSocketCreator());
-    }
+    }*/
 
     private void processException(Peer peer, Exception e) {
         if (peer != null) {
@@ -328,7 +328,7 @@ public final class PeerServlet extends WebSocketServlet {
     /**
      * WebSocket creator for peer connections
      */
-    private class PeerSocketCreator implements WebSocketCreator {
+    private class PeerSocketCreator /*implements WebSocketCreator*/ {
         /**
          * Create a peer WebSocket
          *
@@ -336,6 +336,7 @@ public final class PeerServlet extends WebSocketServlet {
          * @param resp WebSocket upgrade response
          * @return WebSocket
          */
+/*
         @Override
         public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
             Object res = null;
@@ -354,5 +355,6 @@ public final class PeerServlet extends WebSocketServlet {
             }
             return res;
         }
+*/
     }
 }

@@ -147,7 +147,7 @@ public class PeersService {
     private final TimeLimiterService timeLimiterService;
     private final PropertiesHolder propertiesHolder;
     private final Blockchain blockchain;
-    private final PeerHttpServer peerHttpServer;
+//    private final PeerHttpServer peerHttpServer;
     private final TaskDispatchManager taskDispatchManager;
     private final AccountService accountService;
     List<String> wellKnownPeers;
@@ -170,7 +170,7 @@ public class PeersService {
                         Blockchain blockchain,
                         TimeService timeService,
                         TaskDispatchManager taskDispatchManager,
-                        PeerHttpServer peerHttpServer,
+//                        PeerHttpServer peerHttpServer,
                         TimeLimiterService timeLimiterService,
                         AccountService accountService,
                         TransactionConverter transactionConverter,
@@ -180,7 +180,7 @@ public class PeersService {
         this.blockchain = blockchain;
         this.timeService = timeService;
         this.taskDispatchManager = taskDispatchManager;
-        this.peerHttpServer = peerHttpServer;
+//        this.peerHttpServer = peerHttpServer;
         this.timeLimiterService = timeLimiterService;
         this.accountService = accountService;
         this.transactionConverter = transactionConverter;
@@ -204,11 +204,11 @@ public class PeersService {
         hideErrorDetails = propertiesHolder.getBooleanProperty("apl.hideErrorDetails", true);
         useTLS = propertiesHolder.getBooleanProperty("apl.userPeersTLS", true);
         String myHost = null;
-        if (peerHttpServer.getMyExtAddress() != null) {
+/*        if (peerHttpServer.getMyExtAddress() != null) {
             PeerAddress pa = peerHttpServer.getMyExtAddress();
             myHost = pa.getHost();
             myPort = pa.getPort();
-        }
+        }*/
         myHallmark = Convert.emptyToNull(propertiesHolder.getStringProperty("apl.myHallmark", "").trim());
         if (myHallmark != null && PeersService.myHallmark.length() > 0) {
             try {
@@ -217,16 +217,16 @@ public class PeersService {
                 if (!hallmark.isValid()) {
                     throw new PeerRuntimeException("Hallmark is not valid");
                 }
-                if (peerHttpServer.getMyExtAddress() != null) {
+/*                if (peerHttpServer.getMyExtAddress() != null) {
                     if (!hallmark.getHost().equals(myHost)) {
                         throw new PeerRuntimeException("Invalid hallmark host");
                     }
                     if (myPort != hallmark.getPort()) {
                         throw new PeerRuntimeException("Invalid hallmark port");
                     }
-                }
+                }*/
             } catch (RuntimeException e) {
-                LOG.error("Your hallmark is invalid: " + myHallmark + " for your address: " + peerHttpServer.getMyExtAddress());
+                LOG.error("Your hallmark is invalid: " + myHallmark + " for your address: "/* + peerHttpServer.getMyExtAddress()*/);
                 throw new PeerRuntimeException(e.toString(), e);
             }
         }
@@ -299,7 +299,7 @@ public class PeersService {
 
         configureBackgroundTasks();
 
-        peerHttpServer.start();
+//        peerHttpServer.start();
     }
 
     private void configureBackgroundTasks() {
@@ -347,6 +347,7 @@ public class PeersService {
         PeerInfo pi = new PeerInfo();
         LOG.debug("Start filling 'MyPeerInfo'...");
         List<Peer.Service> servicesList = new ArrayList<>();
+/*
         PeerAddress myExtAddress = peerHttpServer.getMyExtAddress();
 
         if (myExtAddress != null) {
@@ -361,6 +362,7 @@ public class PeersService {
         } else {
             LOG.debug("Peer external address is NOT SET");
         }
+*/
 
         if (myHallmark != null && myHallmark.length() > 0) {
             pi.setHallmark(myHallmark);
@@ -368,9 +370,9 @@ public class PeersService {
         }
         pi.setApplication(Constants.APPLICATION);
         pi.setVersion(Constants.VERSION.toString());
-        pi.setPlatform(peerHttpServer.getMyPlatform());
+//        pi.setPlatform(peerHttpServer.getMyPlatform());
         pi.setChainId(blockchainConfig.getChain().getChainId().toString());
-        pi.setShareAddress(peerHttpServer.isShareMyAddress());
+//        pi.setShareAddress(peerHttpServer.isShareMyAddress());
         if (!blockchainConfig.isEnablePruning() && propertiesHolder.INCLUDE_EXPIRED_PRUNABLE()) {
             servicesList.add(Peer.Service.PRUNABLE);
         }
@@ -430,7 +432,7 @@ public class PeersService {
     public void shutdown() {
         try {
             shutdown = true;
-            peerHttpServer.shutdown();
+//            peerHttpServer.shutdown();
             TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
             if (dispatcher != null) {
                 dispatcher.shutdown();
@@ -453,9 +455,9 @@ public class PeersService {
 
     public void suspend() {
         LOG.debug("peerHttpServer suspend...");
-        if (peerHttpServer != null) {
+/*        if (peerHttpServer != null) {
             suspend = peerHttpServer.suspend();
-        }
+        }*/
         TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
         dispatcher.suspend();
         getActivePeers().forEach((p) -> {
@@ -465,9 +467,11 @@ public class PeersService {
 
     public void resume() {
         LOG.debug("peerHttpServer resume...");
+/*
         if (suspend && peerHttpServer != null) {
             suspend = !peerHttpServer.resume();
         }
+*/
         TaskDispatcher dispatcher = taskDispatchManager.getDispatcher(BACKGROUND_SERVICE_NAME);
         dispatcher.resume();
     }
@@ -582,10 +586,10 @@ public class PeersService {
                 return true;
             }
         }
-        PeerAddress myExtAddr = peerHttpServer.getMyExtAddress();
+/*        PeerAddress myExtAddr = peerHttpServer.getMyExtAddress();
         if (pa.compareTo(myExtAddr) == 0) {
             return true;
-        }
+        }*/
         return false;
     }
 
@@ -622,8 +626,8 @@ public class PeersService {
         //check not-null announced address and do not create peer
         //if it is not resolvable
         PeerAddress apa = resolveAnnouncedAddress(announcedAddress);
-        peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService, peerHttpServer.getPeerServlet(),
-            this, timeLimiterService.acquireLimiter("P2PTransport"), accountService);
+//        peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService, peerHttpServer.getPeerServlet(),
+//            this, timeLimiterService.acquireLimiter("P2PTransport"), accountService);
         listeners.notify(peer, Event.NEW_PEER);
         if (apa != null) {
             connectablePeers.put(apa.getAddrWithPort(), peer);

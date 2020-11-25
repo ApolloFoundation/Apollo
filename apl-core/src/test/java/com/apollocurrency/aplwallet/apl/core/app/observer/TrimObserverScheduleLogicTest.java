@@ -14,11 +14,12 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @Slf4j
-@EnableWeld
+@QuarkusTest
 @Execution(ExecutionMode.CONCURRENT)
 class TrimObserverScheduleLogicTest {
     TrimService trimService = mock(TrimService.class);
@@ -50,14 +51,14 @@ class TrimObserverScheduleLogicTest {
     HeightConfig config = Mockito.mock(HeightConfig.class);
     Random random = new Random();
     Blockchain blockchain = mock(Blockchain.class);
-    @WeldSetup
+/*    @WeldSetup
     WeldInitiator weld = WeldInitiator.from(TrimObserver.class)
         .addBeans(MockBean.of(trimService, TrimService.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(random, Random.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class))
-        .build();
+        .build();*/
     @Inject
     Event<Block> blockEvent;
     @Inject

@@ -157,14 +157,20 @@
       <artifactId>javax.ws.rs-api</artifactId>
       <scope>provided</scope>
     </dependency>
+<!--
     <dependency>
       <groupId>org.jboss.weld.servlet</groupId>
       <artifactId>weld-servlet-shaded</artifactId>
       <scope>provided</scope>
     </dependency>
+-->
     <dependency>
       <groupId>io.swagger.core.v3</groupId>
       <artifactId>swagger-jaxrs2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-openapi</artifactId>
     </dependency>
     <!-- Bean Validation API support -->
     <dependency>

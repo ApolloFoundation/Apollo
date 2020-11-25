@@ -11,11 +11,12 @@ import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import io.quarkus.test.junit.QuarkusTest;
 import org.apache.commons.io.FileUtils;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
@@ -37,7 +38,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.slf4j.LoggerFactory.getLogger;
 
-@EnableWeld
+@QuarkusTest
 class DownloadableFilesManagerTest {
     // @formatter:off
     private static final Logger log = getLogger(DownloadableFilesManagerTest.class);
@@ -54,6 +55,7 @@ class DownloadableFilesManagerTest {
         when(chainCoinfig.getChain()).thenReturn(chain);
     }
 
+/*
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
                ShardNameHelper.class,
@@ -61,6 +63,7 @@ class DownloadableFilesManagerTest {
             .addBeans(MockBean.of(dirProvider, DirProvider.class))
             .addBeans(MockBean.of(chainCoinfig, BlockchainConfig.class))
             .build();
+*/
     String fileBaseDir =System.getProperty("java.io.tmpdir")+"/"+Constants.APPLICATION;
     String zipFileName = "apl-blockchain-arch-1.zip";
 

@@ -18,11 +18,12 @@ import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.jboss.weld.junit5.EnableWeld;
+/*import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,7 +59,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
-@EnableWeld
+@QuarkusTest
 class PrunableArchiveMigratorTest {
     @Mock
     ShardDao shardDao;
@@ -79,8 +80,8 @@ class PrunableArchiveMigratorTest {
     DatabaseManager databaseManager;
     @RegisterExtension
     TemporaryFolderExtension extension = new TemporaryFolderExtension();
-    @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(Event.class, PropertiesHolder.class, BlockchainConfig.class).build(); // only for Prunable db table mocks
+//    @WeldSetup
+//    WeldInitiator weld = WeldInitiator.from(Event.class, PropertiesHolder.class, BlockchainConfig.class).build(); // only for Prunable db table mocks
     PrunableArchiveMigrator migrator;
     UUID chainId = UUID.fromString("3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6");
     Shard shard1 = new Shard(1L, new byte[32], ShardState.FULL, 2000, null, new long[3], new int[3], new int[3], new byte[32]);

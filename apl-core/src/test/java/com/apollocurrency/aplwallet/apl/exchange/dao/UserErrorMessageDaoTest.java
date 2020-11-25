@@ -13,36 +13,54 @@ import com.apollocurrency.aplwallet.apl.data.UserErrorMessageTestData;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserErrorMessage;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
+import io.quarkus.test.Mock;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
 
 @Slf4j
 
 @Tag("slow")
-@EnableWeld
+@QuarkusTest
 public class UserErrorMessageDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer);
+//    @RegisterExtension
+//    public ArcTestContainer container = new ArcTestContainer(Seven.class, One.class, VetoedInterceptor.class, Logging.class);
 
+    @Dependent
+    private Jdbi jdbi = extension.getDatabaseManager().getJdbi();
+    @Dependent
+    JdbiHandleFactory factory = extension.getDatabaseManager().getJdbiHandleFactory();
+    @Dependent
+    DatabaseManager databaseManager = extension.getDatabaseManager();
+    @Dependent
+    UserErrorMessageDao userErrorMessageDao = mock(UserErrorMessageDao.class);
+    @Dependent
+    DaoConfig daoConfig = mock(DaoConfig.class);
+/*
     @WeldSetup
     WeldInitiator weld = WeldUtils.from(List.of(UserErrorMessageDao.class, DaoConfig.class), List.of())
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .build();
+*/
 
     @Inject
     UserErrorMessageDao dao;

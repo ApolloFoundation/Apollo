@@ -38,10 +38,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadin
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -60,7 +61,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@EnableWeld
+@QuarkusTest
 @ExtendWith(MockitoExtension.class)
 class TransactionProcessorTest {
 
@@ -84,7 +85,7 @@ class TransactionProcessorTest {
     private UnconfirmedTransactionProcessingService processingService = mock(UnconfirmedTransactionProcessingService.class);
     private MemPool memPool = mock(MemPool.class);
 
-    @WeldSetup
+/*    @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
@@ -104,7 +105,7 @@ class TransactionProcessorTest {
         .addBeans(MockBean.of(taskDispatchManager, TaskDispatchManager.class))
         .addBeans(MockBean.of(accountPublicKeyService, AccountPublicKeyService.class))
         .addBeans(MockBean.of(transactionTypeFactory, TransactionTypeFactory.class))
-        .build();
+        .build();*/
 
     private TransactionProcessor service;
     TransactionTestData td;

@@ -5,10 +5,11 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
@@ -21,14 +22,16 @@ import static org.mockito.Mockito.mock;
 /**
  * @author al
  */
-@EnableWeld
+@QuarkusTest
 public class PeerAddressTest {
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
 
+/*
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from()
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .build();
+*/
     @Inject
     PropertiesHolder ph;
 

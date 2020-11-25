@@ -27,11 +27,12 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.junit.MockBean;
+/*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
+import org.jboss.weld.junit5.WeldSetup;*/
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -52,14 +53,14 @@ import static org.mockito.Mockito.mock;
 @Slf4j
 
 @Tag("slow")
-@EnableWeld
+@QuarkusTest
 class ReferencedTransactionMigratorTest extends DbContainerBaseTest {
 
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(mariaDBContainer);
     TransactionTestData td = new TransactionTestData();
 
-    @WeldSetup
+/*    @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
         ChainsConfigHolder.class, BlockchainConfig.class, FullTextConfigImpl.class,
         TransactionRowMapper.class,
@@ -73,7 +74,7 @@ class ReferencedTransactionMigratorTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(Mockito.mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
-        .build();
+        .build();*/
 
     @Inject
     ReferencedTransactionDaoImpl referencedTransactionDao;
