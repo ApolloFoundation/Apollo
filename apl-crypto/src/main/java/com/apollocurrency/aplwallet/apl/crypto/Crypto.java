@@ -202,12 +202,12 @@ public final class Crypto {
                 return false;
             }
             if (!Curve25519.isCanonicalSignature(signature)) {
-                LOG.debug("Rejecting non-canonical signature");
+                LOG.debug("Rejecting non-canonical signature: {}", Convert.toHexString(signature));
                 return false;
             }
 
             if (!Curve25519.isCanonicalPublicKey(publicKey)) {
-                LOG.debug("Rejecting non-canonical public key");
+                LOG.debug("Rejecting non-canonical publicKey: {}", Convert.toHexString(publicKey));
                 return false;
             }
 
