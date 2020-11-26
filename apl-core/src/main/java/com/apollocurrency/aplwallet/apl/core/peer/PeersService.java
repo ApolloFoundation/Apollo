@@ -152,12 +152,12 @@ public class PeersService {
     private final AccountService accountService;
     List<String> wellKnownPeers;
     Set<String> knownBlacklistedPeers;
-    boolean shutdown = false;
-    boolean suspend = false;
+    volatile boolean shutdown = false;
+    volatile boolean suspend = false;
     private List<Peer.Service> myServices = new ArrayList<>();
     private volatile BlockchainState currentBlockchainState;
     private JSONStreamAware myPeerInfoRequest;
-    private JSONStreamAware myPeerInfoResponse;
+    private volatile JSONStreamAware myPeerInfoResponse;
     private BlockchainProcessor blockchainProcessor;
     private volatile TimeService timeService;
     private final TransactionConverter transactionConverter;
