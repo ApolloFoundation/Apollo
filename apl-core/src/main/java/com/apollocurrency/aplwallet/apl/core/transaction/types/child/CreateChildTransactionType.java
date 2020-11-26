@@ -49,7 +49,7 @@ public class CreateChildTransactionType extends ChildAccountTransactionType {
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        if (getBlockchainConfig().isTransactionV2ActiveAtHeight(blockchain.getHeight())) {
+        if (!getBlockchainConfig().isTransactionV2ActiveAtHeight(blockchain.getHeight())) {
             throw new AplException.NotYetEnabledException("Transactions of Type 'CreateChildAccount' are not yet enabled");
         }
         super.doStateIndependentValidation(transaction);
