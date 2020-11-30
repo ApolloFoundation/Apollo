@@ -130,7 +130,7 @@ public class PeersService {
     private static int pushThreshold;
     private static int pullThreshold;
     private static int sendToPeersLimit;
-    private static JSONObject myPeerInfo;
+    private static volatile JSONObject myPeerInfo;
     public final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersExecutorService");
     public final boolean isLightClient;
     @Getter
@@ -156,12 +156,12 @@ public class PeersService {
     private final AccountService accountService;
     List<String> wellKnownPeers;
     Set<String> knownBlacklistedPeers;
-    boolean shutdown = false;
-    boolean suspend = false;
+    volatile boolean shutdown = false;
+    volatile boolean suspend = false;
     private List<Peer.Service> myServices = new ArrayList<>();
-    private BlockchainState currentBlockchainState;
+    private volatile BlockchainState currentBlockchainState;
     private JSONStreamAware myPeerInfoRequest;
-    private JSONStreamAware myPeerInfoResponse;
+    private volatile JSONStreamAware myPeerInfoResponse;
     private BlockchainProcessor blockchainProcessor;
     private volatile TimeService timeService;
     private final IdentityService identityService;
@@ -804,7 +804,7 @@ public class PeersService {
                     }
                 }
             }
-            log.trace("Time to send to peers async {}", (System.nanoTime() - time));
+            log.trace("Time to send to peers async {}", (System.nanoTime() - time) / 1000);
         });
     }
 
