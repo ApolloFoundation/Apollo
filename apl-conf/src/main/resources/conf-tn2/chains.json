@@ -53,7 +53,7 @@
         }
       },
       {
-        "height": 478000,
+        "height": 452000,
         "maxNumberOfTransactions": 255,
         "maxArbitraryMessageLength": 160,
         "maxNumberOfChildAccounts": 10,
