@@ -18,7 +18,6 @@ import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.AplContainer;
-import com.apollocurrency.aplwallet.apl.util.cdi.AplContainerBuilder;
 import com.apollocurrency.aplwallet.apl.util.env.EnvironmentVariables;
 import com.apollocurrency.aplwallet.apl.util.env.PosixExitCodes;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
@@ -36,9 +35,6 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocati
 import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
-import io.quarkus.runtime.Quarkus;
-import io.quarkus.runtime.QuarkusApplication;
-import io.quarkus.runtime.annotations.QuarkusMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +55,7 @@ import java.util.UUID;
  *
  * @author alukin@gmail.com
  */
-@QuarkusMain
+// @Singleton
 public class Apollo {
 
     //    System properties to load by PropertiesConfigLoader
@@ -149,20 +145,10 @@ public class Apollo {
         );
     }
 
-//    public static void main(String... args) {
-//        Quarkus.run(MyApp.class, args);
-//    }
-//
-//    public static class MyApp implements QuarkusApplication {
-//        public int run(String... argv) throws Exception {
-//        }
-//    }
-//
-//        /**
-//         * @param argv the command line arguments
-//         */
+    /**
+     * @param argv the command line arguments
+     */
     public static void main(String[] argv) {
-//    public static void main(String... argv) {
         System.out.println("Initializing Apollo");
         Apollo app = new Apollo();
 
@@ -203,7 +189,7 @@ public class Apollo {
 //cheat classloader to get access to package resources
         ConfPlaceholder ph = new ConfPlaceholder();
 //load configuration files
-        EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
+        EnvironmentVariables envVars = new EnvironmentVariables();
         String configDir = StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir;
 
         ConfigDirProviderFactory.setup(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx, args.chainId, configDir);
@@ -293,7 +279,6 @@ public class Apollo {
 
         log.debug("Weld CDI container build done");
 */
-        Quarkus.run(argv);
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         app.propertiesHolder.init(props);
@@ -325,7 +310,6 @@ public class Apollo {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();
         }
-        Quarkus.waitForExit();
     }
 
     public static void shutdownWeldContainer() {

@@ -4,8 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.util.env;
 
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
+import com.apollocurrency.aplwallet.apl.util.Constants;
+
+@Singleton
 public class EnvironmentVariables {
     public String logDir = "";
     public String dbDir = "";
@@ -15,17 +19,14 @@ public class EnvironmentVariables {
     public String pidFile = "";
     public String configDir = "";
     public String dataExportDir = ""; // path to keep exported CSV files
-    private String applicationName;
+    private String applicationName = Constants.APPLICATION_DIR_NAME.toUpperCase();
 
-    public EnvironmentVariables(String applicationName) {
-        if (StringUtils.isBlank(applicationName)) {
-            throw new IllegalArgumentException("Application name cannot be null or blank");
-        }
-        this.applicationName = applicationName.toUpperCase();
-        retrieve();
+    @Inject
+    public  EnvironmentVariables() {
+        init();
     }
 
-    protected final void retrieve() {
+    protected final void init() {
         logDir = System.getenv(applicationName + "_LOG_DIR");
         dbDir = System.getenv(applicationName + "_DB_DIR");
         vaultKeystoreDir = System.getenv(applicationName + "_VAULT_KEY_DIR");
