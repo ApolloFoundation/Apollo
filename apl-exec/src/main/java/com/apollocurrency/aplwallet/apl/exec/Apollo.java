@@ -76,7 +76,7 @@ public class Apollo {
     public static DirProvider dirProvider;
     //We have dir provider configured in logback.xml so should init log later
     private static Logger log;
-    private static AplContainer container;
+//    private static AplContainer container;
     private static AplCoreRuntime aplCoreRuntime;
     private PropertiesHolder propertiesHolder;
     private TaskDispatchManager taskDispatchManager;
@@ -187,7 +187,7 @@ public class Apollo {
         System.setProperty("javax.net.ssl.trustStoreType", "JKS");
 
 //cheat classloader to get access to package resources
-        ConfPlaceholder ph = new ConfPlaceholder();
+//        ConfPlaceholder ph = new ConfPlaceholder();
 //load configuration files
         EnvironmentVariables envVars = new EnvironmentVariables();
         String configDir = StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir;
@@ -313,11 +313,13 @@ public class Apollo {
     }
 
     public static void shutdownWeldContainer() {
+/*
         try {
-//            container.shutdown();
+            container.shutdown();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
         }
+*/
     }
 
     private static String getCustomDbPath(UUID chainId, Properties properties) { //maybe better to set dbUrl or add to dirProvider
