@@ -54,7 +54,11 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
         }
         this.applicationName = applicationName.trim();
         this.isService = isService;
-
+        
+        if(netIdx<0 && uuidOrPart.isEmpty()){
+            uuidOrPart = CHAIN_IDS[0]; //default to main net if no params
+        }
+        
         if (!uuidOrPart.isEmpty()) {
             try {
                 chainUuid = UUID.fromString(uuidOrPart);
@@ -66,7 +70,7 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
         if (netIdx > CONF_DIRS.length - 1) {
             System.err.println("Net index " + netIdx + " is greater than last known.");
             this.netIndex = CONF_DIRS.length - 1;
-            System.err.println("Net index now is lat one: " + netIdx);
+            System.err.println("Net index now is last one: " + netIdx);
         } else {
             this.netIndex = netIdx;
         }
