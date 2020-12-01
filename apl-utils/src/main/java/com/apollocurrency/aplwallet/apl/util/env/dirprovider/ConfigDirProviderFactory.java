@@ -3,6 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
+import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 
 import java.io.IOException;
@@ -17,6 +21,7 @@ import java.util.UUID;
 /**
  * Simple factory which should used for configDirProvider creation
  */
+@Singleton
 public class ConfigDirProviderFactory {
 
     private static boolean isService;
@@ -24,6 +29,10 @@ public class ConfigDirProviderFactory {
     private static int netIdx;
     private static String uuidOrPart;
     private static String configDir = null;
+
+    @Inject
+    public ConfigDirProviderFactory() {
+    }
 
     public static void setup(boolean isServiceP, String applicationNameP, int netIdxP, String uuidOrPartP, String configDirP) {
         isService = isServiceP;
@@ -43,6 +52,8 @@ public class ConfigDirProviderFactory {
         return res;
     }
 
+    @Produces
+    @Singleton
     public static ConfigDirProvider getConfigDirProvider() {
         ConfigDirProvider cdp = createConfigDirProvider();
         if (cdp.getChainId() == null) {
@@ -65,7 +76,7 @@ public class ConfigDirProviderFactory {
                             }
                         }
                     }
-                } catch (IOException ex) {
+                } catch (IOException ignored) {
 
                 }
             }

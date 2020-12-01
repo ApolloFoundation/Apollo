@@ -15,7 +15,9 @@ import java.util.stream.Collectors;
 
 /**
  * Class for building AplContainer with Weld container instance inside.
+ * @deprecated
  */
+@Deprecated
 public class AplContainerBuilder {
     private static final Logger log = LoggerFactory.getLogger(AplContainerBuilder.class);
 

@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.config;
 
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -8,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import javax.enterprise.inject.Produces;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 @Singleton
@@ -18,8 +20,8 @@ public class EnvConfig {
         return DirProviderFactory.getProvider();
     }
 
-    @Produces
-    @Singleton
+//    @Produces
+//    @Singleton
     public ConfigDirProvider configDirProvider() {
         return ConfigDirProviderFactory.getConfigDirProvider();
     }
@@ -33,5 +35,11 @@ public class EnvConfig {
     @Singleton
     public PropertiesHolder propertiesHolder() {
         return new PropertiesHolder();
+    }
+
+//    @Named("applicationDirName")
+    @Produces
+    public String applicationDirName() {
+        return Constants.APPLICATION_DIR_NAME;
     }
 }

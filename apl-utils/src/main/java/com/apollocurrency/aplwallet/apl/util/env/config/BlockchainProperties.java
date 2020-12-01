@@ -145,18 +145,6 @@ public class BlockchainProperties {
         return Objects.hash(height, maxNumberOfTransactions, maxArbitraryMessageLength, maxNumberOfChildAccounts, blockTime, maxBlockTimeLimit, minBlockTimeLimit, maxBalance, shardingSettings, consensusSettings, transactionFeeSettings);
     }
 
-    public int getHeight() {
-        return height;
-    }
-
-    public int getMaxNumberOfTransactions() {
-        return maxNumberOfTransactions;
-    }
-
-    public void setMaxNumberOfTransactions(int maxNumberOfTransactions) {
-        this.maxNumberOfTransactions = maxNumberOfTransactions;
-    }
-
     public int getMaxArbitraryMessageLength() {
         return maxArbitraryMessageLength;
     }
@@ -167,22 +155,6 @@ public class BlockchainProperties {
 
     public int getMaxEncryptedMessageLength() {
         return maxArbitraryMessageLength + MAX_ENCRYPTED_MESSAGE_HEADER_LENGTH;
-    }
-
-    public int getBlockTime() {
-        return blockTime;
-    }
-
-    public void setBlockTime(int blockTime) {
-        this.blockTime = blockTime;
-    }
-
-    public long getMaxBalance() {
-        return maxBalance;
-    }
-
-    public void setMaxBalance(long maxBalance) {
-        this.maxBalance = maxBalance;
     }
 
     public ConsensusSettings getConsensusSettings() {

@@ -20,9 +20,9 @@ import java.util.UUID;
 public class ChainsConfigHolder {
     private Map<UUID, Chain> chains;
 
-    public ChainsConfigHolder(Map<UUID, Chain> chains) {
-        this.chains = chains;
-    }
+//    public ChainsConfigHolder(Map<UUID, Chain> chains) {
+//        this.chains = chains;
+//    }
 
     public ChainsConfigHolder() {
     }

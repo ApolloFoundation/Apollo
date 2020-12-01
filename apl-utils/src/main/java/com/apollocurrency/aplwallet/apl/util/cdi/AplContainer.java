@@ -7,7 +7,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Apollo CDI with Weld container instance inside.
+ * @deprecated
  */
+@Deprecated
 public class AplContainer {
 
     private static final Logger log = LoggerFactory.getLogger(AplContainer.class);
