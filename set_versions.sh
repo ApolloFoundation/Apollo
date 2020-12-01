@@ -20,3 +20,6 @@ CONST_PATH=apl-utils/src/main/java/com/apollocurrency/aplwallet/apl/util/Constan
 echo "Changing Constants in $CONST_PATH"
 VER_STR="VERSION"
 sed -i -e "s/\ VERSION.*/ VERSION = new Version\(\"$NEW_VERSION\"\);/g" ${CONST_PATH}
+PKG_PATH=apl-exec/packaging/pkg-apollo-blockchain.json
+echo "Changing pkg-apollo-blockchain.json"
+sed -i -e "s/\ \"version\".*/ \"version\": \"$NEW_VERSION\",/g" ${PKG_PATH}
