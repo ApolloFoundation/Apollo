@@ -2,12 +2,12 @@ set /p VERSION=<VERSION
 set WALLETDIR=%1
 del /S /F /Q %1\bin
 del /S /F /Q %1\sbin
-del /S /F /Q %1\*.jar
+del /F /Q %1\*.jar
 
 rem curl --retry 100 -o %1\libs.zip -k https://s3.amazonaws.com/updates.apollowallet.org/libs/ApolloWallet-%VERSION%-libs.zip
 rem unzip -o %1\libs.zip -d %1
 
-rem del /S /F /Q %1\lib
+del /F /Q %1\lib\apl-*
 rem rmdir /S /Q %1\lib
 rem mkdir %1\lib
 
