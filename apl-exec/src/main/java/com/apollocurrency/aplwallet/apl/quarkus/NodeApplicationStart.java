@@ -78,8 +78,8 @@ public class NodeApplicationStart {
     private Map<UUID, Chain> chains;
 
 //    @Inject
-    public NodeApplicationStart(ApolloCommandLine args) {
-        this.args = args;
+    public NodeApplicationStart(/*ApolloCommandLine args*/) {
+//        this.args = args;
 
 //        RuntimeEnvironment.getInstance().setMain(Apollo.class);
 

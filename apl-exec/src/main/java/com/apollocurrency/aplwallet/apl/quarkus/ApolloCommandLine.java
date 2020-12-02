@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.quarkus;
 
 import io.quarkus.picocli.runtime.annotations.TopCommand;
+import lombok.NoArgsConstructor;
 import picocli.CommandLine;
 
 import javax.enterprise.context.Dependent;
@@ -9,6 +10,7 @@ import javax.inject.Inject;
 @TopCommand
 @CommandLine.Command
 @Dependent
+@NoArgsConstructor
 public class ApolloCommandLine implements Runnable {
 
     public static int DEFAULT_DEBUG_LEVEL = 2;
@@ -24,7 +26,7 @@ public class ApolloCommandLine implements Runnable {
 
     @Override
     public void run() {
-        NodeApplicationStart app = new NodeApplicationStart(this);
+        NodeApplicationStart app = new NodeApplicationStart(/*this*/);
         app.run();
     }
 
