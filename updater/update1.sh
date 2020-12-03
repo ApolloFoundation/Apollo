@@ -119,11 +119,11 @@ then
     rm -f $1/*.bat
     rm -f $1/*.vbs
     rm -rf $1/META-INF
-    rm -rf $1/html
+#    rm -rf $1/html
     rm -rf $1/bin/*
     rm -rf $1/sbin/*
-    rm -rf $1/lib/*
-    rm -rf $1/webui/*
+
+#    rm -rf $1/webui/*
     rm -rf $1/*.jar
     
     notify "Copying update files...."
@@ -161,14 +161,18 @@ then
 	chmod 755 $1/secureTransport/runClient.sh
     fi
 
-    rm -rf apollo-wallet-deps-${VERSION}.tar.gz
-    rm -rf apollo-wallet-deps-*
+# Download deps section
+
+#    rm -rf apollo-wallet-deps-${VERSION}.tar.gz
+#    rm -rf apollo-wallet-deps-*
     echo Version = $VERSION
-    wget https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz || curl --retry 100  https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz -o apollo-wallet-deps-${VERSION}.tar.gz
-    tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
-    cp apollo-wallet-deps-${VERSION}/* $1/lib
+#    rm -rf $1/lib/*
+#    rm -rf $1/lib/apl-*
+#    wget https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz || curl --retry 100  https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz -o apollo-wallet-deps-${VERSION}.tar.gz
+#    tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
+#    cp apollo-wallet-deps-${VERSION}/* $1/lib
     
-    rm -rf apollo-wallet-deps-${VERSION}*
+#    rm -rf apollo-wallet-deps-${VERSION}*
 
 # Install JRE
 #    notify "Installing Java Runtime..."
@@ -211,10 +215,9 @@ then
 #	bash ./update3.sh $1 $2 $3 $4 $5
 #    fi
 
-    
+
 
 #    notify "Downloading db shards..."
-    
 
     cd $1 
 
