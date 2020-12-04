@@ -153,7 +153,6 @@ public class ShardDownloadPresenceObserver {
                     // create Lucene search indexes first
                     createLuceneSearchIndexes(con);
                     blockchain.commit(genesisBlock);
-                    dataSource.commit();
                     log.debug("Saved Genesis block = {}", genesisBlock);
                     blockchain.update();
                 } catch (SQLException | GenesisImportException e) {
