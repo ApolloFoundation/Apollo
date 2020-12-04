@@ -2,10 +2,12 @@ package com.apollocurrency.aplwallet.apl.util.cdi;
 
 import io.quarkus.arc.ArcContainer;
 import io.quarkus.arc.impl.ArcContainerImpl;
+/*
 import org.jboss.weld.bootstrap.spi.BeanDiscoveryMode;
 import org.jboss.weld.config.ConfigurationKey;
 import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.environment.se.WeldContainer;
+*/
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

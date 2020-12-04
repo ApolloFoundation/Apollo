@@ -10,7 +10,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.SimpleTimeLimiter;
 import com.google.common.util.concurrent.TimeLimiter;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.environment.util.Collections;
 
 import javax.inject.Singleton;
 import java.util.Enumeration;
@@ -47,8 +46,9 @@ public class TimeLimiterServiceImpl implements TimeLimiterService {
     public void shutdown() {
         if (started) {
             started = false;
-            Enumeration<String> keys = allocatedLimiters.keys();
-            Collections.asList(keys).forEach(name -> Tasks.shutdownExecutor(name, allocatedLimiters.get(name).executor, 5));
+//            Enumeration<String> keys = allocatedLimiters.keySet().stream();
+//            Collections.asList(keys).forEach(name -> Tasks.shutdownExecutor(name, allocatedLimiters.get(name).executor, 5));
+            allocatedLimiters.keySet().stream().forEach(name -> Tasks.shutdownExecutor(name, allocatedLimiters.get(name).executor, 5));
         } else {
             log.warn("The service is already shut down.");
         }

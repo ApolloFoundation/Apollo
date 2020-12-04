@@ -12,8 +12,8 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheStats;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.environment.util.Collections;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -88,7 +88,7 @@ public class InMemoryCacheManager {
     }
 
     public List<String> getAllocatedCacheNames() {
-        return Collections.asList(inMemoryCaches.keys());
+        return new ArrayList<>(inMemoryCaches.keySet());
     }
 
     public CacheStats getStats(String cacheName) {

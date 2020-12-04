@@ -13,8 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiTra
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.weld.environment.se.Weld;
-/*import org.jboss.weld.junit.AbstractWeldInitiator;
+/*import org.jboss.weld.environment.se.Weld;
+import org.jboss.weld.junit.AbstractWeldInitiator;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
