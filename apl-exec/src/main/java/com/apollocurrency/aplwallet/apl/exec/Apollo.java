@@ -294,7 +294,7 @@ public class Apollo {
         SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        aplCoreRuntime.init(runtimeMode, blockchainConfig, app.propertiesHolder, app.taskDispatchManager);
+        aplCoreRuntime.init(runtimeMode, app.taskDispatchManager);
         Convert2.init(blockchainConfig);
 
         try {
@@ -302,9 +302,6 @@ public class Apollo {
             Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime));
             aplCoreRuntime.addCoreAndInit();
             app.initUpdater(args.updateAttachmentFile, args.debugUpdater);
-            if (args.startMint) {
-                aplCoreRuntime.startMinter();
-            }
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();
