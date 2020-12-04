@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.util.cdi;
 
+import javax.enterprise.inject.Vetoed;
+
 import io.quarkus.arc.ArcContainer;
 import io.quarkus.arc.impl.ArcContainerImpl;
 /*
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
  * @deprecated
  */
 @Deprecated
+@Vetoed
 public class AplContainerBuilder {
     private static final Logger log = LoggerFactory.getLogger(AplContainerBuilder.class);
 
@@ -108,8 +111,8 @@ public class AplContainerBuilder {
             newContainer.property(ConfigurationKey.CONCURRENT_DEPLOYMENT.get(), "false");
         }
 */
-        newContainer.beanManager();
-        ((ArcContainerImpl)newContainer).init();
+//        newContainer.beanManager();
+//        ((ArcContainerImpl)newContainer).init();
 
         if (newContainer.isRunning()) {
             log.error("Weld container is unsatisfied!");
