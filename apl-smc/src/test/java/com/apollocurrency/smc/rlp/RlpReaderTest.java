@@ -66,17 +66,14 @@ class RlpReaderTest {
         String value7 = "TheFirstShortString";
         byte[] value8 = new byte[]{10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
 
-        StringBuffer stringBuffer = new StringBuffer();
-        stringBuffer.append( Numeric.toHexString(RlpEncoder.encode(RlpString.create(value1))))
-            .append(Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value2))))
-            .append(Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value3))))
-            .append(Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value4))))
-            .append(Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value5))))
-            .append(Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value6))))
-            .append(Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value7))))
-            .append(Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value8))));
-
-        String hexInput = stringBuffer.toString();
+        String hexInput = Numeric.toHexString(RlpEncoder.encode(RlpString.create(value1))) +
+            Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value2))) +
+            Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value3))) +
+            Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value4))) +
+            Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value5))) +
+            Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value6))) +
+            Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value7))) +
+            Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value8)));
 
         //WHEN
         RlpReader reader = new RlpReader(hexInput);

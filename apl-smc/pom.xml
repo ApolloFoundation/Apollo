@@ -102,11 +102,5 @@
       <artifactId>mockito-junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>com.apollocurrency</groupId>
-      <artifactId>apl-crypto</artifactId>
-      <version>1.48.0</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 </project>
