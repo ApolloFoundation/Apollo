@@ -95,7 +95,6 @@ public class GenesisImporter {
         BlockchainConfigUpdater blockchainConfigUpdater,
         DatabaseManager databaseManager,
         AplAppStatus aplAppStatus,
-        GenesisImporterProducer genesisImporterProducer,
         AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
         AccountTable accountTable,
         ApplicationJsonFactory jsonFactory,
@@ -109,7 +108,7 @@ public class GenesisImporter {
             Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
-        this.genesisParametersLocation = getGenesisParametersLocation(genesisImporterProducer);
+        this.genesisParametersLocation = getGenesisParametersLocation();
         this.jsonFactory = Objects.requireNonNull(jsonFactory, "jsonFactory is NULL");
         this.accountService = Objects.requireNonNull(accountService, "accountService is NULL");
         this.accountPublicKeyService = Objects.requireNonNull(accountPublicKeyService, "accountPublicKeyService is NULL");
@@ -123,10 +122,10 @@ public class GenesisImporter {
         this.resourceLocator = new UserResourceLocator(ConfigDirProviderFactory.getConfigDirProvider(), ConfigDirProviderFactory.getConfigDir());
     }
 
-    private String getGenesisParametersLocation(GenesisImporterProducer genesisImporterProducer) {
-        return Optional.ofNullable(genesisImporterProducer)
-            .map(GenesisImporterProducer::genesisParametersLocation)
-            .orElseThrow(() -> new NullPointerException("genesisParametersLocation is NULL"));
+    private String getGenesisParametersLocation() {
+         String res = ConfigDirProviderFactory.getConfigDirProvider().getConfigName()
+                 +File.separator+"data"+File.separator+"genesisParameters.json";
+         return res;
     }
 
     private void cleanUpGenesisData() {

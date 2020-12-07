@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
+import java.io.File;
 import java.nio.file.Paths;
 import java.util.UUID;
 
@@ -99,7 +100,7 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
         if (netIndex >= 0) {
             res = CONF_DIRS[netIndex];
         } else {
-            res = CONFIGS_DIR_NAME + "/" + chainUuid.toString();
+            res = CONFIGS_DIR_NAME + File.separator + chainUuid.toString();
         }
         return res;
     }
