@@ -78,22 +78,19 @@ public class GenesisImporter {
     private final BlockchainConfigUpdater blockchainConfigUpdater;
     private final BlockchainConfig blockchainConfig;
     private final AplAppStatus aplAppStatus;
-    private final DatabaseManager databaseManager;
-    private final String genesisParametersLocation;
-    private AccountService accountService;
-    private AccountPublicKeyService accountPublicKeyService;
+    private final AccountService accountService;
+    private final AccountPublicKeyService accountPublicKeyService;
     private byte[] CREATOR_PUBLIC_KEY;
     private String genesisTaskId;
     private byte[] computedDigest;
-    private AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
-    private AccountTable accountTable;
-    private ResourceLocator resourceLocator;
+    private final AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
+    private final AccountTable accountTable;
+    private final ResourceLocator resourceLocator;
 
     @Inject
     public GenesisImporter(
         BlockchainConfig blockchainConfig,
         BlockchainConfigUpdater blockchainConfigUpdater,
-        DatabaseManager databaseManager,
         AplAppStatus aplAppStatus,
         AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
         AccountTable accountTable,
@@ -106,9 +103,7 @@ public class GenesisImporter {
             Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
         this.blockchainConfigUpdater =
             Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
-        this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.aplAppStatus = Objects.requireNonNull(aplAppStatus, "aplAppStatus is NULL");
-        this.genesisParametersLocation = getGenesisParametersLocation();
         this.jsonFactory = Objects.requireNonNull(jsonFactory, "jsonFactory is NULL");
         this.accountService = Objects.requireNonNull(accountService, "accountService is NULL");
         this.accountPublicKeyService = Objects.requireNonNull(accountPublicKeyService, "accountPublicKeyService is NULL");
@@ -119,9 +114,11 @@ public class GenesisImporter {
             propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
         this.accountGuaranteedBalanceTable = Objects.requireNonNull(accountGuaranteedBalanceTable, "accountGuaranteedBalanceTable is NULL");
         this.accountTable = Objects.requireNonNull(accountTable, "accountTable is NULL");
+        //TODO why we can not just inject it?
         this.resourceLocator = new UserResourceLocator(ConfigDirProviderFactory.getConfigDirProvider(), ConfigDirProviderFactory.getConfigDir());
     }
-
+    
+//TODO: move to ResourcLocator 
     private String getGenesisParametersLocation() {
          String res = ConfigDirProviderFactory.getConfigDirProvider().getConfigName()
                  +File.separator+"data"+File.separator+"genesisParameters.json";
@@ -138,8 +135,8 @@ public class GenesisImporter {
     @PostConstruct
     public void loadGenesisDataFromResources() {
         if (CREATOR_PUBLIC_KEY == null) {
-            InputStream is = resourceLocator.locate(genesisParametersLocation)
-                .or(() -> resourceLocator.locate("conf" + File.separator + genesisParametersLocation))
+            InputStream is = resourceLocator.locate(getGenesisParametersLocation())
+                .or(() -> resourceLocator.locate("conf" + File.separator + getGenesisParametersLocation()))
                 .orElseThrow(() -> new RuntimeException("Failed to load genesis parameters"));
             loadGenesisDataFromIS(is);
         }

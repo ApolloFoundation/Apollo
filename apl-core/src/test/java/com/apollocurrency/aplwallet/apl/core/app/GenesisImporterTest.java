@@ -111,12 +111,12 @@ class GenesisImporterTest {
 
     UUID chainUuid = UUID.randomUUID();
     BalancesPublicKeysTestData testData;
-    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-    private BlockchainConfigUpdater blockchainConfigUpdater = mock(BlockchainConfigUpdater.class);
-    private HeightConfig config = Mockito.mock(HeightConfig.class);
-    private Chain chain = Mockito.mock(Chain.class);
-    private AplAppStatus aplAppStatus = mock(AplAppStatus.class);
-    private PropertiesHolder envConfig = new PropertiesHolder();
+    private final BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    private final BlockchainConfigUpdater blockchainConfigUpdater = mock(BlockchainConfigUpdater.class);
+    private final HeightConfig config = Mockito.mock(HeightConfig.class);
+    private final Chain chain = Mockito.mock(Chain.class);
+    private final AplAppStatus aplAppStatus = mock(AplAppStatus.class);
+    private final PropertiesHolder envConfig = new PropertiesHolder();
     TransactionTestData td = new TransactionTestData();
 
     @WeldSetup
@@ -174,7 +174,6 @@ class GenesisImporterTest {
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
-            extension.getDatabaseManager(),
             aplAppStatus,
             accountGuaranteedBalanceTable,
             accountTable,
@@ -206,7 +205,6 @@ class GenesisImporterTest {
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
-            extension.getDatabaseManager(),
             aplAppStatus,
             accountGuaranteedBalanceTable,
             accountTable,
@@ -237,7 +235,6 @@ class GenesisImporterTest {
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
-            extension.getDatabaseManager(),
             aplAppStatus,
             accountGuaranteedBalanceTable,
             accountTable,
@@ -267,7 +264,6 @@ class GenesisImporterTest {
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
-            extension.getDatabaseManager(),
             aplAppStatus,
             accountGuaranteedBalanceTable,
             accountTable,
@@ -304,7 +300,6 @@ class GenesisImporterTest {
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
-            extension.getDatabaseManager(),
             aplAppStatus,
             accountGuaranteedBalanceTable,
             accountTable,
@@ -329,7 +324,6 @@ class GenesisImporterTest {
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
-            extension.getDatabaseManager(),
             aplAppStatus,
             accountGuaranteedBalanceTable,
             accountTable,
@@ -354,7 +348,6 @@ class GenesisImporterTest {
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
-            extension.getDatabaseManager(),
             aplAppStatus,
             accountGuaranteedBalanceTable,
             accountTable,
@@ -372,7 +365,6 @@ class GenesisImporterTest {
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
-            extension.getDatabaseManager(),
             aplAppStatus,
             accountGuaranteedBalanceTable,
             accountTable,
@@ -396,7 +388,6 @@ class GenesisImporterTest {
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
-            extension.getDatabaseManager(),
             aplAppStatus,
             accountGuaranteedBalanceTable,
             accountTable,
@@ -417,7 +408,6 @@ class GenesisImporterTest {
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
-            extension.getDatabaseManager(),
             aplAppStatus,
             accountGuaranteedBalanceTable,
             accountTable,
@@ -433,10 +423,8 @@ class GenesisImporterTest {
     void shouldNotSavePublicKeysBecauseOfIncorrectPublicKeyNumberTotal() throws IOException {
         //GIVEN
         doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
-        final DatabaseManager databaseManager = mock(DatabaseManager.class);
         final ApplicationJsonFactory jsonFactory = mock(ApplicationJsonFactory.class);
         final TransactionalDataSource dataSource = mock(TransactionalDataSource.class);
-        when(databaseManager.getDataSource()).thenReturn(dataSource);
         when(dataSource.isInTransaction()).thenReturn(true);
         final JsonParser jsonParser = mock(JsonParser.class);
         when(jsonFactory.createParser(any(InputStream.class))).thenReturn(jsonParser);
@@ -445,7 +433,6 @@ class GenesisImporterTest {
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
-            databaseManager,
             aplAppStatus,
             accountGuaranteedBalanceTable,
             accountTable,
@@ -467,11 +454,7 @@ class GenesisImporterTest {
     void shouldNotSaveBalancesBecauseOfIncorrectBalanceNumberTotal() throws IOException {
         //GIVEN
         doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
-        final DatabaseManager databaseManager = mock(DatabaseManager.class);
         final ApplicationJsonFactory jsonFactory = mock(ApplicationJsonFactory.class);
-        final TransactionalDataSource dataSource = mock(TransactionalDataSource.class);
-        when(databaseManager.getDataSource()).thenReturn(dataSource);
-        when(dataSource.isInTransaction()).thenReturn(true);
         final JsonParser jsonParser = mock(JsonParser.class);
         when(jsonFactory.createParser(any(InputStream.class))).thenReturn(jsonParser);
         when(jsonParser.isClosed()).thenReturn(true);
@@ -484,7 +467,6 @@ class GenesisImporterTest {
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
-            databaseManager,
             aplAppStatus,
             accountGuaranteedBalanceTable,
             accountTable,
@@ -518,7 +500,6 @@ class GenesisImporterTest {
         genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
-            extension.getDatabaseManager(),
             aplAppStatus,
             accountGuaranteedBalanceTable,
             accountTable,
