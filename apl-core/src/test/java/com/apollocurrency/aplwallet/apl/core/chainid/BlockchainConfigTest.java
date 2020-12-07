@@ -59,7 +59,7 @@ public class BlockchainConfigTest {
         "TEST",
         "TEST",
         "Test",
-        10000L, 2, "data.json", BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100));
+        10000L, 2, "data.json", BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, null));
     @Inject
     BlockchainConfig blockchainConfig;
     @Inject
@@ -89,6 +89,31 @@ public class BlockchainConfigTest {
 
         chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement());
         assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
+    }
+
+    @Test
+    void testInitBlockchainConfigForFeatureHeightRequirementTransactionVersions() {
+        blockchainConfig.updateChain(chain);
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, 200));
+        assertEquals(150, blockchainConfig.getTransactionV2Height().get());
+        assertTrue(blockchainConfig.isTransactionV2ActiveAtHeight(200));
+        assertFalse(blockchainConfig.isTransactionV2ActiveAtHeight(50));
+
+        assertEquals(200, blockchainConfig.getTransactionV3Height().get());
+        assertTrue(blockchainConfig.isTransactionV3ActiveAtHeight(250));
+        assertFalse(blockchainConfig.isTransactionV3ActiveAtHeight(150));
+
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, null));
+        assertEquals(150, blockchainConfig.getTransactionV2Height().get());
+        assertFalse(blockchainConfig.getTransactionV3Height().isPresent());
+
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, null, null));
+        assertFalse(blockchainConfig.getTransactionV2Height().isPresent());
+        assertFalse(blockchainConfig.getTransactionV3Height().isPresent());
+
+        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, null, 200));
+
+        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, 200, 100));
     }
 
     @Test
