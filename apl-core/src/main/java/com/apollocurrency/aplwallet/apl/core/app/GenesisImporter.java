@@ -60,8 +60,8 @@ public class GenesisImporter {
     private static final String EPOCH_BEGINNING_JSON_FIELD_NAME = "epochBeginning";
     public static long CREATOR_ID;
     public static long EPOCH_BEGINNING;
-    public static String GENESIS_PARAMS_JSON="data"+File.separator+"genesisParameters.json";
-    public static String GENESIS_ACCOUNTS_JSON="data"+File.separator+"genesisAccounts.json";
+    public  String GENESIS_PARAMS_JSON="data"+File.separator+"genesisParameters.json";
+    public  String GENESIS_ACCOUNTS_JSON="data"+File.separator+"genesisAccounts.json";
     private final ApplicationJsonFactory jsonFactory;
     /**
      * Represents a total number of public keys in a genesisAccounts.json file.
