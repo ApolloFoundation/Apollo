@@ -13,15 +13,12 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.utils.FilterCarriageReturnCharacterInputStream;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.env.config.ResourceLocator;
-import com.apollocurrency.aplwallet.apl.util.env.config.UserResourceLocator;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
@@ -63,7 +60,8 @@ public class GenesisImporter {
     private static final String EPOCH_BEGINNING_JSON_FIELD_NAME = "epochBeginning";
     public static long CREATOR_ID;
     public static long EPOCH_BEGINNING;
-
+    public static String GENESIS_PARAMS_JSON="data"+File.separator+"genesisParameters.json";
+    public static String GENESIS_ACCOUNTS_JSON="data"+File.separator+"genesisAccounts.json";
     private final ApplicationJsonFactory jsonFactory;
     /**
      * Represents a total number of public keys in a genesisAccounts.json file.
@@ -86,7 +84,7 @@ public class GenesisImporter {
     private final AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
     private final AccountTable accountTable;
     private final ResourceLocator resourceLocator;
-
+    
     @Inject
     public GenesisImporter(
         BlockchainConfig blockchainConfig,
@@ -97,7 +95,8 @@ public class GenesisImporter {
         ApplicationJsonFactory jsonFactory,
         PropertiesHolder propertiesHolder,
         AccountService accountService,
-        AccountPublicKeyService accountPublicKeyService
+        AccountPublicKeyService accountPublicKeyService,
+        ResourceLocator resourceLocator    
     ) {
         this.blockchainConfig =
             Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
@@ -114,16 +113,10 @@ public class GenesisImporter {
             propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
         this.accountGuaranteedBalanceTable = Objects.requireNonNull(accountGuaranteedBalanceTable, "accountGuaranteedBalanceTable is NULL");
         this.accountTable = Objects.requireNonNull(accountTable, "accountTable is NULL");
-        //TODO why we can not just inject it?
-        this.resourceLocator = new UserResourceLocator(ConfigDirProviderFactory.getConfigDirProvider(), ConfigDirProviderFactory.getConfigDir());
+        this.resourceLocator =  Objects.requireNonNull(resourceLocator);
+        // new UserResourceLocator(ConfigDirProviderFactory.getConfigDirProvider(), ConfigDirProviderFactory.getConfigDir());
     }
-    
-//TODO: move to ResourcLocator 
-    private String getGenesisParametersLocation() {
-         String res = ConfigDirProviderFactory.getConfigDirProvider().getConfigName()
-                 +File.separator+"data"+File.separator+"genesisParameters.json";
-         return res;
-    }
+
 
     private void cleanUpGenesisData() {
         log.debug("clean Up Incomplete Genesis data...");
@@ -135,14 +128,13 @@ public class GenesisImporter {
     @PostConstruct
     public void loadGenesisDataFromResources() {
         if (CREATOR_PUBLIC_KEY == null) {
-            InputStream is = resourceLocator.locate(getGenesisParametersLocation())
-                .or(() -> resourceLocator.locate("conf" + File.separator + getGenesisParametersLocation()))
+            InputStream is = resourceLocator.locate(GENESIS_PARAMS_JSON)
                 .orElseThrow(() -> new RuntimeException("Failed to load genesis parameters"));
             loadGenesisDataFromIS(is);
         }
     }
 
-    private void loadGenesisDataFromIS(InputStream is) {
+    public void loadGenesisDataFromIS(InputStream is) {
         try (
             final JsonParser jsonParser = jsonFactory.createParser(is)
         ) {
@@ -171,7 +163,8 @@ public class GenesisImporter {
         final long start = System.currentTimeMillis();
         createGenesisTaskIdForStatus();
 
-        final String path = blockchainConfig.getChain().getGenesisLocation();
+        final String path = GENESIS_ACCOUNTS_JSON;
+        
         log.trace("path = {}", path);
         final List<String> publicKeys = new ArrayList<>();
         final Map<String, Long> balances = new HashMap<>();
@@ -303,7 +296,7 @@ public class GenesisImporter {
     private int saveGenesisPublicKeys() {
         final long start = System.currentTimeMillis();
         int count = 0;
-        final String path = blockchainConfig.getChain().getGenesisLocation();
+        final String path = GENESIS_ACCOUNTS_JSON;
         log.trace("Saving public keys from a file: {}", path);
         aplAppStatus.durableTaskUpdate(genesisTaskId, 0.2, "Loading public keys");
 
@@ -369,7 +362,7 @@ public class GenesisImporter {
 
     @SneakyThrows(value = {JsonParseException.class, IOException.class})
     private Pair<Long, Integer> saveBalances() {
-        final String path = blockchainConfig.getChain().getGenesisLocation();
+        final String path = GENESIS_ACCOUNTS_JSON;
 
         final long start = System.currentTimeMillis();
         int count = 0;
@@ -421,7 +414,7 @@ public class GenesisImporter {
     }
 
     List<Map.Entry<String, Long>> loadGenesisAccounts() throws GenesisImportException {
-        final String path = blockchainConfig.getChain().getGenesisLocation();
+        final String path = GENESIS_ACCOUNTS_JSON;
         log.debug("Genesis accounts json resource path = " + path);
         final InputStream is = resourceLocator.locate(path).orElseThrow(() -> new RuntimeException("The resource could not be found, path=" + path));
 

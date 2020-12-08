@@ -13,10 +13,12 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import javax.inject.Singleton;
 
 /**
  * Simple factory which should used for configDirProvider creation
  */
+@Singleton
 public class ConfigDirProviderFactory {
 
     private static boolean isService;
@@ -33,7 +35,8 @@ public class ConfigDirProviderFactory {
         configDir = configDirP;
     }
 
-    public static ConfigDirProvider createConfigDirProvider() {
+
+    private static ConfigDirProvider createConfigDirProvider() {
         ConfigDirProvider res;
         if (RuntimeEnvironment.getInstance().isUnixRuntime()) {
             res = new UnixConfigDirProvider(applicationName, isService, netIdx, uuidOrPart);
@@ -42,6 +45,7 @@ public class ConfigDirProviderFactory {
         }
         return res;
     }
+    
 
     public static ConfigDirProvider getConfigDirProvider() {
         ConfigDirProvider cdp = createConfigDirProvider();
@@ -56,7 +60,7 @@ public class ConfigDirProviderFactory {
                 String dir = Path.of(p, ConfigDirProvider.CONFIGS_DIR_NAME).toAbsolutePath().toString();
                 try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(dir))) {
                     for (Path path : stream) {
-                        //at the mopment we chack directories only
+                        //at the moment we check directories only
                         if (Files.isDirectory(path)) {
                             String fname = path.getFileName().toString();
                             if (fname.toLowerCase().startsWith(uuidOrPart)) {

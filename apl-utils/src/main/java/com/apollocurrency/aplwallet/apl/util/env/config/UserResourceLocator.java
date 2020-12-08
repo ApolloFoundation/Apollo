@@ -16,16 +16,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import javax.inject.Inject;
 
 @Slf4j
 public class UserResourceLocator implements ResourceLocator {
 
     private final ConfigDirProvider dirProvider;
     private final String configDir;
-
-    public UserResourceLocator(ConfigDirProvider dirProvider, String configDir) {
+    
+    @Inject
+    public UserResourceLocator(ConfigDirProvider dirProvider) {
         this.dirProvider = dirProvider;
-        this.configDir = configDir;
+        this.configDir = dirProvider.getConfigName();
     }
 
     @Override
@@ -36,10 +38,10 @@ public class UserResourceLocator implements ResourceLocator {
 
     private Optional<InputStream> locateInResources(String resourceName) {
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-
-        InputStream is = classloader.getResourceAsStream(resourceName);
+        String path =  dirProvider.getConfigName()+File.separator+resourceName;
+        InputStream is = classloader.getResourceAsStream(path);
         if (is != null) {
-            log.info("Located in resources, resource={}", resourceName);
+            log.info("Located in resources, resource={}", path);
         }
 
         return Optional.ofNullable(is);

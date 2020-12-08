@@ -48,7 +48,9 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     public TwoFactorAuthServiceImpl(TwoFactorAuthRepository repository, String issuerSuffix, Random random,
                                     TwoFactorAuthRepository targetFileRepository) {
         if (issuerSuffix == null || issuerSuffix.trim().isEmpty()) {
-            issuerSuffix = RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web";
+          //TODO: what is the difference?  
+          //  issuerSuffix = RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web";
+           issuerSuffix = "web";
         }
         this.repository = repository; // database repo
         this.random = random;
