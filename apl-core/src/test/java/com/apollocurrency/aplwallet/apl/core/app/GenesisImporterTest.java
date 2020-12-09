@@ -83,7 +83,6 @@ import com.apollocurrency.aplwallet.apl.util.env.config.UserResourceLocator;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.CDI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -93,8 +92,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-//@Disabled ("Temporary disabled beause of DI problems")
 
 @Tag("slow")
 @Slf4j
@@ -118,7 +115,7 @@ class GenesisImporterTest {
     @Inject
     AccountTable accountTable;
 
-    static UUID chainUuid = UUID.randomUUID();
+
     BalancesPublicKeysTestData testData;
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private BlockchainConfigUpdater blockchainConfigUpdater = mock(BlockchainConfigUpdater.class);
@@ -132,7 +129,7 @@ class GenesisImporterTest {
     
     @BeforeAll
     public static void beforeAll(){
-        ConfigDirProviderFactory.setup(false, "Apollo", 1, chainUuid.toString(), null); 
+        ConfigDirProviderFactory.setup(false, "Apollo", 0, "", null); 
     }
     
     static Bean<?> createCfgdDirProviderBean() {
@@ -187,8 +184,6 @@ class GenesisImporterTest {
         doReturn(3000000000000000000L).when(config).getMaxBalanceATM();
         doReturn(100L).when(config).getInitialBaseTarget();
 
-//        ConfigDirProviderFactory.setup(false, "Apollo", 1, chainUuid.toString(), null);
-
         testData = new BalancesPublicKeysTestData();
         propertiesHolder.init(
             getGenesisAccountTotalProperties("230730", "84832")
@@ -199,8 +194,6 @@ class GenesisImporterTest {
     @SneakyThrows
     @Test
     void newGenesisBlock() {
-//        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
-//        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
 
         propertiesHolder.init(
             getGenesisAccountTotalProperties("10", "10")
@@ -237,8 +230,7 @@ class GenesisImporterTest {
 
     @Test
     void incorrectGenesisParameter() {
-//        doReturn("conf/data/genesisParameters-INCORRECT.json").when(genesisImporterProducer).genesisParametersLocation();
-//        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
+
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
@@ -271,8 +263,7 @@ class GenesisImporterTest {
         info.setStateOfTask(DurableTaskInfo.TASK_STATES[0]);
         info.setIsCrititcal(true);
         doReturn(Optional.of(info)).when(aplAppStatus).findTaskByName("Shard data import");
-//        doReturn("conf/data/genesisAccounts-HUGE.json").when(chain).getGenesisLocation();
-//        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
+
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
@@ -298,8 +289,7 @@ class GenesisImporterTest {
     @Test
     void savePublicKeysOnly() throws Exception {
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
-//        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
-//        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
+
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
         when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
             .thenReturn(10);
@@ -343,7 +333,7 @@ class GenesisImporterTest {
 
     @Test
     void genesisParamIncorrectPath() {
-//        doReturn("conf/unknown_path/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
+
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
@@ -356,14 +346,13 @@ class GenesisImporterTest {
             accountPublicKeyService,
             resourceLocator
         );
-        genesisImporter.GENESIS_ACCOUNTS_JSON="data/genesisAccounts-testnet.json";
+        genesisImporter.GENESIS_ACCOUNTS_JSON="unknown_path/genesisAccounts-testnet.json";
         assertThrows(RuntimeException.class, () -> genesisImporter.newGenesisBlock());
     }
 
     @Test
     void savePublicKeysAndBalances() {
-//        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
-//        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
+
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
         when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
@@ -393,8 +382,7 @@ class GenesisImporterTest {
 
     @Test
     void incorrectTotalBalanceValue() {
-//        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
-//        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
+
         doReturn(30000000L).when(config).getMaxBalanceATM(); // incorrect value here
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
         GenesisImporter genesisImporter = new GenesisImporter(
@@ -415,8 +403,7 @@ class GenesisImporterTest {
 
     @Test
     void missingBalanceValues() {
-//        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
-//        doReturn("conf/data/genesisAccounts-testnet-MISSING-BALANCES.json").when(chain).getGenesisLocation();
+
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
@@ -436,8 +423,7 @@ class GenesisImporterTest {
     @SneakyThrows
     @Test
     void loadGenesisAccounts() {
-//        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
-//        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
+
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
         when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
             .thenReturn(10);
@@ -463,8 +449,7 @@ class GenesisImporterTest {
 
     @Test
     void loadGenesisAccountsIncorrectKey() {
-//        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
-//        doReturn("conf/data/genesisAccounts-testnet-MISSING-BALANCES.json").when(chain).getGenesisLocation();
+
         propertiesHolder.init(getGenesisAccountTotalProperties("10", "10"));
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
@@ -485,9 +470,7 @@ class GenesisImporterTest {
 
     @Test
     void shouldNotSavePublicKeysBecauseOfIncorrectPublicKeyNumberTotal() throws IOException {
-        //GIVEN
-//        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
-//        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
+
         final DatabaseManager databaseManager = mock(DatabaseManager.class);
         final ApplicationJsonFactory jsonFactory = mock(ApplicationJsonFactory.class);
         final TransactionalDataSource dataSource = mock(TransactionalDataSource.class);
@@ -520,9 +503,7 @@ class GenesisImporterTest {
 
     @Test
     void shouldNotSaveBalancesBecauseOfIncorrectBalanceNumberTotal() throws IOException {
-        //GIVEN
-//        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
-//        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
+
         final DatabaseManager databaseManager = mock(DatabaseManager.class);
         final ApplicationJsonFactory jsonFactory = mock(ApplicationJsonFactory.class);
         final TransactionalDataSource dataSource = mock(TransactionalDataSource.class);
@@ -560,9 +541,7 @@ class GenesisImporterTest {
 
     @Test
     void shouldNotLoadGenesisAccountsBecauseOfIncorrectBalanceNumberTotal() throws IOException {
-        //GIVEN
-//        doReturn("conf/data/genesisParameters.json").when(genesisImporterProducer).genesisParametersLocation();
-//        doReturn("conf/data/genesisAccounts-testnet.json").when(chain).getGenesisLocation();
+
         final ApplicationJsonFactory jsonFactory = mock(ApplicationJsonFactory.class);
         final JsonParser jsonParser = mock(JsonParser.class);
         when(jsonFactory.createParser(any(InputStream.class))).thenReturn(jsonParser);
