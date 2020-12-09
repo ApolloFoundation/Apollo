@@ -114,7 +114,7 @@ public class GenesisImporter {
         this.accountGuaranteedBalanceTable = Objects.requireNonNull(accountGuaranteedBalanceTable, "accountGuaranteedBalanceTable is NULL");
         this.accountTable = Objects.requireNonNull(accountTable, "accountTable is NULL");
         this.resourceLocator =  Objects.requireNonNull(resourceLocator);
-        // new UserResourceLocator(ConfigDirProviderFactory.getConfigDirProvider(), ConfigDirProviderFactory.getConfigDir());
+        
     }
 
 
@@ -125,7 +125,6 @@ public class GenesisImporter {
         this.accountTable.truncate();
     }
 
-    @PostConstruct
     public void loadGenesisDataFromResources() {
         if (CREATOR_PUBLIC_KEY == null) {
             InputStream is = resourceLocator.locate(GENESIS_PARAMS_JSON)
