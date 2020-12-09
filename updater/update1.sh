@@ -122,7 +122,7 @@ then
 #    rm -rf $1/html
     rm -rf $1/bin/*
     rm -rf $1/sbin/*
-
+    rm -rf $1/lib/apl-*
 #    rm -rf $1/webui/*
     rm -rf $1/*.jar
     
