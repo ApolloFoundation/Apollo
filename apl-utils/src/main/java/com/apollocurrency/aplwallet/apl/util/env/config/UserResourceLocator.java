@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -38,10 +39,14 @@ public class UserResourceLocator implements ResourceLocator {
 
     private Optional<InputStream> locateInResources(String resourceName) {
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-        String path =  dirProvider.getConfigName()+File.separator+resourceName;
+        //Windows uses path with backslashes but in java resources it should be simple slash
+        Path p = Path.of(dirProvider.getConfigName(), resourceName);
+        String path = p.normalize().toString().replaceAll("\\\\", "/");
         InputStream is = classloader.getResourceAsStream(path);
         if (is != null) {
             log.info("Located in resources, resource={}", path);
+        }else{
+            log.warn("Can not find resource at: {}",path);
         }
 
         return Optional.ofNullable(is);
