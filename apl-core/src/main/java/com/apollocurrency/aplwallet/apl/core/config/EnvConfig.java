@@ -12,9 +12,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class EnvConfig {
-    
-    
-
+ 
     @Produces
     @Singleton
     public DirProvider dirProvider() {

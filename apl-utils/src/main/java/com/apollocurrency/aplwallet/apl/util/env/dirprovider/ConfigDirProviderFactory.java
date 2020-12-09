@@ -13,12 +13,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import javax.inject.Singleton;
 
 /**
  * Simple factory which should used for configDirProvider creation
  */
-@Singleton
 public class ConfigDirProviderFactory {
 
     private static boolean isService;
@@ -35,7 +33,6 @@ public class ConfigDirProviderFactory {
         configDir = configDirP;
     }
 
-
     private static ConfigDirProvider createConfigDirProvider() {
         ConfigDirProvider res;
         if (RuntimeEnvironment.getInstance().isUnixRuntime()) {
@@ -46,7 +43,6 @@ public class ConfigDirProviderFactory {
         return res;
     }
     
-
     public static ConfigDirProvider getConfigDirProvider() {
         ConfigDirProvider cdp = createConfigDirProvider();
         if (cdp.getChainId() == null) {
