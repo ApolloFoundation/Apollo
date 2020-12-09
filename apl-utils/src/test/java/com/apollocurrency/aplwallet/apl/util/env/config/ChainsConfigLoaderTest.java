@@ -61,7 +61,7 @@ public class ChainsConfigLoaderTest {
         "NOT STABLE testnet for experiments. Don't use it if you don't know what is it", "Apollo",
         "APL", "Apollo",
         30000000000L, 8,
-        "conf/data/genesisAccounts-testnet.json", BLOCKCHAIN_PROPERTIES1, new FeaturesHeightRequirement());
+        BLOCKCHAIN_PROPERTIES1, new FeaturesHeightRequirement());
     private static UUID chainId2 = UUID.fromString("ff3bfa13-3711-4f23-8f7b-4fccaa87c4c1");
     private static final Chain CHAIN2 = new Chain(chainId2, Arrays.asList("51.15.0.1",
         "51.15.1.0"),
@@ -69,11 +69,11 @@ public class ChainsConfigLoaderTest {
         "Batman's chain", "BTM",
         "BTM", "I am batman!",
         10000000000L, 8,
-        "conf/data/batman-genesis.json", BLOCKCHAIN_PROPERTIES2);
+         BLOCKCHAIN_PROPERTIES2);
     private static final Chain CHAIN3 = new Chain(chainId2, false, Arrays.asList("51.15.1.1",
         "51.15.0.0"), Collections.emptyList(), Collections.emptyList(), "1", "2", "3", "4", "5",
         100000L, 2,
-        "6", BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150, 150));
+        BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150, 150));
     private Path tempRootPath;
 
     @BeforeEach

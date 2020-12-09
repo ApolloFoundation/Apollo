@@ -20,6 +20,9 @@ public class GenesisAccounts {
         if (genesisImporter == null) {
             genesisImporter = CDI.current().select(GenesisImporter.class).get();
         }
+        
+        genesisImporter.loadGenesisDataFromResources();
+        
         initialGenesisAccountsBalances = genesisImporter.loadGenesisAccounts();
     }
 

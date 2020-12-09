@@ -56,8 +56,8 @@ public class Helper2FA {
         log.trace("is2FaInFile = {}", is2FaInFile);
         service2FA = new TwoFactorAuthServiceImpl(
             new TwoFactorAuthRepositoryImpl(databaseManagerParam.getDataSource()),
-            propertiesHolder.getStringProperty("apl.issuerSuffix2FA",
-                RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"),
+            propertiesHolder.getStringProperty("apl.issuerSuffix2FA", "web"),
+            //RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"),
             new TwoFactorAuthFileSystemRepository(dirProvider.get2FADir())
         );
     }
