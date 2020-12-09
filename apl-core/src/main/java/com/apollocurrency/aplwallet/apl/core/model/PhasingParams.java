@@ -44,7 +44,7 @@ public final class PhasingParams {
     public PhasingParams(Map<?,?> attachmentData) {
         quorum = Convert.parseLong(attachmentData.get("phasingQuorum"));
         long minBalance = Convert.parseLong(attachmentData.get("phasingMinBalance"));
-        byte votingModel = ((Long) attachmentData.get("phasingVotingModel")).byteValue();
+        byte votingModel = ((Number) attachmentData.get("phasingVotingModel")).byteValue();
         long holdingId = Convert.parseUnsignedLong((String) attachmentData.get("phasingHolding"));
         List<?> whitelistJson = (List<?>) (attachmentData.get("phasingWhitelist"));
         if (whitelistJson != null && whitelistJson.size() > 0) {
@@ -55,7 +55,7 @@ public final class PhasingParams {
         } else {
             whitelist = Convert.EMPTY_LONG;
         }
-        byte minBalanceModel = ((Long) attachmentData.get("phasingMinBalanceModel")).byteValue();
+        byte minBalanceModel = ((Number) attachmentData.get("phasingMinBalanceModel")).byteValue();
         voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }
 

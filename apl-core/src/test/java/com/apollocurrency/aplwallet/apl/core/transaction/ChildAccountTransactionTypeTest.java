@@ -53,6 +53,7 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTest
 import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.SENDER_SECRET_PHRASE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
@@ -89,7 +90,7 @@ public class ChildAccountTransactionTypeTest {
     AppendixApplierRegistry applierRegistry = mock(AppendixApplierRegistry.class);
     AppendixValidatorRegistry validatorRegistry = mock(AppendixValidatorRegistry.class);
 
-    CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService);
+    CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain);
     TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(type)));
     TransactionVersionValidator txVersionValidator = new TransactionVersionValidator(blockchainConfig, blockchain);
     TransactionApplier txApplier = new TransactionApplier(blockchainConfig, referencedTransactionDao, accountService, accountPublicKeyService, prunableLoadingService, applierRegistry);
@@ -185,6 +186,7 @@ public class ChildAccountTransactionTypeTest {
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
         when(accountService.getAccount(CHILD_ACCOUNT_ATTACHMENT.getChildPublicKey().get(0))).thenReturn(null);
         when(accountService.getAccount(CHILD_ACCOUNT_ATTACHMENT.getChildPublicKey().get(1))).thenReturn(null);
+        when(blockchainConfig.isTransactionV2ActiveAtHeight(ECBLOCK_HEIGHT + 1)).thenReturn(true);
 
         when(heightConfig.getMaxPayloadLength()).thenReturn(255 * Constants.MIN_TRANSACTION_SIZE);
 
@@ -192,6 +194,37 @@ public class ChildAccountTransactionTypeTest {
         txValidator.validateFully(tx);
 
         verify(accountControlPhasingService).checkTransaction(tx);
+    }
+
+    @Test
+    void validateAttachment_v2_txs_not_enabled() throws AplException.ValidationException {
+        //GIVEN
+        CreateTransactionRequest request = CreateTransactionRequest.builder()
+            .senderAccount(SENDER)
+            .recipientId(SENDER_ID)
+            .deadlineValue("1440")
+            .feeATM(0)
+            .attachment(CHILD_ACCOUNT_ATTACHMENT)
+            .timestamp(300)
+            .keySeed(Crypto.getKeySeed(SENDER_SECRET_PHRASE))
+            .broadcast(false)
+            .build();
+        Transaction tx = txCreator.createTransactionThrowingException(request);
+        assertNotNull(tx);
+        when(blockchain.getHeight()).thenReturn(ECBLOCK_HEIGHT + 1);
+        when(blockchainConfig.getCurrentConfig()).thenReturn(heightConfig);
+        when(chain.getChainId()).thenReturn(UUID.randomUUID());
+        when(blockchainConfig.getChain()).thenReturn(chain);
+        when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
+        when(accountService.getAccount(CHILD_ACCOUNT_ATTACHMENT.getChildPublicKey().get(0))).thenReturn(null);
+        when(accountService.getAccount(CHILD_ACCOUNT_ATTACHMENT.getChildPublicKey().get(1))).thenReturn(null);
+        when(blockchainConfig.isTransactionV2ActiveAtHeight(ECBLOCK_HEIGHT + 1)).thenReturn(false);
+        //WHEN
+
+        AplException.NotYetEnabledException ex = assertThrows(AplException.NotYetEnabledException.class, () -> txValidator.validateFully(tx));
+
+        assertTrue((ex.getMessage()).contains("CreateChildAccount"), "Exception (NotYetEnabled) should belong to disabled CreateChildAccount transactions");
+
     }
 
     @Test
@@ -217,6 +250,7 @@ public class ChildAccountTransactionTypeTest {
         when(chain.getChainId()).thenReturn(UUID.randomUUID());
         when(blockchainConfig.getChain()).thenReturn(chain);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
+        when(blockchainConfig.isTransactionV2ActiveAtHeight(ECBLOCK_HEIGHT + 1)).thenReturn(true);
 
         //WHEN
         try {
@@ -252,6 +286,7 @@ public class ChildAccountTransactionTypeTest {
         when(chain.getChainId()).thenReturn(UUID.randomUUID());
         when(blockchainConfig.getChain()).thenReturn(chain);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
+        when(blockchainConfig.isTransactionV2ActiveAtHeight(ECBLOCK_HEIGHT + 1)).thenReturn(true);
 
 
         //WHEN
@@ -287,6 +322,7 @@ public class ChildAccountTransactionTypeTest {
         when(chain.getChainId()).thenReturn(UUID.randomUUID());
         when(blockchainConfig.getChain()).thenReturn(chain);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
+        when(blockchainConfig.isTransactionV2ActiveAtHeight(ECBLOCK_HEIGHT + 1)).thenReturn(true);
 
         //WHEN
         try {
@@ -321,7 +357,7 @@ public class ChildAccountTransactionTypeTest {
         when(chain.getChainId()).thenReturn(UUID.randomUUID());
         when(blockchainConfig.getChain()).thenReturn(chain);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
-
+       when(blockchainConfig.isTransactionV2ActiveAtHeight(ECBLOCK_HEIGHT + 1)).thenReturn(true);
         //WHEN
         try {
             txValidator.validateFully(tx);

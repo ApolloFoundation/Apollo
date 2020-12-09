@@ -146,7 +146,7 @@ public class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
     @Test
     void applyAttachment() throws AplException.NotValidException {
         //GIVEN
-        CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService);
+        CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain);
         TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(type)));
         byte[] tx = Convert.parseHexString(SIGNED_TX_1_HEX);
         Transaction.Builder txBuilder = builder.newTransactionBuilder(tx);
