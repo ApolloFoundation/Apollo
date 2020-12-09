@@ -277,7 +277,7 @@ public class GetMoreBlocksThread implements Runnable {
             } finally {
                 globalSync.updateUnlock();
                 blockchainProcessorState.setDownloading(false);
-                log.info("Set blockchain state isDownloading=false.");
+                log.debug("Set blockchain state isDownloading=false.");
             }
         } catch (AplException.StopException e) {
             log.info("Blockchain download stopped: " + e.getMessage());

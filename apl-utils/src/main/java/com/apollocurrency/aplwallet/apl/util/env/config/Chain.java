@@ -21,7 +21,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @JsonPropertyOrder({"chainId", "active", "defaultPeers", "wellKnownPeers", "blacklistedPeers", "name", "description", "symbol",
-    "prefix", "project", "initialSupply", "decimals", "genesisLocation", "featuresHeightRequirement", "blockchainProperties"})
+    "prefix", "project", "initialSupply", "decimals", "featuresHeightRequirement", "blockchainProperties"})
 public class Chain {
     private UUID chainId;
     private boolean active;
@@ -36,7 +36,6 @@ public class Chain {
     private long initialSupply;
     private int decimals;
     private long oneAPL;
-    private String genesisLocation;
     private FeaturesHeightRequirement featuresHeightRequirement;
     private Map<Integer, BlockchainProperties> blockchainProperties;
 
@@ -50,12 +49,11 @@ public class Chain {
                  @JsonProperty("project") String project,
                  @JsonProperty("initialSupply") long initialSupply,
                  @JsonProperty("decimals") int decimals,
-                 @JsonProperty("genesisLocation") String genesisLocation,
                  @JsonProperty("blockchainProperties") List<BlockchainProperties> blockchainProperties
     ) {
         this(chainId, false, Collections.emptyList(), wellKnownPeers, Collections.emptyList(),
             name, description, symbol, prefix, project, initialSupply, decimals,
-            genesisLocation, blockchainProperties, null);
+             blockchainProperties, null);
     }
 
     /**
@@ -73,7 +71,6 @@ public class Chain {
      * @param project
      * @param initialSupply             the initial supply in APL
      * @param decimals                  the decimals value to convert APL to ATM, 1APL = 10^decimals ATM
-     * @param genesisLocation
      * @param blockchainProperties
      * @param featuresHeightRequirement
      */
@@ -89,7 +86,6 @@ public class Chain {
                  String project,
                  long initialSupply,
                  int decimals,
-                 String genesisLocation,
                  List<BlockchainProperties> blockchainProperties,
                  FeaturesHeightRequirement featuresHeightRequirement
     ) {
@@ -105,7 +101,6 @@ public class Chain {
         this.project = project;
         this.initialSupply = initialSupply;
         this.setDecimals(decimals);
-        this.genesisLocation = genesisLocation;
         this.blockchainProperties =
             blockchainProperties
                 .stream()
@@ -228,14 +223,6 @@ public class Chain {
         this.active = active;
     }
 
-    public String getGenesisLocation() {
-        return genesisLocation;
-    }
-
-    public void setGenesisLocation(String genesisLocation) {
-        this.genesisLocation = genesisLocation;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -251,14 +238,13 @@ public class Chain {
             Objects.equals(symbol, chain.symbol) &&
             Objects.equals(prefix, chain.prefix) &&
             Objects.equals(project, chain.project) &&
-            Objects.equals(genesisLocation, chain.genesisLocation) &&
             Objects.equals(blockchainProperties, chain.blockchainProperties) &&
             Objects.equals(featuresHeightRequirement, chain.featuresHeightRequirement);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(chainId, active, defaultPeers, wellKnownPeers, blacklistedPeers, name, description, symbol, prefix, project, genesisLocation, blockchainProperties, featuresHeightRequirement);
+        return Objects.hash(chainId, active, defaultPeers, wellKnownPeers, blacklistedPeers, name, description, symbol, prefix, project,  blockchainProperties, featuresHeightRequirement);
     }
 
     public Chain copy() {
@@ -268,7 +254,7 @@ public class Chain {
         List<BlockchainProperties> blockchainPropertiesCopy = blockchainProperties.values().stream().map(BlockchainProperties::copy).collect(Collectors.toList());
         return new Chain(chainId, active, defaultPeersCopy, wellKnownPeersCopy, blacklistedPeersCopy,
             name, description, symbol, prefix, project, initialSupply, decimals,
-            genesisLocation, blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null);
+             blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null);
     }
 
     @Override
@@ -287,7 +273,6 @@ public class Chain {
             ", initialSupply=" + initialSupply +
             ", decimals=" + decimals +
             ", oneAPL=" + oneAPL +
-            ", genesisLocation='" + genesisLocation + '\'' +
             ", featuresHeightRequirement='" + featuresHeightRequirement + '\'' +
             ", blockchainProperties=" + blockchainProperties +
             '}';
