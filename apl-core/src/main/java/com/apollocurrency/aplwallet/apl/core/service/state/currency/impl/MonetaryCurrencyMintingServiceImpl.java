@@ -14,8 +14,6 @@ import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Singleton;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 
 @Singleton
@@ -45,7 +43,7 @@ public class MonetaryCurrencyMintingServiceImpl implements MonetaryCurrencyMinti
             attachment.getUnits(),
             currencyFull.getCurrencySupply().getCurrentSupply() - currency.getReserveSupply(),
             currency.getMaxSupply() - currency.getReserveSupply());
-        return meetsTarget(hash, target);
+        return MonetaryCurrencyMintingService.meetsTarget(hash, target);
     }
 
     private Currency localSupplyDependency(Currency currency) {
@@ -57,34 +55,9 @@ public class MonetaryCurrencyMintingServiceImpl implements MonetaryCurrencyMinti
     }
 
     @Override
-    public boolean meetsTarget(byte[] hash, byte[] target) {
-        for (int i = hash.length - 1; i >= 0; i--) {
-            if ((hash[i] & 0xff) > (target[i] & 0xff)) {
-                return false;
-            }
-            if ((hash[i] & 0xff) < (target[i] & 0xff)) {
-                return true;
-            }
-        }
-        return true;
-    }
-
-    @Override
     public byte[] getHash(byte algorithm, long nonce, long currencyId, long units, long counter, long accountId) {
         HashFunction hashFunction = HashFunction.getHashFunction(algorithm);
-        return getHash(hashFunction, nonce, currencyId, units, counter, accountId);
-    }
-
-    @Override
-    public byte[] getHash(HashFunction hashFunction, long nonce, long currencyId, long units, long counter, long accountId) {
-        ByteBuffer buffer = ByteBuffer.allocate(8 + 8 + 8 + 8 + 8);
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-        buffer.putLong(nonce);
-        buffer.putLong(currencyId);
-        buffer.putLong(units);
-        buffer.putLong(counter);
-        buffer.putLong(accountId);
-        return hashFunction.hash(buffer.array());
+        return MonetaryCurrencyMintingService.getHash(hashFunction, nonce, currencyId, units, counter, accountId);
     }
 
     @Override

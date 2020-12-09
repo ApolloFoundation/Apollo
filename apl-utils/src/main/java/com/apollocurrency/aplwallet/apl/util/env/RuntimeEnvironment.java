@@ -35,7 +35,6 @@ public class RuntimeEnvironment {
     private static final String osname = System.getProperty("os.name").toLowerCase();
     private static boolean isServiceMode = false;
     private static RuntimeEnvironment instance = null;
-    protected boolean hasJavaFX;
     private boolean isHeadless;
     private Class mainClass = null;
     private DirProvider dirProvider;
@@ -62,14 +61,6 @@ public class RuntimeEnvironment {
             b = true;
         }
         isHeadless = b;
-        try {
-            Class.forName("javafx.application.Application");
-            b = true;
-        } catch (ClassNotFoundException e) {
-            System.out.println("javafx not supported");
-            b = false;
-        }
-        hasJavaFX = b;
         isServiceMode = isServiceMode();
 
     }
@@ -128,10 +119,6 @@ public class RuntimeEnvironment {
     public boolean isDesktopEnabled() {
 
         return "desktop".equalsIgnoreCase(System.getProperty(RUNTIME_MODE_ARG)) && !isHeadless();
-    }
-
-    public boolean isDesktopApplicationEnabled() {
-        return isDesktopEnabled() && hasJavaFX;
     }
 
     public DirProvider getDirProvider() {

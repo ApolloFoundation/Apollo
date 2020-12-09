@@ -39,7 +39,7 @@ public class ConfigDirProviderTest {
     @Test
     public void testUnixUserModeConfigDirProvider() {
         UnixConfigDirProvider unixConfigDirProvider = new UnixConfigDirProvider(APPLICATION_NAME, false, 0, "");
-        String r = unixConfigDirProvider.getSysConfigLocation() + File.separator + unixConfigDirProvider.getConfigName();
+        String r = unixConfigDirProvider.getSysConfigLocation() + "/" + unixConfigDirProvider.getConfigName();
         assertEquals(SYSTEM_CONFIG_DIR, r);
         r = unixConfigDirProvider.getConfigLocation() + File.separator + unixConfigDirProvider.getConfigName();
         assertEquals(USER_HOME_CONFIG_DIRECTORY, r);
@@ -50,9 +50,9 @@ public class ConfigDirProviderTest {
     @Test
     public void testUnixServiceModeConfigDirProvider() {
         UnixConfigDirProvider unixConfigDirProvider = new UnixConfigDirProvider(APPLICATION_NAME, true, 0, "");
-        String r = unixConfigDirProvider.getSysConfigLocation() + File.separator + unixConfigDirProvider.getConfigName();
+        String r = unixConfigDirProvider.getSysConfigLocation() + "/" + unixConfigDirProvider.getConfigName();
         assertEquals(SYSTEM_CONFIG_DIR, r);
-        r = unixConfigDirProvider.getConfigLocation() + File.separator + unixConfigDirProvider.getConfigName();
+        r = unixConfigDirProvider.getConfigLocation() + "/" + unixConfigDirProvider.getConfigName();
         assertEquals(SYSTEM_CONFIG_DIR, r);
         r = unixConfigDirProvider.getInstallationConfigLocation() + File.separator + unixConfigDirProvider.getConfigName();
         assertEquals(INSTALLATION_CONFIG_DIR, r);
@@ -87,7 +87,7 @@ public class ConfigDirProviderTest {
         assertEquals("conf", r);
         defaultConfigDirProvider = new DefaultConfigDirProvider(APPLICATION_NAME, false, -1, "7654b697-f359-4ce5-a619-fa34b6fb01a5");
         r = defaultConfigDirProvider.getConfigName();
-        assertEquals("configs/7654b697-f359-4ce5-a619-fa34b6fb01a5", r);
+        assertEquals("configs"+File.separator+"7654b697-f359-4ce5-a619-fa34b6fb01a5", r);
     }
 
 }
