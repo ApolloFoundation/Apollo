@@ -24,7 +24,7 @@ public class PhasingAppendixV2 extends PhasingAppendix {
 
     public PhasingAppendixV2(JSONObject attachmentData) {
         super(attachmentData);
-        Long phasingFinishTime = (Long) attachmentData.get("phasingFinishTime");
+        Number phasingFinishTime = (Number) attachmentData.get("phasingFinishTime");
 
         this.finishTime = phasingFinishTime != null ? phasingFinishTime.intValue() : -1;
     }
