@@ -74,6 +74,10 @@ public interface Transaction {
 
     void unsetBlock();
 
+    /**
+     * the transaction sequence number in the block
+     * @return the transaction sequence number in the block
+     */
     short getIndex();
 
     void setIndex(int index);

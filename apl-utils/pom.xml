@@ -13,6 +13,10 @@
   <name>apl-utils</name>
   <packaging>jar</packaging>
 
+  <properties>
+    <web3j-rlp.version>5.0.0</web3j-rlp.version>
+  </properties>
+
   <dependencies>
     <!-- CORE BOM DEPENDENCIES -->
     <dependency>
@@ -104,6 +108,11 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.web3j</groupId>
+      <artifactId>rlp</artifactId>
+      <version>${web3j-rlp.version}</version>
     </dependency>
     <!-- unit tests -->
     <dependency>

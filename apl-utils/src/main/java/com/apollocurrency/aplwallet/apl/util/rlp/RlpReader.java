@@ -1,4 +1,4 @@
-package com.apollocurrency.smc.rlp;
+package com.apollocurrency.aplwallet.apl.util.rlp;
 
 import org.web3j.rlp.RlpDecoder;
 import org.web3j.rlp.RlpList;
@@ -10,6 +10,7 @@ import java.math.BigInteger;
 import java.util.Iterator;
 
 /**
+ * Simple reader, to read items from RLP encoded input.
  * Not thread safe.
  *
  * @author andrew.zinchenko@gmail.com

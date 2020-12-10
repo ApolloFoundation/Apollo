@@ -1,4 +1,4 @@
-package com.apollocurrency.smc.rlp;
+package com.apollocurrency.aplwallet.apl.util.rlp;
 
 import org.junit.jupiter.api.Test;
 import org.web3j.rlp.RlpEncoder;

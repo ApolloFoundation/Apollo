@@ -166,7 +166,7 @@ public class TransactionCreator {
                 if (txRequest.getKeySeed() != null) {
                     signer.sign(transaction, txRequest.getKeySeed());
                 }
-            } else {//tx v2
+            } else {//tx version >= 2
                 if (txRequest.getCredential() != null) {
                     signer.sign(transaction, txRequest.getCredential());
                 }
