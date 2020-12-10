@@ -90,7 +90,6 @@ Project is entirely on Maven v3 and could be loaded in any IDE that supports Mav
     
             [client-server]
             port=3366
-            socket=/Users/user/.apl-blockchain/apl-blockchain-db/mariadb.sock
             
             [mysqld]
             # Only allow connections from localhost
@@ -111,8 +110,10 @@ Project is entirely on Maven v3 and could be loaded in any IDE that supports Mav
             plugin_load_add = ha_rocksdb
                 
     
-    5) run ./bin/maria-db-init.sh {basedir} {mariadb_apollo_instance.cnf}
-        Example: sh ./bin/maria-db-init.sh /../../..../apl-updater2/mariadb-pkg/target/ApolloWallet/apollo-mariadb /..../..../.apl-blockchain/apl-blockchain-db/conf/mariadb_apollo_instance.cnf
+    5) Run init script (Appolo project)
+    
+        ./bin/maria-db-init.sh {basedir} {mariadb_apollo_instance.cnf}
+    Example: sh ./bin/maria-db-init.sh /../../..../apl-updater2/mariadb-pkg/target/ApolloWallet/apollo-mariadb /..../..../.apl-blockchain/apl-blockchain-db/conf/mariadb_apollo_instance.cnf
    
 
 ## DOCKER Installation
