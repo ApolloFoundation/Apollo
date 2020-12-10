@@ -25,13 +25,13 @@ Java 11 (JRE) is required to run the most Apollo components.
 
 # Build instruction #
 
-If you have already installed ___jdk 11___, you can skip __"Preparation steps" section__, but its recommended to __review__ 
-your software versions using instructions from __"Preparation steps" section__
-
 ## Java versions
 
-We use LTS JDK version 11 in the development and and in the production environments. To be exact, we use vanilla openjdk builds from AdoptOpenJDK site: [Java Development Kit openjdk v.11 from AdopOpenJDK, ](https://adoptopenjdk.net/). You can download and install it. Apollo code runs well on latest JDKs but is not thouroughly tested. So you can use latest JDKs, e.g. version 15 on your own risk.
-If you are dveloper, we'd like to recommend [SDKMan kit](https://sdkman.io/)to manage installed Java platforms.  
+We use LTS JDK version 11 in the development and and in the production environments. To be exact, we use vanilla openjdk builds from AdoptOpenJDK site: [Java Development Kit openjdk v.11 from AdopOpenJDK, ](https://adoptopenjdk.net/). You can download and install JDK for your platform by the link. 
+
+Apollo code runs well on latest JDKs but is not thouroughly tested. So you can use latest JDKs, e.g. version 15 on your own risk.
+
+If you are dveloper, we'd like to recommend [SDKMan kit](https://sdkman.io/) to manage installed Java platforms.  
 
 ## Preparation steps ##
 
@@ -84,7 +84,7 @@ OS name: "linux", version: "5.9.12-200.fc33.x86_64", arch: "amd64", family: "uni
 ### Installation artefacts
 
 Final artefact that is ready to install and run is loacated in the ___apl-exec/target___ directory and has name like  ___apollo-blockchain-1.47.5-NoOS-NoArch.zip___.
-Unzip it and run by scripts in ___ApolloWallet/apollo-blockchain/bin___ directory.
+Unzip it to some location and run by scripts in ___ApolloWallet/apollo-blockchain/bin___ directory.
 
 You'll probably need __Apollo-web-ui__ and __Apollo-desktop__ components to use Apollo wallet.
 Please follow instructions in [Apollo-web-ui](https://github.com/ApolloFoundation/Apollo-web-ui) and [Apollo-desktop](https://github.com/ApolloFoundation/Apollo-desktop) project epositories.
