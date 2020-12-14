@@ -108,6 +108,7 @@ Project is entirely on Maven v3 and could be loaded in any IDE that supports Mav
             
             [mariadb]
             plugin_load_add = ha_rocksdb
+            rocksdb_max_row_locks=1073741824
                 
     
     5) Run init script (Appolo project)
