@@ -1,29 +1,31 @@
 
 # Apollo Blockchain Platform  Core
 
-## Disclaimer.
-Apollo team is actively working on modularity of Apollo blockhain so build scripts and source structure is subject of changes. Apollo project consists of several modules written in different programming languages. If you are not an expert in Java and Maven, JavaScript, NodeJs, npm, yarn, C/C++ and Cmakle please use our release builds at [Apollo Releases page](https://github.com/ApolloFoundation/Apollo/releases).
-
-If you feel like an expert, please use build instructions below. But also please note that instructions may be slightly outdated, escpecially in "development" branches of the Apollo project repositroies.
-
-
 Apollo is being developed by the Apollo Foundation and supporting members of the community.
 
-This repository contains core classes of Apollo blockchain platform and main executable of Apollo-blockchain component. 
+This repository contains core classes of Apollo blockchain platform and main executable of Apollo-blockchain component.
+
 
 There are other components that are parts of Apollo:
 
 1. [Apollo-web-ui](https://github.com/ApolloFoundation/Apollo-web-ui): Web wallet UI that is served by Apollo blockchain node and can be accersed by browser at http://localhost:7876
 2. [Apollo-dektop](https://github.com/ApolloFoundation/Apollo-desktop) Desktop wallet UI. Apollo-web-ui must be installed tobe able to run Apollo desktop wallet.
 3. [Apollo-tools](https://github.com/ApolloFoundation/Apollo-tools): "swiss knife" of tools for node maintenance, transaction signing, etc.
-4. [Apollo-bom-ext](https://github.com/ApolloFoundation/Apollo-bom-ext) This module required in compilation time oly. It contains BOM of all external libraries used by Apollo components.
+4. [Apollo-bom-ext](https://github.com/ApolloFoundation/Apollo-bom-ext) This module required in compilation time oly. It contains BOM of all external libraries used by Apollo components. 
+
 
 ## Requirements
 
 Java 11 (JRE) is required to run the most Apollo components.
 
 
-# Build instruction #
+# Build instruction 
+
+## Disclaimer.
+
+Apollo team is actively working on modularity of Apollo blockhain so build scripts and source structure is subject of changes. Apollo project consists of several modules written in different programming languages. If you are not an expert in Java and Maven, JavaScript, NodeJs, npm, yarn, C/C++ and Cmakle please use our release builds at [Apollo Releases page](https://github.com/ApolloFoundation/Apollo/releases).
+
+If you feel like an expert, please use build instructions below. But also please note that instructions may be slightly outdated, escpecially in "development" branches of the Apollo project repositroies.
 
 ## Java versions
 
