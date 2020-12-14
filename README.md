@@ -130,13 +130,13 @@ fix/*, feature/*, bugfix/** - temporary branches used by developers. Ususaly tho
             default-storage-engine=rocksdb
             max_connections=1024
             
-            datadir=/Users/user/.apl-blockchain/apl-blockchain-db/data
-            tmpdir=/Users/user/.apl-blockchain/apl-blockchain-db/tmp
-            socket=/Users/user/.apl-blockchain/apl-blockchain-db/mariadb.sock
-            log-error=/Users/user/.apl-blockchain/apl-blockchain-db/mariadb.log
-            pid-file=/Users/user/.apl-blockchain/apl-blockchain-db/mariadb.pid
+            datadir= {User Home} /.apl-blockchain/apl-blockchain-db/data
+            tmpdir= {User Home} /.apl-blockchain/apl-blockchain-db/tmp
+            socket= {User Home} /.apl-blockchain/apl-blockchain-db/mariadb.sock
+            log-error= {User Home} /.apl-blockchain/apl-blockchain-db/mariadb.log
+            pid-file= {User Home} /.apl-blockchain/apl-blockchain-db/mariadb.pid
             
-            basedir=/Users/user/projects/apolo/apl-updater2/mariadb-pkg/target/ApolloWallet/apollo-mariadb
+            basedir= {User Home} /ApolloWallet/apollo-mariadb
             
             [mariadb]
             plugin_load_add = ha_rocksdb
@@ -146,7 +146,7 @@ fix/*, feature/*, bugfix/** - temporary branches used by developers. Ususaly tho
     5) Run init script (Appolo project)
     
         ./bin/maria-db-init.sh {basedir} {mariadb_apollo_instance.cnf}
-    Example: sh ./bin/maria-db-init.sh /../../..../apl-updater2/mariadb-pkg/target/ApolloWallet/apollo-mariadb /..../..../.apl-blockchain/apl-blockchain-db/conf/mariadb_apollo_instance.cnf
+    Example: sh ./bin/maria-db-init.sh {User Home}/apollo-mariadb /{User Home}/ApolloWallet/apollo-mariadb/mariadb_apollo_instance.cnf
    
 
 ## DOCKER Installation
