@@ -40,7 +40,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -55,9 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-@Disabled // TODO: YL @full_text_search_fix is needed
 @Slf4j
-
 @Tag("slow")
 @EnableWeld
 class AssetTableTest extends DbContainerBaseTest {
@@ -91,7 +88,7 @@ class AssetTableTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
         .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
         .addBeans(MockBean.of(dbExtension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-        .addBeans(MockBean.of(dbExtension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(dbExtension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
         .build();
 
@@ -99,8 +96,10 @@ class AssetTableTest extends DbContainerBaseTest {
     void setUp() {
         td = new AssetTestData();
         accountTestData = new AccountTestData();
+        dbExtension.cleanAndPopulateDb();
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testLoad() {
         Asset asset = table.get(table.getDbKeyFactory().newKey(td.ASSET_0));
@@ -108,12 +107,14 @@ class AssetTableTest extends DbContainerBaseTest {
         assertEquals(td.ASSET_0, asset);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testLoad_returnNull_ifNotExist() {
         Asset asset = table.get(table.getDbKeyFactory().newKey(td.ASSET_NEW));
         assertNull(asset);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSave_insert_new_entity() {//SQL MERGE -> INSERT
         Asset previous = table.get(table.getDbKeyFactory().newKey(td.ASSET_NEW));
@@ -128,7 +129,7 @@ class AssetTableTest extends DbContainerBaseTest {
         assertEquals(td.ASSET_NEW.getId(), actual.getId());
     }
 
-
+    @Tag("skip-fts-init")
     @Test
     void testSave_MaxDescriptionLength() {
         String description = RandomStringUtils.randomAlphabetic(MAX_ASSET_DESCRIPTION_LENGTH);
@@ -144,15 +145,19 @@ class AssetTableTest extends DbContainerBaseTest {
         assertEquals(td.ASSET_NEW.getId(), actual.getId());
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSave_OverDescriptionLength() {
         String description = RandomStringUtils.randomAlphabetic(MAX_ASSET_DESCRIPTION_LENGTH + 1);
         Asset asset = td.ASSET_NEW;
         asset.setDescription(description);
 
-        assertThrows(UndeclaredThrowableException.class, () -> table.insert(td.ASSET_NEW));
+        assertThrows(RuntimeException.class, () -> {
+            DbUtils.checkAndRunInTransaction(dbExtension, (conn) -> table.insert(td.ASSET_NEW));
+        });
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
         Asset previous = table.get(table.getDbKeyFactory().newKey(td.ASSET_1));
@@ -168,6 +173,7 @@ class AssetTableTest extends DbContainerBaseTest {
         assertEquals(previous.getId(), actual.getId());
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testDefaultSort() {
         assertNotNull(table.defaultSort());
@@ -176,12 +182,14 @@ class AssetTableTest extends DbContainerBaseTest {
         assertEquals(expectedAll, actualAll);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testGetAssetCount() {
         long count = table.getCount();
         assertEquals(8, count);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void getAssetsIssuedBy() {
         List<Asset> expected = toList(table.getManyBy(
@@ -189,9 +197,4 @@ class AssetTableTest extends DbContainerBaseTest {
         assertEquals(2, expected.size());
     }
 
-    @Disabled // TODO: YL @full_text_search_fix is needed
-    void test_searchAssets() {
-        List<Asset> expected = toList(table.search("This", DbClause.EMPTY_CLAUSE, 0, 3, " ORDER BY ft.score DESC "));
-        assertEquals(4, expected.size());
-    }
 }

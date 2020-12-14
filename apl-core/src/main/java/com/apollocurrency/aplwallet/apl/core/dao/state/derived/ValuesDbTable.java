@@ -46,7 +46,8 @@ public abstract class ValuesDbTable<T extends DerivedEntity> extends BasicDbTabl
                          DatabaseManager databaseManager,
                          FullTextConfig fullTextConfig,
                          Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(table, dbKeyFactory, multiversion, derivedDbTablesRegistry, databaseManager, fullTextConfig, deleteOnTrimDataEvent);
+        super(table, dbKeyFactory, multiversion, derivedDbTablesRegistry, databaseManager,
+            fullTextConfig, deleteOnTrimDataEvent, null);
     }
 
     public final List<T> get(DbKey dbKey) {

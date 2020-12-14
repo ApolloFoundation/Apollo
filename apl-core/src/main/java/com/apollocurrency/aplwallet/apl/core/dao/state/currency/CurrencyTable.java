@@ -4,14 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.currency;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
@@ -27,6 +25,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -73,7 +72,8 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> imp
                 + "reserve_supply = VALUES(reserve_supply), max_supply = VALUES(max_supply), creation_height = VALUES(creation_height), "
                 + "issuance_height = VALUES(issuance_height), min_reserve_per_unit_atm = VALUES(min_reserve_per_unit_atm), "
                 + "min_difficulty = VALUES(min_difficulty), max_difficulty = VALUES(max_difficulty), ruleset = VALUES(ruleset), "
-                + "algorithm = VALUES(algorithm), decimals = VALUES(decimals), height = VALUES(height), latest = TRUE, deleted = FALSE")
+                + "algorithm = VALUES(algorithm), decimals = VALUES(decimals), height = VALUES(height), latest = TRUE, deleted = FALSE",
+                Statement.RETURN_GENERATED_KEYS)
         ) {
             final String name = currency.getName();
             Objects.requireNonNull(name);
@@ -99,37 +99,22 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> imp
             pstmt.setByte(++i, currency.getDecimals());
             pstmt.setInt(++i, currency.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    currency.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 
     @Override
     public final DbIterator<Currency> search(String query, DbClause dbClause, int from, int to) {
-        return search(query, dbClause, from, to, " ORDER BY ft.score DESC ");
+        throw new UnsupportedOperationException("Call service, should be implemented by service");
     }
 
     @Override
     public final DbIterator<Currency> search(String query, DbClause dbClause, int from, int to, String sort) {
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-            PreparedStatement pstmt = con.prepareStatement("SELECT " + table + ".*, ft.score FROM " + table +
-                ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
-                + " WHERE " + table + ".db_id = ft.keys[1] "
-                + (multiversion ? " AND " + table + ".latest = TRUE " : " ")
-                + " AND " + dbClause.getClause() + sort
-                + DbUtils.limitsClause(from, to));
-            int i = 0;
-            pstmt.setString(++i, query);
-            i = dbClause.set(pstmt, ++i);
-            i = DbUtils.setLimits(i, pstmt, from, to);
-            return getManyBy(con, pstmt, true);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
+        throw new UnsupportedOperationException("Call service, should be implemented by service");
     }
-
 
 }

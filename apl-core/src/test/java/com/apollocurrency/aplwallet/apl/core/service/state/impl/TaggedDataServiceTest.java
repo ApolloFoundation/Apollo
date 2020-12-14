@@ -33,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
@@ -59,7 +60,6 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -74,7 +74,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
-@Disabled // TODO: YL @full_text_search_fix is needed
 @Slf4j
 
 @Tag("slow")
@@ -121,7 +120,7 @@ class TaggedDataServiceTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
         .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
         .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-        .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
@@ -130,6 +129,7 @@ class TaggedDataServiceTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(ttd.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
+        .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class))
         .build();
 
     @BeforeEach
@@ -138,19 +138,21 @@ class TaggedDataServiceTest extends DbContainerBaseTest {
         tagTd = new TaggedTestData();
     }
 
-
+    @Tag("skip-fts-init")
     @Test
     void getTaggedDataCount() {
         int result = taggedDataService.getTaggedDataCount();
         assertEquals(5, result);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void getDataTagCount() {
         int result = taggedDataService.getDataTagCount();
         assertEquals(2, result);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void getAllTags() {
         DbIterator<DataTag> result = taggedDataService.getAllTags(0, 1);
@@ -163,6 +165,7 @@ class TaggedDataServiceTest extends DbContainerBaseTest {
         assertEquals(2, count);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void getTagsLike() {
         DbIterator<DataTag> result = taggedDataService.getTagsLike("trw", 0, 1);
@@ -175,6 +178,7 @@ class TaggedDataServiceTest extends DbContainerBaseTest {
         assertEquals(1, count);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void addDataUploadAttach() {
         blockchain.setLastBlock(btd.LAST_BLOCK);
@@ -194,6 +198,7 @@ class TaggedDataServiceTest extends DbContainerBaseTest {
         assertEquals(new TaggedDataTimestamp(ttd.TRANSACTION_8.getId(), ttd.TRANSACTION_8.getTimestamp(), btd.LAST_BLOCK.getHeight()), dataTimestamp);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void restore() {
         DbUtils.inTransaction(extension, (con) -> {
@@ -209,6 +214,7 @@ class TaggedDataServiceTest extends DbContainerBaseTest {
         assertEquals(5, count);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void extend() {
         blockchain.setLastBlock(btd.LAST_BLOCK);

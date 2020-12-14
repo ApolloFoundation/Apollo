@@ -49,14 +49,14 @@ public class ShardDownloadPresenceObserver {
     private final ShardImporter shardImporter;
     private final BlockchainConfigUpdater blockchainConfigUpdater;
     private final GenesisImporter genesisImporter;
-    //private final FullTextSearchService fullTextSearchService;
+    private final FullTextSearchService fullTextSearchService;
 
     @Inject
     public ShardDownloadPresenceObserver(DatabaseManager databaseManager, BlockchainProcessor blockchainProcessor,
                                          Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry,
                                          ShardImporter shardImporter, BlockchainConfigUpdater blockchainConfigUpdater,
-                                         GenesisImporter genesisImporter//,
-                                         //FullTextSearchService fullTextSearchService
+                                         GenesisImporter genesisImporter,
+                                         FullTextSearchService fullTextSearchService
     ) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
         this.blockchainProcessor = Objects.requireNonNull(blockchainProcessor, "blockchainProcessor is NULL");
@@ -65,7 +65,7 @@ public class ShardDownloadPresenceObserver {
         this.shardImporter = Objects.requireNonNull(shardImporter, "shardImporter is NULL");
         this.blockchainConfigUpdater = Objects.requireNonNull(blockchainConfigUpdater, "blockchainConfigUpdater is NULL");
         this.genesisImporter = Objects.requireNonNull(genesisImporter, "genesisImporter is NULL");
-        //this.fullTextSearchService = Objects.requireNonNull(fullTextSearchService, "fullTextSearchService is NULL");
+        this.fullTextSearchService = Objects.requireNonNull(fullTextSearchService, "fullTextSearchService is NULL");
     }
 
     /**
@@ -77,28 +77,28 @@ public class ShardDownloadPresenceObserver {
         log.debug("Catching fired 'SHARD_PRESENT' event for {}", shardPresentData);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         TransactionHelper.executeInTransaction(dataSource, ()-> {
-            try (Connection con = dataSource.getConnection()) {
-                // create Lucene search indexes first
-                createLuceneSearchIndexes(con);
-                // import data so it gets into search indexes as well
-                shardImporter.importShardByFileId(shardPresentData);
-            } catch (Exception e) {
-                log.error("Error on Shard # {}. Zip/CSV importing...", shardPresentData);
-                log.error("Node has encountered serious error and import CSV shard data. " +
-                    "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", shardPresentData);
-                // truncate all partial data potentially imported into database
-                cleanUpPreviouslyImportedData();
-                // fall back to importing Genesis and starting from beginning
-                onNoShardPresent(shardPresentData);
-                return;
-            }
-            log.info("SNAPSHOT block should be READY in database...");
-            Block lastBlock = blockchain.findLastBlock();
-            log.debug("SNAPSHOT Last block height: " + lastBlock.getHeight());
-            blockchainConfigUpdater.updateToLatestConfig();
-            blockchainProcessor.resumeBlockchainDownloading(); // turn ON blockchain downloading
-            log.info("onShardPresent() finished Last block height: " + lastBlock.getHeight());
-        });
+        try (Connection con = dataSource.getConnection()) {
+            // create Lucene search indexes first
+            createLuceneSearchIndexes(con);
+            // import data so it gets into search indexes as well
+            shardImporter.importShardByFileId(shardPresentData);
+            fullTextSearchService.reindexAll(con);
+        } catch (Exception e) {
+            log.error("Error on Shard # {}. Zip/CSV importing...", shardPresentData);
+            log.error("Node has encountered serious error and import CSV shard data. " +
+                "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", shardPresentData);
+            // truncate all partial data potentially imported into database
+            cleanUpPreviouslyImportedData();
+            // fall back to importing Genesis and starting from beginning
+            onNoShardPresent(shardPresentData);
+            return;
+        }
+        log.info("SNAPSHOT block should be READY in database...");
+        Block lastBlock = blockchain.findLastBlock();
+        log.debug("SNAPSHOT Last block height: " + lastBlock.getHeight());
+        blockchainConfigUpdater.updateToLatestConfig();
+        blockchainProcessor.resumeBlockchainDownloading(); // turn ON blockchain downloading
+        log.info("onShardPresent() finished Last block height: " + lastBlock.getHeight());});
     }
 
     /**
@@ -109,7 +109,7 @@ public class ShardDownloadPresenceObserver {
      */
     private void createLuceneSearchIndexes(Connection con) throws SQLException {
         for (DerivedTableInterface table : derivedTablesRegistry.getDerivedTables()) {
-            //fullTextSearchService.createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
+            fullTextSearchService.createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
         }
     }
 

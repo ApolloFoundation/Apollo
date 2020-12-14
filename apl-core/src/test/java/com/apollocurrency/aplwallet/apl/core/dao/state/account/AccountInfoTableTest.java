@@ -26,7 +26,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -35,16 +34,13 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 
-import static com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-@Disabled // TODO: YL @full_text_search_fix is needed
 @Slf4j
-
 @Tag("slow")
 @EnableWeld
 class AccountInfoTableTest extends DbContainerBaseTest {
@@ -68,14 +64,14 @@ class AccountInfoTableTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
         .addBeans(MockBean.of(blockchainProcessor, BlockchainProcessor.class, BlockchainProcessorImpl.class))
-        //.addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
-        //.addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
-        .addBeans(MockBean.of(dbExtension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(dbExtension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(dbExtension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
         .build();
 
+    @Tag("skip-fts-init")
     @Test
     void testSave_insert_new_entity() {//SQL MERGE -> INSERT
+        dbExtension.cleanAndPopulateDb();
         AccountInfo previous = table.get(table.getDbKeyFactory().newKey(testData.newInfo));
         assertNull(previous);
 
@@ -88,8 +84,10 @@ class AccountInfoTableTest extends DbContainerBaseTest {
         assertEquals(testData.newInfo.getName(), actual.getName());
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSave_update_existing_entity() {//SQL MERGE -> UPDATE
+        dbExtension.cleanAndPopulateDb();
         AccountInfo previous = table.get(table.getDbKeyFactory().newKey(testData.ACC_INFO_0));
         assertNotNull(previous);
         previous.setName("Ping-Pong " + previous.getName());
@@ -102,9 +100,4 @@ class AccountInfoTableTest extends DbContainerBaseTest {
         assertEquals(previous.getDescription(), actual.getDescription());
     }
 
-    @Test
-    void searchAccounts() {
-        List<AccountInfo> result = toList(table.searchAccounts("CALIG*", 0, Integer.MAX_VALUE));
-        assertEquals(List.of(testData.ACC_INFO_1, testData.ACC_INFO_4), result);
-    }
 }

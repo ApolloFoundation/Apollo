@@ -40,7 +40,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -52,7 +51,6 @@ import java.util.Map;
 
 import static org.mockito.Mockito.mock;
 
-@Disabled // TODO: YL @full_text_search_fix is needed
 @Slf4j
 
 @Tag("slow")
@@ -71,7 +69,7 @@ class FullTextSearchServiceTest extends DbContainerBaseTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-        TaggedDataServiceImpl.class,
+        TaggedDataServiceImpl.class, FullTextSearchUpdater.class,
         GlobalSyncImpl.class,
         TransactionRowMapper.class,
         TransactionBuilder.class,
@@ -88,7 +86,7 @@ class FullTextSearchServiceTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-        .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
@@ -101,7 +99,7 @@ class FullTextSearchServiceTest extends DbContainerBaseTest {
     public FullTextSearchServiceTest() throws IOException {
     }
 
-
+    @Tag("skip-fts-init")
     @Test
     void reindexAll() throws Exception {
         ftl.reindexAll(extension.getDatabaseManager().getDataSource().begin());
