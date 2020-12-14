@@ -95,16 +95,16 @@ public class DGSTestData {
     public final DGSPurchase NEW_PURCHASE = createPurchase(PURCHASE_18.getDbId() + 1, 100, 200, 300, 400, 2, 400000000, (short) 500, null, null, 600, false, null, null, true, null, null, false, false, 0, 1000000, PURCHASE_16.getHeight() + 1, true, null, null);
 
 
-    public final DGSGoods GOODS_0 = createGoods(54, GOODS_0_ID, SELLER_1_ID, "Some product", "Some product Some product", new String[]{"product", "some", "ptd"}, true, "product some ptd test", 41814871, 2, 100000000000L, false, 541839, false);
-    public final DGSGoods GOODS_1 = createGoods(55, GOODS_0_ID, SELLER_1_ID, "Some product", "Some product Some product", new String[]{"product", "some", "ptd"}, true, "product some ptd test", 41814871, 1, 100000000000L, false, 541867, false);
-    public final DGSGoods GOODS_2 = createGoods(56, GOODS_0_ID, SELLER_1_ID, "Some product", "Some product Some product", new String[]{"product", "some", "ptd"}, true, "product some ptd test", 41814871, 0, 100000000000L, false, 541874, true);
+    public final DGSGoods GOODS_0 = createGoods(54, GOODS_0_ID, SELLER_1_ID, "Some product", "Some product Some product", new String[]{"product", "some", "ptd", "test"}, true, "product some ptd test", 41814871, 2, 100000000000L, false, 541839, false);
+    public final DGSGoods GOODS_1 = createGoods(55, GOODS_0_ID, SELLER_1_ID, "Some product", "Some product Some product", new String[]{"product", "some", "ptd", "test"}, true, "product some ptd test", 41814871, 1, 100000000000L, false, 541867, false);
+    public final DGSGoods GOODS_2 = createGoods(56, GOODS_0_ID, SELLER_1_ID, "Some product", "Some product Some product", new String[]{"product", "some", "ptd", "test"}, true, "product some ptd test", 41814871, 0, 100000000000L, false, 541874, true);
     public final DGSGoods GOODS_3 = createGoods(57, GOODS_2_ID, SELLER_0_ID, "Test product", "Test", new String[]{"tag"}, true, "tag", 41816306, 1, 100000000, false, 541986, false);
     public final DGSGoods GOODS_4 = createGoods(58, GOODS_2_ID, SELLER_0_ID, "Test product", "Test", new String[]{"tag"}, true, "tag", 41816306, 0, 100000000, false, 542026, true);
     public final DGSGoods GOODS_5 = createGoods(59, GOODS_1_ID, SELLER_0_ID, "1", null, new String[]{}, true, "", 38796761, 0, 100000000, false, 542029, true);
     public final DGSGoods GOODS_6 = createGoods(60, -9001112213900824483L, BUYER_0_ID, "asdffasdf", "asdf", new String[]{"asdf"}, true, "asdf", 37965044, 222, 400000000, false, 542710, false);
     public final DGSGoods GOODS_7 = createGoods(61, -9001112213900824483L, BUYER_0_ID, "asdffasdf", "asdf", new String[]{"asdf"}, true, "asdf", 37965044, 2, 400000000, false, 542712, false);
     public final DGSGoods GOODS_8 = createGoods(62, -8243930277887618399L, SELLER_0_ID, "test", "TEST", new String[]{"sport"}, true, "sport", 38188829, 21, 44400000000L, true, 542717, true);
-    public final DGSGoods GOODS_9 = createGoods(63, -2394458469048114141L, SELLER_0_ID, "fsf", "fsdfsd", new String[]{}, true, "ff", 38176323, 1, 100000000000L, true, 542719, true);
+    public final DGSGoods GOODS_9 = createGoods(63, -2394458469048114141L, SELLER_0_ID, "fsf", "fsdfsd", new String[]{"ff"}, true, "ff", 38176323, 1, 100000000000L, true, 542719, true);
     public final DGSGoods GOODS_10 = createGoods(64, 8788482956389726350L, SELLER_0_ID, "test", "test", new String[]{"test"}, true, "test", 38189627, 2, 100000000, false, 542721, true);
     public final DGSGoods GOODS_11 = createGoods(65, 4948091426407579194L, SELLER_0_ID, "qwe", "qwe", new String[]{"qwe"}, true, "qwe", 38039976, 12, 100000000, false, 542725, true);
     public final DGSGoods GOODS_12 = createGoods(66, GOODS_3_ID, SELLER_0_ID, "Another product", "Just another produc", new String[]{"tag", "batman"}, true, "tag batman", 41824604, 3, 150000000000L, false, 542828, true);

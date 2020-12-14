@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.mock;
 
+
 @Tag("slow")
 @EnableWeld
 public class DGSFeedbackTableTest extends ValuesDbTableTest<DGSFeedback> {
@@ -99,7 +100,6 @@ public class DGSFeedbackTableTest extends ValuesDbTableTest<DGSFeedback> {
         dtd = new DGSTestData();
         super.setUp();
     }
-
 
     @Override
     protected List<DGSFeedback> dataToInsert() {

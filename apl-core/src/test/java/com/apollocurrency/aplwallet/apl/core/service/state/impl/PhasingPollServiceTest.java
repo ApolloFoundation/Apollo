@@ -10,8 +10,9 @@ import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
@@ -27,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
@@ -63,6 +65,7 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -72,8 +75,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import javax.inject.Inject;
 import java.sql.Connection;
@@ -93,17 +94,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+
 @Tag("slow")
 @EnableWeld
-@Execution(ExecutionMode.CONCURRENT)
-public class PhasingPollServiceTest {
+public class PhasingPollServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
     private TransactionTestData ttd = new TransactionTestData();
+    private PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
+    private BlockDao blockDao = mock(BlockDao.class);
+
+    {
+        BlockTestData blockTestData = new BlockTestData();
+        doReturn(blockTestData.BLOCK_0).when(blockDao).findLastBlock();
+        doReturn(blockTestData.BLOCK_3).when(blockDao).findFirstBlock();
+    }
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -124,7 +134,7 @@ public class PhasingPollServiceTest {
         FullTextConfigImpl.class,
         AccountGuaranteedBalanceTable.class,
         DerivedDbTablesRegistryImpl.class,
-        BlockDaoImpl.class, TransactionDaoImpl.class,
+        TransactionDaoImpl.class,
         BlockchainConfig.class, GenesisPublicKeyTable.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -136,13 +146,14 @@ public class PhasingPollServiceTest {
         .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .addBeans(MockBean.of(blockDao, BlockDao.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(ttd.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(mock(CurrencyService.class), CurrencyService.class))
-        .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
+        .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
         .build();
     @Inject
     PhasingPollServiceImpl service;
@@ -166,6 +177,7 @@ public class PhasingPollServiceTest {
             new BlockchainProperties(1, 1, 1, 1, 1, 1, 1, 1L),
             100000000L, 30000000000L)
         );
+        doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).searchAll(-208393164898941117L);
     }
 
     @Test
@@ -176,6 +188,8 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetActivePhasingDbIdWhenHeightIsMax() {
+        extension.cleanAndPopulateDb();
+
         List<TransactionDbInfo> transactionDbInfoList = service.getActivePhasedTransactionDbInfoAtHeight(ttd.TRANSACTION_12.getHeight() + 1);
         assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_12, ttd.TRANSACTION_12.getId()), new TransactionDbInfo(ttd.DB_ID_11, ttd.TRANSACTION_11.getId())), transactionDbInfoList);
     }
@@ -219,6 +233,8 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetAllPhasedTransactionsCount() {
+        extension.cleanAndPopulateDb();
+
         int count = service.getAllPhasedTransactionsCount();
 
         assertEquals(ptd.NUMBER_OF_PHASED_TRANSACTIONS, count);
@@ -233,6 +249,8 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetResultForNonFinishedPoll() {
+        extension.cleanAndPopulateDb();
+
         PhasingPollResult result = service.getResult(ptd.POLL_3.getId());
 
         assertNull(result);
@@ -306,6 +324,8 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetAccountPhasedTransactionsCount() {
+        extension.cleanAndPopulateDb();
+
         int count = service.getAccountPhasedTransactionCount(ttd.TRANSACTION_0.getSenderId());
 
         assertEquals(3, count);
@@ -330,6 +350,8 @@ public class PhasingPollServiceTest {
 
     @Test
     void testFinishPollApprovedByLinkedTransactions() throws SQLException {
+        extension.cleanAndPopulateDb();
+
         blockchain.setLastBlock(btd.LAST_BLOCK);
         inTransaction(con -> service.finish(ptd.POLL_3, ptd.POLL_3.getQuorum()));
         PhasingPollResult result = service.getResult(ptd.POLL_3.getId());
@@ -340,6 +362,8 @@ public class PhasingPollServiceTest {
 
     @Test
     void testCountVotesForPollWithLinkedTransactions() {
+        extension.cleanAndPopulateDb();
+
         BlockTestData blockTestData = new BlockTestData();
         blockchain.setLastBlock(blockTestData.LAST_BLOCK);
         long votes = service.countVotes(ptd.POLL_3);
@@ -359,6 +383,8 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetVoteCount() {
+        extension.cleanAndPopulateDb();
+
         long votes = service.getVoteCount(ptd.POLL_1.getId());
 
         assertEquals(2, votes);
@@ -492,6 +518,8 @@ public class PhasingPollServiceTest {
 
     @Test
     void testGetSenderPhasedTransactionFees() throws SQLException {
+        extension.cleanAndPopulateDb();
+
         blockchain.setLastBlock(btd.GENESIS_BLOCK);
         long actualFee = service.getSenderPhasedTransactionFees(ptd.POLL_0.getAccountId());
         long expectedFee = ttd.TRANSACTION_13.getFeeATM() + ttd.TRANSACTION_12.getFeeATM() + ttd.TRANSACTION_11.getFeeATM();

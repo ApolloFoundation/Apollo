@@ -101,7 +101,7 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
                 + "WHERE referenced_transaction.referenced_transaction_id = :transactionId "
                 + "AND referenced_transaction.transaction_id = transaction.id "
                 + "ORDER BY transaction.block_timestamp DESC, transaction.transaction_index DESC "
-                + "OFFSET :from FETCH FIRST :limit ROWS ONLY")
+                + "LIMIT :limit OFFSET :from")
                 .bind("transactionId", transactionId)
                 .bind("from", from)
                 .bind("limit", limit)

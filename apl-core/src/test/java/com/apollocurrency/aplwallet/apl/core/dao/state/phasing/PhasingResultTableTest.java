@@ -56,6 +56,7 @@ import java.util.List;
 
 import static org.mockito.Mockito.mock;
 
+
 @Tag("slow")
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)

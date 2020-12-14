@@ -107,3 +107,69 @@ __stage__ branch contains release preparation work of the last release. Do not u
 
 
 fix/*, feature/*, bugfix/** - temporary branches used by developers. Ususaly those branmches get merged to ___develop___ and deleted after work is done.
+
+## MariaDB
+
+### Initiate
+    1) Open repository apl-updater2
+    
+    2) Run script depends on OS. 
+        mariadb-pkg/maria_db_linux_pkg.sh
+        mariadb-pkg/maria_db_osx_pkg.sh
+        mariadb-pkg/maria_db_windows_pkg.sh
+        
+    3) Unzip packege and start db installation process. (..../ApolloWallet/apollo-mariadb is a basedir path)
+    
+    4) Create mariadb config. 
+    
+            [client-server]
+            port=3366
+            
+            [mysqld]
+            # Only allow connections from localhost
+            bind-address = 127.0.0.1
+            lower_case_table_names=2
+            default-storage-engine=rocksdb
+            max_connections=1024
+            
+            datadir= {User Home} /.apl-blockchain/apl-blockchain-db/data
+            tmpdir= {User Home} /.apl-blockchain/apl-blockchain-db/tmp
+            socket= {User Home} /.apl-blockchain/apl-blockchain-db/mariadb.sock
+            log-error= {User Home} /.apl-blockchain/apl-blockchain-db/mariadb.log
+            pid-file= {User Home} /.apl-blockchain/apl-blockchain-db/mariadb.pid
+            
+            basedir= {User Home} /ApolloWallet/apollo-mariadb
+            
+            [mariadb]
+            plugin_load_add = ha_rocksdb
+            rocksdb_max_row_locks=1073741824
+                
+    
+    5) Run init script (Appolo project)
+    
+        ./bin/maria-db-init.sh {basedir} {mariadb_apollo_instance.cnf}
+    Example: sh ./bin/maria-db-init.sh {User Home}/apollo-mariadb /{User Home}/ApolloWallet/apollo-mariadb/mariadb_apollo_instance.cnf
+   
+
+## DOCKER Installation
+
+#### On Linux
+https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04-ru
+should be completed
+
+Article about MariaDB in docker
+https://mariadb.com/kb/en/installing-and-using-mariadb-via-docker/
+
+### How create local docker image for unit tests
+See [creation local Docker image link](/unit-test-Docker-Image/README.md)
+
+#### Check IP table / firewall settings to access docker
+https://github.com/testcontainers/testcontainers-java/issues/572#issuecomment-517831833
+
+$ sudo iptables -L
+```
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     all  --  172.17.0.0/24        anywhere
+```            
+    

@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TrimDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
@@ -15,7 +16,10 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry
 import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
@@ -37,11 +41,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
-class TrimServiceTest {
+@Slf4j
+@Tag("slow")
+class TrimServiceTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     DatabaseManager databaseManager = spy(extension.getDatabaseManager());
     TrimDao trimDao = mock(TrimDao.class);
 
@@ -57,6 +64,11 @@ class TrimServiceTest {
     @BeforeEach
     void setUp() {
         trimService = new TrimService(databaseManager, registry, /*globalSync,*/ timeService, /*event, */trimConfigEvent, trimDao, 1000);
+    }
+
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
     }
 
     @Test
@@ -210,7 +222,7 @@ class TrimServiceTest {
     void testDoTrimDerivedTablesAtHeightLessThanMaxRollback() {
         trimService.doTrimDerivedTablesOnBlockchainHeight(999, true);
 
-        verifyZeroInteractions(trimDao);
+        verifyNoInteractions(trimDao);
     }
 
     @Test
@@ -221,7 +233,7 @@ class TrimServiceTest {
         DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnBlockchainHeight(250000, true));
 
         verify(trimDao, times(0)).clear();
-        verifyZeroInteractions(firedEvent);
+        verifyNoInteractions(firedEvent);
     }
 
     @Test
@@ -253,7 +265,7 @@ class TrimServiceTest {
         assertFalse(dataSource.isInTransaction());
         verify(dataSource).begin();
         verify(dataSource).rollback(true);
-        verifyZeroInteractions(derivedTable, event);
+        verifyNoInteractions(derivedTable, event);
     }
 
     @Test

@@ -22,10 +22,12 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.BigIntegerArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.DexCurrenciesFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.IntArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.LongArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.OrderStatusFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.OrderTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.ShardStateFactory;
+import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -34,11 +36,9 @@ import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
-import org.h2.jdbc.JdbcSQLException;
 import org.jdbi.v3.core.ConnectionException;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
-import org.jdbi.v3.core.h2.H2DatabasePlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.slf4j.Logger;
 
@@ -48,7 +48,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -62,67 +61,81 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class DataSourceWrapper implements DataSource {
     private static final Logger log = getLogger(DataSourceWrapper.class);
     private static final String DB_INITIALIZATION_ERROR_TEXT = "DatabaseManager was not initialized!";
-    private static final String MV_STORE = "MV_STORE";
-    private static final String MVCC = "MVCC";
-    private static Pattern patternExtractShardNumber = Pattern.compile("shard-\\d+");
-    //    private JdbcConnectionPool dataSource;
-//    private volatile int maxActiveConnections;
+    private static Pattern patternExtractShardNumber = Pattern.compile("shard_\\d+");
     private final String dbUrl;
+    private final String dbName;
     private final String dbUsername;
-    private final String dbPassword;
+    private String dbPassword; // can be empty for a 'passwordless mode' in docker container
+    private final String systemDbUrl;
     private final int maxConnections;
     private final int loginTimeout;
-    private final int defaultLockTimeout;
-    private final int maxMemoryRows;
     private String shardId = "main-db";
     private HikariDataSource dataSource;
     private HikariPoolMXBean jmxBean;
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
 
-    public DataSourceWrapper(DbProperties dbProperties) {
-        long maxCacheSize = dbProperties.getMaxCacheSize();
-        if (maxCacheSize == 0) {
-            maxCacheSize = Math.min(256, Math.max(16, (Runtime.getRuntime().maxMemory() / (1024 * 1024) - 128) / 2)) * 1024;
-        }
 
+    public DataSourceWrapper(DbProperties dbProperties) {
         //Even though dbUrl is no longer coming from apl-blockchain.properties,
         //DbMigrationExecutor in afterMigration triggers the further creation of DataSourceWrapper
         String dbUrlTemp = dbProperties.getDbUrl();
-        final String dbParams = dbProperties.getDbParams();
-        validateDbParams(dbParams);
+        this.dbName = dbProperties.getDbName();
 
         if (StringUtils.isBlank(dbUrlTemp)) {
-            String dbFileName = dbProperties.getDbFileName();
-            Matcher m = patternExtractShardNumber.matcher(dbFileName); // try to match shard name
-            if (m.find()) { // if found
+            Matcher m = patternExtractShardNumber.matcher(dbName); // try to match shard name
+            if (m.find()) {
                 shardId = m.group(); // store shard id
             }
-            dbUrlTemp = String.format(
-                "jdbc:%s:file:%s/%s;%s",
-                dbProperties.getDbType(),
-                dbProperties.getDbDir(),
-                dbFileName,
-                dbProperties.getDbParams()
-            );
-        } else {
-            validateDbParams(dbUrlTemp);
+            dbUrlTemp = formatJdbcUrlString(dbProperties, false);
+            dbProperties.setDbUrl(dbUrlTemp);
         }
 
-        if (!dbUrlTemp.contains(MV_STORE + "=")) {
-            dbUrlTemp += ";" + MV_STORE + "=TRUE";
+        if (StringUtils.isBlank(dbProperties.getSystemDbUrl())) {
+            String systemDbUrl = formatJdbcUrlString(dbProperties, true);
+            dbProperties.setSystemDbUrl(systemDbUrl);
         }
-        if (!dbUrlTemp.contains("CACHE_SIZE=")) {
-            dbUrlTemp += ";CACHE_SIZE=" + maxCacheSize;
-        }
+
         this.dbUrl = dbUrlTemp;
-        dbProperties.dbUrl(dbUrlTemp);
         this.dbUsername = dbProperties.getDbUsername();
-        this.dbPassword = dbProperties.getDbPassword();
+        this.dbPassword = StringUtils.isBlank(dbProperties.getDbPassword()) ? null : dbProperties.getDbPassword();
         this.maxConnections = dbProperties.getMaxConnections();
         this.loginTimeout = dbProperties.getLoginTimeout();
-        this.defaultLockTimeout = dbProperties.getDefaultLockTimeout();
-        this.maxMemoryRows = dbProperties.getMaxMemoryRows();
+        this.systemDbUrl = dbProperties.getSystemDbUrl();
+    }
+
+    private String formatJdbcUrlString(DbProperties dbProperties, boolean isSystemDb) {
+        String finalDbUrl;
+        String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s%s";
+        String passwordlessUrlString = "jdbc:%s://%s:%d/%s?user=%s%s"; // skip password for 'password less mode' (in docker container)
+        String tempDbName = dbProperties.getDbName();
+        if (isSystemDb) {
+            tempDbName = "testdb".equalsIgnoreCase(dbProperties.getDbName()) ?  dbProperties.getDbName() : DbProperties.DB_SYSTEM_NAME;
+        }
+        if (dbProperties.getDbPassword() != null && !dbProperties.getDbPassword().isEmpty()) {
+            finalDbUrl = String.format(
+                fullUrlString,
+                dbProperties.getDbType(),
+                dbProperties.getDatabaseHost(),
+                dbProperties.getDatabasePort(),
+                tempDbName,
+                dbProperties.getDbUsername() != null ? dbProperties.getDbUsername() : "",
+                dbProperties.getDbPassword(),
+                dbProperties.getDbParams() != null ? dbProperties.getDbParams() : ""
+            );
+        } else {
+            // skip password for 'password less mode' (in docker container)
+            finalDbUrl = String.format(
+                passwordlessUrlString,
+                dbProperties.getDbType(),
+                dbProperties.getDatabaseHost(),
+                dbProperties.getDatabasePort(),
+                tempDbName,
+                dbProperties.getDbUsername() != null ? dbProperties.getDbUsername() : "",
+                dbProperties.getDbParams() != null ? dbProperties.getDbParams() : ""
+            );
+        }
+        return finalDbUrl;
     }
 
     @Override
@@ -182,37 +195,12 @@ public class DataSourceWrapper implements DataSource {
         return jmxBean;
     }
 
-    private void validateDbParams(String dbParams) {
-        if (Objects.nonNull(dbParams)) {
-            if (dbParams.contains(MVCC)) {
-                final String message = String.format(
-                    "%s is not supported in the dbParams or dbUrl properties.",
-                    MVCC
-                );
-                log.error(message);
-                throw new IllegalArgumentException(
-                    message
-                );
-            }
-            if (dbParams.contains(MV_STORE + "=FALSE")) {
-                final String message = String.format(
-                    "%s should always be TRUE.",
-                    MV_STORE
-                );
-                log.error(message);
-                throw new IllegalArgumentException(
-                    message
-                );
-            }
-        }
-    }
-
     /**
      * Constructor creates internal DataSource.
      *
      * @param dbVersion database version related information
      */
-    public Jdbi initWithJdbi(DbVersion dbVersion) {
+    public Jdbi initWithJdbi(DBUpdater dbVersion) {
         initDatasource(dbVersion);
         Jdbi jdbi = initJdbi();
         setInitialzed();
@@ -224,12 +212,37 @@ public class DataSourceWrapper implements DataSource {
         shutdown = false;
     }
 
-    private void initDatasource(DbVersion dbVersion) {
+    private void initDatasource(DBUpdater dbUpdater) {
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbUsername);
+
+        HikariConfig sysDBConf = new HikariConfig();
+        sysDBConf.setJdbcUrl(systemDbUrl);
+        sysDBConf.setUsername(dbUsername);
+        if (dbPassword != null && !dbPassword.isEmpty()) {
+            sysDBConf.setPassword(dbPassword);
+        }
+        sysDBConf.setMaximumPoolSize(5);
+        sysDBConf.setPoolName("systemDB");
+
+        try (HikariDataSource systemDataSource = new HikariDataSource(sysDBConf);
+             Connection con = systemDataSource.getConnection();
+             Statement stmt = con.createStatement()) {
+
+            stmt.execute(
+                String.format(
+                    "CREATE DATABASE IF NOT EXISTS %1$s CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;",
+                    dbName)
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
         config.setUsername(dbUsername);
-        config.setPassword(dbPassword);
+        if (dbPassword != null && !dbPassword.isEmpty()) {
+            config.setPassword(dbPassword);
+        }
         config.setMaximumPoolSize(maxConnections);
         config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(loginTimeout));
         config.setLeakDetectionThreshold(60_000 * 5); // 5 minutes
@@ -238,33 +251,35 @@ public class DataSourceWrapper implements DataSource {
         log.debug("Creating DataSource pool '{}', path = {}", shardId, dbUrl);
         dataSource = new HikariDataSource(config);
         jmxBean = dataSource.getHikariPoolMXBean();
-/*
-        dataSource = JdbcConnectionPool.create(dbUrl, dbUsername, dbPassword);
-        dataSource.setMaxConnections(maxConnections);
-        dataSource.setLoginTimeout(loginTimeout);
-*/
+
         log.debug("Attempting to create DataSource by path = {}...", dbUrl);
         try (Connection con = dataSource.getConnection();
              Statement stmt = con.createStatement()) {
-            stmt.executeUpdate("SET DEFAULT_LOCK_TIMEOUT " + defaultLockTimeout);
-            stmt.executeUpdate("SET MAX_MEMORY_ROWS " + maxMemoryRows);
+
+            if (this.dbName != null && !this.dbName.equalsIgnoreCase("testdb")
+                && this.dbUsername != null && this.dbUsername.equalsIgnoreCase("root")) { //skip that for unit tests
+                stmt.executeUpdate("set global rocksdb_max_row_locks=1073741824;");
+                stmt.executeUpdate("set session rocksdb_max_row_locks=1073741824;");
+                stmt.executeUpdate(String.format("use %s;", this.dbName));
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        log.debug("Before starting Db schema init {}...", dbVersion);
-        dbVersion.init(this);
+
+        log.debug("Before starting Db schema init {}...", dbUpdater);
+        dbUpdater.update(dbUrl, dbUsername, dbPassword);
     }
 
     private Jdbi initJdbi() {
         log.debug("Attempting to create Jdbi instance...");
         Jdbi jdbi = Jdbi.create(dataSource);
         jdbi.installPlugin(new SqlObjectPlugin());
-        jdbi.installPlugin(new H2DatabasePlugin());
         jdbi.registerArgument(new BigIntegerArgumentFactory());
         jdbi.registerArgument(new DexCurrenciesFactory());
         jdbi.registerArgument(new OrderTypeFactory());
         jdbi.registerArgument(new OrderStatusFactory());
         jdbi.registerArgument(new LongArrayArgumentFactory());
+        jdbi.registerArgument(new IntArrayArgumentFactory());
         jdbi.registerArrayType(long.class, "generatorIds");
         jdbi.registerArgument(new ShardStateFactory());
 
@@ -281,13 +296,13 @@ public class DataSourceWrapper implements DataSource {
         return jdbi;
     }
 
-    public void init(DbVersion dbVersion) {
-        initDatasource(dbVersion);
+    public void init(DBUpdater dbUpdater) {
+        initDatasource(dbUpdater);
         setInitialzed();
     }
 
-    public void update(DbVersion dbVersion) {
-        dbVersion.init(this);
+    public void update(DBUpdater dbUpdater) {
+        dbUpdater.update(dbUrl, dbUsername, dbPassword);
     }
 
     public void shutdown() {
@@ -295,35 +310,14 @@ public class DataSourceWrapper implements DataSource {
         if (!initialized) {
             return;
         }
-        try {
-            Connection con = dataSource.getConnection();
-            Statement stmt = con.createStatement();
-            stmt.execute("SHUTDOWN COMPACT");
-            shutdown = true;
-            initialized = false;
-            dataSource.close();
-//            dataSource.dispose();
-            log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
-        } catch (JdbcSQLException e) {
-            log.info(e.toString());
-        } catch (SQLException e) {
-            log.info(e.toString(), e);
-        }
+        shutdown = true;
+        initialized = false;
+        dataSource.close();
+        log.debug("Db shutdown completed in {} ms for '{}'", System.currentTimeMillis() - start, this.dbUrl);
     }
 
     public boolean isShutdown() {
         return shutdown;
-    }
-
-    public void analyzeTables() {
-        try (Connection con = dataSource.getConnection();
-             Statement stmt = con.createStatement()) {
-            log.debug("Start DB 'ANALYZE' on {}", con.getMetaData());
-            stmt.execute("ANALYZE");
-            log.debug("FINISHED DB 'ANALYZE' on {}", con.getMetaData());
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
     }
 
     @Override

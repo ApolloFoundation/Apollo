@@ -21,6 +21,9 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
@@ -47,6 +50,7 @@ public class ShardImporter {
     private Zip zipComponent;
     private DownloadableFilesManager downloadableFilesManager;
     private AplAppStatus aplAppStatus;
+    static ObjectMapper mapper = new ObjectMapper();
 
     @Inject
     public ShardImporter(ShardDao shardDao, BlockchainConfig blockchainConfig, GenesisImporter genesisImporter, Blockchain blockchain, DerivedTablesRegistry derivedTablesRegistry, CsvImporter csvImporter, Zip zipComponent, DataTagDao dataTagDao, DownloadableFilesManager downloadableFilesManager, AplAppStatus aplAppStatus) {
@@ -163,7 +167,9 @@ public class ShardImporter {
                 log.debug("start importing '{}'...", table);
                 aplAppStatus.durableTaskUpdate(genesisTaskId, "Loading '" + table + "'", 0.6);
                 long rowsImported;
-                if (ShardConstants.ACCOUNT_TABLE_NAME.equalsIgnoreCase(table) || ShardConstants.ACCOUNT_ASSET_TABLE_NAME.equalsIgnoreCase(table) || ShardConstants.ACCOUNT_CURRENCY_TABLE_NAME.equalsIgnoreCase(table)) {
+                if (ShardConstants.ACCOUNT_TABLE_NAME.equalsIgnoreCase(table)
+                    || ShardConstants.ACCOUNT_ASSET_TABLE_NAME.equalsIgnoreCase(table)
+                    || ShardConstants.ACCOUNT_CURRENCY_TABLE_NAME.equalsIgnoreCase(table)) {
                     rowsImported = csvImporter.importCsvWithDefaultParams(table, 100, true,
                         Map.of("height", blockchain.findFirstBlock().getHeight()));
                 } else if (ShardConstants.TAGGED_DATA_TABLE_NAME.equalsIgnoreCase(table)) {
@@ -171,8 +177,14 @@ public class ShardImporter {
                         Object parsedTags = row.get("parsed_tags");
                         Object height = row.get("height");
                         if (parsedTags != null) {
-                            Object[] tagArray = (Object[]) parsedTags;
-                            dataTagDao.add(Arrays.copyOf(tagArray, tagArray.length, String[].class), Integer.parseInt((String) height));
+                            String[] tagArray = new String[0];
+                            try {
+                                tagArray = mapper.readValue((String)parsedTags, new TypeReference<>() {});
+                            } catch (JsonProcessingException e) {
+                                log.error("Parsing 'parsed_tags' error during CSV importing", e);
+                                throw new RuntimeException(e);
+                            }
+                            dataTagDao.add(tagArray, Integer.parseInt((String) height));
                         }
                     });
                 } else {

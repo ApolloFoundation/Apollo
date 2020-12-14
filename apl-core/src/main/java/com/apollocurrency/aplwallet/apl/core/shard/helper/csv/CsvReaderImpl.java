@@ -76,8 +76,13 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
     }
 
     private ResultSet readResultSet(String[] colNames) throws IOException {
-        this.columnNames = colNames;
+        if (colNames != null && colNames.length > 0) {
+            this.columnNames = colNames;
+        }
         initRead();
+        if (this.columnNames == null || this.columnNames.length == 0) {
+            log.error("empty columns array");
+        }
         SimpleResultSet result = new SimpleResultSet(this);
         makeColumnNamesUnique();
         int index = 0;
@@ -119,7 +124,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
             input.reset();
         }
         inputBuffer = new char[IO_BUFFER_SIZE * 2];
-        if (columnNames == null) {
+        if (this.columnNames == null) {
             readHeader();
         }
     }
@@ -128,22 +133,22 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
      * When CSV doesn't have columns in header
      */
     private void makeColumnNamesUnique() {
-        for (int i = 0; i < columnNames.length; i++) {
+        for (int i = 0; i < this.columnNames.length; i++) {
             StringBuilder buff = new StringBuilder();
-            String n = columnNames[i];
+            String n = this.columnNames[i];
             if (n == null || n.length() == 0) {
                 buff.append('C').append(i + 1);
             } else {
                 buff.append(n);
             }
             for (int j = 0; j < i; j++) {
-                String y = columnNames[j];
+                String y = this.columnNames[j];
                 if (buff.toString().equals(y)) {
                     buff.append('1');
                     j = -1;
                 }
             }
-            columnNames[i] = buff.toString();
+            this.columnNames[i] = buff.toString();
         }
     }
 
@@ -180,14 +185,14 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
                 }
             }
         }
-        columnNames = new String[list.size()];
+        this.columnNames = new String[list.size()];
         columnsMetaData = new ColumnMetaData[list.size()];
         if (listMeta.size() > 0 && listMeta.get(0) != null) {
             for (int i = 0; i < listMeta.size(); i++) {
                 columnsMetaData[i] = listMeta.get(i);
             }
         }
-        list.toArray(columnNames);
+        list.toArray(this.columnNames);
     }
 
     private boolean isEOL(int ch) {

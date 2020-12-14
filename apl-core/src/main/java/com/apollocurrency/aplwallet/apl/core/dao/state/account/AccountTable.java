@@ -78,11 +78,17 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     @Override
     public void save(Connection con, Account account) throws SQLException {
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, "
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("INSERT INTO account (id, "
                 + "parent, is_multi_sig, addr_scope, "
                 + "balance, unconfirmed_balance, forged_balance, "
                 + "active_lessee_id, has_control_phasing, height, latest, deleted) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)"
+                + "ON DUPLICATE KEY UPDATE "
+                + "id = VALUES(id), parent = VALUES(parent), is_multi_sig = VALUES(is_multi_sig), addr_scope = VALUES(addr_scope), "
+                + "balance = VALUES(balance), unconfirmed_balance = VALUES(unconfirmed_balance), "
+                + "forged_balance = VALUES(forged_balance), active_lessee_id = VALUES(active_lessee_id), "
+                + "has_control_phasing = VALUES(has_control_phasing), height = VALUES(height), latest = TRUE, deleted = FALSE"
+            )
         ) {
             int i = 0;
             pstmt.setLong(++i, account.getId());
@@ -155,7 +161,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
              @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
              PreparedStatement pstmt =
                  con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
-                     " ORDER BY balance desc " + DbUtils.limitsClause(0, numberOfTopAccounts - 1) + ")")) {
+                     " ORDER BY balance desc " + DbUtils.limitsClause(0, numberOfTopAccounts - 1) + ") as acc_ballance")) {
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
             try (ResultSet rs = pstmt.executeQuery()) {

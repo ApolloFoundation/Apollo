@@ -55,7 +55,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 @EnableWeld
@@ -99,7 +99,7 @@ class PrunableArchiveMigratorTest {
         doReturn("false").when(optionDAO).get(anyString());
         mockChain();
         migrator.migrate();
-        verifyZeroInteractions(shardDao, dirProvider, zip, registry);
+        verifyNoInteractions(shardDao, dirProvider, zip, registry);
     }
 
     @Test
@@ -160,8 +160,8 @@ class PrunableArchiveMigratorTest {
         Files.createFile(dataExportFolder.resolve("not-prunable.csv"));
         Files.createFile(dataExportFolder.resolve("prunable_table.csv"));
         Files.createFile(dataExportFolder.resolve("shard.csv"));
-        Path firstZipPath = dataExportFolder.resolve("apl-blockchain-shard-1-chain-3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6.zip");
-        Path secondZipPath = dataExportFolder.resolve("apl-blockchain-shard-2-chain-3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6.zip");
+        Path firstZipPath = dataExportFolder.resolve("apl_blockchain_3fecf3_shard_1.zip");
+        Path secondZipPath = dataExportFolder.resolve("apl_blockchain_3fecf3_shard_2.zip");
         ChunkedFileOps ops1 = zip.compressAndHash(firstZipPath.toAbsolutePath().toString(), dataExportFolder.toAbsolutePath().toString(), 0L, ((dir, name) -> name.endsWith(".csv")), false);
         byte[] hash1 = null;
         if (ops1 != null && ops1.isHashedOK()) {
@@ -200,7 +200,7 @@ class PrunableArchiveMigratorTest {
 
         verify(shardDao).getAllCompletedShards();
         verifyNoMoreInteractions(shardDao);
-        verifyZeroInteractions(zip);
+        verifyNoInteractions(zip);
     }
 
     private void mockPrunableTablesAndShards() {

@@ -22,6 +22,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
 @Singleton
@@ -55,12 +56,17 @@ public class DGSFeedbackTable extends ValuesDbTable<DGSFeedback> {
     @Override
     public void save(Connection con, DGSFeedback feedback) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase_feedback (id, feedback_data, feedback_nonce, "
-            + "height, latest) VALUES (?, ?, ?, ?, TRUE)")) {
+            + "height, latest) VALUES (?, ?, ?, ?, TRUE)", Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             pstmt.setLong(++i, feedback.getPurchaseId());
             i = EncryptedDataUtil.setEncryptedData(pstmt, feedback.getFeedbackEncryptedData(), ++i);
             pstmt.setInt(i, feedback.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    feedback.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 

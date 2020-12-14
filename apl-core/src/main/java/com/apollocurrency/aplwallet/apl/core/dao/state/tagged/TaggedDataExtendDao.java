@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.tagged;
@@ -15,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -38,7 +37,6 @@ public class TaggedDataExtendDao extends ValuesDbTable<TaggedDataExtend> {
             return taggedData.getDbKey();
         }
     };
-    protected DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
 
     @Inject
     public TaggedDataExtendDao(DerivedTablesRegistry derivedDbTablesRegistry,

@@ -5,15 +5,10 @@
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import org.h2.jdbcx.JdbcConnectionPool;
 
 import javax.inject.Inject;
-import javax.sql.DataSource;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -33,64 +28,29 @@ public class H2DbInfoExtractor implements DbInfoExtractor {
         this.password = password;
     }
 
-    private static String createDbUrl(String dbPath, String type) {
-        return String.format("jdbc:%s:%s;MV_STORE=TRUE", type, dbPath);
-    }
 
-    private Path createDbPath(String dbPath) {
-        return Paths.get(dbPath + DbProperties.DB_EXTENSION_WITH_DOT);
-    }
-
-    @Override
-    public int getHeight(String dbPath) {
-        JdbcConnectionPool dataSource = createDataSource(dbPath);
-        if (dataSource != null) {
-            int height = getHeight(dataSource);
-            shutdownDb(dataSource);
-            return height;
-        } else return 0;
-    }
-
-    @Override
-    public Path getPath(String dbPath) {
-        return createDbPath(dbPath);
-    }
-
-    protected void shutdownDb(JdbcConnectionPool dataSource) {
-        try {
-            Connection connection = dataSource.getConnection();
-            connection.createStatement().execute("SHUTDOWN");
-            dataSource.dispose();
+    protected void shutdownDb() {
+        try (Connection connection = DriverManager.getConnection("jdbc:mariadb://localhost:3306/apollo_new", "root", "12");
+             Statement statement = connection.createStatement();
+        ){
+            statement.execute("SHUTDOWN");
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    protected JdbcConnectionPool createDataSource(String dbPath) {
-        if (!checkPath(dbPath)) {
-            return null;
-        }
-        String dbUrl = createDbUrl(dbPath, DB_TYPE);
-        return JdbcConnectionPool.create(dbUrl, user, password);
-    }
-
-    private boolean checkPath(String dbDir) {
-        Path dbPath = createDbPath(dbDir);
-        return Files.exists(dbPath);
-    }
-
-    private int getHeight(DataSource dataSource) {
+    public int getHeight() {
         int height = 0;
-        try (Connection connection = dataSource.getConnection();
+        try (Connection connection = DriverManager.getConnection("jdbc:mariadb://localhost:3306/apollo_new", "root", "12");
              Statement stmt = connection.createStatement()) {
-            try (ResultSet rs = stmt.executeQuery("SELECT height FROM block order by timestamp desc")) {
+            try (ResultSet rs = stmt.executeQuery("SELECT height FROM block order by `timestamp` desc")) {
                 if (rs.next()) {
                     height = rs.getInt(1);
                 }
             }
         } catch (SQLException ignored) {
         }
+        shutdownDb();
         return height;
     }
-
 }

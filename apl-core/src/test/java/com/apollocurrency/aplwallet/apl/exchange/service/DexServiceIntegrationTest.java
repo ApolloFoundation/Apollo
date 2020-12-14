@@ -54,7 +54,7 @@ import java.util.List;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @EnableWeld
 class DexServiceIntegrationTest {
@@ -114,7 +114,7 @@ class DexServiceIntegrationTest {
 
         txEvent.select(TxEventType.literal(TxEventType.REMOVED_UNCONFIRMED_TRANSACTIONS)).fire(phasedTx);
 
-        verifyZeroInteractions(phasingPollService, approvedResultTable, phasedTx);
+        verifyNoInteractions(phasingPollService, approvedResultTable, phasedTx);
     }
 
     @Test
@@ -124,7 +124,7 @@ class DexServiceIntegrationTest {
 
         txEvent.select(TxEventType.literal(TxEventType.RELEASE_PHASED_TRANSACTION)).fire(phasedTx);
 
-        verifyZeroInteractions(phasingPollService, approvedResultTable);
+        verifyNoInteractions(phasingPollService, approvedResultTable);
     }
 
     @Singleton

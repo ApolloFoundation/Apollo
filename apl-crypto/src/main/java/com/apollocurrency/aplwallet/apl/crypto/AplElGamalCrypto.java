@@ -3,9 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.crypto;
 
-import static com.apollocurrency.aplwallet.apl.crypto.Crypto.aesGCMDecrypt;
-import static com.apollocurrency.aplwallet.apl.crypto.Crypto.aesGCMEncrypt;
-import static com.apollocurrency.aplwallet.apl.crypto.Crypto.getSecureRandom;
 import io.firstbridge.cryptolib.CryptoConfig;
 import io.firstbridge.cryptolib.CryptoNotValidException;
 import io.firstbridge.cryptolib.CryptoParams;
@@ -13,11 +10,16 @@ import io.firstbridge.cryptolib.ElGamalCrypto;
 import io.firstbridge.cryptolib.ElGamalKeyPair;
 import io.firstbridge.cryptolib.dataformat.ElGamalEncryptedMessage;
 import io.firstbridge.cryptolib.impl.ecc.ElGamalCryptoImpl;
+import org.slf4j.Logger;
+
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import org.slf4j.Logger;
+
+import static com.apollocurrency.aplwallet.apl.crypto.Crypto.aesGCMDecrypt;
+import static com.apollocurrency.aplwallet.apl.crypto.Crypto.aesGCMEncrypt;
+import static com.apollocurrency.aplwallet.apl.crypto.Crypto.getSecureRandom;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -26,7 +28,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class AplElGamalCrypto {
  private static final Logger LOG = getLogger(AplElGamalCrypto.class);
- 
+
     private static String normalizeByLen(String in, int length) {
         String rx = "";
         int xlen = in.length();
@@ -43,7 +45,7 @@ public class AplElGamalCrypto {
             return in.substring(xlen - length, length + 1);
         }
     }
-    
+
     public static String decrypt(String cryptogramm, ElGamalKeyPair keyPair) {
         try {
             if (cryptogramm.length() < 450) {
@@ -145,5 +147,5 @@ public class AplElGamalCrypto {
         cryptogram += normalizeByLen(Convert.toHexString(hash), CryptoConstants.SHA256_DIGEST_CHARACTERS);
         return cryptogram;
     }
-    
+
 }

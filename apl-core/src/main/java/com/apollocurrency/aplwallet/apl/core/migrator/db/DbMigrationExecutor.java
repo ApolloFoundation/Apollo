@@ -27,8 +27,8 @@ import java.util.Objects;
  * @see LegacyDbLocationsProvider
  * @see DbMigrator
  */
-public class DbMigrationExecutor extends MigrationExecutor {
-    private LegacyDbLocationsProvider legacyDbLocationsProvider;
+public class DbMigrationExecutor  {
+/*    private LegacyDbLocationsProvider legacyDbLocationsProvider;
     private FullTextSearchService fullTextSearchProvider;
     private DbInfoExtractor dbInfoExtractor;
     private DatabaseManager databaseManager;
@@ -72,5 +72,5 @@ public class DbMigrationExecutor extends MigrationExecutor {
     @Override
     protected Migrator getMigrator() {
         return new DbMigrator(dbInfoExtractor);
-    }
+    }*/
 }

@@ -3,12 +3,12 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.crypto.cert.ApolloCertificate;
 import io.firstbridge.cryptolib.CryptoFactory;
-import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;

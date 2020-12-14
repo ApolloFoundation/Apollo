@@ -127,13 +127,13 @@ class DownloadableFilesManagerTest {
         // parse real/existing shard name + ID
         Path pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::1");
         assertNotNull(pathToShardArchive);
-        assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", pathToShardArchive.getFileName().toString());
+        assertEquals("apl_blockchain_b5d7b6_shard_1.zip", pathToShardArchive.getFileName().toString());
 
         pathToShardArchive = filesManager.mapFileIdToLocalPath("shard::1;chainid::b5d7b697-f359-4ce5-a619-fa34b6fb01a5");
-        assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", pathToShardArchive.getFileName().toString());
+        assertEquals("apl_blockchain_b5d7b6_shard_1.zip", pathToShardArchive.getFileName().toString());
 
         pathToShardArchive = filesManager.mapFileIdToLocalPath("shardprun::1;chainid::b5d7b697-f359-4ce5-a619-fa34b6fb01a5");
-        assertEquals("apl-blockchain-shardprun-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5.zip", pathToShardArchive.getFileName().toString());
+        assertEquals("apl_blockchain_b5d7b6_shardprun_1.zip", pathToShardArchive.getFileName().toString());
 
         //        String fpath = filesManager.mapFileIdToLocalPath("attachment::123;chainid::3ef0").toString();
 //        assertEquals("123", fpath);

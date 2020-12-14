@@ -86,7 +86,7 @@ public class TaggedTestData {
         dataTag_4.setLatest(true);
         dataTag_NOT_SAVED = new DataTag("123", td.TRANSACTION_9.getHeight(), 1);
         dataTag_NOT_SAVED.setLatest(true);
-        dataTag_NOT_SAVED.setDbId(dataTag_4.getDbId() + 1);
+        dataTag_NOT_SAVED.setDbId(dataTag_4.getDbId() + 1); // incorrect assumption for mariadb
     }
 
 }

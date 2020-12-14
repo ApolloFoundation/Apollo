@@ -39,7 +39,6 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessingTaskScheduler;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.TableRegistryInitializer;
 import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
@@ -89,7 +88,7 @@ public final class AplCore {
     private Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
-    private FullTextSearchService fullTextSearchService;
+    //private FullTextSearchService fullTextSearchService;
     private API apiServer;
     private IDexMatcherInterface tcs;
     @Inject
@@ -155,8 +154,8 @@ public final class AplCore {
             blockchainProcessor.shutdown();
             log.info("blockchainProcessor Shutdown...");
         }
-        if (fullTextSearchService != null) fullTextSearchService.shutdown();
-        log.info("full text service shutdown...");
+//        if (fullTextSearchService != null) fullTextSearchService.shutdown();
+//        log.info("full text service shutdown...");
 
         if (databaseManager != null) {
             databaseManager.shutdown();
@@ -216,13 +215,13 @@ public final class AplCore {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
             databaseManager.getDataSource();
             CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
-            fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
-            fullTextSearchService.init(); // first time BEFORE migration
+//            fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
+//            fullTextSearchService.init(); // first time BEFORE migration
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 30.0, "Database initialization done");
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 30.1, "Apollo Data migration started");
 
             ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
-            migrationManager.executeDataMigration();
+            //migrationManager.executeDataMigration();
             BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
             blockchainConfigUpdater.updateToLatestConfig(); // update config for migrated db
 

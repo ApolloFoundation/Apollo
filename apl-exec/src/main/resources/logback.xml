@@ -39,12 +39,12 @@
           </encoder>
       </appender>
   -->
-  <!--
-    <appender name="poll-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
-      <file>${LOGDIR}/apl-poll.log</file>
+<!--
+    <appender name="fts-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <file>${LOGDIR}/apl-fts.log</file>
       <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
         &lt;!&ndash; rollover daily &ndash;&gt;
-        <fileNamePattern>${LOGDIR}/apl-poll-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
+        <fileNamePattern>${LOGDIR}/apl-fts-%d{yyyy-MM-dd}_%i.gz</fileNamePattern>
         <maxHistory>30</maxHistory>
         <maxFileSize>100MB</maxFileSize>
         <totalSizeCap>3GB</totalSizeCap>
@@ -53,7 +53,8 @@
         <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
       </encoder>
     </appender>
-  -->
+-->
+
   <appender name="generator-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${LOGDIR}/apl-generator.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
@@ -176,9 +177,14 @@
   -->
 <!--  <logger name="com.apollocurrency.aplwallet.apl.core.rest.v2" level="TRACE"/>-->
 
-  <!--    <logger name="com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling" level="trace" additivity="false">-->
-  <!--        <appender-ref ref="shuffling-file"/>-->
-  <!--    </logger>-->
+<!--
+      <logger name="com.apollocurrency.aplwallet.apl.core.service.fulltext" level="trace" additivity="false">
+          <appender-ref ref="fts-file"/>
+      </logger>
+      <logger name="com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountInfoServiceImpl" level="trace" additivity="false">
+          <appender-ref ref="fts-file"/>
+      </logger>
+-->
   <!--
       <logger name="com.apollocurrency.aplwallet.apl.core.service.state.PollService" level="trace" additivity="false">
           <appender-ref ref="poll-file"/>
@@ -192,6 +198,9 @@
           <appender-ref ref="account-file"/>
         </logger>
   -->
+  <logger name="org.testcontainers" level="DEBUG" additivity="false"/>
+  <logger name="com.github.dockerjava" level="DEBUG" additivity="false"/>
+
   <logger name="jdbc" level="off" additivity="false"/>
   <logger name="jdbc.connection" level="info" additivity="false"/>
   <logger name="jdbc.sqltiming" level="info" additivity="false"/>

@@ -185,8 +185,8 @@ public final class API {
     private static boolean isWebUIHere(Path webUiPath) {
         boolean res = false;
         if (Files.exists(webUiPath)
-                && Files.isDirectory(webUiPath)
-                && Files.exists(webUiPath.resolve(INDEX_HTML))) {
+            && Files.isDirectory(webUiPath)
+            && Files.exists(webUiPath.resolve(INDEX_HTML))) {
             log.debug("Web UI index.html foind in: {}.", webUiPath.toString());
             res = true;
         }
@@ -197,24 +197,24 @@ public final class API {
         final Path binDir = DirProvider.getBinDir();
         boolean useHtmlStub = true;
         final String webUIlocation = propertiesHolder.getStringProperty("apl.apiResourceBase", DEFAULT_WEBUI_DIR);
-        Path webUiPath=Path.of(DEFAULT_WEBUI_DIR);
+        Path webUiPath = Path.of(DEFAULT_WEBUI_DIR);
         try {
             Path lp = Path.of(webUIlocation);
             if (lp.isAbsolute()) {
                 webUiPath = lp;
-                if(isWebUIHere(webUiPath)){
-                  log.debug("Cannot find index.html in: {}. Gonna use html-stub.", webUiPath.toString());
-                  useHtmlStub = false;                  
+                if (isWebUIHere(webUiPath)) {
+                    log.debug("Cannot find index.html in: {}. Gonna use html-stub.", webUiPath.toString());
+                    useHtmlStub = false;
                 }
             } else {
                 webUiPath = binDir.resolve(webUIlocation);
-                if(isWebUIHere(webUiPath)){
+                if (isWebUIHere(webUiPath)) {
                     useHtmlStub = false;
-                }else{
-                     webUiPath = binDir.getParent().resolve(webUIlocation);
-                     if(isWebUIHere(webUiPath)){
-                         useHtmlStub = false;
-                     }
+                } else {
+                    webUiPath = binDir.getParent().resolve(webUIlocation);
+                    if (isWebUIHere(webUiPath)) {
+                        useHtmlStub = false;
+                    }
                 }
             }
         } catch (InvalidPathException ipe) {

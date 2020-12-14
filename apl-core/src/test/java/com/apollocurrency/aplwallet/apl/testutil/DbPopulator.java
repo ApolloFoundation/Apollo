@@ -4,12 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
-import com.apollocurrency.aplwallet.apl.core.db.DataSourceWrapper;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
-import javax.sql.DataSource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -23,40 +22,50 @@ import java.sql.Statement;
 import java.util.Objects;
 import java.util.StringTokenizer;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
+@Slf4j
 public class DbPopulator {
-    private static final Logger LOG = getLogger(DbPopulator.class);
+    private final String schemaScriptPath;
+    private final String dataScriptPath;
 
-    private DataSource basicDataSource;
-    private String schemaScriptPath;
-    private String dataScriptPath;
-
-    public DbPopulator(DataSourceWrapper db, String schemaScriptPath, String dataScriptPath) {
-        this.basicDataSource = db;
+    public DbPopulator(String schemaScriptPath, String dataScriptPath) {
         this.schemaScriptPath = schemaScriptPath;
         this.dataScriptPath = dataScriptPath;
     }
 
-    public void initDb() {
-        findAndExecute(schemaScriptPath, "Schema");
+    public void initDb(TransactionalDataSource db) {
+        findAndExecute(db, schemaScriptPath, "Schema");
     }
 
-    private void loadSqlAndExecute(URI file) {
-        byte[] bytes = readAllBytes(file);
-
-        StringTokenizer tokenizer = new StringTokenizer(new String(bytes), ";");
-        while (tokenizer.hasMoreElements()) {
-            String sqlCommand = tokenizer.nextToken();
-            try (Connection con = basicDataSource.getConnection();
-                 Statement stm = con.createStatement()) {
-                stm.executeUpdate(sqlCommand);
-                con.commit();
-            } catch (SQLException e) {
-                throw new RuntimeException(e.toString(), e);
-            }
+    public void executeUseDbSql(TransactionalDataSource dataSource) {
+        Objects.requireNonNull(dataSource.getDbIdentity(), "shardName is NULL");
+        try (Connection con = dataSource.getConnection();
+             Statement stm = con.createStatement()) {
+            stm.executeUpdate(String.format("use %s;", dataSource.getDbIdentity().get()));
+            con.commit();
+        } catch (SQLException e) {
+            log.error("Error executing USE shard command", e);
+            throw new RuntimeException(e.toString(), e);
         }
+    }
 
+    private void loadSqlAndExecute(TransactionalDataSource dataSource, URI file) {
+        int appliedResults = 0;
+        StringTokenizer tokenizer = new StringTokenizer(new String(readAllBytes(file)), ";");
+
+        try (Connection con = dataSource.getConnection();
+             Statement stm = con.createStatement()) {
+            while (tokenizer.hasMoreElements()) {
+                String sqlCommand = tokenizer.nextToken();
+                if (sqlCommand.trim().length() != 0) {
+                    stm.addBatch(sqlCommand);
+                }
+            }
+            stm.executeBatch();
+            con.commit();
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        log.trace("Applied '{}' test data commands into db=[{}]", appliedResults, (dataSource).getDbIdentity());
     }
 
     private byte[] readAllBytes(URI file) {
@@ -68,14 +77,14 @@ public class DbPopulator {
     }
 
 
-    public void populateDb() {
-        findAndExecute(dataScriptPath, "Data");
+    public void populateDb(TransactionalDataSource dataSource) {
+        findAndExecute(dataSource, dataScriptPath, "Data");
     }
 
-    public void findAndExecute(String resource, String name) {
+    public void findAndExecute(TransactionalDataSource db, String resource, String name) {
         if (StringUtils.isNotBlank(resource)) {
             URI resourceUri = findResource(resource, name);
-            loadSqlAndExecute(resourceUri);
+            loadSqlAndExecute(db, resourceUri);
         }
     }
 

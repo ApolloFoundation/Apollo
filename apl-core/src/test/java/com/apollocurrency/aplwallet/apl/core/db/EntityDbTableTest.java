@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.Filter;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -63,6 +65,11 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
         super.setUp();
         table = (EntityDbTable<T>) getDerivedDbTable();
         getBlockchain().setLastBlock(new BlockTestData().LAST_BLOCK);
+    }
+
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
     }
 
     @Test
@@ -259,10 +266,11 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
 
     @Test
     public void testGetManyByEmptyClauseWithOffset() {
-        List<T> all = CollectionUtil.toList(table.getManyBy(DbClause.EMPTY_CLAUSE, 2, Integer.MAX_VALUE));
+        DbIterator<T> manyBy = table.getManyBy(DbClause.EMPTY_CLAUSE, 2, Integer.MAX_VALUE);
+        List<T> all = CollectionUtil.toList(manyBy);
         List<T> allExpectedData = getAllLatest();
         List<T> expected = allExpectedData.stream().sorted(getDefaultComparator()).skip(2).collect(Collectors.toList());
-        assertEquals(expected, all);
+        assertIterableEquals(expected, all);
     }
 
     @Test

@@ -54,9 +54,12 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
     @Override
     public void save(Connection con, AccountAsset accountAsset) throws SQLException {
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset "
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("INSERT INTO account_asset "
                 + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest, deleted) "
-                + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE, FALSE)")
+                + "VALUES (?, ?, ?, ?, ?, TRUE, FALSE) "
+                + "ON DUPLICATE KEY UPDATE account_id = VALUES(account_id), asset_id = VALUES(asset_id), quantity = VALUES(quantity), "
+                + "unconfirmed_quantity = VALUES(unconfirmed_quantity), height = VALUES(height), latest = TRUE, deleted = FALSE")
+
         ) {
             int i = 0;
             pstmt.setLong(++i, accountAsset.getAccountId());

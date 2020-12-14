@@ -59,7 +59,12 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
     @Override
     public void save(Connection con, PublicKey publicKey) throws SQLException {
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (account_id, public_key, height, latest) " + "KEY (account_id, height) VALUES (?, ?, ?, TRUE)")
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            final PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + table
+                + " (account_id, public_key, height, latest) "
+                + "VALUES (?, ?, ?, TRUE) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "account_id = VALUES(account_id), public_key = VALUES(public_key), height = VALUES(height), latest = TRUE")
         ) {
             int i = 0;
             pstmt.setLong(++i, publicKey.getAccountId());
@@ -69,4 +74,8 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
         }
     }
 
+    public void init() {
+        // that is needed for 'manual' derived table registration
+        super.init();
+    }
 }

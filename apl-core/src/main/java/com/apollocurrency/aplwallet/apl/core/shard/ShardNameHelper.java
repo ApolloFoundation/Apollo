@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import java.util.Objects;
 import java.util.UUID;
 
-import static com.apollocurrency.aplwallet.apl.util.Constants.APPLICATION_DIR_NAME;
+import static com.apollocurrency.aplwallet.apl.util.Constants.APPLICATION_DB_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -21,27 +21,21 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class ShardNameHelper {
     private static final Logger log = getLogger(ShardNameHelper.class);
 
-    private final static String SHARD_NAME_PATTERN = APPLICATION_DIR_NAME + "-shard-%d-chain-%s";
-    private final static String SHARD_CORE_ARCHIVE_NAME_PATTERN = APPLICATION_DIR_NAME + "-shard-%d-chain-%s.zip";
-    private final static String SHARD_PRUNABLE_ARCHIVE_NAME_PATTERN = APPLICATION_DIR_NAME + "-shardprun-%d-chain-%s.zip";
-    private final static String SHARD_ID_PATTERN = "shard::%d;chain::%s";
+    private final static String SHARD_NAME_PATTERN = APPLICATION_DB_NAME + "_%s_shard_%d";
+    private final static String SHARD_CORE_ARCHIVE_NAME_PATTERN = APPLICATION_DB_NAME + "_%s_shard_%d.zip";
+    private final static String SHARD_PRUNABLE_ARCHIVE_NAME_PATTERN = APPLICATION_DB_NAME + "_%s_shardprun_%d.zip";
+    private final static String SHARD_ID_PATTERN = "chain::%s;shard::%d";
     private final static String SHARD_PRUN_ID_PATTERN = "shardprun::%d;chain::%s";
 
     public ShardNameHelper() {
     }
 
     public String getShardNameByShardId(Long shardId, UUID chainId) {
-        if (shardId == null || shardId < 0) {
-            throw new IllegalArgumentException("'shardId' should have positive value, but " + shardId + " was supplied");
-        }
-        Objects.requireNonNull(chainId, "chainID must be set");
-        String result = String.format(SHARD_NAME_PATTERN, shardId, chainId.toString());
-        log.debug(result);
-        return result;
+        return getShardArchiveNameByShardId(SHARD_NAME_PATTERN, shardId, chainId);
     }
 
     public String getFullShardId(Long shardId, UUID chainId) {
-        String result = String.format(SHARD_ID_PATTERN, shardId, chainId.toString());
+        String result = String.format(SHARD_ID_PATTERN, chainId.toString(), shardId);
         return result;
     }
 
@@ -63,7 +57,7 @@ public class ShardNameHelper {
             throw new IllegalArgumentException("'shardId' should have positive value, but " + shardId + " was supplied");
         }
         Objects.requireNonNull(chainId, "chainID must be set");
-        String result = String.format(pattern, shardId, chainId.toString());
+        String result = String.format(pattern, chainId.toString().substring(0, 6), shardId);
         log.debug(result);
         return result;
     }

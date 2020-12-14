@@ -75,9 +75,12 @@ public class AliasOfferTable extends VersionedDeletableEntityDbTable<AliasOffer>
     public void save(Connection con, AliasOffer offer) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO alias_offer (id, price, buyer_id, "
-                + "height) KEY (id, height) VALUES (?, ?, ?, ?)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO alias_offer (id, price, buyer_id, height) "
+                + "VALUES (?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "id = VALUES(id), price = VALUES(price), buyer_id = VALUES(buyer_id), height = VALUES(height)")
         ) {
+
             int i = 0;
             pstmt.setLong(++i, offer.getAliasId());
             pstmt.setLong(++i, offer.getPriceATM());

@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UserErrorMessageDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -12,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.data.UserErrorMessageTestData;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserErrorMessage;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -26,11 +28,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Slf4j
+
 @Tag("slow")
 @EnableWeld
-public class UserErrorMessageDaoTest {
+public class UserErrorMessageDaoTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    static DbExtension extension = new DbExtension(mariaDBContainer);
 
     @WeldSetup
     WeldInitiator weld = WeldUtils.from(List.of(UserErrorMessageDao.class, DaoConfig.class), List.of())
@@ -53,6 +58,8 @@ public class UserErrorMessageDaoTest {
 
     @Test
     void testGetAll() {
+        extension.cleanAndPopulateDb();
+
         List<UserErrorMessage> all = dao.getAll(Long.MAX_VALUE, 3);
 
         assertEquals(List.of(td.ERROR_3, td.ERROR_2, td.ERROR_1), all);
@@ -91,6 +98,8 @@ public class UserErrorMessageDaoTest {
 
     @Test
     void testDeleteByTimestamp() {
+        extension.cleanAndPopulateDb();
+
         dao.deleteByTimestamp(td.ERROR_2.getTimestamp() + 1);
 
         List<UserErrorMessage> all = dao.getAll(Long.MAX_VALUE, 100);

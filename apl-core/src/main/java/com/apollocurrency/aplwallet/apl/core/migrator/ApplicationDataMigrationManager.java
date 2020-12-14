@@ -4,24 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
-import com.apollocurrency.aplwallet.apl.core.migrator.auth2fa.TwoFactorAuthMigrationExecutor;
-import com.apollocurrency.aplwallet.apl.core.migrator.db.DbMigrationExecutor;
-import com.apollocurrency.aplwallet.apl.core.migrator.keystore.VaultKeystoreMigrationExecutor;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Path;
-
 /**
  * Perform all application data migration
  */
 public class ApplicationDataMigrationManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ApplicationDataMigrationManager.class);
+/*    private static final Logger LOG = LoggerFactory.getLogger(ApplicationDataMigrationManager.class);
 
     @Inject
     private VaultKeystoreMigrationExecutor vaultKeystoreMigrationExecutor;
@@ -84,5 +72,5 @@ public class ApplicationDataMigrationManager {
 
     public void setPublicKeyMigrator(PublicKeyMigrator publicKeyMigrator) {
         this.publicKeyMigrator = publicKeyMigrator;
-    }
+    }*/
 }

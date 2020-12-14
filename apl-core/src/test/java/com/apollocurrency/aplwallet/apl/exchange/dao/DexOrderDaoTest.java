@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import com.apollocurrency.aplwallet.apl.data.DexTestData;
@@ -16,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -25,10 +27,13 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Slf4j
+
 @Tag("slow")
-class DexOrderDaoTest {
+class DexOrderDaoTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     DexOrderDao dexOrderDao;
     DexTestData td;
 
@@ -42,7 +47,8 @@ class DexOrderDaoTest {
 
     @Test
     void testGetOrdersByType() {
-        List<DexOrder> orders = dexOrderDao.getOrders(DexOrderDBRequest.builder().type(OrderType.SELL.ordinal()).build(),
+        List<DexOrder> orders = dexOrderDao.getOrders(
+            DexOrderDBRequest.builder().type(OrderType.SELL.ordinal()).limit(10).offset(0).build(),
             DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 
         assertEquals(List.of(td.ORDER_SPA_2, td.ORDER_SEA_7, td.ORDER_SEA_3), orders); // sorted by pair rate desc
@@ -54,6 +60,7 @@ class DexOrderDaoTest {
                 .dbId(td.ORDER_SPA_2.getDbId())
                 .accountId(td.BOB)
                 .pairCur(DexCurrency.PAX.ordinal())
+                .limit(10).offset(0)
                 .build(),
             DexOrderSortBy.PAIR_RATE, DBSortOrder.DESC);
 
