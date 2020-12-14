@@ -62,6 +62,7 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
@@ -104,7 +105,6 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -124,7 +124,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-@Disabled // TODO: YL @full_text_search_fix is needed
 @Slf4j
 
 @Tag("slow")
@@ -160,7 +159,7 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainImpl.class, DaoConfig.class,
-        PropertyProducer.class, TransactionApplier.class,// DirProvider.class, //ServiceModeDirProvider.class,
+        PropertyProducer.class, TransactionApplier.class, FullTextSearchUpdater.class,
         EntityProducer.class, AccountTable.class,
         TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
         GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
@@ -190,7 +189,7 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(ntpTimeConfig.time(), NtpTime.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-        .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
         .addBeans(MockBean.of(mock(CurrencyService.class), CurrencyService.class))
@@ -235,7 +234,6 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         accountCurrencyTable.init();
-        //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
         AccountAssetTable accountAssetTable = new AccountAssetTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         accountAssetTable.init();
         GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
@@ -255,6 +253,7 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
         purchaseTable.init();
     }
 
+    @Tag("skip-fts-init")
     @DisplayName("Loop over derived table list and get Min/Max/Count values")
     @Test
     void testMinMaxValues() {

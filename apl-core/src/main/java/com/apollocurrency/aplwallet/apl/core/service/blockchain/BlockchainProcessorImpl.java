@@ -40,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
@@ -61,6 +62,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableRestorationService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
@@ -100,6 +102,7 @@ import org.json.simple.JSONValue;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -168,7 +171,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final TransactionSerializer transactionSerializer;
     private final PeersService peersService;
     private final BlockchainConfigUpdater blockchainConfigUpdater;
-//    private final FullTextSearchService fullTextSearchProvider;
+    private final FullTextSearchService fullTextSearchProvider;
     private final TaskDispatchManager taskDispatchManager;
     private final Blockchain blockchain;
     private final TransactionProcessor transactionProcessor;
@@ -184,6 +187,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final BlockSerializer blockSerializer;
     private final ConsensusManager consensusManager;
     private final MemPool memPool;
+    private Map<String, String> fullTextSearchIndexedTables;
 
     /**
      * Three blocks are used for internal calculations on assigning previous block
@@ -212,13 +216,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    Blockchain blockchain,
                                    PeersService peersService,
                                    TransactionProcessor transactionProcessor,
-//                                   FullTextSearchService fullTextSearchProvider,
+                                   FullTextSearchService fullTextSearchProvider,
                                    GeneratorService generatorService,
                                    BlockParser blockParser,
                                    GetNextBlocksResponseParser getNextBlocksResponseParser,
                                    BlockSerializer blockSerializer,
                                    ConsensusManager consensusManager,
-                                   MemPool memPool) {
+                                   MemPool memPool,
+                                   @Named(value = "fullTextTables") Map<String, String> fullTextSearchIndexedTables) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = blockchainConfig;
         this.validator = validator;
@@ -255,13 +260,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.blockchain = blockchain;
         this.peersService = peersService;
         this.transactionProcessor = transactionProcessor;
-//        this.fullTextSearchProvider = fullTextSearchProvider;
+        this.fullTextSearchProvider = fullTextSearchProvider;
         this.blockchainProcessorState = new BlockchainProcessorState();
         this.generatorService = generatorService;
         this.blockParser = blockParser;
         this.getNextBlocksResponseParser = getNextBlocksResponseParser;
         this.blockSerializer = blockSerializer;
         this.consensusManager = consensusManager;
+        this.fullTextSearchIndexedTables = fullTextSearchIndexedTables;
 
         configureBackgroundTasks();
     }
@@ -594,17 +600,21 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         long lockAquireTime = System.currentTimeMillis() - startTime;
         try {
             Block previousLastBlock = null;
+            byte[] generatorPublicKey;
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             dataSource.begin();
             try {
                 previousLastBlock = blockchain.getLastBlock();
-                byte[] generatorPublicKey = previousLastBlock.getGeneratorPublicKey();
-                if (generatorPublicKey == null) {
+                if (!previousLastBlock.hasGeneratorPublicKey()) {
                     generatorPublicKey = accountService.getPublicKeyByteArray(previousLastBlock.getGeneratorId());
-                    previousLastBlock.setGeneratorPublicKey(generatorPublicKey);
+                    if (generatorPublicKey != null) {
+                        previousLastBlock.setGeneratorPublicKey(generatorPublicKey);
+                    }
+                } else {
+                    generatorPublicKey = previousLastBlock.getGeneratorPublicKey();
                 }
-                generatorPublicKey = block.getGeneratorPublicKey();
-                if (generatorPublicKey == null) {
+//                generatorPublicKey = block.getGeneratorPublicKey();
+                if (generatorPublicKey == null) { // second attempt
                     generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
                     block.setGeneratorPublicKey(generatorPublicKey);
                 }
@@ -1349,7 +1359,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (height == shardInitialHeight) {
                     trimService.resetTrim(height + trimService.getMaxRollback());
                     aplAppStatus.durableTaskUpdate(scanTaskId, 0.5, "Dropping all full text search indexes");
-//                    fullTextSearchProvider.dropAll(con);
+                    fullTextSearchProvider.dropAll(con);
                     aplAppStatus.durableTaskUpdate(scanTaskId, 3.5, "Full text indexes dropped successfully");
                 }
                 Collection<DerivedTableInterface> derivedTables = dbTables.getDerivedTables();
@@ -1477,9 +1487,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 double percentsPerTableIndex = getPercentsPerEvent(4.0, derivedTables.size());
                 if (height == shardInitialHeight) {
                     for (DerivedTableInterface table : derivedTables) {
-                        aplAppStatus.durableTaskUpdate(scanTaskId,
-                            "Create full text search index for table " + table.toString(), percentsPerTableIndex);
-//                        fullTextSearchProvider.createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
+                        if (table instanceof SearchableTableInterface) {
+                            aplAppStatus.durableTaskUpdate(scanTaskId,
+                                "Create full text search index for table " + table.toString(), percentsPerTableIndex);
+                            fullTextSearchProvider.createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
+                        }
                     }
                 }
 
