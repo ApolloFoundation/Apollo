@@ -129,7 +129,7 @@ public class FileInfoDownloader {
             PeerFileHashSum pfhs = new PeerFileHashSum(hash, pa, fdi.fileInfo.fileId);
             pl.add(pfhs);
         }
-        log.debug("perr list = {}", pl);
+        log.debug("peer list = {}", pl);
         PeerValidityDecisionMaker pvdm = new PeerValidityDecisionMaker(pl);
         res = pvdm.calcualteNetworkState();
         goodPeers = pvdm.getValidPeers();
@@ -143,7 +143,7 @@ public class FileInfoDownloader {
         Objects.requireNonNull(onlyPeers, "onlyPeers is NULL");
         FileDownloadDecision res;
         Set<String> allPeers = new HashSet<>();
-        if (onlyPeers == null || onlyPeers.isEmpty()) {
+        if (onlyPeers.isEmpty()) {
             for (Peer p : peersService.getAllConnectedPeers()) {
                 allPeers.add(p.getHostWithPort());
             }
