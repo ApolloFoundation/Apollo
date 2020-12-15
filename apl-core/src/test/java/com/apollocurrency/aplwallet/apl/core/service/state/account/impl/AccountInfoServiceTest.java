@@ -8,6 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,11 +31,14 @@ class AccountInfoServiceTest {
     AccountTestData testData;
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private AccountInfoTable accountInfoTable = mock(AccountInfoTable.class);
+    private FullTextSearchUpdater fullTextSearchUpdater = mock(FullTextSearchUpdater.class);
+    private FullTextSearchService fullTextSearchService = mock(FullTextSearchService.class);
 
     @BeforeEach
     void setUp() {
         testData = new AccountTestData();
-        accountInfoService = spy(new AccountInfoServiceImpl(blockchain, accountInfoTable));
+        accountInfoService = spy(new AccountInfoServiceImpl(blockchain, accountInfoTable, fullTextSearchUpdater, fullTextSearchService));
+        doReturn("account_info").when(accountInfoTable).getTableName();
     }
 
     @Test
@@ -45,6 +51,7 @@ class AccountInfoServiceTest {
         verify(accountInfoService).update(testData.ACC_INFO_0);
         assertEquals(newName, testData.ACC_INFO_0.getName());
         assertEquals(newDescription, testData.ACC_INFO_0.getDescription());
+        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
     }
 
     @Test
@@ -57,6 +64,7 @@ class AccountInfoServiceTest {
         doReturn(null).when(accountInfoTable).get(any());
         accountInfoService.updateAccountInfo(testData.ACC_1, newName, newDescription);
         verify(accountInfoService).update(expectedAccountInfo);
+        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
     }
 
     @Test
@@ -67,6 +75,7 @@ class AccountInfoServiceTest {
         accountInfoService.update(newInfo);
         verify(accountInfoTable, times(1)).insert(newInfo);
         verify(accountInfoTable, never()).deleteAtHeight(any(AccountInfo.class), anyInt());
+        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
     }
 
     @Test
@@ -76,5 +85,6 @@ class AccountInfoServiceTest {
         accountInfoService.update(deletedAccountInfo);
         verify(accountInfoTable, times(1)).deleteAtHeight(deletedAccountInfo, blockchain.getHeight());
         verify(accountInfoTable, never()).insert(any(AccountInfo.class));
+        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
     }
 }

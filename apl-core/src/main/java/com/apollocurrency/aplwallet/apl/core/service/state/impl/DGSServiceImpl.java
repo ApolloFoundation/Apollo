@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
+
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTable;
@@ -12,8 +15,10 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSTagTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.dbclause.LongDGSPurchasesClause;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.dbclause.SellerBuyerDGSPurchasesClause;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.dbclause.SellerDbClause;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -24,6 +29,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPublicFeedback;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSTag;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
@@ -37,25 +45,35 @@ import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+@Slf4j
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 @Singleton
 public class DGSServiceImpl implements DGSService {
     private final DbClause inStockOnlyClause = new DbClause.IntClause("in_stock_count", DbClause.Op.GT, 0);
     private final DbClause inStockClause = new DbClause.BooleanClause("goods.delisted", false)
         .and(new DbClause.LongClause("goods.quantity", DbClause.Op.GT, 0));
-    private DGSPublicFeedbackTable publicFeedbackTable;
-    private DGSPurchaseTable purchaseTable;
-    private DGSFeedbackTable feedbackTable;
-    private Blockchain blockchain;
-    private DGSGoodsTable goodsTable;
-    private DGSTagTable tagTable;
-    private AccountService accountService;
+    private final DGSPublicFeedbackTable publicFeedbackTable;
+    private final DGSPurchaseTable purchaseTable;
+    private final DGSFeedbackTable feedbackTable;
+    private final Blockchain blockchain;
+    private final DGSGoodsTable goodsTable;
+    private final DGSTagTable tagTable;
+    private final AccountService accountService;
+    private final FullTextSearchUpdater fullTextSearchUpdater;
+    private final FullTextSearchService fullTextSearchService;
 
     @Inject
     public DGSServiceImpl(DGSPublicFeedbackTable publicFeedbackTable,
@@ -64,7 +82,9 @@ public class DGSServiceImpl implements DGSService {
                           Blockchain blockchain,
                           DGSGoodsTable goodsTable,
                           DGSTagTable tagTable,
-                          AccountService accountService) {
+                          AccountService accountService,
+                          FullTextSearchUpdater fullTextSearchUpdater,
+                          FullTextSearchService fullTextSearchService) {
         this.publicFeedbackTable = publicFeedbackTable;
         this.purchaseTable = purchaseTable;
         this.feedbackTable = feedbackTable;
@@ -72,6 +92,8 @@ public class DGSServiceImpl implements DGSService {
         this.goodsTable = goodsTable;
         this.tagTable = tagTable;
         this.accountService = accountService;
+        this.fullTextSearchUpdater = fullTextSearchUpdater;
+        this.fullTextSearchService = fullTextSearchService;
     }
 
     public int getPurchaseCount() {
@@ -242,6 +264,7 @@ public class DGSServiceImpl implements DGSService {
         DGSGoods goods = new DGSGoods(transaction, attachment, blockchain.getLastBlockTimestamp());
         addTag(goods);
         goodsTable.insert(goods);
+        createAndFireFullTextSearchDataEvent(goods, FullTextOperationData.OperationType.INSERT_UPDATE);
     }
 
     public int getTagsCount() {
@@ -347,12 +370,9 @@ public class DGSServiceImpl implements DGSService {
         long totalWithoutDiscount = Math.multiplyExact((long) purchase.getQuantity(), purchase.getPriceATM());
         Account buyer = accountService.getAccount(purchase.getBuyerId());
         long transactionId = transaction.getId();
-        //buyer.addToBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId,Math.subtractExact(attachment.getDiscountATM(), totalWithoutDiscount));
         accountService.addToBalanceATM(buyer, LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, Math.subtractExact(attachment.getDiscountATM(), totalWithoutDiscount));
-        //buyer.addToUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, attachment.getDiscountATM());
         accountService.addToUnconfirmedBalanceATM(buyer, LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, attachment.getDiscountATM());
         Account seller = accountService.getAccount(transaction.getSenderId());
-        //seller.addToBalanceAndUnconfirmedBalanceATM(LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, Math.subtractExact(totalWithoutDiscount, attachment.getDiscountATM()));
         accountService.addToBalanceAndUnconfirmedBalanceATM(seller, LedgerEvent.DIGITAL_GOODS_DELIVERY, transactionId, Math.subtractExact(totalWithoutDiscount, attachment.getDiscountATM()));
         setEncryptedGoods(purchase, attachment.getGoods(), attachment.goodsIsText());
         setDiscountATM(purchase, attachment.getDiscountATM());
@@ -425,11 +445,13 @@ public class DGSServiceImpl implements DGSService {
             delistTag(goods);
         }
         goodsTable.insert(goods);
+        createAndFireFullTextSearchDataEvent(goods, FullTextOperationData.OperationType.INSERT_UPDATE);
     }
 
     private void changePrice(DGSGoods goods, long priceATM) {
         goods.setPriceATM(priceATM);
         goodsTable.insert(goods);
+        createAndFireFullTextSearchDataEvent(goods, FullTextOperationData.OperationType.INSERT_UPDATE);
     }
 
     private void setDelistedGoods(DGSGoods goods, boolean delisted) {
@@ -438,16 +460,106 @@ public class DGSServiceImpl implements DGSService {
             delistTag(goods);
         }
         goodsTable.insert(goods);
+        createAndFireFullTextSearchDataEvent(goods, FullTextOperationData.OperationType.INSERT_UPDATE);
     }
 
     public DbIterator<DGSGoods> searchGoods(String query, boolean inStockOnly, int from, int to) {
-        return goodsTable.search(query, inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE, from, to,
-            " ORDER BY ft.score DESC, goods.timestamp DESC ");
+        StringBuffer inRangeClause = createDbIdInRangeFromLuceneData(query);
+        if (inRangeClause.length() == 2) {
+            // no DB_ID were fetched from Lucene index, return empty db iterator
+            return DbIterator.EmptyDbIterator();
+        }
+        DbClause dbClause = inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE;
+        String sort = " ORDER BY goods.timestamp DESC ";
+        return fetchDgsGoodsByParams(from, to, inRangeClause, dbClause, sort);
+    }
+
+    /**
+     * compose db_id list for in (id,..id) SQL luceneQuery
+     * @param luceneQuery lucene language luceneQuery pattern
+     * @return composed sql luceneQuery part
+     */
+    private StringBuffer createDbIdInRangeFromLuceneData(String luceneQuery) {
+        Objects.requireNonNull(luceneQuery, "luceneQuery is empty");
+        StringBuffer inRange = new StringBuffer("(");
+        int index = 0;
+        try {
+            ResultSet rs = fullTextSearchService.search("public", goodsTable.getTableName(), luceneQuery, Integer.MAX_VALUE, 0);
+            while (rs.next()) {
+                Long DB_ID = rs.getLong(5);
+                if (index == 0) {
+                    inRange.append(DB_ID);
+                } else {
+                    inRange.append(",").append(DB_ID);
+                }
+                index++;
+            }
+            inRange.append(")");
+            log.debug("{}", inRange.toString());
+        } catch (SQLException e) {
+            log.error("FTS failed", e);
+            throw new RuntimeException(e);
+        }
+        return inRange;
     }
 
     public DbIterator<DGSGoods> searchSellerGoods(String query, long sellerId, boolean inStockOnly, int from, int to) {
-        return goodsTable.search(query, new SellerDbClause(sellerId, inStockOnly), from, to,
-            " ORDER BY ft.score DESC, goods.name ASC, goods.timestamp DESC ");
+        StringBuffer inRangeClause = createDbIdInRangeFromLuceneData(query);
+        if (inRangeClause.length() == 2) {
+            // no DB_ID were fetched from Lucene index, return empty db iterator
+            return DbIterator.EmptyDbIterator();
+        }
+        DbClause dbClause = inStockOnly ? inStockClause : DbClause.EMPTY_CLAUSE;
+        String sort = " ORDER BY goods.name ASC, goods.timestamp DESC ";
+        return fetchDgsGoodsByParams(from, to, inRangeClause, dbClause, sort);
+    }
+
+    public DbIterator<DGSGoods> fetchDgsGoodsByParams(int from, int to,
+                                                      StringBuffer inRangeClause,
+                                                      DbClause dbClause,
+                                                      String sort) {
+        Objects.requireNonNull(inRangeClause, "inRangeClause is NULL");
+        Objects.requireNonNull(dbClause, "dbClause is NULL");
+        Objects.requireNonNull(sort, "sort is NULL");
+
+        Connection con = null;
+        TransactionalDataSource dataSource = goodsTable.getDatabaseManager().getDataSource();
+        final boolean doCache = dataSource.isInTransaction();
+        try {
+            con = dataSource.getConnection();
+            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
+            PreparedStatement pstmt = con.prepareStatement(
+                // select and load full entities from mariadb using prefetched DB_ID list from lucene
+                "SELECT " + goodsTable.getTableName() + ".* FROM " + goodsTable.getTableName()
+                    + " WHERE " + goodsTable.getTableName() + ".db_id in " + inRangeClause.toString()
+                    + (goodsTable.isMultiversion() ? " AND " + goodsTable.getTableName() + ".latest = TRUE " : " ")
+                    + " AND " + dbClause.getClause() + sort
+                    + DbUtils.limitsClause(from, to));
+            int i = 0;
+            i = dbClause.set(pstmt, ++i);
+            DbUtils.setLimits(i, pstmt, from, to);
+            return new DbIterator<>(con, pstmt, (connection, rs) -> {
+                DbKey dbKey = null;
+                if (doCache) {
+                    dbKey = goodsTable.getDbKeyFactory().newKey(rs);
+                }
+                return goodsTable.load(connection, rs, dbKey);
+            });
+        } catch (SQLException e) {
+            DbUtils.close(con);
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    private void createAndFireFullTextSearchDataEvent(DGSGoods goods, FullTextOperationData.OperationType operationType) {
+        FullTextOperationData operationData = new FullTextOperationData(
+            DEFAULT_SCHEMA, goodsTable.getTableName(), Thread.currentThread().getName());
+        operationData.setOperationType(operationType);
+        operationData.setDbIdValue(BigInteger.valueOf(goods.getDbId()));
+        operationData.addColumnData(goods.getName()).addColumnData(goods.getDescription());
+        // send data into Lucene index component
+        log.trace("Put lucene index update data = {}", operationData);
+        fullTextSearchUpdater.putFullTextOperationData(operationData);
     }
 
 }

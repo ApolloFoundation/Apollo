@@ -35,10 +35,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+
 @EnableWeld
 @Execution(ExecutionMode.SAME_THREAD)
 class DeleteTrimObserverTest {
-
     DatabaseManager databaseManager = mock(DatabaseManager.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
 

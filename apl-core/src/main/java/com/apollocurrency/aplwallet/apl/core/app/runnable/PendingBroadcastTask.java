@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTrans
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTxValidationResult;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.util.BatchSizeCalculator;
+import com.apollocurrency.aplwallet.apl.util.BatchSizeCalculator;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 

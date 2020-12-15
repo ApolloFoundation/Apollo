@@ -106,7 +106,12 @@ public class CsvImporterImpl implements CsvImporter {
      * @throws SQLException
      */
     private boolean isBinaryColumn(final ResultSetMetaData meta, final int columnIdx) throws SQLException {
-        return (meta.getColumnType(columnIdx + 1) == Types.BINARY || meta.getColumnType(columnIdx + 1) == Types.VARBINARY);
+        return (meta.getColumnType(columnIdx + 1) == Types.BINARY
+            || meta.getColumnType(columnIdx + 1) == Types.VARBINARY
+            || meta.getColumnType(columnIdx + 1) == Types.LONGVARBINARY
+            || meta.getColumnType(columnIdx + 1) == Types.BLOB
+            || meta.getColumnType(columnIdx + 1) == Types.JAVA_OBJECT
+        );
     }
 
     /**
@@ -130,7 +135,15 @@ public class CsvImporterImpl implements CsvImporter {
      * @throws SQLException
      */
     private boolean isVarcharColumn(final ResultSetMetaData meta, final int columnIdx) throws SQLException {
-        return (meta.getColumnType(columnIdx + 1) == Types.VARCHAR || meta.getColumnType(columnIdx + 1) == Types.NVARCHAR);
+        return (meta.getColumnType(columnIdx + 1) == Types.VARCHAR
+            || meta.getColumnType(columnIdx + 1) == Types.NVARCHAR
+            || meta.getColumnType(columnIdx + 1) == Types.CHAR
+            || meta.getColumnType(columnIdx + 1) == Types.NCHAR
+            || meta.getColumnType(columnIdx + 1) == Types.LONGVARCHAR
+            || meta.getColumnType(columnIdx + 1) == Types.LONGNVARCHAR
+            || meta.getColumnType(columnIdx + 1) == Types.CLOB
+            || meta.getColumnType(columnIdx + 1) == Types.NCLOB
+        );
     }
 
     /**

@@ -59,7 +59,9 @@ public class BlockchainConfigTest {
         "TEST",
         "TEST",
         "Test",
-        10000L, 2, "data.json", BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, null));
+        10000L, 2,
+            //"data.json",
+        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, null));
     @Inject
     BlockchainConfig blockchainConfig;
     @Inject
@@ -124,7 +126,7 @@ public class BlockchainConfigTest {
 
     @Test
     void testCreateBlockchainConfigFromEmptyChain() {
-        Chain emptyChain = new Chain(UUID.randomUUID(), new ArrayList<>(), "Empty", "Empty chain", "EMP", "EM", "EMP", 10000L, 2, "", List.of());
+        Chain emptyChain = new Chain(UUID.randomUUID(), new ArrayList<>(), "Empty", "Empty chain", "EMP", "EM", "EMP", 10000L, 2, List.of());
         assertThrows(IllegalArgumentException.class, () -> blockchainConfig.updateChain(emptyChain));
     }
 

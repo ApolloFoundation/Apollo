@@ -90,6 +90,7 @@ public final class API {
 
     private static final Logger LOG = getLogger(API.class);
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
+    public static final String DEFAULT_WEBUI_DIR = "apollo-web-ui";
     public static final String INDEX_HTML = "index.html";
     public static int openAPIPort;
     public static int openAPISSLPort;
@@ -180,27 +181,44 @@ public final class API {
         isOpenAPI = openAPIPort > 0 || openAPISSLPort > 0;
     }
 
+
+    private static boolean isWebUIHere(Path webUiPath) {
+        boolean res = false;
+        if (Files.exists(webUiPath)
+            && Files.isDirectory(webUiPath)
+            && Files.exists(webUiPath.resolve(INDEX_HTML))) {
+            log.debug("Web UI index.html foind in: {}.", webUiPath.toString());
+            res = true;
+        }
+        return res;
+    }
+
     public static String findWebUiDir() {
         final Path binDir = DirProvider.getBinDir();
-        boolean useHtmlStub = false;
-        final String webUIlocation = propertiesHolder.getStringProperty("apl.apiResourceBase");
-        Path webUiPath = null;
+        boolean useHtmlStub = true;
+        final String webUIlocation = propertiesHolder.getStringProperty("apl.apiResourceBase", DEFAULT_WEBUI_DIR);
+        Path webUiPath = Path.of(DEFAULT_WEBUI_DIR);
         try {
             Path lp = Path.of(webUIlocation);
             if (lp.isAbsolute()) {
                 webUiPath = lp;
+                if (isWebUIHere(webUiPath)) {
+                    log.debug("Cannot find index.html in: {}. Gonna use html-stub.", webUiPath.toString());
+                    useHtmlStub = false;
+                }
             } else {
                 webUiPath = binDir.resolve(webUIlocation);
-            }
-            if (!Files.exists(webUiPath)
-                    || !Files.isDirectory(webUiPath)
-                    || !Files.exists(webUiPath.resolve(INDEX_HTML))) {
-                log.debug("Cannot find index.html in: {}. Gonna use html-stub.", webUiPath.toString());
-                useHtmlStub = true;
+                if (isWebUIHere(webUiPath)) {
+                    useHtmlStub = false;
+                } else {
+                    webUiPath = binDir.getParent().resolve(webUIlocation);
+                    if (isWebUIHere(webUiPath)) {
+                        useHtmlStub = false;
+                    }
+                }
             }
         } catch (InvalidPathException ipe) {
             log.debug("Cannot resolve apl.webUIDir: {} within DirProvider.getBinDir(): {}. Gonna use html-stub.", webUIlocation, binDir.toString());
-            useHtmlStub = true;
         }
 
         if (useHtmlStub) {

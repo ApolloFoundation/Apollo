@@ -63,8 +63,8 @@ public final class ShufflingParticipant extends VersionedDeletableEntity {
         this.nextAccountId = rs.getLong("next_account_id");
         this.index = rs.getInt("participant_index");
         this.state = ShufflingParticipantState.get(rs.getByte("state"));
-        this.blameData = DbUtils.getArray(rs, "blame_data", byte[][].class, Convert.EMPTY_BYTES);
-        this.keySeeds = DbUtils.getArray(rs, "key_seeds", byte[][].class, Convert.EMPTY_BYTES);
+        this.blameData = DbUtils.get2dByteArray(rs, "blame_data", Convert.EMPTY_BYTES);
+        this.keySeeds = DbUtils.get2dByteArray(rs, "key_seeds", Convert.EMPTY_BYTES);
         this.dataTransactionFullHash = rs.getBytes("data_transaction_full_hash");
         this.dataHash = rs.getBytes("data_hash");
     }

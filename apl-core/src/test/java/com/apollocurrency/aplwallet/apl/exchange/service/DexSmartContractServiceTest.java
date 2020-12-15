@@ -61,7 +61,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -222,7 +222,7 @@ class DexSmartContractServiceTest {
 
         assertThrows(RuntimeException.class, () -> service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, amount, 10L, DexCurrency.PAX));
 
-        verifyZeroInteractions(dexContract);
+        verifyNoInteractions(dexContract);
         verify(ethereumWalletService, never()).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS, Constants.ETH_MAX_POS_INT);
     }
 
@@ -232,7 +232,7 @@ class DexSmartContractServiceTest {
 
         assertThrows(UnsupportedOperationException.class, () -> service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, BigInteger.TEN, 10L, DexCurrency.APL));
 
-        verifyZeroInteractions(dexContract);
+        verifyNoInteractions(dexContract);
         verify(ethereumWalletService, never()).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS, Constants.ETH_MAX_POS_INT);
     }
 
@@ -391,7 +391,7 @@ class DexSmartContractServiceTest {
         boolean r = service.refundAndWithdraw(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true) != null;
 
         assertTrue(r);
-        verifyZeroInteractions(dexContract, dexEthService);
+        verifyNoInteractions(dexContract, dexEthService);
     }
 
 
@@ -403,7 +403,7 @@ class DexSmartContractServiceTest {
 
         assertThrows(AplException.DEXProcessingException.class, () -> service.refundAndWithdraw(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true));
 
-        verifyZeroInteractions(dexContract, dexEthService);
+        verifyNoInteractions(dexContract, dexEthService);
     }
 
     @Test
@@ -415,7 +415,7 @@ class DexSmartContractServiceTest {
 
         assertThrows(AplException.DEXProcessingException.class, () -> service.refundAndWithdraw(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true));
 
-        verifyZeroInteractions(dexContract, dexEthService);
+        verifyNoInteractions(dexContract, dexEthService);
     }
 
     private void mockExistingTransactionSendingWithoutReceipt(String hash) throws IOException {

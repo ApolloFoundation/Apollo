@@ -89,9 +89,18 @@ public class BlockchainImpl implements Blockchain {
     private final AtomicReference<Block> shardInitialBlock;
 
     @Inject
-    public BlockchainImpl(BlockDao blockDao, TransactionDao transactionDao, BlockchainConfig blockchainConfig, TimeService timeService,
-                          PropertiesHolder propertiesHolder, TransactionIndexDao transactionIndexDao, BlockIndexService blockIndexService,
-                          DatabaseManager databaseManager, ShardDao shardDao, ShardRecoveryDao shardRecoveryDao, PrunableLoadingService prunableService, PublicKeyDao publicKeyDao) {
+    public BlockchainImpl(BlockDao blockDao,
+                          TransactionDao transactionDao,
+                          BlockchainConfig blockchainConfig,
+                          TimeService timeService,
+                          PropertiesHolder propertiesHolder,
+                          TransactionIndexDao transactionIndexDao,
+                          BlockIndexService blockIndexService,
+                          DatabaseManager databaseManager,
+                          ShardDao shardDao,
+                          ShardRecoveryDao shardRecoveryDao,
+                          PrunableLoadingService prunableService,
+                          PublicKeyDao publicKeyDao) {
         this.blockDao = blockDao;
         this.transactionDao = transactionDao;
         this.blockchainConfig = blockchainConfig;

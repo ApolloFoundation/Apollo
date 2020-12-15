@@ -173,7 +173,7 @@ class TrimObserverTest {
             ThreadUtils.sleep(100);
             doReturn(6000).when(blockchain).getHeight();
         });
-        waitTrim(List.of(5013)); // doesn't work, test hangs here
+        waitTrim(List.of(5013));
         assertFalse(observer.isTrimDerivedTablesEnabled());
         fireBlockPushed(7000);
         doReturn(7001).when(blockchain).getHeight();
@@ -190,6 +190,7 @@ class TrimObserverTest {
                 for (Integer height : heights) {
                     verify(trimService).trimDerivedTables(height, true);
                 }
+                Thread.sleep(10);
                 break;
             } catch (Throwable ignored) {
             }

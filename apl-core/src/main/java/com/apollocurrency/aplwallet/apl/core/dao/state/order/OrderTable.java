@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.order;
 
-import javax.enterprise.event.Event;
-
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.Order;
@@ -33,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -56,8 +55,14 @@ public abstract class OrderTable<T extends Order> extends VersionedDeletableEnti
             super.getTableName(), order, ThreadUtils.last5Stacktrace());
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO " + table + " (id, account_id, asset_id, "
-                + "price, quantity, creation_height, transaction_index, transaction_height, height, latest, deleted) KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + table + " (id, account_id, asset_id, "
+                + "price, quantity, creation_height, transaction_index, transaction_height, height, latest, deleted) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "id = VALUES(id), account_id = VALUES(account_id), asset_id = VALUES(asset_id), "
+                + "price = VALUES(price), quantity = VALUES(quantity), creation_height = VALUES(creation_height), "
+                + "transaction_index = VALUES(transaction_index), transaction_height = VALUES(transaction_height), "
+                + "height = VALUES(height), latest = TRUE, deleted = FALSE")
         ) {
             int i = 0;
             pstmt.setLong(++i, order.getId());

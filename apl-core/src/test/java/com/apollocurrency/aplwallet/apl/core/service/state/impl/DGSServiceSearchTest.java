@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSFeedbackTable;
@@ -22,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
@@ -32,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -47,14 +50,17 @@ import java.util.List;
 import java.util.Map;
 
 import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_0_ID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.mockito.Mockito.mock;
+
+@Slf4j
 
 @Tag("slow")
 @EnableWeld
-public class DGSServiceSearchTest {
+public class DGSServiceSearchTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension extension = new DbExtension(Map.of("goods", List.of("name", "description", "tags")));
+    static DbExtension extension = new DbExtension(mariaDBContainer, Map.of("goods", List.of("name", "description", "tags")));
     Blockchain blockchain = mock(Blockchain.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -74,12 +80,13 @@ public class DGSServiceSearchTest {
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class))
-        .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
         .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
         .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
+        .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class))
         .build();
     @Inject
     DGSService service;
@@ -92,35 +99,39 @@ public class DGSServiceSearchTest {
         dtd = new DGSTestData();
     }
 
-
+    @Tag("skip-fts-init")
     @Test
     void testSearchGoods() {
         List<DGSGoods> goods = CollectionUtil.toList(service.searchGoods("tes*", false, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_4, dtd.GOODS_2, dtd.GOODS_10, dtd.GOODS_8), goods);
+        assertIterableEquals(List.of(dtd.GOODS_4, dtd.GOODS_2, dtd.GOODS_10, dtd.GOODS_8), goods);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSearchGoodsWithPagination() {
         List<DGSGoods> goods = CollectionUtil.toList(service.searchGoods("tes*", false, 1, 2));
-        assertEquals(List.of(dtd.GOODS_2, dtd.GOODS_10), goods);
+        assertIterableEquals(List.of(dtd.GOODS_2, dtd.GOODS_10), goods);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSearchGoodsByTag() {
         List<DGSGoods> goods = CollectionUtil.toList(service.searchGoods("prod*", false, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_2), goods);
+        assertIterableEquals(List.of(dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_2), goods);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSearchSellerGoods() {
         List<DGSGoods> dgsGoods = CollectionUtil.toList(service.searchSellerGoods("bat*", SELLER_0_ID, true, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_12), dgsGoods);
+        assertIterableEquals(List.of(dtd.GOODS_12), dgsGoods);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void testSearchSellerGoodsWithPagination() {
         List<DGSGoods> dgsGoods = CollectionUtil.toList(service.searchSellerGoods("ta*", SELLER_0_ID, false, 1, 2));
-        assertEquals(List.of(dtd.GOODS_4), dgsGoods);
+        assertIterableEquals(List.of(dtd.GOODS_4), dgsGoods);
     }
 
 }

@@ -42,6 +42,7 @@
     <module>apl-bom</module>
     <module>apl-conf</module>
     <module>apl-exec</module>
+    <module>apl-db-updater</module>
   </modules>
 
   <properties>

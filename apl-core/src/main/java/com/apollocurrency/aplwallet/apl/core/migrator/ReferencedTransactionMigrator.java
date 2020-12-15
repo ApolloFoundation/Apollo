@@ -42,7 +42,7 @@ public class ReferencedTransactionMigrator {
 
             try (
                 PreparedStatement selectPstmt = con.prepareStatement((
-                    "SELECT rtx.transaction_id as id, tx.height FROM referenced_transaction rtx left join transaction  tx  on rtx.transaction_id = tx.id where rtx.height = -1"));
+                    "SELECT rtx.transaction_id as id, tx.height FROM referenced_transaction rtx left join `transaction` tx  on rtx.transaction_id = tx.id where rtx.height = -1"));
                 PreparedStatement updatePstmt = con.prepareStatement("UPDATE referenced_transaction SET height = ? WHERE transaction_id = ?")
             ) {
                 int counter = 0;

@@ -31,11 +31,11 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -51,6 +51,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,7 +59,7 @@ import java.util.List;
 @Singleton
 @Slf4j
 public class PollTable extends EntityDbTable<Poll> implements SearchableTableInterface<Poll> {
-    private static final String FINISH_HEIGHT = "finish_height";
+    public static final String FINISH_HEIGHT = "finish_height";
 
     private static final LongKeyFactory<Poll> POLL_LONG_KEY_FACTORY = new LongKeyFactory<>("id") {
         @Override
@@ -86,9 +87,10 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
         try (
             @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
             PreparedStatement pstmt = con.prepareStatement("INSERT INTO poll (id, account_id, "
-                + "name, description, options, finish_height, voting_model, min_balance, min_balance_model, "
-                + "holding_id, min_num_options, max_num_options, min_range_value, max_range_value, timestamp, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                + "name, description, `options`, finish_height, voting_model, min_balance, min_balance_model, "
+                + "holding_id, min_num_options, max_num_options, min_range_value, max_range_value, `timestamp`, height) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                Statement.RETURN_GENERATED_KEYS)
         ) {
             int i = 0;
             pstmt.setLong(++i, poll.getId());
@@ -108,6 +110,11 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
             pstmt.setInt(++i, poll.getTimestamp());
             pstmt.setInt(++i, poll.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    poll.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 
@@ -191,16 +198,17 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
     }
 
     public DbIterator<Poll> searchPolls(String query, boolean includeFinished, int from, int to, int height) {
-        DbClause dbClause = includeFinished ? DbClause.EMPTY_CLAUSE : new DbClause.IntClause(FINISH_HEIGHT,
-            DbClause.Op.GT, height);
-        return search(query, dbClause, from, to, " ORDER BY ft.score DESC, poll.height DESC, poll.db_id DESC ");
+//        DbClause dbClause = includeFinished ? DbClause.EMPTY_CLAUSE : new DbClause.IntClause(FINISH_HEIGHT,
+//            DbClause.Op.GT, height);
+//        return search(query, dbClause, from, to, " ORDER BY ft.score DESC, poll.height DESC, poll.db_id DESC ");
+        throw new UnsupportedOperationException("Call service, should be implemented by service");
     }
 
     public int getCount() {
         return getCount();
     }
 
-    public void addPoll(
+    public Poll addPoll(
         final Transaction transaction,
         final MessagingPollCreation attachment,
         final int timestamp,
@@ -210,6 +218,7 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
         log.trace("addPoll = {}, height = {}, blockId={}", poll, transaction.getHeight(), transaction.getBlockId());
         poll.setHeight(height);
         insert(poll);
+        return poll;
     }
 
     public DbKey getDbKey(final Poll poll) {
@@ -218,30 +227,12 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
 
     @Override
     public final DbIterator<Poll> search(String query, DbClause dbClause, int from, int to) {
-        return search(query, dbClause, from, to, " ORDER BY ft.score DESC ");
+//        return search(query, dbClause, from, to, " ORDER BY ft.score DESC ");
+        throw new UnsupportedOperationException("Call service, should be implemented by service");
     }
 
     @Override
     public final DbIterator<Poll> search(String query, DbClause dbClause, int from, int to, String sort) {
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-            PreparedStatement pstmt = con.prepareStatement("SELECT " + table + ".*, ft.score FROM " + table +
-                ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
-                + " WHERE " + table + ".db_id = ft.keys[1] "
-                + (multiversion ? " AND " + table + ".latest = TRUE " : " ")
-                + " AND " + dbClause.getClause() + sort
-                + DbUtils.limitsClause(from, to));
-            int i = 0;
-            pstmt.setString(++i, query);
-            i = dbClause.set(pstmt, ++i);
-            i = DbUtils.setLimits(i, pstmt, from, to);
-            return getManyBy(con, pstmt, true);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
+        throw new UnsupportedOperationException("Call service, should be implemented by service");
     }
 }

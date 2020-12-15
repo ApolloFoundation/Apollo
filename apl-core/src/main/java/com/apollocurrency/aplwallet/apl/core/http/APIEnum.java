@@ -342,7 +342,7 @@ public enum APIEnum {
     FULL_RESET("fullReset", new FullReset()),
     POP_OFF("popOff", new PopOff()),
     SCAN("scan", new Scan()),
-    LUCENE_REINDEX("luceneReindex", new LuceneReindex()),
+    //LUCENE_REINDEX("luceneReindex", new LuceneReindex()),
     DUMP_PEERS("dumpPeers", new DumpPeers()),
     GET_LOG("getLog", new GetLog()),
     GET_STACK_TRACES("getStackTraces", new GetStackTraces()),

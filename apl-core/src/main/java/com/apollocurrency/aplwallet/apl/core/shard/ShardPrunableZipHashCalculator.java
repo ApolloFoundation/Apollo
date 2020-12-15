@@ -76,7 +76,7 @@ public class ShardPrunableZipHashCalculator {
 
         allCompletedShards.forEach(shard -> {
             try {
-                Path tempDirectory = Files.createTempDirectory("shard-" + shard.getShardId());
+                Path tempDirectory = Files.createTempDirectory("shard_" + shard.getShardId());
                 // create new instance of CsvExporter for each directory
                 CsvExporterImpl csvExporter = new CsvExporterImpl(databaseManager, tempDirectory, translator);
                 List<PrunableDbTable> prunableTables = registry.getDerivedTables()
@@ -100,7 +100,7 @@ public class ShardPrunableZipHashCalculator {
                     //supply empty to remove from cache
                     ops = new ChunkedFileOps("");
                 } else {
-                    String zipName = "shard-" + shard.getShardId() + ".zip";
+                    String zipName = "shard_" + shard.getShardId() + ".zip";
                     ops = zip.compressAndHash(
                         tempDirectory.resolve(zipName).toAbsolutePath().toString(), //zip file abs path
                         tempDirectory.toAbsolutePath().toString(), //dir to zip abs path

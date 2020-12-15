@@ -63,7 +63,7 @@ import static org.mockito.Mockito.mock;
 @EnableWeld
 public class DbMigrationExecutorTest {
 
-    @RegisterExtension
+/*    @RegisterExtension
     static TemporaryFolderExtension temporaryFolder = new TemporaryFolderExtension();
     @Inject
     JdbiHandleFactory jdbiHandleFactory;
@@ -180,5 +180,5 @@ public class DbMigrationExecutorTest {
         BlockTestData btd = new BlockTestData();
         Assertions.assertEquals(btd.LAST_BLOCK.getHeight(), migratedHeight);
 
-    }
+    }*/
 }

@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
@@ -32,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
@@ -51,6 +53,7 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -71,13 +74,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+
 @Tag("slow")
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
-class TaggedDataServiceTest {
+class TaggedDataServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(Map.of("tagged_data", List.of("name", "description", "tags")));
+    static DbExtension extension = new DbExtension(mariaDBContainer, Map.of("tagged_data", List.of("name", "description", "tags")));
     @Inject
     TaggedDataService taggedDataService;
     @Inject
@@ -115,7 +120,7 @@ class TaggedDataServiceTest {
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
         .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
         .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-        .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
@@ -124,6 +129,7 @@ class TaggedDataServiceTest {
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(ttd.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
+        .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class))
         .build();
 
     @BeforeEach
@@ -132,19 +138,21 @@ class TaggedDataServiceTest {
         tagTd = new TaggedTestData();
     }
 
-
+    @Tag("skip-fts-init")
     @Test
     void getTaggedDataCount() {
         int result = taggedDataService.getTaggedDataCount();
         assertEquals(5, result);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void getDataTagCount() {
         int result = taggedDataService.getDataTagCount();
         assertEquals(2, result);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void getAllTags() {
         DbIterator<DataTag> result = taggedDataService.getAllTags(0, 1);
@@ -157,6 +165,7 @@ class TaggedDataServiceTest {
         assertEquals(2, count);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void getTagsLike() {
         DbIterator<DataTag> result = taggedDataService.getTagsLike("trw", 0, 1);
@@ -169,6 +178,7 @@ class TaggedDataServiceTest {
         assertEquals(1, count);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void addDataUploadAttach() {
         blockchain.setLastBlock(btd.LAST_BLOCK);
@@ -188,6 +198,7 @@ class TaggedDataServiceTest {
         assertEquals(new TaggedDataTimestamp(ttd.TRANSACTION_8.getId(), ttd.TRANSACTION_8.getTimestamp(), btd.LAST_BLOCK.getHeight()), dataTimestamp);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void restore() {
         DbUtils.inTransaction(extension, (con) -> {
@@ -203,6 +214,7 @@ class TaggedDataServiceTest {
         assertEquals(5, count);
     }
 
+    @Tag("skip-fts-init")
     @Test
     void extend() {
         blockchain.setLastBlock(btd.LAST_BLOCK);

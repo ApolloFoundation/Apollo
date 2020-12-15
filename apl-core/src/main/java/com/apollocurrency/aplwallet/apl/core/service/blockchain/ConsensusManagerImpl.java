@@ -4,15 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import javax.inject.Singleton;
-import java.math.BigInteger;
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+
+import javax.inject.Singleton;
+import java.math.BigInteger;
+import java.util.Objects;
 
 @Singleton
 public class ConsensusManagerImpl implements ConsensusManager {

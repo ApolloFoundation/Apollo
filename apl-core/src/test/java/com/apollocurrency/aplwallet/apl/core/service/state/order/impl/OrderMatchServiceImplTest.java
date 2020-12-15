@@ -18,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -106,8 +106,8 @@ class OrderMatchServiceImplTest {
         orderMatchService.matchOrders(assetId);
 
         //THEN
-        verifyZeroInteractions(tradeService);
-        verifyZeroInteractions(accountService);
-        verifyZeroInteractions(accountAssetService);
+        verifyNoInteractions(tradeService);
+        verifyNoInteractions(accountService);
+        verifyNoInteractions(accountAssetService);
     }
 }

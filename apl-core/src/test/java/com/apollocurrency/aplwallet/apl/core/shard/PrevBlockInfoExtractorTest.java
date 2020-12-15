@@ -4,9 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -15,10 +17,13 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Slf4j
+
 @Tag("slow")
-public class PrevBlockInfoExtractorTest {
+public class PrevBlockInfoExtractorTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension();
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
     PrevBlockInfoExtractor extractor;
 
     @BeforeEach

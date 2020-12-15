@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.dao.appdata.impl;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,7 +22,7 @@ import java.util.Objects;
 public class TwoFactorAuthFileSystemRepository implements TwoFactorAuthRepository {
     private static final String DEFAULT_SUFFIX = ".copy";
     private final String suffix;
-    private Path twoFactorDirPath;
+    private final Path twoFactorDirPath;
 
     public TwoFactorAuthFileSystemRepository(Path directory, String suffix) {
         Objects.requireNonNull(suffix);

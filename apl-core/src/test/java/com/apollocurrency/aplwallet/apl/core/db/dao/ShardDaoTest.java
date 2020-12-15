@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
@@ -29,11 +30,13 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadin
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -51,16 +54,19 @@ import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_1;
 import static com.apollocurrency.aplwallet.apl.data.ShardTestData.SHARD_2;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+
 @Tag("slow")
 @EnableWeld
-class ShardDaoTest {
+class ShardDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension extension = new DbExtension();
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
@@ -90,12 +96,17 @@ class ShardDaoTest {
     @Inject
     private ShardDao dao;
 
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
+    }
+
     @Test
     void testGetAll() {
         List<Shard> allShards = dao.getAllShard();
 
         assertEquals(SHARDS.size(), allShards.size());
-        assertEquals(SHARDS, allShards);
+        assertIterableEquals(SHARDS, allShards);
     }
 
     @Test
@@ -131,7 +142,7 @@ class ShardDaoTest {
         expected.add(NOT_SAVED_SHARD);
 
         assertEquals(SHARDS.size() + 1, actual.size());
-        assertEquals(expected, actual);
+        assertIterableEquals(expected, actual);
     }
 
     @Test
@@ -154,7 +165,7 @@ class ShardDaoTest {
 
         List<Shard> allShards = dao.getAllShard();
 
-        assertEquals(Arrays.asList(copy, SHARD_1, SHARD_2), allShards);
+        assertIterableEquals(Arrays.asList(copy, SHARD_1, SHARD_2), allShards);
     }
 
     @Test
@@ -163,7 +174,7 @@ class ShardDaoTest {
         assertEquals(1, deleteCount);
 
         List<Shard> allShards = dao.getAllShard();
-        assertEquals(Arrays.asList(SHARD_0, SHARD_2), allShards);
+        assertIterableEquals(Arrays.asList(SHARD_0, SHARD_2), allShards);
     }
 
     @Test
@@ -213,7 +224,7 @@ class ShardDaoTest {
     @Test
     void testGetAllCompletedOrArchivedShards() {
         List<Shard> result = dao.getAllCompletedOrArchivedShards();
-        assertEquals(Arrays.asList(SHARD_2, SHARD_1), result);
+        assertIterableEquals(Arrays.asList(SHARD_2, SHARD_1), result);
     }
 
     @Test
@@ -226,6 +237,6 @@ class ShardDaoTest {
     void testGetCompletedBetweenBlockHeight() {
         List<Shard> result = dao.getCompletedBetweenBlockHeight(2, 4);
         assertEquals(1, result.size());
-        assertEquals(Collections.singletonList(SHARD_1), result);
+        assertIterableEquals(Collections.singletonList(SHARD_1), result);
     }
 }
