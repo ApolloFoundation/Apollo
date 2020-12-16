@@ -70,10 +70,12 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTest
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Tag;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @Disabled
+@Tag("slow")
 @ExtendWith(MockitoExtension.class)
 public class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
 
