@@ -1,10 +1,17 @@
+/*
+ * Copyright (c) 2018-2020. Apollo Foundation.
+ */
+
 package com.apollocurrency.aplwallet.apl.util.rlp;
 
 import org.bouncycastle.util.Arrays;
 import org.web3j.rlp.RlpEncoder;
+import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpString;
+import org.web3j.rlp.RlpType;
 
 import java.math.BigInteger;
+import java.util.List;
 
 /**
  * Simple writer, to encode values in RLP format.
@@ -45,6 +52,11 @@ public class RlpWriteBuffer {
 
     public RlpWriteBuffer write(BigInteger value) {
         output = Arrays.concatenate(output, RlpEncoder.encode(RlpString.create(value)));
+        return this;
+    }
+
+    public RlpWriteBuffer write(List<RlpType> list) {
+        output = Arrays.concatenate(output, RlpEncoder.encode(new RlpList(list)));
         return this;
     }
 }

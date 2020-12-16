@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2018-2020. Apollo Foundation.
+ */
+
 package com.apollocurrency.aplwallet.apl.util.rlp;
 
 import org.web3j.rlp.RlpDecoder;
@@ -30,6 +34,10 @@ public class RlpReader {
         this.iterator = listInput.getValues().iterator();
     }
 
+    public boolean hasNext(){
+        return iterator.hasNext();
+    }
+
     public byte[] read() {
         RlpType value = iterator.next();
         return ((RlpString) value).getBytes();
@@ -48,5 +56,10 @@ public class RlpReader {
     public BigInteger readBigInteger() {
         RlpType value = iterator.next();
         return ((RlpString) value).asPositiveBigInteger();
+    }
+
+    public RlpReader readList() {
+        RlpList list = (RlpList) iterator.next();
+        return new RlpReader(list);
     }
 }
