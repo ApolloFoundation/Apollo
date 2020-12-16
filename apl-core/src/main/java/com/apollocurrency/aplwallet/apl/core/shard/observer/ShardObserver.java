@@ -217,7 +217,7 @@ public class ShardObserver {
 
         if (heightGoodToShard >= 0) {
             if (heightGoodToShard < howLateWeCanBe) {
-                log.warn("isTimeForShard(): Not a shard time at height '{}' blocks! Current currentBlockHeight: {} (howLateWeCanBe={})",
+                log.trace("isTimeForShard(): Not a shard time at height '{}' blocks! Current currentBlockHeight: {} (howLateWeCanBe={})",
                     heightGoodToShard, currentBlockHeight, howLateWeCanBe);
             } else {
                 // real sharding data is prepared here !!

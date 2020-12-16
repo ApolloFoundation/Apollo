@@ -4,27 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import static org.mockito.Mockito.doReturn;
 
 @ExtendWith(MockitoExtension.class)
 public class DbMigratorTest {
+/*
     @Mock
     DbInfoExtractor dbInfoExtractor;
 
@@ -103,5 +88,6 @@ public class DbMigratorTest {
         Assertions.assertArrayEquals(secondDbPayload, Files.readAllBytes(targetDbPath));
     }
 
+*/
 
 }

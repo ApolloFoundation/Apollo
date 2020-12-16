@@ -51,7 +51,6 @@
     "project": "Apollo",
     "initialSupply": 30000000000,
     "decimals": 8,
-    "genesisLocation": "conf/data/genesisAccounts.json",
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 3500000,
       "dexExpiredContractWithFinishedPhasingHeightAndStep3": 4000000

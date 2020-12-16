@@ -88,9 +88,14 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
             order.getId(), order.getAccountId(), order.getType(), order.getOrderCurrency(), order.getOrderAmount(), order.getPairCurrency(),
             order.getFinishTime(), order.getStatus(), order.getHeight(), order.getFromAddress(), order.getToAddress());
 
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO dex_offer (id, account_id, type, " +
-            "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest, from_address, to_address) " +
-            "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)")) {
+        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_offer (id, account_id, `type`, " +
+            "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest, from_address, to_address) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?) "
+            + "ON DUPLICATE KEY UPDATE id = VALUES(id), account_id = VALUES(account_id), `type` = VALUES(`type`), "
+            + "offer_currency = VALUES(offer_currency), offer_amount = VALUES(offer_amount), pair_currency = VALUES(pair_currency), "
+            + "pair_rate = VALUES(pair_rate), finish_time = VALUES(finish_time), status = VALUES(status), "
+            + "height = VALUES(height), latest = TRUE , from_address = VALUES(from_address), to_address = VALUES(to_address)")
+        ) {
 
             int i = 0;
             pstmt.setLong(++i, order.getId());

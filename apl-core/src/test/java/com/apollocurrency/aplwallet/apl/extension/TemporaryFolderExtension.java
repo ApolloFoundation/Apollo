@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.extension;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -14,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
+@Slf4j
 public class TemporaryFolderExtension implements BeforeEachCallback, AfterEachCallback, BeforeAllCallback, AfterAllCallback {
     private final File parentFolder;
     private File folder;
@@ -84,6 +86,14 @@ public class TemporaryFolderExtension implements BeforeEachCallback, AfterEachCa
     }
 
     public File getRoot() {
+        if (folder == null || rootFolder == null) {
+            try {
+                folder = create(rootFolder == null ? parentFolder : rootFolder);
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+
         if (folder == null && rootFolder == null) {
             throw new IllegalStateException("the temporary folder has not yet been created");
         }

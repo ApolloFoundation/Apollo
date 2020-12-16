@@ -174,4 +174,7 @@ public class GenerateBlocksTask implements Runnable {
         return blockchainProcessor;
     }
 
+    public void setSuspendForging(boolean suspendForging) {
+        this.suspendForging = suspendForging;
+    }
 }

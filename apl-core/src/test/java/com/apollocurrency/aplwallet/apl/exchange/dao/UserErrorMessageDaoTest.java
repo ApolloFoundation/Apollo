@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.eth.dao.UserErrorMessageDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserErrorMessage;
@@ -16,7 +17,6 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -28,16 +28,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Tag("slow")
 @EnableWeld
-@Disabled // TODO move integration tests
-public class UserErrorMessageDaoTest {
+public class UserErrorMessageDaoTest extends DbContainerBaseTest {
     public final UserErrorMessage ERROR_1 = new UserErrorMessage(100L, "0x0398E119419E0D7792c53913d3f370f9202Ae137", "Invalid transaction", "deposit", "900", 1000);
     public final UserErrorMessage ERROR_2 = new UserErrorMessage(200L, "0x8e96e98b32c56115614B64704bA35feFE9e8f7bC", "Out of gas", "redeem", "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 1100);
     public final UserErrorMessage ERROR_3 = new UserErrorMessage(300L, "0x0398E119419E0D7792c53913d3f370f9202Ae137", "Double spending", "withdraw", "100", 1200);
     public final UserErrorMessage NEW_ERROR = new UserErrorMessage(301L, "0x0398E119419E0D7792c53913d3f370f9202Ae137", "No enough funds", "deposit", "100", 1300);
 
-
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    static DbExtension extension = new DbExtension(mariaDBContainer);
 
     @WeldSetup
     WeldInitiator weld = WeldUtils.from(List.of(UserErrorMessageDao.class, DaoConfig.class), List.of())
@@ -58,6 +56,8 @@ public class UserErrorMessageDaoTest {
 
     @Test
     void testGetAll() {
+        extension.cleanAndPopulateDb();
+
         List<UserErrorMessage> all = dao.getAll(Long.MAX_VALUE, 3);
 
         assertEquals(List.of(ERROR_3, ERROR_2, ERROR_1), all);
@@ -96,6 +96,8 @@ public class UserErrorMessageDaoTest {
 
     @Test
     void testDeleteByTimestamp() {
+        extension.cleanAndPopulateDb();
+
         dao.deleteByTimestamp(ERROR_2.getTimestamp() + 1);
 
         List<UserErrorMessage> all = dao.getAll(Long.MAX_VALUE, 100);

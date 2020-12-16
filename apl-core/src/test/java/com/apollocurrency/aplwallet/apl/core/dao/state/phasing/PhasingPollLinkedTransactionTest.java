@@ -54,6 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+
 @Tag("slow")
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
@@ -62,7 +63,6 @@ public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingP
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
     TransactionTestData td = new TransactionTestData();
-
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(

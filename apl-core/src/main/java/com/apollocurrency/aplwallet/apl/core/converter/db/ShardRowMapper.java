@@ -22,9 +22,9 @@ public class ShardRowMapper implements RowMapper<Shard> {
     @Override
     public Shard map(ResultSet rs, StatementContext ctx) throws SQLException {
 
-        Long[] generatorIds = DbUtils.getArray(rs, "generator_ids", Long[].class);
-        Integer[] blockTimeouts = DbUtils.getArray(rs, "block_timeouts", Integer[].class);
-        Integer[] blockTimestamps = DbUtils.getArray(rs, "block_timestamps", Integer[].class);
+        Long[] generatorIds = DbUtils.getArray(rs, "generator_ids", Long[].class, new Long[]{});
+        Integer[] blockTimeouts = DbUtils.getArray(rs, "block_timeouts", Integer[].class, new Integer[]{});
+        Integer[] blockTimestamps = DbUtils.getArray(rs, "block_timestamps", Integer[].class, new Integer[]{});
         return Shard.builder()
             .id(rs.getLong("shard_id"))
             .shardHash(rs.getBytes("shard_hash"))

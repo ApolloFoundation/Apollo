@@ -2,11 +2,15 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <properties>
+    <!--    move to BOM -->
+    <mariadb-java-client.version>2.6.1</mariadb-java-client.version>
+  </properties>
 
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.47.4</version>
+    <version>1.48.0</version>
   </parent>
   <artifactId>apl-core</artifactId>
   <name>apl-core</name>
@@ -20,25 +24,30 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-        <groupId>com.apollocurrency</groupId>
-        <artifactId>apl-api</artifactId>
-        <version>${project.version}</version>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-api</artifactId>
+      <version>${project.version}</version>
     </dependency>
-      <dependency>
-          <groupId>com.apollocurrency</groupId>
-          <artifactId>apl-api2</artifactId>
-          <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-api2</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-db-updater</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-      <dependency>
-          <groupId>com.apollocurrency</groupId>
-          <artifactId>apl-dex</artifactId>
-          <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-dex</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-      <!-- EXT BOM DEPENDENCIES -->
-      <dependency>
-          <groupId>ch.qos.logback</groupId>
+    <!-- EXT BOM DEPENDENCIES -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
           <artifactId>logback-classic</artifactId>
       </dependency>
       <dependency>
@@ -175,6 +184,15 @@
       <groupId>io.swagger.core.v3</groupId>
       <artifactId>swagger-models</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>mariadb</artifactId>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.mariadb.jdbc/mariadb-java-client -->
+    <dependency>
+      <groupId>org.mariadb.jdbc</groupId>
+      <artifactId>mariadb-java-client</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>javax.servlet</groupId>
@@ -269,7 +287,11 @@
       <artifactId>janino</artifactId>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>com.j256.two-factor-auth</groupId>
       <artifactId>two-factor-auth</artifactId>
@@ -285,10 +307,6 @@
     <dependency>
       <groupId>com.googlecode.log4jdbc</groupId>
       <artifactId>log4jdbc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
     </dependency>
     <dependency>
       <groupId>com.zaxxer</groupId>

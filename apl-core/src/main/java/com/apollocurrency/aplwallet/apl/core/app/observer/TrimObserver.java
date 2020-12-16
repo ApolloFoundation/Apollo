@@ -122,7 +122,6 @@ public class TrimObserver {
             synchronized (lock) {
                 if (trimDerivedTablesEnabled) {
                     trimHeight = trimHeights.peek();
-                    log.info("" + trimHeight);
                     performTrim = trimHeight != null && trimHeight <= blockchain.getHeight();
                     if (performTrim) {
                         trimHeights.remove();

@@ -4,24 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
-import org.slf4j.Logger;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-import static org.slf4j.LoggerFactory.getLogger;
-
 /**
  * Implement db migration specific algorithm
  */
-public class DbMigrator implements Migrator {
-    private static final Logger LOG = getLogger(DbMigrator.class);
+public class DbMigrator {
+/*    private static final Logger LOG = getLogger(DbMigrator.class);
     private final DbInfoExtractor dbInfoExtractor;
 
     public DbMigrator(DbInfoExtractor dbInfoExtractor) {
@@ -29,11 +16,11 @@ public class DbMigrator implements Migrator {
         this.dbInfoExtractor = dbInfoExtractor;
     }
 
-    /**
+    *//**
      * {@inheritDoc}
      * <p><br>This implementation migrate db (copy db file) from one of the srcPaths file to destPath. Migration will be performed only when any path
      * from srcPaths will represent blockchain db and has height of blocks > 0</p>
-     */
+     *//*
     @Override
     public List<Path> migrate(List<Path> srcPaths, Path destPath) throws IOException {
         List<Path> migratedDbsPaths = new ArrayList<>();
@@ -75,6 +62,6 @@ public class DbMigrator implements Migrator {
             this.dbDir = dbDir;
             this.height = height;
         }
-    }
+    }*/
 }
 

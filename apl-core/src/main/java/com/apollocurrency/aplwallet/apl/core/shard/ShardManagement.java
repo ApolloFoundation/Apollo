@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
+import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -45,13 +45,13 @@ public interface ShardManagement {
 
     /**
      * That is preferred way to retrieve cached shard data source or create it fully or partially initialized.
-     * The initialization schema is specified by dbVersion implementation class.
+     * The initialization schema is specified by dbUpdater implementation class.
      *
      * @param shardId   shard Id to be added, can be NULL then an next shardId is selected from 'SHARD' table
-     * @param dbVersion 'partial' or 'full' kind of 'schema script' implementation class can be supplied
+     * @param dbUpdater 'partial' or 'full' kind of 'schema script' implementation class can be supplied
      * @return shard database connection pool instance is put into internal cache
      */
-    TransactionalDataSource getOrCreateShardDataSourceById(Long shardId, DbVersion dbVersion);
+    TransactionalDataSource getOrCreateShardDataSourceById(Long shardId, DBUpdater dbUpdater);
 
     /**
      * Return already initialized or init and then return transactional datasource for full shard specified by shardId
@@ -60,15 +60,6 @@ public interface ShardManagement {
      * @return datasource for full shard if exist, otherwise - null
      */
     TransactionalDataSource getOrInitFullShardDataSourceById(long shardId);
-
-    /**
-     * Method gives ability to create 'temporary database' file with fully initialized internal schema.
-     * The datasource is cached by -1L long value.
-     *
-     * @param temporaryDatabaseName temp database name
-     * @return temp database data source
-     */
-    TransactionalDataSource createAndAddTemporaryDb(String temporaryDatabaseName);
 
     /**
      * @param shardId id of shard datasorce
@@ -82,10 +73,10 @@ public interface ShardManagement {
      * Partial schema is specified by dbVersion implementation
      *
      * @param shardId   shard Id to be added, can be NULL then an next shardId is selected from 'SHARD' table
-     * @param dbVersion 'partial' or 'full' kind of 'schema script' implementation class can be supplied
+     * @param dbUpdater 'partial' or 'full' kind of 'schema script' implementation class can be supplied
      * @return shard database connection pool instance is put into internal cache
      */
-    TransactionalDataSource createOrUpdateShard(Long shardId, DbVersion dbVersion);
+    TransactionalDataSource createOrUpdateShard(Long shardId, DBUpdater dbUpdater);
 
 
     /**

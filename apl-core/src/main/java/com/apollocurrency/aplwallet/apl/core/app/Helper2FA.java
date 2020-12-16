@@ -22,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -56,8 +55,8 @@ public class Helper2FA {
         log.trace("is2FaInFile = {}", is2FaInFile);
         service2FA = new TwoFactorAuthServiceImpl(
             new TwoFactorAuthRepositoryImpl(databaseManagerParam.getDataSource()),
-            propertiesHolder.getStringProperty("apl.issuerSuffix2FA",
-                RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"),
+            propertiesHolder.getStringProperty("apl.issuerSuffix2FA", "web"),
+            //RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"),
             new TwoFactorAuthFileSystemRepository(dirProvider.get2FADir())
         );
     }

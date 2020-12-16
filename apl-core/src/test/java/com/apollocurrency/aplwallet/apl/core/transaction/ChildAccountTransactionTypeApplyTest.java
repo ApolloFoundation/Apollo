@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
@@ -38,7 +39,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.impl.BlockChainInfoSe
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.PhasingPollServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
@@ -75,14 +75,14 @@ import static org.mockito.Mockito.when;
 
 @Disabled
 @ExtendWith(MockitoExtension.class)
-public class ChildAccountTransactionTypeApplyTest {
+public class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
 
     public static final int ECBLOCK_HEIGHT = 100_000;
     public static final long ECBLOCK_ID = 121L;
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("txApplierDb").toAbsolutePath().toString()));
+    static DbExtension extension = new DbExtension(mariaDBContainer);
 
     @Mock
     HeightConfig heightConfig;
@@ -146,7 +146,7 @@ public class ChildAccountTransactionTypeApplyTest {
     @Test
     void applyAttachment() throws AplException.NotValidException {
         //GIVEN
-        CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService);
+        CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain);
         TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(type)));
         byte[] tx = Convert.parseHexString(SIGNED_TX_1_HEX);
         Transaction.Builder txBuilder = builder.newTransactionBuilder(tx);
@@ -189,7 +189,7 @@ public class ChildAccountTransactionTypeApplyTest {
 */
     }
 
-    private Path createPath(String fileName) {
+    private static Path createPath(String fileName) {
         try {
             return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
         } catch (IOException e) {

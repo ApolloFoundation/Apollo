@@ -56,7 +56,7 @@ public interface BlockIndexDao {
     Integer getLastHeight();
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT block_id FROM block_index WHERE block_height > :height ORDER BY block_height asc FETCH FIRST :limit ROWS ONLY")
+    @SqlQuery("SELECT block_id FROM block_index WHERE block_height > :height ORDER BY block_height asc LIMIT :limit")
     List<Long> getBlockIdsAfter(@Bind("height") int height, @Bind("limit") int limit);
 
 

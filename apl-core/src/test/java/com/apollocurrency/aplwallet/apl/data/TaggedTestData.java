@@ -1,11 +1,11 @@
 package com.apollocurrency.aplwallet.apl.data;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataTimestamp;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 
 public class TaggedTestData {
 
@@ -86,7 +86,7 @@ public class TaggedTestData {
         dataTag_4.setLatest(true);
         dataTag_NOT_SAVED = new DataTag("123", td.TRANSACTION_9.getHeight(), 1);
         dataTag_NOT_SAVED.setLatest(true);
-        dataTag_NOT_SAVED.setDbId(dataTag_4.getDbId() + 1);
+        dataTag_NOT_SAVED.setDbId(dataTag_4.getDbId() + 1); // incorrect assumption for mariadb
     }
 
 }

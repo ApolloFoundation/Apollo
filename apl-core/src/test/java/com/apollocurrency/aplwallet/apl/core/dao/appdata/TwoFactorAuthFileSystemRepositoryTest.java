@@ -9,8 +9,10 @@ import com.apollocurrency.aplwallet.apl.core.db.AbstractTwoFactorAuthRepositoryT
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -20,6 +22,9 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.function.Predicate;
 
+@Slf4j
+
+@Tag("slow")
 public class TwoFactorAuthFileSystemRepositoryTest extends AbstractTwoFactorAuthRepositoryTest {
 
     private TwoFactorAuthRepository repository;

@@ -154,8 +154,10 @@ public class DataTagDao extends EntityDbTable<DataTag> {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
             PreparedStatement pstmt = con.prepareStatement(
-                "MERGE INTO data_tag (tag, tag_count, height, latest) "
-                    + "KEY (tag, height) VALUES (?, ?, ?, TRUE)")
+                "INSERT INTO data_tag (tag, tag_count, height, latest) "
+                    + "VALUES (?, ?, ?, TRUE) "
+                    + "ON DUPLICATE KEY UPDATE "
+                    + "tag = VALUES(tag), tag_count = VALUES(tag_count), height = VALUES(height), latest = TRUE")
         ) {
             int i = 0;
             pstmt.setString(++i, dataTag.getTag());

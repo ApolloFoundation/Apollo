@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.data;
 
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MariaDBContainer;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,41 +15,54 @@ import java.util.UUID;
 
 public class DbTestData {
     private static final Random random = new Random();
-    private static final DbProperties DB_PROPERTIES = new DbProperties()
-        .dbPassword("sa")
-        .dbUsername("sa")
+    private static final DbProperties DB_PROPERTIES = DbProperties.builder()
+        .dbName("testdb")
+        .dbUsername("testuser")
+        .dbPassword("testpass")
+//        .databasePort(3306) // docker container default for quick test only
         .maxConnections(10)
-        .dbType("h2")
+        .dbType("mariadb")
         .chainId(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5"))
-        .dbParams("")
-        .loginTimeout(10)
+        .dbParams("&TC_DAEMON=true&TC_REUSABLE=true&TC_INITSCRIPT=file:src/test/resources/db/schema.sql")
+        .loginTimeout(2)
         .maxMemoryRows(100000)
-        .defaultLockTimeout(10);
+        .defaultLockTimeout(1)
+        .maxConnections(55)
+        .build();
 
     public static DbProperties getInMemDbProps() {
-        return getDbUrlProps("jdbc:h2:mem:tempDb" + random.nextLong() + ";MV_STORE=TRUE;CACHE_SIZE=16000");
+        return getDbUrlProps();
     }
 
-    private static DbProperties getDbUrlProps(String url) {
+    public static DbProperties getDbUrlProps() {
         DbProperties dbProperties = DB_PROPERTIES.deepCopy();
-        dbProperties.dbUrl(url);
         return dbProperties;
     }
 
     public static DbProperties getDbFileProperties(String fileName) {
-        DbProperties dbProperties = getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0;MV_STORE=TRUE;CACHE_SIZE=16000;AUTO_SERVER=TRUE", fileName));
+        DbProperties dbProperties = getDbUrlProps();
         Path filePath = Paths.get(fileName).toAbsolutePath();
-        dbProperties.dbDir(filePath.getParent().toString());
-        dbProperties.dbFileName(filePath.getFileName().toString());
+        dbProperties.setDbDir(filePath.getParent().toString());
+        dbProperties.setDbName(filePath.getFileName().toString());
         return dbProperties;
     }
 
-
-    public static DbProperties getDbFileProperties(Path dbPath) {
-        dbPath = dbPath.toAbsolutePath().toAbsolutePath();
-        DbProperties dbProperties = getDbUrlProps(String.format("jdbc:h2:%s;TRACE_LEVEL_FILE=0;MV_STORE=TRUE;CACHE_SIZE=16000;AUTO_SERVER=TRUE", dbPath));
-        dbProperties.dbDir(dbPath.getParent().toString());
-        dbProperties.dbFileName(dbPath.getFileName().toString());
+    public static DbProperties getDbFileProperties(GenericContainer jdbcDatabaseContainer) {
+        DbProperties dbProperties = DB_PROPERTIES.deepCopy();
+        dbProperties.setDbUsername(((MariaDBContainer) jdbcDatabaseContainer).getUsername());
+        if (((MariaDBContainer) jdbcDatabaseContainer).getPassword() != null && !((MariaDBContainer) jdbcDatabaseContainer).getPassword().isEmpty()) {
+            dbProperties.setDbPassword(((MariaDBContainer) jdbcDatabaseContainer).getPassword());
+        }
+        if (jdbcDatabaseContainer.getMappedPort(3306) != null) {
+            dbProperties.setDatabasePort(jdbcDatabaseContainer.getMappedPort(3306));
+        }
+//        dbProperties.setDatabasePort(3306); // docker container default for quick test only
+        dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
+        dbProperties.setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
         return dbProperties;
+    }
+
+    public static DbProperties getDbFilePropertiesByPath(Path dbPath) {
+        return DB_PROPERTIES.deepCopy();
     }
 }

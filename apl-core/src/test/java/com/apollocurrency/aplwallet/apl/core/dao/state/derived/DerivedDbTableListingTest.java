@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyBasedFileConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
@@ -60,6 +61,7 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
@@ -95,6 +97,7 @@ import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -108,7 +111,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -121,17 +123,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.slf4j.LoggerFactory.getLogger;
+
+@Slf4j
 
 @Tag("slow")
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
-class DerivedDbTableListingTest {
-    private static final Logger log = getLogger(DerivedDbTableListingTest.class);
+class DerivedDbTableListingTest extends DbContainerBaseTest {
+
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension extension = new DbExtension(Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
+    static DbExtension extension = new DbExtension(mariaDBContainer, Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
     @Inject
     GlobalSync globalSync;
     @Inject
@@ -156,7 +159,7 @@ class DerivedDbTableListingTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainImpl.class, DaoConfig.class,
-        PropertyProducer.class, TransactionApplier.class,// DirProvider.class, //ServiceModeDirProvider.class,
+        PropertyProducer.class, TransactionApplier.class, FullTextSearchUpdater.class,
         EntityProducer.class, AccountTable.class,
         TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
         GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
@@ -186,7 +189,7 @@ class DerivedDbTableListingTest {
         .addBeans(MockBean.of(ntpTimeConfig.time(), NtpTime.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-        .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
         .addBeans(MockBean.of(mock(CurrencyService.class), CurrencyService.class))
@@ -231,7 +234,6 @@ class DerivedDbTableListingTest {
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         accountCurrencyTable.init();
-        //Account.init(extension.getDatabaseManager(), propertiesHolder, null, null, blockchain, null, null, accountTable, null);
         AccountAssetTable accountAssetTable = new AccountAssetTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         accountAssetTable.init();
         GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
@@ -251,6 +253,7 @@ class DerivedDbTableListingTest {
         purchaseTable.init();
     }
 
+    @Tag("skip-fts-init")
     @DisplayName("Loop over derived table list and get Min/Max/Count values")
     @Test
     void testMinMaxValues() {
@@ -262,7 +265,7 @@ class DerivedDbTableListingTest {
             assertNotNull(item);
             log.debug("Table = '{}'", item.toString());
             MinMaxValue minMaxValue = item.getMinMaxValue(targetHeight);
-            assertTrue(minMaxValue.getMax() >= 0, "incorrect for '" + item.toString() + "', value = " + minMaxValue.getMax());
+            assertTrue(minMaxValue.getMax().longValue() >= 0, "incorrect for '" + item.toString() + "', value = " + minMaxValue.getMax());
             log.debug("Table = {}, Min/Max = {} at height = {}", item.toString(), minMaxValue, targetHeight);
         });
     }

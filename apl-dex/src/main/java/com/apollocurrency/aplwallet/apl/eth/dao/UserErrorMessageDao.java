@@ -19,7 +19,7 @@ public interface UserErrorMessageDao {
 
 
     @Transactional
-    @SqlUpdate("INSERT INTO user_error_message (address, error, operation, details, timestamp) VALUES (:address, :error, :operation, :details, :timestamp)")
+    @SqlUpdate("INSERT INTO user_error_message (address, error, operation, details, `timestamp`) VALUES (:address, :error, :operation, :details, :timestamp)")
     void add(@BindBean UserErrorMessage errorMessage);
 
     @Transactional(readOnly = true)
@@ -28,6 +28,6 @@ public interface UserErrorMessageDao {
     List<UserErrorMessage> getAll(@Bind("dbId") long toDbId, @Bind("limit") int limit);
 
     @Transactional
-    @SqlUpdate("DELETE FROM user_error_message WHERE timestamp < :timestamp")
+    @SqlUpdate("DELETE FROM user_error_message WHERE `timestamp` < :timestamp")
     int deleteByTimestamp(@Bind("timestamp") long timestamp);
 }

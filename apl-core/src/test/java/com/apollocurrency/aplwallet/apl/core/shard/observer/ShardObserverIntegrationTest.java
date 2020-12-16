@@ -19,16 +19,14 @@ import org.mockito.Mockito;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
+import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-
-import java.util.Random;
-import java.util.concurrent.CompletableFuture;
 
 @EnableWeld
 public class ShardObserverIntegrationTest {

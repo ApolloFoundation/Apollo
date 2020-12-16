@@ -16,6 +16,8 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyFounder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -26,8 +28,11 @@ import lombok.extern.slf4j.Slf4j;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
 
 @Slf4j
 @Singleton
@@ -40,6 +45,7 @@ public class CrowdFundingObserver {
     private final CurrencyFounderService currencyFounderService;
     private final BlockChainInfoService blockChainInfoService;
     private final CurrencySupplyTable currencySupplyTable;
+    private final FullTextSearchUpdater fullTextSearchUpdater;
 
     @Inject
     public CrowdFundingObserver(AccountService accountService,
@@ -48,7 +54,9 @@ public class CrowdFundingObserver {
                                 CurrencyTable currencyTable,
                                 CurrencyFounderService currencyFounderService,
                                 BlockChainInfoService blockChainInfoService,
-                                CurrencySupplyTable currencySupplyTable) {
+                                CurrencySupplyTable currencySupplyTable,
+                                FullTextSearchUpdater fullTextSearchUpdater
+    ) {
         this.accountService = accountService;
         this.accountCurrencyService = accountCurrencyService;
         this.currencyService = currencyService;
@@ -56,6 +64,7 @@ public class CrowdFundingObserver {
         this.currencyFounderService = currencyFounderService;
         this.blockChainInfoService = blockChainInfoService;
         this.currencySupplyTable = currencySupplyTable;
+        this.fullTextSearchUpdater = fullTextSearchUpdater;
     }
 
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
@@ -91,6 +100,7 @@ public class CrowdFundingObserver {
         int height = blockChainInfoService.getHeight();
         currency.setHeight(height);
         currencyTable.deleteAtHeight(currency, height);
+        createAndFireFullTextSearchDataEvent(currency, FullTextOperationData.OperationType.DELETE);
         currencyFounderService.remove(currency.getId());
     }
 
@@ -129,4 +139,14 @@ public class CrowdFundingObserver {
         currencySupplyTable.insert(currencySupply);
     }
 
+    private void createAndFireFullTextSearchDataEvent(Currency currency, FullTextOperationData.OperationType operationType) {
+        FullTextOperationData operationData = new FullTextOperationData(
+            DEFAULT_SCHEMA, currencyTable.getTableName(), Thread.currentThread().getName());
+        operationData.setOperationType(operationType);
+        operationData.setDbIdValue(BigInteger.valueOf(currency.getDbId()));
+        operationData.addColumnData(currency.getName()).addColumnData(currency.getDescription());
+        // send data into Lucene index component
+        log.trace("Put lucene index update data = {}", operationData);
+        fullTextSearchUpdater.putFullTextOperationData(operationData);
+    }
 }

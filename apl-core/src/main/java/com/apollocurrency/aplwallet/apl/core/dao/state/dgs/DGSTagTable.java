@@ -22,6 +22,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 @Singleton
 public class DGSTagTable extends EntityDbTable<DGSTag> {
@@ -56,8 +57,11 @@ public class DGSTagTable extends EntityDbTable<DGSTag> {
     public void save(Connection con, DGSTag tag) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO tag (tag, in_stock_count, total_count, height, latest) "
-                + "KEY (tag, height) VALUES (?, ?, ?, ?, TRUE)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO tag (tag, in_stock_count, total_count, height, latest) "
+                + "VALUES (?, ?, ?, ?, TRUE) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "tag = VALUES(tag), in_stock_count = VALUES(in_stock_count), total_count = VALUES(total_count), "
+                + "height = VALUES(height), latest = TRUE", Statement.RETURN_GENERATED_KEYS)
         ) {
             int i = 0;
             pstmt.setString(++i, tag.getTag());
@@ -65,6 +69,11 @@ public class DGSTagTable extends EntityDbTable<DGSTag> {
             pstmt.setInt(++i, tag.getTotalCount());
             pstmt.setInt(++i, tag.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    tag.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 

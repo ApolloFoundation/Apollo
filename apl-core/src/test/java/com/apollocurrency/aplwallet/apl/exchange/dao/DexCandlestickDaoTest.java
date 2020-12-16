@@ -5,12 +5,14 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.DexTradingTestData;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCandlestick;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -23,9 +25,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 @Tag("slow")
-class DexCandlestickDaoTest {
+class DexCandlestickDaoTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), "db/dex-candlestick-data.sql", null);
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/dex-candlestick-data.sql", null);
     private DexCandlestickDao dao;
 
     private DexTradingTestData td;
@@ -35,6 +38,11 @@ class DexCandlestickDaoTest {
         dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(
             extension.getDatabaseManager().getJdbiHandleFactory(), DexCandlestickDao.class);
         td = new DexTradingTestData();
+    }
+
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
     }
 
     @Test
@@ -91,8 +99,8 @@ class DexCandlestickDaoTest {
     @Test
     void testUpdate() {
         DexCandlestick candlestick = td.ETH_3_CANDLESTICK;
-        candlestick.setClose(BigDecimal.ZERO);
-        candlestick.setOpen(BigDecimal.ONE);
+        candlestick.setClose(BigDecimal.valueOf(1, 7));
+        candlestick.setOpen(BigDecimal.valueOf(0, 7));
         dao.update(candlestick);
 
         assertEquals(candlestick, dao.getByTimestamp(candlestick.getTimestamp(), candlestick.getCoin()));
@@ -100,7 +108,7 @@ class DexCandlestickDaoTest {
 
     @Test
     void testAdd() {
-        DexCandlestick candlestick = new DexCandlestick(DexCurrency.ETH, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ONE, td.ETH_9_CANDLESTICK.getTimestamp() + 1, td.ETH_9_CANDLESTICK.getTimestamp() + 1, td.ETH_9_CANDLESTICK.getTimestamp() + 1);
+        DexCandlestick candlestick = new DexCandlestick(DexCurrency.ETH, BigDecimal.valueOf(10, 7), BigDecimal.valueOf(10, 7), BigDecimal.valueOf(10, 7), BigDecimal.valueOf(10, 7), BigDecimal.valueOf(1, 2), BigDecimal.valueOf(1, 7), td.ETH_9_CANDLESTICK.getTimestamp() + 1, td.ETH_9_CANDLESTICK.getTimestamp() + 1, td.ETH_9_CANDLESTICK.getTimestamp() + 1);
 
         dao.add(candlestick);
 

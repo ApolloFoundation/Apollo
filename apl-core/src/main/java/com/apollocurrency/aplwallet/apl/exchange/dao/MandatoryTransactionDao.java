@@ -21,7 +21,7 @@ public interface MandatoryTransactionDao {
     MandatoryTransaction get(@Bind("id") long id);
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT * from mandatory_transaction where db_id > :fromDbId FETCH FIRST :limit ROWS ONLY")
+    @SqlQuery("SELECT * from mandatory_transaction where db_id > :fromDbId LIMIT :limit")
     @RegisterRowMapper(MandatoryTransactionMapper.class)
     List<MandatoryTransaction> getAll(@Bind("fromDbId") long fromDbId, @Bind("limit") int limit);
 

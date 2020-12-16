@@ -40,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
@@ -101,6 +102,7 @@ import org.json.simple.JSONValue;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -185,6 +187,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final BlockSerializer blockSerializer;
     private final ConsensusManager consensusManager;
     private final MemPool memPool;
+    private Map<String, String> fullTextSearchIndexedTables;
 
     /**
      * Three blocks are used for internal calculations on assigning previous block
@@ -219,7 +222,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    GetNextBlocksResponseParser getNextBlocksResponseParser,
                                    BlockSerializer blockSerializer,
                                    ConsensusManager consensusManager,
-                                   MemPool memPool) {
+                                   MemPool memPool,
+                                   @Named(value = "fullTextTables") Map<String, String> fullTextSearchIndexedTables) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = blockchainConfig;
         this.validator = validator;
@@ -263,6 +267,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.getNextBlocksResponseParser = getNextBlocksResponseParser;
         this.blockSerializer = blockSerializer;
         this.consensusManager = consensusManager;
+        this.fullTextSearchIndexedTables = fullTextSearchIndexedTables;
 
         configureBackgroundTasks();
     }
@@ -595,17 +600,21 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         long lockAquireTime = System.currentTimeMillis() - startTime;
         try {
             Block previousLastBlock = null;
+            byte[] generatorPublicKey;
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             dataSource.begin();
             try {
                 previousLastBlock = blockchain.getLastBlock();
-                byte[] generatorPublicKey = previousLastBlock.getGeneratorPublicKey();
-                if (generatorPublicKey == null) {
+                if (!previousLastBlock.hasGeneratorPublicKey()) {
                     generatorPublicKey = accountService.getPublicKeyByteArray(previousLastBlock.getGeneratorId());
-                    previousLastBlock.setGeneratorPublicKey(generatorPublicKey);
+                    if (generatorPublicKey != null) {
+                        previousLastBlock.setGeneratorPublicKey(generatorPublicKey);
+                    }
+                } else {
+                    generatorPublicKey = previousLastBlock.getGeneratorPublicKey();
                 }
-                generatorPublicKey = block.getGeneratorPublicKey();
-                if (generatorPublicKey == null) {
+//                generatorPublicKey = block.getGeneratorPublicKey();
+                if (generatorPublicKey == null) { // second attempt
                     generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
                     block.setGeneratorPublicKey(generatorPublicKey);
                 }
@@ -1156,44 +1165,53 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int payloadLength = 0;
         int maxPayloadLength = blockchainConfig.getCurrentConfig().getMaxPayloadLength();
-        txSelectLoop:
-        while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
-            int prevNumberOfNewTransactions = sortedTransactions.size();
-            for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
-                int transactionLength = unconfirmedTransaction.getTransaction().getFullSize();
-                if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > maxPayloadLength) {
-                    continue;
+        TransactionalDataSource.StartedConnection startedConnection = databaseManager.getDataSource().beginTransactionIfNotStarted();
+        try {
+            txSelectLoop:
+            while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
+                int prevNumberOfNewTransactions = sortedTransactions.size();
+                for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
+                    int transactionLength = unconfirmedTransaction.getTransaction().getFullSize();
+                    if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > maxPayloadLength) {
+                        continue;
+                    }
+                    if (!isValidTransactionVersion(unconfirmedTransaction.getVersion(), previousBlock.getHeight())) {
+                        continue;
+                    }
+                    if (blockTimestamp > 0 && (unconfirmedTransaction.getTimestamp() > blockTimestamp + Constants.MAX_TIMEDRIFT
+                        || unconfirmedTransaction.getExpiration() < blockTimestamp)) {
+                        continue;
+                    }
+                    try {
+                        transactionValidator.validateFully(unconfirmedTransaction.getTransaction());
+                    } catch (AplException.ValidationException e) {
+                        continue;
+                    }
+                    if (!transactionApplier.applyUnconfirmed(unconfirmedTransaction.getTransaction())) { // persist tx changes and validate against updated state
+                        continue;
+                    }
+                    // prefetch data for duplicate validation
+                    Account senderAccount = accountService.getAccount(unconfirmedTransaction.getTransaction().getSenderId());
+                    Set<AccountControlType> senderAccountControls = senderAccount.getControls();
+                    AccountControlPhasing accountControlPhasing = accountControlPhasingService.get(
+                        unconfirmedTransaction.getTransaction().getSenderId());
+                    if (unconfirmedTransaction.getTransaction().attachmentIsDuplicate(
+                        duplicates, true, senderAccountControls, accountControlPhasing)) {
+                        continue;
+                    }
+                    sortedTransactions.add(unconfirmedTransaction);
+                    if (sortedTransactions.size() == limit) {
+                        break txSelectLoop;
+                    }
+                    payloadLength += transactionLength;
                 }
-                if (!isValidTransactionVersion(unconfirmedTransaction.getVersion(), previousBlock.getHeight())) {
-                    continue;
+                if (sortedTransactions.size() == prevNumberOfNewTransactions) {
+                    break;
                 }
-                if (blockTimestamp > 0 && (unconfirmedTransaction.getTimestamp() > blockTimestamp + Constants.MAX_TIMEDRIFT
-                    || unconfirmedTransaction.getExpiration() < blockTimestamp)) {
-                    continue;
-                }
-                try {
-                    transactionValidator.validateFully(unconfirmedTransaction.getTransaction());
-                } catch (AplException.ValidationException e) {
-                    continue;
-                }
-                // prefetch data for duplicate validation
-                Account senderAccount = accountService.getAccount(unconfirmedTransaction.getTransaction().getSenderId());
-                Set<AccountControlType> senderAccountControls = senderAccount.getControls();
-                AccountControlPhasing accountControlPhasing = accountControlPhasingService.get(
-                    unconfirmedTransaction.getTransaction().getSenderId());
-                if (unconfirmedTransaction.getTransaction().attachmentIsDuplicate(
-                    duplicates, true, senderAccountControls, accountControlPhasing)) {
-                    continue;
-                }
-                sortedTransactions.add(unconfirmedTransaction);
-                if (sortedTransactions.size() == limit) {
-                    break txSelectLoop;
-                }
-                payloadLength += transactionLength;
             }
-            if (sortedTransactions.size() == prevNumberOfNewTransactions) {
-                break;
-            }
+        } finally {
+            // do not apply changes for applyUnconfirmed
+            databaseManager.getDataSource().rollback(!startedConnection.isAlreadyStarted());
         }
         return sortedTransactions;
     }
@@ -1221,10 +1239,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     public void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException {
-
         Block previousBlock = blockchain.getLastBlock();
         SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp, Integer.MAX_VALUE);
-        transactionProcessor.printMemPoolStat();
         List<Transaction> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
         long totalAmountATM = 0;
@@ -1471,9 +1487,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 double percentsPerTableIndex = getPercentsPerEvent(4.0, derivedTables.size());
                 if (height == shardInitialHeight) {
                     for (DerivedTableInterface table : derivedTables) {
-                        aplAppStatus.durableTaskUpdate(scanTaskId,
-                            "Create full text search index for table " + table.toString(), percentsPerTableIndex);
-                        fullTextSearchProvider.createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
+                        if (table instanceof SearchableTableInterface) {
+                            aplAppStatus.durableTaskUpdate(scanTaskId,
+                                "Create full text search index for table " + table.toString(), percentsPerTableIndex);
+                            fullTextSearchProvider.createSearchIndex(con, table.getName(), table.getFullTextSearchColumns());
+                        }
                     }
                 }
 

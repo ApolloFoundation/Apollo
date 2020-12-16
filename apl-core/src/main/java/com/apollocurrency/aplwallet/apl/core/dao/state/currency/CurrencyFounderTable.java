@@ -4,10 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.currency;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory;
@@ -18,6 +14,9 @@ import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -53,8 +52,11 @@ public class CurrencyFounderTable extends VersionedDeletableEntityDbTable<Curren
     public void save(Connection con, CurrencyFounder currencyFounder) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO currency_founder (currency_id, account_id, amount, height, latest, deleted) "
-                + "KEY (currency_id, account_id, height) VALUES (?, ?, ?, ?, TRUE, FALSE)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO currency_founder (currency_id, account_id, amount, height, latest, deleted) "
+                + "VALUES (?, ?, ?, ?, TRUE, FALSE) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "currency_id = VALUES(currency_id), account_id = VALUES(account_id), amount = VALUES(amount), "
+                + "height = VALUES(height), latest = TRUE, deleted = FALSE")
         ) {
             int i = 0;
             pstmt.setLong(++i, currencyFounder.getCurrencyId());

@@ -55,7 +55,7 @@ public final class AssetDividendTable extends EntityDbTable<AssetDividend> {
     @Override
     public void save(Connection con, AssetDividend assetDividend) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_dividend (id, asset_id, "
-            + "amount, dividend_height, total_dividend, num_accounts, timestamp, height) "
+            + "amount, dividend_height, total_dividend, num_accounts, `timestamp`, height) "
             + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, assetDividend.getId());

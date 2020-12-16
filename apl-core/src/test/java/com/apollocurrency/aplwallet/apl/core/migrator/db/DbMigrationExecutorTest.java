@@ -4,66 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
-import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.OptionDAO;
-import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
-import com.apollocurrency.aplwallet.apl.data.BlockTestData;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
-import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
-import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
-import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
-import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.mockito.Mockito;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Properties;
-
-import static org.mockito.Mockito.mock;
 
 @EnableWeld
 public class DbMigrationExecutorTest {
 
-    @RegisterExtension
+/*    @RegisterExtension
     static TemporaryFolderExtension temporaryFolder = new TemporaryFolderExtension();
     @Inject
     JdbiHandleFactory jdbiHandleFactory;
@@ -180,5 +126,5 @@ public class DbMigrationExecutorTest {
         BlockTestData btd = new BlockTestData();
         Assertions.assertEquals(btd.LAST_BLOCK.getHeight(), migratedHeight);
 
-    }
+    }*/
 }

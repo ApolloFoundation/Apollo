@@ -5,22 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
 
-import com.apollocurrency.aplwallet.apl.data.BlockTestData;
-import com.apollocurrency.aplwallet.apl.data.DbTestData;
-import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 class H2DbInfoExtractorTest {
-    private static Path path = Paths.get(System.getProperty("java.io.tmpdir"), "dbInfoExtractor" + DbProperties.DB_EXTENSION_WITH_DOT);
+/*    private static Path path = Paths.get(System.getProperty("java.io.tmpdir"), "dbInfoExtractor" + DbProperties.DB_EXTENSION_WITH_DOT);
     private H2DbInfoExtractor h2DbInfoExtractor = new H2DbInfoExtractor("sa", "sa");
 
     @BeforeEach
@@ -47,5 +33,5 @@ class H2DbInfoExtractorTest {
     public void testGetPath() {
         String path = H2DbInfoExtractorTest.path.toAbsolutePath().toString();
         Assertions.assertEquals(Paths.get(path + DbProperties.DB_EXTENSION_WITH_DOT), h2DbInfoExtractor.getPath(path));
-    }
+    }*/
 }

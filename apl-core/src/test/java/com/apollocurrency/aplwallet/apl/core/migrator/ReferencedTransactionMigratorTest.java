@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.migrator;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
@@ -26,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -47,11 +49,14 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+
 @Tag("slow")
 @EnableWeld
-class ReferencedTransactionMigratorTest {
+class ReferencedTransactionMigratorTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension();
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
     TransactionTestData td = new TransactionTestData();
 
     @WeldSetup

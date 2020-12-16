@@ -46,8 +46,6 @@ public class CmdLineArgs {
     public String dataExportDir = "";
     @Parameter(names = {"--pid-file"}, description = "Save PID to specified file.")
     public String pidFile = "";
-    @Parameter(names = {"--start-mint", "-m"}, help = true, description = "Start currency minting worker")
-    public boolean startMint;
     @Parameter(names = {"--net", "-n"}, help = true, description = "Connect to net [0-4]. 0 means mainnet, 1 - 1st testnet and so on")
     public int netIdx = -1;
     @Parameter(names = {"--chain", "-C"}, help = true, description = "Connect to net with given chainID. UUID of chain id may be specified partially, 6 symbos min. Configs must be present.")

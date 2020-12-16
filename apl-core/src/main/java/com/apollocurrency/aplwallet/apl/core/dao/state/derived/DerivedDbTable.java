@@ -29,9 +29,10 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -48,11 +49,14 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     protected final DatabaseManager databaseManager;
     private final DerivedTablesRegistry derivedDbTablesRegistry;
     private FullTextConfig fullTextConfig;
+    @Getter
+    private final String fullTextSearchColumns;
 
     protected DerivedDbTable(String table,
                              DerivedTablesRegistry derivedDbTablesRegistry,
                              DatabaseManager databaseManager,
-                             FullTextConfig fullTextConfig) {
+                             FullTextConfig fullTextConfig,
+                             String fullTextSearchColumns) {
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
         this.derivedDbTablesRegistry = Objects.requireNonNull(derivedDbTablesRegistry, "derivedDbTablesRegistry is NULL");
@@ -60,7 +64,8 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         if (fullTextConfig != null) { // CAN BE NULL for some tables
             this.fullTextConfig = fullTextConfig;
         }
-        init();
+        this.fullTextSearchColumns = fullTextSearchColumns;
+        init(); // reverted back for usage
     }
 
     public String getTableName() {
@@ -76,21 +81,16 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
 
     @Override
     public void trim(int height, boolean isSharding) {
-/*
-        // default implementation for most of derived successor
-        // 'Vote' is only one exception in that case
-        this.trim(height, isSharding);
-*/
     }
 
-    @PostConstruct
+    //    @PostConstruct // can be used, but keep eyes on 'PublicKeyTable' which is not gets into derivedDbTablesRegistry
     public void init() {
         derivedDbTablesRegistry.registerDerivedTable(this);
         log.debug("Register derived class: {}", this.getClass().getName());
         if (this instanceof SearchableTableInterface) {
             log.debug("Register SearchableTable derived class: {}", this.getClass().getName());
             if (fullTextConfig != null) {
-                fullTextConfig.registerTable(table);
+                fullTextConfig.registerTable(table, this.getFullTextSearchColumns());
             } else {
                 String error = "ERROR registering 'SearchableTable' table without supplied 'fullTextConfig' instance !!!";
                 log.error(error);
@@ -188,8 +188,8 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         Objects.requireNonNull(pstmt, "prepared statement is NULL");
         Objects.requireNonNull(minMaxValue, "minMaxValue is NULL");
         try {
-            pstmt.setLong(1, minMaxValue.getMin());
-            pstmt.setLong(2, minMaxValue.getMax());
+            pstmt.setBigDecimal(1, minMaxValue.getMin());
+            pstmt.setBigDecimal(2, minMaxValue.getMax());
             pstmt.setLong(3, limit);
             return pstmt.executeQuery();
         } catch (SQLException e) {
@@ -233,8 +233,8 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
         MinMaxValue result = null;
         try (ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
-                long min = rs.getLong("min_id");
-                long max = rs.getLong("max_id");
+                BigDecimal min = rs.getBigDecimal("min_id");
+                BigDecimal max = rs.getBigDecimal("max_id");
                 long rowCount = rs.getLong("count");
                 int height = rs.getInt("max_height");
                 result = new MinMaxValue(

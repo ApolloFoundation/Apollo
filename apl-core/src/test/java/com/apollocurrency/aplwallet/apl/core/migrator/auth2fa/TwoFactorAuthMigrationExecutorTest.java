@@ -9,11 +9,14 @@ import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+
+@Tag("slow")
 public class TwoFactorAuthMigrationExecutorTest extends AbstractMigrationExecutorTest {
     @RegisterExtension
-    TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
 
     public TwoFactorAuthMigrationExecutorTest() {
         super("apl.migrator.2fa.deleteAfterMigration", "2faMigrationRequired-0", "./keystore/2fa", "apl.dir2FA");

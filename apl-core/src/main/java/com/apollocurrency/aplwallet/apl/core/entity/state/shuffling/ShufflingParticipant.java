@@ -23,7 +23,6 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.shuffling;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingParticipantTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.extern.slf4j.Slf4j;
@@ -63,8 +62,8 @@ public final class ShufflingParticipant extends VersionedDeletableEntity {
         this.nextAccountId = rs.getLong("next_account_id");
         this.index = rs.getInt("participant_index");
         this.state = ShufflingParticipantState.get(rs.getByte("state"));
-        this.blameData = DbUtils.getArray(rs, "blame_data", byte[][].class, Convert.EMPTY_BYTES);
-        this.keySeeds = DbUtils.getArray(rs, "key_seeds", byte[][].class, Convert.EMPTY_BYTES);
+        this.blameData = DbUtils.get2dByteArray(rs, "blame_data", Convert.EMPTY_BYTES);
+        this.keySeeds = DbUtils.get2dByteArray(rs, "key_seeds", Convert.EMPTY_BYTES);
         this.dataTransactionFullHash = rs.getBytes("data_transaction_full_hash");
         this.dataHash = rs.getBytes("data_hash");
     }

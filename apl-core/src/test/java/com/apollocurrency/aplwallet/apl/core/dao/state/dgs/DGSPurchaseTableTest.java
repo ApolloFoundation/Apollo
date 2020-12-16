@@ -54,6 +54,7 @@ import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.mock;
 
+
 @Tag("slow")
 @EnableWeld
 public class DGSPurchaseTableTest extends EntityDbTableTest<DGSPurchase> {

@@ -41,7 +41,7 @@ public interface DexOrderDao {
         "AND (:offerCur is NULL OR offer.offer_currency = :offerCur) " +
         "AND (:pairCur is NULL OR offer.pair_currency = :pairCur) " +
         "ORDER BY <sortBy> <sortOrder> " +
-        "OFFSET :offset FETCH FIRST :limit ROWS ONLY"
+        "LIMIT :limit OFFSET :offset"
     )
     @RegisterRowMapper(DexOrderMapper.class)
     List<DexOrder> getOrders(@BindBean DexOrderDBRequest dexOrderDBRequest, @Define("sortBy") DexOrderSortBy sortBy, @Define("sortOrder") DBSortOrder sortOrder);

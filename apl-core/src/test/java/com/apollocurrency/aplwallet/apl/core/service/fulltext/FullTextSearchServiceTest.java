@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
@@ -33,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -49,12 +51,14 @@ import java.util.Map;
 
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+
 @Tag("slow")
 @EnableWeld
-class FullTextSearchServiceTest {
+class FullTextSearchServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension(Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
+    static DbExtension extension = new DbExtension(mariaDBContainer, Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
     @Inject
     FullTextSearchService ftl;
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
@@ -65,7 +69,7 @@ class FullTextSearchServiceTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-        TaggedDataServiceImpl.class,
+        TaggedDataServiceImpl.class, FullTextSearchUpdater.class,
         GlobalSyncImpl.class,
         TransactionRowMapper.class,
         TransactionBuilder.class,
@@ -82,7 +86,7 @@ class FullTextSearchServiceTest {
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
-        .addBeans(MockBean.of(extension.getFtl(), FullTextSearchService.class))
+        .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
@@ -95,7 +99,7 @@ class FullTextSearchServiceTest {
     public FullTextSearchServiceTest() throws IOException {
     }
 
-
+    @Tag("skip-fts-init")
     @Test
     void reindexAll() throws Exception {
         ftl.reindexAll(extension.getDatabaseManager().getDataSource().begin());

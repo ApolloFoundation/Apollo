@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.ShardRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.IntArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.LongArrayArgumentFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -48,16 +49,16 @@ public interface ShardDao {
     @SqlUpdate("INSERT INTO shard(shard_id, shard_hash, shard_state, shard_height, zip_hash_crc, prunable_zip_hash, generator_ids, block_timeouts, block_timestamps) " +
         "VALUES (:shardId, :shardHash, :shardState, :shardHeight, :coreZipHash, :prunableZipHash, :generatorIds, " +
         ":blockTimeouts, :blockTimestamps)")
-    @RegisterRowMapper(ShardRowMapper.class)
     @RegisterArgumentFactory(LongArrayArgumentFactory.class)
+    @RegisterArgumentFactory(IntArrayArgumentFactory.class)
     void saveShard(@BindBean Shard shard);
 
     @Transactional
     @SqlUpdate("UPDATE shard SET shard_hash =:shardHash, shard_state =:shardState, shard_height =:shardHeight, " +
         "zip_hash_crc =:coreZipHash, prunable_zip_hash =:prunableZipHash, generator_ids =:generatorIds, block_timeouts =:blockTimeouts, block_timestamps =:blockTimestamps " +
         "where shard_id =:shardId")
-    @RegisterRowMapper(ShardRowMapper.class)
     @RegisterArgumentFactory(LongArrayArgumentFactory.class)
+    @RegisterArgumentFactory(IntArrayArgumentFactory.class)
     int updateShard(@BindBean Shard shard);
 
     @Transactional
@@ -117,7 +118,7 @@ public interface ShardDao {
     @Transactional(readOnly = true)
 //    @SqlQuery("(select * from SHARD where SHARD_STATE = 100 and SHARD_HEIGHT <= :heightFrom + 1 limit 1) UNION ALL" +
 //        " (select * from SHARD where SHARD_STATE = 100 and (SHARD_HEIGHT > :heightFrom + 1 OR SHARD_HEIGHT >= :heightTo) order by SHARD_HEIGHT)")
-    @SqlQuery("select * from SHARD where SHARD_STATE = 100 and (SHARD_HEIGHT between :heightFrom - 1 and :heightTo) order by SHARD_HEIGHT")
+    @SqlQuery("select * from shard WHERE SHARD_STATE = 100 and (SHARD_HEIGHT between :heightFrom - 1 and :heightTo) order by SHARD_HEIGHT")
     @RegisterRowMapper(ShardRowMapper.class)
     List<Shard> getCompletedBetweenBlockHeight(@Bind("heightFrom") long heightFrom, @Bind("heightTo") long heightTo);
 }

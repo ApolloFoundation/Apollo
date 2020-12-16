@@ -180,7 +180,7 @@ public class BlockDaoImpl implements BlockDao {
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
              PreparedStatement pstmt = con.prepareStatement(
-                 "SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY timestamp DESC LIMIT 1")) {
+                 "SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY `timestamp` DESC LIMIT 1")) {
             Block block = null;
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -243,7 +243,7 @@ public class BlockDaoImpl implements BlockDao {
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE generator_id = ? "
-                + (timestamp > 0 ? " AND timestamp >= ? " : " ") + "ORDER BY height DESC"
+                + (timestamp > 0 ? " AND `timestamp` >= ? " : " ") + "ORDER BY height DESC"
                 + DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setLong(++i, accountId);
@@ -269,7 +269,7 @@ public class BlockDaoImpl implements BlockDao {
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE generator_id = ? "
-                + (timestamp > 0 ? " AND timestamp >= ? " : " ") + "ORDER BY height DESC"
+                + (timestamp > 0 ? " AND `timestamp` >= ? " : " ") + "ORDER BY height DESC"
                 + DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setLong(++i, accountId);
@@ -294,7 +294,7 @@ public class BlockDaoImpl implements BlockDao {
         try {
             con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement(
-                "SELECT * FROM block WHERE height <= ? AND height >= ? and timestamp >= ? ORDER BY height DESC");
+                "SELECT * FROM block WHERE height <= ? AND height >= ? and `timestamp` >= ? ORDER BY height DESC");
             pstmt.setInt(1, from);
             pstmt.setInt(2, to);
             pstmt.setInt(3, timestamp);
@@ -425,7 +425,7 @@ public class BlockDaoImpl implements BlockDao {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                 "SELECT * FROM block WHERE version = ? ORDER BY timestamp DESC LIMIT 1 OFFSET ?")) {
+                 "SELECT * FROM block WHERE version = ? ORDER BY `timestamp` DESC LIMIT 1 OFFSET ?")) {
             int i = 0;
             pstmt.setInt(++i, version);
             pstmt.setInt(++i, skipCount);
@@ -445,7 +445,7 @@ public class BlockDaoImpl implements BlockDao {
     public Block findLastBlock(int timestamp) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE timestamp <= ? ORDER BY timestamp DESC LIMIT 1")) {
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE `timestamp` <= ? ORDER BY `timestamp` DESC LIMIT 1")) {
             pstmt.setInt(1, timestamp);
             Block block = null;
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -514,7 +514,7 @@ public class BlockDaoImpl implements BlockDao {
     @Override
     public void saveBlock(Connection con, Block block) {
         try {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, timestamp, previous_block_id, "
+            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, `timestamp`, previous_block_id, "
                 + "total_amount, total_fee, payload_length, previous_block_hash, next_block_id, cumulative_difficulty, "
                 + "base_target, height, generation_signature, block_signature, payload_hash, generator_id, timeout) "
                 + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
@@ -613,11 +613,12 @@ public class BlockDaoImpl implements BlockDao {
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
              @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
-             PreparedStatement pstmtBlockSelect = con.prepareStatement("SELECT db_id, id FROM block WHERE timestamp >= "
-                 + "IFNULL ((SELECT timestamp FROM block WHERE id = ?), " + Integer.MAX_VALUE + ") ORDER BY timestamp DESC");
+             PreparedStatement pstmtBlockSelect = con.prepareStatement("SELECT db_id, id FROM block WHERE `timestamp` >= "
+                 + "IFNULL ((SELECT `timestamp` FROM block WHERE id = ?), " + Integer.MAX_VALUE + ") ORDER BY `timestamp` DESC");
              PreparedStatement pstmtBlockDelete = con.prepareStatement("DELETE FROM block WHERE db_id = ?");
+//             PreparedStatement pstmtTransactionDelete = con.prepareStatement("DELETE TX, US from transaction AS TX LEFT JOIN update_status AS US ON TX.id = US.transaction_id WHERE TX.db_id = ?");
              PreparedStatement pstmtTransactionDelete = con.prepareStatement("DELETE FROM transaction WHERE db_id = ?");
-             PreparedStatement pstmtTransactionSelect = con.prepareStatement("SELECT db_id FROM transaction WHERE block_id = ?")
+             PreparedStatement pstmtTransactionSelect = con.prepareStatement("SELECT db_id FROM transaction WHERE block_id = ?");
         ) {
             try {
                 pstmtBlockSelect.setLong(1, blockId);

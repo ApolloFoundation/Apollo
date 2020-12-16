@@ -32,7 +32,6 @@ import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -115,60 +114,54 @@ public class ShardService {
 
         Path dbDir = dirProvider.getDbDir();
         Path backupZip = dbDir.resolve(String.format(ShardConstants.DB_BACKUP_FORMAT, new ShardNameHelper().getShardNameByShardId(shardId, blockchainConfig.getChain().getChainId())));
-        boolean backupExists = Files.exists(backupZip);
-        if (backupExists) {
-            if (isSharding) {
-                if (shardingProcess != null) {
-                    log.info("Stopping sharding process...");
-                    shardingProcess.cancel(true);
-                } else {
-                    log.info("Unable to stop sharding process. Try again later");
-                    return false;
-                }
+        if (isSharding) {
+            if (shardingProcess != null) {
+                log.info("Stopping sharding process...");
+                shardingProcess.cancel(true);
+            } else {
+                log.info("Unable to stop sharding process. Try again later");
+                return false;
             }
+        }
 
-            updateTrimConfig(false, true);
-            blockchainProcessor.suspendBlockchainDownloading();
+        updateTrimConfig(false, true);
+        blockchainProcessor.suspendBlockchainDownloading();
+        try {
+            log.debug("Waiting finish of last trim");
+            while (trimService.isTrimming()) {
+                ThreadUtils.sleep(100);
+            }
+            globalSync.writeLock();
             try {
-                log.debug("Waiting finish of last trim");
-                while (trimService.isTrimming()) {
-                    ThreadUtils.sleep(100);
-                }
-                globalSync.writeLock();
-                try {
 
-                    databaseManager.setAvailable(false);
-                    dbEvent.fire(new DbHotSwapConfig(shardId));
-                    databaseManager.shutdown();
-                    FileUtils.deleteFilesByFilter(dirProvider.getDbDir(), (p) -> {
-                        Path fileName = p.getFileName();
-                        int shardIndex = fileName.toString().indexOf("-shard-");
-                        if ((fileName.toString().endsWith(DbProperties.DB_EXTENSION) || fileName.toString().endsWith("trace.db"))
-                            && shardIndex != -1) {
-                            String idString = fileName.toString().substring(shardIndex + 7);
-                            String id = idString.substring(0, idString.indexOf("-"));
-                            long fileShardId = Long.parseLong(id);
-                            return fileShardId >= shardId;
-                        } else {
-                            return false;
-                        }
-                    });
-                    zip.extract(backupZip.toAbsolutePath().toString(), dbDir.toAbsolutePath().toString(), true);
-                    databaseManager.setAvailable(true);
-                    databaseManager.getDataSource(); // force init
-                    blockchain.update();
-                    recoverSharding();
-                    return true;
-                } finally {
-                    globalSync.writeUnlock();
-                }
+                databaseManager.setAvailable(false);
+                dbEvent.fire(new DbHotSwapConfig(shardId));
+                databaseManager.shutdown();
+                FileUtils.deleteFilesByFilter(dirProvider.getDbDir(), (p) -> {
+                    Path fileName = p.getFileName();
+                    int shardIndex = fileName.toString().indexOf("_shard_");
+                    if ((fileName.toString().endsWith(DbProperties.DB_EXTENSION) || fileName.toString().endsWith("trace.db"))
+                        && shardIndex != -1) {
+                        String idString = fileName.toString().substring(shardIndex + 7);
+                        String id = idString.substring(0, idString.indexOf("-"));
+                        long fileShardId = Long.parseLong(id);
+                        return fileShardId >= shardId;
+                    } else {
+                        return false;
+                    }
+                });
+                zip.extract(backupZip.toAbsolutePath().toString(), dbDir.toAbsolutePath().toString(), true);
+                databaseManager.setAvailable(true);
+                databaseManager.getDataSource(); // force init
+                blockchain.update();
+                recoverSharding();
+                return true;
             } finally {
-                blockchainProcessor.resumeBlockchainDownloading();
-                updateTrimConfig(true, false);
+                globalSync.writeUnlock();
             }
-        } else {
-            log.debug("Backup before shard {} does not exist", shardId);
-            return false;
+        } finally {
+            blockchainProcessor.resumeBlockchainDownloading();
+            updateTrimConfig(true, false);
         }
     }
 

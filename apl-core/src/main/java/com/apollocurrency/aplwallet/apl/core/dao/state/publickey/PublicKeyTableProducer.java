@@ -75,6 +75,8 @@ public class PublicKeyTableProducer {
         } else {
             log.info("'{}' is TURNED OFF...", PublicKeyCacheConfig.PUBLIC_KEY_CACHE_NAME);
         }
+        // IMPORTANT! 'manual' derived table registration, if 'DerivedDbTable' uses init() as @PostConstruct
+//        ((DerivedDbTable)this.publicKeyTable).init();
     }
 
     @Produces
