@@ -36,7 +36,7 @@ public class TransactionSigner {
     }
 
     /**
-     * Sign the unsigned transaction and throw exception if transaction is already signed.
+     * Sign the unsigned (tx V1) transaction and throw exception if transaction is already signed.
      *
      * @param transaction the unsigned transaction
      * @param keySeed     the key seed using to sign the transaction
