@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 
@@ -77,7 +78,12 @@ public abstract class TransactionType {
 
     public abstract LedgerEvent getLedgerEvent();
 
+    @Deprecated(since = "TransactionV3")
     public abstract AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException;
+
+    public AbstractAttachment parseAttachment(RlpReader reader) throws AplException.NotValidException{
+        throw new AplException.NotValidException("Unsupported RLP reader for transaction=" + getSpec());
+    }
 
     public abstract AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException;
 

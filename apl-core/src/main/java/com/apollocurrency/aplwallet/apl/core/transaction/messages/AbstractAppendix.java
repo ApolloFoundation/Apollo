@@ -6,8 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
@@ -25,8 +26,13 @@ public abstract class AbstractAppendix implements Appendix {
         this.version = ((Number) attachmentData.get("version." + getAppendixName())).byteValue();
     }
 
+    @Deprecated
     AbstractAppendix(ByteBuffer buffer) {
         this.version = buffer.get();
+    }
+
+    AbstractAppendix(RlpReader reader) {
+        this.version = reader.read()[0];
     }
 
     AbstractAppendix(int version) {
@@ -55,6 +61,10 @@ public abstract class AbstractAppendix implements Appendix {
         return getMySize();
     }
 
+    /**
+     * @deprecated use {@link #putBytes(RlpWriteBuffer)}
+     */
+    @Deprecated(since = "TransactionV3")
     @Override
     public final void putBytes(ByteBuffer buffer) {
         if (version > 0) {
@@ -63,7 +73,22 @@ public abstract class AbstractAppendix implements Appendix {
         putMyBytes(buffer);
     }
 
+    /**
+     * @deprecated use {@link #putMyBytes(RlpWriteBuffer)}
+     */
+    @Deprecated(since = "TransactionV3")
     public abstract void putMyBytes(ByteBuffer buffer);
+
+    @Override
+    public final void putBytes(RlpWriteBuffer buffer) {
+        buffer.write(version);
+
+        putMyBytes(buffer);
+    }
+
+    public void putMyBytes(RlpWriteBuffer buffer){
+        throw new UnsupportedOperationException("Unsupported RLP writer for appendix=" + getAppendixName());
+    }
 
     @Override
     public final JSONObject getJSONObject() {
@@ -95,10 +120,6 @@ public abstract class AbstractAppendix implements Appendix {
         }
         performFullValidation(transaction, blockHeight);
     }
-
-    public abstract void apply(Transaction transaction, Account senderAccount, Account recipientAccount);
-
-    public abstract boolean isPhasable();
 
     @Override
     public final boolean isPhased(Transaction transaction) {

@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -38,7 +39,13 @@ public interface Appendix {
 
     int getFullSize();
 
+    /**
+     * @deprecated use {@link #putBytes(RlpWriteBuffer)}
+     */
+    @Deprecated(since = "TransactionV3")
     void putBytes(ByteBuffer buffer);
+
+    void putBytes(RlpWriteBuffer buffer);
 
     JSONObject getJSONObject();
 

@@ -21,6 +21,7 @@ import java.util.Iterator;
  */
 public class RlpReader {
     private final Iterator<RlpType> iterator;
+    private final int size;
 
     public RlpReader(String hexInput) {
         this(Numeric.hexStringToByteArray(hexInput));
@@ -31,7 +32,12 @@ public class RlpReader {
     }
 
     public RlpReader(RlpList listInput) {
+        this.size = listInput.getValues().size();
         this.iterator = listInput.getValues().iterator();
+    }
+
+    public int size(){
+        return size;
     }
 
     public boolean hasNext(){
@@ -48,9 +54,14 @@ public class RlpReader {
         return new String(((RlpString) value).getBytes());
     }
 
-    public Long readLong() {
+    public long readLong() {
         RlpType value = iterator.next();
         return ((RlpString) value).asPositiveBigInteger().longValueExact();
+    }
+
+    public int readInt() {
+        RlpType value = iterator.next();
+        return ((RlpString) value).asPositiveBigInteger().intValueExact();
     }
 
     public BigInteger readBigInteger() {
