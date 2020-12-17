@@ -16,6 +16,7 @@
  import com.apollocurrency.aplwallet.apl.core.utils.FbWalletUtil;
  import com.apollocurrency.aplwallet.apl.crypto.Convert;
  import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+ import com.apollocurrency.aplwallet.apl.util.AplCollectionUtils;
  import com.apollocurrency.aplwallet.apl.util.JSON;
  import com.apollocurrency.aplwallet.apl.util.NtpTime;
  import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
@@ -23,7 +24,6 @@
  import com.fasterxml.jackson.databind.ObjectWriter;
  import io.firstbridge.cryptolib.CryptoNotValidException;
  import io.firstbridge.cryptolib.container.FbWallet;
- import org.apache.commons.collections4.CollectionUtils;
  import org.slf4j.Logger;
 
  import javax.inject.Inject;
@@ -285,7 +285,7 @@
          // Check passphrase / migrate keys from old key store to the new.
          FbWallet fbWallet = getSecretStore(passphrase, accountId);
 
-         if (fbWallet == null || CollectionUtils.isEmpty(fbWallet.getAllKeys())) {
+         if (fbWallet == null || AplCollectionUtils.isEmpty(fbWallet.getAllKeys())) {
              return null;
          }
 
@@ -299,7 +299,7 @@
          }
 
          FbWallet fbWallet = getSecretStore(passphrase, accountId);
-         if (fbWallet == null || CollectionUtils.isEmpty(fbWallet.getAllData())) {
+         if (fbWallet == null || AplCollectionUtils.isEmpty(fbWallet.getAllData())) {
              return Status.BAD_CREDENTIALS;
          }
          List<Path> secretPaths = findKeyStorePaths(accountId);

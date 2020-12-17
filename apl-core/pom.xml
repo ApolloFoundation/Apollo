@@ -345,33 +345,6 @@
       <artifactId>core</artifactId>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/org.ethereum/ethereumj-core -->
-    <dependency>
-      <groupId>org.ethereum</groupId>
-      <artifactId>ethereumj-core</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-context</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-orm</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-tx</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.madgag.spongycastle</groupId>
-          <artifactId>prov</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.ethereum</groupId>
-          <artifactId>rocksdbjni</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
 
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>

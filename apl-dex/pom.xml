@@ -11,6 +11,10 @@
 
   <artifactId>apl-dex</artifactId>
 
+  <properties>
+    <web3jVersion>5.0.0</web3jVersion>
+  </properties>
+
 
   <dependencies>
 
@@ -51,35 +55,20 @@
     <dependency>
       <groupId>org.web3j</groupId>
       <artifactId>core</artifactId>
+      <version>${web3jVersion}</version>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/org.ethereum/ethereumj-core -->
-    <dependency>
-      <groupId>org.ethereum</groupId>
-      <artifactId>ethereumj-core</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-context</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-orm</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-tx</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.madgag.spongycastle</groupId>
-          <artifactId>prov</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.ethereum</groupId>
-          <artifactId>rocksdbjni</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+    <!--    <dependency>-->
+    <!--      <groupId>org.web3j</groupId>-->
+    <!--      <artifactId>crypto</artifactId>-->
+    <!--      <version>${web3jVersion}</version>-->
+    <!--    </dependency>-->
+
+    <!--    <dependency>-->
+    <!--      <groupId>org.web3j</groupId>-->
+    <!--      <artifactId>utils</artifactId>-->
+    <!--      <version>${web3jVersion}</version>-->
+    <!--    </dependency>-->
 
 
     <dependency>

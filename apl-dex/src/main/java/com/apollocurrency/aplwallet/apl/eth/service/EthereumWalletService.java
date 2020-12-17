@@ -14,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
-import org.ethereum.util.blockchain.EtherUtil;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
 import org.web3j.abi.TypeEncoder;
@@ -342,7 +341,7 @@ public class EthereumWalletService {
         RawTransaction rawTransaction = RawTransaction
             .createEtherTransaction(
                 nonce,
-                EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI),
+                EthUtil.gweiToWei(gasPrice),
                 Constants.GAS_LIMIT_ETHER_TX,
                 toAddress,
                 amountWei

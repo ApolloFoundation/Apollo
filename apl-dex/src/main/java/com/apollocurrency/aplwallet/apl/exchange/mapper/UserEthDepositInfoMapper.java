@@ -3,7 +3,7 @@ package com.apollocurrency.aplwallet.apl.exchange.mapper;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
-import org.apache.commons.collections4.CollectionUtils;
+import com.apollocurrency.aplwallet.apl.util.AplCollectionUtils;
 import org.web3j.tuples.generated.Tuple4;
 
 import java.math.BigInteger;
@@ -15,7 +15,7 @@ public class UserEthDepositInfoMapper {
     public static EthDepositsWithOffset map(Tuple4<List<BigInteger>, List<BigInteger>, List<BigInteger>, BigInteger> data) {
         EthDepositsWithOffset ethDepositsWithOffset = new EthDepositsWithOffset();
 
-        if (data == null || CollectionUtils.isEmpty(data.component1())) {
+        if (data == null || AplCollectionUtils.isEmpty(data.component1())) {
             return ethDepositsWithOffset;
         }
 

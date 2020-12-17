@@ -75,6 +75,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserAddressesWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
+import com.apollocurrency.aplwallet.apl.util.AplCollectionUtils;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
@@ -83,7 +84,6 @@ import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.google.common.cache.Cache;
 import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -994,7 +994,7 @@ public class DexService {
 
         for (int i = 0; i < MAX_PAGES_FOR_SEARCH; i++) {
             EthDepositsWithOffset ethDepositsWithOffset = dexSmartContractService.getUserFilledOrders(user, offset, limit);
-            if (CollectionUtils.isEmpty(ethDepositsWithOffset.getDeposits())) {
+            if (AplCollectionUtils.isEmpty(ethDepositsWithOffset.getDeposits())) {
                 break;
             }
             ethDepositInfos.addAll(ethDepositsWithOffset.getDeposits());
@@ -1014,7 +1014,7 @@ public class DexService {
 
         for (int i = 0; i < MAX_PAGES_FOR_SEARCH; i++) {
             EthDepositsWithOffset ethDepositsWithOffset = dexSmartContractService.getUserActiveDeposits(user, offset, limit);
-            if (CollectionUtils.isEmpty(ethDepositsWithOffset.getDeposits())) {
+            if (AplCollectionUtils.isEmpty(ethDepositsWithOffset.getDeposits())) {
                 break;
             }
             ethDepositInfos.addAll(ethDepositsWithOffset.getDeposits());
@@ -1046,7 +1046,7 @@ public class DexService {
 
         for (int i = 0; i < MAX_PAGES_FOR_SEARCH; i++) {
             UserAddressesWithOffset userAddressesWithOffset = dexSmartContractService.getUserAddresses(offset, limit);
-            if (CollectionUtils.isEmpty(userAddressesWithOffset.getAddresses())) {
+            if (AplCollectionUtils.isEmpty(userAddressesWithOffset.getAddresses())) {
                 break;
             }
             addresses.addAll(userAddressesWithOffset.getAddresses());

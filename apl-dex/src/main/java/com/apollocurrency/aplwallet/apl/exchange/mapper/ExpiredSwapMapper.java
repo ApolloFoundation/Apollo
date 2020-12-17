@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.mapper;
 
 import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwap;
-import org.apache.commons.collections4.CollectionUtils;
+import com.apollocurrency.aplwallet.apl.util.AplCollectionUtils;
 import org.web3j.tuples.generated.Tuple2;
 
 import java.math.BigInteger;
@@ -12,7 +12,7 @@ public class ExpiredSwapMapper {
     public static List<ExpiredSwap> map(Tuple2<List<BigInteger>, List<byte[]>> data) {
         List<ExpiredSwap> swaps = new ArrayList<>();
 
-        if (data == null || CollectionUtils.isEmpty(data.component1())) {
+        if (data == null || AplCollectionUtils.isEmpty(data.component1())) {
             return swaps;
         }
 

@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.OrderedMap;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -196,13 +195,13 @@ public class ServerInfoController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successful execution",
             content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = OrderedMap.class))),
+                schema = @Schema(implementation = Map.class))),
 
         @ApiResponse(responseCode = "401", description = "Unauthorized Error"),
 
         @ApiResponse(responseCode = "403", description = "Access Forbidden"),
 
-        }
+    }
     )
     @RolesAllowed("admin")
     public Response blockchainProperties(
