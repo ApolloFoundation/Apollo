@@ -149,7 +149,7 @@ public class PeerValidityDecisionMaker {
      * @return Decision from AbsOK to Bad
      */
     public FileDownloadDecision calcualteNetworkState() {
-        stats.crlear();
+        stats.clear();
         try {
             calculateInitialProb(peersFirst);
         } catch (NotEnoughDataException ex) {
