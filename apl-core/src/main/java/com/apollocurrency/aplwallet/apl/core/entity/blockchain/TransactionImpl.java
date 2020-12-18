@@ -499,6 +499,7 @@ public class TransactionImpl implements Transaction {
     }
 
 
+    @Deprecated(since = "TransactionV3")
     private int getSize() {
         int signatureSize = 0;
         if (version < 2) {

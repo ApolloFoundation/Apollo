@@ -6,20 +6,22 @@ package com.apollocurrency.aplwallet.apl.util.rlp;
 
 import org.web3j.rlp.RlpDecoder;
 import org.web3j.rlp.RlpList;
-import org.web3j.rlp.RlpString;
 import org.web3j.rlp.RlpType;
 import org.web3j.utils.Numeric;
 
 import java.math.BigInteger;
 import java.util.Iterator;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Simple reader, to read items from RLP encoded input.
- * Not thread safe.
+ * Not thread-safe.
  *
  * @author andrew.zinchenko@gmail.com
  */
-public class RlpReader {
+public class RlpReader implements Iterable<RlpType> {
     private final Iterator<RlpType> iterator;
     private final int size;
 
@@ -36,6 +38,11 @@ public class RlpReader {
         this.iterator = listInput.getValues().iterator();
     }
 
+    @Override
+    public Iterator<RlpType> iterator(){
+        return iterator;
+    }
+
     public int size(){
         return size;
     }
@@ -45,31 +52,36 @@ public class RlpReader {
     }
 
     public byte[] read() {
-        RlpType value = iterator.next();
-        return ((RlpString) value).getBytes();
+        return RlpConverter.toByteArray(iterator.next());
     }
 
     public String readString() {
-        RlpType value = iterator.next();
-        return new String(((RlpString) value).getBytes());
+        return RlpConverter.toString(iterator.next());
     }
 
     public long readLong() {
-        RlpType value = iterator.next();
-        return ((RlpString) value).asPositiveBigInteger().longValueExact();
+        return RlpConverter.toLong(iterator.next());
     }
 
     public int readInt() {
-        RlpType value = iterator.next();
-        return ((RlpString) value).asPositiveBigInteger().intValueExact();
+        return RlpConverter.toInt(iterator.next());
     }
 
     public BigInteger readBigInteger() {
-        RlpType value = iterator.next();
-        return ((RlpString) value).asPositiveBigInteger();
+        return RlpConverter.toBigInteger(iterator.next());
     }
 
-    public RlpReader readList() {
+    public <T> List<T> readList(Function<RlpType, T> mapper) {
+        RlpList list = (RlpList) iterator.next();
+        return list.getValues().stream().map(mapper).collect(Collectors.toList());
+    }
+
+    public List<RlpType> readList() {
+        RlpList list = (RlpList) iterator.next();
+        return list.getValues();
+    }
+
+    public RlpReader readListReader() {
         RlpList list = (RlpList) iterator.next();
         return new RlpReader(list);
     }

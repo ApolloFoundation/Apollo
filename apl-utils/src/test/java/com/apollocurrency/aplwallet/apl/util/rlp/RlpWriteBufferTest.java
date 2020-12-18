@@ -28,8 +28,7 @@ class RlpWriteBufferTest {
         byte[] expected = Arrays.concatenate(new byte[]{(byte) 0x8B}, value);
         //WHEN
         RlpWriteBuffer buffer = new RlpWriteBuffer();
-        buffer.write(value);
-        byte[] out = buffer.toByteArray();
+        byte[] out = buffer.write(value).toByteArray();
         //THEN
         assertArrayEquals(expected, out);
     }
@@ -41,8 +40,7 @@ class RlpWriteBufferTest {
         byte[] expected = Arrays.concatenate(new byte[]{(byte) 0x99}, value.getBytes(StandardCharsets.UTF_8));
         //WHEN
         RlpWriteBuffer buffer = new RlpWriteBuffer();
-        buffer.write(value);
-        byte[] out = buffer.toByteArray();
+        byte[] out = buffer.write(value).toByteArray();
         //THEN
         assertArrayEquals(expected, out);
     }
@@ -54,8 +52,7 @@ class RlpWriteBufferTest {
         byte[] expected = Arrays.concatenate(new byte[]{(byte) 0x80 + 2}, BigInteger.valueOf(value).toByteArray());
         //WHEN
         RlpWriteBuffer buffer = new RlpWriteBuffer();
-        buffer.write(value);
-        byte[] out = buffer.toByteArray();
+        byte[] out = buffer.write(value).toByteArray();
         //THEN
         assertArrayEquals(expected, out);
     }
@@ -67,8 +64,7 @@ class RlpWriteBufferTest {
         byte[] expected = Arrays.concatenate(new byte[]{(byte) 0x80 + 3}, BigInteger.valueOf(value).toByteArray());
         //WHEN
         RlpWriteBuffer buffer = new RlpWriteBuffer();
-        buffer.write(value);
-        byte[] out = buffer.toByteArray();
+        byte[] out = buffer.write(value).toByteArray();
         //THEN
         assertArrayEquals(expected, out);
     }
@@ -80,14 +76,13 @@ class RlpWriteBufferTest {
         byte[] expected = Arrays.concatenate(new byte[]{(byte) 0x91}, value.toByteArray());
         //WHEN
         RlpWriteBuffer buffer = new RlpWriteBuffer();
-        buffer.write(value);
-        byte[] out = buffer.toByteArray();
+        byte[] out = buffer.write(value).toByteArray();
         //THEN
         assertArrayEquals(expected, out);
     }
 
     @Test
-    void write() {
+    void writeStructure() {
         //GIVEN
         byte[] value1 = new byte[]{10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
         String value2 = "The short example string.";

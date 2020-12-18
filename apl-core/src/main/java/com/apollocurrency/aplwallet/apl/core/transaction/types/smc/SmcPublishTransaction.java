@@ -12,10 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import org.json.simple.JSONObject;
-
-import java.nio.ByteBuffer;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -37,13 +36,13 @@ public class SmcPublishTransaction extends SmcTransaction {
     }
 
     @Override
-    public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return Attachment.SMC_PUBLISH;
+    public AbstractAttachment parseAttachment(RlpReader reader) throws AplException.NotValidException {
+        return super.parseAttachment(reader);
     }
 
     @Override
     public AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return Attachment.SMC_PUBLISH;
+        return new SmcPublishContractAttachment(attachmentData);
     }
 
     @Override

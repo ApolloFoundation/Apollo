@@ -26,7 +26,7 @@ public abstract class AbstractAppendix implements Appendix {
         this.version = ((Number) attachmentData.get("version." + getAppendixName())).byteValue();
     }
 
-    @Deprecated
+    @Deprecated(since = "TransactionV3")
     AbstractAppendix(ByteBuffer buffer) {
         this.version = buffer.get();
     }

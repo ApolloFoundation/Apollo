@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * Simple writer, to encode values in RLP format.
- * Not thread safe.
+ * Not thread-safe.
  *
  * @author andrew.zinchenko@gmail.com
  */

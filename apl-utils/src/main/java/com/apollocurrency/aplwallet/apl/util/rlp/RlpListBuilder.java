@@ -11,10 +11,11 @@ import org.web3j.rlp.RlpType;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collector;
 
 /**
  * Wrapper to collect values in the list.
- * Not thread safe.
+ * Not thread-safe.
  *
  * @author andrew.zinchenko@gmail.com
  */
@@ -61,5 +62,19 @@ public class RlpListBuilder {
 
     public List<RlpType> build(){
         return list;
+    }
+
+    public static List<RlpType> ofString(List<String> values){
+        return values.stream().collect(
+            Collector.of(
+                ArrayList::new,
+                (List<RlpType> objects, String e) -> objects.add(RlpString.create(e)),
+                (r1, r2) -> {
+                    r1.addAll(r2);
+                    return r1;
+                },
+                Collector.Characteristics.IDENTITY_FINISH
+            )
+        );
     }
 }

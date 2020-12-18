@@ -6,68 +6,62 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpConverter;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpListBuilder;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = true)
 @Builder
-@Data
+@Getter
 @AllArgsConstructor
 public class SmcCallMethodAttachment extends SmcAbstractAttachment {
+    private static final String METHOD_NAME_FIELD = "contractSource";
+    private static final String METHOD_PARAMS_FIELD = "constructorParams";
 
-    private String methodName;
-    private List<String> params;
-
-    public SmcCallMethodAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        this(buffer.array());
-    }
+    private final String methodName;
+    private final List<String> methodParams;
 
     public SmcCallMethodAttachment(byte[] input) throws AplException.NotValidException {
         this(new RlpReader(input));
     }
 
     public SmcCallMethodAttachment(RlpReader reader) throws AplException.NotValidException {
-        super(1);
+        super(reader);
         this.methodName = reader.readString();
-        params = new ArrayList<>();
-        RlpReader paramsReader = reader.readList();
-        while (paramsReader.hasNext()){
-            params.add(paramsReader.readString());
-        }
+        this.methodParams = reader.readList(RlpConverter::toString);
     }
 
     public SmcCallMethodAttachment(JSONObject attachmentData) {
-        super(1);
-        this.methodName = (String) attachmentData.get("methodName");
-        this.params = (JSONArray) attachmentData.get("params");
-    }
-
-    @Override
-    public int getMySize() {
-        return 8 + 8 + 4;// TODO: calculate
-    }
-
-    @Override
-    public void putMyBytes(ByteBuffer buffer) {
-
-
-    }
-
-    @Override
-    public void putMyJSON(JSONObject json) {
-        json.put("methodName", getMethodName());
-        json.put("params", getParams());
+        super(attachmentData);
+        this.methodName = String.valueOf(attachmentData.get(METHOD_NAME_FIELD));
+        this.methodParams = (JSONArray) attachmentData.get(METHOD_PARAMS_FIELD);
     }
 
     @Override
     public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
         return TransactionTypes.TransactionTypeSpec.SMC_CALL_METHOD;
     }
+
+    @Override
+    public void putMyJSON(JSONObject json) {
+        json.put(METHOD_NAME_FIELD, this.methodName);
+        json.put(METHOD_PARAMS_FIELD, JSONArray.toJSONString(this.methodParams));
+    }
+
+    @Override
+    public void putMyBytes(RlpWriteBuffer buffer) {
+        buffer
+            .write(methodName)
+            .write(RlpListBuilder.ofString(methodParams));
+    }
+
 }

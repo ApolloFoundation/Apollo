@@ -31,12 +31,8 @@ public interface Attachment extends Appendix {
     EmptyAttachment PRIVATE_PAYMENT = new PrivatePaymentAttachment();
     // the message payload is in the Appendix
     EmptyAttachment ARBITRARY_MESSAGE = new ArbitraryMessageAttachment();
-    // Smc empty attachments
-    EmptyAttachment SMC_PUBLISH = new CommonEmptyAttachment(TransactionTypes.TransactionTypeSpec.SMC_PUBLISH);
-    EmptyAttachment SMC_CALL_METHOD = new CommonEmptyAttachment(TransactionTypes.TransactionTypeSpec.SMC_CALL_METHOD);
 
     TransactionTypes.TransactionTypeSpec getTransactionTypeSpec();
-
 
     void bindTransactionType(@NotNull TransactionType transactionType);
 }

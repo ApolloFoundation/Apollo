@@ -158,7 +158,7 @@ class RlpReaderTest {
 
         assertArrayEquals(value1, reader.read());
         assertEquals(value2, reader.readString());
-        RlpReader innerReader = reader.readList();
+        RlpReader innerReader = reader.readListReader();
         assertEquals(value4, reader.readBigInteger());
 
         assertNotNull(innerReader);
