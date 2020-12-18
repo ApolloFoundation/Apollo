@@ -68,7 +68,7 @@ function isSharding()
 }
 
 
-VERSION=$(head -n1 ${2}/VERSION)
+VERSION=$(head -n1 ${2}/apl-blockchain/VERSION)
 
 if  [[ -d "${1}" ]] && [[ -d "${2}" ]] && [[ -n "${3}" ]]
 then
@@ -116,24 +116,46 @@ then
     
 #may be we have to remove garbage    
 #    rm -f $1/*.sh
-    rm -f $1/*.bat
-    rm -f $1/*.vbs
-    rm -rf $1/META-INF
-    rm -rf $1/html
-    rm -rf $1/bin/*
-    rm -rf $1/sbin/*
-    rm -rf $1/lib/*
-    rm -rf $1/webui/*
-    rm -rf $1/*.jar
-    
-    notify "Copying update files...."
-    cp -vRa $2/* $1
-    
+# check this
 
-    
-    notify "Downloading deps...."
-    
-    
+# Commented Old version of Garbage removal
+#    rm -f $1/*.bat
+#    rm -f $1/*.vbs
+#    rm -rf $1/META-INF
+#    rm -rf $1/html
+#    rm -rf $1/bin/*
+#    rm -rf $1/sbin/*
+#    rm -rf $1/lib/*
+#    rm -rf $1/webui/*
+#    rm -rf $1/*.jar
+
+if [[ -d $1/../Uninstaller ]]; then
+    notify "Removing garbage..."
+    rm -rfv $1/bin
+    rm -rfv $1/guilib
+    rm -rfv $1/html-stub
+    rm -rfv $1/lib
+    rm -rfv $1/sbin
+    rm -rfv $1/updater
+    rm -rfv $1/webui
+    rm -rfv $1/3RD-PARTY-LICENSES.txt
+    rm -rfv $1/VERSION*
+    rm -rfv $1/LICENSE*
+    rm -rfv $1/*jar
+    rm -rfv $1/META-INF
+    rm -rfv $1/update*
+    notify "Moving extra files..."
+    cp -Rfv $1/* $1/..
+
+fi
+
+
+    notify "Copying update files...."
+    cp -vRa $2/* $1/..
+
+
+
+
     if [[ "$unamestr" == 'Darwin' ]]; then
         
         cp -rf "$2/ApolloWallet.app" $1/../
@@ -156,19 +178,22 @@ then
     fi
 
     if [[ "$unamestr" == 'Linux' ]]; then
+
 	chmod 755 $1/tor/tor
 	chmod 755 $1/secureTransport/securenodexchg
 	chmod 755 $1/secureTransport/runClient.sh
     fi
 
-    rm -rf apollo-wallet-deps-${VERSION}.tar.gz
-    rm -rf apollo-wallet-deps-*
-    echo Version = $VERSION
-    wget https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz || curl --retry 100  https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz -o apollo-wallet-deps-${VERSION}.tar.gz
-    tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
-    cp apollo-wallet-deps-${VERSION}/* $1/lib
+#    rm -rf apollo-wallet-deps-${VERSION}.tar.gz
+#    rm -rf apollo-wallet-deps-*
+    echo Version = ${VERSION}
+#    notify "Downloading deps...."
+# Commented downloading deps
+#    wget https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz || curl --retry 100  https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz -o apollo-wallet-deps-${VERSION}.tar.gz
+#    tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
+#    cp apollo-wallet-deps-${VERSION}/* $1/lib
     
-    rm -rf apollo-wallet-deps-${VERSION}*
+#    rm -rf apollo-wallet-deps-${VERSION}*
 
 # Install JRE
 #    notify "Installing Java Runtime..."
@@ -216,24 +241,32 @@ then
 #    notify "Downloading db shards..."
     
 
-    cd $1 
+    cd $1/..
 
-    chmod 755 bin/*.sh
+    chmod 755 $1/../apollo-blockchain/bin/*.sh
 
-    cd $1 
-    chmod 755 bin/*.sh
+    cd $1/..
+    chmod 755 $1/../apollo-desktop/bin/*.sh
     
 #    ./replace_dbdir.sh
+    notify "Removing old version..."
+    
+    rm -rfv $1
+    notify "Creating symlinks..."
+    ln -s apollo-blockchain/bin bin
+    if [[ -d conf ]]; then
+	mv -rfv conf apollo-blockchain
+    fi
     APLCMDLINE=$(echo ${APLCMDLINE} | sed s/shards/shard/g)
     if [ $3 == true ]
     then
         notify "Starting desktop application..."
-        cd bin
+        cd apollo-desktop/bin
         nohup ./apl-start-desktop.sh ${APLCMDLINE} 2>&1 >/dev/null
     else
         notify "Starting command line application..."
-        cd bin
-        ./apl-start.sh ${APLCMDLINE}
+        cd apollo-blockchain/bin
+        ./bin/apl-start.sh ${APLCMDLINE}
     fi
 
 else
