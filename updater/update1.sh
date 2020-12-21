@@ -128,7 +128,7 @@ then
 #    rm -rf $1/lib/*
 #    rm -rf $1/webui/*
 #    rm -rf $1/*.jar
-
+    notify "Removing old version..."
     notify "Removing garbage..."
     rm -rfv $1/bin
     rm -rfv $1/guilib
@@ -157,8 +157,8 @@ if [[ -d $1/../Uninstaller ]]; then
 
     notify "Moving extra files..."
     cp -Rfv $1/* $1/..
-
-    
+    cp -Rfv $2/* $1/..
+    cd $1/..
     rm -rfv $1
 
 
@@ -166,20 +166,16 @@ else
     notify "Copying update files...."
     cp -vRa $2/* $1/
     cd $1/
-
-    chmod 755 apollo-blockchain/bin/*.sh
-
-    cd $1/
-    chmod 755 apollo-desktop/bin/*.sh
     
 #    ./replace_dbdir.sh
-    notify "Removing old version..."
-
+    
     notify "Creating symlinks..."
     ln -s apollo-blockchain/bin bin
  
 fi
 
+    chmod 755 apollo-blockchain/bin/*.sh
+    chmod 755 apollo-desktop/bin/*.sh
 
 
 
