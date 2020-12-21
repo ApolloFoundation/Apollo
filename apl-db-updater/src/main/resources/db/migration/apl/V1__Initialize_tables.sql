@@ -1095,6 +1095,45 @@ CREATE TABLE `shuffling_participant` (
 
 
 
+CREATE TABLE `smc_contract`
+(
+    `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+    `address` varchar(256) COLLATE latin1_bin NOT NULL,
+    `transaction_id` varchar(256) NOT NULL,
+    `name` varchar(1024) NOT NULL,
+    `data` LONGTEXT COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `language` varchar(64) NOT NULL,
+    `fuel` varchar(160) NOT NULL,
+    `fuel_price` varchar(160) NOT NULL,
+    `height` int(11) NOT NULL,
+    `latest` tinyint(1) NOT NULL DEFAULT 1,
+    UNIQUE KEY `db_id` (`db_id`),
+    UNIQUE KEY `smc_contract_address_idx` (`address`, `height`),
+    KEY `smc_contract_height_idx` (`height`, `address`)
+) ENGINE = ROCKSDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+
+
+
+CREATE TABLE `smc_contract_state`
+(
+    `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+    `address` varchar(256) COLLATE latin1_bin NOT NULL,
+    `transaction_id` varchar(256) COLLATE latin1_bin NOT NULL,
+    `method` varchar(1024) NOT NULL,
+    `args` TEXT DEFAULT NULL,
+    `object` LONGTEXT NOT NULL,
+    `status` tinyint(4) NOT NULL,
+    `height` int(11) NOT NULL,
+    `latest` tinyint(1) NOT NULL DEFAULT 1,
+    UNIQUE KEY `db_id` (`db_id`),
+    UNIQUE KEY `smc_contract_state_address_transaction_id_idx` (`address`, `transaction_id`, `height`),
+    KEY `smc_contract_state_height_idx` (`height`, `address`, `transaction_id`)
+) ENGINE = ROCKSDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+
+
+
 CREATE TABLE `tag` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `tag` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,

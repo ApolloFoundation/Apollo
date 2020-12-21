@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.ExchangeContractDTO;
+import com.apollocurrency.aplwallet.apl.core.converter.Converter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;

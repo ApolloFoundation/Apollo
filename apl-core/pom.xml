@@ -5,6 +5,7 @@
   <properties>
     <!--    move to BOM -->
     <mariadb-java-client.version>2.6.1</mariadb-java-client.version>
+    <smc-lib.version>0.1.7</smc-lib.version>
   </properties>
 
   <parent>
@@ -37,6 +38,12 @@
       <groupId>com.apollocurrency</groupId>
       <artifactId>apl-db-updater</artifactId>
       <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>smc-lib</artifactId>
+      <version>${smc-lib.version}</version>
     </dependency>
 
     <!-- EXT BOM DEPENDENCIES -->
@@ -107,21 +114,6 @@
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-multipart-provider</artifactId>
     </dependency>
-
-    <!--
-        <dependency> &lt;!&ndash; may be NEEDED by FAT JAR in run-time &ndash;&gt;
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-jaxrs</artifactId>
-        </dependency>
-        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-tracing-api</artifactId>
-        </dependency>
-        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
-          <groupId>org.apache.httpcomponents</groupId>
-          <artifactId>httpcore-nio</artifactId>
-        </dependency>
-    -->
 
     <dependency>
       <groupId>org.jboss.resteasy</groupId>

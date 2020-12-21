@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.account.PhasingParamsDTO;
+import com.apollocurrency.aplwallet.apl.core.converter.Converter;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 
 import java.util.ArrayList;

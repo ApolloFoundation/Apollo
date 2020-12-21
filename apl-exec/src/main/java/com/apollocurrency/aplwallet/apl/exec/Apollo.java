@@ -88,7 +88,13 @@ public class Apollo {
         if (logLevel >= VALID_LOG_LEVELS.length - 1) {
             logLevel = VALID_LOG_LEVELS.length - 1;
         }
-        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        LoggerContext loggerContext = null;
+        if (!(LoggerFactory.getILoggerFactory()
+            .getLogger(packageName) instanceof ch.qos.logback.classic.Logger)) {
+            loggerContext = new LoggerContext();
+        } else {
+            loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        }
 
         ch.qos.logback.classic.Logger logger = loggerContext.getLogger(packageName);
         System.out.println(packageName + " current logger level: " + logger.getLevel()
@@ -228,7 +234,7 @@ public class Apollo {
         }
 
         CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
-   
+
         DirProviderFactory.setup(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
         dirProvider = DirProviderFactory.getProvider();
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);

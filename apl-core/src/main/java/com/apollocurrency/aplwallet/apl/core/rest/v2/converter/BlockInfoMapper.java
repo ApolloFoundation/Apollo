@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.v2.converter;
 import com.apollocurrency.aplwallet.api.v2.model.BlockInfo;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
+import com.apollocurrency.aplwallet.apl.core.converter.Converter;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 /**
