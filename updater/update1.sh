@@ -129,7 +129,6 @@ then
 #    rm -rf $1/webui/*
 #    rm -rf $1/*.jar
 
-if [[ -d $1/../Uninstaller ]]; then
     notify "Removing garbage..."
     rm -rfv $1/bin
     rm -rfv $1/guilib
@@ -144,14 +143,44 @@ if [[ -d $1/../Uninstaller ]]; then
     rm -rfv $1/*jar
     rm -rfv $1/META-INF
     rm -rfv $1/update*
+
+if [[ -d $1/../Uninstaller ]]; then
+    cd $1/..
+
+    chmod 755 $1/../apollo-blockchain/bin/*.sh
+
+    cd $1/..
+    chmod 755 $1/../apollo-desktop/bin/*.sh
+    
+#    ./replace_dbdir.sh
+    notify "Removing old version..."
+
     notify "Moving extra files..."
     cp -Rfv $1/* $1/..
 
+    
+    rm -rfv $1
+
+
+else
+    notify "Copying update files...."
+    cp -vRa $2/* $1/
+    cd $1/
+
+    chmod 755 apollo-blockchain/bin/*.sh
+
+    cd $1/
+    chmod 755 apollo-desktop/bin/*.sh
+    
+#    ./replace_dbdir.sh
+    notify "Removing old version..."
+
+    notify "Creating symlinks..."
+    ln -s apollo-blockchain/bin bin
+ 
 fi
 
 
-    notify "Copying update files...."
-    cp -vRa $2/* $1/..
 
 
 
@@ -241,19 +270,6 @@ fi
 #    notify "Downloading db shards..."
     
 
-    cd $1/..
-
-    chmod 755 $1/../apollo-blockchain/bin/*.sh
-
-    cd $1/..
-    chmod 755 $1/../apollo-desktop/bin/*.sh
-    
-#    ./replace_dbdir.sh
-    notify "Removing old version..."
-    
-    rm -rfv $1
-    notify "Creating symlinks..."
-    ln -s apollo-blockchain/bin bin
     if [[ -d conf ]]; then
 	mv -rfv conf apollo-blockchain
     fi
