@@ -37,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -155,9 +156,36 @@ public interface Transaction {
 
     long getECBlockId();
 
+    /**
+     * Transaction V3 properties
+    */
+    String getChainId();
+
+    /**
+     * the number of transactions sent by the sender
+     * @return the number of transactions sent by the sender
+     */
+    BigInteger getNonce();
+
+    BigInteger getAmount();//long:getAmountATM
+    BigInteger getFuelPrice();
+    BigInteger getFuelLimit();
+    long getLongTimestamp();//int getTimestamp
+
+    /**
+     * Return RLP encoded transaction
+     * @return byte array of the RLP encoded transaction
+     */
+    byte[] rlpEncodedTx();
+
+    /**
+     *
+     */
     boolean ofType(TransactionTypes.TransactionTypeSpec spec);
 
-    boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec);
+    default boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec){
+        return !ofType(spec);
+    }
 
     /**
      * @deprecated see method with longer parameters list below

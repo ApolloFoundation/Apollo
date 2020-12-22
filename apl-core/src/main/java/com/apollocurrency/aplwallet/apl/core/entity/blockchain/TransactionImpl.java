@@ -91,6 +91,14 @@ public class TransactionImpl implements Transaction {
     private volatile byte[] bytes = null;
     private volatile long dbId;
     private volatile boolean hasValidSignature = false;
+    /**
+     * Transaction V3 properties
+     */
+    private String chainId;
+    private BigInteger nonce;
+    private BigInteger amount;
+    private BigInteger fuelLimit;
+    private BigInteger fuelPrice;
 
     TransactionImpl(BuilderImpl builder) {
 
@@ -405,58 +413,71 @@ public class TransactionImpl implements Transaction {
 
     public byte[] bytes() {
         if (bytes == null) {
-            try {
-                ByteBuffer buffer = ByteBuffer.allocate(getSize());
-                buffer.order(ByteOrder.LITTLE_ENDIAN);
-                buffer.put(type.getSpec().getType());
-                buffer.put((byte) ((version << 4) | type.getSpec().getSubtype()));
-                buffer.putInt(timestamp);
-                buffer.putShort(deadline);
-                buffer.put(getSenderPublicKey());
-                buffer.putLong(type.canHaveRecipient() ? recipientId : GenesisImporter.CREATOR_ID);
-                buffer.putLong(amountATM);
-                buffer.putLong(feeATM);
-                if (referencedTransactionFullHash != null) {
-                    buffer.put(referencedTransactionFullHash);
-                } else {
-                    buffer.put(new byte[32]);
-                }
-                if (version < 2) {
-                    if (signature != null) {
-                        buffer.put(signature.bytes());
-                    } else {
-                        buffer.put(new byte[Signature.ECDSA_SIGNATURE_SIZE]);
+            if (version <= 2) {
+                try {
+                    ByteBuffer buffer = ByteBuffer.allocate(getSize());
+                    buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+                        writeV2Bytes(buffer);
+
+                    bytes = buffer.array();
+                } catch (RuntimeException e) {
+                    if (signature != null && log.isDebugEnabled()) {
+                        log.debug("Failed to get transaction bytes for transaction: {}", getId());
                     }
+                    throw e;
                 }
-                buffer.putInt(getFlags());
-                buffer.putInt(ecBlockHeight);
-                buffer.putLong(ecBlockId);
-                for (Appendix appendage : appendages) {
-                    appendage.putBytes(buffer);
-                }
-                if (version >= 2) {
-                    if (signature != null) {
-                        buffer.put(signature.bytes());
-                    }
-                }
-                bytes = buffer.array();
-            } catch (RuntimeException e) {
-                if (signature != null && log.isDebugEnabled()) {
-                    log.debug("Failed to get transaction bytes for transaction: {}", getId());
-                }
-                throw e;
+            }else{//version>=3
+
             }
         }
         return bytes;
+    }
+
+    private void writeV2Bytes(ByteBuffer buffer) {
+        buffer.put(type.getSpec().getType());
+        buffer.put((byte) ((version << 4) | type.getSpec().getSubtype()));
+        buffer.putInt(timestamp);
+        buffer.putShort(deadline);
+        buffer.put(getSenderPublicKey());
+        buffer.putLong(type.canHaveRecipient() ? recipientId : GenesisImporter.CREATOR_ID);
+        buffer.putLong(amountATM);
+        buffer.putLong(feeATM);
+        if (referencedTransactionFullHash != null) {
+            buffer.put(referencedTransactionFullHash);
+        } else {
+            buffer.put(new byte[32]);
+        }
+        if (version < 2) {
+            if (signature != null) {
+                buffer.put(signature.bytes());
+            } else {
+                buffer.put(new byte[Signature.ECDSA_SIGNATURE_SIZE]);
+            }
+        }
+        buffer.putInt(getFlags());
+        buffer.putInt(ecBlockHeight);
+        buffer.putLong(ecBlockId);
+        for (Appendix appendage : appendages) {
+            appendage.putBytes(buffer);
+        }
+        if (version >= 2) {
+            if (signature != null) {
+                buffer.put(signature.bytes());
+            }
+        }
+
     }
 
     @Override
     public byte[] getUnsignedBytes() {
         if (version < 2) {
             return zeroSignature(getCopyTxBytes());
-        } else {
+        } else if (version < 3) {
             byte[] txBytes = bytes();
             return Arrays.copyOf(txBytes, txV2HeaderSize() + appendagesSize);
+        } else {
+            return rlpEncodedTx();
         }
     }
 
@@ -471,13 +492,44 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
-        return type.getSpec() == spec;
+    public String getChainId() {
+        return chainId;
     }
 
     @Override
-    public boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec) {
-        return !ofType(spec);
+    public BigInteger getNonce() {
+        return nonce;
+    }
+
+    @Override
+    public BigInteger getAmount() {
+        return amount;
+    }
+
+    @Override
+    public BigInteger getFuelPrice() {
+        return fuelPrice;
+    }
+
+    @Override
+    public BigInteger getFuelLimit() {
+        return fuelLimit;
+    }
+
+    @Override
+    public long getLongTimestamp() {
+        return timestamp;
+    }
+
+    @Override
+    public byte[] rlpEncodedTx() {
+        //TODO: not implemented yet
+        return new byte[0];
+    }
+
+    @Override
+    public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
+        return type.getSpec() == spec;
     }
 
     @Override

@@ -19,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -291,6 +292,41 @@ public class SimpleTransaction implements Transaction {
     @Override
     public long getECBlockId() {
         return 0;
+    }
+
+    @Override
+    public String getChainId() {
+        return null;
+    }
+
+    @Override
+    public BigInteger getNonce() {
+        return null;
+    }
+
+    @Override
+    public BigInteger getAmount() {
+        return null;
+    }
+
+    @Override
+    public BigInteger getFuelPrice() {
+        return null;
+    }
+
+    @Override
+    public BigInteger getFuelLimit() {
+        return null;
+    }
+
+    @Override
+    public long getLongTimestamp() {
+        return 0;
+    }
+
+    @Override
+    public byte[] rlpEncodedTx() {
+        return new byte[0];
     }
 
     @Override

@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryp
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -325,13 +326,43 @@ public class UnconfirmedTransaction extends DerivedEntity implements Transaction
     }
 
     @Override
-    public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
-        return transaction.ofType(spec);
+    public String getChainId() {
+        return transaction.getChainId();
     }
 
     @Override
-    public boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec) {
-        return transaction.isNotOfType(spec);
+    public BigInteger getNonce() {
+        return transaction.getNonce();
+    }
+
+    @Override
+    public BigInteger getAmount() {
+        return transaction.getAmount();
+    }
+
+    @Override
+    public BigInteger getFuelPrice() {
+        return transaction.getFuelPrice();
+    }
+
+    @Override
+    public BigInteger getFuelLimit() {
+        return transaction.getFuelLimit();
+    }
+
+    @Override
+    public long getLongTimestamp() {
+        return transaction.getLongTimestamp();
+    }
+
+    @Override
+    public byte[] rlpEncodedTx() {
+        return transaction.rlpEncodedTx();
+    }
+
+    @Override
+    public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
+        return transaction.ofType(spec);
     }
 
     @Override

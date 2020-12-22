@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpConverter;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpListBuilder;
@@ -14,7 +13,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.List;
@@ -30,11 +28,11 @@ public class SmcCallMethodAttachment extends SmcAbstractAttachment {
     private final String methodName;
     private final List<String> methodParams;
 
-    public SmcCallMethodAttachment(byte[] input) throws AplException.NotValidException {
+    public SmcCallMethodAttachment(byte[] input) {
         this(new RlpReader(input));
     }
 
-    public SmcCallMethodAttachment(RlpReader reader) throws AplException.NotValidException {
+    public SmcCallMethodAttachment(RlpReader reader) {
         super(reader);
         this.methodName = reader.readString();
         this.methodParams = reader.readList(RlpConverter::toString);
@@ -43,7 +41,7 @@ public class SmcCallMethodAttachment extends SmcAbstractAttachment {
     public SmcCallMethodAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.methodName = String.valueOf(attachmentData.get(METHOD_NAME_FIELD));
-        this.methodParams = (JSONArray) attachmentData.get(METHOD_PARAMS_FIELD);
+        this.methodParams = (List<String>) attachmentData.get(METHOD_PARAMS_FIELD);
     }
 
     @Override
@@ -54,7 +52,7 @@ public class SmcCallMethodAttachment extends SmcAbstractAttachment {
     @Override
     public void putMyJSON(JSONObject json) {
         json.put(METHOD_NAME_FIELD, this.methodName);
-        json.put(METHOD_PARAMS_FIELD, JSONArray.toJSONString(this.methodParams));
+        json.put(METHOD_PARAMS_FIELD, this.methodParams);
     }
 
     @Override

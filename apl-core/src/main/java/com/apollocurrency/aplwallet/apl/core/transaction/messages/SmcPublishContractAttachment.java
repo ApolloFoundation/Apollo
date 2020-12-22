@@ -13,7 +13,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.List;
@@ -37,13 +36,12 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
         super(reader);
         this.contractSource = reader.readString();
         this.constructorParams = reader.readList(RlpConverter::toString);
-
     }
 
     public SmcPublishContractAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.contractSource = String.valueOf(attachmentData.get(CONTRACT_SOURCE_FIELD));
-        this.constructorParams = (JSONArray) attachmentData.get(CONSTRUCTOR_PARAMS_FIELD);
+        this.constructorParams= (List<String>) attachmentData.get(CONSTRUCTOR_PARAMS_FIELD);
     }
 
     @Override
@@ -54,7 +52,7 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
     @Override
     public void putMyJSON(JSONObject json) {
         json.put(CONTRACT_SOURCE_FIELD, this.contractSource);
-        json.put(CONSTRUCTOR_PARAMS_FIELD, JSONArray.toJSONString(this.constructorParams));
+        json.put(CONSTRUCTOR_PARAMS_FIELD, this.constructorParams);
     }
 
     @Override

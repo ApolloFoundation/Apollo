@@ -1,7 +1,7 @@
 
 
 
-CREATE TABLE `account` (
+CREATE TABLE IF NOT EXISTS `account` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `balance` bigint(20) NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE `account` (
 
 
 
-CREATE TABLE `account_asset` (
+CREATE TABLE IF NOT EXISTS `account_asset` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `account_id` bigint(20) NOT NULL,
   `asset_id` bigint(20) NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE `account_asset` (
 
 
 
-CREATE TABLE `account_control_phasing` (
+CREATE TABLE IF NOT EXISTS `account_control_phasing` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `account_id` bigint(20) NOT NULL,
   `whitelist` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`whitelist`)),
@@ -63,7 +63,7 @@ CREATE TABLE `account_control_phasing` (
 
 
 
-CREATE TABLE `account_currency` (
+CREATE TABLE IF NOT EXISTS `account_currency` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `account_id` bigint(20) NOT NULL,
   `currency_id` bigint(20) NOT NULL,
@@ -81,7 +81,7 @@ CREATE TABLE `account_currency` (
 
 
 
-CREATE TABLE `account_guaranteed_balance` (
+CREATE TABLE IF NOT EXISTS `account_guaranteed_balance` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `account_id` bigint(20) NOT NULL,
   `additions` bigint(20) NOT NULL,
@@ -93,7 +93,7 @@ CREATE TABLE `account_guaranteed_balance` (
 
 
 
-CREATE TABLE `account_info` (
+CREATE TABLE IF NOT EXISTS `account_info` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `account_id` bigint(20) NOT NULL,
   `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE `account_info` (
 
 
 
-CREATE TABLE `account_lease` (
+CREATE TABLE IF NOT EXISTS `account_lease` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `lessor_id` bigint(20) NOT NULL,
   `current_leasing_height_from` int(11) DEFAULT NULL,
@@ -129,7 +129,7 @@ CREATE TABLE `account_lease` (
 
 
 
-CREATE TABLE `account_ledger` (
+CREATE TABLE IF NOT EXISTS `account_ledger` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `account_id` bigint(20) NOT NULL,
   `event_type` tinyint(4) NOT NULL,
@@ -148,7 +148,7 @@ CREATE TABLE `account_ledger` (
 
 
 
-CREATE TABLE `account_property` (
+CREATE TABLE IF NOT EXISTS `account_property` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `recipient_id` bigint(20) NOT NULL,
@@ -167,7 +167,7 @@ CREATE TABLE `account_property` (
 
 
 
-CREATE TABLE `alias` (
+CREATE TABLE IF NOT EXISTS `alias` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `account_id` bigint(20) NOT NULL,
@@ -187,7 +187,7 @@ CREATE TABLE `alias` (
 
 
 
-CREATE TABLE `alias_offer` (
+CREATE TABLE IF NOT EXISTS `alias_offer` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `price` bigint(20) NOT NULL,
@@ -202,7 +202,7 @@ CREATE TABLE `alias_offer` (
 
 
 
-CREATE TABLE `ask_order` (
+CREATE TABLE IF NOT EXISTS `ask_order` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `account_id` bigint(20) NOT NULL,
@@ -225,7 +225,7 @@ CREATE TABLE `ask_order` (
 
 
 
-CREATE TABLE `asset` (
+CREATE TABLE IF NOT EXISTS `asset` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `account_id` bigint(20) NOT NULL,
@@ -245,7 +245,7 @@ CREATE TABLE `asset` (
 
 
 
-CREATE TABLE `asset_delete` (
+CREATE TABLE IF NOT EXISTS `asset_delete` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `asset_id` bigint(20) NOT NULL,
@@ -262,7 +262,7 @@ CREATE TABLE `asset_delete` (
 
 
 
-CREATE TABLE `asset_dividend` (
+CREATE TABLE IF NOT EXISTS `asset_dividend` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `asset_id` bigint(20) NOT NULL,
@@ -280,7 +280,7 @@ CREATE TABLE `asset_dividend` (
 
 
 
-CREATE TABLE `asset_transfer` (
+CREATE TABLE IF NOT EXISTS `asset_transfer` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `asset_id` bigint(20) NOT NULL,
@@ -299,7 +299,7 @@ CREATE TABLE `asset_transfer` (
 
 
 
-CREATE TABLE `bid_order` (
+CREATE TABLE IF NOT EXISTS `bid_order` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `account_id` bigint(20) NOT NULL,
@@ -322,7 +322,7 @@ CREATE TABLE `bid_order` (
 
 
 
-CREATE TABLE `block` (
+CREATE TABLE IF NOT EXISTS `block` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `version` int(11) NOT NULL,
@@ -351,7 +351,7 @@ CREATE TABLE `block` (
 
 
 
-CREATE TABLE `block_index` (
+CREATE TABLE IF NOT EXISTS `block_index` (
   `block_id` bigint(20) NOT NULL,
   `block_height` int(11) NOT NULL,
   UNIQUE KEY `block_index_block_id_idx` (`block_id`),
@@ -360,7 +360,7 @@ CREATE TABLE `block_index` (
 
 
 
-CREATE TABLE `buy_offer` (
+CREATE TABLE IF NOT EXISTS `buy_offer` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `currency_id` bigint(20) NOT NULL,
@@ -384,7 +384,7 @@ CREATE TABLE `buy_offer` (
 
 
 
-CREATE TABLE `currency` (
+CREATE TABLE IF NOT EXISTS `currency` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `account_id` bigint(20) NOT NULL,
@@ -419,7 +419,7 @@ CREATE TABLE `currency` (
 
 
 
-CREATE TABLE `currency_founder` (
+CREATE TABLE IF NOT EXISTS `currency_founder` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `currency_id` bigint(20) NOT NULL,
   `account_id` bigint(20) NOT NULL,
@@ -435,7 +435,7 @@ CREATE TABLE `currency_founder` (
 
 
 
-CREATE TABLE `currency_mint` (
+CREATE TABLE IF NOT EXISTS `currency_mint` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `currency_id` bigint(20) NOT NULL,
   `account_id` bigint(20) NOT NULL,
@@ -451,7 +451,7 @@ CREATE TABLE `currency_mint` (
 
 
 
-CREATE TABLE `currency_supply` (
+CREATE TABLE IF NOT EXISTS `currency_supply` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `current_supply` bigint(20) NOT NULL,
@@ -467,7 +467,7 @@ CREATE TABLE `currency_supply` (
 
 
 
-CREATE TABLE `currency_transfer` (
+CREATE TABLE IF NOT EXISTS `currency_transfer` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `currency_id` bigint(20) NOT NULL,
@@ -486,7 +486,7 @@ CREATE TABLE `currency_transfer` (
 
 
 
-CREATE TABLE `data_tag` (
+CREATE TABLE IF NOT EXISTS `data_tag` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `tag` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
   `tag_count` int(11) NOT NULL,
@@ -500,7 +500,7 @@ CREATE TABLE `data_tag` (
 
 
 
-CREATE TABLE `dex_candlestick` (
+CREATE TABLE IF NOT EXISTS `dex_candlestick` (
   `coin` tinyint(4) NOT NULL,
   `open` decimal(12,7) NOT NULL,
   `close` decimal(12,7) NOT NULL,
@@ -517,7 +517,7 @@ CREATE TABLE `dex_candlestick` (
 
 
 
-CREATE TABLE `dex_contract` (
+CREATE TABLE IF NOT EXISTS `dex_contract` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `offer_id` bigint(20) NOT NULL,
@@ -539,7 +539,7 @@ CREATE TABLE `dex_contract` (
 
 
 
-CREATE TABLE `dex_offer` (
+CREATE TABLE IF NOT EXISTS `dex_offer` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `type` tinyint(4) NOT NULL,
@@ -562,7 +562,7 @@ CREATE TABLE `dex_offer` (
 
 
 
-CREATE TABLE `dex_operation` (
+CREATE TABLE IF NOT EXISTS `dex_operation` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `account` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `stage` tinyint(4) NOT NULL,
@@ -577,7 +577,7 @@ CREATE TABLE `dex_operation` (
 
 
 
-CREATE TABLE `dex_transaction` (
+CREATE TABLE IF NOT EXISTS `dex_transaction` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `hash` blob NOT NULL,
   `tx` blob NOT NULL,
@@ -591,7 +591,7 @@ CREATE TABLE `dex_transaction` (
 
 
 
-CREATE TABLE `exchange` (
+CREATE TABLE IF NOT EXISTS `exchange` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `transaction_id` bigint(20) NOT NULL,
   `currency_id` bigint(20) NOT NULL,
@@ -615,7 +615,7 @@ CREATE TABLE `exchange` (
 
 
 
-CREATE TABLE `exchange_request` (
+CREATE TABLE IF NOT EXISTS `exchange_request` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `account_id` bigint(20) NOT NULL,
@@ -636,7 +636,7 @@ CREATE TABLE `exchange_request` (
 
 
 
-CREATE TABLE `genesis_public_key` (
+CREATE TABLE IF NOT EXISTS `genesis_public_key` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `account_id` bigint(20) NOT NULL,
   `public_key` binary(32) DEFAULT NULL,
@@ -650,7 +650,7 @@ CREATE TABLE `genesis_public_key` (
 
 
 
-CREATE TABLE `goods` (
+CREATE TABLE IF NOT EXISTS `goods` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `seller_id` bigint(20) NOT NULL,
@@ -675,7 +675,7 @@ CREATE TABLE `goods` (
 
 
 
-CREATE TABLE `mandatory_transaction` (
+CREATE TABLE IF NOT EXISTS `mandatory_transaction` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `transaction_bytes` blob NOT NULL,
@@ -686,7 +686,7 @@ CREATE TABLE `mandatory_transaction` (
 
 
 
-CREATE TABLE `option` (
+CREATE TABLE IF NOT EXISTS `option` (
   `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `VALUE` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   UNIQUE KEY `option_name_value_idx` (`name`,`VALUE`)
@@ -695,7 +695,7 @@ CREATE TABLE `option` (
 
 
 
-CREATE TABLE `order_scan` (
+CREATE TABLE IF NOT EXISTS `order_scan` (
   `coin` tinyint(4) NOT NULL,
   `last_db_id` bigint(20) NOT NULL,
   UNIQUE KEY `order_scan_coin_idx` (`coin`)
@@ -704,7 +704,7 @@ CREATE TABLE `order_scan` (
 
 
 
-CREATE TABLE `peer` (
+CREATE TABLE IF NOT EXISTS `peer` (
   `address` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
   `last_updated` int(11) DEFAULT NULL,
   `services` bigint(20) DEFAULT NULL,
@@ -714,7 +714,7 @@ CREATE TABLE `peer` (
 
 
 
-CREATE TABLE `phasing_approval_tx` (
+CREATE TABLE IF NOT EXISTS `phasing_approval_tx` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `phasing_tx` bigint(20) NOT NULL,
   `approved_tx` bigint(20) NOT NULL,
@@ -725,7 +725,7 @@ CREATE TABLE `phasing_approval_tx` (
 
 
 
-CREATE TABLE `phasing_poll` (
+CREATE TABLE IF NOT EXISTS `phasing_poll` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `account_id` bigint(20) NOT NULL,
@@ -750,7 +750,7 @@ CREATE TABLE `phasing_poll` (
 
 
 
-CREATE TABLE `phasing_poll_linked_transaction` (
+CREATE TABLE IF NOT EXISTS `phasing_poll_linked_transaction` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `transaction_id` bigint(20) NOT NULL,
   `linked_full_hash` binary(32) NOT NULL,
@@ -765,7 +765,7 @@ CREATE TABLE `phasing_poll_linked_transaction` (
 
 
 
-CREATE TABLE `phasing_poll_result` (
+CREATE TABLE IF NOT EXISTS `phasing_poll_result` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `result` bigint(20) NOT NULL,
@@ -779,7 +779,7 @@ CREATE TABLE `phasing_poll_result` (
 
 
 
-CREATE TABLE `phasing_poll_voter` (
+CREATE TABLE IF NOT EXISTS `phasing_poll_voter` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `transaction_id` bigint(20) NOT NULL,
   `voter_id` bigint(20) NOT NULL,
@@ -792,7 +792,7 @@ CREATE TABLE `phasing_poll_voter` (
 
 
 
-CREATE TABLE `phasing_vote` (
+CREATE TABLE IF NOT EXISTS `phasing_vote` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `vote_id` bigint(20) NOT NULL,
   `transaction_id` bigint(20) NOT NULL,
@@ -806,7 +806,7 @@ CREATE TABLE `phasing_vote` (
 
 
 
-CREATE TABLE `poll` (
+CREATE TABLE IF NOT EXISTS `poll` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `account_id` bigint(20) NOT NULL,
@@ -834,7 +834,7 @@ CREATE TABLE `poll` (
 
 
 
-CREATE TABLE `poll_result` (
+CREATE TABLE IF NOT EXISTS `poll_result` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `poll_id` bigint(20) NOT NULL,
   `result` bigint(20) DEFAULT NULL,
@@ -848,7 +848,7 @@ CREATE TABLE `poll_result` (
 
 
 
-CREATE TABLE `prunable_message` (
+CREATE TABLE IF NOT EXISTS `prunable_message` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `sender_id` bigint(20) NOT NULL,
@@ -872,7 +872,7 @@ CREATE TABLE `prunable_message` (
 
 
 
-CREATE TABLE `public_key` (
+CREATE TABLE IF NOT EXISTS `public_key` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `account_id` bigint(20) NOT NULL,
   `public_key` binary(32) DEFAULT NULL,
@@ -886,7 +886,7 @@ CREATE TABLE `public_key` (
 
 
 
-CREATE TABLE `purchase` (
+CREATE TABLE IF NOT EXISTS `purchase` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `buyer_id` bigint(20) NOT NULL,
@@ -922,7 +922,7 @@ CREATE TABLE `purchase` (
 
 
 
-CREATE TABLE `purchase_feedback` (
+CREATE TABLE IF NOT EXISTS `purchase_feedback` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `feedback_data` blob NOT NULL,
@@ -937,7 +937,7 @@ CREATE TABLE `purchase_feedback` (
 
 
 
-CREATE TABLE `purchase_public_feedback` (
+CREATE TABLE IF NOT EXISTS `purchase_public_feedback` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `public_feedback` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -951,7 +951,7 @@ CREATE TABLE `purchase_public_feedback` (
 
 
 
-CREATE TABLE `referenced_transaction` (
+CREATE TABLE IF NOT EXISTS `referenced_transaction` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `transaction_id` bigint(20) NOT NULL,
   `referenced_transaction_id` bigint(20) NOT NULL,
@@ -963,7 +963,7 @@ CREATE TABLE `referenced_transaction` (
 
 
 
-CREATE TABLE `scan` (
+CREATE TABLE IF NOT EXISTS `scan` (
   `rescan` tinyint(1) NOT NULL DEFAULT 0,
   `height` int(11) NOT NULL DEFAULT 0,
   `validate` tinyint(1) NOT NULL DEFAULT 0
@@ -972,7 +972,7 @@ CREATE TABLE `scan` (
 
 
 
-CREATE TABLE `sell_offer` (
+CREATE TABLE IF NOT EXISTS `sell_offer` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `currency_id` bigint(20) NOT NULL,
@@ -997,7 +997,7 @@ CREATE TABLE `sell_offer` (
 
 
 
-CREATE TABLE `shard` (
+CREATE TABLE IF NOT EXISTS `shard` (
   `shard_id` bigint(20) NOT NULL,
   `shard_hash` blob DEFAULT NULL,
   `shard_height` int(11) NOT NULL DEFAULT 0,
@@ -1014,7 +1014,7 @@ CREATE TABLE `shard` (
 
 
 
-CREATE TABLE `shard_recovery` (
+CREATE TABLE IF NOT EXISTS `shard_recovery` (
   `shard_recovery_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `state` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
   `object_name` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -1031,7 +1031,7 @@ CREATE TABLE `shard_recovery` (
 
 
 
-CREATE TABLE `shuffling` (
+CREATE TABLE IF NOT EXISTS `shuffling` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `holding_id` bigint(20) DEFAULT NULL,
@@ -1058,7 +1058,7 @@ CREATE TABLE `shuffling` (
 
 
 
-CREATE TABLE `shuffling_data` (
+CREATE TABLE IF NOT EXISTS `shuffling_data` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `shuffling_id` bigint(20) NOT NULL,
   `account_id` bigint(20) NOT NULL,
@@ -1073,7 +1073,7 @@ CREATE TABLE `shuffling_data` (
 
 
 
-CREATE TABLE `shuffling_participant` (
+CREATE TABLE IF NOT EXISTS `shuffling_participant` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `shuffling_id` bigint(20) NOT NULL,
   `account_id` bigint(20) NOT NULL,
@@ -1095,13 +1095,13 @@ CREATE TABLE `shuffling_participant` (
 
 
 
-CREATE TABLE `smc_contract`
+CREATE TABLE IF NOT EXISTS `smc_contract`
 (
     `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
     `address` varchar(256) COLLATE latin1_bin NOT NULL,
     `transaction_id` varchar(256) NOT NULL,
-    `name` varchar(1024) NOT NULL,
-    `data` LONGTEXT COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `name` varchar(256) NOT NULL,
+    `data` longtext NOT NULL,
     `language` varchar(64) NOT NULL,
     `fuel` varchar(160) NOT NULL,
     `fuel_price` varchar(160) NOT NULL,
@@ -1115,14 +1115,14 @@ CREATE TABLE `smc_contract`
 
 
 
-CREATE TABLE `smc_contract_state`
+CREATE TABLE IF NOT EXISTS `smc_contract_state`
 (
     `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
     `address` varchar(256) COLLATE latin1_bin NOT NULL,
     `transaction_id` varchar(256) COLLATE latin1_bin NOT NULL,
-    `method` varchar(1024) NOT NULL,
-    `args` TEXT DEFAULT NULL,
-    `object` LONGTEXT NOT NULL,
+    `method` varchar(256) NOT NULL,
+    `args` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`args`)),
+    `object` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`object`)),
     `status` tinyint(4) NOT NULL,
     `height` int(11) NOT NULL,
     `latest` tinyint(1) NOT NULL DEFAULT 1,
@@ -1134,7 +1134,7 @@ CREATE TABLE `smc_contract_state`
 
 
 
-CREATE TABLE `tag` (
+CREATE TABLE IF NOT EXISTS `tag` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `tag` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
   `in_stock_count` int(11) NOT NULL,
@@ -1150,7 +1150,7 @@ CREATE TABLE `tag` (
 
 
 
-CREATE TABLE `tagged_data` (
+CREATE TABLE IF NOT EXISTS `tagged_data` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `account_id` bigint(20) NOT NULL,
@@ -1178,7 +1178,7 @@ CREATE TABLE `tagged_data` (
 
 
 
-CREATE TABLE `tagged_data_extend` (
+CREATE TABLE IF NOT EXISTS `tagged_data_extend` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `extend_id` bigint(20) NOT NULL,
@@ -1191,7 +1191,7 @@ CREATE TABLE `tagged_data_extend` (
 
 
 
-CREATE TABLE `tagged_data_timestamp` (
+CREATE TABLE IF NOT EXISTS `tagged_data_timestamp` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `TIMESTAMP` int(11) NOT NULL,
@@ -1205,7 +1205,7 @@ CREATE TABLE `tagged_data_timestamp` (
 
 
 
-CREATE TABLE `trade` (
+CREATE TABLE IF NOT EXISTS `trade` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `asset_id` bigint(20) NOT NULL,
   `block_id` bigint(20) NOT NULL,
@@ -1233,7 +1233,7 @@ CREATE TABLE `trade` (
 
 
 
-CREATE TABLE `transaction` (
+CREATE TABLE IF NOT EXISTS `transaction` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `deadline` smallint(6) NOT NULL,
@@ -1275,7 +1275,7 @@ CREATE TABLE `transaction` (
 
 
 
-CREATE TABLE `transaction_shard_index` (
+CREATE TABLE IF NOT EXISTS `transaction_shard_index` (
   `transaction_id` bigint(20) NOT NULL,
   `partial_transaction_hash` blob NOT NULL,
   `transaction_index` smallint(6) NOT NULL,
@@ -1287,7 +1287,7 @@ CREATE TABLE `transaction_shard_index` (
 
 
 
-CREATE TABLE `trim` (
+CREATE TABLE IF NOT EXISTS `trim` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `height` int(11) NOT NULL,
   `done` tinyint(1) NOT NULL DEFAULT 0,
@@ -1297,7 +1297,7 @@ CREATE TABLE `trim` (
 
 
 
-CREATE TABLE `two_factor_auth` (
+CREATE TABLE IF NOT EXISTS `two_factor_auth` (
   `account` bigint(20) NOT NULL,
   `secret` blob DEFAULT NULL,
   `confirmed` tinyint(1) NOT NULL DEFAULT 0,
@@ -1307,7 +1307,7 @@ CREATE TABLE `two_factor_auth` (
 
 
 
-CREATE TABLE `unconfirmed_transaction` (
+CREATE TABLE IF NOT EXISTS `unconfirmed_transaction` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `expiration` int(11) NOT NULL,
@@ -1326,7 +1326,7 @@ CREATE TABLE `unconfirmed_transaction` (
 
 
 
-CREATE TABLE `update_status` (
+CREATE TABLE IF NOT EXISTS `update_status` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `transaction_id` bigint(20) NOT NULL,
   `updated` tinyint(1) NOT NULL DEFAULT 0,
@@ -1336,7 +1336,7 @@ CREATE TABLE `update_status` (
 
 
 
-CREATE TABLE `user_error_message` (
+CREATE TABLE IF NOT EXISTS `user_error_message` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `address` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `error` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -1349,13 +1349,13 @@ CREATE TABLE `user_error_message` (
 
 
 
-CREATE TABLE `version` (
+CREATE TABLE IF NOT EXISTS `version` (
   `next_update` int(11) NOT NULL
 ) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
-CREATE TABLE `vote` (
+CREATE TABLE IF NOT EXISTS `vote` (
   `db_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `id` bigint(20) NOT NULL,
   `poll_id` bigint(20) NOT NULL,
