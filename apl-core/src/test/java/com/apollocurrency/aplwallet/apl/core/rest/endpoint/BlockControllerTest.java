@@ -62,7 +62,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         endpoint = new BlockController(blockchain, blockConverter, 100, timeService);
         dispatcher.getRegistry().addSingletonResource(endpoint);
 //        txd = new TransactionTestData();
-        btd = new BlockTestData();
+//      btd = new BlockTestData();
     }
 
     @Test
