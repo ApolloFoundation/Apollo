@@ -68,7 +68,7 @@ function isSharding()
 }
 
 
-VERSION=$(head -n1 ${2}/apl-blockchain/VERSION)
+VERSION=$(head -n1 ${2}/apollo-blockchain/VERSION)
 
 if  [[ -d "${1}" ]] && [[ -d "${2}" ]] && [[ -n "${3}" ]]
 then
@@ -159,6 +159,7 @@ if [[ -d $1/../Uninstaller ]]; then
     cp -Rfv $1/* $1/..
     cp -Rfv $2/* $1/..
     cd $1/..
+
     rm -rfv $1
 
 
@@ -176,6 +177,9 @@ fi
 
     chmod 755 apollo-blockchain/bin/*.sh
     chmod 755 apollo-desktop/bin/*.sh
+    chmod 755 tor/tor
+    chmod 755 secureTransport/securenodexchg
+    chmod 755 secureTransport/runClient.sh
 
 
 
