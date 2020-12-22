@@ -1,7 +1,7 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.vault.service;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.TwoFactorAuthFileSystemRepository;
@@ -19,9 +19,9 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TwoFactorAuthServic
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.PassphraseGeneratorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TwoFactorAuthServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;

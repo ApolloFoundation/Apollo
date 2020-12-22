@@ -18,10 +18,8 @@
  * Copyright © 2019-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.utils;
+package com.apollocurrency.aplwallet.apl.util;
 
-import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,16 +28,20 @@ import java.util.Objects;
 @Slf4j
 public final class Convert2 {
 
-    private static final String BLOCKCHAIN_IS_NULL_MSG = "Blockchain config is null";
-    private static BlockchainConfig blockchainConfig;
+    private static final String ACCOUNT_PREFIX_IS_NULL_MSG = "AccountPrefix is null";
+    private static final String EPOCH_BEGINNING_IS_NULL_MSG = "EpochBeginning is null";
+    private static String accountPrefix;
+    private static Long epochBeginning;
     private static boolean initialized = false;
 
     private Convert2() {
-    } //never
+    }
 
-    public static void init(BlockchainConfig bcConfig) {
-        Objects.requireNonNull(bcConfig, BLOCKCHAIN_IS_NULL_MSG);
-        blockchainConfig = bcConfig;
+    public static void init(String prefix, long epochBeg) {
+        Objects.requireNonNull(accountPrefix, ACCOUNT_PREFIX_IS_NULL_MSG);
+        Objects.requireNonNull(epochBeg, EPOCH_BEGINNING_IS_NULL_MSG);
+        accountPrefix = prefix;
+        epochBeginning = epochBeg;
         initialized = true;
     }
 
@@ -49,14 +51,14 @@ public final class Convert2 {
 
     private static void validate() {
         if (!isInitialized()) {
-            throw new IllegalStateException(BLOCKCHAIN_IS_NULL_MSG);
+            throw new IllegalStateException(ACCOUNT_PREFIX_IS_NULL_MSG);
         }
     }
 
     //TODO: rewrite other classes without defaultRsAccount
     public static String rsAccount(long accountId) {
         validate();
-        return blockchainConfig.getAccountPrefix() + "-" + Crypto.rsEncode(accountId);
+        return accountPrefix + "-" + Crypto.rsEncode(accountId);
     }
 
     public static String rsAccount(String accountPrefix, long accountId) {
@@ -65,17 +67,17 @@ public final class Convert2 {
 
     //avoid static initialization chain when call Constants.ACCOUNT_PREFIX in rsAccount method
     public static String defaultRsAccount(long accountId) {
-        if (blockchainConfig == null) {
+        if (accountPrefix == null) {
             String error = "blockchainConfig should be initialized explicitly first, see Convert2.init(...)";
             log.error(error);
             throw new RuntimeException(error);
         }
-        return blockchainConfig.getAccountPrefix() + "-" + Crypto.rsEncode(accountId);
+        return accountPrefix + "-" + Crypto.rsEncode(accountId);
     }
 
 
     public static long fromEpochTime(int epochTime) {
-        return epochTime * 1000L + GenesisImporter.EPOCH_BEGINNING - 500L;
+        return epochTime * 1000L + epochBeginning - 500L;
     }
 
     /**
@@ -85,7 +87,7 @@ public final class Convert2 {
      * @return seconds
      */
     public static int toEpochTime(long currentTime) {
-        return (int) ((currentTime - GenesisImporter.EPOCH_BEGINNING + 500) / 1000);
+        return (int) ((currentTime - epochBeginning + 500) / 1000);
     }
 
 }

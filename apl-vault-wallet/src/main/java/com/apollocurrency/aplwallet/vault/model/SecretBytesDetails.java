@@ -2,9 +2,10 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.entity.appdata;
+package com.apollocurrency.aplwallet.vault.model;
 
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
+
+import com.apollocurrency.aplwallet.vault.KeyStoreService;
 
 import java.util.Arrays;
 import java.util.Objects;

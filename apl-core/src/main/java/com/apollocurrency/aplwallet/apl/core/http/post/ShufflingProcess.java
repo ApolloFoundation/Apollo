@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingSta
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

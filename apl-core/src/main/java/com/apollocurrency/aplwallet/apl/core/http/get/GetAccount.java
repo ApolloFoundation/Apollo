@@ -37,8 +37,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetS
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

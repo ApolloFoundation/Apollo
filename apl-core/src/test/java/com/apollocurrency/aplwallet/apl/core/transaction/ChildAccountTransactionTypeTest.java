@@ -25,10 +25,10 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValida
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ChildAccountAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
@@ -105,7 +105,7 @@ public class ChildAccountTransactionTypeTest {
         CHILD_2.setParentId(0L);
         CHILD_2.setMultiSig(false);
 
-        Convert2.init(blockchainConfig);
+        Convert2.init("APL", 1739068987193023818L);
 
         EcBlockData ecBlockData = new EcBlockData(ECBLOCK_ID, ECBLOCK_HEIGHT);
         when(blockchain.getECBlock(300)).thenReturn(ecBlockData);

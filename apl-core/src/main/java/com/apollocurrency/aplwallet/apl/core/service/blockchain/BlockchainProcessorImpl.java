@@ -80,11 +80,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;

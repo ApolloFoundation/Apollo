@@ -2,10 +2,10 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.app;
+package com.apollocurrency.aplwallet.vault.model;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 
 import java.util.Arrays;
 import java.util.Objects;

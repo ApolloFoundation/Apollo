@@ -5,14 +5,13 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TwoFactorAuthServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
 import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -222,8 +220,6 @@ public class TwoFactorAuthServiceTest {
     }
 
     private void initConfigPrefix() {
-        BlockchainConfig config = mock(BlockchainConfig.class);
-        doReturn("APL").when(config).getAccountPrefix();
-        Convert2.init(config);
+        Convert2.init("APL", 1739068987193023818L);
     }
 }

@@ -2,28 +2,99 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <parent>
-    <artifactId>apollo-blockchain</artifactId>
-    <groupId>com.apollocurrency</groupId>
-    <version>1.47.4</version>
-  </parent>
-  <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>apollo-blockchain</artifactId>
+        <groupId>com.apollocurrency</groupId>
+        <version>1.48.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.apollocurrency.aplwallet.vault.wallet</groupId>
-  <artifactId>apl-vault-wallet</artifactId>
+    <groupId>com.apollocurrency.aplwallet.vault.wallet</groupId>
+    <artifactId>apl-vault-wallet</artifactId>
+
+    <properties>
+        <web3jVersion>5.0.0</web3jVersion>
+    </properties>
 
 
-  <dependencies>
+    <dependencies>
+
+        <dependency>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-crypto</artifactId>
+            <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.junit</groupId>
+                    <artifactId>junit-bom</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
+
+        <!-- json-simple should be gone after new REST completion -->
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- REST:  Need to put api here because strange things happens without it  -->
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.weld.servlet</groupId>
+            <artifactId>weld-servlet-shaded</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi3-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jdbi</groupId>
+            <artifactId>jdbi3-sqlobject</artifactId>
+        </dependency>
 
 
-    <!-- unit tests -->
-    <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-engine</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.platform</groupId>
+        <!--    DEX     -->
+        <dependency>
+            <groupId>org.web3j</groupId>
+            <artifactId>crypto</artifactId>
+            <version>${web3jVersion}</version>
+        </dependency>
+
+
+        <!-- unit tests -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-commons</artifactId>
       <scope>test</scope>
     </dependency>

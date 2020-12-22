@@ -35,19 +35,25 @@
     </dependency>
     <dependency>
       <groupId>com.apollocurrency</groupId>
-      <artifactId>apl-db-updater</artifactId>
-      <version>${project.version}</version>
+        <artifactId>apl-db-updater</artifactId>
+        <version>${project.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>com.apollocurrency</groupId>
-      <artifactId>apl-dex</artifactId>
-      <version>${project.version}</version>
-    </dependency>
+      <dependency>
+          <groupId>com.apollocurrency</groupId>
+          <artifactId>apl-dex</artifactId>
+          <version>${project.version}</version>
+      </dependency>
 
-    <!-- EXT BOM DEPENDENCIES -->
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
+      <dependency>
+          <groupId>com.apollocurrency</groupId>
+          <artifactId>apl-vault-wallet</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+
+      <!-- EXT BOM DEPENDENCIES -->
+      <dependency>
+          <groupId>ch.qos.logback</groupId>
           <artifactId>logback-classic</artifactId>
       </dependency>
       <dependency>
@@ -113,21 +119,6 @@
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-multipart-provider</artifactId>
     </dependency>
-
-    <!--
-        <dependency> &lt;!&ndash; may be NEEDED by FAT JAR in run-time &ndash;&gt;
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-jaxrs</artifactId>
-        </dependency>
-        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-tracing-api</artifactId>
-        </dependency>
-        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
-          <groupId>org.apache.httpcomponents</groupId>
-          <artifactId>httpcore-nio</artifactId>
-        </dependency>
-    -->
 
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
@@ -338,13 +329,6 @@
       <groupId>com.apollocurrency.antifraud</groupId>
       <artifactId>antifraud</artifactId>
     </dependency>
-
-    <!-- Ethereum API -->
-    <dependency>
-      <groupId>org.web3j</groupId>
-      <artifactId>core</artifactId>
-    </dependency>
-
 
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>

@@ -2,23 +2,22 @@
   * Copyright © 2018 Apollo Foundation
   */
 
- package com.apollocurrency.aplwallet.apl.core.service.appdata.impl;
+ package com.apollocurrency.aplwallet.vault;
 
- import com.apollocurrency.aplwallet.apl.core.app.EncryptedSecretBytesDetails;
- import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
- import com.apollocurrency.aplwallet.apl.core.entity.appdata.SecretBytesDetails;
  import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
- import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
- import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
- import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
- import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
- import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
- import com.apollocurrency.aplwallet.apl.core.utils.FbWalletUtil;
  import com.apollocurrency.aplwallet.apl.crypto.Convert;
  import com.apollocurrency.aplwallet.apl.crypto.Crypto;
  import com.apollocurrency.aplwallet.apl.util.AplCollectionUtils;
+ import com.apollocurrency.aplwallet.apl.util.Convert2;
  import com.apollocurrency.aplwallet.apl.util.JSON;
  import com.apollocurrency.aplwallet.apl.util.NtpTime;
+ import com.apollocurrency.aplwallet.vault.model.AplWalletKey;
+ import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
+ import com.apollocurrency.aplwallet.vault.model.EncryptedSecretBytesDetails;
+ import com.apollocurrency.aplwallet.vault.model.SecretBytesDetails;
+ import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+ import com.apollocurrency.aplwallet.vault.service.Helper2FA;
+ import com.apollocurrency.aplwallet.vault.util.FbWalletUtil;
  import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
  import com.fasterxml.jackson.databind.ObjectMapper;
  import com.fasterxml.jackson.databind.ObjectWriter;

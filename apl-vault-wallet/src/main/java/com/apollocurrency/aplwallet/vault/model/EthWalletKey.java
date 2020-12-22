@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.eth.model;
+package com.apollocurrency.aplwallet.vault.model;
 
 import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;

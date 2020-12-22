@@ -2,10 +2,9 @@
  * Copyright © 2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.model;
+package com.apollocurrency.aplwallet.vault.model;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import io.firstbridge.cryptolib.container.DataRecord;
 import io.firstbridge.cryptolib.container.FbWallet;
 import io.firstbridge.cryptolib.container.KeyRecord;

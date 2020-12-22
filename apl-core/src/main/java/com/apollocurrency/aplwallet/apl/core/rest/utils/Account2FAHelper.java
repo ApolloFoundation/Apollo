@@ -16,9 +16,9 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.PassphraseGeneratorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 

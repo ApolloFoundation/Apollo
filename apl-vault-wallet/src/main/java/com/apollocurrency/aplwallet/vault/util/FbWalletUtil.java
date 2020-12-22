@@ -2,9 +2,9 @@
   * Copyright © 2019 Apollo Foundation
   */
 
- package com.apollocurrency.aplwallet.apl.core.utils;
+ package com.apollocurrency.aplwallet.vault.util;
 
- import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
+ import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
  import org.slf4j.Logger;
  import org.slf4j.LoggerFactory;
 

@@ -22,8 +22,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoSe
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 
 import javax.inject.Inject;
 import java.util.LinkedList;

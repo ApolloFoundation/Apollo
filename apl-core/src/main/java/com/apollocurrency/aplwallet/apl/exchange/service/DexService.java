@@ -45,7 +45,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFr
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachmentV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
@@ -77,6 +76,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.WalletsBalance;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.AplCollectionUtils;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheType;

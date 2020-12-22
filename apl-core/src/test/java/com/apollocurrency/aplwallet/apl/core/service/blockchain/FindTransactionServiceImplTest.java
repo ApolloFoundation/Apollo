@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.model.AplQueryObject;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

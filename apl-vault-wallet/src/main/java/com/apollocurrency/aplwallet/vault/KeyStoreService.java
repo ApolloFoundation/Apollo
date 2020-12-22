@@ -2,11 +2,11 @@
  * Copyright © 2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.service.appdata;
+package com.apollocurrency.aplwallet.vault;
 
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.SecretBytesDetails;
-import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
-import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.vault.model.SecretBytesDetails;
+import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import io.firstbridge.cryptolib.container.FbWallet;
 
 import java.io.File;

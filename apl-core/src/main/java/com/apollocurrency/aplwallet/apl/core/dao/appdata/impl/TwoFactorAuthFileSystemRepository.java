@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.appdata.impl;
 
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import lombok.extern.slf4j.Slf4j;
 

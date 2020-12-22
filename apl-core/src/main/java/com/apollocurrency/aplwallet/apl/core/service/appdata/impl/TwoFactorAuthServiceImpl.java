@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TwoFactorAuthService;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base32;
