@@ -108,21 +108,6 @@
       <artifactId>resteasy-multipart-provider</artifactId>
     </dependency>
 
-    <!--
-        <dependency> &lt;!&ndash; may be NEEDED by FAT JAR in run-time &ndash;&gt;
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-jaxrs</artifactId>
-        </dependency>
-        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-tracing-api</artifactId>
-        </dependency>
-        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
-          <groupId>org.apache.httpcomponents</groupId>
-          <artifactId>httpcore-nio</artifactId>
-        </dependency>
-    -->
-
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-cdi</artifactId>
@@ -177,10 +162,6 @@
     <dependency>
       <groupId>io.swagger.core.v3</groupId>
       <artifactId>swagger-models</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>mariadb</artifactId>
     </dependency>
     <!-- https://mvnrepository.com/artifact/org.mariadb.jdbc/mariadb-java-client -->
     <dependency>
@@ -279,11 +260,6 @@
     <dependency>
       <groupId>org.codehaus.janino</groupId>
       <artifactId>janino</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
