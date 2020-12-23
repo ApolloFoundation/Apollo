@@ -187,22 +187,15 @@ fi
 
     if [[ "$unamestr" == 'Darwin' ]]; then
         
-        cp -rf "$2/ApolloWallet.app" $1/../
-#        rm -rf "$1/../ApolloWallet+Secure Transport.app"
-        cp -rf "$2/ApolloWallet+Secure Transport.app" $1/../
-#        rm -rf "$1/../ApolloWallet+Tor.app"
-        cp -rf "$2/ApolloWallet+Tor.app" $1/../
-        
-        
-	chmod 755 "$1/../ApolloWallet+Secure Transport.app/Contents/MacOS/apl"
-	chmod 755 "$1/../ApolloWallet+Secure Transport.app/secureTransport/securenodexchg"
-	chmod 755 "$1/../ApolloWallet+Secure Transport.app/secureTransport/runClient.sh"
-	chmod 755 "$1/../ApolloWallet+Tor.app/Contents/MacOS/apl"
-	chmod 755 "$1/../ApolloWallet+Tor.app/tor/bin/tor"
-	chmod 755 "$1/../ApolloWallet.app/Contents/MacOS/apl"
-	rm -rf "$1/ApolloWallet+Secure Transport.app"
-	rm -rf "$1/ApolloWallet+Tor.app"
-	rm -rf "$1/ApolloWallet.app"
+	chmod 755 "ApolloWallet+Secure Transport.app/Contents/MacOS/apl"
+	chmod 755 "ApolloWallet+Secure Transport.app/secureTransport/securenodexchg"
+	chmod 755 "ApolloWallet+Secure Transport.app/secureTransport/runClient.sh"
+	chmod 755 "ApolloWallet+Tor.app/Contents/MacOS/apl"
+	chmod 755 "ApolloWallet+Tor.app/tor/bin/tor"
+	chmod 755 "polloWallet.app/Contents/MacOS/apl"
+#	rm -rf "$1/ApolloWallet+Secure Transport.app"
+#	rm -rf "$1/ApolloWallet+Tor.app"
+#	rm -rf "$1/ApolloWallet.app"
 
     fi
 
@@ -271,7 +264,7 @@ fi
     
 
     if [[ -d conf ]]; then
-	mv -rfv conf apollo-blockchain
+	mv -fv conf apollo-blockchain
     fi
     APLCMDLINE=$(echo ${APLCMDLINE} | sed s/shards/shard/g)
     if [ $3 == true ]
