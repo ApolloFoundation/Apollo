@@ -154,14 +154,12 @@ if [[ -d $1/../Uninstaller ]]; then
     
 #    ./replace_dbdir.sh
     notify "Removing old version..."
-
+    
     notify "Moving extra files..."
     cp -Rfv $1/* $1/..
-    cp -Rfv $2/* $1/..
     cd $1/..
-
     rm -rfv $1
-
+    cp -Rfv $2/* .
 
 else
     notify "Copying update files...."
@@ -192,7 +190,7 @@ fi
 	chmod 755 "ApolloWallet+Secure Transport.app/secureTransport/runClient.sh"
 	chmod 755 "ApolloWallet+Tor.app/Contents/MacOS/apl"
 	chmod 755 "ApolloWallet+Tor.app/tor/bin/tor"
-	chmod 755 "polloWallet.app/Contents/MacOS/apl"
+	chmod 755 "ApolloWallet.app/Contents/MacOS/apl"
 #	rm -rf "$1/ApolloWallet+Secure Transport.app"
 #	rm -rf "$1/ApolloWallet+Tor.app"
 #	rm -rf "$1/ApolloWallet.app"
