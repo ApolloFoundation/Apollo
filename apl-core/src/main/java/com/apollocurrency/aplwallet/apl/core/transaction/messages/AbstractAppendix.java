@@ -7,8 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
@@ -32,7 +32,7 @@ public abstract class AbstractAppendix implements Appendix {
     }
 
     AbstractAppendix(RlpReader reader) {
-        this.version = reader.read()[0];
+        this.version = reader.readByte();
     }
 
     AbstractAppendix(int version) {
@@ -42,8 +42,6 @@ public abstract class AbstractAppendix implements Appendix {
     AbstractAppendix() {
         this.version = getVersion() > 0 ? getVersion() : 1;
     }
-
-    public abstract String getAppendixName();
 
     @Override
     public final int getSize() {
@@ -62,7 +60,7 @@ public abstract class AbstractAppendix implements Appendix {
     }
 
     /**
-     * @deprecated use {@link #putBytes(RlpWriteBuffer)}
+     * @deprecated use {@link #putBytes(RlpList.RlpListBuilder)}
      */
     @Deprecated(since = "TransactionV3")
     @Override
@@ -74,19 +72,23 @@ public abstract class AbstractAppendix implements Appendix {
     }
 
     /**
-     * @deprecated use {@link #putMyBytes(RlpWriteBuffer)}
+     * @deprecated use {@link #putMyBytes(RlpList.RlpListBuilder)}
      */
     @Deprecated(since = "TransactionV3")
     public abstract void putMyBytes(ByteBuffer buffer);
 
     @Override
-    public final void putBytes(RlpWriteBuffer buffer) {
-        buffer.write(version);
+    public final void putBytes(RlpList.RlpListBuilder builder) {
+        RlpList.RlpListBuilder attachment = RlpList.builder()
+            .add( getAppendixFlag() )
+            .add(version);
 
-        putMyBytes(buffer);
+        putMyBytes(attachment);
+
+        builder.add(attachment.build());
     }
 
-    public void putMyBytes(RlpWriteBuffer buffer){
+    public void putMyBytes(RlpList.RlpListBuilder builder){
         throw new UnsupportedOperationException("Unsupported RLP writer for appendix=" + getAppendixName());
     }
 

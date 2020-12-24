@@ -6,9 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpConverter;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpListBuilder;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -27,10 +26,6 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
 
     private final String contractSource;
     private final List<String> constructorParams;
-
-    public SmcPublishContractAttachment(byte[] input) {
-        this(new RlpReader(input));
-    }
 
     public SmcPublishContractAttachment(RlpReader reader) {
         super(reader);
@@ -56,10 +51,10 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
     }
 
     @Override
-    public void putMyBytes(RlpWriteBuffer buffer) {
-        buffer
-            .write(contractSource)
-            .write(RlpListBuilder.ofString(constructorParams));
+    public void putMyBytes(RlpList.RlpListBuilder builder) {
+        builder
+            .add(contractSource)
+            .add(RlpList.ofStrings(constructorParams));
     }
 
 

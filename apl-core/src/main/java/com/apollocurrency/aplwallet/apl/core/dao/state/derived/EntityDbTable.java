@@ -34,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
-import lombok.Getter;
 import org.slf4j.Logger;
 
 import javax.enterprise.event.Event;
@@ -365,7 +364,12 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
             restoreDeletedColumnIfSupported(con, dbKey, t);
             save(con, t);
         } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
+            String msg = String.format("%s: SQLState=%s, ErrorCode=%d, message=%s"
+                , e.getClass().getName()
+                , e.getSQLState()
+                , e.getErrorCode()
+                ,e.getLocalizedMessage());
+            throw new RuntimeException(msg, e);
         }
     }
 

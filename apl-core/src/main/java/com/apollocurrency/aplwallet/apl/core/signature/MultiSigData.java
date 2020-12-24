@@ -5,13 +5,18 @@
 package com.apollocurrency.aplwallet.apl.core.signature;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import lombok.extern.slf4j.Slf4j;
+import org.web3j.rlp.RlpType;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -33,13 +38,17 @@ class MultiSigData implements MultiSig {
     private boolean verified = false;
 
     public MultiSigData(byte[] publicKey, byte[] signature) {
-        this(1, new byte[Parser.PAYLOAD_LENGTH]);
-        Arrays.fill(payload, (byte) 0x0);
+        this(1, Parser.PAYLOAD_RESERVED);
         addSignature(publicKey, signature);
     }
 
     public MultiSigData(int count) {
         this(count, Parser.PAYLOAD_RESERVED);
+    }
+
+    public MultiSigData(int count, List<RlpType> reserved) {
+        this(count, Parser.PAYLOAD_RESERVED);
+        //TODO: parse the reserved payload
     }
 
     public MultiSigData(int count, byte[] payload) {
@@ -199,7 +208,7 @@ class MultiSigData implements MultiSig {
         }
 
         /**
-         * Parse the byte array and build the multisig object
+         * Parse the byte array (V2 structure) and build the multisig object
          *
          * @param buffer input data array
          * @return the multisig object
@@ -257,6 +266,57 @@ class MultiSigData implements MultiSig {
                 buffer.put(bytes);
             });
             return buffer.array();
+        }
+
+    }
+
+    static class ParserV3 extends Parser{
+
+        /**
+         * Parse the RLP encoded structure and build the multisig object
+         *
+         * @param reader the RLP encoded data reader
+         * @return the multisig object
+         */
+        @Override
+        public Signature parse(RlpReader reader) {
+            MultiSigData multiSigData;
+            try {
+                List<RlpType> payloads = reader.readList();
+                RlpReader signaturesListReader = reader.readListReader();
+                int count = signaturesListReader.size();
+                multiSigData = new MultiSigData(count, payloads);
+
+                for (int i = 0; i < count; i++) {
+                    RlpReader signatureReader = signaturesListReader.readListReader();
+                    if (signatureReader.size()!=2) {
+                        throw new SignatureParseException("Wrong format of the attached multi-signature data.");
+                    }
+                    byte[] pkId = signatureReader.read();
+                    byte[] sig = signatureReader.read();
+                    multiSigData.addSignature(pkId, sig);
+                }
+            } catch (Exception e) {
+                String message = "Can't parse RLP encoded bytes of signature, cause: " + e.getClass().getName()+":"+e.getMessage();
+                log.error(message);
+                throw new SignatureParseException(message);
+            }
+            return multiSigData;
+        }
+
+        @Override
+        public byte[] bytes(Signature signature) {
+            MultiSig multiSig = (MultiSig) signature;
+            RlpWriteBuffer buffer = new RlpWriteBuffer();
+            buffer.write(multiSig.getPayloads());
+            RlpList.RlpListBuilder listBuilder = RlpList.builder();
+            multiSig.signaturesMap()
+                .forEach( (keyId, bytes) ->
+                    listBuilder.add(RlpList.builder().add(keyId.getKey()).add(bytes).build())
+                );
+            buffer.write(listBuilder.build());
+
+            return buffer.toByteArray();
         }
 
     }

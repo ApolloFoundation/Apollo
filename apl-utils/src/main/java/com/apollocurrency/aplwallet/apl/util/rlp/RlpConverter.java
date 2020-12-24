@@ -20,10 +20,6 @@ import java.util.stream.Collectors;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RlpConverter {
 
-    public static byte toByte(RlpType value) {
-        return ((RlpString) value).getBytes()[0];
-    }
-
     public static byte[] toByteArray(RlpType value) {
         return ((RlpString) value).getBytes();
     }
@@ -38,6 +34,14 @@ public class RlpConverter {
 
     public static int toInt(RlpType value) {
         return ((RlpString) value).asPositiveBigInteger().intValueExact();
+    }
+
+    public static short toShort(RlpType value) {
+        return ((RlpString) value).asPositiveBigInteger().shortValueExact();
+    }
+
+    public static byte toByte(RlpType value) {
+        return ((RlpString) value).asPositiveBigInteger().byteValueExact();
     }
 
     public static BigInteger toBigInteger(RlpType value) {

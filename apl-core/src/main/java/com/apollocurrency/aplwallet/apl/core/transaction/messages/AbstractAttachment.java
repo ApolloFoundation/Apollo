@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import org.json.simple.JSONObject;
 
@@ -17,6 +18,7 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
+@EqualsAndHashCode(callSuper = true)
 public abstract class AbstractAttachment extends AbstractAppendix implements Attachment {
     private TransactionType transactionType;
 

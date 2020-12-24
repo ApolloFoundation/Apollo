@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.signature;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -17,14 +18,25 @@ public interface SignatureParser {
 
     /**
      * Parse the byte array and build the signature object
-     *
+     * @deprecated
      * @param buffer input data array
      * @return the signature object
      */
+    @Deprecated(since = "TransactionV3")
     Signature parse(ByteBuffer buffer);
 
     Signature parse(byte[] bytes);
 
+    default Signature parse(RlpReader reader) {
+        throw new UnsupportedOperationException("Unsupported RLP format for signature.");
+    }
+
+    /**
+     * Returns V1 or V2 signature size.
+     * Don't use for RLP encoded signature (V3).
+     * @param count the participant count
+     * @return size of V1 or V2 signature
+     */
     int calcDataSize(int count);
 
     byte[] bytes(Signature signature);

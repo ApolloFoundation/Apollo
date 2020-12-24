@@ -40,6 +40,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
@@ -52,6 +54,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
 @Slf4j
@@ -121,6 +124,14 @@ public class TransactionImpl implements Transaction {
         this.ecBlockId = builder.ecBlockId;
         this.dbId = builder.dbId;
         this.feeATM = builder.feeATM;
+        /* Transaction V3 properties */
+        this.chainId = builder.chainId;
+        this.nonce = builder.nonce;
+        this.amount = builder.amount;
+        this.fuelLimit = builder.fuelLimit;
+        this.fuelPrice = builder.fuelPrice;
+        /*         ***              */
+
         List<AbstractAppendix> list = new ArrayList<>();
         if ((this.attachment = builder.attachment) != null) {
             list.add(this.attachment);
@@ -147,11 +158,11 @@ public class TransactionImpl implements Transaction {
             list.add(this.prunableEncryptedMessage);
         }
         this.appendages = Collections.unmodifiableList(list);
-        int appendagesSize = 0;
+        int apxSize = 0;
         for (Appendix appendage : appendages) {
-            appendagesSize += appendage.getSize();
+            apxSize += appendage.getSize();
         }
-        this.appendagesSize = appendagesSize;
+        this.appendagesSize = apxSize;
         this.signature = builder.signature;
     }
 
@@ -418,7 +429,7 @@ public class TransactionImpl implements Transaction {
                     ByteBuffer buffer = ByteBuffer.allocate(getSize());
                     buffer.order(ByteOrder.LITTLE_ENDIAN);
 
-                        writeV2Bytes(buffer);
+                        writeBytesV1or2(buffer);
 
                     bytes = buffer.array();
                 } catch (RuntimeException e) {
@@ -428,15 +439,19 @@ public class TransactionImpl implements Transaction {
                     throw e;
                 }
             }else{//version>=3
-
+                bytes = rlpEncodedTx();
             }
         }
         return bytes;
     }
 
-    private void writeV2Bytes(ByteBuffer buffer) {
+    private byte getVersionAndSubtype(){
+        return (byte) ((version << 4) | type.getSpec().getSubtype());
+    }
+
+    private void writeBytesV1or2(ByteBuffer buffer) {
         buffer.put(type.getSpec().getType());
-        buffer.put((byte) ((version << 4) | type.getSpec().getSubtype()));
+        buffer.put(getVersionAndSubtype());
         buffer.putInt(timestamp);
         buffer.putShort(deadline);
         buffer.put(getSenderPublicKey());
@@ -461,12 +476,47 @@ public class TransactionImpl implements Transaction {
         for (Appendix appendage : appendages) {
             appendage.putBytes(buffer);
         }
-        if (version >= 2) {
+        if (version == 2) {
             if (signature != null) {
                 buffer.put(signature.bytes());
             }
         }
 
+    }
+
+    @Override
+    public byte[] rlpEncodedTx() {
+        RlpWriteBuffer buffer = new RlpWriteBuffer();
+        //header
+        buffer
+            .write(type.getSpec().getType())
+            .write(getVersionAndSubtype())
+            .write(getChainId())
+            .write(getDeadline())
+            .write(getLongTimestamp())
+            .write(getECBlockHeight())
+            .write(getECBlockId())
+            .write(getNonce())
+            .write(getSenderPublicKey())
+            .write(getRecipientId())
+            .write(getAmount())
+            .write(getFuelPrice())
+            .write(getFuelLimit());
+
+        //data part
+        buffer.write(referencedTransactionFullHash==null?new byte[0]:referencedTransactionFullHash);
+        RlpList.RlpListBuilder attachmentsList = RlpList.builder();
+        for (Appendix appendage : appendages) {
+            appendage.putBytes(attachmentsList);
+        }
+        buffer.write(attachmentsList.build());
+
+        //signature part
+        if(signature != null){
+            buffer.write(signature.bytes());
+        }
+
+        return buffer.toByteArray();
     }
 
     @Override
@@ -522,12 +572,6 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public byte[] rlpEncodedTx() {
-        //TODO: not implemented yet
-        return new byte[0];
-    }
-
-    @Override
     public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
         return type.getSpec() == spec;
     }
@@ -550,7 +594,6 @@ public class TransactionImpl implements Transaction {
         return (int) (getId() ^ (getId() >>> 32));
     }
 
-
     @Deprecated(since = "TransactionV3")
     private int getSize() {
         int signatureSize = 0;
@@ -566,11 +609,15 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public int getFullSize() {
-        int fullSize = getSize() - appendagesSize;
-        for (AbstractAppendix appendage : getAppendages()) {
-            fullSize += appendage.getFullSize();
+        if(version < 3) {
+            int fullSize = getSize() - appendagesSize;
+            for (AbstractAppendix appendage : getAppendages()) {
+                fullSize += appendage.getFullSize();
+            }
+            return fullSize;
+        }else{
+            return rlpEncodedTx().length;
         }
-        return fullSize;
     }
 
     /**
@@ -729,6 +776,25 @@ public class TransactionImpl implements Transaction {
         private short index = -1;
         private long dbId = 0;
 
+        private final Map<Class<? extends AbstractAppendix>, Consumer<AbstractAppendix>> appendagesMap = Map.of(
+            MessageAppendix.class, appendix -> message = (MessageAppendix) appendix,
+            EncryptedMessageAppendix.class, appendix -> encryptedMessage= (EncryptedMessageAppendix) appendix,
+            EncryptToSelfMessageAppendix.class, appendix -> encryptToSelfMessage = (EncryptToSelfMessageAppendix) appendix,
+            PublicKeyAnnouncementAppendix.class, appendix -> publicKeyAnnouncement = (PublicKeyAnnouncementAppendix) appendix,
+            PrunablePlainMessageAppendix.class, appendix -> prunablePlainMessage = (PrunablePlainMessageAppendix) appendix,
+            PrunableEncryptedMessageAppendix.class, appendix -> prunableEncryptedMessage = (PrunableEncryptedMessageAppendix) appendix,
+            PhasingAppendix.class, appendix -> phasing = (PhasingAppendix) appendix
+        );
+
+        /**
+         * Transaction V3 properties
+         */
+        private String chainId;
+        private BigInteger nonce;
+        private BigInteger amount;
+        private BigInteger fuelLimit;
+        private BigInteger fuelPrice;
+
         public BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
                            AbstractAttachment attachment, int timestamp, TransactionType transactionType) {
             this.version = version;
@@ -742,6 +808,22 @@ public class TransactionImpl implements Transaction {
                 throw new IllegalArgumentException("Timestamp cannot be less than 0");
             }
             this.timestamp = timestamp;
+        }
+
+        public BuilderImpl(String chainId,
+                           TransactionType transactionType, byte version,
+                           byte[] senderPublicKey, BigInteger nonce,
+                           BigInteger amount, BigInteger fuelLimit, BigInteger fuelPrice,
+                           int deadline, long timestamp,
+                           AbstractAttachment attachment ) {
+
+            this(version, senderPublicKey, amount.longValueExact(), fuelLimit.multiply(fuelPrice).longValueExact(),
+                (short) deadline, attachment, (int) timestamp, transactionType);
+            this.chainId = chainId;
+            this.nonce = nonce;
+            this.amount = amount;
+            this.fuelLimit = fuelLimit;
+            this.fuelPrice = fuelPrice;
         }
 
         @Override
@@ -770,6 +852,18 @@ public class TransactionImpl implements Transaction {
             return this;
         }
 
+        @Override
+        public BuilderImpl appendix(AbstractAppendix appendix) {
+            Consumer<AbstractAppendix> consumer = appendagesMap.get(appendix.getClass());
+            if(consumer == null){
+                throw new IllegalStateException("Incompatible appendix: name="+appendix.getAppendixName()+" class="+appendix.getClass().getName());
+            }else{
+                consumer.accept(appendix);
+            }
+            return this;
+        }
+
+        @Override
         public BuilderImpl appendix(AbstractAttachment attachment) {
             this.attachment = attachment;
             return this;
@@ -890,6 +984,16 @@ public class TransactionImpl implements Transaction {
 
         public BuilderImpl index(short index) {
             this.index = index;
+            return this;
+        }
+
+        public BuilderImpl chainId(String chainId){
+            this.chainId = chainId;
+            return this;
+        }
+
+        public BuilderImpl nonce(BigInteger nonce){
+            this.nonce = nonce;
             return this;
         }
     }

@@ -100,7 +100,7 @@ class RlpWriteBufferTest {
 
         //WHEN
         RlpWriteBuffer buffer = new RlpWriteBuffer();
-        List<RlpType> list = new RlpListBuilder()
+        List<RlpType> list = RlpList.builder()
             .add(value3)
             .add(value2)
             .add(value4)

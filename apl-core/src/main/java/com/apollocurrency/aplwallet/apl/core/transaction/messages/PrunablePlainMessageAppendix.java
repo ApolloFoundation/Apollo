@@ -168,4 +168,9 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
         return (prunableMessage != null || message != null);
     }
 
+    @Override
+    public int getAppendixFlag() {
+        return 0x20;
+    }
+
 }

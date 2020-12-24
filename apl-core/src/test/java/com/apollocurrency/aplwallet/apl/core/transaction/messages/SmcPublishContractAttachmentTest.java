@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
@@ -46,10 +48,15 @@ class SmcPublishContractAttachmentTest {
     void putMyBytes() {
         //GIVEN
         RlpWriteBuffer buffer = new RlpWriteBuffer();
-        expected.putBytes(buffer);
+        RlpList.RlpListBuilder listBuilder = RlpList.builder();
+        expected.putBytes(listBuilder);
+        buffer.write(listBuilder.build());
+        byte[] input = buffer.toByteArray();
 
         //WHEN
-        SmcPublishContractAttachment attachment = new SmcPublishContractAttachment(buffer.toByteArray());
+        RlpReader reader = new RlpReader(input).readListReader().readListReader();
+        reader.readByte();//read appendix flag = 0x00
+        SmcPublishContractAttachment attachment = new SmcPublishContractAttachment(reader);
 
         //THEN
         assertEquals(expected.getContractSource(), attachment.getContractSource());

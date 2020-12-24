@@ -75,7 +75,7 @@ public class TransactionCreator {
         PrunablePlainMessageAppendix prunablePlainMessage = txRequest.isMessageIsPrunable() ? (PrunablePlainMessageAppendix) txRequest.getMessage() : null;
 
         PublicKeyAnnouncementAppendix publicKeyAnnouncement = null;
-        if (txRequest.getRecipientPublicKey() != null) {
+        if (txRequest.getRecipientPublicKey() != null && transactionType.canHaveRecipient()) {
             publicKeyAnnouncement = new PublicKeyAnnouncementAppendix(Convert.parseHexString(txRequest.getRecipientPublicKey()));
         }
         if (txRequest.getKeySeed() == null && txRequest.getSecretPhrase() != null) {
@@ -96,9 +96,9 @@ public class TransactionCreator {
             return tcd;
         }
 
-        short deadline;
+        int deadline;
         try {
-            deadline = Short.parseShort(txRequest.getDeadlineValue());
+            deadline = Integer.parseInt(txRequest.getDeadlineValue());
             if (deadline < 1) {
                 tcd.setErrorType(TransactionCreationData.ErrorType.INCORRECT_DEADLINE);
                 return tcd;
@@ -120,10 +120,21 @@ public class TransactionCreator {
         int timestamp = txRequest.getTimestamp() != 0 ? txRequest.getTimestamp() : timeService.getEpochTime();
         Transaction transaction;
         try {
-            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(version, txRequest.getPublicKey(),
-                txRequest.getAmountATM(), txRequest.getFeeATM(),
-                deadline, txRequest.getAttachment(), timestamp)
-                .referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
+            Transaction.Builder builder;
+            if(version < 3) {
+                builder = transactionBuilder.newTransactionBuilder(version, txRequest.getPublicKey(),
+                    txRequest.getAmountATM(), txRequest.getFeeATM(),
+                    (short) deadline, txRequest.getAttachment(), timestamp);
+            }else{
+                builder = transactionBuilder.newTransactionBuilder(txRequest.getChainId(), version,
+                    txRequest.getPublicKey(), txRequest.getNonce(),
+                    txRequest.getAmount(), txRequest.getFuelLimit(), txRequest.getFuelPrice(),
+                    deadline, timestamp,
+                    txRequest.getAttachment()
+                );
+            }
+
+            builder.referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
             if (transactionType.canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());
             }

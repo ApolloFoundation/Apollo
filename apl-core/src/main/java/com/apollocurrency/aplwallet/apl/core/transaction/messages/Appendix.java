@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -40,14 +40,31 @@ public interface Appendix {
     int getFullSize();
 
     /**
-     * @deprecated use {@link #putBytes(RlpWriteBuffer)}
+     * @deprecated use {@link #putBytes(RlpList.RlpListBuilder)}
      */
     @Deprecated(since = "TransactionV3")
     void putBytes(ByteBuffer buffer);
 
-    void putBytes(RlpWriteBuffer buffer);
+    void putBytes(RlpList.RlpListBuilder builder);
 
     JSONObject getJSONObject();
+
+    /**
+     * Returns appendix flag as a bit mask.
+     * 0x00 - AbstractAttachment
+     * 0x01 - Message
+     * 0x02 - EncryptedMessage
+     * 0x04 - PublicKeyAnnouncement
+     * 0x08 - EncryptToSelfMessage
+     * 0x10 - Phasing
+     * 0x20 - PrunablePlainMessage
+     * 0x40 - PrunableEncryptedMessage
+     *
+     * @return appendix flag
+     */
+    default int getAppendixFlag(){
+        return 0;
+    }
 
     byte getVersion();
 

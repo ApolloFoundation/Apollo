@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.v2.NotFoundException;
 import com.apollocurrency.aplwallet.api.v2.SmcApiService;
 import com.apollocurrency.aplwallet.api.v2.model.PublishContractReqTest;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionArrayResp;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -15,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -34,12 +36,14 @@ import java.nio.charset.StandardCharsets;
 @RequestScoped
 public class SmcApiServiceImpl implements SmcApiService {
 
+    private final BlockchainConfig blockchainConfig;
     private final AccountService accountService;
     private final TransactionCreator transactionCreator;
     private final CryptoLibProvider cryptoLibProvider;
 
     @Inject
-    public SmcApiServiceImpl(AccountService accountService, TransactionCreator transactionCreator, CryptoLibProvider cryptoLibProvider) {
+    public SmcApiServiceImpl(BlockchainConfig blockchainConfig, AccountService accountService, TransactionCreator transactionCreator, CryptoLibProvider cryptoLibProvider) {
+        this.blockchainConfig = blockchainConfig;
         this.accountService = accountService;
         this.transactionCreator = transactionCreator;
         this.cryptoLibProvider = cryptoLibProvider;
@@ -65,25 +69,21 @@ public class SmcApiServiceImpl implements SmcApiService {
             .constructorParams(body.getParams())
             .build();
 
-        String publicKey = Convert.toHexString(
-            Crypto.getPublicKey(
-                Crypto.getKeySeed(
-                    Convert2.rsAccount(account.getId())
-                    , Crypto.sha256().digest(attachment.getContractSource().getBytes(StandardCharsets.UTF_8))
-                    , Crypto.getSecureRandom().generateSeed(32)
-                )
-            )
-        );
+        String publicKey = generatePublicKey(account, attachment.getContractSource());
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
+            .chainId(blockchainConfig.getChain().getChainId().toString())
             .version(3)
             .senderAccount(account)
             .recipientPublicKey(publicKey)
             .secretPhrase(body.getSecret())
-            .deadlineValue("1440")
-            .amountATM(0)
-            .feeATM(fuelLimit.multiply(fuelPrice).longValueExact())
+            .deadlineValue(String.valueOf(1440*60))
+            .nonce(BigInteger.ONE)
+            .amount(BigInteger.ZERO)
+            .fuelLimit(fuelLimit)
+            .fuelPrice(fuelPrice)
             .attachment(attachment)
+            .credential(new MultiSigCredential(1, Crypto.getKeySeed(body.getSecret())))
             .broadcast(false)
             .validate(false)
             .build();
@@ -97,5 +97,17 @@ public class SmcApiServiceImpl implements SmcApiService {
         );
 
         return builder.bind(response).build();
+    }
+
+    private static String generatePublicKey(Account account, String src){
+        return Convert.toHexString(
+            Crypto.getPublicKey(
+                Crypto.getKeySeed(
+                    Convert2.rsAccount(account.getId())
+                    , Crypto.sha256().digest(src.getBytes(StandardCharsets.UTF_8))
+                    , Crypto.getSecureRandom().generateSeed(32)
+                )
+            )
+        );
     }
 }

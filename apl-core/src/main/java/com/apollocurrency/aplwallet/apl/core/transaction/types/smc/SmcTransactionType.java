@@ -20,9 +20,9 @@ import java.nio.ByteBuffer;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public abstract class SmcTransaction extends TransactionType {
+public abstract class SmcTransactionType extends TransactionType {
 
-    public SmcTransaction(BlockchainConfig blockchainConfig, AccountService accountService) {
+    public SmcTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
         super(blockchainConfig, accountService);
     }
 

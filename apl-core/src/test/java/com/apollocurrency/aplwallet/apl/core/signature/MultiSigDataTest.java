@@ -157,12 +157,6 @@ class MultiSigDataTest extends AbstractSigData {
     @Test
     void addSignature() {
         //GIVEN
-        Set<MultiSig.KeyId> keyIdSet = Set.of(
-            MultiSigData.createKey(PUBLIC_KEY1),
-            MultiSigData.createKey(PUBLIC_KEY2),
-            MultiSigData.createKey(PUBLIC_KEY3)
-        );
-
         assertEquals(2, multiSigData.getThresholdParticipantCount());
 
         //WHEN
@@ -176,12 +170,6 @@ class MultiSigDataTest extends AbstractSigData {
     @Test
     void testAddSignature() {
         //GIVEN
-        Set<MultiSig.KeyId> keyIdSet = Set.of(
-            MultiSigData.createKey(PUBLIC_KEY1),
-            MultiSigData.createKey(PUBLIC_KEY2),
-            MultiSigData.createKey(PUBLIC_KEY3)
-        );
-
         assertEquals(2, multiSigData.getThresholdParticipantCount());
 
         //WHEN

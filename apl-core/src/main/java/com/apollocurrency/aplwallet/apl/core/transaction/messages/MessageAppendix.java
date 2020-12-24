@@ -9,6 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -35,6 +37,12 @@ public class MessageAppendix extends AbstractAppendix {
         if (isText && !Arrays.equals(message, Convert.toBytes(Convert.toString(message)))) {
             throw new AplException.NotValidException("Message is not UTF-8 text");
         }
+    }
+
+    public MessageAppendix(RlpReader reader) {
+        super(reader);
+        this.isText = reader.readBoolean();
+        this.message = reader.read();
     }
 
     public MessageAppendix(JSONObject attachmentData) {
@@ -91,6 +99,13 @@ public class MessageAppendix extends AbstractAppendix {
     }
 
     @Override
+    public void putMyBytes(RlpList.RlpListBuilder builder) {
+        builder
+            .add(isText)
+            .add(message);
+    }
+
+    @Override
     public Fee getBaselineFee(Transaction transaction, long oneAPL) {
         return new Fee.SizeBasedFee(0, oneAPL, 32) {
             @Override
@@ -112,6 +127,11 @@ public class MessageAppendix extends AbstractAppendix {
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    }
+
+    @Override
+    public int getAppendixFlag() {
+        return 0x01;
     }
 
     public byte[] getMessage() {

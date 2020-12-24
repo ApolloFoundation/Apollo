@@ -16,12 +16,17 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishCont
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import org.json.simple.JSONObject;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public class SmcPublishTransaction extends SmcTransaction {
+@Singleton
+public class SmcPublishTransactionType extends SmcTransactionType {
 
-    public SmcPublishTransaction(BlockchainConfig blockchainConfig, AccountService accountService) {
+    @Inject
+    public SmcPublishTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
         super(blockchainConfig, accountService);
     }
 
@@ -37,7 +42,7 @@ public class SmcPublishTransaction extends SmcTransaction {
 
     @Override
     public AbstractAttachment parseAttachment(RlpReader reader) throws AplException.NotValidException {
-        return super.parseAttachment(reader);
+        return new SmcPublishContractAttachment(reader);
     }
 
     @Override

@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -168,12 +169,15 @@ public interface Transaction {
     BigInteger getNonce();
 
     BigInteger getAmount();//long:getAmountATM
+
     BigInteger getFuelPrice();
     BigInteger getFuelLimit();
+
     long getLongTimestamp();//int getTimestamp
 
     /**
-     * Return RLP encoded transaction
+     * Return RLP encoded transaction bytes.
+     * The same as {@link #bytes()} for transaction V3
      * @return byte array of the RLP encoded transaction
      */
     byte[] rlpEncodedTx();
@@ -212,6 +216,10 @@ public interface Transaction {
         Builder referencedTransactionFullHash(String referencedTransactionFullHash);
 
         Builder referencedTransactionFullHash(byte[] referencedTransactionFullHash);
+
+        Builder appendix(AbstractAttachment attachment);
+
+        Builder appendix(AbstractAppendix appendix);
 
         Builder appendix(MessageAppendix message);
 

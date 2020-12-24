@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
@@ -43,10 +45,15 @@ class SmcCallMethodAttachmentTest {
     void putMyBytes() {
         //GIVEN
         RlpWriteBuffer buffer = new RlpWriteBuffer();
-        expected.putBytes(buffer);
+        RlpList.RlpListBuilder listBuilder = RlpList.builder();
+        expected.putBytes(listBuilder);
+        buffer.write(listBuilder.build());
+        byte[] input = buffer.toByteArray();
 
         //WHEN
-        SmcCallMethodAttachment attachment = new SmcCallMethodAttachment(buffer.toByteArray());
+        RlpReader reader = new RlpReader(input).readListReader().readListReader();
+        reader.readByte();//read appendix flag = 0x00
+        SmcCallMethodAttachment attachment = new SmcCallMethodAttachment(reader);
 
         //THEN
         assertEquals(expected.getMethodName(), attachment.getMethodName());

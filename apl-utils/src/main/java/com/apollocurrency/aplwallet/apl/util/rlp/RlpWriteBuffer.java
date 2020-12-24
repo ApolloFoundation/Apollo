@@ -40,6 +40,11 @@ public class RlpWriteBuffer {
         return this;
     }
 
+    public RlpWriteBuffer write(boolean value) {
+        write((byte) (value?1:0));
+        return this;
+    }
+
     public RlpWriteBuffer write(long value) {
         output = Arrays.concatenate(output, RlpEncoder.encode(RlpString.create(value)));
         return this;

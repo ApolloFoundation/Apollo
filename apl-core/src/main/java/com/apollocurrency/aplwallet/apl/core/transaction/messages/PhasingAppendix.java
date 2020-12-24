@@ -199,5 +199,9 @@ public class PhasingAppendix extends AbstractAppendix {
         return params;
     }
 
+    @Override
+    public int getAppendixFlag() {
+        return 0x10;
+    }
 
 }

@@ -25,14 +25,16 @@ import java.util.Set;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SignatureToolFactory {
 
+    private static final SignatureVerifier multiSigValidator = new MultiSigVerifierImpl();
+
     private static final SignatureVerifier[] validators = new SignatureVerifier[]
-        {new SignatureVerifierV1(), new MultiSigVerifierImpl()};
+        {new SignatureVerifierV1(), multiSigValidator, multiSigValidator};
 
     private static final SignatureParser[] parsers = new SignatureParser[]
-        {new SigData.Parser(), new MultiSigData.Parser()};
+        {new SigData.Parser(), new MultiSigData.Parser(), new MultiSigData.Parser()};
 
     private static final DocumentSigner[] sigSigners = new DocumentSigner[]
-        {new DocumentSignerV1(), new MultiSigSigner()};
+        {new DocumentSignerV1(), new MultiSigSigner(), new MultiSigSigner()};
 
     public static Signature createSignature(byte[] signature) {
         return new SigData(Objects.requireNonNull(signature));
@@ -45,6 +47,7 @@ public class SignatureToolFactory {
             case 1:
                 return new SignatureCredential(keys[0]);
             case 2:
+            case 3:
                 return new MultiSigCredential(keys.length, keys);
             default:
                 throw new UnsupportedTransactionVersion("Can't crate credential a given transaction version: " + version);

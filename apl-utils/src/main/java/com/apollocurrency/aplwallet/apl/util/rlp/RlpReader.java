@@ -55,6 +55,14 @@ public class RlpReader implements Iterable<RlpType> {
         return RlpConverter.toByteArray(iterator.next());
     }
 
+    public byte readByte() {
+        return RlpConverter.toByte(iterator.next());
+    }
+
+    public boolean readBoolean() {
+        return RlpConverter.toByte(iterator.next())!=0;
+    }
+
     public String readString() {
         return RlpConverter.toString(iterator.next());
     }
@@ -65,6 +73,10 @@ public class RlpReader implements Iterable<RlpType> {
 
     public int readInt() {
         return RlpConverter.toInt(iterator.next());
+    }
+
+    public short readShort() {
+        return RlpConverter.toShort(iterator.next());
     }
 
     public BigInteger readBigInteger() {
