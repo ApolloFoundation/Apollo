@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.util.task;
 
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,6 +11,8 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -75,12 +78,15 @@ class BackgroundTaskDispatcherTest {
 
         taskDispatcher = TaskDispatcherFactory.newScheduledDispatcher("TestThreadInfoSuspending");
         //task.setTask(runnable);
-        final Count count = new Count(0);
+        final AtomicInteger count = new AtomicInteger();
+        AtomicBoolean finished = new AtomicBoolean(); // operation ending detection
         task = Task.builder()
             .name("task-1")
             .task(() -> {
-                count.inc();
+                finished.set(false);
+                count.incrementAndGet();
                 log.debug("task-body: task running");
+                finished.set(true);
             })
             .initialDelay(0)
             .delay(10)
@@ -92,13 +98,16 @@ class BackgroundTaskDispatcherTest {
         Thread.sleep(SLEEP_DELAY);
         log.debug("Suspend dispatcher");
         taskDispatcher.suspend();
-        int val1 = count.value;
+        while (!finished.get()) { // wait until the last scheduled operation ending
+            ThreadUtils.sleep(10);
+        }
+        int val1 = count.get();
         Thread.sleep(SLEEP_DELAY);
         log.debug("Resume dispatcher");
-        int val2 = count.value;
+        int val2 = count.get();
         taskDispatcher.resume();
         Thread.sleep(SLEEP_DELAY);
-        int val3 = count.value;
+        int val3 = count.get();
         taskDispatcher.shutdown();
 
         assertTrue(val1 > 0);

@@ -420,8 +420,8 @@ public class DefaultTaskDispatcher implements TaskDispatcher {
 
     private static class PausableScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor implements PausableExecutorService {
         private boolean isPaused;
-        private ReentrantLock pauseLock = new ReentrantLock();
-        private Condition condition = pauseLock.newCondition();
+        private final ReentrantLock pauseLock = new ReentrantLock();
+        private final Condition condition = pauseLock.newCondition();
 
         public PausableScheduledThreadPoolExecutor(int corePoolSize, ThreadFactory threadFactory) {
             super(corePoolSize, threadFactory);
