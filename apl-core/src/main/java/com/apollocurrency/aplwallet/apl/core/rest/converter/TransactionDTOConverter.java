@@ -46,7 +46,7 @@ public class TransactionDTOConverter implements Converter<TransactionDTO, Transa
             byte[] senderPublicKey = Convert.parseHexString(txDto.getSenderPublicKey());
             byte version = txDto.getVersion() == null ? 0 : txDto.getVersion();
 
-            SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
+            SignatureParser signatureParser = SignatureToolFactory.createParser(version).orElseThrow(UnsupportedTransactionVersion::new);
             Signature signature = signatureParser.parse(Convert.parseHexString(txDto.getSignature()));
 
             int ecBlockHeight = 0;

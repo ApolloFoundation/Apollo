@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -141,13 +142,9 @@ public class TransactionApiServiceImpl implements TransactionApiService {
     }
 
     @Getter
+    @AllArgsConstructor
     private static class StatusResponse {
         int status;
         BaseResponse response;
-
-        public StatusResponse(int status, BaseResponse response) {
-            this.status = status;
-            this.response = response;
-        }
     }
 }

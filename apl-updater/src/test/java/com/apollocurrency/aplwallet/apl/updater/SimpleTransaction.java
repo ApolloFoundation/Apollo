@@ -330,6 +330,11 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
+    public byte[] rlpEncodedUnsignedTx() {
+        return new byte[0];
+    }
+
+    @Override
     public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
         return false;
     }

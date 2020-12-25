@@ -65,7 +65,7 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
             long ecBlockId = rs.getLong("ec_block_id");
             byte version = rs.getByte("version");
 
-            SignatureParser parser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
+            SignatureParser parser = SignatureToolFactory.createParser(version).orElseThrow(UnsupportedTransactionVersion::new);
             ByteBuffer signatureBuffer = ByteBuffer.wrap(rs.getBytes("signature"));
             Signature signature = parser.parse(signatureBuffer);
 

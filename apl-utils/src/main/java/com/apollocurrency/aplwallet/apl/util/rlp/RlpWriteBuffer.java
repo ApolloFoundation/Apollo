@@ -26,6 +26,10 @@ public class RlpWriteBuffer {
         output = new byte[]{};
     }
 
+    public int size(){
+        return output.length;
+    }
+
     public byte[] toByteArray(){
         return output;
     }
@@ -62,6 +66,11 @@ public class RlpWriteBuffer {
 
     public RlpWriteBuffer write(List<RlpType> list) {
         output = Arrays.concatenate(output, RlpEncoder.encode(new RlpList(list)));
+        return this;
+    }
+
+    public RlpWriteBuffer concat(byte[] bytes) {
+        output = Arrays.concatenate(output, bytes);
         return this;
     }
 }

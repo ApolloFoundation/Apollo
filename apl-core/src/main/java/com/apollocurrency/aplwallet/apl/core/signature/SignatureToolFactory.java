@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,16 +26,22 @@ import java.util.Set;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SignatureToolFactory {
 
-    private static final SignatureVerifier multiSigValidator = new MultiSigVerifierImpl();
+    //TODO: read from properties, example: "elliptic-curve=Curve25519", "pk-size=32"
+    private static final List<String> DEFAULT_MULTISIG_V3_PARAMS = List.of();
+
+    private static final SignatureVerifier multiSigValidator = new MultiSigVerifierImpl(DEFAULT_MULTISIG_V3_PARAMS);
 
     private static final SignatureVerifier[] validators = new SignatureVerifier[]
         {new SignatureVerifierV1(), multiSigValidator, multiSigValidator};
 
     private static final SignatureParser[] parsers = new SignatureParser[]
-        {new SigData.Parser(), new MultiSigData.Parser(), new MultiSigData.Parser()};
+        {new SigData.Parser(), new MultiSigData.Parser(), new MultiSigData.ParserV3()};
 
-    private static final DocumentSigner[] sigSigners = new DocumentSigner[]
-        {new DocumentSignerV1(), new MultiSigSigner(), new MultiSigSigner()};
+    private static final DocumentSigner[] sigSigners = new DocumentSigner[]{
+          new DocumentSignerV1()
+        , new MultiSigSigner(parsers[1], DEFAULT_MULTISIG_V3_PARAMS)
+        , new MultiSigSigner(parsers[2], DEFAULT_MULTISIG_V3_PARAMS)
+    };
 
     public static Signature createSignature(byte[] signature) {
         return new SigData(Objects.requireNonNull(signature));
@@ -58,7 +65,7 @@ public class SignatureToolFactory {
         return selectTool(transactionVersion, validators);
     }
 
-    public static Optional<SignatureParser> selectParser(int transactionVersion) {
+    public static Optional<SignatureParser> createParser(int transactionVersion) {
         return selectTool(transactionVersion, parsers);
     }
 
@@ -115,6 +122,11 @@ public class SignatureToolFactory {
     }
 
     private static class MultiSigVerifierImpl implements SignatureVerifier {
+        private final List<String> params;
+
+        public MultiSigVerifierImpl(List<String> params) {
+            this.params = params;
+        }
 
         @Override
         public boolean verify(byte[] document, Signature signature, Credential credential) {
@@ -135,6 +147,7 @@ public class SignatureToolFactory {
                             log.debug("Pk already verified, pk={}", Convert.toHexString(pk));
                         }
                     } else {
+                        //TODO: use params in cryptography routine
                         if (Crypto.verify(multiSigData.getSignature(pk), document, pk)) {
                             verifiedPks.add(pk);
                         }
@@ -177,6 +190,14 @@ public class SignatureToolFactory {
     }
 
     private static class MultiSigSigner implements DocumentSigner {
+        private final SignatureParser parser;
+        private final List<String> params;
+
+        public MultiSigSigner(SignatureParser parser, List<String> params) {
+            this.parser = parser;
+            this.params = params;
+        }
+
         @Override
         public Signature sign(byte[] document, Credential credential) {
             Objects.requireNonNull(document);
@@ -188,10 +209,11 @@ public class SignatureToolFactory {
             for (byte[] seed : multiSigCredential.getKeys()) {
                 signatures.put(
                     Crypto.getPublicKey(seed),
+                    //TODO: use params in cryptography routine
                     Crypto.sign(document, seed)
                 );
             }
-            MultiSigData multiSigData = new MultiSigData(signatures.size());
+            MultiSigData multiSigData = new MultiSigData(signatures.size(), params, parser);
             signatures.forEach(multiSigData::addSignature);
             if (log.isTraceEnabled()) {
                 log.trace("#MULTI_SIG# sign multi-signature: {}", multiSigData.getHexString());

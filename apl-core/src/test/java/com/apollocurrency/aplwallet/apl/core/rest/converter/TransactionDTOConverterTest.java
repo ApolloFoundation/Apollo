@@ -72,7 +72,6 @@ class TransactionDTOConverterTest {
     @Mock
     TransactionValidator validator;
 
-
     @Test
     void applyVoteCastingAttachment() throws JsonProcessingException {
         VoteCastingTransactionType voteCastingTransactionType = new VoteCastingTransactionType(blockchainConfig, accountService, pollService, validator);
@@ -83,7 +82,6 @@ class TransactionDTOConverterTest {
         TransactionDTOConverter transactionDTOConverter = new TransactionDTOConverter(transactionTypeFactory);
 
         Transaction transaction = transactionDTOConverter.apply(transactionDTO);
-
 
         assertNotNull(transaction);
         assertNotNull(transaction.getAttachment());

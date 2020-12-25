@@ -177,10 +177,17 @@ public interface Transaction {
 
     /**
      * Return RLP encoded transaction bytes.
-     * The same as {@link #bytes()} for transaction V3
+     * The same as {@link #bytes()} for V2 transaction
      * @return byte array of the RLP encoded transaction
      */
     byte[] rlpEncodedTx();
+
+    /**
+     * Return RLP encoded unsigned transaction bytes.
+     * The same as {@link #getUnsignedBytes()}} for V2 transaction
+     * @return byte array of the RLP encoded transaction
+     */
+    byte[] rlpEncodedUnsignedTx();
 
     /**
      *

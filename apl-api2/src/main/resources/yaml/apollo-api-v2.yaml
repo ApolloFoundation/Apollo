@@ -527,6 +527,38 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /@@smc/publish:
+    post:
+      tags:
+        - smc
+      summary: Publish the smart contract
+      description: |
+        Publish the smart contract.
+      operationId: createPublishContractTx
+      requestBody:
+        description: the contract source and constructor paramters
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishContractReqTest'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionArrayResp'
+        401:
+          description: Unauthorized Error
+        403:
+          description: Access Forbidden
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: []
 
   /@@smc/publish/test:
     post:
@@ -560,8 +592,6 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
         - bearerAuth: []
-
-
 
 components:
   schemas:

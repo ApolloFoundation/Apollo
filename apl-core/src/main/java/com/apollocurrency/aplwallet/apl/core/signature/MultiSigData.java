@@ -5,11 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.signature;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpConverter;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import lombok.extern.slf4j.Slf4j;
-import org.web3j.rlp.RlpType;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -31,32 +31,29 @@ import static com.apollocurrency.aplwallet.apl.core.signature.MultiSig.KeyId.KEY
  */
 @Slf4j
 class MultiSigData implements MultiSig {
-    private static final SignatureParser parser = new Parser();
-    private final byte[] payload;
+    private final SignatureParser parser;
     private final short count;
+    private final List<String> signatureParams;
     private final Map<KeyId, byte[]> signaturesMap;
     private boolean verified = false;
 
     public MultiSigData(byte[] publicKey, byte[] signature) {
-        this(1, Parser.PAYLOAD_RESERVED);
+        this(1,List.of(), new Parser());
         addSignature(publicKey, signature);
     }
 
-    public MultiSigData(int count) {
-        this(count, Parser.PAYLOAD_RESERVED);
+    public MultiSigData(int count, SignatureParser parser) {
+        this(count, List.of(), parser);
     }
 
-    public MultiSigData(int count, List<RlpType> reserved) {
-        this(count, Parser.PAYLOAD_RESERVED);
-        //TODO: parse the reserved payload
-    }
-
-    public MultiSigData(int count, byte[] payload) {
+    public MultiSigData(int count, List<String> signatureParams, SignatureParser parser) {
         if (count < 1) {
             throw new IllegalArgumentException("The count is less than 1;");
         }
         this.count = (short) count;
-        this.payload = payload;
+        //TODO: parse the signatureParams
+        this.signatureParams = signatureParams;
+        this.parser = Objects.requireNonNull(parser);
         this.signaturesMap = new HashMap<>();
     }
 
@@ -85,8 +82,8 @@ class MultiSigData implements MultiSig {
     }
 
     @Override
-    public byte[] getPayload() {
-        return payload;
+    public List<String> getParams() {
+        return signatureParams;
     }
 
     @Override
@@ -144,16 +141,12 @@ class MultiSigData implements MultiSig {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MultiSigData that = (MultiSigData) o;
-        return count == that.count &&
-            Arrays.equals(payload, that.payload) &&
-            signaturesMap.equals(that.signaturesMap);
+        return count == that.count && Objects.equals(signatureParams, that.signatureParams) && Objects.equals(signaturesMap, that.signaturesMap);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(count, signaturesMap);
-        result = 31 * result + Arrays.hashCode(payload);
-        return result;
+        return Objects.hash(count, signatureParams, signaturesMap);
     }
 
     public static KeyId createKey(byte[] key) {
@@ -226,7 +219,7 @@ class MultiSigData implements MultiSig {
                 byte[] payload = new byte[PAYLOAD_LENGTH];
                 buffer.get(payload);
                 short count = buffer.getShort();
-                multiSigData = new MultiSigData(count, payload);
+                multiSigData = new MultiSigData(count, List.of("payload="+Convert.toHexString(payload)), this);
 
                 for (int i = 0; i < count; i++) {
                     byte[] pkId = new byte[KEY_LENGTH];
@@ -282,10 +275,10 @@ class MultiSigData implements MultiSig {
         public Signature parse(RlpReader reader) {
             MultiSigData multiSigData;
             try {
-                List<RlpType> payloads = reader.readList();
+                List<String> signatureParams = reader.readList(RlpConverter::toString);
                 RlpReader signaturesListReader = reader.readListReader();
                 int count = signaturesListReader.size();
-                multiSigData = new MultiSigData(count, payloads);
+                multiSigData = new MultiSigData(count, signatureParams, this);
 
                 for (int i = 0; i < count; i++) {
                     RlpReader signatureReader = signaturesListReader.readListReader();
@@ -308,7 +301,7 @@ class MultiSigData implements MultiSig {
         public byte[] bytes(Signature signature) {
             MultiSig multiSig = (MultiSig) signature;
             RlpWriteBuffer buffer = new RlpWriteBuffer();
-            buffer.write(multiSig.getPayloads());
+            buffer.write(RlpList.ofStrings(multiSig.getParams()));
             RlpList.RlpListBuilder listBuilder = RlpList.builder();
             multiSig.signaturesMap()
                 .forEach( (keyId, bytes) ->

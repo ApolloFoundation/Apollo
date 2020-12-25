@@ -370,6 +370,11 @@ public class MandatoryTransaction implements Transaction {
     }
 
     @Override
+    public byte[] rlpEncodedUnsignedTx() {
+        return transaction.rlpEncodedUnsignedTx();
+    }
+
+    @Override
     public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
         return transaction.ofType(spec);
     }

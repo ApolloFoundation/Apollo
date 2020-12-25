@@ -99,6 +99,11 @@ public class SmcApiServiceImpl implements SmcApiService {
         return builder.bind(response).build();
     }
 
+    @Override
+    public Response createPublishContractTx(PublishContractReqTest body, SecurityContext securityContext) throws NotFoundException {
+        return null;
+    }
+
     private static String generatePublicKey(Account account, String src){
         return Convert.toHexString(
             Crypto.getPublicKey(

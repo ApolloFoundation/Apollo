@@ -91,9 +91,9 @@ class SignatureToolFactoryTest extends AbstractSigData {
     void selectParser() {
         //GIVEN
         //WHEN
-        Optional<SignatureParser> parser1 = SignatureToolFactory.selectParser(1);
-        Optional<SignatureParser> parser2 = SignatureToolFactory.selectParser(2);
-        Optional<SignatureParser> parser3 = SignatureToolFactory.selectParser(3);
+        Optional<SignatureParser> parser1 = SignatureToolFactory.createParser(1);
+        Optional<SignatureParser> parser2 = SignatureToolFactory.createParser(2);
+        Optional<SignatureParser> parser3 = SignatureToolFactory.createParser(3);
         //THEN
         assertTrue(parser1.isPresent());
         assertTrue(parser2.isPresent());

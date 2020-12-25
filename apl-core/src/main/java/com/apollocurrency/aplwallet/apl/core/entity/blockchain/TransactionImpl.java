@@ -487,6 +487,27 @@ public class TransactionImpl implements Transaction {
     @Override
     public byte[] rlpEncodedTx() {
         RlpWriteBuffer buffer = new RlpWriteBuffer();
+
+        rlpUnsignedTx(buffer);
+
+        //signature part
+        if(signature != null){
+            buffer.concat(signature.bytes());
+        }
+
+        return buffer.toByteArray();
+    }
+
+    @Override
+    public byte[] rlpEncodedUnsignedTx(){
+        RlpWriteBuffer buffer = new RlpWriteBuffer();
+
+        rlpUnsignedTx(buffer);
+
+        return buffer.toByteArray();
+    }
+
+    private void rlpUnsignedTx(RlpWriteBuffer buffer){
         //header
         buffer
             .write(type.getSpec().getType())
@@ -510,13 +531,6 @@ public class TransactionImpl implements Transaction {
             appendage.putBytes(attachmentsList);
         }
         buffer.write(attachmentsList.build());
-
-        //signature part
-        if(signature != null){
-            buffer.write(signature.bytes());
-        }
-
-        return buffer.toByteArray();
     }
 
     @Override
@@ -527,7 +541,7 @@ public class TransactionImpl implements Transaction {
             byte[] txBytes = bytes();
             return Arrays.copyOf(txBytes, txV2HeaderSize() + appendagesSize);
         } else {
-            return rlpEncodedTx();
+            return rlpEncodedUnsignedTx();
         }
     }
 

@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.signature;
 
-import org.web3j.rlp.RlpType;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,9 +15,7 @@ import java.util.Set;
  */
 public interface MultiSig extends Signature {
 
-    byte[] getPayload();
-
-    default List<RlpType> getPayloads(){
+    default List<String> getParams(){
         return List.of();
     }
 

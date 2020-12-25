@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,12 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author andrii.zinchenko@firstbridge.io
  */
 class MultiSigDataTest extends AbstractSigData {
+    private static final List<String> DEFAULT_MULTISIG_V3_PARAMS = List.of("elliptic-curve=Curve25519", "pk-size=32");
 
     MultiSigData multiSigData;
 
     @BeforeEach
     void setUp() {
-        multiSigData = new MultiSigData(2);
+        multiSigData = new MultiSigData(2, DEFAULT_MULTISIG_V3_PARAMS, new MultiSigData.Parser());
         multiSigData.addSignature(PUBLIC_KEY1, SIGNATURE1);
         multiSigData.addSignature(PUBLIC_KEY2, SIGNATURE2);
     }
@@ -38,7 +40,7 @@ class MultiSigDataTest extends AbstractSigData {
 
         //THEN
         assertEquals(1, multiSigData.getThresholdParticipantCount());
-        assertArrayEquals(ZERO4BYTES, multiSigData.getPayload());
+        assertEquals(DEFAULT_MULTISIG_V3_PARAMS, multiSigData.getParams());
         assertEquals(8 + 2 + 8 + 64, multiSigData.getSize());
     }
 
@@ -55,15 +57,12 @@ class MultiSigDataTest extends AbstractSigData {
     }
 
     @Test
-    void getPayload() {
+    void getParams() {
         //GIVEN
-        byte[] payload = new byte[]{1, 2, 3, 4};
-        multiSigData = new MultiSigData(2, payload);
+        multiSigData = new MultiSigData(2, DEFAULT_MULTISIG_V3_PARAMS, new MultiSigData.Parser());
         //WHEN
-        byte[] rc = multiSigData.getPayload();
-
         //THEN
-        assertArrayEquals(payload, rc);
+        assertEquals(DEFAULT_MULTISIG_V3_PARAMS, multiSigData.getParams());
     }
 
     @Test
@@ -182,6 +181,21 @@ class MultiSigDataTest extends AbstractSigData {
 
     @Test
     void testParser() {
+        //GIVEN
+        byte[] signature = multiSigData.bytes();
+        ByteBuffer byteBuffer = ByteBuffer.wrap(signature);
+        MultiSigData.Parser parser = new MultiSigData.Parser();
+        //WHEN
+        Signature sigData = parser.parse(byteBuffer);
+
+        //THEN
+        assertEquals(4 + 4 + 2 + 2 * (8 + 64), parser.calcDataSize(2));
+
+        checkData(sigData);
+    }
+
+    @Test
+    void testParserV3() {
         //GIVEN
         byte[] signature = multiSigData.bytes();
         ByteBuffer byteBuffer = ByteBuffer.wrap(signature);

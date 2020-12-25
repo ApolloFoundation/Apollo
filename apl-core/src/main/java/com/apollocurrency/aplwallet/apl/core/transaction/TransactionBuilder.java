@@ -17,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
@@ -65,15 +64,56 @@ public class TransactionBuilder {
         return new TransactionImpl.BuilderImpl(chainId, transactionType, (byte) version, senderPublicKey,nonce, amount, fuelLimit, fuelPrice, deadline, timestamp, (AbstractAttachment) attachment);
     }
 
+    public TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes, JSONObject prunableAttachments) throws AplException.NotValidException {
+        TransactionImpl.BuilderImpl builder = newTransactionBuilder(bytes);
+        if (prunableAttachments != null) {
+            ShufflingProcessingAttachment shufflingProcessing = ShufflingProcessingAttachment.parse(prunableAttachments);
+            if (shufflingProcessing != null) {
+                TransactionType transactionType = factory.findTransactionTypeBySpec(shufflingProcessing.getTransactionTypeSpec());
+                builder.appendix(shufflingProcessing);
+                shufflingProcessing.bindTransactionType(transactionType);
+            }
+            TaggedDataUploadAttachment taggedDataUploadAttachment = TaggedDataUploadAttachment.parse(prunableAttachments);
+            if (taggedDataUploadAttachment != null) {
+                TransactionType transactionType = factory.findTransactionTypeBySpec(taggedDataUploadAttachment.getTransactionTypeSpec());
+                taggedDataUploadAttachment.bindTransactionType(transactionType);
+                builder.appendix(taggedDataUploadAttachment);
+            }
+            TaggedDataExtendAttachment taggedDataExtendAttachment = TaggedDataExtendAttachment.parse(prunableAttachments);
+            if (taggedDataExtendAttachment != null) {
+                TransactionType transactionType = factory.findTransactionTypeBySpec(taggedDataExtendAttachment.getTransactionTypeSpec());
+                taggedDataExtendAttachment.bindTransactionType(transactionType);
+                builder.appendix(taggedDataExtendAttachment);
+            }
+            PrunablePlainMessageAppendix prunablePlainMessage = PrunablePlainMessageAppendix.parse(prunableAttachments);
+            if (prunablePlainMessage != null) {
+                builder.appendix(prunablePlainMessage);
+            }
+            PrunableEncryptedMessageAppendix prunableEncryptedMessage = PrunableEncryptedMessageAppendix.parse(prunableAttachments);
+            if (prunableEncryptedMessage != null) {
+                builder.appendix(prunableEncryptedMessage);
+            }
+        }
+        return builder;
+    }
+
     public TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws AplException.NotValidException {
+        byte version = (byte) ((bytes[1] & 0xF0) >> 4);
+        if(version<3){
+            return parseTxV2(bytes);
+        }else{
+            RlpReader reader = new RlpReader(bytes);
+            return parseTxV3(reader);
+        }
+    }
+
+    private TransactionImpl.BuilderImpl parseTxV2(byte[] bytes) throws AplException.NotValidException {
         try {
             ByteBuffer buffer = ByteBuffer.wrap(bytes);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             byte type = buffer.get();
             byte subtype = buffer.get();
             byte version = (byte) ((subtype & 0xF0) >> 4);
-            Signature signature = null;
-            SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
             subtype = (byte) (subtype & 0x0F);
             int timestamp = buffer.getInt();
             short deadline = buffer.getShort();
@@ -85,9 +125,13 @@ public class TransactionBuilder {
             byte[] referencedTransactionFullHash = new byte[32];
             buffer.get(referencedTransactionFullHash);
             referencedTransactionFullHash = Convert.emptyToNull(referencedTransactionFullHash);
+
+            Signature signature = null;
+            SignatureParser signatureParser = SignatureToolFactory.createParser(version).orElseThrow(UnsupportedTransactionVersion::new);
             if (version < 2) {
                 signature = signatureParser.parse(buffer);
             }
+
             int flags = 0;
             int ecBlockHeight = 0;
             long ecBlockId = 0;
@@ -137,11 +181,13 @@ public class TransactionBuilder {
             if ((flags & position) != 0) {
                 builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
             }
+
             if (version >= 2) {
                 //read transaction multi-signature V2
                 signature = signatureParser.parse(buffer);
             }
             builder.signature(signature);
+
             if (buffer.hasRemaining()) {
                 throw new AplException.NotValidException("Transaction bytes too long, " + buffer.remaining() + " extra bytes");
             }
@@ -152,55 +198,12 @@ public class TransactionBuilder {
         }
     }
 
-    public TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes, JSONObject prunableAttachments) throws AplException.NotValidException {
-        TransactionImpl.BuilderImpl builder = newTransactionBuilder(bytes);
-        if (prunableAttachments != null) {
-            ShufflingProcessingAttachment shufflingProcessing = ShufflingProcessingAttachment.parse(prunableAttachments);
-            if (shufflingProcessing != null) {
-                TransactionType transactionType = factory.findTransactionTypeBySpec(shufflingProcessing.getTransactionTypeSpec());
-                builder.appendix(shufflingProcessing);
-                shufflingProcessing.bindTransactionType(transactionType);
-            }
-            TaggedDataUploadAttachment taggedDataUploadAttachment = TaggedDataUploadAttachment.parse(prunableAttachments);
-            if (taggedDataUploadAttachment != null) {
-                TransactionType transactionType = factory.findTransactionTypeBySpec(taggedDataUploadAttachment.getTransactionTypeSpec());
-                taggedDataUploadAttachment.bindTransactionType(transactionType);
-                builder.appendix(taggedDataUploadAttachment);
-            }
-            TaggedDataExtendAttachment taggedDataExtendAttachment = TaggedDataExtendAttachment.parse(prunableAttachments);
-            if (taggedDataExtendAttachment != null) {
-                TransactionType transactionType = factory.findTransactionTypeBySpec(taggedDataExtendAttachment.getTransactionTypeSpec());
-                taggedDataExtendAttachment.bindTransactionType(transactionType);
-                builder.appendix(taggedDataExtendAttachment);
-            }
-            PrunablePlainMessageAppendix prunablePlainMessage = PrunablePlainMessageAppendix.parse(prunableAttachments);
-            if (prunablePlainMessage != null) {
-                builder.appendix(prunablePlainMessage);
-            }
-            PrunableEncryptedMessageAppendix prunableEncryptedMessage = PrunableEncryptedMessageAppendix.parse(prunableAttachments);
-            if (prunableEncryptedMessage != null) {
-                builder.appendix(prunableEncryptedMessage);
-            }
-        }
-        return builder;
-    }
-
-    public TransactionImpl.BuilderImpl newTransactionBuilder(RlpReader reader) throws AplException.NotValidException {
-        MessageAppendix message=null;
-        EncryptedMessageAppendix encryptedMessage=null;
-        EncryptToSelfMessageAppendix encryptToSelfMessage=null;
-        PublicKeyAnnouncementAppendix publicKeyAnnouncement=null;
-        PhasingAppendix phasing=null;
-        PrunablePlainMessageAppendix prunablePlainMessage=null;
-        PrunableEncryptedMessageAppendix prunableEncryptedMessage=null;
-
+    private TransactionImpl.BuilderImpl parseTxV3(RlpReader reader) throws AplException.NotValidException {
         try {
             //header
             byte type = reader.readByte();
             byte subtype = reader.readByte();
             byte version = (byte) ((subtype & 0xF0) >> 4);
-            Signature signature = null;
-            SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
             subtype = (byte) (subtype & 0x0F);
 
             String chainId = reader.readString();
@@ -232,7 +235,7 @@ public class TransactionBuilder {
                 RlpReader attachmentReader = attachmentsListReader.readListReader();
                 int appendixFlag = attachmentReader.readInt();
                 if (appendixFlag == 0 ){//transaction attachment
-                    attachment = transactionType.parseAttachment(reader);
+                    attachment = transactionType.parseAttachment(attachmentReader);
                     attachment.bindTransactionType(transactionType);
                 }else{//transaction appendages
                     AbstractAppendix appendix = readAppendix(appendixFlag, attachmentReader);
@@ -241,7 +244,7 @@ public class TransactionBuilder {
                     }
                 }
                 if(attachmentReader.hasNext()){
-                    throw new AplException.NotValidException("Wrong transaction structure: type="+type+", subtype="+subtype+", version="+version);
+                    throw new AplException.NotValidException("Wrong transaction attachment structure: type="+type+", subtype="+subtype+", version="+version);
                 }
             }
 
@@ -258,10 +261,11 @@ public class TransactionBuilder {
                 builder.recipientId(recipientId);
             }
 
-            if (version >= 2) {
-                //read transaction multi-signature V2
-                signature = signatureParser.parse(reader);
-            }
+            Signature signature = null;
+            //read transaction multi-signature V2
+            SignatureParser signatureParser = SignatureToolFactory.createParser(version).orElseThrow(UnsupportedTransactionVersion::new);
+            signature = signatureParser.parse(reader);
+
             builder.signature(signature);
             if (reader.hasNext()) {
                 throw new AplException.NotValidException("Transaction bytes too long");
@@ -319,7 +323,7 @@ public class TransactionBuilder {
             Long versionValue = (Long) transactionData.get("version");
             byte version = versionValue == null ? 0 : versionValue.byteValue();
 
-            SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
+            SignatureParser signatureParser = SignatureToolFactory.createParser(version).orElseThrow(UnsupportedTransactionVersion::new);
             ByteBuffer signatureBuffer = ByteBuffer.wrap(Convert.parseHexString((String) transactionData.get("signature")));
             Signature signature = signatureParser.parse(signatureBuffer);
 
