@@ -4,10 +4,10 @@ const ReadOnly = 1
 const TorShortcutName = "Apollo TOR IP masking.lnk"
 const TransportShortcutName = "Apollo Secure Transport IP masking.lnk"
 const ApplicationShortcutName = "Apollo Wallet.lnk"
-const ServiceScriptPath = "\bin\apl-start-service.vbs"
-const DesktopScriptPath = "\bin\apl-start-desktop.vbs"
-const TorDesktopScriptPath = "\bin\apl-start-tor.vbs"
-const TransportDesktopScriptPath = "\bin\apl-start-secure-transport.vbs"
+const ServiceScriptPath = "\apollo-blockchain\bin\apl-start-service.vbs"
+const DesktopScriptPath = "\apollo-blockchain\bin\apl-start-desktop.vbs"
+const TorDesktopScriptPath = "\apollo-blockchain\bin\apl-start-tor.vbs"
+const TransportDesktopScriptPath = "\apollo-blockchain\bin\apl-start-secure-transport.vbs"
 
 If Wscript.Arguments.Count > 1 Then
    For i = 0 To Wscript.Arguments.Count - 1
@@ -57,7 +57,7 @@ rem	WScript.Echo "remove_jre.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(3
 	Wscript.Echo "Root files were copied. Copy subfolders..."
 	CopySubfolders fso.GetFolder(objFolder)
 	Wscript.Echo "Subfolders were copied"
-	Shell.CurrentDirectory = WScript.Arguments(0) & "\bin"
+	Shell.CurrentDirectory = WScript.Arguments(0) & "apollo-blockchain\bin"
 	if  ("true" = LCase(WScript.Arguments(2))) Then
         
 		u = UpdateShortcut(Shell, fso, TorDesktopScriptPath, TorShortcutName)
