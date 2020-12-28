@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.files.statcheck;
 
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.Set;
  * @author al
  */
 @Slf4j
+@ToString
 public class PeersList {
 
     private final List<PeerFileHashSum> allPeers = new ArrayList<>();
@@ -43,7 +45,7 @@ public class PeersList {
             }
         }
         //well, now we have to get hash of entity from peers
-        //but there coud be not enough of them
+        //but there could be not enough of them
         //TODO: what to do if we have less? Just request bigger numbers?
         for (int idx : idxSet) {
             PeerFileHashSum p = allPeers.get(idx);
