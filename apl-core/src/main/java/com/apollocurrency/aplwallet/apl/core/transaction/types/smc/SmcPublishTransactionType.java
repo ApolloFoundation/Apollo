@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
@@ -22,6 +23,7 @@ import javax.inject.Singleton;
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 @Singleton
 public class SmcPublishTransactionType extends SmcTransactionType {
 
@@ -52,16 +54,19 @@ public class SmcPublishTransactionType extends SmcTransactionType {
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+        log.info("SMC: doStateDependentValidation");
 
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        log.info("SMC: doStateIndependentValidation");
 
     }
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        log.info("SMC: applyAttachment");
 
     }
 
