@@ -1,0 +1,4 @@
+id(-5|19|0),account_id(-5|19|0),whitelist_size(-6|3|0),finish_height(4|10|0),voting_model(-6|3|0),quorum(-5|19|0),min_balance(-5|19|0),holding_id(-5|19|0),min_balance_model(-6|3|0),hashed_secret(-3|2147483647|0),algorithm(-6|3|0),height(4|10|0),finish_time(4|10|0)
+1471926494854938613,9211698109297098287,0,4000,5,1,null,null,0,b'YmU2NWZmZjBmZDMyMWU0MGZhNTg1NzgxNWM0NTc2NjlkMGFmZGI5YzM4MjM0NDUxNDBhOWYwYTQwZjlkNDQxNA==',2,3500,-1
+208614188720864902,9211698109297098287,2,10000,0,1,null,null,0,null,0,8000,-1
+3083198303623116770,9211698109297098287,0,9500,0,1,null,null,0,null,0,8000,-1
