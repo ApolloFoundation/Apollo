@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
+import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +53,7 @@ class BlockControllerTest extends AbstractEndpointTest {
     private static final String getBlocksUri = "/block/list";
     private static final String getBlockEcUri = "/block/ec";
 
-//    private TransactionTestData txd;
+    private TransactionTestData txd;
     private BlockTestData btd;
     private BlockDTO blockDTO;
 
@@ -61,8 +62,8 @@ class BlockControllerTest extends AbstractEndpointTest {
         super.setUp();
         endpoint = new BlockController(blockchain, blockConverter, 100, timeService);
         dispatcher.getRegistry().addSingletonResource(endpoint);
-//        txd = new TransactionTestData();
-//      btd = new BlockTestData();
+        txd = new TransactionTestData();
+        btd = new BlockTestData();
     }
 
     @Test
