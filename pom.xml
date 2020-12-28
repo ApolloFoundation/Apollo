@@ -91,7 +91,7 @@
       </activation>
       <properties>
         <zipExecutionPhase>package</zipExecutionPhase>
-        <excludeTestTags/>
+        <excludeTestTags>slow</excludeTestTags>
       </properties>
     </profile>
   </profiles>

@@ -13,8 +13,6 @@ import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
@@ -37,7 +35,6 @@ import static org.mockito.Mockito.verify;
 
 
 @EnableWeld
-@Execution(ExecutionMode.SAME_THREAD)
 class DeleteTrimObserverTest {
     DatabaseManager databaseManager = mock(DatabaseManager.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
@@ -71,7 +68,7 @@ class DeleteTrimObserverTest {
         trimEvent.select(new AnnotationLiteral<TrimEvent>() {})
             .fireAsync(new DeleteOnTrimData(false, Collections.emptySet(), "some_table"));
         try {
-            Thread.sleep(200);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

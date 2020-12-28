@@ -16,7 +16,7 @@ unamestr=`uname`
 # transactions will be sent over tor only. Requires a tor proxy running
 # at localhost:9050. Set apl.shareMyAddress=false when using tor.
 
-TOR_DIR="${APL_TOP_DIR}"/"${TOR_DIST_DIR}"
+TOR_DIR="${APL_TOP_DIR}"/../"${TOR_DIST_DIR}"
 echo Tor dir  = ${TOR_DIR}
 if [ -x "${TOR_DIR}" ];  then
     TOR_CMD="${TOR_DIR}/tor"
