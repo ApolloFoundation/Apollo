@@ -265,10 +265,14 @@ public class Apollo {
             // See https://docs.jboss.org/cdi/spec/2.0.EDR2/cdi-spec.html#se_bootstrap for more details
             // we already have it in beans.xml in core
             .annotatedDiscoveryMode();
+        
+        //!!!!!!!!!!!!!!
         //TODO:  turn it on periodically in development process to check CDI errors
         // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/
         // run with ./bin/apl-run-jmx.sh
-        //.devMode()
+        // aplContainerBuilder.devMode();
+        //!!!!!!!!!!!!!!!
+        
         if (args.disableWeldConcurrentDeployment) {
             //It's very helpful when the application is stuck during the Weld Container building.
             log.info("The concurrent deployment of Weld container is disabled.");
