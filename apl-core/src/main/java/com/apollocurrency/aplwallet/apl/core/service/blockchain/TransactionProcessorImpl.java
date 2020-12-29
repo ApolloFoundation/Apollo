@@ -133,6 +133,23 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     @Override
+    public void validateBeforeBroadcast(Transaction transaction) throws AplException.ValidationException {
+        if (blockchain.hasTransaction(transaction.getId())) {
+            throw new AplException.ExistingTransactionException("Transaction " + transaction.getId() + " is already saved in blockchain");
+        }
+        if (memPool.hasUnconfirmedTransaction(transaction.getId())) {
+            throw new AplException.ExistingTransactionException("Transaction " + transaction.getId() + " is already saved in mempool");
+        }
+        transactionValidator.validateSignatureWithTxFee(transaction);
+        transactionValidator.validateFully(transaction);
+        UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, timeService.systemTimeMillis());
+        UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
+        if (!validationResult.isOk()) {
+            throw new AplException.NotValidException(validationResult.getErrorDescription());
+        }
+    }
+
+    @Override
     public void broadcast(Transaction transaction) throws AplException.ValidationException {
         if (blockchain.hasTransaction(transaction.getId())) {
             log.debug("Transaction {} already in blockchain, will not broadcast again", transaction.getStringId());

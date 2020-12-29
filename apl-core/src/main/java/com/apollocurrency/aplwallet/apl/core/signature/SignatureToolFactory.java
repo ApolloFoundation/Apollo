@@ -23,7 +23,7 @@ import java.util.Set;
  * @author andrii.zinchenko@firstbridge.io
  */
 @Slf4j
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.NONE)
 public class SignatureToolFactory {
 
     //TODO: read from properties, example: "elliptic-curve=Curve25519", "pk-size=32"
@@ -121,7 +121,7 @@ public class SignatureToolFactory {
         return signatureCredential;
     }
 
-    private static class MultiSigVerifierImpl implements SignatureVerifier {
+    static class MultiSigVerifierImpl implements SignatureVerifier {
         private final List<String> params;
 
         public MultiSigVerifierImpl(List<String> params) {
@@ -165,7 +165,7 @@ public class SignatureToolFactory {
         }
     }
 
-    private static class SignatureVerifierV1 implements SignatureVerifier {
+    static class SignatureVerifierV1 implements SignatureVerifier {
         @Override
         public boolean verify(byte[] document, Signature signature, Credential credential) {
             Objects.requireNonNull(document);
@@ -189,7 +189,7 @@ public class SignatureToolFactory {
         }
     }
 
-    private static class MultiSigSigner implements DocumentSigner {
+    static class MultiSigSigner implements DocumentSigner {
         private final SignatureParser parser;
         private final List<String> params;
 
@@ -233,7 +233,7 @@ public class SignatureToolFactory {
         }
     }
 
-    private static class DocumentSignerV1 implements DocumentSigner {
+    static class DocumentSignerV1 implements DocumentSigner {
         @Override
         public Signature sign(byte[] document, Credential credential) {
             Objects.requireNonNull(document);
