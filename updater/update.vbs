@@ -43,7 +43,7 @@ rem	WScript.Echo "remove_jre.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(3
 	Wscript.Echo "Subfolders were copied"
 	Dim ParentDir
 	ParentDir =  fso.GetParentFolderName(WScript.Arguments(0))
-	Shell.CurrentDirectory = Wscript.Arguments(0) & "\..\apollo-blockchain\bin"
+	Rem Shell.CurrentDirectory = Wscript.Arguments(0) & "\..\apollo-blockchain\bin"
 	if  ("true" = LCase(WScript.Arguments(2))) Then
         
 		u = UpdateShortcut(Shell, fso, TorDesktopScriptPath, TorShortcutName)
