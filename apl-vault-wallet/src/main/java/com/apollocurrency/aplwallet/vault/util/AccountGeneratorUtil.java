@@ -2,19 +2,13 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.utils;
+package com.apollocurrency.aplwallet.vault.util;
 
-import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
-import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import org.slf4j.Logger;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import com.apollocurrency.aplwallet.vault.model.AplWalletKey;
 
 public class AccountGeneratorUtil {
-    private static final Logger log = getLogger(AccountGeneratorUtil.class);
 
     public AccountGeneratorUtil() {
     }
@@ -34,12 +28,4 @@ public class AccountGeneratorUtil {
         return new AplWalletKey(accountId, accountPublicKey, privateKey, secretBytes);
     }
 
-    /**
-     * Generate new account with random key.
-     *
-     * @return EthWallet
-     */
-    public static EthWalletKey generateEth() {
-        return EthUtil.generateNewAccount();
-    }
 }

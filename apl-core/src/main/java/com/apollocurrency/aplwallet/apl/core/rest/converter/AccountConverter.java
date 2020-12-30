@@ -16,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrenc
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
@@ -24,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.vault.service.TwoFactorAuthService;
 
 import javax.inject.Inject;
 import java.util.LinkedList;

@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedRe
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingApprovalResult;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -37,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
+import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;

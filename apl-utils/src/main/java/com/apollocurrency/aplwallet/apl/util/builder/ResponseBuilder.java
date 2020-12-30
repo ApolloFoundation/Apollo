@@ -4,13 +4,14 @@
  *
  */
 
-package com.apollocurrency.aplwallet.apl.core.rest.utils;
+package com.apollocurrency.aplwallet.apl.util.builder;
 
 import com.apollocurrency.aplwallet.api.dto.BaseDTO;
 import com.apollocurrency.aplwallet.api.response.ResponseBase;
 import com.apollocurrency.aplwallet.api.response.ResponseDone;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.ErrorInfo;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.apl.util.exception.ErrorInfo;
+import com.apollocurrency.aplwallet.apl.util.exception.Messages;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

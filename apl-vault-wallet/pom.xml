@@ -2,15 +2,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>apollo-blockchain</artifactId>
-        <groupId>com.apollocurrency</groupId>
-        <version>1.48.0</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.apollocurrency.aplwallet.vault.wallet</groupId>
+    <parent>
+        <groupId>com.apollocurrency</groupId>
+        <artifactId>apollo-blockchain</artifactId>
+        <version>1.48.0</version>
+    </parent>
+
     <artifactId>apl-vault-wallet</artifactId>
+    <name>apl-vault-wallet</name>
+    <packaging>jar</packaging>
 
     <properties>
         <web3jVersion>5.0.0</web3jVersion>
@@ -19,6 +21,11 @@
 
     <dependencies>
 
+        <dependency>
+            <groupId>com.apollocurrency</groupId>
+            <artifactId>apl-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.apollocurrency</groupId>
             <artifactId>apl-utils</artifactId>
@@ -84,6 +91,12 @@
             <groupId>org.web3j</groupId>
             <artifactId>crypto</artifactId>
             <version>${web3jVersion}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>com.j256.two-factor-auth</groupId>
+            <artifactId>two-factor-auth</artifactId>
         </dependency>
 
 

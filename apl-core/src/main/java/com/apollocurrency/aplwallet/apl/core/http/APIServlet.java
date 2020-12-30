@@ -21,15 +21,17 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.ParameterException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.vault.service.Account2FAService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.slf4j.Logger;
@@ -65,6 +67,7 @@ public final class APIServlet extends HttpServlet {
     private final Blockchain blockchain;//
     private final GlobalSync globalSync; // = CDI.current().select(GlobalSync.class).get();
     private final AdminPasswordVerifier apw; // =  CDI.current().select(AdminPasswordVerifier.class).get();
+    private final Account2FAService account2FAService;
 
     @Inject
     public APIServlet() {
@@ -72,6 +75,7 @@ public final class APIServlet extends HttpServlet {
         this.blockchain = CDI.current().select(BlockchainImpl.class).get();
         this.globalSync = CDI.current().select(GlobalSync.class).get();
         this.apw = CDI.current().select(AdminPasswordVerifier.class).get();
+        this.account2FAService = CDI.current().select(Account2FAService.class).get();
 
 
         Map<String, AbstractAPIRequestHandler> map = new HashMap<>();
@@ -180,7 +184,8 @@ public final class APIServlet extends HttpServlet {
             }
             String accountName2FA = apiRequestHandler.vaultAccountName();
             if (apiRequestHandler.is2FAProtected()) {
-                Helper2FA.verify2FA(req, accountName2FA);
+                TwoFactorAuthParameters params2FA = HttpParameterParserUtil.parse2FARequest(req, accountName2FA, false);
+                account2FAService.verify2FA(params2FA);
             }
             final long requireBlockId = apiRequestHandler.allowRequiredBlockParameters() ?
                 HttpParameterParserUtil.getUnsignedLong(req, "requireBlock", false) : 0;

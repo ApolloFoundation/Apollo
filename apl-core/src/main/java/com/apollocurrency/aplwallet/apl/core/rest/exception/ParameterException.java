@@ -16,7 +16,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.exception;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.json.simple.JSONStreamAware;
 

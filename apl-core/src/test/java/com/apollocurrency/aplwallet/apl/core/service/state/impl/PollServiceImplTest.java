@@ -3,7 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollResultTable;
@@ -20,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpda
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollOptionResultService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

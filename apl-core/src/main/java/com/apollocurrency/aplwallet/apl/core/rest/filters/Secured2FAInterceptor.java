@@ -4,11 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.filters;
 
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.vault.service.Account2FAService;
 import lombok.Setter;
 
 import javax.annotation.Priority;
@@ -22,11 +22,11 @@ import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper.CODE2FA_PARAM_NAME;
-import static com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper.PASSPHRASE_PARAM_NAME;
-import static com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper.PUBLIC_KEY_PARAM_NAME;
-import static com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper.SECRET_PHRASE_PARAM_NAME;
-import static com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
+import static com.apollocurrency.aplwallet.vault.service.Account2FAService.CODE2FA_PARAM_NAME;
+import static com.apollocurrency.aplwallet.vault.service.Account2FAService.PASSPHRASE_PARAM_NAME;
+import static com.apollocurrency.aplwallet.vault.service.Account2FAService.PUBLIC_KEY_PARAM_NAME;
+import static com.apollocurrency.aplwallet.vault.service.Account2FAService.SECRET_PHRASE_PARAM_NAME;
+import static com.apollocurrency.aplwallet.vault.service.Account2FAService.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
 
 @Secured2FA
 @Provider
@@ -37,7 +37,7 @@ public class Secured2FAInterceptor implements ContainerRequestFilter {
     ResourceInfo info;
     @Inject
     @Setter
-    private Account2FAHelper faHelper;
+    private Account2FAService faHelper;
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {

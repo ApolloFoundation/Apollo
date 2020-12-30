@@ -2,9 +2,9 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.rest.exception;
+package com.apollocurrency.aplwallet.apl.util.exception;
 
-import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;

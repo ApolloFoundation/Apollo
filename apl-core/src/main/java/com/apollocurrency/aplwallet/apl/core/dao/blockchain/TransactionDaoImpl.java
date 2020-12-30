@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -43,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;

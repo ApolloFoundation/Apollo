@@ -2,10 +2,10 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.service.appdata;
+package com.apollocurrency.aplwallet.vault.service;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
 
 public interface TwoFactorAuthService {
     /**
@@ -54,12 +54,5 @@ public interface TwoFactorAuthService {
      * @return status OK if 2fa was confirmed successfully for this account, otherwise status hold error cause
      */
     Status2FA confirm(long accountId, int authCode);
-
-    /**
-     * Check db and move all data into file if exists.
-     * That is one time method, it will be removed later.
-     */
-    @Deprecated
-    int attemptMoveDataFromDatabase();
 
 }

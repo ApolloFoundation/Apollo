@@ -1,7 +1,7 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.app.runnable;
+package com.apollocurrency.aplwallet.apl.util.service;
 
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;

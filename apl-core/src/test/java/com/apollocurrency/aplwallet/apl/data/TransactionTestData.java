@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -36,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.update.CriticalUp
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.ImportantUpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.Getter;
 import lombok.NonNull;
 

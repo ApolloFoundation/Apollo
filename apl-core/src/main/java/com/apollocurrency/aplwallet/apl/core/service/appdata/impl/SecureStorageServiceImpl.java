@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.model.SecureStorage;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.PropertyStorageService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;

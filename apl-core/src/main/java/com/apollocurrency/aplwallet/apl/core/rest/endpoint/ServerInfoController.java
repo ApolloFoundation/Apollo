@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
 import com.apollocurrency.aplwallet.api.dto.info.TimeDto;
 import com.apollocurrency.aplwallet.api.dto.info.TotalSupplyDto;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

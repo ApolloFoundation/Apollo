@@ -8,12 +8,12 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorException
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.IllegalArgumentExceptionMapper;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.BlockchainHeightValidator;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.CustomValidatorFactory;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.TimestampValidator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterExceptionMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;

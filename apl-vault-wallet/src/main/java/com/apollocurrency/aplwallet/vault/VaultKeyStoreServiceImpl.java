@@ -4,19 +4,19 @@
 
  package com.apollocurrency.aplwallet.vault;
 
- import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
  import com.apollocurrency.aplwallet.apl.crypto.Convert;
  import com.apollocurrency.aplwallet.apl.crypto.Crypto;
  import com.apollocurrency.aplwallet.apl.util.AplCollectionUtils;
  import com.apollocurrency.aplwallet.apl.util.Convert2;
  import com.apollocurrency.aplwallet.apl.util.JSON;
  import com.apollocurrency.aplwallet.apl.util.NtpTime;
+ import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
  import com.apollocurrency.aplwallet.vault.model.AplWalletKey;
  import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
  import com.apollocurrency.aplwallet.vault.model.EncryptedSecretBytesDetails;
  import com.apollocurrency.aplwallet.vault.model.SecretBytesDetails;
  import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
- import com.apollocurrency.aplwallet.vault.service.Helper2FA;
+ import com.apollocurrency.aplwallet.vault.service.Account2FAService;
  import com.apollocurrency.aplwallet.vault.util.FbWalletUtil;
  import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
  import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,10 +54,12 @@
      private Path keystoreDirPath;
      private Integer version;
      private NtpTime ntpTime;
+     private Account2FAService account2FAService;
 
      @Inject
-     public VaultKeyStoreServiceImpl(@Named("keystoreDirPath") Path keystoreDir, NtpTime ntpTime) {
+     public VaultKeyStoreServiceImpl(@Named("keystoreDirPath") Path keystoreDir, NtpTime ntpTime, Account2FAService account2FAService) {
          this(keystoreDir, CURRENT_KEYSTORE_VERSION, ntpTime);
+         this.account2FAService = account2FAService;
      }
 
      public VaultKeyStoreServiceImpl(Path keystoreDir, Integer version, NtpTime ntpTime) {
@@ -166,8 +168,8 @@
          byte[] secretBytes = secretBytesDetails.getSecretBytes();
 
          try {
-             Helper2FA.generateUserWallet(passphrase, secretBytes);
-         } catch (ParameterException e) {
+             account2FAService.generateUserWallet(passphrase, secretBytes);
+         } catch (RestParameterException e) {
              LOG.error(e.getMessage(), e);
              return false;
          }

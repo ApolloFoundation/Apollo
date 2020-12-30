@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.poll;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
@@ -40,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollC
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;

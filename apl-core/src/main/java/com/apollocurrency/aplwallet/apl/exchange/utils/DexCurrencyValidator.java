@@ -1,9 +1,9 @@
 package com.apollocurrency.aplwallet.apl.exchange.utils;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
 /**
  * Examples of latest approach of working with currency pairs.

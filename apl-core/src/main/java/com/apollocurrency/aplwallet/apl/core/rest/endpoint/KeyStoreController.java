@@ -1,24 +1,25 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.ExportKeyStore;
-import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
-import com.apollocurrency.aplwallet.apl.core.utils.FbWalletUtil;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.apl.util.exception.ParameterException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.vault.KeyStoreService;
+import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.service.Account2FAService;
+import com.apollocurrency.aplwallet.vault.util.FbWalletUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -56,9 +57,9 @@ import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 public class KeyStoreController {
 
     private final KeyStoreService keyStoreService = CDI.current().select(KeyStoreService.class).get();
-    private final Helper2FA helper2FA = CDI.current().select(Helper2FA.class).get();
     private PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
     private SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
+    private Account2FAService account2FAService = CDI.current().select(Account2FAService.class).get();
     private Integer maxKeyStoreSize = propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize");
 
 
@@ -203,6 +204,7 @@ public class KeyStoreController {
             String passphraseStr = HttpParameterParserUtil.getPassphrase(passphraseReq, true);
             long accountId = HttpParameterParserUtil.getAccountId(account, "account", true);
 
+
             if (!keyStoreService.isKeyStoreForAccountExist(accountId)) {
                 return Response.status(Response.Status.OK)
                     .entity(JSON.toString(JSONResponses.vaultWalletError(accountId,
@@ -210,9 +212,12 @@ public class KeyStoreController {
                     ).build();
             }
 
-            if (helper2FA.isEnabled2FA(accountId)) {
+            if (account2FAService.isEnabled2FA(accountId)) {
                 int code2FA = HttpParameterParserUtil.getInt(request, "code2FA", 0, Integer.MAX_VALUE, false);
-                Status2FA status2FA = helper2FA.auth2FA(passphraseStr, accountId, code2FA);
+                TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(accountId, passphraseStr, null);
+                twoFactorAuthParameters.setCode2FA(code2FA);
+
+                Status2FA status2FA = account2FAService.verify2FA(twoFactorAuthParameters);
                 if (!status2FA.OK.equals(status2FA)) {
                     return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.error2FA(status2FA, accountId))).build();
                 }
@@ -247,7 +252,10 @@ public class KeyStoreController {
         String aplVaultPassphrase = HttpParameterParserUtil.getPassphrase(passphrase, true);
         long accountId = HttpParameterParserUtil.getAccountId(account, "account", true);
 
-        Helper2FA.verifyVault2FA(accountId, code);
+        TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(accountId, aplVaultPassphrase, null);
+        twoFactorAuthParameters.setCode2FA(code);
+        account2FAService.verify2FA(twoFactorAuthParameters);
+
         if (!keyStoreService.isKeyStoreForAccountExist(accountId)) {
             return Response.status(Response.Status.OK)
                 .entity(JSON.toString(JSONResponses.vaultWalletError(accountId,

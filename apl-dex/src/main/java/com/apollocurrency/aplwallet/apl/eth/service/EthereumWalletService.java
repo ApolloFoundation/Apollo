@@ -2,7 +2,6 @@ package com.apollocurrency.aplwallet.apl.eth.service;
 
 import com.apollocurrency.aplwallet.apl.eth.dao.UserErrorMessageDao;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.exception.DexException;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotSufficientFundsException;
@@ -13,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.UserErrorMessage;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
 import lombok.extern.slf4j.Slf4j;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
@@ -213,15 +213,15 @@ public class EthereumWalletService {
      * @param gasPrice  Gwei
      * @return String - transaction Hash.
      */
-    public String transfer(EthWalletKey ethWalletKey, String fromAddress, String toAddress, BigDecimal amountEth, Long gasPrice, DexCurrency currencies) {
-        if (ethWalletKey == null) {
+    public String transfer(Credentials ethCredentials, String fromAddress, String toAddress, BigDecimal amountEth, Long gasPrice, DexCurrency currencies) {
+        if (ethCredentials == null) {
             throw new DexException("Not found eth address at the user storage: " + fromAddress);
         }
 
         if (DexCurrency.ETH.equals(currencies)) {
-            return transferEth(ethWalletKey.getCredentials(), toAddress, EthUtil.etherToWei(amountEth), gasPrice);
+            return transferEth(ethCredentials, toAddress, EthUtil.etherToWei(amountEth), gasPrice);
         } else if (DexCurrency.PAX.equals(currencies)) {
-            return transferERC20(PAX_CONTRACT_ADDRESS, ethWalletKey.getCredentials(), toAddress, EthUtil.etherToWei(amountEth), gasPrice);
+            return transferERC20(PAX_CONTRACT_ADDRESS, ethCredentials, toAddress, EthUtil.etherToWei(amountEth), gasPrice);
         } else {
             throw new DexException("Withdraw not supported for " + currencies.getCurrencyCode());
         }

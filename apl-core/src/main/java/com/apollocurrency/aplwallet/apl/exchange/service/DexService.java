@@ -1,8 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.api.request.GetEthBalancesRequest;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.cache.DexOrderFreezingCacheConfig;
@@ -18,18 +16,15 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollRes
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.http.post.TransactionResponse;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrderWithFreezing;
 import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.core.model.dex.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.CustomRequestWrapper;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -48,7 +43,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
@@ -81,6 +75,12 @@ import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.ParameterException;
+import com.apollocurrency.aplwallet.vault.KeyStoreService;
+import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
+import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.service.Account2FAService;
 import com.google.common.cache.Cache;
 import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
@@ -126,6 +126,7 @@ public class DexService {
     private BlockchainConfig blockchainConfig;
     private AccountService accountService;
     private DexConfig dexConfig;
+    private final Account2FAService account2FAService;
 
     private Integer MAX_PAGES_FOR_SEARCH = 10;
 
@@ -138,7 +139,7 @@ public class DexService {
                       BlockchainConfig blockchainConfig,
                       @CacheProducer
                       @CacheType(DexOrderFreezingCacheConfig.CACHE_NAME) Cache<Long, OrderFreezing> cache,
-                      DexConfig dexConfig, KeyStoreService keyStoreService) {
+                      DexConfig dexConfig, KeyStoreService keyStoreService, Account2FAService account2FAService) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOrderDao = dexOrderDao;
         this.dexOrderTable = dexOrderTable;
@@ -160,6 +161,7 @@ public class DexService {
         this.accountService = accountService;
         this.dexConfig = dexConfig;
         this.keyStoreService = keyStoreService;
+        this.account2FAService = account2FAService;
     }
 
 
@@ -341,7 +343,7 @@ public class DexService {
             WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(secretPhrase, accountId);
             EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
 
-            return ethereumWalletService.transfer(ethWalletKey, fromAddress, toAddress, amount, transferFee, currencies);
+            return ethereumWalletService.transfer(ethWalletKey.getCredentials(), fromAddress, toAddress, amount, transferFee, currencies);
         } else {
             throw new AplException.ExecutiveProcessException("Withdraw not supported for " + currencies.getCurrencyCode());
         }
@@ -635,7 +637,7 @@ public class DexService {
                 .passphrase(passphrase)
                 .publicKey(accountService.getPublicKeyByteArray(userAccountId))
                 .senderAccount(accountService.getAccount(userAccountId))
-                .keySeed(Crypto.getKeySeed(Helper2FA.findAplSecretBytes(userAccountId, passphrase)))
+                .keySeed(Crypto.getKeySeed(account2FAService.findAplSecretBytes(userAccountId, passphrase)))
                 .deadlineValue("1440")
                 .feeATM(Math.multiplyExact(blockchainConfig.getOneAPL(), 2))
                 .broadcast(true)

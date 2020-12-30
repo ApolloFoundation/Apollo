@@ -1,6 +1,6 @@
-package com.apollocurrency.aplwallet.apl.core.dao.appdata;
+package com.apollocurrency.aplwallet.vault.service;
 
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthEntity;
 
 import java.util.List;
 

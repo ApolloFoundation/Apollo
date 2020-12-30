@@ -2,18 +2,13 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionHash;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidAtomicSwapTime;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -25,6 +20,12 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.ParameterException;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.vault.service.Account2FAService;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -62,11 +63,13 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION
 public class DexTransactionSendingController {
     private DexApiValidator validator;
     private DexService dexService;
+    private Account2FAService account2FAService;
 
     @Inject
-    public DexTransactionSendingController(DexApiValidator validator, DexService dexService) {
+    public DexTransactionSendingController(DexApiValidator validator, DexService dexService, Account2FAService account2FAService) {
         this.validator = validator;
         this.dexService = dexService;
+        this.account2FAService = account2FAService;
     }
 
     //Not delete, required for RESTEASY
@@ -448,7 +451,10 @@ public class DexTransactionSendingController {
         Account account = HttpParameterParserUtil.getAccount(accountString, "sender");
         String decryptedPassphrase = HttpParameterParserUtil.getPassphrase(passphrase, true);
         validator.validateVaultAccount(account.getId(), passphrase);
-        Helper2FA.verifyVault2FA(account.getId(), code2FA);
+        TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(account.getId(), passphrase, null);
+        twoFactorAuthParameters.setCode2FA(code2FA);
+        account2FAService.verify2FA(twoFactorAuthParameters);
+
         return new AccountDetails(decryptedPassphrase, account);
     }
 

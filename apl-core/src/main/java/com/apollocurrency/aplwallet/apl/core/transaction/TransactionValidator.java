@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.antifraud.AntifraudValidator;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -29,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentChildSpecific;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentMarker;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;

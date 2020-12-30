@@ -1,16 +1,12 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEventType;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
@@ -46,9 +42,13 @@ import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.ParameterException;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
+import com.apollocurrency.aplwallet.vault.service.Account2FAService;
 import lombok.extern.slf4j.Slf4j;
 import org.web3j.utils.Numeric;
 
@@ -115,6 +115,7 @@ public class DexOrderProcessor {
     private DexConfig dexConfig;
     private Blockchain blockchain;
     private final BlockchainConfig blockchainConfig;
+    private final Account2FAService account2FAService;
 
     @Inject
     public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService,
@@ -127,7 +128,8 @@ public class DexOrderProcessor {
                              @Property(name = "apl.dex.orderProcessor.enabled", defaultValue = "true") boolean startProcessor,
                              @Property(name = "apl.dex.orderProcessor.delay", defaultValue = "" + DEFAULT_DEX_OFFER_PROCESSOR_DELAY) int processingDelay,
                              DexConfig dexConfig,
-                             BlockchainConfig blockchainConfig
+                             BlockchainConfig blockchainConfig,
+                             Account2FAService account2FAService
     ) {
 
         this.secureStorageService = secureStorageService;
@@ -148,6 +150,7 @@ public class DexOrderProcessor {
         this.accountService = accountService;
         this.dexConfig = dexConfig;
         this.blockchainConfig = blockchainConfig;
+        this.account2FAService = account2FAService;
     }
 
     @PostConstruct
@@ -711,8 +714,8 @@ public class DexOrderProcessor {
     }
 
 
-    private CreateTransactionRequest buildRequest(String passphrase, Long accountId, Attachment attachment, Long feeATM) throws ParameterException {
-        byte[] keySeed = Crypto.getKeySeed(Helper2FA.findAplSecretBytes(accountId, passphrase));
+    private CreateTransactionRequest buildRequest(String passphrase, Long accountId, Attachment attachment, Long feeATM) {
+        byte[] keySeed = Crypto.getKeySeed(account2FAService.findAplSecretBytes(accountId, passphrase));
         CreateTransactionRequest transferMoneyReq = CreateTransactionRequest
             .builder()
             .passphrase(passphrase)

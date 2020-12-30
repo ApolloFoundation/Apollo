@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.parameter;
 
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 
 public interface RestParameter<T> {
 

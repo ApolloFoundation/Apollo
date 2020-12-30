@@ -4,8 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.exception;
 
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.NotFoundException;

@@ -4,7 +4,7 @@
  *
  */
 
-package com.apollocurrency.aplwallet.apl.core.rest.utils;
+package com.apollocurrency.aplwallet.apl.util.exception;
 
 import java.text.FieldPosition;
 import java.text.MessageFormat;

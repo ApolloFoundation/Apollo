@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedRe
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrderWithFreezing;
 import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -34,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.google.common.cache.LoadingCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

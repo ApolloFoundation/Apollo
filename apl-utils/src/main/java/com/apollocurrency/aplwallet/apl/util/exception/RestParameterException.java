@@ -2,9 +2,7 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.rest.exception;
-
-import com.apollocurrency.aplwallet.apl.core.rest.ErrorInfo;
+package com.apollocurrency.aplwallet.apl.util.exception;
 
 /**
  * Exception with dedicated mapper {@link RestParameterExceptionMapper}, can be thrown directly from REST endpoint

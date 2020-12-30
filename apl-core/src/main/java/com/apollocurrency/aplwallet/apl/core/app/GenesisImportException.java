@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+
 /**
  * @author andrii.zinchenko@firstbridge.io
  */

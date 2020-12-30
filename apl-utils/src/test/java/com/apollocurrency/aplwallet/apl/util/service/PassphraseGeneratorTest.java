@@ -2,9 +2,8 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.service.appdata;
+package com.apollocurrency.aplwallet.apl.util.service;
 
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.PassphraseGeneratorImpl;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

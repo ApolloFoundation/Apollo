@@ -26,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExcepti
 import com.apollocurrency.aplwallet.apl.core.rest.exception.IllegalArgumentExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.CharsetRequestFilter;
@@ -37,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.provider.PlatformSpecConverter
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

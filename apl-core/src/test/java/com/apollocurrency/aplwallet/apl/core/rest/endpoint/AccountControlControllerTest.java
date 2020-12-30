@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.account.AccountControlPhasingDTO;
 import com.apollocurrency.aplwallet.api.response.AccountControlPhasingResponse;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -17,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountContro
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingTestData;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.jboss.resteasy.mock.MockHttpResponse;

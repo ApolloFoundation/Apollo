@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.provider;
 
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.Arch;
 import com.apollocurrency.aplwallet.apl.util.env.OS;
 import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import lombok.AllArgsConstructor;
 
 import javax.ws.rs.FormParam;

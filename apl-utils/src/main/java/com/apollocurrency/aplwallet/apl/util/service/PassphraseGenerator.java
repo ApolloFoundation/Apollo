@@ -2,7 +2,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.service.appdata;
+package com.apollocurrency.aplwallet.apl.util.service;
 
 public interface PassphraseGenerator {
     /**

@@ -1,26 +1,24 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.apl.core.rest.utils;
+package com.apollocurrency.aplwallet.vault.service;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
-import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TwoFactorAuthService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.PassphraseGeneratorImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
+import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
+import com.apollocurrency.aplwallet.apl.util.service.PassphraseGeneratorImpl;
+import com.apollocurrency.aplwallet.vault.KeyStoreService;
+import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.util.AccountHelper;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -33,7 +31,7 @@ import javax.inject.Singleton;
  */
 @Slf4j
 @Singleton
-public class Account2FAHelper {
+public class Account2FAService {
     public static final String TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME = "twoFactorAuthParameters";
     public static final String PASSPHRASE_PARAM_NAME = "passphrase";
     public static final String SECRET_PHRASE_PARAM_NAME = "secretPhrase";
@@ -42,18 +40,16 @@ public class Account2FAHelper {
 
     private final TwoFactorAuthService service2FA;
     private final PassphraseGeneratorImpl passphraseGenerator;
-
     private final ElGamalEncryptor elGamal;
     private final KeyStoreService keyStoreService;
-    private final AccountService accountService;
 
     @Inject
-    public Account2FAHelper(TwoFactorAuthService service2FA, KeyStoreService keyStoreService, ElGamalEncryptor elGamal, AccountService accountService) {
+    public Account2FAService(TwoFactorAuthService service2FA, KeyStoreService keyStoreService, ElGamalEncryptor elGamal,
+                             PassphraseGeneratorImpl passphraseGenerator) {
         this.keyStoreService = keyStoreService;
         this.elGamal = elGamal;
-        this.accountService = accountService;
-        this.passphraseGenerator = new PassphraseGeneratorImpl(10, 15);
         this.service2FA = service2FA;
+        this.passphraseGenerator = passphraseGenerator;
     }
 
     /**
@@ -162,7 +158,7 @@ public class Account2FAHelper {
         return params2FA;
     }
 
-    private Status2FA verify2FA(TwoFactorAuthParameters params2FA) throws RestParameterException {
+    public Status2FA verify2FA(TwoFactorAuthParameters params2FA) throws RestParameterException {
         if (params2FA.getCode2FA() == null) {
             throw new RestParameterException(ApiErrors.MISSING_PARAM, "code2FA");
         }
@@ -182,27 +178,6 @@ public class Account2FAHelper {
 
     public boolean isEnabled2FA(long accountId) {
         return service2FA.isEnabled(accountId);
-    }
-
-    public WalletKeysInfo generateUserWallet(String passphrase) throws RestParameterException {
-        return generateUserWallet(passphrase, null);
-    }
-
-    public WalletKeysInfo generateUserWallet(String passphrase, byte[] secretApl) throws RestParameterException {
-        if (passphrase == null) {
-            passphrase = passphraseGenerator.generate();
-        }
-
-        ApolloFbWallet apolloWallet = accountService.generateUserAccounts(secretApl);
-
-        long aplId = apolloWallet.getAplWalletKey().getId();
-
-        KeyStoreService.Status status = keyStoreService.saveSecretKeyStore(passphrase, aplId, apolloWallet);
-        validateKeyStoreStatus(aplId, status, "generated");
-
-        WalletKeysInfo walletKeyInfo = new WalletKeysInfo(apolloWallet, passphrase);
-
-        return walletKeyInfo;
     }
 
     public KeyStoreService.Status deleteAccount(long accountId, String passphrase, Integer code) throws RestParameterException {
@@ -234,6 +209,28 @@ public class Account2FAHelper {
         return findAplSecretBytes(twoFactorAuthParameters.getAccountId(), twoFactorAuthParameters.getPassphrase());
     }
 
+    public WalletKeysInfo generateUserWallet(String passphrase) throws RestParameterException {
+        return generateUserWallet(passphrase, null);
+    }
+
+    public WalletKeysInfo generateUserWallet(String passphrase, byte[] secretApl) throws RestParameterException {
+        if (passphrase == null) {
+            passphrase = passphraseGenerator.generate();
+        }
+
+        ApolloFbWallet apolloWallet = AccountHelper.generateApolloWallet(secretApl);
+
+        long aplId = apolloWallet.getAplWalletKey().getId();
+
+        KeyStoreService.Status status = keyStoreService.saveSecretKeyStore(passphrase, aplId, apolloWallet);
+        validateKeyStoreStatus(aplId, status, "generated");
+
+        WalletKeysInfo walletKeyInfo = new WalletKeysInfo(apolloWallet, passphrase);
+
+        return walletKeyInfo;
+    }
+
+
     private void validate2FAStatus(Status2FA status2FA, long accountId) throws RestParameterException {
         if (status2FA != Status2FA.OK) {
             log.debug("2fa error: {}-{}", Convert2.rsAccount(accountId), status2FA);
@@ -248,13 +245,4 @@ public class Account2FAHelper {
         }
     }
 
-    // ------ checked to
-    @Deprecated
-    public WalletKeysInfo importSecretBytes(String passphrase, byte[] secretBytes) throws ParameterException {
-        if (passphrase == null) {
-            passphrase = passphraseGenerator.generate();
-        }
-        WalletKeysInfo walletKeysInfo = generateUserWallet(passphrase, secretBytes);
-        return walletKeysInfo;
-    }
 }

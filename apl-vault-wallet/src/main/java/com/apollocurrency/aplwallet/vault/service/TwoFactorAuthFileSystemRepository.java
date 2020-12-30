@@ -2,12 +2,11 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.dao.appdata.impl;
+package com.apollocurrency.aplwallet.vault.service;
 
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthEntity;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;

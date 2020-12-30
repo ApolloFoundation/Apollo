@@ -1,7 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
@@ -17,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
 import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequest;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderScan;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.junit.jupiter.api.BeforeEach;

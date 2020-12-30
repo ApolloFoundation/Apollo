@@ -2,15 +2,12 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.service.appdata.impl;
+package com.apollocurrency.aplwallet.vault.service;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthEntity;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base32;
@@ -21,7 +18,6 @@ import javax.inject.Singleton;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
-import java.util.List;
 import java.util.Random;
 
 @Slf4j
@@ -34,24 +30,22 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     private static final String DEFAULT_CHARSET = "UTF-8";
     private final Random random;
     private final String issuerSuffix;
-    private TwoFactorAuthRepository repository;
     private TwoFactorAuthRepository targetFileRepository;
 
     @Inject
-    public TwoFactorAuthServiceImpl(@Named("DBRepository") TwoFactorAuthRepository repository,
-                                    @Property("apl.issuerSuffix2FA") String issuerSuffix,
+    public TwoFactorAuthServiceImpl(String issuerSuffix,
                                     @Named("FSRepository") TwoFactorAuthRepository targetFileRepository) {
-        this(repository, issuerSuffix, new Random(), targetFileRepository);
+        this(issuerSuffix, new Random(), targetFileRepository);
     }
 
-    public TwoFactorAuthServiceImpl(TwoFactorAuthRepository repository, String issuerSuffix, Random random,
+
+    public TwoFactorAuthServiceImpl(String issuerSuffix, Random random,
                                     TwoFactorAuthRepository targetFileRepository) {
         if (issuerSuffix == null || issuerSuffix.trim().isEmpty()) {
             //TODO: what is the difference?
             //  issuerSuffix = RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web";
             issuerSuffix = "web";
         }
-        this.repository = repository; // database repo
         this.random = random;
         this.issuerSuffix = issuerSuffix.trim();
         this.targetFileRepository = targetFileRepository; // file repo
@@ -163,44 +157,4 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
         return Status2FA.OK;
     }
 
-    @Override
-    public int attemptMoveDataFromDatabase() {
-        log.debug("make attempt to move data from db into file...");
-        // select all possible records from db
-        List<TwoFactorAuthEntity> result = repository.selectAll();
-        log.debug("Db repo found 2fa records = [{}]", result.size());
-        boolean isAllImportedIntoFile = true; // store and check if any error has happened on any record
-        int countProcesses = 0; // store really processed records
-        // loop over all db records if any
-        for (TwoFactorAuthEntity itemRecord : result) {
-            log.debug("Start conversion 2fa record = {}...", itemRecord);
-            if (targetFileRepository.add(itemRecord)) { // if 2fa file added
-                // added new file, record stored as 2fa file
-                log.debug("File Stored for 2fa record = {}...", itemRecord);
-            } else {
-                // 2fa file is not added by some reason
-                if (targetFileRepository.get(itemRecord.getAccount()) != null) {
-                    // a previous file found for 2fa record, remove db recors
-                    log.debug("SKIPPING, 2fa File already stored for record = {}", itemRecord);
-                } else {
-                    // a previous file is NOT found for 2fa record AND it is NOT added
-                    isAllImportedIntoFile = false;
-                    continue; // skip for next time, do not remove db record
-                }
-            }
-            try {
-                repository.delete(itemRecord.getAccount()); // remove record from db
-                countProcesses++; // increase counter when really processed
-                log.debug("DONE conversion 2fa record = {}...", itemRecord);
-            } catch (Exception e) {
-                isAllImportedIntoFile = false;
-                log.warn("Error removing 2fa record from db = {}", itemRecord, e);
-            }
-        }
-        if (!isAllImportedIntoFile) {
-            log.error("Something went wrong on export/import all 2fa records !!!");
-        }
-        log.info("Moved 2fa records = [{}], 2fa db records found = [{}]", countProcesses, result.size());
-        return countProcesses;
-    }
 }

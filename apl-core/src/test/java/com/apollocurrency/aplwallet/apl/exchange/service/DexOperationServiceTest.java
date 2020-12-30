@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOperationDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOperation;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

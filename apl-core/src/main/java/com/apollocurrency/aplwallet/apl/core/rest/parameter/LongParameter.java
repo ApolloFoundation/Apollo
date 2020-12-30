@@ -3,9 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.rest.parameter;
 
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 
 public class LongParameter extends AbstractRestParameter<Long> {
 

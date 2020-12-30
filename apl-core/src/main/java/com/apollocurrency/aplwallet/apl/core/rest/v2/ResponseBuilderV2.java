@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.v2;
 
 import com.apollocurrency.aplwallet.api.v2.model.BaseResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ErrorResponse;
-import com.apollocurrency.aplwallet.apl.core.rest.ErrorInfo;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.Messages;
+import com.apollocurrency.aplwallet.apl.util.exception.ErrorInfo;
+import com.apollocurrency.aplwallet.apl.util.exception.Messages;
 
 import javax.ws.rs.core.Response;
 

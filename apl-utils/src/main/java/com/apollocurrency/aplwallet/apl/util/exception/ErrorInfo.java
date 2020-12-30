@@ -4,7 +4,7 @@
  *
  */
 
-package com.apollocurrency.aplwallet.apl.core.rest;
+package com.apollocurrency.aplwallet.apl.util.exception;
 
 public interface ErrorInfo {
     int getErrorCode();

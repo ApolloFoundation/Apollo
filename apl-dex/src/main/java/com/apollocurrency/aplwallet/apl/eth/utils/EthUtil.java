@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.apl.eth.utils;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.model.EthUnit;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
+import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
 import org.apache.commons.lang3.StringUtils;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;

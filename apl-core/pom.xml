@@ -283,11 +283,8 @@
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>com.j256.two-factor-auth</groupId>
-      <artifactId>two-factor-auth</artifactId>
-    </dependency>
-    <dependency>
+
+      <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
     </dependency>
