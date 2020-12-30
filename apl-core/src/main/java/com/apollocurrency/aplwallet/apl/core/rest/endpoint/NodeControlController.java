@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.api.dto.RunningThreadsInfo;
 import com.apollocurrency.aplwallet.api.response.CacheStatsResponse;
 import com.apollocurrency.aplwallet.api.response.NodeHealthResponse;
 import com.apollocurrency.aplwallet.api.response.NodeStatusResponse;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
+import com.apollocurrency.aplwallet.apl.core.converter.Converter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.BackendControlService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
