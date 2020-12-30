@@ -270,7 +270,7 @@ public class Apollo {
         //TODO:  turn it on periodically in development process to check CDI errors
         // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/
         // run with ./bin/apl-run-jmx.sh
-        // aplContainerBuilder.devMode();
+        aplContainerBuilder.devMode();
         //!!!!!!!!!!!!!!!
         
         if (args.disableWeldConcurrentDeployment) {
