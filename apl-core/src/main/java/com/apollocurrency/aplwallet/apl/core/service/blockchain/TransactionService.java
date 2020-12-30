@@ -5,10 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.List;
 
 /**
@@ -19,9 +21,13 @@ public interface TransactionService {
 
     Transaction findTransaction(long transactionId, int height);
 
+    Transaction findTransaction(long transactionId, int height, TransactionalDataSource dataSource);
+
     Transaction findTransactionByFullHash(byte[] fullHash);
 
     Transaction findTransactionByFullHash(byte[] fullHash, int height);
+
+    Transaction findTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource);
 
     boolean hasTransaction(long transactionId);
 
@@ -33,11 +39,9 @@ public interface TransactionService {
 
     byte[] getFullHash(long transactionId);
 
-    List<Transaction> findBlockTransactions(long blockId);
+    List<Transaction> findBlockTransactions(long blockId, TransactionalDataSource dataSource);
 
     long getBlockTransactionsCount(long blockId);
-
-    void saveTransactions(List<Transaction> transactions);
 
     void saveTransactions(Connection con, List<Transaction> transactions);
 
@@ -54,6 +58,8 @@ public interface TransactionService {
                                     int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                     boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
                                     int height, int prunableExpiration);
+
+    List<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
 
     List<Transaction> getTransactions(byte type, byte subtype, int from, int to);
 

@@ -57,9 +57,9 @@ public class TransactionEntityToModelConverter implements Converter<TransactionE
             }
             TransactionType transactionType = factory.findTransactionType(entity.getType(), entity.getSubtype());
             TransactionImpl.BuilderImpl builder = transactionBuilder.newTransactionBuilder(entity.getVersion(), entity.getSenderPublicKey(),
-                entity.getAmountATM(), entity.getFeeATM(), ((short) entity.getDeadline()),
+                entity.getAmountATM(), entity.getFeeATM(), entity.getDeadline(),
                 transactionType != null ? transactionType.parseAttachment(buffer) : null,
-                ((int) entity.getTimestamp()))
+                entity.getTimestamp())
 
                 .referencedTransactionFullHash(entity.getReferencedTransactionFullHash())
                 .blockId(entity.getBlockId())

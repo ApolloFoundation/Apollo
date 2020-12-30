@@ -279,7 +279,7 @@ public class TransactionDaoImpl implements TransactionDao {
                     + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                     int i = 0;
                     pstmt.setLong(++i, transaction.getId());
-                    pstmt.setInt(++i, transaction.getDeadline());
+                    pstmt.setShort(++i, transaction.getDeadline());
                     DbUtils.setLongZeroToNull(pstmt, ++i, transaction.getRecipientId());
                     pstmt.setLong(++i, transaction.getAmountATM());
                     pstmt.setLong(++i, transaction.getFeeATM());
@@ -287,7 +287,7 @@ public class TransactionDaoImpl implements TransactionDao {
                     pstmt.setInt(++i, transaction.getHeight());
                     pstmt.setLong(++i, transaction.getBlockId());
                     pstmt.setBytes(++i, transaction.getSignatureBytes());
-                    pstmt.setLong(++i, transaction.getTimestamp());
+                    pstmt.setInt(++i, transaction.getTimestamp());
                     pstmt.setByte(++i, transaction.getType());
                     pstmt.setByte(++i, transaction.getSubtype());
                     pstmt.setLong(++i, transaction.getSenderId());

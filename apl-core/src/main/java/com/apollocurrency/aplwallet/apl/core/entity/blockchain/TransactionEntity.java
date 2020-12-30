@@ -7,8 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 import lombok.Builder;
 import lombok.Data;
 
-import java.math.BigInteger;
-
 /**
  * @author andrew.zinchenko@gmail.com
  */
@@ -18,26 +16,26 @@ public class TransactionEntity {
     private long dbId;
     private long id;
 
-    private final int deadline;
-    private final long recipientId;
+    private short deadline;
+    private long recipientId;
     private short index = -1;
-    private final long amountATM;
+    private long amountATM;
     private long feeATM;
     private byte[] fullHash;
-    private volatile int height;
-    private volatile long blockId;
-    private final int ecBlockHeight;
-    private final long ecBlockId;
+    private int height;
+    private long blockId;
+    private int ecBlockHeight;
+    private long ecBlockId;
 
     private byte[] signatureBytes;
-    private final long timestamp;
-    private final byte type;
-    private final byte subtype;
+    private int timestamp;
+    private byte type;
+    private byte subtype;
     private long senderId;
     private byte[] senderPublicKey;
     private int blockTimestamp = -1;
-    private final byte[] referencedTransactionFullHash;
-    private final byte version;
+    private byte[] referencedTransactionFullHash;
+    private byte version;
 
     private boolean hasMessage;
     private boolean hasEncryptedMessage;
@@ -49,15 +47,17 @@ public class TransactionEntity {
     private boolean hasPrunableAttachment;
 
     /* Serialized attachment and all appendages */
-    private final byte[] attachmentBytes;
+    private byte[] attachmentBytes;
 
     /**
      * Transaction V3 properties
      */
+    /*
     private String chainId;
     private BigInteger nonce;
     private BigInteger amount;
     private BigInteger fuelLimit;
     private BigInteger fuelPrice;
+     */
 
 }

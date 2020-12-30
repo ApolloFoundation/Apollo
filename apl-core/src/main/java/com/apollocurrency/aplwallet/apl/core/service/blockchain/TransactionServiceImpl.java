@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -21,8 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -37,15 +40,17 @@ public class TransactionServiceImpl implements TransactionService {
     private final BlockchainConfig blockchainConfig;
     private final TransactionDao transactionDao;
     private final TransactionEntityToModelConverter toModelConverter;
+    private final TransactionModelToEntityConverter toEntityConverter;
 
     @Inject
-    public TransactionServiceImpl(DatabaseManager databaseManager, TimeService timeService, PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, TransactionDao transactionDao, TransactionEntityToModelConverter toModelConverter) {
+    public TransactionServiceImpl(DatabaseManager databaseManager, TimeService timeService, PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, TransactionDao transactionDao, TransactionEntityToModelConverter toModelConverter, TransactionModelToEntityConverter toEntityConverter) {
         this.databaseManager = databaseManager;
         this.timeService = timeService;
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
         this.transactionDao = transactionDao;
         this.toModelConverter = toModelConverter;
+        this.toEntityConverter = toEntityConverter;
     }
 
     @Override
@@ -56,113 +61,130 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public Transaction findTransaction(long transactionId, int height) {
-        TransactionEntity entity = transactionDao.findTransaction(transactionId, height, databaseManager.getDataSource());
+        return findTransaction(transactionId, height, databaseManager.getDataSource());
+    }
+
+    @Override
+    public Transaction findTransaction(long transactionId, int height, TransactionalDataSource dataSource) {
+        TransactionEntity entity = transactionDao.findTransaction(transactionId, height, dataSource);
         return toModelConverter.convert(entity);
     }
 
     @Override
     public Transaction findTransactionByFullHash(byte[] fullHash) {
-        return null;
+        TransactionEntity entity = transactionDao.findTransactionByFullHash(fullHash, databaseManager.getDataSource());
+        return toModelConverter.convert(entity);
     }
 
     @Override
     public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
-        return null;
+        return findTransactionByFullHash(fullHash, height, databaseManager.getDataSource());
+    }
+
+    @Override
+    public Transaction findTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource) {
+        TransactionEntity entity = transactionDao.findTransactionByFullHash(fullHash, height, dataSource);
+        return toModelConverter.convert(entity);
     }
 
     @Override
     public boolean hasTransaction(long transactionId) {
-        return false;
+        return transactionDao.hasTransaction(transactionId, databaseManager.getDataSource());
     }
 
     @Override
     public boolean hasTransaction(long transactionId, int height) {
-        return false;
+        return transactionDao.hasTransaction(transactionId, height, databaseManager.getDataSource());
     }
 
     @Override
     public boolean hasTransactionByFullHash(byte[] fullHash) {
-        return false;
+        return transactionDao.hasTransactionByFullHash(fullHash, databaseManager.getDataSource());
     }
 
     @Override
     public boolean hasTransactionByFullHash(byte[] fullHash, int height) {
-        return false;
+        return transactionDao.hasTransactionByFullHash(fullHash, height, databaseManager.getDataSource());
     }
 
     @Override
     public byte[] getFullHash(long transactionId) {
-        return new byte[0];
+        return transactionDao.getFullHash(transactionId, databaseManager.getDataSource());
     }
 
     @Override
-    public List<Transaction> findBlockTransactions(long blockId) {
-        return null;
+    public List<Transaction> findBlockTransactions(long blockId, TransactionalDataSource transactionalDataSource) {
+        List<TransactionEntity> transactions = transactionDao.findBlockTransactions(blockId, databaseManager.getDataSource());
+        return transactions.stream().map(toModelConverter).collect(Collectors.toList());
     }
 
     @Override
     public long getBlockTransactionsCount(long blockId) {
-        return 0;
-    }
-
-    @Override
-    public void saveTransactions(List<Transaction> transactions) {
-
+        return transactionDao.getBlockTransactionsCount(blockId, databaseManager.getDataSource());
     }
 
     @Override
     public void saveTransactions(Connection con, List<Transaction> transactions) {
-        transactionDao.saveTransactions(con, transactions);
+        transactionDao.saveTransactions(con, transactions.stream().map(toEntityConverter).collect(Collectors.toList()));
     }
 
     @Override
     public int getTransactionCount() {
-        return 0;
+        return transactionDao.getTransactionCount();
     }
 
     @Override
     public Long getTransactionCount(int from, int to) {
-        return null;
+        return transactionDao.getTransactionCount(databaseManager.getDataSource(), from, to);
     }
 
     @Override
     public List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) {
-        return null;
+        List<TransactionEntity> transactions = transactionDao.getTransactions(databaseManager.getDataSource(), accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+        return transactions.stream().map(toModelConverter).collect(Collectors.toList());
     }
 
     @Override
     public int getTransactionCountByFilter(long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) {
-        return 0;
+        return transactionDao.getTransactionCountByFilter(databaseManager.getDataSource(), accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
+    }
+
+    @Override
+    public List<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
+        List<TransactionEntity> transactions = transactionDao.getTransactions(con, pstmt);
+        return transactions.stream().map(toModelConverter).collect(Collectors.toList());
     }
 
     @Override
     public List<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
-        return null;
+        List<TransactionEntity> transactions = transactionDao.getTransactions(type, subtype, from, to);
+        return transactions.stream().map(toModelConverter).collect(Collectors.toList());
     }
 
     @Override
     public List<Transaction> getTransactions(int fromDbId, int toDbId) {
-        return null;
+        List<TransactionEntity> transactions = transactionDao.getTransactions(fromDbId, toDbId);
+        return transactions.stream().map(toModelConverter).collect(Collectors.toList());
     }
 
     @Override
     public List<TransactionDbInfo> getTransactionsBeforeHeight(int height) {
-        return null;
+        return transactionDao.getTransactionsBeforeHeight(height);
     }
 
     @Override
     public int getTransactionCount(long accountId, byte type, byte subtype) {
-        return 0;
+        return transactionDao.getTransactionCount(accountId, type, subtype);
     }
 
     @Override
     public int getTransactionsCount(List<Long> accounts, byte type, byte subtype, int startTime, int endTime, int fromHeight, int toHeight, String sortOrder, int from, int to) {
-        return 0;
+        return transactionDao.getTransactionsCount(accounts, type, subtype, startTime, endTime, fromHeight, toHeight, sortOrder, from, to);
     }
 
     @Override
     public List<TxReceipt> getTransactions(List<Long> accounts, byte type, byte subtype, int startTime, int endTime, int fromHeight, int toHeight, String sortOrder, int from, int to) {
-        return null;
+        return transactionDao.getTransactions(accounts, type, subtype, startTime, endTime, fromHeight, toHeight, sortOrder, from, to);
     }
 
     @Override
@@ -183,7 +205,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         // start fetch from main db
         TransactionalDataSource currentDataSource = databaseManager.getDataSource();
-        List<Transaction> transactions = transactionDao.getTransactions(
+        List<TransactionEntity> transactions = transactionDao.getTransactions(
             currentDataSource,
             accountId, numberOfConfirmations, type, subtype,
             blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
@@ -221,7 +243,7 @@ public class TransactionServiceImpl implements TransactionService {
                     continue; // skip shard without any suitable records
                 }
                 // because count is > 0 then try to fetch Tx records from shard db
-                List<Transaction> fetchedTxs = transactionDao.getTransactions(
+                List<TransactionEntity> fetchedTxs = transactionDao.getTransactions(
                     dataSource,
                     accountId, numberOfConfirmations, type, subtype,
                     blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
@@ -242,6 +264,6 @@ public class TransactionServiceImpl implements TransactionService {
             }
         }
         log.trace("Tx number Requested / Loaded : [{}] / [{}] = in {} ms", limit, transactions.size(), System.currentTimeMillis() - start);
-        return transactions;
+        return transactions.stream().map(toModelConverter).collect(Collectors.toList());
     }
 }

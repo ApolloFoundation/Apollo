@@ -31,7 +31,7 @@ public class TransactionEntityRowMapper implements RowMapper<TransactionEntity> 
                 .version(rs.getByte("version"))
                 .type(rs.getByte("type"))
                 .subtype(rs.getByte("subtype"))
-                .timestamp(rs.getLong("timestamp"))
+                .timestamp(rs.getInt("timestamp"))
                 .deadline(rs.getShort("deadline"))
                 .amountATM(rs.getLong("amount"))
                 .feeATM(rs.getLong("fee"))

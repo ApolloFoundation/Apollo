@@ -543,7 +543,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public Transaction findTransaction(long transactionId, int height) {
         TransactionalDataSource datasource = getDatasourceWithShardingByTransactionId(transactionId);
-        return loadPrunable(transactionDao.findTransaction(transactionId, height, datasource));
+        return loadPrunable(transactionService.findTransaction(transactionId, height, datasource));
     }
 
     @Transactional(readOnly = true)
@@ -561,8 +561,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
         TransactionalDataSource dataSource = getDatasourceWithShardingByTransactionId(Convert.fullHashToId(fullHash));
-
-        return loadPrunable(transactionDao.findTransactionByFullHash(fullHash, height, dataSource));
+        return loadPrunable(transactionService.findTransactionByFullHash(fullHash, height, dataSource));
     }
 
     @Override
@@ -668,7 +667,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public List<Transaction> getBlockTransactions(long blockId) {
         TransactionalDataSource dataSource = getDataSourceWithSharding(blockId);
-        return transactionDao.findBlockTransactions(blockId, dataSource);
+        return transactionService.findBlockTransactions(blockId, dataSource);
     }
 
     @Transactional(readOnly = true)
@@ -710,7 +709,7 @@ public class BlockchainImpl implements Blockchain {
     @Transactional(readOnly = true)
     @Override
     public List<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
-        return transactionDao.getTransactions(con, pstmt);
+        return transactionService.getTransactions(con, pstmt);
     }
 
     @Transactional(readOnly = true)
