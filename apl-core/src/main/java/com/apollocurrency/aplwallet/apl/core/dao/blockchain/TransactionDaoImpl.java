@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.ARBITRARY_MESSAGE;
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT;
 
 @Slf4j
@@ -561,6 +562,28 @@ public class TransactionDaoImpl implements TransactionDao {
             }
             DbUtils.setLimits(++i, statement, from, to);
             return getTransactions(con, statement);
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public List<TransactionEntity> getTransactionsChatHistory(long account1, long account2, int from, int to) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement stmt = conn.prepareStatement(
+            "SELECT * from transaction "
+                + "where type = ? and subtype = ? and ((sender_id =? and recipient_id = ?) or  (sender_id =? and recipient_id = ?)) "
+                + "order by timestamp desc"
+                + DbUtils.limitsClause(from, to))) {
+            int i = 0;
+            stmt.setByte(++i, ARBITRARY_MESSAGE.getType());
+            stmt.setByte(++i, ARBITRARY_MESSAGE.getSubtype());
+            stmt.setLong(++i, account1);
+            stmt.setLong(++i, account2);
+            stmt.setLong(++i, account2);
+            stmt.setLong(++i, account1);
+            DbUtils.setLimits(++i, stmt, from, to);
+            return getTransactions(conn, stmt);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }

@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
@@ -22,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -149,18 +149,21 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionDao.getTransactionCountByFilter(databaseManager.getDataSource(), accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
     }
 
+    @Transactional(readOnly = true)
     @Override
-    public List<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
-        List<TransactionEntity> transactions = transactionDao.getTransactions(con, pstmt);
+    public List<Transaction> getTransactionsChatHistory(long account1, long account2, int from, int to) {
+        List<TransactionEntity> transactions = transactionDao.getTransactionsChatHistory(account1, account2, from, to);
         return transactions.stream().map(toModelConverter).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<Transaction> getTransactions(byte type, byte subtype, int from, int to) {
         List<TransactionEntity> transactions = transactionDao.getTransactions(type, subtype, from, to);
         return transactions.stream().map(toModelConverter).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<Transaction> getTransactions(int fromDbId, int toDbId) {
         List<TransactionEntity> transactions = transactionDao.getTransactions(fromDbId, toDbId);

@@ -55,7 +55,6 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -1131,19 +1130,6 @@ class BlockchainTest extends DBContainerRootTest {
         int transactionCount = blockchain.getTransactionCount(txd.TRANSACTION_2.getSenderId(), (byte) 8, (byte) 0);
 
         assertEquals(2, transactionCount);
-    }
-
-    @Test
-    void testGetTransactionsByPreparedStatementOnConnection() {
-        DbUtils.checkAndRunInTransaction(extension, (con) -> {
-            try (PreparedStatement pstm = con.prepareStatement("select * from transaction where id = ?")) {
-                pstm.setLong(1, txd.TRANSACTION_10.getId());
-                List<Transaction> transactions = blockchain.getTransactions(con, pstm);
-                assertEquals(List.of(txd.TRANSACTION_10), transactions);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        });
     }
 
     @Test

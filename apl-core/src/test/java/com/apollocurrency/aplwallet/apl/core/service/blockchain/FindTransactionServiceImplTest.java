@@ -6,12 +6,14 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.model.AplQueryObject;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,6 +54,10 @@ class FindTransactionServiceImplTest {
     BlockChainInfoService blockChainInfoService;
     @Mock
     TxReceiptMapper txReceiptMapper;
+    @Mock
+    BlockIndexService blockIndexService;
+    @Mock
+    TransactionIndexDao transactionIndexDao;
 
     FindTransactionService findTransactionService;
 
@@ -61,7 +67,9 @@ class FindTransactionServiceImplTest {
     @BeforeEach
     void setUp() {
 
-        findTransactionService = new FindTransactionServiceImpl(transactionService, memPool, blockChainInfoService, txReceiptMapper);
+        findTransactionService = new FindTransactionServiceImpl(transactionService, memPool,
+            blockChainInfoService, txReceiptMapper,
+            blockIndexService, transactionIndexDao, databaseManager);
 
     }
 

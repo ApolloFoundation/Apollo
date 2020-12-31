@@ -543,7 +543,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public Transaction findTransaction(long transactionId, int height) {
         TransactionalDataSource datasource = getDatasourceWithShardingByTransactionId(transactionId);
-        return loadPrunable(transactionService.findTransaction(transactionId, height, datasource));
+        return loadPrunable(transactionDao.findTransaction(transactionId, height, datasource));
     }
 
     @Transactional(readOnly = true)
@@ -741,31 +741,7 @@ public class BlockchainImpl implements Blockchain {
         return timeService.getEpochTime() > tx.getExpiration();
     }
 
-    private TransactionalDataSource getDataSourceWithSharding(long blockId) {
-        Long shardId = blockIndexService.getShardIdByBlockId(blockId);
-        return getShardDataSourceOrDefault(shardId);
-    }
 
-    private TransactionalDataSource getShardDataSourceOrDefault(Long shardId) {
-        TransactionalDataSource dataSource = null;
-        if (shardId != null) {
-            dataSource = ((ShardManagement) databaseManager).getOrInitFullShardDataSourceById(shardId);
-        }
-        if (dataSource == null) {
-            dataSource = databaseManager.getDataSource();
-        }
-        return dataSource;
-    }
-
-    private TransactionalDataSource getDataSourceWithShardingByHeight(int blockHeight) {
-        Long shardId = blockIndexService.getShardIdByBlockHeight(blockHeight);
-        return getShardDataSourceOrDefault(shardId);
-    }
-
-    private TransactionalDataSource getDatasourceWithShardingByTransactionId(long transactionId) {
-        Long shardId = transactionIndexDao.getShardIdByTransactionId(transactionId);
-        return getShardDataSourceOrDefault(shardId);
-    }
 
     private Transaction loadPrunable(Transaction transaction) {
         if (transaction != null) {

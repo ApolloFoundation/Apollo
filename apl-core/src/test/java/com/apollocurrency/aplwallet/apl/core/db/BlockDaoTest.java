@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -69,7 +69,11 @@ class BlockDaoTest extends DbContainerBaseTest {
         td = new BlockTestData();
         txd = new TransactionTestData();
         blockDao = new BlockDaoImpl(extension.getDatabaseManager());
-        transactionDao = new TransactionDaoImpl(extension.getDatabaseManager(), txd.getTransactionTypeFactory(), new TransactionRowMapper(txd.getTransactionTypeFactory(), new TransactionBuilder(txd.getTransactionTypeFactory())));
+        transactionDao = new TransactionDaoImpl(
+            new TxReceiptRowMapper(txd.getTransactionTypeFactory()),
+            new TransactionEntityRowMapper(),
+            extension.getDatabaseManager(),
+            txd.getTransactionTypeFactory());
     }
 
     @AfterEach
@@ -166,8 +170,11 @@ class BlockDaoTest extends DbContainerBaseTest {
         List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(null, Integer.MAX_VALUE, 0, 0));
         assertEquals(List.of(td.BLOCK_5, td.BLOCK_4, td.BLOCK_3, td.BLOCK_2, td.BLOCK_1, td.BLOCK_0, td.GENESIS_BLOCK), blocks);
 
-        List<Transaction> transactions = transactionDao.getTransactions(0, Integer.MAX_VALUE);
-        assertEquals(List.of(txd.TRANSACTION_0, txd.TRANSACTION_1, txd.TRANSACTION_2, txd.TRANSACTION_3, txd.TRANSACTION_4, txd.TRANSACTION_5, txd.TRANSACTION_6), transactions);
+        List<TransactionEntity> transactions = transactionDao.getTransactions(0, Integer.MAX_VALUE);
+
+        assertEquals(
+            List.of(txd.TRANSACTION_0, txd.TRANSACTION_1, txd.TRANSACTION_2, txd.TRANSACTION_3, txd.TRANSACTION_4, txd.TRANSACTION_5, txd.TRANSACTION_6),
+            transactions);
     }
 
     @Test
@@ -177,7 +184,7 @@ class BlockDaoTest extends DbContainerBaseTest {
         List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(null, Integer.MAX_VALUE, 0, 0));
         assertEquals(0, blocks.size());
 
-        List<Transaction> transactions = transactionDao.getTransactions(0, Integer.MAX_VALUE);
+        List<TransactionEntity> transactions = transactionDao.getTransactions(0, Integer.MAX_VALUE);
         assertEquals(0, transactions.size());
     }
 
@@ -191,7 +198,7 @@ class BlockDaoTest extends DbContainerBaseTest {
         List<Block> blocks = CollectionUtil.toList(blockDao.getBlocks(null, Integer.MAX_VALUE, 0, 0));
         assertEquals(List.of(td.BLOCK_3, td.BLOCK_2, td.BLOCK_1, td.BLOCK_0, td.GENESIS_BLOCK), blocks);
 
-        List<Transaction> transactions = transactionDao.getTransactions(0, Integer.MAX_VALUE);
+        List<TransactionEntity> transactions = transactionDao.getTransactions(0, Integer.MAX_VALUE);
         assertEquals(List.of(txd.TRANSACTION_0, txd.TRANSACTION_1, txd.TRANSACTION_2, txd.TRANSACTION_3), transactions);
     }
 

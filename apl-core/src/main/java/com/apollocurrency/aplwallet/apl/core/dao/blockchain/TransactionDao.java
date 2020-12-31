@@ -56,6 +56,8 @@ public interface TransactionDao {
 
     List<TransactionEntity> getTransactions(byte type, byte subtype, int from, int to);
 
+    List<TransactionEntity> getTransactionsChatHistory(long account1, long account2, int from, int to);
+
     List<TransactionEntity> getTransactions(int fromDbId, int toDbId);
 
     List<TransactionDbInfo> getTransactionsBeforeHeight(int height);

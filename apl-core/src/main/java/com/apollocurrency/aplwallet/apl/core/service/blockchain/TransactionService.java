@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.util.List;
 
 /**
@@ -59,7 +58,7 @@ public interface TransactionService {
                                     boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
                                     int height, int prunableExpiration);
 
-    List<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
+    List<Transaction> getTransactionsChatHistory(long account1, long account2, int from, int to);
 
     List<Transaction> getTransactions(byte type, byte subtype, int from, int to);
 
