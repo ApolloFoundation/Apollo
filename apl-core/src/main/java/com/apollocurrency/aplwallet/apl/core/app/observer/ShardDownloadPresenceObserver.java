@@ -151,7 +151,7 @@ public class ShardDownloadPresenceObserver {
                     // import other genesis data
                     genesisImporter.importGenesisJson(false);
                     // first genesis block should be saved only after all genesis data has been imported before
-                    addBlock(dataSource, genesisBlock); // save first genesis block here
+                    blockchain.saveBlock(genesisBlock);// save first genesis block here
                     // create Lucene search indexes first
                     createLuceneSearchIndexes(con);
                     blockchain.commit(genesisBlock);
@@ -169,14 +169,4 @@ public class ShardDownloadPresenceObserver {
             log.error(e.toString(), e);
         }
     }
-
-    private void addBlock(TransactionalDataSource dataSource, Block block) {
-        try (Connection con = dataSource.getConnection()) {
-            blockchain.saveBlock(con, block);
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-
 }

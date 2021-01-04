@@ -28,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.Set;
@@ -87,7 +86,7 @@ public interface Blockchain {
 
     Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions);
 
-    void saveBlock(Connection con, Block block);
+    void saveBlock(Block block);
 
     List<Transaction> getOrLoadTransactions(Block parentBlock);
 
@@ -167,8 +166,6 @@ public interface Blockchain {
     boolean hasBlock(long blockId, int height);
 
     int getTransactionCount(long accountId, byte type, byte subtype);
-
-    List<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
 
     List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp);
 

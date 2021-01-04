@@ -52,25 +52,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class BlockDaoImpl implements BlockDao {
     private static final Logger LOG = getLogger(BlockDaoImpl.class);
 
-//    @Inject
-//    @CacheProducer
-//    @CacheType(PUBLIC_KEY_CACHE_NAME)
-//    private Cache<Long, BlockIndex> publicKeyCache;
-
     private final DatabaseManager databaseManager;
 
     @Inject
     public BlockDaoImpl(DatabaseManager databaseManager) {
-        // this.blockCacheSize = blockCacheSize;
         this.databaseManager = Objects.requireNonNull(databaseManager, "DatabaseManager cannot be null");
-    }
-
-    private void clearBlockCache() {
-//        synchronized (blockCache) {
-//            blockCache.clear();
-//            heightMap.clear();
-//            transactionCache.clear();
-//        }
     }
 
     @Transactional(readOnly = true)
@@ -192,22 +178,6 @@ public class BlockDaoImpl implements BlockDao {
             throw new RuntimeException(e.toString(), e);
         }
     }
-
-/*
-    @Override
-    public DbIterator<Block> getAllBlocks() {
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block ORDER BY db_id ASC");
-            return getBlocks(con, pstmt);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-*/
 
     @Override
     public List<byte[]> getBlockSignaturesFrom(int fromHeight, int toHeight) {
@@ -512,12 +482,14 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public void saveBlock(Connection con, Block block) {
+    public void saveBlock(Block block) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, `timestamp`, previous_block_id, "
-                + "total_amount, total_fee, payload_length, previous_block_hash, next_block_id, cumulative_difficulty, "
-                + "base_target, height, generation_signature, block_signature, payload_hash, generator_id, timeout) "
-                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            try (Connection con = dataSource.getConnection();
+                 PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, `timestamp`, previous_block_id, "
+                     + "total_amount, total_fee, payload_length, previous_block_hash, next_block_id, cumulative_difficulty, "
+                     + "base_target, height, generation_signature, block_signature, payload_hash, generator_id, timeout) "
+                     + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 int i = 0;
                 pstmt.setLong(++i, block.getId());
                 pstmt.setInt(++i, block.getVersion());
@@ -539,19 +511,12 @@ public class BlockDaoImpl implements BlockDao {
                 pstmt.executeUpdate();
             }
             if (block.getPreviousBlockId() != 0) {
-                try (PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = ? WHERE id = ?")) {
+                try (Connection con = dataSource.getConnection();
+                     PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = ? WHERE id = ?")) {
                     pstmt.setLong(1, block.getId());
                     pstmt.setLong(2, block.getPreviousBlockId());
                     pstmt.executeUpdate();
                 }
-//                Update next block id for cached block
-//                Block previousBlock;
-//                synchronized (blockCache) {
-//                    previousBlock = blockCache.get(block.getPreviousBlockId());
-//                }
-//                if (previousBlock != null) {
-//                    previousBlock.setNextBlockId(block.getId());
-//                }
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -657,8 +622,6 @@ public class BlockDaoImpl implements BlockDao {
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        } finally {
-//            clearBlockCache();
         }
     }
 

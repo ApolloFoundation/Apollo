@@ -6,14 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.model.AplQueryObject;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
-import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,10 +52,6 @@ class FindTransactionServiceImplTest {
     BlockChainInfoService blockChainInfoService;
     @Mock
     TxReceiptMapper txReceiptMapper;
-    @Mock
-    BlockIndexService blockIndexService;
-    @Mock
-    TransactionIndexDao transactionIndexDao;
 
     FindTransactionService findTransactionService;
 
@@ -68,8 +62,7 @@ class FindTransactionServiceImplTest {
     void setUp() {
 
         findTransactionService = new FindTransactionServiceImpl(transactionService, memPool,
-            blockChainInfoService, txReceiptMapper,
-            blockIndexService, transactionIndexDao, databaseManager);
+            blockChainInfoService, txReceiptMapper);
 
     }
 
@@ -108,7 +101,7 @@ class FindTransactionServiceImplTest {
         TransactionalDataSource ds = mock(TransactionalDataSource.class);
         Transaction tx = mock(Transaction.class);
         doReturn(ds).when(databaseManager).getDataSource();
-        doReturn(tx).when(transactionService).findTransaction(transactionId, height, ds);
+        doReturn(tx).when(transactionService).findTransaction(transactionId, height);
 
         //WHEN
         Optional<Transaction> result = findTransactionService.findTransaction(transactionId, height);

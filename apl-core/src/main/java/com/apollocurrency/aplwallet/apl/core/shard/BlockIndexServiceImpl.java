@@ -4,8 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.BlockIndex;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
 import com.google.common.cache.Cache;
@@ -15,6 +17,7 @@ import javax.inject.Singleton;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.core.cache.BlockIndexCacheConfig.BLOCK_INDEX_CACHE_NAME;
+import static com.apollocurrency.aplwallet.apl.core.shard.util.ShardUtils.getShardDataSourceOrDefault;
 
 /**
  * Block finding service that uses block_index table via BlockIndexDao This
@@ -27,15 +30,18 @@ public class BlockIndexServiceImpl implements BlockIndexService {
 
     private final BlockIndexDao blockIndexDao;
     private final Cache<Long, BlockIndex> blockIndexCache;
+    private final DatabaseManager databaseManager;
 
     @Inject
     public BlockIndexServiceImpl(BlockIndexDao blockIndexDao,
                                  @CacheProducer
                                  @CacheType(BLOCK_INDEX_CACHE_NAME)
-                                     Cache<Long, BlockIndex> blockIndexCache
+                                     Cache<Long, BlockIndex> blockIndexCache,
+                                 DatabaseManager databaseManager
     ) {
         this.blockIndexDao = blockIndexDao;
         this.blockIndexCache = blockIndexCache;
+        this.databaseManager = databaseManager;
     }
 
     @Override
@@ -91,6 +97,18 @@ public class BlockIndexServiceImpl implements BlockIndexService {
             blockIndexCache.cleanUp();
         }
         return blockIndexDao.hardDeleteAllBlockIndex();
+    }
+
+    @Override
+    public TransactionalDataSource getDataSourceWithSharding(long blockId) {
+        Long shardId = this.getShardIdByBlockId(blockId);
+        return getShardDataSourceOrDefault(shardId, databaseManager);
+    }
+
+    @Override
+    public TransactionalDataSource getDataSourceWithShardingByHeight(int blockHeight) {
+        Long shardId = this.getShardIdByBlockHeight(blockHeight);
+        return getShardDataSourceOrDefault(shardId, databaseManager);
     }
 
 }

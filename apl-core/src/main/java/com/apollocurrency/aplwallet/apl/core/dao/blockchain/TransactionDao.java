@@ -36,7 +36,7 @@ public interface TransactionDao {
 
     List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp);
 
-    void saveTransactions(Connection con, List<TransactionEntity> transactions);
+    void saveTransactions(List<TransactionEntity> transactions);
 
     int getTransactionCount();
 

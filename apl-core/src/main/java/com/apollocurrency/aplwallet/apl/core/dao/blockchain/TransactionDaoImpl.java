@@ -267,17 +267,19 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public void saveTransactions(Connection con, List<TransactionEntity> transactions) {
+    public void saveTransactions(List<TransactionEntity> transactions) {
         try {
+            TransactionalDataSource dataSource = databaseManager.getDataSource();
             short index = 0;
             for (TransactionEntity transaction : transactions) {
-                try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO transaction (id, deadline, "
-                    + "recipient_id, amount, fee, referenced_transaction_full_hash, height, "
-                    + "block_id, signature, `timestamp`, type, subtype, sender_id, sender_public_key, attachment_bytes, "
-                    + "block_timestamp, full_hash, version, has_message, has_encrypted_message, has_public_key_announcement, "
-                    + "has_encrypttoself_message, phased, has_prunable_message, has_prunable_encrypted_message, "
-                    + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                try (Connection con = dataSource.getConnection();
+                     PreparedStatement pstmt = con.prepareStatement("INSERT INTO transaction (id, deadline, "
+                         + "recipient_id, amount, fee, referenced_transaction_full_hash, height, "
+                         + "block_id, signature, `timestamp`, type, subtype, sender_id, sender_public_key, attachment_bytes, "
+                         + "block_timestamp, full_hash, version, has_message, has_encrypted_message, has_public_key_announcement, "
+                         + "has_encrypttoself_message, phased, has_prunable_message, has_prunable_encrypted_message, "
+                         + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index) "
+                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                     int i = 0;
                     pstmt.setLong(++i, transaction.getId());
                     pstmt.setShort(++i, transaction.getDeadline());

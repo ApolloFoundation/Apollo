@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -16,16 +17,19 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.apollocurrency.aplwallet.apl.core.shard.util.ShardUtils.getShardDataSourceOrDefault;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -39,16 +43,20 @@ public class TransactionServiceImpl implements TransactionService {
     private final PropertiesHolder propertiesHolder;
     private final BlockchainConfig blockchainConfig;
     private final TransactionDao transactionDao;
+    private final TransactionIndexDao transactionIndexDao;
+    private final BlockIndexService blockIndexService;
     private final TransactionEntityToModelConverter toModelConverter;
     private final TransactionModelToEntityConverter toEntityConverter;
 
     @Inject
-    public TransactionServiceImpl(DatabaseManager databaseManager, TimeService timeService, PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, TransactionDao transactionDao, TransactionEntityToModelConverter toModelConverter, TransactionModelToEntityConverter toEntityConverter) {
+    public TransactionServiceImpl(DatabaseManager databaseManager, TimeService timeService, PropertiesHolder propertiesHolder, BlockchainConfig blockchainConfig, TransactionDao transactionDao, TransactionIndexDao transactionIndexDao, BlockIndexService blockIndexService, TransactionEntityToModelConverter toModelConverter, TransactionModelToEntityConverter toEntityConverter) {
         this.databaseManager = databaseManager;
         this.timeService = timeService;
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
         this.transactionDao = transactionDao;
+        this.transactionIndexDao = transactionIndexDao;
+        this.blockIndexService = blockIndexService;
         this.toModelConverter = toModelConverter;
         this.toEntityConverter = toEntityConverter;
     }
@@ -61,11 +69,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public Transaction findTransaction(long transactionId, int height) {
-        return findTransaction(transactionId, height, databaseManager.getDataSource());
-    }
-
-    @Override
-    public Transaction findTransaction(long transactionId, int height, TransactionalDataSource dataSource) {
+        TransactionalDataSource dataSource = getDatasourceWithShardingByTransactionId(transactionId);
         TransactionEntity entity = transactionDao.findTransaction(transactionId, height, dataSource);
         return toModelConverter.convert(entity);
     }
@@ -78,11 +82,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
-        return findTransactionByFullHash(fullHash, height, databaseManager.getDataSource());
-    }
-
-    @Override
-    public Transaction findTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource) {
+        TransactionalDataSource dataSource = getDatasourceWithShardingByTransactionId(Convert.fullHashToId(fullHash));
         TransactionEntity entity = transactionDao.findTransactionByFullHash(fullHash, height, dataSource);
         return toModelConverter.convert(entity);
     }
@@ -113,19 +113,21 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public List<Transaction> findBlockTransactions(long blockId, TransactionalDataSource transactionalDataSource) {
-        List<TransactionEntity> transactions = transactionDao.findBlockTransactions(blockId, databaseManager.getDataSource());
+    public List<Transaction> findBlockTransactions(long blockId) {
+        TransactionalDataSource dataSource = blockIndexService.getDataSourceWithSharding(blockId);
+        List<TransactionEntity> transactions = transactionDao.findBlockTransactions(blockId, dataSource);
         return transactions.stream().map(toModelConverter).collect(Collectors.toList());
     }
 
     @Override
     public long getBlockTransactionsCount(long blockId) {
-        return transactionDao.getBlockTransactionsCount(blockId, databaseManager.getDataSource());
+        TransactionalDataSource dataSource = blockIndexService.getDataSourceWithSharding(blockId);
+        return transactionDao.getBlockTransactionsCount(blockId, dataSource);
     }
 
     @Override
-    public void saveTransactions(Connection con, List<Transaction> transactions) {
-        transactionDao.saveTransactions(con, transactions.stream().map(toEntityConverter).collect(Collectors.toList()));
+    public void saveTransactions(List<Transaction> transactions) {
+        transactionDao.saveTransactions(transactions.stream().map(toEntityConverter).collect(Collectors.toList()));
     }
 
     @Override
@@ -139,7 +141,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) {
+    public List<Transaction> getTransactionsByFilter(long accountId, int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate, int height, int prunableExpiration) {
         List<TransactionEntity> transactions = transactionDao.getTransactions(databaseManager.getDataSource(), accountId, numberOfConfirmations, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, from, to, includeExpiredPrunable, executedOnly, includePrivate, height, prunableExpiration);
         return transactions.stream().map(toModelConverter).collect(Collectors.toList());
     }
@@ -191,9 +193,9 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public List<Transaction> getTransactions(long accountId, int currentBlockChainHeight, int numberOfConfirmations, byte type, byte subtype,
-                                             int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                             int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
+    public List<Transaction> getTransactionsCrossShardingByAccount(long accountId, int currentBlockChainHeight, int numberOfConfirmations, byte type, byte subtype,
+                                                                   int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+                                                                   int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
         long start = System.currentTimeMillis();
         int height = numberOfConfirmations > 0 ? currentBlockChainHeight - numberOfConfirmations : Integer.MAX_VALUE;
         int prunableExpiration = Math.max(0, propertiesHolder.INCLUDE_EXPIRED_PRUNABLE() && includeExpiredPrunable ?
@@ -269,4 +271,10 @@ public class TransactionServiceImpl implements TransactionService {
         log.trace("Tx number Requested / Loaded : [{}] / [{}] = in {} ms", limit, transactions.size(), System.currentTimeMillis() - start);
         return transactions.stream().map(toModelConverter).collect(Collectors.toList());
     }
+
+    private TransactionalDataSource getDatasourceWithShardingByTransactionId(long transactionId) {
+        Long shardId = transactionIndexDao.getShardIdByTransactionId(transactionId);
+        return getShardDataSourceOrDefault(shardId, databaseManager);
+    }
+
 }

@@ -375,7 +375,7 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
     void testCountVotesForPollWithNewSavedLinkedTransactions() throws SQLException {
         BlockTestData blockTestData = new BlockTestData();
         blockchain.setLastBlock(blockTestData.LAST_BLOCK);
-        inTransaction(connection -> transactionService.saveTransactions(connection,
+        inTransaction(connection -> transactionService.saveTransactions(
             Collections.singletonList(ttd.NOT_SAVED_TRANSACTION))
         );
         long votes = service.countVotes(ptd.POLL_3);

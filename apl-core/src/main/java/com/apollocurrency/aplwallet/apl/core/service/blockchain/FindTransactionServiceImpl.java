@@ -5,16 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.model.AplQueryObject;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
-import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
-import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -38,26 +33,16 @@ public class FindTransactionServiceImpl implements FindTransactionService {
     private final TransactionService transactionService;
     private final MemPool memPool;
     private final TxReceiptMapper txReceiptMapper;
-    private final BlockIndexService blockIndexService;
-    private final TransactionIndexDao transactionIndexDao;
-    private final DatabaseManager databaseManager;
-
 
     @Inject
     public FindTransactionServiceImpl(TransactionService transactionService,
                                       MemPool memPool,
                                       BlockChainInfoService blockChainInfoService,
-                                      TxReceiptMapper txReceiptMapper,
-                                      BlockIndexService blockIndexService,
-                                      TransactionIndexDao transactionIndexDao,
-                                      DatabaseManager databaseManager) {
+                                      TxReceiptMapper txReceiptMapper) {
         this.transactionService = Objects.requireNonNull(transactionService);
         this.blockChainInfoService = Objects.requireNonNull(blockChainInfoService);
         this.txReceiptMapper = Objects.requireNonNull(txReceiptMapper);
         this.memPool = memPool;
-        this.blockIndexService = blockIndexService;
-        this.transactionIndexDao = transactionIndexDao;
-        this.databaseManager = databaseManager;
     }
 
     @Override
@@ -142,30 +127,6 @@ public class FindTransactionServiceImpl implements FindTransactionService {
         return unconfirmedTxCount + txCount;
     }
 
-    private TransactionalDataSource getDataSourceWithSharding(long blockId) {
-        Long shardId = blockIndexService.getShardIdByBlockId(blockId);
-        return getShardDataSourceOrDefault(shardId);
-    }
 
-    private TransactionalDataSource getShardDataSourceOrDefault(Long shardId) {
-        TransactionalDataSource dataSource = null;
-        if (shardId != null) {
-            dataSource = ((ShardManagement) databaseManager).getOrInitFullShardDataSourceById(shardId);
-        }
-        if (dataSource == null) {
-            dataSource = databaseManager.getDataSource();
-        }
-        return dataSource;
-    }
-
-    private TransactionalDataSource getDataSourceWithShardingByHeight(int blockHeight) {
-        Long shardId = blockIndexService.getShardIdByBlockHeight(blockHeight);
-        return getShardDataSourceOrDefault(shardId);
-    }
-
-    private TransactionalDataSource getDatasourceWithShardingByTransactionId(long transactionId) {
-        Long shardId = transactionIndexDao.getShardIdByTransactionId(transactionId);
-        return getShardDataSourceOrDefault(shardId);
-    }
 
 }

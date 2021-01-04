@@ -51,7 +51,6 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -161,7 +160,7 @@ public class BlockchainImpl implements Blockchain {
         if (block.getId() == blockId) {
             return block;
         }
-        TransactionalDataSource dataSource = getDataSourceWithSharding(blockId);
+        TransactionalDataSource dataSource = blockIndexService.getDataSourceWithSharding(blockId);
 
         return loadBlockData(blockDao.findBlock(blockId, dataSource));
     }
@@ -316,9 +315,9 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional
     @Override
-    public void saveBlock(Connection con, Block block) {
-        blockDao.saveBlock(con, block);
-        transactionService.saveTransactions(con, this.getOrLoadTransactions(block));
+    public void saveBlock(Block block) {
+        blockDao.saveBlock(block);
+        transactionService.saveTransactions(this.getOrLoadTransactions(block));
     }
 
     public List<Transaction> getOrLoadTransactions(Block parentBlock) {
@@ -432,7 +431,7 @@ public class BlockchainImpl implements Blockchain {
         if (fromBlockHeight != null) {
             int prevSize;
             do {
-                dataSource = getDataSourceWithShardingByHeight(fromBlockHeight + 1); //should return datasource, where such block exist or default datasource
+                dataSource = blockIndexService.getDataSourceWithShardingByHeight(fromBlockHeight + 1); //should return datasource, where such block exist or default datasource
 //                log.info("Datasource - {}", dataSource.getUrl());
                 prevSize = result.size();
                 try (Connection con = dataSource.getConnection()) { //get blocks and transactions in one connectiщn
@@ -448,7 +447,7 @@ public class BlockchainImpl implements Blockchain {
                 } catch (SQLException e) {
                     throw new RuntimeException(e.toString(), e);
                 }
-            } while (result.size() != prevSize && dataSource != databaseManager.getDataSource() && getDataSourceWithShardingByHeight(fromBlockHeight + 1) != dataSource);
+            } while (result.size() != prevSize && dataSource != databaseManager.getDataSource() && blockIndexService.getDataSourceWithShardingByHeight(fromBlockHeight + 1) != dataSource);
         }
 //        log.info("GetAfterBlock time {}", System.currentTimeMillis() - time);
         return loadBlockData(result);
@@ -482,7 +481,7 @@ public class BlockchainImpl implements Blockchain {
         if (height == block.getHeight()) {
             return block;
         }
-        TransactionalDataSource dataSource = getDataSourceWithShardingByHeight(height);
+        TransactionalDataSource dataSource = blockIndexService.getDataSourceWithShardingByHeight(height);
         return blockDao.findBlockAtHeight(height, dataSource);
     }
 
@@ -542,8 +541,8 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     public Transaction findTransaction(long transactionId, int height) {
-        TransactionalDataSource datasource = getDatasourceWithShardingByTransactionId(transactionId);
-        return loadPrunable(transactionDao.findTransaction(transactionId, height, datasource));
+        //cross sharding
+        return loadPrunable(transactionService.findTransaction(transactionId, height));
     }
 
     @Transactional(readOnly = true)
@@ -560,8 +559,8 @@ public class BlockchainImpl implements Blockchain {
 
     @Override
     public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
-        TransactionalDataSource dataSource = getDatasourceWithShardingByTransactionId(Convert.fullHashToId(fullHash));
-        return loadPrunable(transactionService.findTransactionByFullHash(fullHash, height, dataSource));
+        //cross sharding
+        return loadPrunable(transactionService.findTransactionByFullHash(fullHash, height));
     }
 
     @Override
@@ -582,7 +581,6 @@ public class BlockchainImpl implements Blockchain {
         return hasTransaction;
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public boolean hasTransactionByFullHash(String fullHash) {
@@ -602,7 +600,6 @@ public class BlockchainImpl implements Blockchain {
         return Arrays.equals(hash, fullHash)
             && transactionIndexDao.getTransactionHeightByTransactionId(id) <= height;
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -658,7 +655,7 @@ public class BlockchainImpl implements Blockchain {
                                              int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
                                              int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
 
-        return transactionService.getTransactions(accountId, getHeight(), numberOfConfirmations, type, subtype,
+        return transactionService.getTransactionsCrossShardingByAccount(accountId, getHeight(), numberOfConfirmations, type, subtype,
             blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
             from, to, includeExpiredPrunable, executedOnly, includePrivate);
     }
@@ -666,15 +663,15 @@ public class BlockchainImpl implements Blockchain {
     @Transactional(readOnly = true)
     @Override
     public List<Transaction> getBlockTransactions(long blockId) {
-        TransactionalDataSource dataSource = getDataSourceWithSharding(blockId);
-        return transactionService.findBlockTransactions(blockId, dataSource);
+        //cross sharding
+        return transactionService.findBlockTransactions(blockId);
     }
 
     @Transactional(readOnly = true)
     @Override
     public long getBlockTransactionCount(long blockId) {
-        TransactionalDataSource dataSource = getDataSourceWithSharding(blockId);
-        return transactionDao.getBlockTransactionsCount(blockId, dataSource);
+        //cross sharding
+        return transactionService.getBlockTransactionsCount(blockId);
     }
 
     @Override
@@ -708,12 +705,6 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public List<Transaction> getTransactions(Connection con, PreparedStatement pstmt) {
-        return transactionService.getTransactions(con, pstmt);
-    }
-
-    @Transactional(readOnly = true)
-    @Override
     public List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
         return transactionDao.findPrunableTransactions(con, minTimestamp, maxTimestamp);
     }
@@ -740,8 +731,6 @@ public class BlockchainImpl implements Blockchain {
     public boolean isExpired(Transaction tx) {
         return timeService.getEpochTime() > tx.getExpiration();
     }
-
-
 
     private Transaction loadPrunable(Transaction transaction) {
         if (transaction != null) {

@@ -310,7 +310,7 @@ class BlockDaoTest extends DbContainerBaseTest {
     @Test
     void testSaveBlock() {
         DbUtils.inTransaction(extension, (con) -> {
-            blockDao.saveBlock(con, td.NEW_BLOCK);
+            blockDao.saveBlock(td.NEW_BLOCK);
             blockDao.commit(td.NEW_BLOCK);
         });
         Block lastBlock = blockDao.findLastBlock();

@@ -5,11 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 
-import java.sql.Connection;
 import java.util.List;
 
 /**
@@ -18,15 +16,13 @@ import java.util.List;
 public interface TransactionService {
     Transaction findTransaction(long transactionId);
 
-    Transaction findTransaction(long transactionId, int height);
-
-    Transaction findTransaction(long transactionId, int height, TransactionalDataSource dataSource);
+    Transaction findTransaction(long transactionId, int height);//cross sharding
 
     Transaction findTransactionByFullHash(byte[] fullHash);
 
-    Transaction findTransactionByFullHash(byte[] fullHash, int height);
+    Transaction findTransactionByFullHash(byte[] fullHash, int height);//cross sharding
 
-    Transaction findTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource);
+    List<Transaction> findBlockTransactions(long blockId);//cross sharding
 
     boolean hasTransaction(long transactionId);
 
@@ -38,20 +34,22 @@ public interface TransactionService {
 
     byte[] getFullHash(long transactionId);
 
-    List<Transaction> findBlockTransactions(long blockId, TransactionalDataSource dataSource);
+    long getBlockTransactionsCount(long blockId);//cross sharding
 
-    long getBlockTransactionsCount(long blockId);
-
-    void saveTransactions(Connection con, List<Transaction> transactions);
+    void saveTransactions(List<Transaction> transactions);
 
     int getTransactionCount();
 
     Long getTransactionCount(int from, int to);
 
-    List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
-                                      int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                      int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
-                                      int height, int prunableExpiration);
+    List<Transaction> getTransactionsCrossShardingByAccount(long accountId, int currentBlockChainHeight, int numberOfConfirmations, byte type, byte subtype,
+                                                            int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+                                                            int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
+
+    List<Transaction> getTransactionsByFilter(long accountId, int numberOfConfirmations, byte type, byte subtype,
+                                              int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+                                              int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
+                                              int height, int prunableExpiration);
 
     int getTransactionCountByFilter(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                     int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
@@ -80,7 +78,4 @@ public interface TransactionService {
                                     String sortOrder,
                                     int from, int to);
 
-    List<Transaction> getTransactions(long accountId, int currentBlockChainHeight, int numberOfConfirmations, byte type, byte subtype,
-                                      int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                      int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
 }

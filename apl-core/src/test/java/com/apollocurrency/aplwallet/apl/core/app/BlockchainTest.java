@@ -404,7 +404,7 @@ class BlockchainTest extends DBContainerRootTest {
         btd.NEW_BLOCK.setTransactions(newTransactions);
 
         DbUtils.checkAndRunInTransaction(extension, (con) -> {
-            blockchain.saveBlock(con, btd.NEW_BLOCK);
+            blockchain.saveBlock(btd.NEW_BLOCK);
             blockchain.commit(btd.NEW_BLOCK);
         });
 
