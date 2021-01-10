@@ -36,12 +36,6 @@
 
       <dependency>
           <groupId>com.apollocurrency</groupId>
-          <artifactId>apl-vault-wallet</artifactId>
-          <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-          <groupId>com.apollocurrency</groupId>
           <artifactId>apl-crypto</artifactId>
           <version>${project.version}</version>
           <exclusions>

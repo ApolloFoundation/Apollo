@@ -142,7 +142,7 @@ public class DexSmartContractService {
                 allowance = ethereumWalletService.getAllowance(smartContractAddress, ethWalletKey.getCredentials().getAddress(), paxContractAddress);
 
                 if (allowance.compareTo(weiValue) < 0) {
-                    String approvedTx = ethereumWalletService.sendApproveTransaction(ethWalletKey, smartContractAddress, Constants.ETH_MAX_POS_INT);
+                    String approvedTx = ethereumWalletService.sendApproveTransaction(ethWalletKey.getCredentials(), smartContractAddress, Constants.ETH_MAX_POS_INT);
 
                     if (approvedTx == null) {
                         log.error("Approved tx wasn't send for PAX. AccountId:{}, OrderIs:{}, FromAddress:{}", accountId, offerId, fromAddress);

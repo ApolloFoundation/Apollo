@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.UserErrorMessage;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
 import lombok.extern.slf4j.Slf4j;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
@@ -227,7 +226,7 @@ public class EthereumWalletService {
         }
     }
 
-    public String sendApproveTransaction(EthWalletKey ethWalletKey, String spenderAddress, BigInteger value) {
+    public String sendApproveTransaction(Credentials credentials, String spenderAddress, BigInteger value) {
         EthGasInfo ethGasInfo;
         try {
             ethGasInfo = dexEthService.getEthPriceInfo();
@@ -235,7 +234,7 @@ public class EthereumWalletService {
             throw new DexException("Third service is not available.");
         }
 
-        return sendApproveTransaction(ethWalletKey.getCredentials(), spenderAddress, ethGasInfo.getAverageSpeedPrice(), value);
+        return sendApproveTransaction(credentials, spenderAddress, ethGasInfo.getAverageSpeedPrice(), value);
     }
 
 

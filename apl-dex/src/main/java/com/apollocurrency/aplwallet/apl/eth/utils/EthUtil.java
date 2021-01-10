@@ -2,7 +2,6 @@ package com.apollocurrency.aplwallet.apl.eth.utils;
 
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.model.EthUnit;
-import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
 import org.apache.commons.lang3.StringUtils;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
@@ -25,7 +24,7 @@ public class EthUtil {
      *
      * @return EthWallet
      */
-    public static EthWalletKey generateNewAccount() {
+    public static Credentials generateEthCredentials() {
         byte[] secretBytes = new byte[32];
         Crypto.getSecureRandom().nextBytes(secretBytes);
         byte[] keySeed = Crypto.getKeySeed(secretBytes);
@@ -34,7 +33,7 @@ public class EthUtil {
         ECKeyPair ecKeyPair = ECKeyPair.create(privateKey);
         Credentials cs = Credentials.create(ecKeyPair);
 
-        return new EthWalletKey(cs);
+        return cs;
     }
 
     public static BigDecimal weiToEther(BigInteger wei) {
