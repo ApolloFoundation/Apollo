@@ -2,7 +2,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.config;
+package com.apollocurrency.aplwallet.apl.util.config;
 
 import javax.enterprise.util.Nonbinding;
 import javax.inject.Qualifier;

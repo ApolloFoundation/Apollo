@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.utils;
 
-import com.apollocurrency.aplwallet.apl.core.config.Property;
+import com.apollocurrency.aplwallet.apl.util.config.Property;
 import lombok.Getter;
 
 import javax.inject.Inject;

@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.impl.PhasingPollServi
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
+import com.apollocurrency.aplwallet.apl.dex.config.DexConfig;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.dex.exchange.model.DBSortOrder;
 import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
@@ -27,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.dex.exchange.model.ExchangeContractStatu
 import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderType;
-import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;

@@ -5,9 +5,7 @@ import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.dto.TradingViewConfigDTO;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToDtoConverter;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.exchange.service.graph.DexTradingDataService;
 import com.apollocurrency.aplwallet.apl.exchange.service.graph.TimeFrame;
 import com.apollocurrency.aplwallet.apl.exchange.utils.TradingViewService;
@@ -48,18 +46,14 @@ public class TradingDataController {
 
     private TradingViewService tradingViewService;
     private DexTradingDataService dataService;
-    private TimeService timeService;
-    private DexService dexService;
     private TradingDataOutputToDtoConverter converter = new TradingDataOutputToDtoConverter();
 
     public TradingDataController() { // required for resteasy
     }
 
     @Inject
-    public TradingDataController(DexTradingDataService dataService, TimeService timeService, DexService dexService, TradingViewService tradingViewService) {
+    public TradingDataController(DexTradingDataService dataService, TradingViewService tradingViewService) {
         this.dataService = dataService;
-        this.timeService = timeService;
-        this.dexService = dexService;
         this.tradingViewService = tradingViewService;
     }
 

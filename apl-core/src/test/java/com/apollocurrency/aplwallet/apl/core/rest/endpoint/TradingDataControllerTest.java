@@ -37,7 +37,7 @@ class TradingDataControllerTest {
     @BeforeEach
     void setup() {
         dispatcher = MockDispatcherFactory.createDispatcher();
-        TradingDataController tradingDataController = new TradingDataController(service, null, null, null);
+        TradingDataController tradingDataController = new TradingDataController(service, null);
         dispatcher.getRegistry().addSingletonResource(tradingDataController);
         dispatcher.getProviderFactory().registerProvider(LegacyParameterExceptionMapper.class);
         tradingDataOutput.init();

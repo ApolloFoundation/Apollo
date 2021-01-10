@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.exchange.utils;
+package com.apollocurrency.aplwallet.apl.exchange.util;
 
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;

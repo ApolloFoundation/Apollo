@@ -2,7 +2,7 @@
  * Copyright (c)  2018-2020. Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.apl.core.rest.validation;
+package com.apollocurrency.aplwallet.apl.dex.exchange.validation;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;

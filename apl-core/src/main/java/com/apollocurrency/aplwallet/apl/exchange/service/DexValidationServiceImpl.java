@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
+import com.apollocurrency.aplwallet.apl.dex.config.DexConfig;
 import com.apollocurrency.aplwallet.apl.dex.eth.dao.EthGasStationInfoDao;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
@@ -22,7 +23,6 @@ import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.dex.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.dex.exchange.model.SwapDataInfo;
-import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 

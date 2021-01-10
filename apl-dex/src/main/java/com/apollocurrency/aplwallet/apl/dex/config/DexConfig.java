@@ -1,6 +1,6 @@
-package com.apollocurrency.aplwallet.apl.exchange;
+package com.apollocurrency.aplwallet.apl.dex.config;
 
-import com.apollocurrency.aplwallet.apl.core.config.Property;
+import com.apollocurrency.aplwallet.apl.util.config.Property;
 import com.google.common.base.Preconditions;
 
 import javax.inject.Inject;

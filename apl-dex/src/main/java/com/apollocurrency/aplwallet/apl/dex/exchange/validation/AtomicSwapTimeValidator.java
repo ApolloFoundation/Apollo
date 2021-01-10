@@ -2,9 +2,9 @@
  * Copyright (c)  2018-2020. Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.apl.core.rest.validation;
+package com.apollocurrency.aplwallet.apl.dex.exchange.validation;
 
-import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
+import com.apollocurrency.aplwallet.apl.dex.config.DexConfig;
 import lombok.Setter;
 
 import javax.inject.Inject;
