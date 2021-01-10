@@ -27,18 +27,18 @@ import java.util.Objects;
 
 @Slf4j
 public final class Convert2 {
-
     private static final String ACCOUNT_PREFIX_IS_NULL_MSG = "AccountPrefix is null";
     private static final String EPOCH_BEGINNING_IS_NULL_MSG = "EpochBeginning is null";
     private static String accountPrefix;
     private static Long epochBeginning;
     private static boolean initialized = false;
 
-    private Convert2() {
+    Convert2() {
     }
 
+    //TODO move to property
     public static void init(String prefix, long epochBeg) {
-        Objects.requireNonNull(accountPrefix, ACCOUNT_PREFIX_IS_NULL_MSG);
+        Objects.requireNonNull(prefix, ACCOUNT_PREFIX_IS_NULL_MSG);
         Objects.requireNonNull(epochBeg, EPOCH_BEGINNING_IS_NULL_MSG);
         accountPrefix = prefix;
         epochBeginning = epochBeg;

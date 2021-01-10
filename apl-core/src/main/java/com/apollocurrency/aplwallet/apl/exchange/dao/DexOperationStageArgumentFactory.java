@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOperation;
+import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexOperation;
 import org.jdbi.v3.core.argument.AbstractArgumentFactory;
 import org.jdbi.v3.core.argument.Argument;
 import org.jdbi.v3.core.config.ConfigRegistry;

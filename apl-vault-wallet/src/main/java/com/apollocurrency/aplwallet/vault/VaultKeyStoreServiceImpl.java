@@ -62,7 +62,7 @@
          this.account2FAService = account2FAService;
      }
 
-     public VaultKeyStoreServiceImpl(Path keystoreDir, Integer version, NtpTime ntpTime) {
+     VaultKeyStoreServiceImpl(Path keystoreDir, Integer version, NtpTime ntpTime) {
          if (version < 0) {
              throw new IllegalArgumentException("version should not be negative");
          }

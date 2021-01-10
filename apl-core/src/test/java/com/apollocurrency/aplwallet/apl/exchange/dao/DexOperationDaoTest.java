@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.DexOperationTestData;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOperation;
+import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexOperation;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import lombok.extern.slf4j.Slf4j;

@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.dao.appdata.factory;
 
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
 import org.jdbi.v3.core.argument.AbstractArgumentFactory;
 import org.jdbi.v3.core.argument.Argument;
 import org.jdbi.v3.core.config.ConfigRegistry;

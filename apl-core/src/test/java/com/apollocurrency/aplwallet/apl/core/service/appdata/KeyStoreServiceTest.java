@@ -4,10 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
-import com.apollocurrency.aplwallet.apl.core.app.EncryptedSecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.SecretBytesDetails;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.VaultKeyStoreServiceImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
@@ -15,6 +12,11 @@ import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.exception.ParameterException;
+import com.apollocurrency.aplwallet.vault.KeyStoreService;
+import com.apollocurrency.aplwallet.vault.VaultKeyStoreServiceImpl;
+import com.apollocurrency.aplwallet.vault.model.EncryptedSecretBytesDetails;
+import com.apollocurrency.aplwallet.vault.model.SecretBytesDetails;
+import com.apollocurrency.aplwallet.vault.service.Account2FAService;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -31,7 +33,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Random;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -65,6 +66,7 @@ public class KeyStoreServiceTest {
     private static final String SECRET_BYTES_1 = "44a2868161a651682bdf938b16c485f359443a2c53bd3e752046edef20d11567";
     private static final String SECRET_BYTES_2 = "146c55cbdc5f33390d207d6d08030c3dd4012c3f775ed700937a893786393dbf";
     private NtpTime time = mock(NtpTime.class);
+    private Account2FAService account2FAService = mock(Account2FAService.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
 
     @WeldSetup
@@ -72,23 +74,14 @@ public class KeyStoreServiceTest {
         .addBeans(MockBean.of(time, NtpTime.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .build();
-    private byte[] secretBytes = generateSecretBytes();
-    private byte[] nonce = new byte[16];
     private Path tempDirectory;
     private VaultKeyStoreServiceImpl keyStore;
 
-    private byte[] generateSecretBytes() {
-        byte secretBytes[] = new byte[32];
-        Random random = new Random();
-        random.nextBytes(secretBytes);
-        return secretBytes;
-    }
 
     @BeforeEach
     void setUp() throws Exception {
-//        Crypto.getSecureRandom().nextBytes(nonce);
         tempDirectory = Files.createTempDirectory("keystore-test");
-        keyStore = new VaultKeyStoreServiceImpl(tempDirectory, 0, time);
+        keyStore = new VaultKeyStoreServiceImpl(tempDirectory, time, account2FAService);
         Files.write(tempDirectory.resolve("---" + ACCOUNT1), encryptedKeyJSON.getBytes());
         Convert2.init("APL", 1739068987193023818L);
     }

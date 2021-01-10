@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.cache;
 
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
+import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheConfiguration;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheConfigurator;
 import com.google.common.cache.CacheLoader;

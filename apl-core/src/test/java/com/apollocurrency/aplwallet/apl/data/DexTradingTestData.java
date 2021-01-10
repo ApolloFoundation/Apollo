@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCandlestick;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCandlestick;
+import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
 
 import java.math.BigDecimal;
 

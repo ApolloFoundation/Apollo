@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
-import com.apollocurrency.aplwallet.apl.eth.dao.UserErrorMessageDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.UserErrorMessage;
+import com.apollocurrency.aplwallet.apl.dex.eth.dao.UserErrorMessageDao;
+import com.apollocurrency.aplwallet.apl.dex.exchange.model.UserErrorMessage;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;

@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOperation;
+import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexOperation;
 
 import java.sql.Timestamp;
 

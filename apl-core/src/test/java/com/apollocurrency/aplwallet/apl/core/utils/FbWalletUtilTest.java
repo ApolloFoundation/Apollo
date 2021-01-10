@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.utils;
 
+import com.apollocurrency.aplwallet.vault.util.FbWalletUtil;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;

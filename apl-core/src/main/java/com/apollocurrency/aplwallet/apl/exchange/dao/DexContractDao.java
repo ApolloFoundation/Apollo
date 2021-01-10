@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.ExchangeContractMapper;
 import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
+import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexContractDBRequest;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;

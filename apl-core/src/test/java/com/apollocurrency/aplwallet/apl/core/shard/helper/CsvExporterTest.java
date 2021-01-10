@@ -47,7 +47,6 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.VaultKeyStoreServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
@@ -111,6 +110,8 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ServiceModeDirProvi
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.vault.KeyStoreService;
+import com.apollocurrency.aplwallet.vault.VaultKeyStoreServiceImpl;
+import com.apollocurrency.aplwallet.vault.service.Account2FAService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit.MockBean;
@@ -189,9 +190,10 @@ class CsvExporterTest extends DbContainerBaseTest {
     //    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time); // prod data test
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    Account2FAService account2FAService = mock(Account2FAService.class);
     NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
-    KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), ntpTimeConfig.time());
+    KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), ntpTimeConfig.time(), account2FAService);
     PeersService peersService = mock(PeersService.class);
     GeneratorService generatorService = mock(GeneratorService.class);
     TransactionTestData td = new TransactionTestData();
