@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
@@ -83,9 +84,8 @@ class TransactionDaoTest extends DbContainerBaseTest {
         dao = new TransactionDaoImpl(
             new TxReceiptRowMapper(td.getTransactionTypeFactory()),
             new TransactionEntityRowMapper(),
-            extension.getDatabaseManager(),
-            td.getTransactionTypeFactory());
-
+            new PrunableTxRowMapper(td.getTransactionTypeFactory()),
+            extension.getDatabaseManager());
     }
 
 
@@ -214,7 +214,7 @@ class TransactionDaoTest extends DbContainerBaseTest {
         List<Long> expectedIds = List.of(td.TRANSACTION_6.getId(), td.TRANSACTION_13.getId(), td.TRANSACTION_14.getId());
 
         DbUtils.inTransaction(extension, (con) -> {
-            List<PrunableTransaction> prunableTransactions = dao.findPrunableTransactions(con, 0, Integer.MAX_VALUE);
+            List<PrunableTransaction> prunableTransactions = dao.findPrunableTransactions(0, Integer.MAX_VALUE);
             assertEquals(expectedIds.size(), prunableTransactions.size());
             for (int i = 0; i < prunableTransactions.size(); i++) {
                 assertEquals(expectedIds.get(i), prunableTransactions.get(i).getId());
@@ -227,7 +227,7 @@ class TransactionDaoTest extends DbContainerBaseTest {
         List<Long> expectedIds = List.of(td.TRANSACTION_6.getId(), td.TRANSACTION_13.getId(), td.TRANSACTION_14.getId());
 
         DbUtils.inTransaction(extension, (con) -> {
-            List<PrunableTransaction> prunableTransactions = dao.findPrunableTransactions(con, td.TRANSACTION_6.getTimestamp(), td.TRANSACTION_14.getTimestamp());
+            List<PrunableTransaction> prunableTransactions = dao.findPrunableTransactions(td.TRANSACTION_6.getTimestamp(), td.TRANSACTION_14.getTimestamp());
             assertEquals(expectedIds.size(), prunableTransactions.size());
             for (int i = 0; i < prunableTransactions.size(); i++) {
                 assertEquals(expectedIds.get(i), prunableTransactions.get(i).getId());
@@ -238,7 +238,7 @@ class TransactionDaoTest extends DbContainerBaseTest {
     @Test
     void testFindPrunableTransactionsWithTimestampInnerLimit() {
         DbUtils.inTransaction(extension, (con) -> {
-            List<PrunableTransaction> prunableTransactions = dao.findPrunableTransactions(con, td.TRANSACTION_6.getTimestamp() + 1, td.TRANSACTION_14.getTimestamp() - 1);
+            List<PrunableTransaction> prunableTransactions = dao.findPrunableTransactions(td.TRANSACTION_6.getTimestamp() + 1, td.TRANSACTION_14.getTimestamp() - 1);
             assertEquals(1, prunableTransactions.size());
             assertEquals(td.TRANSACTION_13.getId(), prunableTransactions.get(0).getId());
         });

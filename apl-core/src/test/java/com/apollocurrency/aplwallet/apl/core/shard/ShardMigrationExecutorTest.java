@@ -285,7 +285,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         // checks before COPYING blocks / transactions
         long count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1); // upper bound is excluded, so +1
         assertEquals(14, count); // total blocks in main db
-        count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+        count = blockchain.getTransactionCount(0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
         assertEquals(14, count); // total transactions in main db
 
         TransactionTestData td = new TransactionTestData();
@@ -305,7 +305,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         count = blockchain.getBlockCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
         assertEquals(8, count); // blocks in shard db
         shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
-        count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+        count = transactionDao.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
         assertEquals(5, count);// transactions in shard db
 
 //5.        // create shard db FULL schema
@@ -360,7 +360,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         // checks after COPY + DELETE...
         count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
         assertEquals(6, count); // total blocks left in main db
-        count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+        count = blockchain.getTransactionCount(0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
         assertEquals(9, count); // total transactions left in main db
 
         shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
@@ -368,7 +368,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         assertEquals(8, count); // blocks in shard
 
         shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
-        count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+        count = transactionDao.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
         assertEquals(5, count); // transactions in shard
 
 //14.       // complete shard process

@@ -19,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -120,6 +121,11 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    public List<PrunableTransaction> findPrunableTransactions(int minTimestamp, int maxTimestamp) {
+        return transactionDao.findPrunableTransactions(minTimestamp, maxTimestamp);
+    }
+
+    @Override
     public long getBlockTransactionsCount(long blockId) {
         TransactionalDataSource dataSource = blockIndexService.getDataSourceWithSharding(blockId);
         return transactionDao.getBlockTransactionsCount(blockId, dataSource);
@@ -127,7 +133,9 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public void saveTransactions(List<Transaction> transactions) {
-        transactionDao.saveTransactions(transactions.stream().map(toEntityConverter).collect(Collectors.toList()));
+        if (!transactions.isEmpty()) {
+            transactionDao.saveTransactions(transactions.stream().map(toEntityConverter).collect(Collectors.toList()));
+        }
     }
 
     @Override

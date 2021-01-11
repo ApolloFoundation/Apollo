@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
@@ -72,8 +73,8 @@ class BlockDaoTest extends DbContainerBaseTest {
         transactionDao = new TransactionDaoImpl(
             new TxReceiptRowMapper(txd.getTransactionTypeFactory()),
             new TransactionEntityRowMapper(),
-            extension.getDatabaseManager(),
-            txd.getTransactionTypeFactory());
+            new PrunableTxRowMapper(txd.getTransactionTypeFactory()),
+            extension.getDatabaseManager());
     }
 
     @AfterEach

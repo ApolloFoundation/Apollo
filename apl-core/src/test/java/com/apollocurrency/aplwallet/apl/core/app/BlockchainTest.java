@@ -1135,7 +1135,7 @@ class BlockchainTest extends DBContainerRootTest {
     @Test
     void testFindPrunableTransactionsStartingFromFirstPrunableTransactionTimestampExclusive() {
         DbUtils.checkAndRunInTransaction(extension, (con) -> {
-            List<PrunableTransaction> prunableTransactions = blockchain.findPrunableTransactions(con, txd.TRANSACTION_13.getTimestamp() + 1, Integer.MAX_VALUE);
+            List<PrunableTransaction> prunableTransactions = blockchain.findPrunableTransactions(txd.TRANSACTION_13.getTimestamp() + 1, Integer.MAX_VALUE);
             assertEquals(1, prunableTransactions.size());
             assertEquals(txd.TRANSACTION_14.getId(), prunableTransactions.get(0).getId());
         });
@@ -1144,7 +1144,7 @@ class BlockchainTest extends DBContainerRootTest {
     @Test
     void testFindPrunableTransactionsBetweenTxTimestampsInclusive() {
         DbUtils.checkAndRunInTransaction(extension, (con) -> {
-            List<PrunableTransaction> prunableTransactions = blockchain.findPrunableTransactions(con, txd.TRANSACTION_13.getTimestamp(), txd.TRANSACTION_14.getTimestamp());
+            List<PrunableTransaction> prunableTransactions = blockchain.findPrunableTransactions(txd.TRANSACTION_13.getTimestamp(), txd.TRANSACTION_14.getTimestamp());
             assertEquals(2, prunableTransactions.size());
             assertEquals(txd.TRANSACTION_14.getId(), prunableTransactions.get(1).getId());
             assertEquals(txd.TRANSACTION_13.getId(), prunableTransactions.get(0).getId());
@@ -1196,14 +1196,14 @@ class BlockchainTest extends DBContainerRootTest {
 
     @Test
     void testGetTransactionCountBetweenMinMaxHeights() {
-        Long count = blockchain.getTransactionCount(extension.getDatabaseManager().getDataSource(), 0, Integer.MAX_VALUE);
+        Long count = blockchain.getTransactionCount(0, Integer.MAX_VALUE);
         assertEquals(6, count);
     }
 
 
     @Test
     void testGetTransactionCountBetweenHeights() {
-        Long count = blockchain.getTransactionCount(extension.getDatabaseManager().getDataSource(), txd.TRANSACTION_10.getHeight(), txd.TRANSACTION_13.getHeight());
+        Long count = blockchain.getTransactionCount(txd.TRANSACTION_10.getHeight(), txd.TRANSACTION_13.getHeight());
         assertEquals(4, count);
     }
 

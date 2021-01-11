@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 
 import java.util.List;
 
@@ -23,6 +24,8 @@ public interface TransactionService {
     Transaction findTransactionByFullHash(byte[] fullHash, int height);//cross sharding
 
     List<Transaction> findBlockTransactions(long blockId);//cross sharding
+
+    List<PrunableTransaction> findPrunableTransactions(int minTimestamp, int maxTimestamp);
 
     boolean hasTransaction(long transactionId);
 

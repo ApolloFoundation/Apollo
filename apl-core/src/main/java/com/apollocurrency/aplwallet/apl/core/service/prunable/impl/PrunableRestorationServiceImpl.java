@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.service.prunable.impl;
 import com.apollocurrency.aplwallet.api.p2p.request.GetTransactionsRequest;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
@@ -29,8 +28,6 @@ import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -72,30 +69,23 @@ public class PrunableRestorationServiceImpl implements PrunableRestorationServic
 
     @Override
     public int restorePrunedData() {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.begin()) {
-            int now = timeService.getEpochTime();
-            int minTimestamp = Math.max(1, now - blockchainConfig.getMaxPrunableLifetime());
-            int maxTimestamp = Math.max(minTimestamp, now - blockchainConfig.getMinPrunableLifetime()) - 1;
-            List<PrunableTransaction> transactionList =
-                blockchain.findPrunableTransactions(con, minTimestamp, maxTimestamp);
-            transactionList.forEach(prunableTransaction -> {
-                long id = prunableTransaction.getId();
-                if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(id)) ||
-                    prunableMessageService.isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage())) {
-                    synchronized (prunableTransactions) {
-                        prunableTransactions.add(id);
-                    }
+        int now = timeService.getEpochTime();
+        int minTimestamp = Math.max(1, now - blockchainConfig.getMaxPrunableLifetime());
+        int maxTimestamp = Math.max(minTimestamp, now - blockchainConfig.getMinPrunableLifetime()) - 1;
+        List<PrunableTransaction> transactionList = blockchain.findPrunableTransactions(minTimestamp, maxTimestamp);
+        transactionList.forEach(prunableTransaction -> {
+            long id = prunableTransaction.getId();
+            if ((prunableTransaction.hasPrunableAttachment() && prunableTransaction.getTransactionType().isPruned(id)) ||
+                prunableMessageService.isPruned(id, prunableTransaction.hasPrunablePlainMessage(), prunableTransaction.hasPrunableEncryptedMessage())) {
+                synchronized (prunableTransactions) {
+                    prunableTransactions.add(id);
                 }
-            });
-            if (!prunableTransactions.isEmpty()) {
-                lastRestoreTime = 0;
             }
-            dataSource.commit();
-        } catch (SQLException e) {
-            dataSource.rollback();
-            throw new RuntimeException(e.toString(), e);
+        });
+        if (!prunableTransactions.isEmpty()) {
+            lastRestoreTime = 0;
         }
+
         synchronized (prunableTransactions) {
             return prunableTransactions.size();
         }

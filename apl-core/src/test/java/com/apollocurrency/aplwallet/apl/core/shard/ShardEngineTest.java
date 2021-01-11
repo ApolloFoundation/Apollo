@@ -32,7 +32,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
@@ -422,7 +421,7 @@ class ShardEngineTest extends DBContainerRootTest {
         // checks before COPYING blocks / transactions
         long count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1); // upper bound is excluded, so +1
         assertEquals(14, count); // total blocks in main db
-        count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+        count = blockchain.getTransactionCount(0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
         assertEquals(14, count); // total transactions in main db
 
         List<TableInfo> tableNameList = new ArrayList<>();
@@ -453,7 +452,7 @@ class ShardEngineTest extends DBContainerRootTest {
 
         assertEquals(8, count); // blocks in shard db
         shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
-        count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+        count = transactionDao.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
         assertEquals(5, count);// transactions in shard db
         TransactionEntity excludedTransaction = transactionDao.findTransaction(td.TRANSACTION_0.getId(), shardDataSource); // excluded transaction #1
         assertNull(excludedTransaction);
@@ -550,7 +549,7 @@ class ShardEngineTest extends DBContainerRootTest {
         // checks after COPY + DELETE...
         count = blockchain.getBlockCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
         assertEquals(6, count); // total blocks left in main db
-        count = blockchain.getTransactionCount(null, 0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
+        count = blockchain.getTransactionCount(0, BLOCK_12_HEIGHT + 1);// upper bound is excluded, so +1
         assertEquals(9, count); // total transactions left in main db
         assertNull(blockchain.getTransaction(td.TRANSACTION_0.getId())); //deleted finished phased transaction
 
@@ -559,7 +558,7 @@ class ShardEngineTest extends DBContainerRootTest {
         assertEquals(8, count); // blocks in shard
 
         shardDataSource = ((ShardManagement) extension.getDatabaseManager()).getOrCreateShardDataSourceById(4L);
-        count = blockchain.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
+        count = transactionDao.getTransactionCount(shardDataSource, 0, snapshotBlockHeight + 1);// upper bound is excluded, so +1
         assertEquals(5, count); // transactions in shard
 
 //14.       // complete shard process

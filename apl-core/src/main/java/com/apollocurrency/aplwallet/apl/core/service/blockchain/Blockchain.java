@@ -151,7 +151,14 @@ public interface Blockchain {
 
     int getTransactionCount();
 
-    Long getTransactionCount(TransactionalDataSource dataSource, int from, int to);
+    /**
+     * Returns the transaction count from main database between <code>from</code> and <code>to</code> heights
+     *
+     * @param from the start height
+     * @param to   the end height
+     * @return the transaction count from main data base
+     */
+    Long getTransactionCount(int from, int to);
 
     List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
@@ -167,9 +174,9 @@ public interface Blockchain {
 
     int getTransactionCount(long accountId, byte type, byte subtype);
 
-    List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp);
-
     List<Transaction> getTransactions(byte type, byte subtype, int from, int to);
+
+    List<PrunableTransaction> findPrunableTransactions(int minTimestamp, int maxTimestamp);
 
     Set<Long> getBlockGenerators(int limit);
 

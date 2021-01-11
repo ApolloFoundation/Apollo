@@ -34,7 +34,7 @@ public interface TransactionDao {
 
     long getBlockTransactionsCount(long blockId, TransactionalDataSource dataSource);
 
-    List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp);
+    List<PrunableTransaction> findPrunableTransactions(int minTimestamp, int maxTimestamp);
 
     void saveTransactions(List<TransactionEntity> transactions);
 

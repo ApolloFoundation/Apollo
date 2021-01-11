@@ -26,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
-import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.BlockIndex;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
@@ -71,7 +70,6 @@ public class BlockchainImpl implements Blockchain {
     private static final int MAX_BLOCK_GENERATOR_OFFSET = 10_000;
     private final BlockDao blockDao;
     private final TransactionService transactionService;
-    private final TransactionDao transactionDao;
     private final TimeService timeService;
     private final TransactionIndexDao transactionIndexDao;
     private final BlockIndexService blockIndexService;
@@ -87,7 +85,6 @@ public class BlockchainImpl implements Blockchain {
     @Inject
     public BlockchainImpl(BlockDao blockDao,
                           TransactionService transactionService,
-                          TransactionDao transactionDao,
                           TimeService timeService,
                           TransactionIndexDao transactionIndexDao,
                           BlockIndexService blockIndexService,
@@ -98,7 +95,6 @@ public class BlockchainImpl implements Blockchain {
                           PublicKeyDao publicKeyDao) {
         this.blockDao = blockDao;
         this.transactionService = transactionService;
-        this.transactionDao = transactionDao;
         this.timeService = timeService;
         this.transactionIndexDao = transactionIndexDao;
         this.blockIndexService = blockIndexService;
@@ -316,8 +312,10 @@ public class BlockchainImpl implements Blockchain {
     @Transactional
     @Override
     public void saveBlock(Block block) {
-        blockDao.saveBlock(block);
-        transactionService.saveTransactions(this.getOrLoadTransactions(block));
+        if (block != null) {
+            blockDao.saveBlock(block);
+            transactionService.saveTransactions(this.getOrLoadTransactions(block));
+        }
     }
 
     public List<Transaction> getOrLoadTransactions(Block parentBlock) {
@@ -645,8 +643,9 @@ public class BlockchainImpl implements Blockchain {
         return transactionService.getTransactionCount();
     }
 
-    public Long getTransactionCount(TransactionalDataSource dataSource, int from, int to) {
-        return transactionDao.getTransactionCount(dataSource, from, to);
+    @Override
+    public Long getTransactionCount(int from, int to) {
+        return transactionService.getTransactionCount(from, to);
     }
 
     @Transactional(readOnly = true)
@@ -705,8 +704,8 @@ public class BlockchainImpl implements Blockchain {
 
     @Transactional(readOnly = true)
     @Override
-    public List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
-        return transactionDao.findPrunableTransactions(con, minTimestamp, maxTimestamp);
+    public List<PrunableTransaction> findPrunableTransactions(int minTimestamp, int maxTimestamp) {
+        return transactionService.findPrunableTransactions(minTimestamp, maxTimestamp);
     }
 
     @Transactional(readOnly = true)

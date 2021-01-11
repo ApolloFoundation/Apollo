@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.converter.db;
@@ -70,13 +70,13 @@ public class TxReceiptRowMapper implements RowMapper<TxReceipt> {
             }
 
             short transactionIndex = rs.getShort("transaction_index");
-            TransactionType transactionType = typeFactory.findTransactionType(type, subtype);
-            if (transactionType == null) {
-                throw new AplException.NotValidException("Wrong transaction type/subtype value, type=" + type + " subtype=" + subtype);
-            }
             String payload = null;
-            transactionType.parseAttachment(buffer);
             if (rs.getBoolean("has_message")) {
+                TransactionType transactionType = typeFactory.findTransactionType(type, subtype);
+                if (transactionType == null) {
+                    throw new AplException.NotValidException("Wrong transaction type/subtype value, type=" + type + " subtype=" + subtype);
+                }
+                transactionType.parseAttachment(buffer);
                 payload = Convert.toString(new MessageAppendix(buffer).getMessage());
             }
 

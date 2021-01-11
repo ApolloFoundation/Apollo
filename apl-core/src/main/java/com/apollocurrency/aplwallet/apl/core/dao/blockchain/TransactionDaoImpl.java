@@ -15,13 +15,14 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
@@ -31,8 +32,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -56,15 +55,15 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 public class TransactionDaoImpl implements TransactionDao {
     private final TxReceiptRowMapper txReceiptRowMapper;
     private final TransactionEntityRowMapper entityRowMapper;
+    private final PrunableTxRowMapper prunableTxRowMapper;
     private final DatabaseManager databaseManager;
-    private final TransactionTypeFactory typeFactory;
 
     @Inject
-    public TransactionDaoImpl(TxReceiptRowMapper txReceiptRowMapper, TransactionEntityRowMapper entityRowMapper, DatabaseManager databaseManager, TransactionTypeFactory typeFactory) {
+    public TransactionDaoImpl(TxReceiptRowMapper txReceiptRowMapper, TransactionEntityRowMapper entityRowMapper, PrunableTxRowMapper prunableTxRowMapper, DatabaseManager databaseManager) {
         this.txReceiptRowMapper = txReceiptRowMapper;
         this.entityRowMapper = entityRowMapper;
+        this.prunableTxRowMapper = prunableTxRowMapper;
         this.databaseManager = databaseManager;
-        this.typeFactory = typeFactory;
     }
 
     @Override
@@ -238,26 +237,21 @@ public class TransactionDaoImpl implements TransactionDao {
     }
 
     @Override
-    public List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp) {
+    public List<PrunableTransaction> findPrunableTransactions(int minTimestamp, int maxTimestamp) {
         List<PrunableTransaction> result = new ArrayList<>();
-        try (PreparedStatement pstmt = con.prepareStatement("SELECT id, `type`, subtype, "
-            + "has_prunable_attachment AS prunable_attachment, "
-            + "has_prunable_message AS prunable_plain_message, "
-            + "has_prunable_encrypted_message AS prunable_encrypted_message "
-            + "FROM transaction WHERE (`timestamp` BETWEEN ? AND ?) AND "
-            + "(has_prunable_attachment = TRUE OR has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE)")) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT id, `type`, subtype, "
+                 + "has_prunable_attachment AS prunable_attachment, "
+                 + "has_prunable_message AS prunable_plain_message, "
+                 + "has_prunable_encrypted_message AS prunable_encrypted_message "
+                 + "FROM transaction WHERE (`timestamp` BETWEEN ? AND ?) AND "
+                 + "(has_prunable_attachment = TRUE OR has_prunable_message = TRUE OR has_prunable_encrypted_message = TRUE)")) {
             pstmt.setInt(1, minTimestamp);
             pstmt.setInt(2, maxTimestamp);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    long id = rs.getLong("id");
-                    byte type = rs.getByte("type");
-                    byte subtype = rs.getByte("subtype");
-                    TransactionType transactionType = typeFactory.findTransactionType(type, subtype);
-                    result.add(new PrunableTransaction(id, transactionType,
-                        rs.getBoolean("prunable_attachment"),
-                        rs.getBoolean("prunable_plain_message"),
-                        rs.getBoolean("prunable_encrypted_message")));
+                    result.add(prunableTxRowMapper.map(rs, null));
                 }
             }
         } catch (SQLException e) {
