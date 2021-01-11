@@ -273,7 +273,7 @@ fi
     else
         notify "Starting command line application..."
         cd apollo-blockchain/bin
-        ./bin/apl-start.sh ${APLCMDLINE}
+        ./apl-start.sh ${APLCMDLINE}
     fi
 
 else
