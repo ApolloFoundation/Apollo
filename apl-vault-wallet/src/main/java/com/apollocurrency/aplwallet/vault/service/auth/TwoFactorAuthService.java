@@ -2,7 +2,7 @@
  * Copyright © 2018 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.vault.service;
+package com.apollocurrency.aplwallet.vault.service.auth;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;

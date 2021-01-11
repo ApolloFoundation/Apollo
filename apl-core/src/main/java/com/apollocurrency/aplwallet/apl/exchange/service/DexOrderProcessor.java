@@ -48,7 +48,7 @@ import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
-import com.apollocurrency.aplwallet.vault.service.Account2FAService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import lombok.extern.slf4j.Slf4j;
 import org.web3j.utils.Numeric;
 

@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.vault.service;
+package com.apollocurrency.aplwallet.vault.service.auth;
 
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import lombok.extern.slf4j.Slf4j;

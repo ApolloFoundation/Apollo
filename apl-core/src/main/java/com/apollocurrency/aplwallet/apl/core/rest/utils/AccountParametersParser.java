@@ -27,7 +27,7 @@ import java.util.Map;
 
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.INCORRECT_VALUE;
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.MISSING_PARAM_LIST;
-import static com.apollocurrency.aplwallet.vault.service.Account2FAService.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
+import static com.apollocurrency.aplwallet.vault.service.auth.Account2FAService.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
 
 @Singleton
 public class AccountParametersParser {

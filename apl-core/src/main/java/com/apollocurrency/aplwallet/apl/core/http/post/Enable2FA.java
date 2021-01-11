@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.vault.service.Account2FAService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 

@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.vault.service;
+package com.apollocurrency.aplwallet.vault.service.auth;
 
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthEntity;
 

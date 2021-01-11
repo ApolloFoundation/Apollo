@@ -34,7 +34,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.vault.KeyStoreService;
-import com.apollocurrency.aplwallet.vault.service.Account2FAService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.google.common.cache.LoadingCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

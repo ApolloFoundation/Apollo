@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.apollocurrency.aplwallet.vault.VaultKeyStoreServiceImpl;
 import com.apollocurrency.aplwallet.vault.model.EncryptedSecretBytesDetails;
 import com.apollocurrency.aplwallet.vault.model.SecretBytesDetails;
-import com.apollocurrency.aplwallet.vault.service.Account2FAService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;

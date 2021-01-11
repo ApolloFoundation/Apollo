@@ -42,7 +42,7 @@ import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.vault.service.Account2FAService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.apollocurrency.aplwallet.vault.util.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.vault.util.AccountHelper;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -91,7 +91,7 @@ import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_ID;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.GENESIS_BLOCK_TIMESTAMP;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.buildBlock;
-import static com.apollocurrency.aplwallet.vault.service.Account2FAService.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
+import static com.apollocurrency.aplwallet.vault.service.auth.Account2FAService.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
 import static org.jboss.resteasy.mock.MockHttpRequest.post;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

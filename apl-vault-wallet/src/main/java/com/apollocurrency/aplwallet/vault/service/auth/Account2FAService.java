@@ -1,7 +1,7 @@
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.vault.service;
+package com.apollocurrency.aplwallet.vault.service.auth;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;

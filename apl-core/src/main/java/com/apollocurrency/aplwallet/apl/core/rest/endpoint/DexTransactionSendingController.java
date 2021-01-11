@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.exception.ParameterException;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.vault.service.Account2FAService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

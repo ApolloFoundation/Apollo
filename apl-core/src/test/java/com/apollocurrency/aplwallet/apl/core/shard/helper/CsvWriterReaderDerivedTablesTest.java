@@ -103,7 +103,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.apollocurrency.aplwallet.vault.VaultKeyStoreServiceImpl;
-import com.apollocurrency.aplwallet.vault.service.Account2FAService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.google.common.base.Throwables;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;

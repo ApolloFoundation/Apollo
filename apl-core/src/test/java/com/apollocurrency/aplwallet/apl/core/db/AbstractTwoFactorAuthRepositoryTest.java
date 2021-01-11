@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthEntity;
-import com.apollocurrency.aplwallet.vault.service.TwoFactorAuthRepository;
+import com.apollocurrency.aplwallet.vault.service.auth.TwoFactorAuthRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 

@@ -16,7 +16,7 @@
  import com.apollocurrency.aplwallet.vault.model.EncryptedSecretBytesDetails;
  import com.apollocurrency.aplwallet.vault.model.SecretBytesDetails;
  import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
- import com.apollocurrency.aplwallet.vault.service.Account2FAService;
+ import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
  import com.apollocurrency.aplwallet.vault.util.FbWalletUtil;
  import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
  import com.fasterxml.jackson.databind.ObjectMapper;

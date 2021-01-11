@@ -8,8 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.db.AbstractTwoFactorAuthRepositoryT
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.JSON;
-import com.apollocurrency.aplwallet.vault.service.TwoFactorAuthFileSystemRepository;
-import com.apollocurrency.aplwallet.vault.service.TwoFactorAuthRepository;
+import com.apollocurrency.aplwallet.vault.service.auth.TwoFactorAuthFileSystemRepository;
+import com.apollocurrency.aplwallet.vault.service.auth.TwoFactorAuthRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

@@ -62,7 +62,7 @@ import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.vault.service.Account2FAService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

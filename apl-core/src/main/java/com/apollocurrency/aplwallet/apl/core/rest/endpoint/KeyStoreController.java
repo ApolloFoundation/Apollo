@@ -18,7 +18,7 @@ import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.vault.service.Account2FAService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.apollocurrency.aplwallet.vault.util.FbWalletUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

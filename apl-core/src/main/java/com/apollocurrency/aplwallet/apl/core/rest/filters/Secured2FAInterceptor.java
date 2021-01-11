@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.vault.service.Account2FAService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import lombok.Setter;
 
 import javax.annotation.Priority;
@@ -22,11 +22,11 @@ import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.apollocurrency.aplwallet.vault.service.Account2FAService.CODE2FA_PARAM_NAME;
-import static com.apollocurrency.aplwallet.vault.service.Account2FAService.PASSPHRASE_PARAM_NAME;
-import static com.apollocurrency.aplwallet.vault.service.Account2FAService.PUBLIC_KEY_PARAM_NAME;
-import static com.apollocurrency.aplwallet.vault.service.Account2FAService.SECRET_PHRASE_PARAM_NAME;
-import static com.apollocurrency.aplwallet.vault.service.Account2FAService.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
+import static com.apollocurrency.aplwallet.vault.service.auth.Account2FAService.CODE2FA_PARAM_NAME;
+import static com.apollocurrency.aplwallet.vault.service.auth.Account2FAService.PASSPHRASE_PARAM_NAME;
+import static com.apollocurrency.aplwallet.vault.service.auth.Account2FAService.PUBLIC_KEY_PARAM_NAME;
+import static com.apollocurrency.aplwallet.vault.service.auth.Account2FAService.SECRET_PHRASE_PARAM_NAME;
+import static com.apollocurrency.aplwallet.vault.service.auth.Account2FAService.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
 
 @Secured2FA
 @Provider

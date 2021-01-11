@@ -80,7 +80,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.ParameterException;
 import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.vault.service.Account2FAService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.google.common.cache.Cache;
 import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
