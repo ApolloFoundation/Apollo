@@ -10,6 +10,8 @@ import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderDbIdPaginationDbRequest;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +38,10 @@ class DexTradingDataServiceTest {
     DexTradingDataService service;
     DexTradingTestData td = new DexTradingTestData();
 
+    @BeforeAll
+    static void beforeAll() {
+        Convert2.init("APL", 0);
+    }
 
     @BeforeEach
     void setUp() {

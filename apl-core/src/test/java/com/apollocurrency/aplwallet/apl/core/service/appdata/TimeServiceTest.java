@@ -33,7 +33,7 @@ class TimeServiceTest {
 
     @BeforeAll
     static void beforeAll() {
-        Convert2.init("APL", 0);
+        Convert2.init("APL", 1515931200000L);
     }
 
     @BeforeEach
