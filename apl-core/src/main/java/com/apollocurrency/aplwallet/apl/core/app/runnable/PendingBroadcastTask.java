@@ -100,6 +100,7 @@ public class PendingBroadcastTask implements Runnable {
                 validator.validateLightly(tx);
                 UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(tx);
                 if (!validationResult.isOk()) {
+                    log.debug("Transaction {} is not valid: {}", tx.getId(), validationResult.getErrorDescription());
                     return new NextPendingTx(null, true);
                 }
                 return new NextPendingTx(tx, true);

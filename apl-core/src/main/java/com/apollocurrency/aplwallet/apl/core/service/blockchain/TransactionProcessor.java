@@ -41,6 +41,8 @@ public interface TransactionProcessor {
 
     void removeUnconfirmedTransaction(Transaction transaction);
 
+    void validateBeforeBroadcast(Transaction transaction) throws AplException.ValidationException;
+
     void broadcast(Transaction transaction) throws AplException.ValidationException;
 
     void processDelayedTxs(int number);

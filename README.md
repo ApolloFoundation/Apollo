@@ -103,53 +103,32 @@ __master__ branch contains stable code of the latest release. It is also tagged 
 
 __develop__ branch contains latest development version. Use this branch if you are developer/contributor.
 
-__stage__ branch contains release preparation work of the last release. Do not use this branch if you are not release engineer
+__stage__ branch contains release preparation work of the last release. Do not use this branch if you are not release
+engineer
 
-
-fix/*, feature/*, bugfix/** - temporary branches used by developers. Ususaly those branmches get merged to ___develop___ and deleted after work is done.
+fix/*, feature/*, bugfix/** - temporary branches used by developers. Usually those branches get merged to ___develop___
+and deleted after work is done.
 
 ## MariaDB
 
 ### Initiate
-    1) Open repository apl-updater2
+
+    1) Open repository https://github.com/ApolloFoundation/dbpackages
     
-    2) Run script depends on OS. 
-        mariadb-pkg/maria_db_linux_pkg.sh
-        mariadb-pkg/maria_db_osx_pkg.sh
-        mariadb-pkg/maria_db_windows_pkg.sh
+    2) Change directory to mariadb-pkg and Run script depends on OS. 
+        ./maria_db_linux_pkg.sh
+        ./maria_db_osx_pkg.sh
+        ./maria_db_windows_pkg.sh
         
-    3) Unzip packege and start db installation process. (..../ApolloWallet/apollo-mariadb is a basedir path)
+    3) Unzip target packege and start db installation process. (<BASE_DIR>/ApolloWallet/apollo-mariadb is a basedir path)
     
-    4) Create mariadb config. 
-    
-            [client-server]
-            port=3366
-            
-            [mysqld]
-            # Only allow connections from localhost
-            bind-address = 127.0.0.1
-            lower_case_table_names=2
-            default-storage-engine=rocksdb
-            max_connections=1024
-            
-            datadir= {User Home} /.apl-blockchain/apl-blockchain-db/data
-            tmpdir= {User Home} /.apl-blockchain/apl-blockchain-db/tmp
-            socket= {User Home} /.apl-blockchain/apl-blockchain-db/mariadb.sock
-            log-error= {User Home} /.apl-blockchain/apl-blockchain-db/mariadb.log
-            pid-file= {User Home} /.apl-blockchain/apl-blockchain-db/mariadb.pid
-            
-            basedir= {User Home} /ApolloWallet/apollo-mariadb
-            
-            [mariadb]
-            plugin_load_add = ha_rocksdb
-            rocksdb_max_row_locks=1073741824
-                
-    
-    5) Run init script (Appolo project)
-    
-        ./bin/maria-db-init.sh {basedir} {mariadb_apollo_instance.cnf}
-    Example: sh ./bin/maria-db-init.sh {User Home}/apollo-mariadb /{User Home}/ApolloWallet/apollo-mariadb/mariadb_apollo_instance.cnf
-   
+    4) Change directory to apollo-mariadb and run script 
+        ./install-mariadb.sh
+
+    The default database data directory is <BASE_DIR>/ApolloWallet/apl-blockchain-db. 
+    To specify the custom path of the database data directory use parameter --apl-db-dir, 
+    example: 
+       ./install-mariadb.sh --apl-db-dir /home/user/.apl-blockchain/apl-blockchain-db
 
 ## DOCKER Installation
 

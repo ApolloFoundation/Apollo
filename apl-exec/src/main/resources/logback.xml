@@ -113,33 +113,29 @@
     </rollingPolicy>
 
     <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-      <maxFileSize>300MB</maxFileSize>
+        <maxFileSize>300MB</maxFileSize>
     </triggeringPolicy>
-    <encoder>
-      <pattern>%d [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
-    </encoder>
+      <encoder>
+          <pattern>%d [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+      </encoder>
   </appender>
 
-  <logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE" additivity="false">
-    <appender-ref ref="p2p-file"/>
-  </logger>
-<!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksThread" level="TRACE"-->
-<!--          additivity="false">-->
-<!--    <appender-ref ref="p2p-file"/>-->
-<!--  </logger>-->
+    <logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE" additivity="false">
+        <appender-ref ref="p2p-file"/>
+    </logger>
 
-  <!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable" level="trace" additivity="false">-->
-  <!--    <appender-ref ref="tp-file"/>-->
-  <!--  </logger>-->
-  <logger name="com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl" level="trace"
-          additivity="false">
-    <appender-ref ref="tp-file"/>
-  </logger>
-  <logger name="com.apollocurrency.aplwallet.apl.util.QueuedThreadPool" level="trace">
-    <appender-ref ref="tp-file"/>
-  </logger>
-<!--  <logger name="com.apollocurrency.aplwallet.apl.core.peer.endpoint" level="trace" additivity="false">-->
-<!--    <appender-ref ref="tp-file"/>-->
+    <!--  <logger name="com.apollocurrency.aplwallet.apl.core.peer" level="TRACE" additivity="false">-->
+    <!--  </logger>-->
+    <!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksThread" level="TRACE"-->
+    <!--          additivity="false">-->
+    <!--    <appender-ref ref="p2p-file"/>-->
+    <!--  </logger>-->
+
+    <!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable" level="trace" additivity="false">-->
+    <!--    <appender-ref ref="tp-file"/>-->
+    <!--  </logger>-->
+    <!--  <logger name="com.apollocurrency.aplwallet.apl.core.peer.endpoint" level="trace" additivity="false">-->
+    <!--    <appender-ref ref="tp-file"/>-->
 <!--  </logger>-->
 <!--  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTransactionsThread" level="trace"-->
 <!--          additivity="false">-->
@@ -159,6 +155,8 @@
   <!--  </logger>-->
 
   <logger name="com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService" level="trace" additivity="false"/>
+    <logger name="com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl" level="debug"
+            additivity="false"/>
   <logger name="com.apollocurrency.aplwallet" level="INFO"/>
   <!--Uncomment next line to enable trim duration logging-->
   <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedDeletableEntityDbTable" level="trace"/>-->
