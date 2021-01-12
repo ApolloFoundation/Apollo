@@ -101,7 +101,7 @@ class FindTransactionServiceImplTest {
         TransactionalDataSource ds = mock(TransactionalDataSource.class);
         Transaction tx = mock(Transaction.class);
         doReturn(ds).when(databaseManager).getDataSource();
-        doReturn(tx).when(transactionService).findTransaction(transactionId, height);
+        doReturn(tx).when(transactionService).findTransactionCrossSharding(transactionId, height);
 
         //WHEN
         Optional<Transaction> result = findTransactionService.findTransaction(transactionId, height);

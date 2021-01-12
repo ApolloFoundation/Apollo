@@ -57,7 +57,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
 
     @Override
     public Optional<Transaction> findTransaction(long transactionId, int height) {
-        return Optional.ofNullable(transactionService.findTransaction(transactionId, height));
+        return Optional.ofNullable(transactionService.findTransactionCrossSharding(transactionId, height));
     }
 
     @Override

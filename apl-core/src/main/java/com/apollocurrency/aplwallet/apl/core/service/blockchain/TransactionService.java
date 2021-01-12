@@ -17,13 +17,13 @@ import java.util.List;
 public interface TransactionService {
     Transaction findTransaction(long transactionId);
 
-    Transaction findTransaction(long transactionId, int height);//cross sharding
+    Transaction findTransactionCrossSharding(long transactionId, int height);
 
     Transaction findTransactionByFullHash(byte[] fullHash);
 
-    Transaction findTransactionByFullHash(byte[] fullHash, int height);//cross sharding
+    Transaction findTransactionCrossShardingByFullHash(byte[] fullHash, int height);
 
-    List<Transaction> findBlockTransactions(long blockId);//cross sharding
+    List<Transaction> findBlockTransactionsCrossSharding(long blockId);
 
     List<PrunableTransaction> findPrunableTransactions(int minTimestamp, int maxTimestamp);
 
@@ -37,7 +37,7 @@ public interface TransactionService {
 
     byte[] getFullHash(long transactionId);
 
-    long getBlockTransactionsCount(long blockId);//cross sharding
+    long getBlockTransactionsCountCrossSharding(long blockId);
 
     void saveTransactions(List<Transaction> transactions);
 

@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorer;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
@@ -76,6 +77,7 @@ public class BlockchainImpl implements Blockchain {
     private final DatabaseManager databaseManager;
     private final ShardDao shardDao;
     private final ShardRecoveryDao shardRecoveryDao;
+    private final ShardDbExplorer shardDbExplorer;
     private final PrunableLoadingService prunableService;
     private final PublicKeyDao publicKeyDao;
 
@@ -91,6 +93,7 @@ public class BlockchainImpl implements Blockchain {
                           DatabaseManager databaseManager,
                           ShardDao shardDao,
                           ShardRecoveryDao shardRecoveryDao,
+                          ShardDbExplorer shardDbExplorer,
                           PrunableLoadingService prunableService,
                           PublicKeyDao publicKeyDao) {
         this.blockDao = blockDao;
@@ -101,6 +104,7 @@ public class BlockchainImpl implements Blockchain {
         this.databaseManager = databaseManager;
         this.shardDao = shardDao;
         this.shardRecoveryDao = shardRecoveryDao;
+        this.shardDbExplorer = shardDbExplorer;
         this.prunableService = prunableService;
         this.publicKeyDao = publicKeyDao;
         this.lastBlock = new AtomicReference<>();
@@ -156,7 +160,7 @@ public class BlockchainImpl implements Blockchain {
         if (block.getId() == blockId) {
             return block;
         }
-        TransactionalDataSource dataSource = blockIndexService.getDataSourceWithSharding(blockId);
+        TransactionalDataSource dataSource = shardDbExplorer.getDataSourceWithSharding(blockId);
 
         return loadBlockData(blockDao.findBlock(blockId, dataSource));
     }
@@ -429,7 +433,7 @@ public class BlockchainImpl implements Blockchain {
         if (fromBlockHeight != null) {
             int prevSize;
             do {
-                dataSource = blockIndexService.getDataSourceWithShardingByHeight(fromBlockHeight + 1); //should return datasource, where such block exist or default datasource
+                dataSource = shardDbExplorer.getDataSourceWithShardingByHeight(fromBlockHeight + 1); //should return datasource, where such block exist or default datasource
 //                log.info("Datasource - {}", dataSource.getUrl());
                 prevSize = result.size();
                 try (Connection con = dataSource.getConnection()) { //get blocks and transactions in one connectiщn
@@ -445,7 +449,7 @@ public class BlockchainImpl implements Blockchain {
                 } catch (SQLException e) {
                     throw new RuntimeException(e.toString(), e);
                 }
-            } while (result.size() != prevSize && dataSource != databaseManager.getDataSource() && blockIndexService.getDataSourceWithShardingByHeight(fromBlockHeight + 1) != dataSource);
+            } while (result.size() != prevSize && dataSource != databaseManager.getDataSource() && shardDbExplorer.getDataSourceWithShardingByHeight(fromBlockHeight + 1) != dataSource);
         }
 //        log.info("GetAfterBlock time {}", System.currentTimeMillis() - time);
         return loadBlockData(result);
@@ -479,7 +483,7 @@ public class BlockchainImpl implements Blockchain {
         if (height == block.getHeight()) {
             return block;
         }
-        TransactionalDataSource dataSource = blockIndexService.getDataSourceWithShardingByHeight(height);
+        TransactionalDataSource dataSource = shardDbExplorer.getDataSourceWithShardingByHeight(height);
         return blockDao.findBlockAtHeight(height, dataSource);
     }
 
@@ -540,7 +544,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public Transaction findTransaction(long transactionId, int height) {
         //cross sharding
-        return loadPrunable(transactionService.findTransaction(transactionId, height));
+        return loadPrunable(transactionService.findTransactionCrossSharding(transactionId, height));
     }
 
     @Transactional(readOnly = true)
@@ -558,7 +562,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public Transaction findTransactionByFullHash(byte[] fullHash, int height) {
         //cross sharding
-        return loadPrunable(transactionService.findTransactionByFullHash(fullHash, height));
+        return loadPrunable(transactionService.findTransactionCrossShardingByFullHash(fullHash, height));
     }
 
     @Override
@@ -608,7 +612,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     @Transactional(readOnly = true)
     public Integer getTransactionHeight(byte[] fullHash, int heightLimit) {
-        Transaction transaction = transactionService.findTransactionByFullHash(fullHash, heightLimit);
+        Transaction transaction = transactionService.findTransactionCrossShardingByFullHash(fullHash, heightLimit);
         Integer txHeight = null;
         if (transaction != null) {
             txHeight = transaction.getHeight();
@@ -663,14 +667,14 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public List<Transaction> getBlockTransactions(long blockId) {
         //cross sharding
-        return transactionService.findBlockTransactions(blockId);
+        return transactionService.findBlockTransactionsCrossSharding(blockId);
     }
 
     @Transactional(readOnly = true)
     @Override
     public long getBlockTransactionCount(long blockId) {
         //cross sharding
-        return transactionService.getBlockTransactionsCount(blockId);
+        return transactionService.getBlockTransactionsCountCrossSharding(blockId);
     }
 
     @Override

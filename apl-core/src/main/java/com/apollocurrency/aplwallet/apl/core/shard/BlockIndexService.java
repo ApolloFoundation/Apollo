@@ -3,7 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.BlockIndex;
 
 import java.util.List;
@@ -23,7 +22,4 @@ public interface BlockIndexService {
 
     int hardDeleteAllBlockIndex();
 
-    TransactionalDataSource getDataSourceWithSharding(long blockId);
-
-    TransactionalDataSource getDataSourceWithShardingByHeight(int blockHeight);
 }
