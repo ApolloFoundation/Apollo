@@ -164,8 +164,9 @@ if [[ -d $1/../Uninstaller ]]; then
 else
     notify "Copying update files...."
     cp -vRa $2/* $1/
-    cd $1/
     
+    cd $1/
+    cp -vRa conf* apollo-blockchain
 #    ./replace_dbdir.sh
     
     notify "Creating symlinks..."
