@@ -7,7 +7,7 @@
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
     <version>1.47.6</version>
-  </parent>
+ </parent>
 
   <artifactId>apl-exec</artifactId>
   <name>apl-exec</name>

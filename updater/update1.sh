@@ -258,10 +258,9 @@ fi
 #	bash ./update3.sh $1 $2 $3 $4 $5
 #    fi
 
-    
+
 
 #    notify "Downloading db shards..."
-    
 
     if [[ -d conf ]]; then
 	mv -fv conf apollo-blockchain
