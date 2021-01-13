@@ -21,10 +21,10 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.monetary.Exchange;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -52,7 +52,7 @@ public final class GetExchangesByExchangeRequest extends AbstractAPIRequestHandl
         boolean includeCurrencyInfo = "true".equalsIgnoreCase(req.getParameter("includeCurrencyInfo"));
         JSONObject response = new JSONObject();
         JSONArray exchangesData = new JSONArray();
-        try (DbIterator<Exchange> exchanges = Exchange.getExchanges(transactionId)) {
+        try (DbIterator<Exchange> exchanges = exchangeService.getExchanges(transactionId)) {
             while (exchanges.hasNext()) {
                 exchangesData.add(JSONData.exchange(exchanges.next(), includeCurrencyInfo));
             }

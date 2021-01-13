@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -56,11 +56,11 @@ public final class GetAllShufflings extends AbstractAPIRequestHandler {
         DbIterator<Shuffling> shufflings = null;
         try {
             if (finishedOnly) {
-                shufflings = Shuffling.getFinishedShufflings(firstIndex, lastIndex);
+                shufflings = shufflingService.getFinishedShufflings(firstIndex, lastIndex);
             } else if (includeFinished) {
-                shufflings = Shuffling.getAll(firstIndex, lastIndex);
+                shufflings = shufflingService.getAll(firstIndex, lastIndex);
             } else {
-                shufflings = Shuffling.getActiveShufflings(firstIndex, lastIndex);
+                shufflings = shufflingService.getActiveShufflings(firstIndex, lastIndex);
             }
             for (Shuffling shuffling : shufflings) {
                 jsonArray.add(JSONData.shuffling(shuffling, includeHoldingInfo));

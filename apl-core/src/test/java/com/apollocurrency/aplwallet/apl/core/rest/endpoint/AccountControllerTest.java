@@ -1,40 +1,46 @@
+/*
+ * Copyright © 2018-2020 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountEffectiveBalanceDto;
 import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountAssetService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountCurrencyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.apl.core.order.entity.AskOrder;
-import com.apollocurrency.aplwallet.apl.core.order.service.OrderService;
-import com.apollocurrency.aplwallet.apl.core.order.service.impl.AskOrderServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -51,7 +57,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.Mockito;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
@@ -131,9 +136,15 @@ class AccountControllerTest extends AbstractEndpointTest {
     private AccountAssetConverter accountAssetConverter;
     @Mock
     private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderService;
+    @Mock
+    private CurrencyService currencyService;
+    @Mock
+    PrunableLoadingService prunableLoadingService;
 
-    private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter());
-    private BlockConverter blockConverter = new BlockConverter(blockchain, transactionConverter, mock(PhasingPollService.class));
+    private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter(prunableLoadingService));
+    private BlockConverter blockConverter = new BlockConverter(
+        blockchain, transactionConverter,
+        mock(PhasingPollService.class), mock(AccountService.class));
 
     @Mock
     private Account2FAHelper account2FAHelper;
@@ -141,6 +152,8 @@ class AccountControllerTest extends AbstractEndpointTest {
     private FirstLastIndexParser indexParser = new FirstLastIndexParser(100);
     @Mock
     private AccountStatisticsService accountStatisticsService = Mockito.mock(AccountStatisticsService.class);
+    @Mock
+    private AssetService assetService = Mockito.mock(AssetService.class);
 
     private Block GENESIS_BLOCK, LAST_BLOCK, NEW_BLOCK;
     private Block BLOCK_0, BLOCK_1, BLOCK_2, BLOCK_3;
@@ -165,8 +178,10 @@ class AccountControllerTest extends AbstractEndpointTest {
             new Account2FADetailsConverter(),
             new Account2FAConverter(),
             orderService,
-            indexParser,
-            accountStatisticsService
+            100,
+            accountStatisticsService,
+            assetService,
+            currencyService
         );
 
         dispatcher.getRegistry().addSingletonResource(endpoint);
@@ -662,7 +677,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         int from = 0;
         int to = 99;
 
-        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, to);
+        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, from, to, timestamp);
 
         MockHttpResponse response = sendGetRequest("/accounts/block-ids?account=" + ACCOUNT_ID
             + "&timestamp=" + timestamp
@@ -680,7 +695,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         JsonNode root = mapper.readTree(content);
         assertTrue(root.get("blockIds").isArray());
         assertEquals(BLOCKS.size(), root.withArray("blockIds").size());
-        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, timestamp, from, to);
+        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, from, to, timestamp);
     }
 
     @Test
@@ -703,7 +718,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         int from = 0;
         int to = 200;
 
-        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, timestamp, from, 99);
+        doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, from, 99, timestamp);
 
         MockHttpResponse response = sendGetRequest("/accounts/blocks?account=" + ACCOUNT_ID
             + "&timestamp=" + timestamp
@@ -722,7 +737,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         assertTrue(root.get("blocks").isArray());
         assertEquals(BLOCKS.size(), root.withArray("blocks").size());
         assertEquals(Long.toUnsignedString(BLOCK_0.getGeneratorId()), root.withArray("blocks").get(1).get("generator").asText());
-        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, timestamp, from, 99);
+        verify(accountService, times(1)).getAccountBlocks(ACCOUNT_ID, from, 99, timestamp);
     }
 
     @ParameterizedTest(name = "{index} url={arguments}")

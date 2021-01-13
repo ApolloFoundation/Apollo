@@ -1,0 +1,19 @@
+{
+  "name": "apollo-blockchain",
+  "description": "Apollo blockchain backend",
+  "version": "1.47.5",
+  "dependencies": [
+    {
+      "name": "OpenJDK",
+      "optional": false,
+      "version_min": "11.0.6",
+      "version_max": "13.0.2"
+    },
+    {
+      "name": "Apollo-web-ui",
+      "optional": true,
+      "version_min": "2.8.1",
+      "version_max": "2.8.99"
+    }
+  ]
+}

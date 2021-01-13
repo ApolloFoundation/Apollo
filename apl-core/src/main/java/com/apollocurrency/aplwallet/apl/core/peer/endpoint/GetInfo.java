@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -34,10 +34,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.StringWriter;
 
-public final class GetInfo extends PeerRequestHandler {
+@Singleton
+public class GetInfo extends PeerRequestHandler {
     private static final Logger log = LoggerFactory.getLogger(GetInfo.class);
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
     private static final JSONStreamAware INVALID_APPLICATION;

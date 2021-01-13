@@ -8,8 +8,8 @@ import com.apollocurrency.aplwallet.api.dto.AplWalletDTO;
 import com.apollocurrency.aplwallet.api.dto.AplWalletKeyDTO;
 import com.apollocurrency.aplwallet.api.dto.EthWalletKeyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.WalletKeysInfoDTO;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 public class WalletKeysConverter implements Converter<WalletKeysInfo, WalletKeysInfoDTO> {

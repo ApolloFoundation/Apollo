@@ -20,13 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
@@ -60,7 +60,7 @@ public final class GetExpectedSellOffers extends AbstractAPIRequestHandler {
         boolean sortByRate = "true".equalsIgnoreCase(req.getParameter("sortByRate"));
 
         Filter<Transaction> filter = transaction -> {
-            if (transaction.getType() != MonetarySystem.PUBLISH_EXCHANGE_OFFER) {
+            if (transaction.isNotOfType(TransactionTypes.TransactionTypeSpec.MS_PUBLISH_EXCHANGE_OFFER)) {
                 return false;
             }
             if (accountId != 0 && transaction.getSenderId() != accountId) {

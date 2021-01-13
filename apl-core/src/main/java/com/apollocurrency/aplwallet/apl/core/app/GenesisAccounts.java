@@ -16,10 +16,13 @@ public class GenesisAccounts {
     private static List<Map.Entry<String, Long>> initialGenesisAccountsBalances;
     private static GenesisImporter genesisImporter;
 
-    public static void init() {
+    public static void init() throws GenesisImportException {
         if (genesisImporter == null) {
             genesisImporter = CDI.current().select(GenesisImporter.class).get();
         }
+        
+        genesisImporter.loadGenesisDataFromResources();
+        
         initialGenesisAccountsBalances = genesisImporter.loadGenesisAccounts();
     }
 

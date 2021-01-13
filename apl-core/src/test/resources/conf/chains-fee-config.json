@@ -1,0 +1,145 @@
+[
+  {
+    "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
+    "active": true,
+    "wellKnownPeers": [
+      "51.15.250.32",
+      "51.15.130.37"
+    ],
+    "name": "Apollo experimental testnet",
+    "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
+    "symbol": "Apollo",
+    "prefix": "APL",
+    "project": "Apollo",
+    "initialSupply": 30000000000,
+    "decimals": 8,
+    "genesisLocation": "conf/data/genesisAccounts-testnet.json",
+    "featuresHeightRequirement": {
+      "dexReopenPendingOrdersHeight": 3000,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000
+    },
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "blockTime": 1,
+        "maxBlockTimeLimit": 2,
+        "minBlockTimeLimit": 0,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 1,
+        "blockTime": 1,
+        "maxBlockTimeLimit": 2,
+        "minBlockTimeLimit": 0,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": false,
+          "frequency": 1
+        }
+      },
+      {
+        "height": 5,
+        "blockTime": 5,
+        "maxBlockTimeLimit": 7,
+        "minBlockTimeLimit": 3,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 5
+        }
+      },
+      {
+        "height": 10,
+        "blockTime": 10,
+        "maxBalance": 30000000000,
+        "maxBlockTimeLimit": 12,
+        "minBlockTimeLimit": 8,
+        "shardingSettings": {
+          "frequency": 10
+        }
+      },
+      {
+        "height": 50,
+        "blockTime": 50,
+        "maxBlockTimeLimit": 55,
+        "minBlockTimeLimit": 45,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 50
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 0,
+              "subType": 0,
+              "rate": 50
+            },
+            {
+              "type": 0,
+              "subType": 1,
+              "rate": 50
+            },
+            {
+              "type": 1,
+              "subType": 1,
+              "rate": 50
+            }
+          ]
+        }
+      },
+      {
+        "height": 70,
+        "blockTime": 70,
+        "maxBlockTimeLimit": 77,
+        "minBlockTimeLimit": 63,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 70
+        }
+      },
+      {
+        "height": 100,
+        "blockTime": 100,
+        "maxBalance": 30000000000,
+        "maxBlockTimeLimit": 120,
+        "minBlockTimeLimit": 90,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 100
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 0,
+              "subType": 0,
+              "rate": 0
+            },
+            {
+              "type": 0,
+              "subType": 1,
+              "rate": 0
+            },
+            {
+              "type": 1,
+              "subType": 1,
+              "rate": 0
+            }
+          ]
+        }
+      },
+      {
+        "height": 200,
+        "blockTime": 200,
+        "maxBlockTimeLimit": 245,
+        "minBlockTimeLimit": 182,
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 200
+        }
+      }
+    ]
+  }
+]

@@ -4,19 +4,19 @@
 package com.apollocurrency.aplwallet.apl.core.rest.utils;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
-import com.apollocurrency.aplwallet.apl.core.app.PassphraseGeneratorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.app.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TwoFactorAuthService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.PassphraseGeneratorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.extern.slf4j.Slf4j;

@@ -4,15 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -61,8 +61,8 @@ public final class GetPrivateTransaction extends AbstractAPIRequestHandler {
         }
         JSONObject response;
         if (transaction == null) {
-            transaction = lookupTransactionProcessor().getUnconfirmedTransaction(transactionId);
-            if (transaction == null || !transaction.getType().equals(Payment.PRIVATE) || transaction.getType().equals(Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
+            transaction = lookupMemPool().getUnconfirmedTransaction(transactionId);
+            if (transaction == null || transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT || transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
                 return UNKNOWN_TRANSACTION;
             }
             if (data.isEncrypt()) {
@@ -71,7 +71,7 @@ public final class GetPrivateTransaction extends AbstractAPIRequestHandler {
                 response = JSONData.unconfirmedTransaction(transaction);
             }
         } else {
-            if (!transaction.getType().equals(Payment.PRIVATE) || transaction.getType().equals(Payment.PRIVATE) && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
+            if (transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT || transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
                 return UNKNOWN_TRANSACTION;
             }
             if (data.isEncrypt()) {

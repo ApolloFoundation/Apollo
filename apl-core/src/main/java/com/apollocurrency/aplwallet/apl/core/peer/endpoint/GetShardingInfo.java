@@ -4,11 +4,11 @@
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.api.p2p.ShardInfo;
-import com.apollocurrency.aplwallet.api.p2p.ShardingInfoRequest;
-import com.apollocurrency.aplwallet.api.p2p.ShardingInfoResponse;
+import com.apollocurrency.aplwallet.api.p2p.request.ShardingInfoRequest;
+import com.apollocurrency.aplwallet.api.p2p.respons.ShardingInfoResponse;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
@@ -20,6 +20,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.UUID;
  * @author alukin@gmail.com
  */
 @Slf4j
+@Singleton
 public class GetShardingInfo extends PeerRequestHandler {
 
     private final ShardDao shardDao;

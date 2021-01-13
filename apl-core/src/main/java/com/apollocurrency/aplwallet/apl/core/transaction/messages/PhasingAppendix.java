@@ -3,44 +3,21 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import java.util.List;
 
 public class PhasingAppendix extends AbstractAppendix {
-    private static final Logger LOG = getLogger(PhasingAppendix.class);
 
-    private static final Fee PHASING_FEE = (transaction, appendage) -> {
-        long fee = 0;
-        PhasingAppendix phasing = (PhasingAppendix) appendage;
-        if (!phasing.params.getVoteWeighting().isBalanceIndependent()) {
-            fee += 20 * Constants.ONE_APL;
-        } else {
-            fee += Constants.ONE_APL;
-        }
-        if (phasing.hashedSecret.length > 0) {
-            fee += (1 + (phasing.hashedSecret.length - 1) / 32) * Constants.ONE_APL;
-        }
-        fee += Constants.ONE_APL * phasing.linkedFullHashes.length;
-        return fee;
-    };
     private final int finishHeight;
     private final PhasingParams params;
     private final byte[][] linkedFullHashes;
@@ -74,11 +51,11 @@ public class PhasingAppendix extends AbstractAppendix {
 
     public PhasingAppendix(JSONObject attachmentData) {
         super(attachmentData);
-        Long phasingFinishHeight = (Long) attachmentData.get("phasingFinishHeight");
+        Number phasingFinishHeight = (Number) attachmentData.get("phasingFinishHeight");
 
         this.finishHeight = phasingFinishHeight != null ? phasingFinishHeight.intValue() : -1;
         params = new PhasingParams(attachmentData);
-        JSONArray linkedFullHashesJson = (JSONArray) attachmentData.get("phasingLinkedFullHashes");
+        List<?> linkedFullHashesJson = (List<?>) attachmentData.get("phasingLinkedFullHashes");
         if (linkedFullHashesJson != null && linkedFullHashesJson.size() > 0) {
             linkedFullHashes = new byte[linkedFullHashesJson.size()][];
             for (int i = 0; i < linkedFullHashes.length; i++) {
@@ -114,7 +91,7 @@ public class PhasingAppendix extends AbstractAppendix {
     //TODO think it over how to change it (magic numbers).
     @Override
     public byte getVersion() {
-        return Byte.valueOf("1");
+        return 1;
     }
 
     @Override
@@ -153,125 +130,41 @@ public class PhasingAppendix extends AbstractAppendix {
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        generalValidation(transaction);
-
-        validateFinishHeight(this.finishHeight);
-    }
-
-    public void generalValidation(Transaction transaction) throws AplException.ValidationException {
-        params.validate();
-
-        int currentHeight = lookupBlockchain().getHeight();
-        if (params.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.TRANSACTION) {
-            if (linkedFullHashes.length == 0 || linkedFullHashes.length > Constants.MAX_PHASING_LINKED_TRANSACTIONS) {
-                throw new AplException.NotValidException("Invalid number of linkedFullHashes " + linkedFullHashes.length);
-            }
-            Set<Long> linkedTransactionIds = new HashSet<>(linkedFullHashes.length);
-            for (byte[] hash : linkedFullHashes) {
-                if (Convert.emptyToNull(hash) == null || hash.length != 32) {
-                    throw new AplException.NotValidException("Invalid linkedFullHash " + Convert.toHexString(hash));
-                }
-                if (!linkedTransactionIds.add(Convert.fullHashToId(hash))) {
-                    throw new AplException.NotValidException("Duplicate linked transaction ids");
-                }
-                checkLinkedTransaction(hash, currentHeight, transaction.getHeight());
-            }
-            if (params.getQuorum() > linkedFullHashes.length) {
-                throw new AplException.NotValidException("Quorum of " + params.getQuorum() + " cannot be achieved in by-transaction voting with "
-                    + linkedFullHashes.length + " linked full hashes only");
-            }
-        } else {
-            if (linkedFullHashes.length != 0) {
-                throw new AplException.NotValidException("LinkedFullHashes can only be used with VotingModel.TRANSACTION");
-            }
-        }
-
-        if (params.getVoteWeighting().getVotingModel() == VoteWeighting.VotingModel.HASH) {
-            if (params.getQuorum() != 1) {
-                throw new AplException.NotValidException("Quorum must be 1 for by-hash voting");
-            }
-            if (hashedSecret.length == 0 || hashedSecret.length > Byte.MAX_VALUE) {
-                throw new AplException.NotValidException("Invalid hashedSecret " + Convert.toHexString(hashedSecret));
-            }
-            if (PhasingPollService.getHashFunction(algorithm) == null) {
-                throw new AplException.NotValidException("Invalid hashedSecretAlgorithm " + algorithm);
-            }
-        } else {
-            if (hashedSecret.length != 0) {
-                throw new AplException.NotValidException("HashedSecret can only be used with VotingModel.HASH");
-            }
-            if (algorithm != 0) {
-                throw new AplException.NotValidException("HashedSecretAlgorithm can only be used with VotingModel.HASH");
-            }
-        }
-    }
-
-    public void validateFinishHeight(Integer finishHeight) throws AplException.NotCurrentlyValidException {
-        Block lastBlock = lookupBlockchain().getLastBlock();
-        int currentHeight = lastBlock.getHeight();
-
-        if (this.finishHeight <= currentHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1)
-            || this.finishHeight >= currentHeight + Constants.MAX_PHASING_DURATION) {
-            throw new AplException.NotCurrentlyValidException("Invalid finish height " + finishHeight);
-        }
-
-    }
-
-    public void validateFinishHeightAndTime(Integer height, Integer time) throws AplException.NotCurrentlyValidException {
-
-        if ((this.finishHeight != -1 && time != -1) || (this.finishHeight == -1 && time == -1)) {
-            throw new AplException.NotCurrentlyValidException("Only one parameter should be filled 'phasingFinishHeight or phasingFinishTime'");
-        }
-
-        Block lastBlock = lookupBlockchain().getLastBlock();
-        int lastBlockHeight = lastBlock.getHeight();
-        int currentTime = lookupTimeService().getEpochTime();
-
-        if (time == -1 &&
-            (this.finishHeight <= lastBlockHeight + (params.getVoteWeighting().acceptsVotes() ? 2 : 1) ||
-                this.finishHeight >= lastBlockHeight + Constants.MAX_PHASING_DURATION)) {
-            throw new AplException.NotCurrentlyValidException("Invalid finish height " + height);
-        }
-
-
-        if (this.finishHeight == -1 && time >= currentTime + Constants.MAX_PHASING_TIME_DURATION_SEC) {
-            throw new AplException.NotCurrentlyValidException("Invalid finish time " + time);
-        }
-
-    }
-
-    private void checkLinkedTransaction(byte[] hash, int currentHeight, int transactionHeight) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
-        Integer txHeight = lookupBlockchain().getTransactionHeight(hash, currentHeight);
-        if (txHeight != null) {
-
-            if (transactionHeight - txHeight > lookupBlockchainConfig().getCurrentConfig().getReferencedTransactionHeightSpan()) {
-                throw new AplException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");
-            }
-            if (lookupPhasingPollService().isTransactionPhased(Convert.fullHashToId(hash))) {
-                throw new AplException.NotCurrentlyValidException("Cannot link to an already existing phased transaction");
-            }
-        }
-    }
-
-    @Override
-    public void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        params.checkApprovable();
-    }
-
-    @Override
-    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        lookupPhasingPollService().addPoll(transaction, this);
-    }
-
-    @Override
     public boolean isPhasable() {
         return false;
     }
 
     @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        return PHASING_FEE;
+    public Fee getBaselineFee(Transaction tx, final long oneAPL) {
+        return (transaction, appendage) -> {
+            long fee = 0;
+            PhasingAppendix phasing = (PhasingAppendix) appendage;
+            if (!phasing.params.getVoteWeighting().isBalanceIndependent()) {
+                fee += 20 * oneAPL;
+            } else {
+                fee += oneAPL;
+            }
+            if (phasing.hashedSecret.length > 0) {
+                fee += (1 + (phasing.hashedSecret.length - 1) / 32) * oneAPL;
+            }
+            fee += oneAPL * phasing.linkedFullHashes.length;
+            return fee;
+        };
+    }
+
+    @Override
+    public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        throw new UnsupportedOperationException("Apply for phasing appendix is not supported, use separate class");
+    }
+
+    @Override
+    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        throw new UnsupportedOperationException("Validation for phasing appendix is not supported, use separate class");
+    }
+
+    @Override
+    public void performLightweightValidation(Transaction transaction, int blockcHeight) throws AplException.ValidationException {
+        throw new UnsupportedOperationException("Validation for phasing appendix is not supported, use separate validator");
     }
 
     public int getFinishHeight() {

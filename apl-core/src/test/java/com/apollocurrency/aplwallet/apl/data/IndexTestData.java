@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.BlockIndex;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import java.util.Arrays;

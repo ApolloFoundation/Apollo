@@ -27,13 +27,15 @@ import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -55,7 +57,8 @@ public final class SearchAssets extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         JSONArray assetsJSONArray = new JSONArray();
-        try (DbIterator<Asset> assets = Asset.searchAssets(query, firstIndex, lastIndex)) {
+        AssetService assetService = CDI.current().select(AssetService.class).get();
+        try (DbIterator<Asset> assets = assetService.searchAssets(query, firstIndex, lastIndex)) {
             while (assets.hasNext()) {
                 assetsJSONArray.add(JSONData.asset(assets.next(), includeCounts));
             }

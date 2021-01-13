@@ -3,9 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingParams;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -24,7 +24,7 @@ public class PhasingAppendixV2 extends PhasingAppendix {
 
     public PhasingAppendixV2(JSONObject attachmentData) {
         super(attachmentData);
-        Long phasingFinishTime = (Long) attachmentData.get("phasingFinishTime");
+        Number phasingFinishTime = (Number) attachmentData.get("phasingFinishTime");
 
         this.finishTime = phasingFinishTime != null ? phasingFinishTime.intValue() : -1;
     }
@@ -64,10 +64,8 @@ public class PhasingAppendixV2 extends PhasingAppendix {
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        super.generalValidation(transaction);
-
-        validateFinishHeightAndTime(blockHeight, this.getFinishTime());
+    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        throw new UnsupportedOperationException("Validate for PhasingV2 is not supported, use separate class");
     }
 
     public int getFinishTime() {

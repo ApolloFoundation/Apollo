@@ -1,10 +1,9 @@
 /*
  *  Copyright © 2018-2020 Apollo Foundation
  */
-
 package com.apollocurrency.aplwallet.apl.updater.export;
 
-import com.apollocurrency.aplwallet.apl.core.db.model.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.OptionDAO;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.updater.export.event.UpdateEvent;
@@ -29,11 +28,11 @@ import java.util.Base64;
 import java.util.Objects;
 import java.util.Properties;
 
-import static com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService.SECURE_STORE_KEY;
+import static com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService.SECURE_STORE_KEY;
 
 /**
- * Class process sent event afer update is processed and not run script.
- * It stores some properties into config folder for later use.
+ * Class process sent event afer update is processed and not run script. It
+ * stores some properties into config folder for later use.
  */
 @Slf4j
 @Singleton
@@ -60,7 +59,7 @@ public class UpdateEventObserver {
         String propertyValue = propertiesHolder.getStringProperty(nameKey);
         log.debug("propertiesHolder value found? = '{}'", propertyValue != null && !propertyValue.isEmpty());
         // prepare folder to write to
-        String configDir = configDirProvider.getConfigDirectory();
+        String configDir = configDirProvider.getConfigLocation() + "/" + configDirProvider.getConfigName();
         File folder = new File(configDir);
         if (!folder.exists()) {
             // create if missing

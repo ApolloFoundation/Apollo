@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.BlockIndex;
 
 import java.util.List;
 

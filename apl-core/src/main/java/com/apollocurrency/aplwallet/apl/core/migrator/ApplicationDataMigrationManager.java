@@ -61,7 +61,7 @@ public class ApplicationDataMigrationManager {
             if (!twoFactorAuthMigrationExecutor.isAutoCleanup()) {
                 twoFactorAuthMigrationExecutor.performAfterMigrationCleanup(target2FADir);
             }
-            publicKeyMigrator.migrate();
+//            publicKeyMigrator.migrate(); // commented out because node fails here after first restart
             referencedTransactionMigrator.migrate();
             transactionPublicKeyMigrator.migrate();
         } catch (IOException e) {

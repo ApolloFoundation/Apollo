@@ -21,22 +21,22 @@
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-import org.slf4j.Logger;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.inject.Singleton;
 
+@Slf4j
+@NoArgsConstructor
+@Singleton
 public final class ProcessBlock extends PeerRequestHandler {
-    private static final Logger LOG = getLogger(ProcessBlock.class);
-
-    public ProcessBlock() {
-    }
 
     @Override
     public JSONStreamAware processRequest(final JSONObject request, final Peer peer) {
@@ -54,8 +54,11 @@ public final class ProcessBlock extends PeerRequestHandler {
                 peerBlockTimestamp == lastBlock.getTimestamp() && peerBlockTimeout > lastBlock.getTimeout()))) {
             lookupPeersService().peersExecutorService.submit(() -> {
                 try {
-                    LOG.debug("API: need to process better peer block");
-                    lookupBlockchainProcessor().processPeerBlock(request);
+                    log.debug("API: need to process better peer block");
+                    Object blockObject = request.get("block");
+                    if (blockObject != null) {
+                        lookupBlockchainProcessor().processPeerBlock((JSONObject) blockObject);
+                    }
                 } catch (AplException | RuntimeException e) {
                     if (peer != null) {
                         peer.blacklist(e);
@@ -68,7 +71,7 @@ public final class ProcessBlock extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 
 }

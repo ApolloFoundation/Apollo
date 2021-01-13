@@ -3,15 +3,15 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * @author al
@@ -35,7 +35,7 @@ public final class MessagingVoteCasting extends AbstractAttachment {
     public MessagingVoteCasting(JSONObject attachmentData) {
         super(attachmentData);
         pollId = Convert.parseUnsignedLong((String) attachmentData.get("poll"));
-        JSONArray vote = (JSONArray) attachmentData.get("vote");
+        List<?> vote = (List<?>) attachmentData.get("vote");
         pollVote = new byte[vote.size()];
         for (int i = 0; i < pollVote.length; i++) {
             pollVote[i] = ((Long) vote.get(i)).byteValue();
@@ -72,8 +72,8 @@ public final class MessagingVoteCasting extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return Messaging.VOTE_CASTING;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.VOTE_CASTING;
     }
 
     public long getPollId() {

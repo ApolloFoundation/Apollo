@@ -6,23 +6,23 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.AplDbVersion;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
-import com.apollocurrency.aplwallet.apl.core.db.ShardDataSourceCreateHelper;
-import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardState;
-import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.db.derived.PrunableDbTable;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardDataSourceCreateHelper;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.AbstractHelper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.BatchedPaginationOperation;
@@ -509,7 +509,8 @@ public class ShardEngineImpl implements ShardEngine {
         try {
             trimService.waitTrimming();
             // distinguish usual trim and trim within sharding process
-            return trimService.doTrimDerivedTablesOnHeightLocked(height, true);
+//            return trimService.doTrimDerivedTablesOnHeightLocked(height, true);
+            return trimService.doTrimDerivedTablesOnHeight(height, true);
         } catch (Exception e) {
             databaseManager.getDataSource().rollback(false);
             throw new RuntimeException(e);

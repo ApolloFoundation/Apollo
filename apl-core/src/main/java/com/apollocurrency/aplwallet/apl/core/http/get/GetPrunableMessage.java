@@ -20,26 +20,23 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.PRUNED_TRANSACTION;
 
 @Vetoed
 public final class GetPrunableMessage extends AbstractAPIRequestHandler {
-    private PrunableMessageService prunableMessageService = CDI.current().select(PrunableMessageService.class).get();
 
     public GetPrunableMessage() {
         super(new APITag[]{APITag.MESSAGES}, "transaction", "secretPhrase", "sharedKey", "retrieve", "account", "passphrase");
@@ -57,7 +54,7 @@ public final class GetPrunableMessage extends AbstractAPIRequestHandler {
         boolean retrieve = "true".equalsIgnoreCase(req.getParameter("retrieve"));
         PrunableMessage prunableMessage = prunableMessageService.get(transactionId);
         if (prunableMessage == null && retrieve) {
-            if (lookupBlockchainProcessor().restorePrunedTransaction(transactionId) == null) {
+            if (prunableRestorationService.restorePrunedTransaction(transactionId) == null) {
                 return PRUNED_TRANSACTION;
             }
             prunableMessage = prunableMessageService.get(transactionId);

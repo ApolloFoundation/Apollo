@@ -1,40 +1,40 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
-import com.apollocurrency.aplwallet.apl.core.rest.ByteArrayConverterProvider;
-import com.apollocurrency.aplwallet.apl.core.rest.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.ByteArrayConverterProvider;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.AccountParametersParser;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateV2TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Arch;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.jboss.resteasy.mock.MockHttpResponse;
-import org.jboss.weld.junit.MockBean;
-import org.jboss.weld.junit5.EnableWeld;
-import org.jboss.weld.junit5.WeldInitiator;
-import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,6 +47,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -59,8 +60,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@EnableWeld
-    // enable weld only to have an ability of creation Transaction since it require dynamic CDI injection TODO should be removed after refactoring
 class UpdateControllerTest extends AbstractEndpointTest {
     TransactionCreator transactionCreator;
     @Mock
@@ -68,38 +67,47 @@ class UpdateControllerTest extends AbstractEndpointTest {
     @Mock
     TransactionValidator validator;
     @Mock
+    TransactionSigner transactionSigner;
+    @Mock
     TimeService timeService;
     @Mock
     TransactionProcessor processor;
     @Mock
-    ElGamalEncryptor elGamal = mock(ElGamalEncryptor.class);
+    ElGamalEncryptor elGamal;
     @Mock
-    AccountService accountService = mock(AccountService.class);
+    AccountService accountService;
     @Mock
     KeyStoreService keystoreService = mock(KeyStoreService.class);
+    @Mock
+    BlockchainConfig blockchainConfig;
 
-    UpdateV2Attachment attachment = new UpdateV2Attachment("https://test.com", Level.CRITICAL, new Version("1.23.4"), "https://con.com", BigInteger.ONE, Convert.parseHexString("111100ff"), Set.of(new PlatformSpec(Platform.WINDOWS, Architecture.AMD64), new PlatformSpec(Platform.ALL, Architecture.ARM)));
-    @WeldSetup
-    WeldInitiator weldInitiator = WeldInitiator.from().addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class)).build();
+    UpdateV2TransactionType v2Transaction;
+
+    UpdateV2Attachment attachment = new UpdateV2Attachment("https://test.com", Level.CRITICAL, new Version("1.23.4"), "https://con.com", BigInteger.ONE, Convert.parseHexString("111100ff"), Set.of(new PlatformSpec(OS.WINDOWS, Arch.X86_64), new PlatformSpec(OS.NO_OS, Arch.ARM_64)));
 
     @Override
     @BeforeEach
     void setUp() {
         super.setUp();
-        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(), blockchain, processor);
+        v2Transaction = new UpdateV2TransactionType(blockchainConfig, accountService);
+        UnconfirmedTransactionConverter converter = new UnconfirmedTransactionConverter(mock(PrunableLoadingService.class));
+        CachedTransactionTypeFactory txTypeFactory = new CachedTransactionTypeFactory(List.of(v2Transaction));
+        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(mock(PrunableLoadingService.class), blockchainConfig), blockchain, processor, txTypeFactory, new TransactionBuilder(txTypeFactory), mock(TransactionSigner.class));
         dispatcher.getProviderFactory()
             .register(ByteArrayConverterProvider.class)
             .register(LegacyParameterExceptionMapper.class)
             .register(PlatformSpecConverterProvider.class);
-        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, blockchain, keystoreService, elGamal), transactionCreator);
+        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, blockchain, keystoreService, elGamal), transactionCreator, converter, blockchainConfig);
         dispatcher.getRegistry().addSingletonResource(updateController);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
     }
 
     @Test
     void testSendUpdateSuccessful() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+        long ONE_APL = 100000000l;
+        when(blockchainConfig.getOneAPL()).thenReturn(ONE_APL);
         when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
-        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * Constants.ONE_APL, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
+        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * ONE_APL, 10000 * ONE_APL, 0, 0, CURRENT_HEIGHT);
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
         doReturn(sender).when(accountService).getAccount(Convert.parseHexString(PUBLIC_KEY_SECRET));
         EcBlockData ecBlockData = new EcBlockData(121, 100_000);
@@ -112,18 +120,21 @@ class UpdateControllerTest extends AbstractEndpointTest {
             return "";
         }).when(req).getParameter(anyString());
 
-        MockHttpResponse response = sendPostRequest("/updates", "secretPhrase=" + SECRET + "&manifestUrl=https://test.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,ALL-ARM" +
-            "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
+        MockHttpResponse response = sendPostRequest("/updates", "secretPhrase=" + SECRET + "&manifestUrl=https://test11.com&level=CRITICAL&platformSpec=WINDOWS-X86_32,NoOS-ARM" +
+            "&version=1.23.4&cn=https://cn345.com&serialNumber=1&signature=111100ff");
         String json = response.getContentAsString();
+//        System.out.println("json = \n" + json);
 
-        JSONAssert.assertEquals("{\"timestamp\": 0, \"attachment\" : {\"level\": 0, \"manifestUrl\":\"https://test.com\", \"platforms\": [{\"platform\": 1, \"architecture\": 1},{\"platform\": -1, \"architecture\": 2}]}, \"type\" : 8, \"subtype\": 3}", json, JSONCompareMode.LENIENT);
+        JSONAssert.assertEquals("{\"timestamp\": 0, \"attachment\" : {\"level\": 0, \"manifestUrl\":\"https://test11.com\", \"platforms\": [{\"platform\": 1, \"architecture\": 0},{\"platform\": -1, \"architecture\": 3}]}, \"type\" : 8, \"subtype\": 3}", json, JSONCompareMode.LENIENT);
         verify(processor).broadcast(any(Transaction.class));
     }
 
     @Test
     void testSendUpdateSuccessful_usingVault() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
+        long ONE_APL = 100000000l;
+        when(blockchainConfig.getOneAPL()).thenReturn(ONE_APL);
         when(elGamal.elGamalDecrypt(SECRET)).thenReturn(SECRET);
-        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * Constants.ONE_APL, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
+        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * ONE_APL, 10000 * ONE_APL, 0, 0, CURRENT_HEIGHT);
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
         ApolloFbWallet wallet = mock(ApolloFbWallet.class);
         doReturn(Convert.toHexString(Crypto.getKeySeed(Convert.toBytes(SECRET)))).when(wallet).getAplKeySecret();
@@ -141,22 +152,24 @@ class UpdateControllerTest extends AbstractEndpointTest {
             return "";
         }).when(req).getParameter(anyString());
 
-        MockHttpResponse response = sendPostRequest("/updates", "passphrase=" + SECRET + "&account=" + ACCOUNT_ID_WITH_SECRET + "&manifestUrl=https://test.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,ALL-ARM" +
-            "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
+        MockHttpResponse response = sendPostRequest("/updates", "passphrase=" + SECRET + "&account=" + ACCOUNT_ID_WITH_SECRET + "&manifestUrl=https://test11.com&level=CRITICAL&platformSpec=WINDOWS-X86_64,NoOS-ARM64" +
+            "&version=1.23.4&cn=https://cn345.com&serialNumber=1&signature=111100ff");
         String json = response.getContentAsString();
+//        System.out.println("json = \n" + json);
 
-        JSONAssert.assertEquals("{\"timestamp\": 0, \"attachment\" : {\"level\": 0, \"manifestUrl\":\"https://test.com\", \"platforms\": [{\"platform\": 1, \"architecture\": 1},{\"platform\": -1, \"architecture\": 2}]}, \"type\" : 8, \"subtype\": 3}", json, JSONCompareMode.LENIENT);
+        JSONAssert.assertEquals("{\"requestProcessingTime\":0,\"type\":8,\"subtype\":3,\"phased\":false,\"timestamp\":0,\"deadline\":1440,\"senderPublicKey\":\"176457a70121bc34fa14d03d1e7b012b122db01b5c5cd7f7eb1ffd83298dad2c\",\"amountATM\":\"0\",\"feeATM\":\"100000000\",\"attachment\":{\"serialNumber\":\"1\",\"level\":0,\"signature\":\"111100ff\",\"version.UpdateV2\":1,\"manifestUrl\":\"https://test11.com\",\"cn\":\"https://cn345.com\",\"version\":\"1.23.4\",\"platforms\":[{\"platform\":-1,\"architecture\":2},{\"platform\":1,\"architecture\":1}]},\"sender\":\"1080826614482663334\",\"senderRS\":\"APL-FXX8-4KC2-YPXB-2YYZX\",\"height\":2147483647,\"version\":1,\"ecBlockId\":\"121\",\"ecBlockHeight\":100000}", json, JSONCompareMode.LENIENT);
         verify(processor).broadcast(any(Transaction.class));
     }
 
     @Test
     void testSendUpdate_missingSecretPhrase() throws URISyntaxException, UnsupportedEncodingException, AplException.ValidationException {
-        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * Constants.ONE_APL, 10000 * Constants.ONE_APL, 0, 0, CURRENT_HEIGHT);
+        Account sender = new Account(ACCOUNT_ID_WITH_SECRET, 10000 * blockchainConfig.getOneAPL(), 10000 * blockchainConfig.getOneAPL(), 0, 0, CURRENT_HEIGHT);
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
 
-        MockHttpResponse response = sendPostRequest("/updates", "manifestUrl=https://test.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,ALL-ARM" +
-            "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
+        MockHttpResponse response = sendPostRequest("/updates", "manifestUrl=https://test11.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,NoOS-ARM" +
+            "&version=1.23.4&cn=https://cn345.com&serialNumber=1&signature=111100ff");
         String json = response.getContentAsString();
+//        System.out.println("json = \n" + json);
 
         JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified.\"}", json, JSONCompareMode.LENIENT);
         verify(processor, never()).broadcast(any(Transaction.class));
@@ -173,7 +186,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
             return "";
         }).when(req).getParameter(anyString());
 
-        MockHttpResponse response = sendPostRequest("/updates", "passphrase=" + SECRET + "&manifestUrl=https://test.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,ALL-ARM" +
+        MockHttpResponse response = sendPostRequest("/updates", "passphrase=" + SECRET + "&manifestUrl=https://test.com&level=CRITICAL&platformSpec=WINDOWS-AMD64,NoOS-ARM" +
             "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
         String json = response.getContentAsString();
 

@@ -50,8 +50,8 @@ echo "${ECHO_PREFIX} Apollo main jar path: ${MAIN_JAR}"
 
 # Java detection code. At the moment it is enough just to check jre in distribution
 # or version of system-wide java installation
-if [ -x "${APL_TOP_DIR}"/jre/bin/java ]; then
-    JAVA_CMD="${APL_TOP_DIR}"/jre/bin/java
+if [ -x "${APL_TOP_DIR}"/../jre/bin/java ]; then
+    JAVA_CMD="${APL_TOP_DIR}"/../jre/bin/java
 else
   if [[ -n $(type -p java) ]]
   then

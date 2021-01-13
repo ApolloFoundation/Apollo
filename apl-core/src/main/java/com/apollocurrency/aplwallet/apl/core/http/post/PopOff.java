@@ -20,10 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -56,6 +57,7 @@ public final class PopOff extends AbstractAPIRequestHandler {
         boolean keepTransactions = "true".equalsIgnoreCase(req.getParameter("keepTransactions"));
         List<? extends Block> blocks;
         lookupBlockchainProcessor();
+        Blockchain blockchain = lookupBlockchain();
         try {
             blockchainProcessor.suspendBlockchainDownloading();
             //TODO: It's a temporary approach to prevent hanging on calling the waitTrimming method.
@@ -63,7 +65,7 @@ public final class PopOff extends AbstractAPIRequestHandler {
             _waitForSuitableConditionBeforePopOff();
 
             if (numBlocks > 0) {
-                height = lookupBlockchain().getHeight() - numBlocks;
+                height = blockchain.getHeight() - numBlocks;
                 log.trace(">> PopOff by 'numBlocks' to height = {}", height);
                 blocks = blockchainProcessor.popOffTo(height);
             } else if (height > 0) {
@@ -82,7 +84,8 @@ public final class PopOff extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         //response.put("blocks", blocksJSON);
         if (keepTransactions) {
-            blocks.forEach(block -> lookupTransactionProcessor().processLater(block.getOrLoadTransactions()));
+            blocks.forEach(block -> lookupTransactionProcessor().processLater(
+                blockchain.getOrLoadTransactions(block)));
         }
         return response;
     }

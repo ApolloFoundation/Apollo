@@ -89,14 +89,14 @@
     <logger name="javax.servlet.level" level="off" additivity="false"/>
     <logger name="com.apollocurrency.aplwallet.apl.core.http.APIProxyServlet" level="info" additivity="false"/>
     <!--    <logger name="com.apollocurrency.aplwallet.apl.core.account.Account" level="trace"/> -->
-<!--    <logger name="com.apollocurrency.aplwallet.apl.core.app.Shuffling" level="trace" additivity="false">-->
+<!--    <logger name="com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling" level="trace" additivity="false">-->
 <!--        <appender-ref ref="shuffling-file"/>-->
 <!--    </logger>-->
 <!--
-    <logger name="com.apollocurrency.aplwallet.apl.core.app.Poll" level="trace" additivity="false">
+    <logger name="com.apollocurrency.aplwallet.apl.core.service.state.PollService" level="trace" additivity="false">
         <appender-ref ref="poll-file"/>
     </logger>
-    <logger name="com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl" level="trace" additivity="false">
+    <logger name="com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl" level="trace" additivity="false">
       <appender-ref ref="account-file"/>
     </logger>
 -->

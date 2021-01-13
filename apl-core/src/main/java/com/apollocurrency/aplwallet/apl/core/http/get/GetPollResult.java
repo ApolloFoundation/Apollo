@@ -21,15 +21,15 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 
-import com.apollocurrency.aplwallet.apl.core.app.Poll;
-import com.apollocurrency.aplwallet.apl.core.app.PollOptionResult;
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
+import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
@@ -40,7 +40,6 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.POLL_RESU
 
 @Vetoed
 public class GetPollResult extends AbstractAPIRequestHandler {
-
     public GetPollResult() {
         super(new APITag[]{APITag.VS}, "poll", "votingModel", "holding", "minBalance", "minBalanceModel");
     }
@@ -51,7 +50,7 @@ public class GetPollResult extends AbstractAPIRequestHandler {
         List<PollOptionResult> pollResults;
         VoteWeighting voteWeighting;
         if (Convert.emptyToNull(req.getParameter("votingModel")) == null) {
-            pollResults = poll.getResults();
+            pollResults = pollOptionResultService.getResultsByPoll(poll);
             voteWeighting = poll.getVoteWeighting();
         } else {
             byte votingModel = HttpParameterParserUtil.getByte(req, "votingModel", (byte) 0, (byte) 3, true);
@@ -59,8 +58,9 @@ public class GetPollResult extends AbstractAPIRequestHandler {
             long minBalance = HttpParameterParserUtil.getLong(req, "minBalance", 0, Long.MAX_VALUE, false);
             byte minBalanceModel = HttpParameterParserUtil.getByte(req, "minBalanceModel", (byte) 0, (byte) 3, false);
             voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
-            voteWeighting.validate();
-            pollResults = poll.getResults(voteWeighting);
+            voteWeighting.validateStateDependent();
+            voteWeighting.validateStateIndependent();
+            pollResults = pollOptionResultService.getResultsByVoteWeightingAndPoll(voteWeighting, poll);
         }
         if (pollResults == null) {
             return POLL_RESULTS_NOT_AVAILABLE;

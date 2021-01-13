@@ -20,16 +20,26 @@ public class HeightConfig {
     private final long maxBaseTarget;
     private final long minBaseTarget;
 
-    public HeightConfig(BlockchainProperties bp) {
-        Objects.requireNonNull(bp, "Blockchain properties cannot be null");
-
-        this.bp = bp;
+    public HeightConfig(BlockchainProperties bp, long oneAPL, long initialSupply) {
+        this.bp = Objects.requireNonNull(bp, "Blockchain properties cannot be null");
         this.maxPayloadLength = bp.getMaxNumberOfTransactions() * Constants.MIN_TRANSACTION_SIZE;
-        this.maxBalanceAtm = bp.getMaxBalance() * Constants.ONE_APL;
+        if (bp.getMaxBalance() > initialSupply) {
+            throw new IllegalArgumentException("Wrong height config, height=" + bp.getHeight() + ". The maxBalanceATM value " + bp.getMaxBalance() + " can't be greater than the initialSupply value " + initialSupply);
+        }
+        this.maxBalanceAtm = Math.multiplyExact(bp.getMaxBalance(), oneAPL);
         this.initialBaseTarget = BigInteger.valueOf(2).pow(63).divide(BigInteger.valueOf(bp.getBlockTime() * bp.getMaxBalance())).longValue();
         this.maxBaseTarget = initialBaseTarget * 50;
         this.minBaseTarget = initialBaseTarget * 9 / 10;
         this.blockTimeScaledConfig = new BlockTimeScaledConfig(bp.getBlockTime());
+        if (bp.getMaxBlockTimeLimit() < bp.getMinBlockTimeLimit()) {
+            throw new IllegalArgumentException("maxBlockTimeLimit '" + bp.getMaxBlockTimeLimit() + "' is less than minBlockTimeLimit '" + bp.getMinBlockTimeLimit()+"'");
+        }
+        if (bp.getMaxBlockTimeLimit() < bp.getBlockTime()) {
+            throw new IllegalArgumentException("maxBlockTimeLimit '" + bp.getMaxBlockTimeLimit() + "' is less than blockTime '" + bp.getBlockTime() + "'");
+        }
+        if (bp.getMinBlockTimeLimit() > bp.getBlockTime()) {
+            throw new IllegalArgumentException("minBlockTimeLimit '" + bp.getMinBlockTimeLimit() + "' is greater than blockTime '" + bp.getBlockTime() + "'");
+        }
     }
 
     public int getReferencedTransactionHeightSpan() {
@@ -40,11 +50,9 @@ public class HeightConfig {
         return maxPayloadLength;
     }
 
-
     public long getMaxBalanceATM() {
         return maxBalanceAtm;
     }
-
 
     public long getInitialBaseTarget() {
         return initialBaseTarget;
@@ -64,6 +72,18 @@ public class HeightConfig {
 
     public int getMaxNumberOfTransactions() {
         return bp.getMaxNumberOfTransactions();
+    }
+
+    public int getMaxArbitraryMessageLength() {
+        return bp.getMaxArbitraryMessageLength();
+    }
+
+    public int getMaxEncryptedMessageLength() {
+        return bp.getMaxEncryptedMessageLength();
+    }
+
+    public int getMaxNumberOfChildAccount() {
+        return bp.getMaxNumberOfChildAccounts();
     }
 
     public int getBlockTime() {
@@ -108,6 +128,10 @@ public class HeightConfig {
 
     public int getShardingFrequency() {
         return bp.getShardingSettings().getFrequency();
+    }
+
+    public short getFeeRate(byte type, byte subType) {
+        return bp.getTransactionFeeSettings().getRate(type, subType);
     }
 
     @Override

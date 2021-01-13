@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransaction;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMethods;
@@ -26,7 +26,7 @@ public interface MandatoryTransactionDao {
     List<MandatoryTransaction> getAll(@Bind("fromDbId") long fromDbId, @Bind("limit") int limit);
 
     @Transactional
-    @SqlUpdate("INSERT into mandatory_transaction(id, transaction_bytes, required_tx_hash) VALUES (:getId, :getBytes, :getRequiredTxHash)")
+    @SqlUpdate("INSERT into mandatory_transaction(id, transaction_bytes, required_tx_hash) VALUES (:getId, :getCopyTxBytes, :getRequiredTxHash)")
     void insert(@BindMethods MandatoryTransaction mandatoryTransaction);
 
     @Transactional

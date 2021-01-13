@@ -4,19 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import javax.enterprise.inject.spi.CDI;
-import java.nio.ByteBuffer;
-
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
+import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -24,13 +16,8 @@ import java.nio.ByteBuffer;
 /**
  *
  */
+@EqualsAndHashCode
 public abstract class AbstractAppendix implements Appendix {
-
-    private static Blockchain blockchain;// = CDI.current().select(Blockchain.class).get();
-    private static PhasingPollService phasingPollService;// = CDI.current().select(PhasingPollService.class).get();
-    private static BlockchainConfig blockchainConfig;// = CDI.current().select(BlockchainConfig.class).get();
-    private static volatile TimeService timeService;// = CDI.current().select(TimeService.class).get();
-    private static PrunableMessageService messageService;// = CDI.current().select(PrunableMessageService.class).get();
 
     private final byte version;
 
@@ -98,81 +85,24 @@ public abstract class AbstractAppendix implements Appendix {
     }
 
     @Override
-    public int getBaselineFeeHeight() {
-        return 1;
-    }
-
-    @Override
-    public Fee getBaselineFee(Transaction transaction) {
+    public Fee getBaselineFee(Transaction transaction, long oneAPL) {
         return Fee.NONE;
-    }
-
-    @Override
-    public int getNextFeeHeight() {
-        return Integer.MAX_VALUE;
-    }
-
-    @Override
-    public Fee getNextFee(Transaction transaction) {
-        return getBaselineFee(transaction);
     }
 
     public void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException {
         if (!isPhased(transaction)) {
             return;
         }
-        validate(transaction, blockHeight);
+        performFullValidation(transaction, blockHeight);
     }
 
     public abstract void apply(Transaction transaction, Account senderAccount, Account recipientAccount);
-
-    public void loadPrunable(Transaction transaction) {
-        loadPrunable(transaction, false);
-    }
-
-    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
-    }
 
     public abstract boolean isPhasable();
 
     @Override
     public final boolean isPhased(Transaction transaction) {
         return isPhasable() && transaction.getPhasing() != null;
-    }
-
-    Blockchain lookupBlockchain() {
-        if (blockchain == null) {
-            blockchain = CDI.current().select(BlockchainImpl.class).get();
-        }
-        return blockchain;
-    }
-
-    public BlockchainConfig lookupBlockchainConfig(){
-        if ( blockchainConfig == null) {
-            blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        }
-        return blockchainConfig;
-    }
-
-    public static PhasingPollService lookupPhasingPollService(){
-        if ( phasingPollService == null) {
-            phasingPollService = CDI.current().select(PhasingPollService.class).get();
-        }
-        return phasingPollService;
-    }
-
-    public static TimeService lookupTimeService(){
-        if ( timeService == null) {
-            timeService = CDI.current().select(TimeService.class).get();
-        }
-        return timeService;
-    }
-
-    public static PrunableMessageService lookupMessageService(){
-        if ( messageService == null) {
-            messageService = CDI.current().select(PrunableMessageService.class).get();
-        }
-        return messageService;
     }
 
 }

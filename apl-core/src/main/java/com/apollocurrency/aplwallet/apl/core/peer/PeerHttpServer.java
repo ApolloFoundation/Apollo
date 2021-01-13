@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.http.JettyConnectorCreator;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.MyNetworkInterfaces;
@@ -133,19 +133,19 @@ public class PeerHttpServer {
                         externalPorts.add(port);
                     }
                 }
-                myExtAddress = new PeerAddress(externalPorts.get(0), upnp.getExternalAddress().getHostAddress());
-            } else {
-                externalPorts.addAll(internalPorts);
+                if(externalPorts.size()>0){
+                    myExtAddress = new PeerAddress(externalPorts.get(0), upnp.getExternalAddress().getHostAddress());
+                }
             }
             // if we still do not have addres set in config and do not have UPnP
             //  myExtAddress is still null, do we have public IP?
             if (myExtAddress == null) {
                 String addr = getMyPublicIPAdresses();
                 if (addr != null) {
-                    myExtAddress = new PeerAddress(externalPorts.get(0), addr);
+                    myExtAddress = new PeerAddress(internalPorts.get(0), addr);
                 }
-                peerServer.setStopAtShutdown(true);
             }
+            peerServer.setStopAtShutdown(true);
 
         } else {
             peerServer = null;

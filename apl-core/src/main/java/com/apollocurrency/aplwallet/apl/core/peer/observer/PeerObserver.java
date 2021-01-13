@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.observer;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountEventType;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.observer.events.AccountEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEvent;
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,7 +18,7 @@ import javax.inject.Singleton;
 @Singleton
 public class PeerObserver {
 
-    private PeersService peersService;
+    private final PeersService peersService;
 
     @Inject
     public PeerObserver(PeersService peersService) {
@@ -26,7 +26,7 @@ public class PeerObserver {
     }
 
     public void onAccountBalance(@Observes @AccountEvent(AccountEventType.BALANCE) Account account) {
-        log.trace("Catch event {} accaount={}", AccountEventType.BALANCE, account);
+        //log.trace("Catch event {} account={}", AccountEventType.BALANCE, account);
         peersService.getAllConnectablePeers().forEach(peer -> {
             if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
                 peersService.notifyListeners(peer, PeersService.Event.WEIGHT);

@@ -7,12 +7,12 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -58,6 +58,7 @@ import java.util.UUID;
  */
 // @Singleton
 public class Apollo {
+
     //    System properties to load by PropertiesConfigLoader
     public static final String PID_FILE = "apl.pid";
     public static final String CMD_FILE = "apl.cmdline";
@@ -103,7 +104,7 @@ public class Apollo {
         for (String s : argv) {
             cmdline = cmdline + s + " ";
         }
-        Path hp = Paths.get(configDirProvider.getUserConfigDirectory()).getParent();
+        Path hp = Paths.get(configDirProvider.getUserConfigLocation());
         String home = hp.toString() + File.separator;
         File dir = new File(home);
         if (!dir.exists()) {
@@ -165,6 +166,10 @@ public class Apollo {
             jc.usage();
             System.exit(PosixExitCodes.EX_USAGE.exitCode());
         }
+        if (args.getNetIdx() >= 0 && !args.chainId.isEmpty()) {
+            System.err.println("--chainId, --testnet and --net parameters are incompatible, please specify only one");
+            System.exit(PosixExitCodes.EX_USAGE.exitCode());
+        }
         if (args.help) {
             jc.usage();
             System.exit(PosixExitCodes.OK.exitCode());
@@ -186,19 +191,27 @@ public class Apollo {
         ConfPlaceholder ph = new ConfPlaceholder();
 //load configuration files
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
-        ConfigDirProviderFactory.setup(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx);
+        String configDir = StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir;
+
+        ConfigDirProviderFactory.setup(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx, args.chainId, configDir);
+
         ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
+
+// Well, we can not resolve chainID for given parameters and therefor can not read configs. We have to exit program
+        if (configDirProvider.getChainId() == null) {
+            System.exit(PosixExitCodes.EX_CONFIG.exitCode());
+        }
 
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
             configDirProvider,
             args.isResourceIgnored(),
-            StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+            configDir,
             Constants.APPLICATION_DIR_NAME + ".properties",
             SYSTEM_PROPERTY_NAMES);
 
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
             configDirProvider,
-            StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir,
+            configDir,
             args.isResourceIgnored()
         );
 // init application data dir provider
@@ -215,6 +228,7 @@ public class Apollo {
         }
 
         CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
+   
         DirProviderFactory.setup(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
         dirProvider = DirProviderFactory.getProvider();
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
@@ -268,8 +282,9 @@ public class Apollo {
         // init config holders
         app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
         app.propertiesHolder.init(props);
-        if (log != null) log.trace("{}", app.propertiesHolder.dumpAllProperties()); // dumping all properties
-
+        if (log != null) {
+            log.trace("{}", app.propertiesHolder.dumpAllProperties()); // dumping all properties
+        }
         app.taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
         ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
         chainsConfigHolder.setChains(chains);
@@ -280,7 +295,7 @@ public class Apollo {
         SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        aplCoreRuntime.init(runtimeMode, blockchainConfig, app.propertiesHolder, app.taskDispatchManager);
+        aplCoreRuntime.init(runtimeMode, app.taskDispatchManager);
         Convert2.init(blockchainConfig);
 
         try {
@@ -288,9 +303,6 @@ public class Apollo {
             Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime));
             aplCoreRuntime.addCoreAndInit();
             app.initUpdater(args.updateAttachmentFile, args.debugUpdater);
-            if (args.startMint) {
-                aplCoreRuntime.startMinter();
-            }
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();

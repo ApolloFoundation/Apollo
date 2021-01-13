@@ -54,7 +54,7 @@
          try {
              ApolloFbWallet fbWallet = new ApolloFbWallet();
              fbWallet.readOpenData(new ByteArrayInputStream(keyStore));
-             byte[] key = fbWallet.keyFromPassPhrase(passPhrase, fbWallet.getContanerIV());
+             byte[] key = fbWallet.keyFromPassPhrase(passPhrase, fbWallet.getContainerIV());
              fbWallet.openStream(new ByteArrayInputStream(keyStore), key);
              return fbWallet;
          } catch (Exception ex) {

@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.BlockIndex;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.BlockIndexDao;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.BlockIndex;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
 import com.google.common.cache.Cache;

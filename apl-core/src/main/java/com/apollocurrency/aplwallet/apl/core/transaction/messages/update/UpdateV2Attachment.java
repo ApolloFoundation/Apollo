@@ -1,15 +1,14 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.Update;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.env.Architecture;
-import com.apollocurrency.aplwallet.apl.util.env.Platform;
+import com.apollocurrency.aplwallet.apl.util.env.Arch;
+import com.apollocurrency.aplwallet.apl.util.env.OS;
 import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -20,6 +19,7 @@ import org.json.simple.JSONObject;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,7 +43,7 @@ public class UpdateV2Attachment extends AbstractAttachment {
             this.updateLevel = Level.from(buffer.get());
             byte platformsLength = buffer.get();
             for (int i = 0; i < platformsLength; i++) {
-                this.platforms.add(new PlatformSpec(Platform.from(buffer.get()), Architecture.from(buffer.get())));
+                this.platforms.add(new PlatformSpec(OS.from(buffer.get()), Arch.from(buffer.get())));
             }
             this.releaseVersion = new Version(buffer.getShort(), buffer.getShort(), buffer.getShort());
             this.cn = Convert.readString(buffer, buffer.getShort(), MAX_URL_LENGTH);
@@ -62,10 +62,10 @@ public class UpdateV2Attachment extends AbstractAttachment {
         super(attachmentData);
         this.manifestUrl = Convert.nullToEmpty((String) attachmentData.get("manifestUrl"));
         this.updateLevel = Level.from(((Long) Convert.parseLong(attachmentData.get("level"))).intValue());
-        JSONArray platforms = (JSONArray) attachmentData.get("platforms");
+        List<?> platforms = (List<?>) attachmentData.get("platforms");
         for (Object platformObj : platforms) {
-            JSONObject platformJsonObj = (JSONObject) platformObj;
-            PlatformSpec platformSpec = new PlatformSpec(Platform.from(((Long) platformJsonObj.get("platform")).intValue()), Architecture.from(((Long) platformJsonObj.get("architecture")).intValue()));
+            Map<?,?> platformJsonObj = (Map<?,?>) platformObj;
+            PlatformSpec platformSpec = new PlatformSpec(OS.from(((Long) platformJsonObj.get("platform")).intValue()), Arch.from(((Long) platformJsonObj.get("architecture")).intValue()));
             this.platforms.add(platformSpec);
         }
         this.cn = (String) attachmentData.get("cn");
@@ -98,8 +98,8 @@ public class UpdateV2Attachment extends AbstractAttachment {
         buffer.put(updateLevel.code);
         buffer.put((byte) platforms.size());
         for (PlatformSpec platformSpec : platforms) {
-            buffer.put(platformSpec.getPlatform().code);
-            buffer.put(platformSpec.getArchitecture().code);
+            buffer.put(platformSpec.getOS().code);
+            buffer.put(platformSpec.getArch().code);
         }
         buffer.putShort((short) releaseVersion.getMajorVersion());
         buffer.putShort((short) releaseVersion.getIntermediateVersion());
@@ -131,7 +131,7 @@ public class UpdateV2Attachment extends AbstractAttachment {
         attachment.put("level", updateLevel.code);
         JSONArray platformArray = new JSONArray();
         for (PlatformSpec platformSpec : this.platforms) {
-            platformArray.add(new JSONObject(Map.of("platform", platformSpec.getPlatform().code, "architecture", platformSpec.getArchitecture().code)));
+            platformArray.add(new JSONObject(Map.of("platform", platformSpec.getOS().code, "architecture", platformSpec.getArch().code)));
         }
         attachment.put("platforms", platformArray);
         attachment.put("version", releaseVersion.toString());
@@ -141,8 +141,8 @@ public class UpdateV2Attachment extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return Update.UPDATE_V2;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.UPDATE_V2;
     }
 
 }

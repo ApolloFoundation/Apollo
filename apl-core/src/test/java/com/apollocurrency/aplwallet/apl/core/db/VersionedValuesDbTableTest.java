@@ -5,8 +5,10 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 
-import com.apollocurrency.aplwallet.apl.core.db.derived.VersionedDeletableValuesDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableValuesDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-public abstract class VersionedValuesDbTableTest<T extends VersionedDerivedEntity> extends ValuesDbTableTest<T> {
+public abstract class VersionedValuesDbTableTest<T extends VersionedDeletableEntity> extends ValuesDbTableTest<T> {
 
     VersionedDeletableValuesDbTable<T> table;
 

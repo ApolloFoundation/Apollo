@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.addons;
 
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import org.slf4j.Logger;

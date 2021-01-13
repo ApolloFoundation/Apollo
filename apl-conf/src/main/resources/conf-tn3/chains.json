@@ -8,22 +8,26 @@
       "51.15.210.116",
       "51.15.242.197",
       "51.15.218.241",
-      "51.15.130.37"
+      "51.15.130.37",
+      "51.15.46.49"
     ],
     "name": "Apollo experimental testnet",
     "description": "NOT STABLE testnet for experiments. Don't use it if you don't know what is it",
     "symbol": "Apollo",
     "prefix": "APL",
     "project": "Apollo",
-    "genesisLocation": "conf/data/genesisAccounts-testnet.json",
+    "initialSupply": 30000000000,
+    "decimals": 8,
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 3000,
-      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000,
+      "transactionV2Height": 1
     },
     "blockchainProperties": [
       {
         "height": 0,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
@@ -32,6 +36,8 @@
       {
         "height": 1,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "maxNumberOfChildAccounts": 10,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,
@@ -44,12 +50,28 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 2000
+          "frequency": 50000
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 0,
+              "subType": 0,
+              "rate": 100
+            },
+            {
+              "type": 0,
+              "subType": 1,
+              "rate": 100
+            }
+          ]
         }
       },
       {
-        "height": 50000,
+        "height": 76000,
         "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "maxNumberOfChildAccounts": 10,
         "blockTime": 2,
         "maxBlockTimeLimit": 3,
         "minBlockTimeLimit": 1,
@@ -62,7 +84,21 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 10000
+          "frequency": 1000
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 0,
+              "subType": 0,
+              "rate": 100
+            },
+            {
+              "type": 0,
+              "subType": 1,
+              "rate": 100
+            }
+          ]
         }
       }
     ]

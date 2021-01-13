@@ -1,0 +1,171 @@
+[
+  {
+    "chainId": "3fecf3bd-86a3-436b-a1d6-41eefc0bd1c6",
+    "active": true,
+    "defaultPeers": [
+    ],
+    "wellKnownPeers": [
+    ],
+    "blacklistedPeers": [],
+    "name": "Apollo mainnet",
+    "description": "Main Apollo chain",
+    "symbol": "Apollo",
+    "prefix": "APL",
+    "project": "Apollo",
+    "initialSupply": 30000000000,
+    "decimals": 8,
+    "genesisLocation": "conf/data/genesisAccounts.json",
+    "featuresHeightRequirement": {
+      "dexReopenPendingOrdersHeight": 3500000,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 4000000
+    },
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 53,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 314800,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "blockTime": 10,
+        "maxBlockTimeLimit": 60,
+        "minBlockTimeLimit": 7,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 355000,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        }
+      },
+      {
+        "height": 406340,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 20
+          }
+        }
+      },
+      {
+        "height": 414980,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 40
+          }
+        }
+      },
+      {
+        "height": 420740,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 60
+          }
+        }
+      },
+      {
+        "height": 448999,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000
+      },
+      {
+        "height": 1250000,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        }
+      },
+      {
+        "height": 2000000,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 10000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 20
+          }
+        }
+      },
+      {
+        "height": 2169999,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "maxNumberOfChildAccounts": 10,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 70,
+        "minBlockTimeLimit": 50,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 2247000,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 750000
+        }
+      }
+    ]
+  }
+]

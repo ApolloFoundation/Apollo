@@ -20,8 +20,6 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.rest.ByteArrayConverterProvider;
-import com.apollocurrency.aplwallet.apl.core.rest.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
@@ -34,10 +32,13 @@ import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.CharsetRequestFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.ByteArrayConverterProvider;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -56,6 +57,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.security.Constraint;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
 import org.jboss.weld.environment.servlet.Listener;
@@ -88,6 +90,7 @@ public final class API {
 
     private static final Logger LOG = getLogger(API.class);
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
+    public static final String DEFAULT_WEBUI_DIR = "apollo-web-ui";
     public static final String INDEX_HTML = "index.html";
     public static int openAPIPort;
     public static int openAPISSLPort;
@@ -178,27 +181,44 @@ public final class API {
         isOpenAPI = openAPIPort > 0 || openAPISSLPort > 0;
     }
 
+
+    private static boolean isWebUIHere(Path webUiPath) {
+        boolean res = false;
+        if (Files.exists(webUiPath)
+                && Files.isDirectory(webUiPath)
+                && Files.exists(webUiPath.resolve(INDEX_HTML))) {
+            log.debug("Web UI index.html foind in: {}.", webUiPath.toString());
+            res = true;
+        }
+        return res;
+    }
+
     public static String findWebUiDir() {
         final Path binDir = DirProvider.getBinDir();
-        boolean useHtmlStub = false;
-        final String webUIlocation = propertiesHolder.getStringProperty("apl.apiResourceBase");
-        Path webUiPath = null;
+        boolean useHtmlStub = true;
+        final String webUIlocation = propertiesHolder.getStringProperty("apl.apiResourceBase", DEFAULT_WEBUI_DIR);
+        Path webUiPath=Path.of(DEFAULT_WEBUI_DIR);
         try {
             Path lp = Path.of(webUIlocation);
             if (lp.isAbsolute()) {
                 webUiPath = lp;
+                if(isWebUIHere(webUiPath)){
+                  log.debug("Cannot find index.html in: {}. Gonna use html-stub.", webUiPath.toString());
+                  useHtmlStub = false;                  
+                }
             } else {
                 webUiPath = binDir.resolve(webUIlocation);
-            }
-            if (!Files.exists(webUiPath)
-                    || !Files.isDirectory(webUiPath)
-                    || !Files.exists(webUiPath.resolve(INDEX_HTML))) {
-                log.debug("Cannot find index.html in: {}. Gonna use html-stub.", webUiPath.toString());
-                useHtmlStub = true;
+                if(isWebUIHere(webUiPath)){
+                    useHtmlStub = false;
+                }else{
+                     webUiPath = binDir.getParent().resolve(webUIlocation);
+                     if(isWebUIHere(webUiPath)){
+                         useHtmlStub = false;
+                     }
+                }
             }
         } catch (InvalidPathException ipe) {
             log.debug("Cannot resolve apl.webUIDir: {} within DirProvider.getBinDir(): {}. Gonna use html-stub.", webUIlocation, binDir.toString());
-            useHtmlStub = true;
         }
 
         if (useHtmlStub) {
@@ -236,14 +256,12 @@ public final class API {
         return welcomePageUri;
     }
 
+    @SneakyThrows
     public final void start() {
 
         if (enableAPIServer) {
 
-            org.eclipse.jetty.util.thread.QueuedThreadPool threadPool = new org.eclipse.jetty.util.thread.QueuedThreadPool();
-            threadPool.setMaxThreads(Math.max(maxThreadPoolSize, 200));
-            threadPool.setMinThreads(Math.max(minThreadPoolSize, 8));
-            threadPool.setName("APIThreadPool");
+            final QueuedThreadPool threadPool = getQueuedThreadPool();
             apiServer = new Server(threadPool);
 
             //
@@ -281,13 +299,13 @@ public final class API {
             apiHandler.addEventListener(new Listener());
             ServletHolder servletHolder = apiHandler.addServlet(APIServlet.class, "/apl");
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
-                    null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+                null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
 
             servletHolder = apiHandler.addServlet(APIProxyServlet.class, "/apl-proxy");
             servletHolder.setInitParameters(Collections.singletonMap("idleTimeout",
-                    "" + Math.max(apiServerIdleTimeout - APIProxyServlet.PROXY_IDLE_TIMEOUT_DELTA, 0)));
+                "" + Math.max(apiServerIdleTimeout - APIProxyServlet.PROXY_IDLE_TIMEOUT_DELTA, 0)));
             servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(
-                    null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
+                null, Math.max(propertiesHolder.getIntProperty("apl.maxUploadFileSize"), Constants.MAX_TAGGED_DATA_DATA_LENGTH), -1L, 0));
 
             GzipHandler gzipHandler = new GzipHandler();
             if (!propertiesHolder.getBooleanProperty("apl.enableAPIServerGZIPFilter", isOpenAPI)) {
@@ -332,20 +350,20 @@ public final class API {
             //restEasyServletHolder.setInitParameter("resteasy.role.based.security", "true");
 
             restEasyServletHolder.setInitParameter(ResteasyContextParameters.RESTEASY_PROVIDERS,
-                    new StringJoiner(",")
-                            .add(ConstraintViolationExceptionMapper.class.getName())
-                            .add(ClientErrorExceptionMapper.class.getName())
-                            .add(ParameterExceptionMapper.class.getName())
-                            .add(LegacyParameterExceptionMapper.class.getName())
-                            .add(SecurityInterceptor.class.getName())
-                            .add(Secured2FAInterceptor.class.getName())
-                            .add(RestParameterExceptionMapper.class.getName())
-                            .add(DefaultGlobalExceptionMapper.class.getName())
-                            .add(CharsetRequestFilter.class.getName())
-                            .add(IllegalArgumentExceptionMapper.class.getName())
-                            .add(PlatformSpecConverterProvider.class.getName())
-                            .add(ByteArrayConverterProvider.class.getName())
-                            .toString()
+                new StringJoiner(",")
+                    .add(ConstraintViolationExceptionMapper.class.getName())
+                    .add(ClientErrorExceptionMapper.class.getName())
+                    .add(ParameterExceptionMapper.class.getName())
+                    .add(LegacyParameterExceptionMapper.class.getName())
+                    .add(SecurityInterceptor.class.getName())
+                    .add(Secured2FAInterceptor.class.getName())
+                    .add(RestParameterExceptionMapper.class.getName())
+                    .add(DefaultGlobalExceptionMapper.class.getName())
+                    .add(CharsetRequestFilter.class.getName())
+                    .add(IllegalArgumentExceptionMapper.class.getName())
+                    .add(PlatformSpecConverterProvider.class.getName())
+                    .add(ByteArrayConverterProvider.class.getName())
+                    .toString()
             );
 
             String restEasyAppClassName = RestEasyApplication.class.getName();
@@ -356,10 +374,11 @@ public final class API {
             //need this listener to support scopes properly
             apiHandler.addEventListener(new org.jboss.weld.environment.servlet.Listener());
 
-            //--------- ADD swagger generated docs and API test page
+            //--------- ADD swagger/openApi generated docs and API test page
             // Set the path to our static (Swagger UI) resources
             URL su = API.class.getResource("/swaggerui");
             if (su != null) {
+                LOG.info("Swagger UI html/js resources base path= {}", su.toURI().toString());
                 String resourceBasePath = su.toExternalForm();
                 ContextHandler contextHandler = new ContextHandler("/swagger");
                 ResourceHandler swFileHandler = new ResourceHandler();
@@ -411,6 +430,23 @@ public final class API {
             LOG.info("API server not enabled");
         }
 
+    }
+
+    private QueuedThreadPool getQueuedThreadPool() {
+        int minThreadPoolSizeLocal;
+        int maxThreadPoolSizeLocal;
+        if (propertiesHolder.getBooleanProperty("apl.limitHardwareResources", false)) {
+            minThreadPoolSizeLocal = propertiesHolder.getIntProperty("apl.apiMinThreadPoolSize");
+            maxThreadPoolSizeLocal = propertiesHolder.getIntProperty("apl.apiMaxThreadPoolSize");
+        } else {
+            minThreadPoolSizeLocal = Math.max(minThreadPoolSize, 8);
+            maxThreadPoolSizeLocal = Math.max(maxThreadPoolSize, 200);
+        }
+        final QueuedThreadPool threadPool = new QueuedThreadPool();
+        threadPool.setMaxThreads(maxThreadPoolSizeLocal);
+        threadPool.setMinThreads(minThreadPoolSizeLocal);
+        threadPool.setName("APIThreadPool");
+        return threadPool;
     }
 
     public final void shutdown() {

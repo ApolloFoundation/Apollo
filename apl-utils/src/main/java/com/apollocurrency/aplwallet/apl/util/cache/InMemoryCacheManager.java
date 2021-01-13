@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.cache;
 
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -11,28 +12,20 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheStats;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.jboss.weld.environment.util.Collections;
 
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.Annotated;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
-@Singleton
 public class InMemoryCacheManager {
 
     private static final long MIN_MEMORY_SIZE_FOR_CACHES = 16 * 1024 * 1024;//in bytes
 
     private ConcurrentHashMap<String, Cache> inMemoryCaches;
 
-    @Inject
     public InMemoryCacheManager(InMemoryCacheConfigurator configurator) {
         Objects.requireNonNull(configurator, "Configurator is NULL.");
         validateConfigurations(configurator);
@@ -44,14 +37,6 @@ public class InMemoryCacheManager {
      */
     public static MemoryUsageCalculator newCalc() {
         return new MemoryUsageCalculator().startObject();
-    }
-
-    @Produces
-    @CacheProducer
-    public <K, V> Cache<K, V> acquireCache(InjectionPoint injectionPoint) {
-        Annotated annotated = injectionPoint.getAnnotated();
-        CacheType cacheTypeAnnotation = annotated.getAnnotation(CacheType.class);
-        return acquireCache(cacheTypeAnnotation.value());
     }
 
     @SuppressWarnings("unchecked")
@@ -68,7 +53,7 @@ public class InMemoryCacheManager {
             , "The available memory is less than %s bytes.", MIN_MEMORY_SIZE_FOR_CACHES);
 
         cfg.getConfiguredCaches().stream().forEach(cacheConfiguration -> {
-            Preconditions.checkArgument(StringUtils.isNotEmpty(cacheConfiguration.getCacheName()), "Cache name cant be empty.");
+            Preconditions.checkArgument(StringUtils.isNotBlank(cacheConfiguration.getCacheName()), "Cache name cant be empty.");
             Preconditions.checkArgument(cacheConfiguration.getExpectedElementSize() > 0, "Element size must not be negative or zero.");
             Preconditions.checkArgument(cacheConfiguration.getCachePriority() > 0, "Cache priority must be greater than zero.");
         });

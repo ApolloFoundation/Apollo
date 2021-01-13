@@ -20,24 +20,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.app.Shuffling;
-import com.apollocurrency.aplwallet.apl.core.app.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.app.mint.CurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipantState;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
 import com.apollocurrency.aplwallet.apl.core.http.APIServlet;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -59,6 +61,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Vetoed
 public final class GetConstants extends AbstractAPIRequestHandler {
     private static final Logger LOG = getLogger(GetConstants.class);
+
 
     public GetConstants() {
         super(new APITag[]{APITag.INFO});
@@ -92,14 +95,15 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 JSONObject response = new JSONObject();
                 Blockchain blockchain = CDI.current().select(Blockchain.class).get();
                 PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
+                BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+                TransactionTypeFactory transactionTypeFactory = CDI.current().select(TransactionTypeFactory.class).get();
                 if (blockchain.isInitialized()) {
                     response.put("genesisBlockId", Long.toUnsignedString(blockchain.getBlockIdAtHeight(0)));
                 }
                 response.put("genesisAccountId", Long.toUnsignedString(GenesisImporter.CREATOR_ID));
                 response.put("epochBeginning", GenesisImporter.EPOCH_BEGINNING);
-                response.put("maxArbitraryMessageLength", Constants.MAX_ARBITRARY_MESSAGE_LENGTH);
+                response.put("maxArbitraryMessageLength", blockchainConfig.getCurrentConfig().getMaxArbitraryMessageLength());
                 response.put("maxPrunableMessageLength", Constants.MAX_PRUNABLE_MESSAGE_LENGTH);
-                BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
                 response.put("coinSymbol", blockchainConfig.getCoinSymbol());
                 response.put("accountPrefix", blockchainConfig.getAccountPrefix());
                 response.put("projectName", blockchainConfig.getProjectName());
@@ -120,7 +124,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                     for (int subtype = 0; ; subtype++) {
                         TransactionType transactionType;
                         try {
-                            transactionType = TransactionType.findTransactionType((byte) type, (byte) subtype);
+                            transactionType = transactionTypeFactory.findTransactionType((byte) type, (byte) subtype);
                         } catch (IllegalArgumentException ignore) {
                             continue;
                         }
@@ -128,6 +132,12 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                             if (subtype == 0) {
                                 break outer;
                             } else {
+                                try {
+                                    TransactionTypes.find(type, subtype);
+                                    //There is the specification but doesn't exist an TransactionType instance of the given type and subtype, ex. type=1, subtype=4
+                                    continue;
+                                } catch (IllegalArgumentException ignored) {
+                                }
                                 break;
                             }
                         }
@@ -181,7 +191,7 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 response.put("maxPhasingDuration", Constants.MAX_PHASING_DURATION);
 
                 JSONObject mintingHashFunctions = new JSONObject();
-                for (HashFunction hashFunction : CurrencyMinting.acceptedHashFunctions) {
+                for (HashFunction hashFunction : MonetaryCurrencyMintingService.acceptedHashFunctions) {
                     mintingHashFunctions.put(hashFunction.toString(), hashFunction.getId());
                 }
                 response.put("mintingHashAlgorithms", mintingHashFunctions);
@@ -214,13 +224,13 @@ public final class GetConstants extends AbstractAPIRequestHandler {
                 response.put("holdingTypes", holdingTypes);
 
                 JSONObject shufflingStages = new JSONObject();
-                for (Shuffling.Stage stage : Shuffling.Stage.values()) {
+                for (ShufflingStage stage : ShufflingStage.values()) {
                     shufflingStages.put(stage.toString(), stage.getCode());
                 }
                 response.put("shufflingStages", shufflingStages);
 
                 JSONObject shufflingParticipantStates = new JSONObject();
-                for (ShufflingParticipant.State state : ShufflingParticipant.State.values()) {
+                for (ShufflingParticipantState state : ShufflingParticipantState.values()) {
                     shufflingParticipantStates.put(state.toString(), state.getCode());
                 }
                 response.put("shufflingParticipantStates", shufflingParticipantStates);

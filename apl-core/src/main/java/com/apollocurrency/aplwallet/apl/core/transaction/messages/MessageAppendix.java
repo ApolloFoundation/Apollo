@@ -4,12 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -17,13 +16,7 @@ import java.util.Arrays;
 
 public class MessageAppendix extends AbstractAppendix {
 
-    private static final String appendixName = "Message";
-    private static final Fee MESSAGE_FEE = new Fee.SizeBasedFee(0, Constants.ONE_APL, 32) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendage) {
-            return ((MessageAppendix) appendage).getMessage().length;
-        }
-    };
+    static final String appendixName = "Message";
     private final byte[] message;
     private final boolean isText;
 
@@ -98,15 +91,23 @@ public class MessageAppendix extends AbstractAppendix {
     }
 
     @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        return MESSAGE_FEE;
+    public Fee getBaselineFee(Transaction transaction, long oneAPL) {
+        return new Fee.SizeBasedFee(0, oneAPL, 32) {
+            @Override
+            public int getSize(Transaction transaction, Appendix appendage) {
+                return ((MessageAppendix) appendage).getMessage().length;
+            }
+        };
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        if (message.length > Constants.MAX_ARBITRARY_MESSAGE_LENGTH) {
-            throw new AplException.NotValidException("Invalid arbitrary message length: " + message.length);
-        }
+    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
+    }
+
+    @Override
+    public void performLightweightValidation(Transaction transaction, int blockcHeight) throws AplException.ValidationException {
+        throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
     }
 
     @Override

@@ -3,11 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -23,14 +22,14 @@ public class DexOrderAttachment extends AbstractAttachment {
     private int finishTime;
 
     public DexOrderAttachment(DexOrder order) {
-        this.type = Byte.valueOf(String.valueOf(order.getType().ordinal()));
-        this.orderCurrency = Byte.valueOf(String.valueOf(order.getOrderCurrency().ordinal()));
+        this.type = Byte.parseByte(String.valueOf(order.getType().ordinal()));
+        this.orderCurrency = Byte.parseByte(String.valueOf(order.getOrderCurrency().ordinal()));
         this.orderAmount = order.getOrderAmount();
-        this.pairCurrency = Byte.valueOf(String.valueOf(order.getPairCurrency().ordinal()));
+        this.pairCurrency = Byte.parseByte(String.valueOf(order.getPairCurrency().ordinal()));
         //TODO change on double.
         this.pairRate = EthUtil.ethToGwei(order.getPairRate());
         this.finishTime = order.getFinishTime();
-        this.status = Byte.valueOf(String.valueOf(order.getStatus().ordinal()));
+        this.status = Byte.parseByte(String.valueOf(order.getStatus().ordinal()));
     }
 
     public DexOrderAttachment(ByteBuffer buffer) {
@@ -45,18 +44,18 @@ public class DexOrderAttachment extends AbstractAttachment {
 
     public DexOrderAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        this.type = Byte.valueOf(String.valueOf(attachmentData.get("type")));
-        this.orderCurrency = Byte.valueOf(String.valueOf(attachmentData.get("offerCurrency")));
+        this.type = Byte.parseByte(String.valueOf(attachmentData.get("type")));
+        this.orderCurrency = Byte.parseByte(String.valueOf(attachmentData.get("offerCurrency")));
         this.orderAmount = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("offerAmount")));
-        this.pairCurrency = Byte.valueOf(String.valueOf(attachmentData.get("pairCurrency")));
+        this.pairCurrency = Byte.parseByte(String.valueOf(attachmentData.get("pairCurrency")));
         this.pairRate = Convert.parseUnsignedLong(String.valueOf(attachmentData.get("pairRate")));
-        this.status = Byte.valueOf(String.valueOf(attachmentData.get("status")));
-        this.finishTime = Integer.valueOf(String.valueOf(attachmentData.get("finishTime")));
+        this.status = Byte.parseByte(String.valueOf(attachmentData.get("status")));
+        this.finishTime = Integer.parseInt(String.valueOf(attachmentData.get("finishTime")));
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return DEX.DEX_ORDER_TRANSACTION;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.DEX_ORDER;
     }
 
     @Override

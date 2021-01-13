@@ -1,15 +1,15 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2019-2020 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.api.p2p.request.GetNextBlocksRequest;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.JSON;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksResponseParser;
+import com.apollocurrency.aplwallet.apl.core.peer.respons.GetNextBlocksResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +27,8 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
      * Block identifier list
      */
     private final List<Long> blockIds;
-    private BlockchainConfig blockchainConfig;
+    private final BlockchainConfig blockchainConfig;
+    private final GetNextBlocksResponseParser getNextBlocksResponseParser;
     /**
      * Callable future
      */
@@ -65,8 +66,11 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
      * @param stop        Stop index within the list
      * @param startHeight Height of the block from which we will start to download blockchain
      */
-    public GetNextBlocksTask(List<Long> blockIds, int start, int stop, int startHeight, BlockchainConfig blockchainConfig) {
+    public GetNextBlocksTask(List<Long> blockIds, int start, int stop, int startHeight,
+                             BlockchainConfig blockchainConfig,
+                             GetNextBlocksResponseParser getNextBlocksResponseParser) {
         this.blockchainConfig = blockchainConfig;
+        this.getNextBlocksResponseParser = getNextBlocksResponseParser;
         this.blockIds = blockIds;
         this.start = start;
         this.stop = stop;
@@ -85,55 +89,45 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
         //
         // Build the block request list
         //
-        JSONArray idList = new JSONArray();
+        List<String> idList = new ArrayList<>();
         for (int i = start + 1; i <= stop; i++) {
             idList.add(Long.toUnsignedString(blockIds.get(i)));
         }
-        JSONObject request = new JSONObject();
-        request.put("requestType", "getNextBlocks");
-        request.put("blockIds", idList);
-        request.put("blockId", Long.toUnsignedString(blockIds.get(start)));
-        request.put("chainId", blockchainConfig.getChain().getChainId());
+
+        GetNextBlocksRequest request = new GetNextBlocksRequest(
+            idList,
+            Long.toUnsignedString(blockIds.get(start)),
+            blockchainConfig.getChain().getChainId()
+        );
+
+        GetNextBlocksResponse response;
         long startTime = System.currentTimeMillis();
-        JSONObject response;
         try {
-            response = peer.send(JSON.prepareRequest(request), blockchainConfig.getChain().getChainId());
+            log.trace("Try to send GetNextBlock request: blockId={} to peer={}", request.getBlockId(), peer.getAnnouncedAddress());
+            response = peer.send(request, getNextBlocksResponseParser);
         } catch (PeerNotConnectedException ex) {
-            response = null;
+            return null;
+        } finally {
+            responseTime = System.currentTimeMillis() - startTime;
         }
-        responseTime = System.currentTimeMillis() - startTime;
+
         if (response == null) {
+            log.debug("NULL GetNextBlocks response from peer: {}", peer.getAnnouncedAddress());
             return null;
         }
-        //
-        // Get the list of blocks.  We will stop parsing blocks if we encounter
-        // an invalid block.  We will return the valid blocks and reset the stop
-        // index so no more blocks will be processed.
-        //
-        List<JSONObject> nextBlocks = (List<JSONObject>) response.get("nextBlocks");
-        if (nextBlocks == null) {
-            return null;
+
+        if (response.getErrorCode() != 0) {
+            log.debug("Failed to parse block(s): " + response.getCause());
+            peer.blacklist(response.getCause());
+            stop = start + response.getNextBlocks().size();
         }
-        if (nextBlocks.size() > 36) {
-            log.debug("Obsolete or rogue peer " + peer.getHost() + " sends too many nextBlocks, blacklisting");
-            peer.blacklist("Too many nextBlocks");
-            return null;
+
+        int count = stop - start;
+        if (response.getNextBlocks().size() > count) {
+            return response.getNextBlocks().subList(0, count);
+        } else {
+            return response.getNextBlocks();
         }
-        List<BlockImpl> blockList = new ArrayList<>(nextBlocks.size());
-        try {
-            int count = stop - start;
-            for (JSONObject blockData : nextBlocks) {
-                blockList.add(BlockImpl.parseBlock(blockData));
-                if (--count <= 0) {
-                    break;
-                }
-            }
-        } catch (AplException.NotValidException | RuntimeException e) {
-            log.debug("Failed to parse block: " + e.toString(), e);
-            peer.blacklist(e);
-            stop = start + blockList.size();
-        }
-        return blockList;
     }
 
     /**

@@ -4,9 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.db.derived.BasicDbTable;
-import com.apollocurrency.aplwallet.apl.core.db.model.DerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.BasicDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -141,7 +142,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
     @Test
     public void testTrimOutsideTransaction() {
         if (table.isMultiversion()) {
-            Assertions.assertThrows(IllegalStateException.class, () -> table.trim(0));
+            Assertions.assertThrows(IllegalStateException.class, () -> table.trim(0, true));
         }
     }
 
@@ -235,7 +236,7 @@ public abstract class BasicDbTableTest<T extends DerivedEntity> extends DerivedD
             expected.remove(t);
         }
         expected = sortByHeightAsc(expected);
-        DbUtils.inTransaction(extension, (con) -> table.trim(height));
+        DbUtils.inTransaction(extension, (con) -> table.trim(height, true));
         List<T> values = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         assertEquals(expected, values);
     }

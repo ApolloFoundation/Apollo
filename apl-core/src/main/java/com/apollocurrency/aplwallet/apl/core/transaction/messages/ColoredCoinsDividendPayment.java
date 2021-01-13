@@ -3,8 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.ColoredCoins;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
@@ -30,7 +29,7 @@ public final class ColoredCoinsDividendPayment extends AbstractAttachment {
         super(attachmentData);
         this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
         this.height = ((Long) attachmentData.get("height")).intValue();
-        this.amountATMPerATU = attachmentData.containsKey("amountATMPerATU") ? Convert.parseLong(attachmentData.get("amountATMPerATU")) : Convert.parseLong(attachmentData.get("amountNQTPerQNT"));
+        this.amountATMPerATU = Convert.parseLong(attachmentData.get("amountATMPerATU"));
     }
 
     public ColoredCoinsDividendPayment(long assetId, int height, long amountATMPerATU) {
@@ -59,8 +58,8 @@ public final class ColoredCoinsDividendPayment extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return ColoredCoins.DIVIDEND_PAYMENT;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.CC_DIVIDEND_PAYMENT;
     }
 
     public long getAssetId() {

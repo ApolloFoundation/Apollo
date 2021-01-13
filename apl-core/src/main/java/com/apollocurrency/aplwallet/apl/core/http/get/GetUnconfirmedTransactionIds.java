@@ -20,9 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -52,22 +51,21 @@ public final class GetUnconfirmedTransactionIds extends AbstractAPIRequestHandle
 
         JSONArray transactionIds = new JSONArray();
         if (accountIds.isEmpty()) {
-            try (DbIterator<? extends Transaction> transactionsIterator = lookupTransactionProcessor().getAllUnconfirmedTransactions(firstIndex, lastIndex)) {
-                while (transactionsIterator.hasNext()) {
-                    Transaction transaction = transactionsIterator.next();
-                    transactionIds.add(transaction.getStringId());
-                }
+            for (UnconfirmedTransaction tx : lookupMemPool().getProcessed(firstIndex, lastIndex)) {
+                transactionIds.add(tx.getStringId());
             }
         } else {
-            try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<>(
-                lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
-                transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId()),
-                firstIndex, lastIndex)) {
-                while (transactionsIterator.hasNext()) {
-                    Transaction transaction = transactionsIterator.next();
-                    transactionIds.add(transaction.getStringId());
-                }
+            int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
+            if (limit == 0) {
+                limit = Integer.MAX_VALUE;
             }
+                lookupMemPool().getAllProcessedStream()
+                .filter(transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId()))
+                .limit(limit)
+                .skip(firstIndex)
+                .forEach(e-> {
+                    transactionIds.add(e.getStringId());
+                });
         }
 
         JSONObject response = new JSONObject();

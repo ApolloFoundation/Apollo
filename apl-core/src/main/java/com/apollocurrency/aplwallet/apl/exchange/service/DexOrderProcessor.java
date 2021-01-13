@@ -1,25 +1,28 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEventType;
-import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingPoll;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
@@ -37,15 +40,12 @@ import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwap;
-import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderHeightId;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
@@ -114,6 +114,7 @@ public class DexOrderProcessor {
     private int processingDelay; // seconds
     private DexConfig dexConfig;
     private Blockchain blockchain;
+    private final BlockchainConfig blockchainConfig;
 
     @Inject
     public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService,
@@ -125,7 +126,8 @@ public class DexOrderProcessor {
                              Blockchain blockchain, PhasingPollService phasingPollService, DexOperationService operationService,
                              @Property(name = "apl.dex.orderProcessor.enabled", defaultValue = "true") boolean startProcessor,
                              @Property(name = "apl.dex.orderProcessor.delay", defaultValue = "" + DEFAULT_DEX_OFFER_PROCESSOR_DELAY) int processingDelay,
-                             DexConfig dexConfig
+                             DexConfig dexConfig,
+                             BlockchainConfig blockchainConfig
     ) {
 
         this.secureStorageService = secureStorageService;
@@ -145,6 +147,7 @@ public class DexOrderProcessor {
         this.processingDelay = Math.max(MIN_DEX_OFFER_PROCESSOR_DELAY, processingDelay);
         this.accountService = accountService;
         this.dexConfig = dexConfig;
+        this.blockchainConfig = blockchainConfig;
     }
 
     @PostConstruct
@@ -275,7 +278,7 @@ public class DexOrderProcessor {
                     continue;
                 }
                 String passphrase = secureStorageService.getUserPassPhrase(accountId);
-                DexOperation op = operationService.getBy(Convert.defaultRsAccount(accountId), DexOperation.Stage.ETH_SWAP, contract.getId().toString());
+                DexOperation op = operationService.getBy(Convert2.defaultRsAccount(accountId), DexOperation.Stage.ETH_SWAP, contract.getId().toString());
                 if (op != null) {
                     String details = op.getDetails();
                     String secretHashValue = extractValue(details, "secretHash", true);
@@ -290,7 +293,7 @@ public class DexOrderProcessor {
                                 txHashValue = dexSmartContractService.getHashForAtomicSwapTransaction(counterOrder.getId());
                                 log.debug("Trying to extract eth swap transaction hash from the eth node event logs, result - {}", txHashValue);
                             } catch (NoSuchElementException e) {
-                                log.error("Initiated event was not found for order {} and account {}", counterOrder.getId(), Convert.defaultRsAccount(accountId));
+                                log.error("Initiated event was not found for order {} and account {}", counterOrder.getId(), Convert2.defaultRsAccount(accountId));
                                 continue;
                             } catch (Throwable e) {
                                 log.error("Unable to get atomic swap transaction hash from node event logs. Possible cause: filter rpc api is not supported. Will not proceed with exchange process recovering.", e);
@@ -313,7 +316,7 @@ public class DexOrderProcessor {
 
                 byte[] encryptedSecretX = Crypto.aesGCMEncrypt(secretX, Crypto.sha256().digest(Convert.toBytes(passphrase)));
 
-                String rsAccount = Convert.defaultRsAccount(accountId);
+                String rsAccount = Convert2.defaultRsAccount(accountId);
                 String secretHashHex = Convert.toHexString(secretHash);
                 DexOperation operation = null;
                 if (counterOrder.getType() == OrderType.BUY) { // for now - only for buy orders TODO add for all types
@@ -372,9 +375,9 @@ public class DexOrderProcessor {
         contractAttachment.setTimeToReply(dexConfig.getMaxAtomicSwapDuration());
 
         //TODO move it to some util
-        CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
+        CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Math.multiplyExact(2, blockchainConfig.getOneAPL()));
         createTransactionRequest.setBroadcast(false);
-        Transaction contractTx = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
+        Transaction contractTx = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(createTransactionRequest);
         if (contractTx == null) {
             throw new AplException.ExecutiveProcessException("Creating contract wasn't finish. Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId() + ", " + contract.getContractStatus());
         }
@@ -494,7 +497,7 @@ public class DexOrderProcessor {
                     continue;
                 }
                 String passphrase = secureStorageService.getUserPassPhrase(accountId);
-                DexOperation op = operationService.getBy(Convert.defaultRsAccount(accountId), DexOperation.Stage.ETH_SWAP, contract.getId().toString());
+                DexOperation op = operationService.getBy(Convert2.defaultRsAccount(accountId), DexOperation.Stage.ETH_SWAP, contract.getId().toString());
                 if (op != null) {
                     String details = op.getDetails();
                     String secretHashValue = extractValue(details, "secretHash", true);
@@ -512,7 +515,7 @@ public class DexOrderProcessor {
                                 txHashValue = dexSmartContractService.getHashForAtomicSwapTransaction(order.getId());
                                 log.debug("Trying to extract eth swap transaction hash from the eth node event logs, result - {}", txHashValue);
                             } catch (NoSuchElementException e) {
-                                log.error("Initiated event was not found for order {} and account {}", order.getId(), Convert.defaultRsAccount(accountId));
+                                log.error("Initiated event was not found for order {} and account {}", order.getId(), Convert2.defaultRsAccount(accountId));
                                 continue;
                             } catch (Throwable e) {
                                 log.error("Unable to get atomic swap transaction hash from node event logs. Possible cause: filter rpc api is not supported. Will not proceed with exchange process recovering.", e);
@@ -555,7 +558,7 @@ public class DexOrderProcessor {
                 log.debug("DexOfferProcessor Step-2. User transfer money. accountId:{}, offer {}, counterOffer {}.", accountId, order.getId(), counterOrder.getId());
                 DexOperation operation = null;
                 if (order.getType() == OrderType.BUY) { // for now - only for buy orders TODO add for all types
-                    String rsAccount = Convert.defaultRsAccount(accountId);
+                    String rsAccount = Convert2.defaultRsAccount(accountId);
                     String secretHashHex = Convert.toHexString(contract.getSecretHash());
                     operation = new DexOperation(null, rsAccount, DexOperation.Stage.ETH_SWAP, contract.getId().toString(),
                         String.format(ETH_SWAP_DESCRIPTION_FORMAT, rsAccount, secretHashHex, counterOrder.getToAddress(), contract.getId()),
@@ -574,10 +577,10 @@ public class DexOrderProcessor {
 
                 DexContractAttachment contractAttachment = new DexContractAttachment(contract.getOrderId(), contract.getCounterOrderId(), null, transferTransactionInfo.getTxId(), null, null, STEP_3, (int) transferWithApprovalDuration);
 
-                CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
+                CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Math.multiplyExact(2, blockchainConfig.getOneAPL()));
                 createTransactionRequest.setBroadcast(false);
 
-                Transaction contractTx = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
+                Transaction contractTx = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(createTransactionRequest);
 
                 if (contractTx == null) {
                     throw new AplException.ExecutiveProcessException("Creating contract wasn't finish. (Step-2) Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId());
@@ -595,10 +598,10 @@ public class DexOrderProcessor {
     private Transaction createContractTransactionStep3(ExchangeContract contract, String txHash, String passphrase, Long accountId, long transferWithApprovalDuration) throws ParameterException, AplException.ValidationException, AplException.ExecutiveProcessException {
         DexContractAttachment contractAttachment = new DexContractAttachment(contract.getOrderId(), contract.getCounterOrderId(), null, txHash, null, null, STEP_3, (int) transferWithApprovalDuration);
 
-        CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Constants.ONE_APL * 2);
+        CreateTransactionRequest createTransactionRequest = buildRequest(passphrase, accountId, contractAttachment, Math.multiplyExact(2, blockchainConfig.getOneAPL()));
         createTransactionRequest.setBroadcast(false);
 
-        Transaction contractTx = dexOrderTransactionCreator.createTransaction(createTransactionRequest);
+        Transaction contractTx = dexOrderTransactionCreator.createTransactionAndBroadcastIfRequired(createTransactionRequest);
 
         if (contractTx == null) {
             throw new AplException.ExecutiveProcessException("Creating contract wasn't finish. (Step-2) Orderid: " + contract.getOrderId() + ", counterOrder:  " + contract.getCounterOrderId());
@@ -852,7 +855,7 @@ public class DexOrderProcessor {
     }
 
     private void validateAndBroadcast(Transaction tx) throws AplException.ValidationException {
-        validator.validate(tx);
+        validator.validateFully(tx);
         dexService.broadcast(tx);
     }
 

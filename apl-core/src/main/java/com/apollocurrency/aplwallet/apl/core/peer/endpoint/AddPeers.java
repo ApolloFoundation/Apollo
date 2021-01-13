@@ -21,13 +21,15 @@
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
-public final class AddPeers extends PeerRequestHandler {
+import javax.inject.Singleton;
+
+@Singleton
+public class AddPeers extends PeerRequestHandler {
 
     public AddPeers() {
     }
@@ -41,7 +43,7 @@ public final class AddPeers extends PeerRequestHandler {
             lookupPeersService().peersExecutorService.submit(() -> {
                 for (int i = 0; i < peersArray.size(); i++) {
                     String announcedAddress = (String) peersArray.get(i);
-                    PeerImpl newPeer = lookupPeersService().findOrCreatePeer(null, announcedAddress, true);
+                    Peer newPeer = lookupPeersService().findOrCreatePeer(null, announcedAddress, true);
                     if (newPeer != null) {
                         if (lookupPeersService().addPeer(newPeer) && setServices) {
                             newPeer.setServices(Long.parseUnsignedLong((String) services.get(i)));

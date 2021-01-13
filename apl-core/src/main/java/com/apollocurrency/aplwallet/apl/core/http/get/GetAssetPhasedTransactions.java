@@ -20,15 +20,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -36,6 +35,7 @@ import org.json.simple.JSONStreamAware;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Vetoed
 public class GetAssetPhasedTransactions extends AbstractAPIRequestHandler {
@@ -55,13 +55,11 @@ public class GetAssetPhasedTransactions extends AbstractAPIRequestHandler {
         boolean withoutWhitelist = "true".equalsIgnoreCase(req.getParameter("withoutWhitelist"));
 
         JSONArray transactions = new JSONArray();
-        try (DbIterator<? extends Transaction> iterator = phasingPollService.getHoldingPhasedTransactions(assetId, VoteWeighting.VotingModel.ASSET,
-            accountId, withoutWhitelist, firstIndex, lastIndex)) {
-            while (iterator.hasNext()) {
-                Transaction transaction = iterator.next();
-                transactions.add(JSONData.transaction(false, transaction));
-            }
-        }
+        List<Transaction> holdingPhasedTransactions = phasingPollService.getHoldingPhasedTransactions(assetId, VoteWeighting.VotingModel.ASSET,
+            accountId, withoutWhitelist, firstIndex, lastIndex);
+        holdingPhasedTransactions.forEach(e-> {
+            transactions.add(JSONData.transaction(false, e));
+        });
         JSONObject response = new JSONObject();
         response.put("transactions", transactions);
         return response;

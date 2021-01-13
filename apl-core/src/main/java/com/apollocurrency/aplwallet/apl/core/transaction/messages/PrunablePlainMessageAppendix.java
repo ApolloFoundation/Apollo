@@ -3,14 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Fee;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.AplException;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -20,14 +18,7 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendi
 
 public class PrunablePlainMessageAppendix extends AbstractAppendix implements Prunable {
 
-    private static final String appendixName = "PrunablePlainMessage";
-    private static final Fee PRUNABLE_MESSAGE_FEE = new Fee.SizeBasedFee(Constants.ONE_APL / 10) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendix) {
-            return appendix.getFullSize();
-        }
-    };
-
+    static final String APPENDIX_NAME = "PrunablePlainMessage";
     private byte[] hash;
     private byte[] message;
     private boolean isText;
@@ -75,7 +66,7 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
     }
 
     public static PrunablePlainMessageAppendix parse(JSONObject attachmentData) {
-        if (!hasAppendix(appendixName, attachmentData)) {
+        if (!hasAppendix(APPENDIX_NAME, attachmentData)) {
             return null;
         }
         return new PrunablePlainMessageAppendix(attachmentData);
@@ -83,12 +74,17 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
 
     @Override
     public String getAppendixName() {
-        return appendixName;
+        return APPENDIX_NAME;
     }
 
     @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        return PRUNABLE_MESSAGE_FEE;
+    public Fee getBaselineFee(Transaction transaction, long oneAPL) {
+        return new Fee.SizeBasedFee(oneAPL / 10) {
+            @Override
+            public int getSize(Transaction transaction, Appendix appendix) {
+                return appendix.getFullSize();
+            }
+        };
     }
 
     @Override
@@ -118,25 +114,23 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
         json.put("messageHash", Convert.toHexString(getHash()));
     }
 
+    public void setPrunableMessage(PrunableMessage prunableMessage) {
+        this.prunableMessage = prunableMessage;
+    }
+
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        if (transaction.getMessage() != null) {
-            throw new AplException.NotValidException("Cannot have both message and prunable message attachments");
-        }
-        byte[] msg = getMessage();
-        if (msg != null && msg.length > Constants.MAX_PRUNABLE_MESSAGE_LENGTH) {
-            throw new AplException.NotValidException("Invalid prunable message length: " + msg.length);
-        }
-        if (msg == null && lookupTimeService().getEpochTime() - transaction.getTimestamp() < lookupBlockchainConfig().getMinPrunableLifetime()) {
-            throw new AplException.NotCurrentlyValidException("Message has been pruned prematurely");
-        }
+    public void performFullValidation(Transaction transaction, int blockHeight) {
+        throw new UnsupportedOperationException("Validation for prunable plain message is not supported, use separate class");
+    }
+
+    @Override
+    public void performLightweightValidation(Transaction transaction, int blockcHeight) {
+        throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
     }
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        if (lookupTimeService().getEpochTime() - transaction.getTimestamp() < lookupBlockchainConfig().getMaxPrunableLifetime()) {
-            lookupMessageService().add(transaction, this);
-        }
+        throw new UnsupportedOperationException("Apply for this prunable plain appendix is not supported, use separate class");
     }
 
     public byte[] getMessage() {
@@ -165,16 +159,6 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
     }
 
     @Override
-    public void loadPrunable(Transaction transaction, boolean includeExpiredPrunable) {
-        if (!hasPrunableData() && shouldLoadPrunable(transaction, includeExpiredPrunable)) {
-            PrunableMessage prunableMessage = lookupMessageService().get(transaction.getId());
-            if (prunableMessage != null && prunableMessage.getMessage() != null) {
-                this.prunableMessage = prunableMessage;
-            }
-        }
-    }
-
-    @Override
     public boolean isPhasable() {
         return false;
     }
@@ -184,8 +168,4 @@ public class PrunablePlainMessageAppendix extends AbstractAppendix implements Pr
         return (prunableMessage != null || message != null);
     }
 
-    @Override
-    public void restorePrunableData(Transaction transaction, int blockTimestamp, int height) {
-        lookupMessageService().add(transaction, this, blockTimestamp, height);
-    }
 }

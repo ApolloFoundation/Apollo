@@ -4,22 +4,29 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
-import com.apollocurrency.aplwallet.apl.core.app.service.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingApprovedResultTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingApprovalResult;
-import com.apollocurrency.aplwallet.apl.core.phasing.model.PhasingVote;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedResultTable;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingApprovalResult;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexTransferMoneyTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryPaymentTransactionType;
+import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
@@ -28,7 +35,6 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
-import com.apollocurrency.aplwallet.apl.exchange.transaction.DEX;
 import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -52,9 +58,12 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 @EnableWeld
 class DexServiceIntegrationTest {
-
+    TransactionTestData td = new TransactionTestData();
     @WeldSetup
-    WeldInitiator weld = WeldUtils.from(List.of(DexService.class, CacheProducer.class), List.of(EthereumWalletService.class,
+    WeldInitiator weld = WeldUtils.from(List.of(TransactionRowMapper.class,
+        TransactionBuilder.class,TransactionSerializerImpl.class,
+        DexService.class, CacheProducer.class),
+        List.of(EthereumWalletService.class,
         DexOrderDao.class,
         DexOrderTable.class,
         TransactionProcessor.class,
@@ -73,6 +82,8 @@ class DexServiceIntegrationTest {
         BlockchainImpl.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
         .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .build();
     @Inject
     DexService dexService;
@@ -88,7 +99,7 @@ class DexServiceIntegrationTest {
         doReturn(List.of(new PhasingVote(null, 500, 1, 100, 20), new PhasingVote(null, 499, 1, 200, 30))).when(phasingPollService).getVotes(1);
         Transaction phasedTx = mock(Transaction.class);
         doReturn(1L).when(phasedTx).getId();
-        doReturn(DEX.DEX_TRANSFER_MONEY_TRANSACTION).when(phasedTx).getType();
+        doReturn(new DexTransferMoneyTransaction(mock(BlockchainConfig.class), mock(AccountService.class), dexService)).when(phasedTx).getType();
         DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(100L, 200L);
         doReturn(attachment).when(phasedTx).getAttachment();
         txEvent.select(TxEventType.literal(TxEventType.RELEASE_PHASED_TRANSACTION)).fire(phasedTx);
@@ -109,7 +120,7 @@ class DexServiceIntegrationTest {
     @Test
     void testTriggerPhasingReleasedTxEventForDifferentTxType() {
         Transaction phasedTx = mock(Transaction.class);
-        doReturn(Payment.ORDINARY).when(phasedTx).getType();
+        doReturn(new OrdinaryPaymentTransactionType(mock(BlockchainConfig.class), mock(AccountService.class))).when(phasedTx).getType();
 
         txEvent.select(TxEventType.literal(TxEventType.RELEASE_PHASED_TRANSACTION)).fire(phasedTx);
 

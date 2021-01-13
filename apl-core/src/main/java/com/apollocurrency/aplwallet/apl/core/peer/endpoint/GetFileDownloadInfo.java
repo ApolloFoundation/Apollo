@@ -3,8 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoRequest;
-import com.apollocurrency.aplwallet.api.p2p.FileDownloadInfoResponse;
+import com.apollocurrency.aplwallet.api.p2p.request.FileDownloadInfoRequest;
+import com.apollocurrency.aplwallet.api.p2p.respons.FileDownloadInfoResponse;
 import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import lombok.extern.slf4j.Slf4j;
@@ -12,11 +12,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * @author alukin@gmail.com
  */
 @Slf4j
+@Singleton
 public class GetFileDownloadInfo extends PeerRequestHandler {
 
     private DownloadableFilesManager downloadableFilesManager;

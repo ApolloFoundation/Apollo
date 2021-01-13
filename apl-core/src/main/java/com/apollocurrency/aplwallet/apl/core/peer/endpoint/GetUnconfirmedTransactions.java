@@ -20,17 +20,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 import java.util.List;
-import java.util.SortedSet;
-
+import java.util.Set;
+@Slf4j
+@Singleton
 public final class GetUnconfirmedTransactions extends PeerRequestHandler {
+    private final TransactionSerializer transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
 
     public GetUnconfirmedTransactions() {
     }
@@ -44,13 +51,14 @@ public final class GetUnconfirmedTransactions extends PeerRequestHandler {
             return JSON.emptyJSON;
         }
 
-        SortedSet<? extends Transaction> transactionSet = lookupTransactionProcessor().getCachedUnconfirmedTransactions(exclude);
+        Set<UnconfirmedTransaction> transactionSet = lookupMemPool().getCachedUnconfirmedTransactions(exclude);
+        log.trace("Return {} txs to peer {}", transactionSet.size(), peer.getHost());
         JSONArray transactionsData = new JSONArray();
         for (Transaction transaction : transactionSet) {
-            if (transactionsData.size() >= 100) {
+            if (transactionsData.size() >= 200) {
                 break;
             }
-            transactionsData.add(transaction.getJSONObject());
+            transactionsData.add(transactionSerializer.toJson(transaction));
         }
         JSONObject response = new JSONObject();
         response.put("unconfirmedTransactions", transactionsData);
@@ -60,7 +68,7 @@ public final class GetUnconfirmedTransactions extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 
 }

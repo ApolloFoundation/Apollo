@@ -1,11 +1,19 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -17,6 +25,7 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -33,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+@Tag("slow")
 @EnableWeld
 class TransactionDaoTest {
 
@@ -65,7 +75,8 @@ class TransactionDaoTest {
     @BeforeEach
     void setUp() {
         td = new TransactionTestData();
-        dao = new TransactionDaoImpl(extension.getDatabaseManager());
+
+        dao = new TransactionDaoImpl(extension.getDatabaseManager(), td.getTransactionTypeFactory(), new TransactionRowMapper(td.getTransactionTypeFactory(), new TransactionBuilder(td.getTransactionTypeFactory())));
     }
 
 
@@ -259,20 +270,20 @@ class TransactionDaoTest {
 
     @Test
     void testGetTransactionsWithPagination() {
-        List<Transaction> transactions = CollectionUtil.toList(dao.getTransactions((byte) -1, (byte) -1, 2, 4));
+        List<Transaction> transactions = dao.getTransactions((byte) -1, (byte) -1, 2, 4);
         assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11, td.TRANSACTION_10), transactions);
     }
 
     @Test
     void testGetTransactionsByType() {
-        List<Transaction> transactions = CollectionUtil.toList(dao.getTransactions((byte) 8, (byte) -1, 0, Integer.MAX_VALUE));
+        List<Transaction> transactions = dao.getTransactions((byte) 8, (byte) -1, 0, Integer.MAX_VALUE);
 
         assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11), transactions);
     }
 
     @Test
     void testGetTransactionsByTypeAndSubtypeWithPagination() {
-        List<Transaction> transactions = CollectionUtil.toList(dao.getTransactions((byte) 0, (byte) 0, 3, 5));
+        List<Transaction> transactions = dao.getTransactions((byte) 0, (byte) 0, 3, 5);
 
         assertEquals(List.of(td.TRANSACTION_8, td.TRANSACTION_7, td.TRANSACTION_6), transactions);
     }

@@ -6,19 +6,19 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
-import com.apollocurrency.aplwallet.apl.core.app.TrimConfig;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.config.TrimConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.utils.RuntimeUtils;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
@@ -43,21 +43,21 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ShardService {
     public final static long LOWER_SHARDING_MEMORY_LIMIT = 1536 * 1024 * 1024; //1.5GB
-    private ShardDao shardDao;
-    private BlockchainProcessor blockchainProcessor;
-    private Blockchain blockchain;
-    private DirProvider dirProvider;
-    private Zip zip;
-    private DatabaseManager databaseManager;
-    private BlockchainConfig blockchainConfig;
-    private ShardRecoveryDao shardRecoveryDao;
-    private ShardMigrationExecutor shardMigrationExecutor;
-    private AplAppStatus aplAppStatus;
-    private PropertiesHolder propertiesHolder;
-    private Event<TrimConfig> trimEvent;
-    private Event<DbHotSwapConfig> dbEvent;
-    private TrimService trimService;
-    private GlobalSync globalSync;
+    private final ShardDao shardDao;
+    private final BlockchainProcessor blockchainProcessor;
+    private final Blockchain blockchain;
+    private final DirProvider dirProvider;
+    private final Zip zip;
+    private final DatabaseManager databaseManager;
+    private final BlockchainConfig blockchainConfig;
+    private final ShardRecoveryDao shardRecoveryDao;
+    private final ShardMigrationExecutor shardMigrationExecutor;
+    private final AplAppStatus aplAppStatus;
+    private final PropertiesHolder propertiesHolder;
+    private final Event<TrimConfig> trimEvent;
+    private final Event<DbHotSwapConfig> dbEvent;
+    private final TrimService trimService;
+    private final GlobalSync globalSync;
     private volatile boolean isSharding;
     private volatile CompletableFuture<MigrateState> shardingProcess = null;
 
@@ -219,9 +219,9 @@ public class ShardService {
             shardRecoveryDeleted, shard.getShardId());
     }
 
-    public MigrateState performSharding(int minRollbackHeight, long shardId, MigrateState initialState) {
+    public MigrateState performSharding(int newShardBlockHeight, long shardId, MigrateState initialState) {
         MigrateState resultState = MigrateState.FAILED;
-        log.debug(">> performSharding '{}' at minRollbackHeight={}", shardId, minRollbackHeight);
+        log.debug(">> performSharding '{}' at newShardBlockHeight={}", shardId, newShardBlockHeight);
         if (!shouldPerformSharding()) {
             log.debug("Will skip sharding due to lack of memory or cmd/config properties, shardId='{}'", shardId);
         } else {
@@ -230,39 +230,40 @@ public class ShardService {
 
             try {
                 shardMigrationExecutor.prepare();
-                shardMigrationExecutor.createAllCommands(minRollbackHeight, shardId, initialState);
+                shardMigrationExecutor.createAllCommands(newShardBlockHeight, shardId, initialState);
                 resultState = shardMigrationExecutor.executeAllOperations();
-                log.info("Finished sharding '{}' in {} ms", shardId, System.currentTimeMillis() - start);
+                log.info("Finished sharding #'{}' at height='{}' in {} ms", shardId, newShardBlockHeight, System.currentTimeMillis() - start);
             } catch (Exception t) {
-                log.error("Error occurred while trying create shard " + shardId + " at height " + minRollbackHeight, t);
+                log.error("Error occurred while trying create shard " + shardId + " at height " + newShardBlockHeight, t);
             }
             if (resultState != MigrateState.FAILED) {
-                log.info("Finished sharding successfully in {} secs '{}'", (System.currentTimeMillis() - start) / 1000, shardId);
+                log.info("Finished sharding successfully in {} secs '{}' at '{}'",
+                    (System.currentTimeMillis() - start) / 1000, shardId, newShardBlockHeight);
             } else {
-                log.info("FAILED sharding in {} secs '{}'", (System.currentTimeMillis() - start) / 1000, shardId);
+                log.info("FAILED sharding in {} secs '{}' at height='{}'", (System.currentTimeMillis() - start) / 1000, shardId, newShardBlockHeight);
             }
         }
         return resultState;
     }
 
 
-    public CompletableFuture<MigrateState> tryCreateShardAsync(int lastTrimBlockHeight, int blockchainHeight) {
+    public CompletableFuture<MigrateState> tryCreateShardAsync(int newShardBlockHeight, int currentBlockchainHeight) {
         CompletableFuture<MigrateState> newShardingProcess = null;
         log.debug(">> tryCreateShardAsync, scanning ? = {}, !isSharding={},\nCurrent config = {}",
             !blockchainProcessor.isScanning(), !isSharding, blockchainConfig.getCurrentConfig());
         if (!blockchainProcessor.isScanning()) {
             if (!isSharding) {
                 Shard lastShard = shardDao.getLastShard();
-                if (lastShard == null || lastTrimBlockHeight > lastShard.getShardHeight()) {
+                if (lastShard == null || newShardBlockHeight > lastShard.getShardHeight()) {
                     isSharding = true;
                     updateTrimConfig(false, false);
                     // quick create records for new Shard and Recovery process for later use
                     long nextShardId = shardDao.getNextShardId();
-                    log.debug("Prepare for next sharding = '{}' at height = '{}', lastTrimHeight = '{}'",
-                        nextShardId, blockchainHeight, lastTrimBlockHeight);
-                    saveShardRecoveryAndShard(nextShardId, lastTrimBlockHeight, blockchainHeight);
+                    log.debug("Prepare for next sharding = '{}' at currentBlockchainHeight = '{}', newShardBlockHeight = '{}'",
+                        nextShardId, currentBlockchainHeight, newShardBlockHeight);
+                    saveShardRecoveryAndShard(nextShardId, newShardBlockHeight, currentBlockchainHeight);
 
-                    this.shardingProcess = CompletableFuture.supplyAsync(() -> performSharding(lastTrimBlockHeight, nextShardId, MigrateState.INIT));
+                    this.shardingProcess = CompletableFuture.supplyAsync(() -> performSharding(newShardBlockHeight, nextShardId, MigrateState.INIT));
                     this.shardingProcess.handle((result, ex) -> {
                         blockchain.setShardInitialBlock(blockchain.findFirstBlock());
                         updateTrimConfig(true, false);
@@ -271,13 +272,13 @@ public class ShardService {
                     });
                     newShardingProcess = this.shardingProcess;
                 } else {
-                    log.warn("Last trim height {} less than last shard height {}", lastTrimBlockHeight, lastShard.getShardHeight());
+                    log.warn("Last trim height {} less than last shard height {}", newShardBlockHeight, lastShard.getShardHeight());
                 }
             } else {
-                log.warn("Unable to start sharding at height {}, previous sharding process was not finished", lastTrimBlockHeight);
+                log.warn("Unable to start sharding at height {}, previous sharding process was not finished", newShardBlockHeight);
             }
         } else {
-            log.warn("Will skip sharding at height {} due to current blockchain scanning !", lastTrimBlockHeight);
+            log.warn("Will skip sharding at height {} due to current blockchain scanning !", newShardBlockHeight);
         }
         return newShardingProcess;
     }

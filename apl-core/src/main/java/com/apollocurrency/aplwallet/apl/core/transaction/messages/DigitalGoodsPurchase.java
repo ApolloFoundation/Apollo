@@ -3,8 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.DigitalGoods;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
 
@@ -32,7 +31,7 @@ public final class DigitalGoodsPurchase extends AbstractAttachment {
         super(attachmentData);
         this.goodsId = Convert.parseUnsignedLong((String) attachmentData.get("goods"));
         this.quantity = ((Long) attachmentData.get("quantity")).intValue();
-        this.priceATM = attachmentData.containsKey("priceATM") ? Convert.parseLong(attachmentData.get("priceATM")) : Convert.parseLong(attachmentData.get("priceNQT"));
+        this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
         this.deliveryDeadlineTimestamp = ((Long) attachmentData.get("deliveryDeadlineTimestamp")).intValue();
     }
 
@@ -65,8 +64,8 @@ public final class DigitalGoodsPurchase extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return DigitalGoods.PURCHASE;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.DGS_PURCHASE;
     }
 
     public long getGoodsId() {

@@ -1,8 +1,15 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
+
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.api.v2.AccountApi;
+import com.apollocurrency.aplwallet.api.v2.InfoApi;
+import com.apollocurrency.aplwallet.api.v2.OperationApi;
+import com.apollocurrency.aplwallet.api.v2.StateApi;
+import com.apollocurrency.aplwallet.api.v2.TransactionApi;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.AccountControlController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.AccountController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.BlockController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.DebugController;
@@ -18,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ServerInfoController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.ShardController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TradingDataController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.TransportInteractionController;
+import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UnconfirmedTransactionController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UpdateController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UserErrorMessageController;
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UtilsController;
@@ -62,9 +70,17 @@ public class RestEasyApplication extends Application {
         set.add(ServerInfoController.class);
         set.add(UpdateController.class);
         set.add(BlockController.class);
+        set.add(AccountControlController.class);
+        set.add(UnconfirmedTransactionController.class);
 
+        //API V2
+        set.add(AccountApi.class);
+        set.add(InfoApi.class);
+        set.add(OperationApi.class);
+        set.add(StateApi.class);
+        set.add(TransactionApi.class);
+        //API V2 Services
 
-        //TODO: add all endpoints below
         //swagger openapi endpoint
         set.add(OpenApiResource.class);
         return set;

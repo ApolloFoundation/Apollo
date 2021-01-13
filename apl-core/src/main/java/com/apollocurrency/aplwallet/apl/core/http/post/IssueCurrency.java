@@ -20,16 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONStreamAware;
 
@@ -55,31 +55,31 @@ import javax.servlet.http.HttpServletRequest;
  * <li>initialSupply - the number of currency units created when the currency is issued (pre-mine)
  * <li>decimals - currency units are divisible to this number of decimals
  * <li>issuanceHeight - the blockchain height at which the currency would become active
- * For {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#RESERVABLE} currency
+ * For {@link CurrencyType#RESERVABLE} currency
  * <li>minReservePerUnitATM - the minimum APL value per unit to allow the currency to become active
- * For {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#RESERVABLE} currency
+ * For {@link CurrencyType#RESERVABLE} currency
  * <li>reserveSupply - the number of units that will be distributed to founders when currency becomes active (less initialSupply)
- * For {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#RESERVABLE} currency
+ * For {@link CurrencyType#RESERVABLE} currency
  * <li>minDifficulty - for mint-able currency, the exponent of the initial difficulty.
- * For {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#MINTABLE} currency
+ * For {@link CurrencyType#MINTABLE} currency
  * <li>maxDifficulty - for mint-able currency, the exponent of the final difficulty.
- * For {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#MINTABLE} currency
+ * For {@link CurrencyType#MINTABLE} currency
  * <li>algorithm - the hashing {@link com.apollocurrency.aplwallet.apl.crypto.HashFunction algorithm} used for minting.
- * For {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#MINTABLE} currency
+ * For {@link CurrencyType#MINTABLE} currency
  * </ul>
  * <p>
  * Constraints
  * <ul>
- * <li>A given currency can not be neither {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#EXCHANGEABLE} nor {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#CLAIMABLE}.<br>
- * <li>A {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#RESERVABLE} currency becomes active once the blockchain height reaches the currency issuance height.<br>
+ * <li>A given currency can not be neither {@link CurrencyType#EXCHANGEABLE} nor {@link CurrencyType#CLAIMABLE}.<br>
+ * <li>A {@link CurrencyType#RESERVABLE} currency becomes active once the blockchain height reaches the currency issuance height.<br>
  * At this time, if the minReservePerUnitATM has not been reached the currency issuance is cancelled and
  * funds are returned to the founders.<br>
  * Otherwise the currency becomes active and remains active until deleted, provided deletion is possible.
- * When a {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#RESERVABLE} becomes active, in case it is {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#CLAIMABLE} the APL used for
+ * When a {@link CurrencyType#RESERVABLE} becomes active, in case it is {@link CurrencyType#CLAIMABLE} the APL used for
  * reserving the currency are locked until they are claimed back.
- * When a {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#RESERVABLE} becomes active, in case it is non {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#CLAIMABLE} the APL used for
+ * When a {@link CurrencyType#RESERVABLE} becomes active, in case it is non {@link CurrencyType#CLAIMABLE} the APL used for
  * reserving the currency are sent to the issuer account as crowd funding.
- * <li>When issuing a {@link com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType#MINTABLE} currency, the number of units per {@link CurrencyMint} cannot exceed 0.01% of the
+ * <li>When issuing a {@link CurrencyType#MINTABLE} currency, the number of units per {@link CurrencyMint} cannot exceed 0.01% of the
  * total supply. Therefore make sure totalSupply &gt; 10000 or otherwise the currency cannot be minted
  * <li>difficulty is calculated as follows<br>
  * difficulty of minting the first unit is based on 2^minDifficulty<br>
@@ -88,7 +88,7 @@ import javax.servlet.http.HttpServletRequest;
  * difficulty increases linearly with the number units minted per {@link CurrencyMint}<br>
  * </ul>
  *
- * @see com.apollocurrency.aplwallet.apl.core.monetary.CurrencyType
+ * @see CurrencyType
  * @see com.apollocurrency.aplwallet.apl.crypto.HashFunction
  */
 @Vetoed
@@ -138,7 +138,7 @@ public final class IssueCurrency extends CreateTransaction {
             type = HttpParameterParserUtil.getInt(req, "type", 0, Integer.MAX_VALUE, false);
         }
 
-        long maxSupply = HttpParameterParserUtil.getLong(req, "maxSupply", 1, Constants.MAX_CURRENCY_TOTAL_SUPPLY, false);
+        long maxSupply = HttpParameterParserUtil.getLong(req, "maxSupply", 1, Math.multiplyExact(lookupBlockchainConfig().getInitialSupply(), lookupBlockchainConfig().getOneAPL()), false);
         long reserveSupply = HttpParameterParserUtil.getLong(req, "reserveSupply", 0, maxSupply, false);
         long initialSupply = HttpParameterParserUtil.getLong(req, "initialSupply", 0, maxSupply, false);
         int issuanceHeight = HttpParameterParserUtil.getInt(req, "issuanceHeight", 0, Integer.MAX_VALUE, false);

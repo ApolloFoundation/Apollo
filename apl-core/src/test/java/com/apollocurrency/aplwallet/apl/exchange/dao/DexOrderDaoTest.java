@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import com.apollocurrency.aplwallet.apl.data.DexTestData;
 import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequ
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -24,7 +25,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-
+@Tag("slow")
 class DexOrderDaoTest {
     @RegisterExtension
     DbExtension extension = new DbExtension();

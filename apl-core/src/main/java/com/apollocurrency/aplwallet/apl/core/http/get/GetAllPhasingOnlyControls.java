@@ -15,12 +15,12 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -34,6 +34,7 @@ import org.json.simple.JSONStreamAware;
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
+@Deprecated
 @Vetoed
 public final class GetAllPhasingOnlyControls extends AbstractAPIRequestHandler {
 
@@ -47,8 +48,9 @@ public final class GetAllPhasingOnlyControls extends AbstractAPIRequestHandler {
         int lastIndex = HttpParameterParserUtil.getLastIndex(req);
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
-        try (DbIterator<PhasingOnly> iterator = PhasingOnly.getAll(firstIndex, lastIndex)) {
-            for (PhasingOnly phasingOnly : iterator) {
+//        try (DbIterator<PhasingOnly> iterator = PhasingOnly.getAll(firstIndex, lastIndex)) {
+        try (DbIterator<AccountControlPhasing> iterator = lookupAccountControlPhasingService().getAll(firstIndex, lastIndex)) {
+            for (AccountControlPhasing phasingOnly : iterator) {
                 jsonArray.add(JSONData.phasingOnly(phasingOnly));
             }
         }

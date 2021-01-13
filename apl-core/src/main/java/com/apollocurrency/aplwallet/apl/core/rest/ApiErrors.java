@@ -8,7 +8,10 @@ package com.apollocurrency.aplwallet.apl.core.rest;
 
 public enum ApiErrors implements ErrorInfo {
 
-    INTERNAL_SERVER_EXCEPTION(0, 1000, "Internal error, root cause: %s"),
+    INTERNAL_SERVER_EXCEPTION(0, 100, "Internal error, root cause: %s"),
+    BLOCKCHAIN_NOT_INITIALIZED(-1, 101, "Blockchain is not initialized."),
+    UNCONFIRMED_TRANSACTION_CACHE_IS_FULL(-1, 102, "Blockchain is busy, the unconfirmed transaction cache is full."),
+
     JSON_SERIALIZATION_EXCEPTION(1, 1001, "Exception encountered during generating JSON content, root cause: %s"),
 
     CONSTRAINT_VIOLATION(4, 2001, "Constraint violation: %s"),
@@ -40,6 +43,7 @@ public enum ApiErrors implements ErrorInfo {
     FEATURE_NOT_ENABLED(9, 2027, "Feature not available, '{0}'"),
     NOT_ENOUGH_FUNDS(6, 2028, "Not enough %s funds"),
     TX_VALIDATION_FAILED(-1, 2029, "Failed to validate tx: %s"),
+    CUSTOM_ERROR_MESSAGE(8, 2030, "{0}"),
     ;
 
     private int oldErrorCode;

@@ -4,52 +4,56 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.alias.service.AliasService;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDao;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TrimDao;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.BlockIndexDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.TrimDao;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiTransactionalInterceptor;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ShardRecoveryDaoJdbcImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
-import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbc;
-import com.apollocurrency.aplwallet.apl.core.db.ShardRecoveryDaoJdbcImpl;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiTransactionalInterceptor;
-import com.apollocurrency.aplwallet.apl.core.db.dao.BlockIndexDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ShardRecoveryDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.TransactionIndexDao;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.Shard;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.ShardRecovery;
-import com.apollocurrency.aplwallet.apl.core.db.dao.model.TransactionIndex;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.TransactionDbInfo;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.TransactionIndex;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExporterImpl;
@@ -58,6 +62,9 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.model.ExcludeInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.model.PrevBlockData;
 import com.apollocurrency.aplwallet.apl.core.shard.model.TableInfo;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
@@ -79,6 +86,7 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jboss.weld.literal.NamedLiteral;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
@@ -112,6 +120,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -123,6 +132,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.slf4j.LoggerFactory.getLogger;
 
+@Tag("slow")
 @EnableWeld
 class ShardEngineTest {
     static final String GOODS_TABLE_NAME = "goods";
@@ -145,6 +155,11 @@ class ShardEngineTest {
     private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
     @RegisterExtension
     DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
+    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
+    private TimeService timeService = mock(TimeService.class);
+    private TransactionTestData td = new TransactionTestData();
+
     Weld weld = WeldInitiator.createWeld();
     @Inject
     DGSGoodsTable goodsTable;
@@ -158,6 +173,9 @@ class ShardEngineTest {
     private Zip zip = spy(new ZipImpl());
     private CsvEscaper translator = new CsvEscaperImpl();
     private CsvExporter csvExporter = spy(new CsvExporterImpl(extension.getDatabaseManager(), dataExportDirPath, translator));
+    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+
+    private final PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
     @WeldSetup
     public WeldInitiator weldInitiator = WeldInitiator.from(weld)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -168,14 +186,20 @@ class ShardEngineTest {
         .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
         .addBeans(MockBean.of(dirProvider, DirProvider.class))
         .addBeans(MockBean.of(csvExporter, CsvExporter.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(zip, Zip.class))
         .addBeans(dataExportDir)
-        .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyService.class, AccountPublicKeyServiceImpl.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
         .addBeans(MockBean.of(translator, CsvEscaperImpl.class))
 //            .addBeans(MockBean.of(baseDbProperties, DbProperties.class)) // YL  DO NOT REMOVE THAT PLEASE, it can be used for manual testing
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+        .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
         .build();
     @Inject
     private ShardEngine shardEngine;
@@ -198,8 +222,10 @@ class ShardEngineTest {
 
     {
         weld.addInterceptor(JdbiTransactionalInterceptor.class);
-        weld.addBeanClasses(PropertiesHolder.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
+        weld.addBeanClasses(BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
             DerivedDbTablesRegistryImpl.class, JdbiTransactionalInterceptor.class,
+            TransactionRowMapper.class,
+            TransactionBuilder.class,
             TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
             GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
             DGSGoodsTable.class, PrunableMessageServiceImpl.class, PrunableMessageTable.class,
@@ -208,7 +234,7 @@ class ShardEngineTest {
             ShardEngineImpl.class, AplAppStatus.class, BlockDaoImpl.class, TransactionDaoImpl.class, TrimService.class, TrimDao.class
         );
 
-        // return the same dir for both CDI components
+        // return the same dir for both CDI components //
         dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
         doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
     }
@@ -348,6 +374,8 @@ class ShardEngineTest {
 
     @Test
     void createShardDbDoAllOperations() throws IOException, SQLException {
+        doReturn(86400).when(blockchainConfig).getMaxPrunableLifetime();
+        doReturn(1590667190).when(blockchainConfig).getMinPrunableLifetime();
         // folder to backup step
         doReturn(temporaryFolderExtension.newFolder("backup").toPath()).when(dirProvider).getDbDir();
         blockIndexDao.hardDeleteAllBlockIndex();
@@ -421,7 +449,7 @@ class ShardEngineTest {
         assertNull(excludedTransaction);
         assertEquals(td.TRANSACTION_5, transactionDao.findTransaction(td.TRANSACTION_5.getId(), shardDataSource));
 
-        //5.        // create shard db FULL schema + add shard hash info
+//5.        // create shard db FULL schema + add shard hash info
         state = shardEngine.addOrCreateShard(new ShardAddConstraintsSchemaVersion(), CommandParamInfo.builder().shardHash(shardHash).shardId(4L).prevBlockData(PrevBlockData.builder().generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[]{3, 4}).prevBlockTimestamps(new Integer[]{5, 6}).build()).build());
         assertEquals(SHARD_SCHEMA_FULL, state);
         // check 'merkle tree hash' is stored in shard record
@@ -481,6 +509,7 @@ class ShardEngineTest {
         assertEquals(10, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(GOODS_TABLE_NAME))).size());
         assertEquals(4, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(TRANSACTION_TABLE_NAME))).size());
         assertEquals(2, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(BLOCK_TABLE_NAME))).size());
+        assertEquals(12, Files.readAllLines(dataExportDirPath.resolve(tableToCsvFile(PRUNABLE_MESSAGE_TABLE_NAME))).size());
 
 
         paramInfo = CommandParamInfo.builder().snapshotBlockHeight(snapshotBlockHeight).excludeInfo(excludeInfo).shardId(4L).tableInfoList(tableNameList).build();
@@ -546,6 +575,7 @@ class ShardEngineTest {
         );
         CommandParamInfo paramInfo = CommandParamInfo.builder().tableInfoList(tables).commitBatchSize(batchLimit).snapshotBlockHeight(snaphotBlockHeight).excludeInfo(excludeInfo).build();
         doThrow(IllegalStateException.class).when(csvExporter).exportBlock(snaphotBlockHeight);
+        initPublicKeyDao();
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
@@ -583,6 +613,8 @@ class ShardEngineTest {
         Path transactionPath = dataExportDirPath.resolve("transaction.csv");
         Files.createFile(transactionPath);
         Files.write(transactionPath, List.of("Str-0", "Str-1", "Str-2", "Str-3", "Str-4", "Str-5", "Str-6"));
+        initPublicKeyDao();
+
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
@@ -630,12 +662,18 @@ class ShardEngineTest {
         int batchLimit = 1;
         List<TableInfo> tables = List.of(new TableInfo("invalid_table"));
         CommandParamInfo paramInfo = CommandParamInfo.builder().tableInfoList(tables).commitBatchSize(batchLimit).snapshotBlockHeight(snaphotBlockHeight).build();
+        initPublicKeyDao();
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
         assertEquals(MigrateState.FAILED, state);
         verify(csvExporter, times(2)).getDataExportPath();
         verifyNoMoreInteractions(csvExporter);
+    }
+
+
+    private void initPublicKeyDao() {
+        doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).searchAll(anyLong());
     }
 
     @Test
@@ -647,6 +685,7 @@ class ShardEngineTest {
         List<TableInfo> tables = List.of(new TableInfo(GOODS_TABLE_NAME));
         DbUtils.inTransaction(extension, (con) -> shardRecoveryDaoJdbc.hardDeleteAllShardRecovery(con));
         CommandParamInfo paramInfo = CommandParamInfo.builder().tableInfoList(tables).commitBatchSize(batchLimit).snapshotBlockHeight(snaphotBlockHeight).build();
+        initPublicKeyDao();
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
 
@@ -675,6 +714,7 @@ class ShardEngineTest {
         Path txtFile = directory.resolve("old.txt");
         Files.createFile(txtFile);
         Path anotherCsvFile = Files.createFile(directory.resolve("another.csv"));
+        initPublicKeyDao();
 
         MigrateState state = shardEngine.exportCsv(paramInfo);
 

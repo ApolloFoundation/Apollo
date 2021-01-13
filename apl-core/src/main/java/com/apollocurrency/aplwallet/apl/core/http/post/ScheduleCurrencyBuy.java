@@ -20,24 +20,26 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSync;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionSchedulerService;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.monetary.Currency;
-import com.apollocurrency.aplwallet.apl.core.monetary.CurrencySellOffer;
-import com.apollocurrency.aplwallet.apl.core.monetary.MonetarySystem;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TransactionSchedulerService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
+import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
@@ -48,6 +50,7 @@ import org.slf4j.Logger;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
+import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -58,7 +61,8 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
     private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private final TransactionSchedulerService transactionSchedulerService = CDI.current().select(TransactionSchedulerService.class).get();
-
+    private final TransactionBuilder transactionBuilder = CDI.current().select(TransactionBuilder.class).get();
+    private final CurrencyExchangeOfferFacade exchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
     public ScheduleCurrencyBuy() {
 
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
@@ -91,7 +95,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     response.put("scheduled", false);
                     return response;
                 }
-                transaction = Transaction.newTransactionBuilder((JSONObject) response.get("transactionJSON")).build();
+                transaction = transactionBuilder.newTransactionBuilder((JSONObject) response.get("transactionJSON")).build();
             } else {
                 response = new JSONObject();
                 transaction = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON).build();
@@ -101,7 +105,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
                 } catch (AplException.NotYetEncryptedException ignore) {
                 }
-                response.put("transactionBytes", Convert.toHexString(transaction.getBytes()));
+                response.put("transactionBytes", Convert.toHexString(transaction.getCopyTxBytes()));
                 response.put("signatureHash", json.get("signatureHash"));
                 response.put("transaction", transaction.getStringId());
                 response.put("fullHash", transaction.getFullHashString());
@@ -112,23 +116,26 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
 
             globalSync.updateLock();
             try {
-                validator.validate(transaction);
-                CurrencySellOffer sellOffer = CurrencySellOffer.getOffer(attachment.getCurrencyId(), offerIssuerId);
+                validator.validateFully(transaction);
+                CurrencySellOffer sellOffer = exchangeOfferFacade.getCurrencySellOfferService()
+                    .getOffer(attachment.getCurrencyId(), offerIssuerId);
                 if (sellOffer != null && sellOffer.getSupply() > 0 && sellOffer.getRateATM() <= attachment.getRateATM()) {
                     LOG.debug("Exchange offer found in blockchain, broadcasting transaction " + transaction.getStringId());
                     lookupTransactionProcessor().broadcast(transaction);
                     response.put("broadcasted", true);
                     return response;
                 }
-                try (DbIterator<? extends Transaction> unconfirmedTransactions = lookupTransactionProcessor().getAllUnconfirmedTransactions()) {
-                    while (unconfirmedTransactions.hasNext()) {
-                        if (filter.test(unconfirmedTransactions.next())) {
-                            LOG.debug("Exchange offer found in unconfirmed pool, broadcasting transaction " + transaction.getStringId());
+                for (UnconfirmedTransaction unconfirmedTransaction : lookupMemPool().getAllProcessedStream().collect(Collectors.toList())) {
+                    if (filter.test(unconfirmedTransaction)) {
+                        LOG.debug("Exchange offer found in unconfirmed pool, broadcasting transaction " + transaction.getStringId());
+                        try {
                             lookupTransactionProcessor().broadcast(transaction);
-                            response.put("broadcasted", true);
-                            return response;
+                        } catch (AplException.ValidationException validationException) {
+                            throw new RuntimeException(validationException.toString(), validationException);
                         }
+                        response.put("broadcasted", true);
                     }
+                    return response;
                 }
                 if (apw.checkPassword(req)) {
                     LOG.debug("Scheduling transaction " + transaction.getStringId());
@@ -168,7 +175,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
         @Override
         public boolean test(Transaction transaction) {
             if (transaction.getSenderId() != senderId
-                || transaction.getType() != MonetarySystem.PUBLISH_EXCHANGE_OFFER
+                || transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.MS_PUBLISH_EXCHANGE_OFFER
                 || transaction.getPhasing() != null) {
                 return false;
             }

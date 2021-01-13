@@ -3,18 +3,18 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author al
@@ -64,7 +64,7 @@ public final class MessagingPollCreation extends AbstractAttachment {
         this.pollName = ((String) attachmentData.get("name")).trim();
         this.pollDescription = ((String) attachmentData.get("description")).trim();
         this.finishHeight = ((Long) attachmentData.get("finishHeight")).intValue();
-        JSONArray options = (JSONArray) attachmentData.get("options");
+        List<?> options = (List<?>) attachmentData.get("options");
         this.pollOptions = new String[options.size()];
         for (int i = 0; i < pollOptions.length; i++) {
             this.pollOptions[i] = ((String) options.get(i)).trim();
@@ -151,8 +151,8 @@ public final class MessagingPollCreation extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return Messaging.POLL_CREATION;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.POLL_CREATION;
     }
 
     public String getPollName() {

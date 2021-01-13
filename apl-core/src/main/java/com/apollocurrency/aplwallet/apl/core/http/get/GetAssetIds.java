@@ -24,12 +24,14 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.core.monetary.Asset;
+import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
@@ -46,7 +48,8 @@ public final class GetAssetIds extends AbstractAPIRequestHandler {
         int lastIndex = HttpParameterParserUtil.getLastIndex(req);
 
         JSONArray assetIds = new JSONArray();
-        try (DbIterator<Asset> assets = Asset.getAllAssets(firstIndex, lastIndex)) {
+        AssetService assetService = CDI.current().select(AssetService.class).get();
+        try (DbIterator<Asset> assets = assetService.getAllAssets(firstIndex, lastIndex)) {
             while (assets.hasNext()) {
                 assetIds.add(Long.toUnsignedString(assets.next().getId()));
             }

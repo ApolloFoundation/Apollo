@@ -20,14 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.AplException;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -55,8 +56,8 @@ import javax.servlet.http.HttpServletRequest;
  * Prunable appendages are classes implementing the {@link com.apollocurrency.aplwallet.apl} interface.
  */
 @Vetoed
+@Slf4j
 public final class BroadcastTransaction extends AbstractAPIRequestHandler {
-
     public BroadcastTransaction() {
         super(new APITag[]{APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
     }
@@ -72,7 +73,11 @@ public final class BroadcastTransaction extends AbstractAPIRequestHandler {
         try {
             Transaction.Builder builder = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
             Transaction transaction = builder.build();
-            lookupTransactionProcessor().broadcast(transaction);
+
+            boolean broadcasted = lookupMemPool().softBroadcast(transaction);
+            if (!broadcasted) {
+                throw new RuntimeException("Broadcast queue is full. Please try again later.");
+            }
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHashString());
         } catch (AplException.ValidationException | RuntimeException e) {

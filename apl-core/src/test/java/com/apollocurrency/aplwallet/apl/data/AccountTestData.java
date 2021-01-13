@@ -4,18 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.account.LedgerHolding;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountGuaranteedBalance;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountInfo;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountLease;
-import com.apollocurrency.aplwallet.apl.core.account.model.AccountProperty;
-import com.apollocurrency.aplwallet.apl.core.account.model.LedgerEntry;
-import com.apollocurrency.aplwallet.apl.core.account.model.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountGuaranteedBalance;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountLease;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountProperty;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerHolding;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 
 import java.util.Collections;
 import java.util.EnumSet;

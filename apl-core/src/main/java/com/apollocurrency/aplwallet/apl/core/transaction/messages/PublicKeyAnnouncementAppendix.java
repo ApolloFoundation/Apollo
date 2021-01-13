@@ -4,24 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import org.json.simple.JSONObject;
 
-import javax.enterprise.inject.spi.CDI;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
 
-    private static final String appendixName = "PublicKeyAnnouncement";
-    private static AccountPublicKeyService accountPublicKeyService;
+    static final String appendixName = "PublicKeyAnnouncement";
     private final byte[] publicKey;
 
     public PublicKeyAnnouncementAppendix(ByteBuffer buffer) {
@@ -46,13 +38,6 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
         return new PublicKeyAnnouncementAppendix(attachmentData);
     }
 
-    protected AccountPublicKeyService lookupAccountPublickKeyService() {
-        if (accountPublicKeyService == null) {
-            accountPublicKeyService = CDI.current().select(AccountPublicKeyServiceImpl.class).get();
-        }
-        return accountPublicKeyService;
-    }
-
     @Override
     public String getAppendixName() {
         return appendixName;
@@ -74,28 +59,18 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
     }
 
     @Override
-    public void validate(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        if (transaction.getRecipientId() == 0) {
-            throw new AplException.NotValidException("PublicKeyAnnouncement cannot be attached to transactions with no recipient");
-        }
-        if (!Crypto.isCanonicalPublicKey(publicKey)) {
-            throw new AplException.NotValidException("Invalid recipient public key: " + Convert.toHexString(publicKey));
-        }
-        long recipientId = transaction.getRecipientId();
-        if (AccountService.getId(this.publicKey) != recipientId) {
-            throw new AplException.NotValidException("Announced public key does not match recipient accountId");
-        }
-        byte[] recipientPublicKey = lookupAccountPublickKeyService().getPublicKeyByteArray(recipientId);
-        if (recipientPublicKey != null && !Arrays.equals(publicKey, recipientPublicKey)) {
-            throw new AplException.NotCurrentlyValidException("A different public key for this account has already been announced");
-        }
+    public void performFullValidation(Transaction transaction, int blockHeight) {
+        throw new UnsupportedOperationException("Validation is not supported, use separate class");
+    }
+
+    @Override
+    public void performLightweightValidation(Transaction transaction, int blockcHeight) {
+        throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
     }
 
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        if (lookupAccountPublickKeyService().setOrVerifyPublicKey(recipientAccount.getId(), publicKey)) {
-            lookupAccountPublickKeyService().apply(recipientAccount, this.publicKey);
-        }
+        throw new UnsupportedOperationException("Apply is not supported, use separate class");
     }
 
     @Override

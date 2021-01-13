@@ -4,16 +4,22 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthFileSystemRepository;
-import com.apollocurrency.aplwallet.apl.core.db.TwoFactorAuthRepositoryImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.TwoFactorAuthFileSystemRepository;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.TwoFactorAuthRepositoryImpl;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TwoFactorAuthService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.PassphraseGeneratorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TwoFactorAuthServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
@@ -50,8 +56,8 @@ public class Helper2FA {
         log.trace("is2FaInFile = {}", is2FaInFile);
         service2FA = new TwoFactorAuthServiceImpl(
             new TwoFactorAuthRepositoryImpl(databaseManagerParam.getDataSource()),
-            propertiesHolder.getStringProperty("apl.issuerSuffix2FA",
-                RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"),
+            propertiesHolder.getStringProperty("apl.issuerSuffix2FA", "web"),
+            //RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web"),
             new TwoFactorAuthFileSystemRepository(dirProvider.get2FADir())
         );
     }

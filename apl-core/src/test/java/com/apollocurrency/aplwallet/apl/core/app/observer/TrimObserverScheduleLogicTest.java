@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.observer;
 
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +65,7 @@ class TrimObserverScheduleLogicTest {
 
     {
         doReturn(config).when(blockchainConfig).getCurrentConfig();
+        doReturn(100).when(propertiesHolder).getIntProperty("apl.trimProcessingDelay", 2000);
     }
 
     @BeforeEach
@@ -239,7 +240,7 @@ class TrimObserverScheduleLogicTest {
 
         nextTrimHeight = simulateFireBlockPushed(15000);
         log.debug("nextTrimHeight = {}", nextTrimHeight);
-        assertEquals(15000, nextTrimHeight);
+        assertEquals(15629, nextTrimHeight);
 
         doReturn(555).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random increase
         nextTrimHeight = simulateFireBlockPushed(16000);

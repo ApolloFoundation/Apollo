@@ -1,13 +1,13 @@
-
 /*
  * Copyright © 2018-2019 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.crypto.AplElGamalCrypto;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
-import io.firstbridge.cryptolib.dataformat.FBElGamalKeyPair;
+import io.firstbridge.cryptolib.ElGamalKeyPair;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -21,8 +21,8 @@ public class ElGamalEncryptor {
 
     private byte[] privateKey;
     private byte[] publicKey;
-    private FBElGamalKeyPair elGamalKeyPair;
-    private TaskDispatchManager taskDispatchManager;
+    private ElGamalKeyPair elGamalKeyPair;
+    private final TaskDispatchManager taskDispatchManager;
 
     @Inject
     public ElGamalEncryptor(TaskDispatchManager dispatchManager) {
@@ -56,12 +56,12 @@ public class ElGamalEncryptor {
         return privateKey;
     }
 
-    public synchronized FBElGamalKeyPair getServerElGamalPublicKey() {
+    public synchronized ElGamalKeyPair getServerElGamalPublicKey() {
         return elGamalKeyPair;
     }
 
     public synchronized String elGamalDecrypt(String cryptogramm) {
-        return Crypto.elGamalDecrypt(cryptogramm, elGamalKeyPair);
+        return AplElGamalCrypto.decrypt(cryptogramm, elGamalKeyPair);
     }
 
 }

@@ -101,7 +101,7 @@ public class PeerInfoStatistics {
         return res;
     }
 
-    public void crlear() {
+    public void clear() {
         sorted.clear();
     }
 }

@@ -29,7 +29,7 @@ public class BlockDTO extends BaseDTO {
     private String generatorPublicKey;
     private Integer timestamp; //time in seconds since genesis block
     private Integer timeout;
-    private Integer numberOfTransactions;
+    private Long numberOfTransactions;
     private String totalFeeATM;
     private Integer payloadLength;
     private Integer version;

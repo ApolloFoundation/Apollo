@@ -3,11 +3,10 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.Messaging;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
@@ -34,7 +33,7 @@ public final class MessagingAliasSell extends AbstractAttachment {
     public MessagingAliasSell(JSONObject attachmentData) {
         super(attachmentData);
         this.aliasName = Convert.nullToEmpty((String) attachmentData.get("alias"));
-        this.priceATM = attachmentData.containsKey("priceATM") ? Convert.parseLong(attachmentData.get("priceATM")) : Convert.parseLong(attachmentData.get("priceNQT"));
+        this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
     }
 
     public MessagingAliasSell(String aliasName, long priceATM) {
@@ -43,8 +42,8 @@ public final class MessagingAliasSell extends AbstractAttachment {
     }
 
     @Override
-    public TransactionType getTransactionType() {
-        return Messaging.ALIAS_SELL;
+    public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
+        return TransactionTypes.TransactionTypeSpec.ALIAS_SELL;
     }
 
     @Override

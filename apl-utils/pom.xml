@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.44.7</version>
+    <version>1.47.6</version>
   </parent>
 
   <artifactId>apl-utils</artifactId>
@@ -87,26 +87,14 @@
       <groupId>org.bitlet</groupId>
       <artifactId>weupnp</artifactId>
     </dependency>
-    <!-- Apache Tika libs-->
-    <dependency>
-      <groupId>org.apache.tika</groupId>
-      <artifactId>tika-core</artifactId>
-    </dependency>
+
     <dependency>
       <groupId>org.jboss.weld.se</groupId>
       <artifactId>weld-se-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.jboss.weld.servlet</groupId>
-      <artifactId>weld-servlet-shaded</artifactId>
-    </dependency>
-    <dependency>
       <groupId>commons-net</groupId>
       <artifactId>commons-net</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
@@ -136,11 +124,6 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.weld</groupId>
-      <artifactId>weld-junit5</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

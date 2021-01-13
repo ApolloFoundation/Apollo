@@ -14,7 +14,7 @@
  *
  */
 
-/*
+ /*
  * Copyright © 2018 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.util;
@@ -24,7 +24,7 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.44.7");
+    public static final Version VERSION = new Version("1.47.6");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
@@ -34,7 +34,6 @@ public final class Constants {
     public static final long LONG_TIME_FIVE_SECONDS = 5000L;
     public static final int MAX_AUTO_ROLLBACK = 720; //number of blocks that forms fork
 
-    public static final long ONE_APL = 100000000;
     public static final long APL_COMMISSION = 10;
     public static final long ETH_GAS_MULTIPLIER = 5;
 
@@ -54,9 +53,9 @@ public final class Constants {
 
     public static final int ONE_DAY_SECS = 24 * 3600;
 
-    public static final int MIN_TRANSACTION_SIZE = 176;
+    public static final int MIN_TRANSACTION_SIZE = 176; // the transaction HEADER size (without Appendages)
     public static final int BASE_TARGET_GAMMA = 64;
-    public static final long MIN_FORGING_BALANCE_ATM = 1000 * ONE_APL;
+    public static final long MIN_FORGING_BALANCE = 1000;
 
     public static final int MAX_TIMEDRIFT = 15; // allow up to 15 s clock difference
 
@@ -74,8 +73,8 @@ public final class Constants {
     public static final int MAX_ALIAS_URI_LENGTH = 1000;
     public static final int MAX_ALIAS_LENGTH = 100;
 
-    public static final int MAX_ARBITRARY_MESSAGE_LENGTH = 160;
-    public static final int MAX_ENCRYPTED_MESSAGE_LENGTH = 160 + 16;
+    public static final int MIN_VALUE_FOR_MAX_ARBITRARY_MESSAGE_LENGTH = 160;
+    public static final int MAX_ENCRYPTED_MESSAGE_HEADER_LENGTH = 16;
 
     public static final int MAX_PRUNABLE_MESSAGE_LENGTH = 42 * 1024;
     public static final int MAX_PRUNABLE_ENCRYPTED_MESSAGE_LENGTH = 42 * 1024;
@@ -91,7 +90,6 @@ public final class Constants {
     public static final int MAX_ACCOUNT_PROPERTY_NAME_LENGTH = 32;
     public static final int MAX_ACCOUNT_PROPERTY_VALUE_LENGTH = 160;
 
-    public static final long MAX_ASSET_QUANTITY_ATU = 30000000000L * 100000000L;
     public static final int MIN_ASSET_NAME_LENGTH = 3;
     public static final int MAX_ASSET_NAME_LENGTH = 10;
     public static final int MAX_ASSET_DESCRIPTION_LENGTH = 1000;
@@ -120,7 +118,6 @@ public final class Constants {
     public static final int MIN_CURRENCY_CODE_LENGTH = 3;
     public static final int MAX_CURRENCY_CODE_LENGTH = 5;
     public static final int MAX_CURRENCY_DESCRIPTION_LENGTH = 1000;
-    public static final long MAX_CURRENCY_TOTAL_SUPPLY = 30000000000L * 100000000L;
     public static final int MAX_MINTING_RATIO = 10000; // per mint units not more than 0.01% of total supply
     public static final byte MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS = 3;
     public static final byte MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS = 30; // max possible at current block payload limit is 51

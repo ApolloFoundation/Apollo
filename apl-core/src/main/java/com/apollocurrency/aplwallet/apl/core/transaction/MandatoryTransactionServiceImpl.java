@@ -1,14 +1,14 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.MandatoryTransaction;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,16 +23,18 @@ public class MandatoryTransactionServiceImpl implements MandatoryTransactionServ
     private static final int INITIAL_DELAY = 2 * 60 * 1000; // 2 min in ms
     private static final int REPEAT_DELAY = 30 * 60 * 1000; // 30 min in ms
     private static final int TX_SELECT_SIZE = 50;
-    private TransactionProcessor txProcessor;
-    private TransactionValidator txValidator;
-    private TaskDispatchManager taskManager;
-    private MandatoryTransactionDao dao;
-    private Blockchain blockchain;
+    private final TransactionProcessor txProcessor;
+    private final TransactionValidator txValidator;
+    private final TransactionBuilder transactionBuilder;
+    private final TaskDispatchManager taskManager;
+    private final MandatoryTransactionDao dao;
+    private final Blockchain blockchain;
 
     @Inject
-    public MandatoryTransactionServiceImpl(TransactionProcessor txProcessor, TransactionValidator txValidator, TaskDispatchManager taskManager, MandatoryTransactionDao dao, Blockchain blockchain) {
+    public MandatoryTransactionServiceImpl(TransactionProcessor txProcessor, TransactionValidator txValidator, TransactionBuilder transactionBuilder, TaskDispatchManager taskManager, MandatoryTransactionDao dao, Blockchain blockchain) {
         this.txProcessor = txProcessor;
         this.txValidator = txValidator;
+        this.transactionBuilder = transactionBuilder;
         this.taskManager = taskManager;
         this.dao = dao;
         this.blockchain = blockchain;
@@ -102,7 +104,7 @@ public class MandatoryTransactionServiceImpl implements MandatoryTransactionServ
     }
 
     private void validateAndBroadcast(Transaction tx) throws AplException.ValidationException {
-        txValidator.validate(tx);
+        txValidator.validateFully(tx);
         txProcessor.broadcast(tx);
     }
 
@@ -122,7 +124,17 @@ public class MandatoryTransactionServiceImpl implements MandatoryTransactionServ
 
     @Override
     public List<MandatoryTransaction> getAll(long from, int limit) {
-        return dao.getAll(from, limit);
+        List<MandatoryTransaction> all = dao.getAll(from, limit);
+        all.forEach(this::loadTransaction);
+        return all;
+    }
+
+    private void loadTransaction(MandatoryTransaction mandatoryTransaction) {
+        try {
+            mandatoryTransaction.setTransaction(transactionBuilder.newTransactionBuilder(mandatoryTransaction.getTransactionBytes()).build());
+        } catch (AplException.NotValidException notValidException) {
+            throw new RuntimeException(notValidException.toString(), notValidException);
+        }
     }
 
     @Override

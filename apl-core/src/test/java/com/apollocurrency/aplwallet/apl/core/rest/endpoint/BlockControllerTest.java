@@ -7,13 +7,13 @@ import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.ECBlockDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.response.BlocksResponse;
-import com.apollocurrency.aplwallet.apl.core.app.Block;
-import com.apollocurrency.aplwallet.apl.core.app.Convert2;
-import com.apollocurrency.aplwallet.apl.core.app.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.app.TimeService;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -47,6 +47,10 @@ class BlockControllerTest extends AbstractEndpointTest {
     private BlockConverter blockConverter = mock(BlockConverter.class);
     private FirstLastIndexParser indexParser = mock(FirstLastIndexParser.class);
     private TimeService timeService = mock(TimeService.class);
+    private static final String getOneUri = "/block/one";
+    private static final String getByIdUri = "/block/id";
+    private static final String getBlocksUri = "/block/list";
+    private static final String getBlockEcUri = "/block/ec";
 
 //    private TransactionTestData txd;
     private BlockTestData btd;
@@ -55,7 +59,7 @@ class BlockControllerTest extends AbstractEndpointTest {
     @BeforeEach
     void setUp() {
         super.setUp();
-        endpoint = new BlockController(blockchain, blockConverter, indexParser, timeService);
+        endpoint = new BlockController(blockchain, blockConverter, 100, timeService);
         dispatcher.getRegistry().addSingletonResource(endpoint);
 //        txd = new TransactionTestData();
         btd = new BlockTestData();
@@ -67,7 +71,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         blockDTO = createBlockDTO(btd.BLOCK_13, false, false);
         doReturn(blockDTO).when(blockConverter).convert(btd.BLOCK_13);
 
-        MockHttpResponse response = super.sendGetRequest("/block");
+        MockHttpResponse response = super.sendGetRequest(getOneUri);
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -87,7 +91,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         blockDTO = createBlockDTO(btd.BLOCK_10, true, false);
         doReturn(blockDTO).when(blockConverter).convert(btd.BLOCK_10);
 
-        MockHttpResponse response = super.sendGetRequest("/block?block=" + btd.BLOCK_10.getStringId());
+        MockHttpResponse response = super.sendGetRequest(getOneUri + "?block=" + btd.BLOCK_10.getStringId());
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -108,7 +112,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         blockDTO = createBlockDTO(btd.BLOCK_10, true, false);
         doReturn(blockDTO).when(blockConverter).convert(btd.BLOCK_10);
 
-        MockHttpResponse response = super.sendGetRequest("/block?height=" + btd.BLOCK_10.getHeight());
+        MockHttpResponse response = super.sendGetRequest(getOneUri + "?height=" + btd.BLOCK_10.getHeight());
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -129,7 +133,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         blockDTO = createBlockDTO(btd.BLOCK_10, true, false);
         doReturn(blockDTO).when(blockConverter).convert(btd.BLOCK_10);
 
-        MockHttpResponse response = super.sendGetRequest("/block?timestamp=" + btd.BLOCK_10.getTimestamp());
+        MockHttpResponse response = super.sendGetRequest(getOneUri + "?timestamp=" + btd.BLOCK_10.getTimestamp());
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -150,7 +154,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         blockDTO = createBlockDTO(btd.BLOCK_10, true, false);
         doReturn(blockDTO).when(blockConverter).convert(btd.BLOCK_10);
 
-        MockHttpResponse response = super.sendGetRequest("/block/id?height=" + btd.BLOCK_10.getHeight());
+        MockHttpResponse response = super.sendGetRequest(getByIdUri + "?height=" + btd.BLOCK_10.getHeight());
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -158,7 +162,7 @@ class BlockControllerTest extends AbstractEndpointTest {
 
         BlockDTO dtoResult = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(dtoResult);
-        assertEquals(String.valueOf(btd.BLOCK_10.getId()), dtoResult.getBlock());
+        assertEquals(Long.toUnsignedString(btd.BLOCK_10.getId()), dtoResult.getBlock());
         //verify
         verify(blockchain, times(1)).getBlockIdAtHeight(btd.BLOCK_10.getHeight());
     }
@@ -169,13 +173,13 @@ class BlockControllerTest extends AbstractEndpointTest {
         blockDTO = createBlockDTO(btd.BLOCK_10, true, false);
         doReturn(blockDTO).when(blockConverter).convert(btd.BLOCK_10);
 
-        MockHttpResponse response = super.sendGetRequest("/block/id");
+        MockHttpResponse response = super.sendGetRequest(getOneUri);
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
         Error error = mapper.readValue(respondJson, new TypeReference<>(){});
         assertNotNull(error.getErrorDescription());
-        assertEquals(2001, error.getNewErrorCode());
+        assertEquals(2005, error.getNewErrorCode());
 
         //verify
         verify(blockConverter, times(0)).convert(btd.BLOCK_10);
@@ -187,15 +191,14 @@ class BlockControllerTest extends AbstractEndpointTest {
         doReturn(btd.BLOCK_13).when(blockchain).getLastBlock();
         FirstLastIndexParser.FirstLastIndex index = new FirstLastIndexParser.FirstLastIndex(0, 99);
         doReturn(index).when(indexParser).adjustIndexes(0, -1);
-        Stream<Block> blockStream = Stream.of( btd.BLOCK_1, btd.BLOCK_2, btd.BLOCK_3, btd.BLOCK_4, btd.BLOCK_5, btd.BLOCK_6, btd.BLOCK_10 );
         List<Block> blockList = List.of( btd.BLOCK_1, btd.BLOCK_2, btd.BLOCK_3, btd.BLOCK_4, btd.BLOCK_5, btd.BLOCK_6, btd.BLOCK_10 );
         Stream<Block> blockStream3 = Stream.of( btd.BLOCK_1, btd.BLOCK_2, btd.BLOCK_3, btd.BLOCK_4, btd.BLOCK_5, btd.BLOCK_6, btd.BLOCK_10 );
-        doReturn(blockStream).when(blockchain).getBlocksStream(0, 99, -1); // fix
+        doReturn(blockList).when(blockchain).getBlocksFromShards(0, 99, -1); // fix
 
         List<BlockDTO> blockDTOList = createDtoList(blockStream3);
         doReturn(blockDTOList).when(blockConverter).convert(blockList);
 
-        MockHttpResponse response = super.sendGetRequest("/block/list");
+        MockHttpResponse response = super.sendGetRequest(getBlocksUri);
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -206,7 +209,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         assertEquals(blockList.size(), blockDTOList.size());
         //verify
         verify(blockConverter, times(1)).convert(blockList);
-        verify(blockchain, times(1)).getBlocksStream(0, 99, -1);
+        verify(blockchain, times(1)).getBlocksFromShards(0, 99, -1);
     }
 
     @Test
@@ -215,7 +218,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         doReturn(ecBlockData).when(blockchain).getECBlock(btd.BLOCK_10.getTimestamp());
         doReturn(btd.BLOCK_10.getTimestamp()).when(timeService).getEpochTime();
 
-        MockHttpResponse response = super.sendGetRequest("/block/ec?timestamp=-1");
+        MockHttpResponse response = super.sendGetRequest(getBlockEcUri+ "?timestamp=-1");
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -235,7 +238,7 @@ class BlockControllerTest extends AbstractEndpointTest {
         doReturn(ecBlockData).when(blockchain).getECBlock(btd.BLOCK_10.getTimestamp());
         doReturn(btd.BLOCK_10.getTimestamp()).when(timeService).getEpochTime();
 
-        MockHttpResponse response = super.sendGetRequest("/block/ec");
+        MockHttpResponse response = super.sendGetRequest(getBlockEcUri);
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String respondJson = response.getContentAsString();
         assertNotNull(respondJson);
@@ -262,7 +265,7 @@ class BlockControllerTest extends AbstractEndpointTest {
 //        dto.setGeneratorPublicKey(Convert.toHexString(model.getGeneratorPublicKey())); // fails
         dto.setTimestamp(model.getTimestamp());
         dto.setTimeout(model.getTimeout());
-        dto.setNumberOfTransactions(model.getOrLoadTransactions().size());
+        dto.setNumberOfTransactions(blockchain.getBlockTransactionCount(model.getId()));
         dto.setTotalFeeATM(String.valueOf(model.getTotalFeeATM()));
         dto.setPayloadLength(model.getPayloadLength());
         dto.setVersion(model.getVersion());
@@ -284,7 +287,7 @@ class BlockControllerTest extends AbstractEndpointTest {
             dto.setTransactions(Collections.emptyList());
         }
         dto.setTotalAmountATM(String.valueOf(
-            model.getOrLoadTransactions().stream().mapToLong(Transaction::getAmountATM).sum()));
+            blockchain.getOrLoadTransactions(model).stream().mapToLong(Transaction::getAmountATM).sum()));
         return dto;
     }
 

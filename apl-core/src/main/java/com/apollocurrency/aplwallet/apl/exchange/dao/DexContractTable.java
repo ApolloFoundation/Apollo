@@ -4,18 +4,22 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.app.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.converter.db.ExchangeContractMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.mapper.ExchangeContractMapper;
-import com.apollocurrency.aplwallet.apl.core.db.derived.EntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -43,8 +47,10 @@ public class DexContractTable extends EntityDbTable<ExchangeContract> {
     private ExchangeContractMapper mapper = new ExchangeContractMapper();
 
     @Inject
-    public DexContractTable() {
-        super(TABLE_NAME, KEY_FACTORY, true, null, false);
+    public DexContractTable(DerivedTablesRegistry derivedDbTablesRegistry,
+                            DatabaseManager databaseManager,
+                            Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+        super(TABLE_NAME, KEY_FACTORY, true, null, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
     }
 
     private static ExchangeContract getFirstOrNull(List<ExchangeContract> contracts) {

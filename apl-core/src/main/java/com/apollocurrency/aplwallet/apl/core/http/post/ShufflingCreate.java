@@ -20,16 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
-import com.apollocurrency.aplwallet.apl.util.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONStreamAware;
 
@@ -53,7 +53,7 @@ public final class ShufflingCreate extends CreateTransaction {
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
         if (holdingType == HoldingType.APL && amount < blockchainConfig.getShufflingDepositAtm()) {
             return JSONResponses.incorrect("amount",
-                "Minimum shuffling amount is " + blockchainConfig.getShufflingDepositAtm() / Constants.ONE_APL + " " + blockchainConfig.getCoinSymbol());
+                "Minimum shuffling amount is " + blockchainConfig.getShufflingDepositAtm() / blockchainConfig.getOneAPL() + " " + blockchainConfig.getCoinSymbol());
         }
         byte participantCount = HttpParameterParserUtil.getByte(req, "participantCount", Constants.MIN_NUMBER_OF_SHUFFLING_PARTICIPANTS,
             Constants.MAX_NUMBER_OF_SHUFFLING_PARTICIPANTS, true);

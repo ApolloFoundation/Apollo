@@ -20,21 +20,25 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
 
 /**
  * Get the transactions
  */
+@Singleton
 public class GetTransactions extends PeerRequestHandler {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
+    private static TransactionSerializer transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
 
     public GetTransactions() {
     }
@@ -56,8 +60,7 @@ public class GetTransactions extends PeerRequestHandler {
                 long id = Long.parseUnsignedLong((String) transactionId);
                 Transaction transaction = blockchain.getTransaction(id);
                 if (transaction != null) {
-                    transaction.getAppendages(true);
-                    JSONObject transactionJSON = transaction.getJSONObject();
+                    JSONObject transactionJSON = transactionSerializer.toJson(transaction);
                     transactionArray.add(transactionJSON);
                 }
             });
@@ -68,6 +71,6 @@ public class GetTransactions extends PeerRequestHandler {
 
     @Override
     public boolean rejectWhileDownloading() {
-        return true;
+        return false;
     }
 }

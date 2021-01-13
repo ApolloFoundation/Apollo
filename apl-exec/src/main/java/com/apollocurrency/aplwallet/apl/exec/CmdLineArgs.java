@@ -8,6 +8,7 @@ import com.beust.jcommander.Parameter;
  * @author alukin@gmail.com
  */
 public class CmdLineArgs {
+
     public static int DEFAULT_DEBUG_LEVEL = 2;
 
     @Parameter(names = {"--debug", "-d"}, description = "Debug level [0-4] from ERROR to TRACE")
@@ -20,9 +21,7 @@ public class CmdLineArgs {
     public boolean serviceMode;
     @Parameter(names = {"--ignore-resources"}, description = "Ignore resources bundled with application jar. Default is false")
     public boolean ingnoreResources = false;
-    @Parameter(names = {"--resources-path", "-r"}, description = "Load all resources from specified path. Sytem resources ignored.")
-    public String resourcesPath = "";
-    @Parameter(names = {"--config-dir", "-c"}, description = "Load all configuration and resources from specified path. Sytem resources not ignored, standard config search is ignored.")
+    @Parameter(names = {"--config-dir", "-c"}, description = "Load all configuration and resources from specified path. System resources not ignored, standard config search is ignored.")
     public String configDir = "";
     @Parameter(names = {"--log-dir", "-l"}, description = "Save log files to from specified directory.")
     public String logDir = "";
@@ -47,10 +46,10 @@ public class CmdLineArgs {
     public String dataExportDir = "";
     @Parameter(names = {"--pid-file"}, description = "Save PID to specified file.")
     public String pidFile = "";
-    @Parameter(names = {"--start-mint", "-m"}, help = true, description = "Start currency minting worker")
-    public boolean startMint;
-    @Parameter(names = {"--net", "-n"}, help = true, description = "Connect to net [0-3]. 0 means mainnet, 1 - 1st testnet and so on")
-    public int netIdx = 0;
+    @Parameter(names = {"--net", "-n"}, help = true, description = "Connect to net [0-4]. 0 means mainnet, 1 - 1st testnet and so on")
+    public int netIdx = -1;
+    @Parameter(names = {"--chain", "-C"}, help = true, description = "Connect to net with given chainID. UUID of chain id may be specified partially, 6 symbos min. Configs must be present.")
+    public String chainId = "";
     @Parameter(names = {"--testnet"}, help = true, description = "Connect to testent 1. Has higher priority then --net")
     public boolean isTestnet = false;
     //---
@@ -59,7 +58,7 @@ public class CmdLineArgs {
     public boolean disableWeldConcurrentDeployment = false;
 
     public boolean isResourceIgnored() {
-        return !resourcesPath.isEmpty() || ingnoreResources;
+        return ingnoreResources;
     }
 
     public int getNetIdx() {

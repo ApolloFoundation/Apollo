@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
-import com.apollocurrency.aplwallet.apl.core.db.FilteringIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.transaction.Payment;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -37,20 +37,22 @@ public final class GetPrivateUnconfirmedTransactions extends AbstractAPIRequestH
         }
         int firstIndex = HttpParameterParserUtil.getFirstIndex(req);
         int lastIndex = HttpParameterParserUtil.getLastIndex(req);
-        JSONArray transactions = new JSONArray();
-        try (FilteringIterator<? extends Transaction> transactionsIterator = new FilteringIterator<>(
-            lookupTransactionProcessor().getAllUnconfirmedTransactions(0, -1),
-            transaction -> data.getAccountId() == transaction.getSenderId() || data.getAccountId() == transaction.getRecipientId(),
-            firstIndex, lastIndex)) {
-            while (transactionsIterator.hasNext()) {
-                Transaction transaction = transactionsIterator.next();
-                if (data.isEncrypt() && transaction.getType() == Payment.PRIVATE) {
-                    transactions.add(JSONData.encryptedUnconfirmedTransaction(transaction, data.getSharedKey()));
-                } else {
-                    transactions.add(JSONData.unconfirmedTransaction(transaction));
-                }
-            }
+        int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
+        if (limit == 0) {
+            limit = Integer.MAX_VALUE;
         }
+        JSONArray transactions = new JSONArray();
+        lookupMemPool()
+            .getAllProcessedStream()
+            .filter(transaction -> data.getAccountId() == transaction.getSenderId() || data.getAccountId() == transaction.getRecipientId())
+            .skip(firstIndex)
+            .limit(limit).forEach(e-> {
+            if (data.isEncrypt() && ((Transaction) e).getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
+                    transactions.add(JSONData.encryptedUnconfirmedTransaction(e, data.getSharedKey()));
+                } else {
+                    transactions.add(JSONData.unconfirmedTransaction(e));
+                }
+        });
         JSONObject response = new JSONObject();
         response.put("unconfirmedTransactions", transactions);
         response.put("serverPublicKey", Convert.toHexString(elGamal.getServerPublicKey()));

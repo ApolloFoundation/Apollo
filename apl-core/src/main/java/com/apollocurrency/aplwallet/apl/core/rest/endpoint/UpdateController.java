@@ -2,20 +2,20 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
-import com.apollocurrency.aplwallet.apl.core.account.model.Account;
-import com.apollocurrency.aplwallet.apl.core.app.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
-import com.apollocurrency.aplwallet.apl.core.rest.PlatformSpecs;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
+import com.apollocurrency.aplwallet.apl.core.rest.provider.PlatformSpecs;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.AccountParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidPlatformSpecs;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,15 +52,18 @@ import java.util.HashSet;
 public class UpdateController {
     private AccountParametersParser parser;
     private TransactionCreator txCreator;
-    private UnconfirmedTransactionConverter converter = new UnconfirmedTransactionConverter();
+    private UnconfirmedTransactionConverter converter;
+    private BlockchainConfig blockchainConfig;
 
     public UpdateController() {
     }
 
     @Inject
-    public UpdateController(AccountParametersParser parser, TransactionCreator txCreator) {
+    public UpdateController(AccountParametersParser parser, TransactionCreator txCreator, UnconfirmedTransactionConverter converter, BlockchainConfig blockchainConfig) {
         this.parser = parser;
         this.txCreator = txCreator;
+        this.converter = converter;
+        this.blockchainConfig = blockchainConfig;
     }
 
     @POST
@@ -73,7 +76,7 @@ public class UpdateController {
     public Response sendUpdateV2(
         @Parameter(required = true) @URL(protocol = "https") @NotNull @Schema(example = "https://aws.s3/manifest-pack.zip", description = "Manifest url where release manifest is located. Https only") @FormParam("manifestUrl") String manifestUrl,
         @Parameter(required = true) @NotNull @Schema(description = "Level of update") @FormParam("level") Level level,
-        @Parameter(required = true) @ValidPlatformSpecs @NotNull @Schema(example = "MAC_OS-AMD64,WINDOWS-ARM,WINDOWS-AMD-64,ALL-X86", description = "Target update platform specs, represent a set of coma separated platforms to update (each platform spec is represented by two hyphen separated params: first is a Platform(OS) such as MAC_OS, WINDOWS, LINUX; second is an Architecture, such as AMD64") @FormParam("platformSpec") PlatformSpecs platformSpec,
+        @Parameter(required = true) @ValidPlatformSpecs @NotNull @Schema(example = "MAC_OS-AMD64,WINDOWS-ARM32,NoOS-NoArch,NoOS-ARM64,WINDOWS-AMD64,ALL-X86", description = "Target update platform specs, represent a set of coma separated platforms to update (each platform spec is represented by two hyphen separated params: first is a Platform(OS) such as MAC_OS, WINDOWS, LINUX; second is an Architecture, such as AMD64") @FormParam("platformSpec") PlatformSpecs platformSpec,
         @Parameter(required = true) @Schema(example = "1.42.111", description = "Version of update: 1.2.3, 1.25.10, etc") @FormParam("version") Version version,
         @Parameter(required = true) @NotBlank @URL @Schema(example = "https://example.ca.com", description = " CA identifier represented by domain name") @FormParam("cn") String cn,
         @Parameter(required = true) @Schema(example = "1", description = "Serial number of issued certificate by CA, which is used to sign update") @FormParam("serialNumber") BigInteger serialNumber,
@@ -92,7 +95,7 @@ public class UpdateController {
             .timestamp(timestamp)
             .senderAccount(senderAccount)
             .broadcast(true)
-            .feeATM(Constants.ONE_APL)
+            .feeATM(blockchainConfig.getOneAPL())
             .deadlineValue("1440")
             .keySeed(keySeed)
             .publicKeyValue(Convert.toHexString(senderAccount.getPublicKey().getPublicKey()))

@@ -68,6 +68,7 @@ import javax.servlet.http.HttpServletRequest;
  * </ul>
  */
 
+@Deprecated
 @Vetoed
 public class SetLogging extends AbstractAPIRequestHandler {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(SetLogging.class);

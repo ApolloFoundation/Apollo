@@ -1,58 +1,76 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import com.apollocurrency.aplwallet.apl.core.account.PhasingOnly;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountAssetTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.AccountCurrencyTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.GenesisPublicKeyTable;
-import com.apollocurrency.aplwallet.apl.core.account.dao.PublicKeyTable;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountPublicKeyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountService;
-import com.apollocurrency.aplwallet.apl.core.account.service.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.DefaultBlockValidator;
-import com.apollocurrency.aplwallet.apl.core.app.GlobalSyncImpl;
-import com.apollocurrency.aplwallet.apl.core.app.KeyStoreService;
-import com.apollocurrency.aplwallet.apl.core.app.ReferencedTransactionService;
-import com.apollocurrency.aplwallet.apl.core.app.TimeServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.app.TransactionProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.app.TrimService;
-import com.apollocurrency.aplwallet.apl.core.app.VaultKeyStoreServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyBasedFileConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
-import com.apollocurrency.aplwallet.apl.core.db.BlockDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
+import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountAssetTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountControlPhasingTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
+import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactoryProducer;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollLinkedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollResultTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollVoterTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.GenesisPublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
+import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedDbTablesRegistryImpl;
-import com.apollocurrency.aplwallet.apl.core.db.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.db.KeyFactoryProducer;
-import com.apollocurrency.aplwallet.apl.core.db.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.db.dao.ReferencedTransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.db.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.db.derived.MinMaxValue;
-import com.apollocurrency.aplwallet.apl.core.db.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSGoodsTable;
-import com.apollocurrency.aplwallet.apl.core.dgs.dao.DGSPurchaseTable;
-import com.apollocurrency.aplwallet.apl.core.message.PrunableMessageService;
-import com.apollocurrency.aplwallet.apl.core.phasing.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollLinkedTransactionTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollResultTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingPollVoterTable;
-import com.apollocurrency.aplwallet.apl.core.phasing.dao.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.VaultKeyStoreServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.ReferencedTransactionService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.impl.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
@@ -62,14 +80,18 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReaderImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
-import com.apollocurrency.aplwallet.apl.core.tagged.TaggedDataServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.tagged.dao.DataTagDao;
-import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataDao;
-import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataExtendDao;
-import com.apollocurrency.aplwallet.apl.core.tagged.dao.TaggedDataTimestampDao;
+import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
+import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -87,6 +109,7 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
@@ -94,6 +117,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -122,6 +146,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
+@Tag("slow")
 @EnableWeld
 @Execution(ExecutionMode.CONCURRENT)
 class CsvWriterReaderDerivedTablesTest {
@@ -132,21 +157,37 @@ class CsvWriterReaderDerivedTablesTest {
     DbExtension extension = new DbExtension(Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
     @Inject
     DerivedTablesRegistry registry;
-    private NtpTime time = mock(NtpTime.class);
-    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-    private HeightConfig config = Mockito.mock(HeightConfig.class);
-    private Chain chain = Mockito.mock(Chain.class);
-    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), time);
+    @Inject
+    Event<DeleteOnTrimData> deleteOnTrimDataEvent;
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    HeightConfig config = Mockito.mock(HeightConfig.class);
+    Chain chain = Mockito.mock(Chain.class);
+    PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
+    TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), ntpTimeConfig.time());
+    PeersService peersService = mock(PeersService.class);
+    GeneratorService generatorService = mock(GeneratorService.class);
+    TransactionTestData td = new TransactionTestData();
+    BlockSerializer blockSerializer = mock(BlockSerializer.class);
+    MemPool memPool = mock(MemPool.class);
+    UnconfirmedTransactionProcessingService unconfirmedTransactionProcessingService = mock(UnconfirmedTransactionProcessingService.class);
+
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, BlockchainImpl.class, DaoConfig.class,
+        BlockchainImpl.class, DaoConfig.class,
         PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
         TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
         GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
         ReferencedTransactionDaoImpl.class,
-        TaggedDataDao.class, PropertyBasedFileConfig.class,
+        TaggedDataTable.class, PropertyBasedFileConfig.class,
         DGSGoodsTable.class,
+        AppendixApplierRegistry.class,
+        AppendixValidatorRegistry.class,
         DataTagDao.class,
+        TransactionRowMapper.class,
+        TransactionBuilder.class, TransactionSerializerImpl.class,
         KeyFactoryProducer.class, FeeCalculator.class,
         TaggedDataTimestampDao.class,
         TaggedDataExtendDao.class,
@@ -157,14 +198,13 @@ class CsvWriterReaderDerivedTablesTest {
         PhasingPollResultTable.class,
         PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,
         PhasingVoteTable.class, PhasingPollTable.class,
-        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-        CsvEscaperImpl.class)
+        BlockDaoImpl.class, TransactionDaoImpl.class,
+        CsvEscaperImpl.class, UnconfirmedTransactionTable.class, AccountService.class, TaskDispatchManager.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
         .addBeans(MockBean.of(mock(TrimService.class), TrimService.class))
-        .addBeans(MockBean.of(time, NtpTime.class))
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
         .addBeans(MockBean.of(mock(DirProvider.class), DirProvider.class))
@@ -174,9 +214,28 @@ class CsvWriterReaderDerivedTablesTest {
         .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
         .addBeans(MockBean.of(mock(BlockIndexService.class), BlockIndexService.class, BlockIndexServiceImpl.class))
+        .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class))
+        .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
+        .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
+        .addBeans(MockBean.of(ntpTimeConfig.time(), NtpTime.class))
+        .addBeans(MockBean.of(timeService, TimeService.class))
+        .addBeans(MockBean.of(peersService, PeersService.class))
+        .addBeans(MockBean.of(generatorService, GeneratorService.class))
+        .addBeans(MockBean.of(mock(TransactionVersionValidator.class), TransactionVersionValidator.class))
+        .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
+        .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
+        .addBeans(MockBean.of(blockSerializer, BlockSerializer.class))
+        .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
+        .addBeans(MockBean.of(unconfirmedTransactionProcessingService, UnconfirmedTransactionProcessingService.class))
+        .addBeans(MockBean.of(memPool, MemPool.class))
         .build();
+
     @Inject
     private Blockchain blockchain;
+    @Inject
+    private DerivedTablesRegistry derivedTablesRegistry;
+    @Inject
+    private FullTextConfig fullTextConfig;
     @Inject
     private CsvEscaper translator;
 
@@ -198,20 +257,22 @@ class CsvWriterReaderDerivedTablesTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         // init several derived tables
-        AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable();
+        AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         accountCurrencyTable.init();
-        PhasingOnly.get(Long.parseLong("-8446384352342482748"));
-        AccountAssetTable accountAssetTable = new AccountAssetTable();
+        AccountControlPhasingTable accountControlPhasingTable = new AccountControlPhasingTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
+        accountControlPhasingTable.init();
+//        PhasingOnly.get(Long.parseLong("-8446384352342482748"));
+        AccountAssetTable accountAssetTable = new AccountAssetTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         accountAssetTable.init();
-        GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(blockchain);
+        GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         genesisPublicKeyTable.init();
-        PublicKeyTable publicKeyTable = new PublicKeyTable(blockchain);
+        PublicKeyTable publicKeyTable = new PublicKeyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         publicKeyTable.init();
-        DGSPurchaseTable purchaseTable = new DGSPurchaseTable();
+        DGSPurchaseTable purchaseTable = new DGSPurchaseTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         purchaseTable.init();
-        DexContractTable dexContractTable = new DexContractTable();
+        DexContractTable dexContractTable = new DexContractTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         registry.registerDerivedTable(dexContractTable);
-        DexOrderTable dexOrderTable = new DexOrderTable();
+        DexOrderTable dexOrderTable = new DexOrderTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
         registry.registerDerivedTable(dexOrderTable);
     }
 

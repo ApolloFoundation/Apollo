@@ -3,15 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.mint.MintWorker;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.task.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import com.zaxxer.hikari.HikariPoolMXBean;
@@ -36,31 +33,18 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.HEALTH_CHECK_INTER
  */
 @Singleton
 public class AplCoreRuntime {
-    //probably it is temprary solution, we should move WebUI serving out of core
-
     private static final Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
     private final List<AplCore> cores = new ArrayList<>();
     private final DatabaseManager databaseManager;
     private final AplAppStatus aplAppStatus;
     private final PeersService peers;
     private RuntimeMode runtimeMode;
-    //TODO: may be it is better to take below variables from here instead of getting it from CDI
-    // in every class?
-    private BlockchainConfig blockchainConfig;
-    private PropertiesHolder propertiesHolder;
-    //TODO:  check and debug minting
-    private MintWorker mintworker;
-    private Thread mintworkerThread;
-
-
-    private TaskDispatchManager taskManager;
 
     // WE CAN'T use @Inject here for 'RuntimeMode' instance because it has several candidates (in CDI hierarchy)
     public AplCoreRuntime() {
         this.databaseManager = CDI.current().select(DatabaseManager.class).get();
         this.aplAppStatus = CDI.current().select(AplAppStatus.class).get();
         this.peers = CDI.current().select(PeersService.class).get();
-
     }
 
     public static void logSystemProperties() {
@@ -88,11 +72,9 @@ public class AplCoreRuntime {
         LOG.debug("processId = {}", RuntimeParams.getProcessId());
     }
 
-    public void init(RuntimeMode runtimeMode, BlockchainConfig blockchainConfig, PropertiesHolder propertiesHolder, TaskDispatchManager taskManager) {
-        this.blockchainConfig = blockchainConfig;
-        this.propertiesHolder = propertiesHolder;
+    public void init(RuntimeMode runtimeMode,
+                     TaskDispatchManager taskManager) {
         this.runtimeMode = runtimeMode;
-        this.taskManager = taskManager;
         TaskDispatcher taskDispatcher = taskManager.newScheduledDispatcher("AplCoreRuntime-periodics");
         taskDispatcher.schedule(Task.builder()
             .name("Core-health")
@@ -172,27 +154,7 @@ public class AplCoreRuntime {
         for (AplCore c : cores) {
             c.shutdown();
         }
-        if (mintworker != null) {
-            mintworker.stop();
-            try {
-                mintworkerThread.join(200);
-            } catch (InterruptedException ex) {
-            }
-        }
         runtimeMode.shutdown();
-    }
-
-    public void startMinter() {
-        mintworker = new MintWorker(propertiesHolder, blockchainConfig);
-        mintworkerThread = new Thread(mintworker);
-        mintworkerThread.setDaemon(true);
-        mintworkerThread.start();
-    }
-
-    public void stopMinter() {
-        if (mintworker != null) {
-            mintworker.stop();
-        }
     }
 
 }
