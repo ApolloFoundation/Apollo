@@ -3,7 +3,8 @@
  */
 package com.apollocurrency.aplwallet.vault.service.auth;
 
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.api.dto.auth.Status2FA;
+import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
@@ -15,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.util.service.PassphraseGeneratorImpl;
 import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.vault.util.AccountHelper;
 import lombok.extern.slf4j.Slf4j;

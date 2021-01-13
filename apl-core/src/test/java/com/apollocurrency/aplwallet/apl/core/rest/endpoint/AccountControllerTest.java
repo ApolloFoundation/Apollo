@@ -4,10 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountEffectiveBalanceDto;
 import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
+import com.apollocurrency.aplwallet.api.dto.auth.Status2FA;
+import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
@@ -40,7 +41,6 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.apollocurrency.aplwallet.vault.util.AccountGeneratorUtil;

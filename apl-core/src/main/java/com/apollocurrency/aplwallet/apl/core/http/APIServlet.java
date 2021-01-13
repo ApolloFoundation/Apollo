@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -30,7 +31,6 @@ import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.exception.ParameterException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;

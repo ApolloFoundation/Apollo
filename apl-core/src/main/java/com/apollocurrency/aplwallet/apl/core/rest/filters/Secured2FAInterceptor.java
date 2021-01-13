@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.filters;
 
+import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
-import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import lombok.Setter;
 

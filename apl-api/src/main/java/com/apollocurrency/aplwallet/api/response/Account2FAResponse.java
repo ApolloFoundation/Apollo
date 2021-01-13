@@ -2,7 +2,7 @@ package com.apollocurrency.aplwallet.api.response;
 
 import com.apollocurrency.aplwallet.api.dto.APL;
 import com.apollocurrency.aplwallet.api.dto.EthWalletInfo;
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.api.dto.auth.Status2FA;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

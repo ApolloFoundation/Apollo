@@ -2,9 +2,8 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.vault.model;
+package com.apollocurrency.aplwallet.api.dto.auth;
 
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
 import lombok.Getter;
 import lombok.Setter;
 

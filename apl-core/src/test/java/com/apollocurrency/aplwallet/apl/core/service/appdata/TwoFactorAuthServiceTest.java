@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
+import com.apollocurrency.aplwallet.api.dto.auth.Status2FA;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;

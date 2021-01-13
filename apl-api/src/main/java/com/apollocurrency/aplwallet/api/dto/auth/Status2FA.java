@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.api.dto;
+package com.apollocurrency.aplwallet.api.dto.auth;
 
 /**
  * @author al
