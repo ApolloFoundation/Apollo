@@ -64,7 +64,7 @@ public class ShardImporter {
     }
 
     public void importShardByFileId(ShardPresentData shardPresentData) {
-        importShard(shardPresentData, List.of());
+        importShard(shardPresentData, List.of(), true);
         // set to start work block download thread (starting from shard's snapshot block here)
         log.debug("Before updating BlockchainProcessor from Shard data and RESUME block downloading...");
         BlockchainProcessor blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get(); // prevent circular dependency, should be fixed later
@@ -83,7 +83,7 @@ public class ShardImporter {
             String shardFileId = nameHelper.getFullShardId(shardId, blockchainConfig.getChain().getChainId());
             log.debug("Latest competed shard shardFileId = {}", shardFileId);
             ShardPresentData shardPresentData = new ShardPresentData(shardId, shardFileId, List.of());
-            importShard(shardPresentData, List.of("block", "transaction"));
+            importShard(shardPresentData, List.of(ShardConstants.BLOCK_TABLE_NAME, ShardConstants.TRANSACTION_TABLE_NAME, ShardConstants.BLOCK_INDEX_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME, ShardConstants.SHARD_TABLE_NAME), false);
         }
     }
 
@@ -101,7 +101,7 @@ public class ShardImporter {
         return true;
     }
 
-    public void importShard(ShardPresentData shardPresentData, List<String> excludedTables) {
+    public void importShard(ShardPresentData shardPresentData, List<String> excludedTables, boolean updateLastShardDetails) {
         Objects.requireNonNull(shardPresentData, "shardPresentData is NULL");
         Objects.requireNonNull(excludedTables, "excludedTables is NULL");
         // shard archive data has been downloaded at that point and stored (unpacked?) in configured folder
@@ -145,7 +145,7 @@ public class ShardImporter {
                 aplAppStatus.durableTaskFinished(genesisTaskId, true, "Shard data import");
                 throw new IllegalStateException("Unable to import shard without records in shard table");
             }
-        } else {
+        } else if (updateLastShardDetails) {
             lastShard.setShardState(ShardState.CREATED_BY_ARCHIVE);
             ChunkedFileOps ops = new ChunkedFileOps(zipInFolder.toAbsolutePath().toString());
             lastShard.setCoreZipHash(ops.getFileHash());
