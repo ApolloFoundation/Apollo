@@ -3,16 +3,16 @@ TRUNCATE prunable_message;
 TRUNCATE public_key;
 
 insert into account
-(DB_ID, ID, BALANCE, UNCONFIRMED_BALANCE, HAS_CONTROL_PHASING, FORGED_BALANCE, ACTIVE_LESSEE_ID, HEIGHT, LATEST)
-values (10, -6004096130734886685, 25000000000000, 25000000000000, false, 0, null, 100, true),
-       (20, 4882266200596627944, 500000000000, 500000000000, false, 0, null, 100, true),
-       (30, -5872452783836294400, 1000000000000, 1000000000000, false, 0, null, 100, true)
+(DB_ID  	,ID  	                        ,BALANCE  	        ,UNCONFIRMED_BALANCE  	,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	,LATEST) values
+(10          ,-6004096130734886685          ,25000000000000     ,25000000000000           ,false                 , 0                 ,null               ,100       ,true ),
+(20          ,4882266200596627944           ,500000000000       ,500000000000             ,false                  ,0                 ,null               ,100       ,true ),
+(30          ,-5872452783836294400          ,1000000000000      ,1000000000000            ,false                  ,0                 ,null               ,100       ,true )
 ;
 insert into public_key
-    (DB_ID, ACCOUNT_ID, PUBLIC_KEY, HEIGHT, LATEST)
-values (10, -6004096130734886685, X'2e8b2883c27b391359d7d0c15d00815a6693290a38dd8eba341cc07ddaa8ed4d', 1, true),
-       (20, 4882266200596627944, X'c0b126b5aa134b84e64625256b8de8973787612b1f3839d2c60526d2114e886d', 10, true),
-       (30, -5872452783836294400, X'a574702cf92b7e0a7847f921ca8a23f538d62a582cc6a2f4861b160077c5f245', 15, true)
+(DB_ID  	,ACCOUNT_ID  	         ,PUBLIC_KEY                                                                               ,HEIGHT  	,LATEST) values
+(10          ,-6004096130734886685   ,X'2e8b2883c27b391359d7d0c15d00815a6693290a38dd8eba341cc07ddaa8ed4d'                      ,1           ,true ),
+(20          ,4882266200596627944    ,X'c0b126b5aa134b84e64625256b8de8973787612b1f3839d2c60526d2114e886d'                      ,10          ,true ),
+(30          ,-5872452783836294400   ,X'a574702cf92b7e0a7847f921ca8a23f538d62a582cc6a2f4861b160077c5f245'                      ,15          ,true )
 ;
 INSERT INTO prunable_message
 (db_id         ,id                  ,sender_id               , recipient_id          ,message                                                 , encrypted_message                                                                                                                                                                                                                     ,message_is_text  , encrypted_is_text , is_compressed, block_timestamp, transaction_timestamp, height) VALUES
