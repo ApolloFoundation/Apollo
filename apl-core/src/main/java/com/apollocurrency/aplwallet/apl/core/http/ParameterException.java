@@ -18,10 +18,12 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.util.exception;
+package com.apollocurrency.aplwallet.apl.core.http;
 
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
+@Deprecated
 public final class ParameterException extends AplException {
 
     private final JSONStreamAware errorResponse;

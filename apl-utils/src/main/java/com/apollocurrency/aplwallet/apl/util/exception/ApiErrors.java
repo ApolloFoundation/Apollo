@@ -6,6 +6,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.exception;
 
+//TODO Move to api module.
 public enum ApiErrors implements ApiErrorInfo {
 
     INTERNAL_SERVER_EXCEPTION(0, 100, "Internal error, root cause: %s"),

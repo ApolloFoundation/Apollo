@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.util.exception.ParameterException;
 import org.eclipse.jetty.servlets.EventSource;
 import org.slf4j.Logger;
 

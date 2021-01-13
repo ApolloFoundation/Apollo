@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.exception;
 
 import com.apollocurrency.aplwallet.api.response.ResponseBase;
-import com.apollocurrency.aplwallet.apl.util.exception.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;

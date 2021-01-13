@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntit
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.util.exception.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
