@@ -428,19 +428,21 @@ public class BlockchainImpl implements Blockchain {
         }
         List<Block> result = new ArrayList<>();
         TransactionalDataSource dataSource;
-//        long time = System.currentTimeMillis();
+        long time = System.currentTimeMillis();
         Integer fromBlockHeight = getBlockHeight(blockId);
         if (fromBlockHeight != null) {
             int prevSize;
             do {
                 dataSource = shardDbExplorer.getDataSourceWithShardingByHeight(fromBlockHeight + 1); //should return datasource, where such block exist or default datasource
-//                log.info("Datasource - {}", dataSource.getUrl());
+                log.info("Datasource - {}", dataSource.getUrl());
                 prevSize = result.size();
-                try (Connection con = dataSource.getConnection()) { //get blocks and transactions in one connectiщn
+                try (Connection con = dataSource.getConnection()) { //get blocks and transactions in one connection
                     blockDao.getBlocksAfter(fromBlockHeight, blockIdList, result, con, prevSize);
+                    log.info("Found {} blocks.", result.size() - prevSize);
                     for (int i = prevSize; i < result.size(); i++) {
                         Block block = result.get(i);
                         List<Transaction> blockTransactions = this.getOrLoadTransactions(block);
+                        log.info("Loaded {} transaction.", blockTransactions != null ? blockTransactions.size() : 0);
                         block.setTransactions(blockTransactions);
                     }
                     if (result.size() - 1 >= 0) {
@@ -451,7 +453,7 @@ public class BlockchainImpl implements Blockchain {
                 }
             } while (result.size() != prevSize && dataSource != databaseManager.getDataSource() && shardDbExplorer.getDataSourceWithShardingByHeight(fromBlockHeight + 1) != dataSource);
         }
-//        log.info("GetAfterBlock time {}", System.currentTimeMillis() - time);
+        log.info("GetAfterBlock time {}", System.currentTimeMillis() - time);
         return loadBlockData(result);
     }
 
