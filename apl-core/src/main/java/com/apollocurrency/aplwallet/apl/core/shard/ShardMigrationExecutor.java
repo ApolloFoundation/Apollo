@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.observer.events.ShardChangeSt
 import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.util.config.Property;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import org.slf4j.Logger;
 
 import javax.enterprise.util.AnnotationLiteral;

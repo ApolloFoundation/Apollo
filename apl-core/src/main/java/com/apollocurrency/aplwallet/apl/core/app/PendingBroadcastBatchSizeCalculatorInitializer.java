@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.util.BatchSizeCalculator;
-import com.apollocurrency.aplwallet.apl.util.config.Property;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;

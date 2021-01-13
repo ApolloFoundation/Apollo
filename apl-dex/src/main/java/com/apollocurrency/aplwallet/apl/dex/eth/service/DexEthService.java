@@ -1,7 +1,6 @@
 package com.apollocurrency.aplwallet.apl.dex.eth.service;
 
-import com.apollocurrency.aplwallet.apl.dex.eth.dao.EthGasStationInfoDao;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.EthGasInfo;
+import com.apollocurrency.aplwallet.apl.dex.eth.model.EthGasInfo;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -18,7 +17,7 @@ public class DexEthService {
     private static Integer ATTEMPTS = 5;
     private static String ETH_GAS_INFO_KEY = "eth_gas_info";
 
-    private EthGasStationInfoDao ethGasStationInfoDao;
+    private EthGasStationInfoService ethGasStationInfoService;
 
     private LoadingCache<String, Object> cache = CacheBuilder.newBuilder()
         .maximumSize(10)
@@ -36,8 +35,8 @@ public class DexEthService {
         );
 
     @Inject
-    public DexEthService(EthGasStationInfoDao ethGasStationInfoDao) {
-        this.ethGasStationInfoDao = ethGasStationInfoDao;
+    public DexEthService(EthGasStationInfoService ethGasStationInfoService) {
+        this.ethGasStationInfoService = ethGasStationInfoService;
     }
 
     public EthGasInfo getEthPriceInfo() throws ExecutionException {
@@ -49,7 +48,7 @@ public class DexEthService {
         Integer counter = 0;
         while (counter < ATTEMPTS) {
             try {
-                ethGasInfo = ethGasStationInfoDao.getEthPriceInfo();
+                ethGasInfo = ethGasStationInfoService.getEthPriceInfo();
 
                 if (ethGasInfo != null) {
                     return ethGasInfo;
@@ -58,7 +57,7 @@ public class DexEthService {
                 log.error("(Gas Station) Attempt " + counter + ":" + e.getMessage(), e);
             }
             try {
-                ethGasInfo = ethGasStationInfoDao.getEthChainPriceInfo();
+                ethGasInfo = ethGasStationInfoService.getEthChainPriceInfo();
 
                 if (ethGasInfo != null) {
                     return ethGasInfo;

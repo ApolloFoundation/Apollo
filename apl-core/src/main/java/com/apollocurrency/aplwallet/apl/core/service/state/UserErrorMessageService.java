@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.UserErrorMessage;
+import com.apollocurrency.aplwallet.apl.dex.core.model.UserErrorMessage;
 
 import java.util.List;
 

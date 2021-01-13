@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.dex.eth.model;
 
 import com.apollocurrency.aplwallet.apl.dex.config.EthBalanceWeiToEthSerializer;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.math.BigInteger;

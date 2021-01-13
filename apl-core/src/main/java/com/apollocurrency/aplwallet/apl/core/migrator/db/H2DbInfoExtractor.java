@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import com.apollocurrency.aplwallet.apl.util.config.Property;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 
 import javax.inject.Inject;
 import java.sql.Connection;

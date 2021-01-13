@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.exchange.util;
 
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
 /**

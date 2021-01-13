@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.dex.eth.service;
 
-import com.apollocurrency.aplwallet.apl.dex.eth.dao.UserErrorMessageDao;
-import com.apollocurrency.aplwallet.apl.dex.exchange.exception.NotSufficientFundsException;
-import com.apollocurrency.aplwallet.apl.dex.exchange.exception.NotValidTransactionException;
+import com.apollocurrency.aplwallet.apl.dex.core.dao.UserErrorMessageDao;
+import com.apollocurrency.aplwallet.apl.dex.core.exception.NotSufficientFundsException;
+import com.apollocurrency.aplwallet.apl.dex.core.exception.NotValidTransactionException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

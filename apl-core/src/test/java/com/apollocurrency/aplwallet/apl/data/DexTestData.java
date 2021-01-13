@@ -8,11 +8,11 @@ import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexTransaction;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderStatus;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexTransaction;
+import com.apollocurrency.aplwallet.apl.dex.core.model.ExchangeContractStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
 import org.web3j.utils.Numeric;
 
 import java.math.BigDecimal;

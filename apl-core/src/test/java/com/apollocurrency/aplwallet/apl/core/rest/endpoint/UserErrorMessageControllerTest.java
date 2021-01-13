@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.service.state.UserErrorMessageService;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.UserErrorMessage;
+import com.apollocurrency.aplwallet.apl.dex.core.model.UserErrorMessage;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jboss.resteasy.mock.MockDispatcherFactory;

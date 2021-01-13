@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.dex.exchange.mapper.DexCandlestickMapper;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCandlestick;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.mapper.DexCandlestickMapper;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCandlestick;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;

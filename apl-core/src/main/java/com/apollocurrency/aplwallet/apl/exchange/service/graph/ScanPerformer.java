@@ -1,10 +1,10 @@
 package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCandlestick;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.HeightDbIdRequest;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderScan;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCandlestick;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.HeightDbIdRequest;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderScan;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.OrderScanDao;

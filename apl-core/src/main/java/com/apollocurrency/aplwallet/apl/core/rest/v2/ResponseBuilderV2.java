@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.v2;
 
 import com.apollocurrency.aplwallet.api.v2.model.BaseResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ErrorResponse;
-import com.apollocurrency.aplwallet.apl.util.exception.ErrorInfo;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrorInfo;
 import com.apollocurrency.aplwallet.apl.util.exception.Messages;
 
 import javax.ws.rs.core.Response;
@@ -31,13 +31,13 @@ public class ResponseBuilderV2 {
         return new ResponseBuilderV2(NO_ERROR_STATUS);
     }
 
-    public static ResponseBuilderV2 apiError(ErrorInfo error, Object... args) {
+    public static ResponseBuilderV2 apiError(ApiErrorInfo error, Object... args) {
         ResponseBuilderV2 instance = new ResponseBuilderV2(ERROR_STATUS);
         instance.error(error, args);
         return instance;
     }
 
-    public static ResponseBuilderV2 detailedApiError(ErrorInfo error, String errorDetails, Object... args) {
+    public static ResponseBuilderV2 detailedApiError(ApiErrorInfo error, String errorDetails, Object... args) {
         ResponseBuilderV2 instance = new ResponseBuilderV2(ERROR_STATUS);
         instance.detailedError(error, errorDetails, args);
         return instance;
@@ -51,7 +51,7 @@ public class ResponseBuilderV2 {
         return ok();
     }
 
-    public static ErrorResponse createErrorResponse(ErrorInfo error, String errorDetails, Object... args) {
+    public static ErrorResponse createErrorResponse(ApiErrorInfo error, String errorDetails, Object... args) {
         //TODO ???
         String reasonPhrase = Messages.format(error.getErrorDescription(), args);
         return new ErrorResponse(error.getErrorCode(), reasonPhrase, errorDetails);
@@ -63,12 +63,12 @@ public class ResponseBuilderV2 {
         return this;
     }
 
-    public ResponseBuilderV2 detailedError(ErrorInfo error, String errorDetails, Object... args) {
-        error( createErrorResponse(error, errorDetails, args) );
+    public ResponseBuilderV2 detailedError(ApiErrorInfo error, String errorDetails, Object... args) {
+        error(createErrorResponse(error, errorDetails, args));
         return this;
     }
 
-    public ResponseBuilderV2 error(ErrorInfo error, Object... args) {
+    public ResponseBuilderV2 error(ApiErrorInfo error, Object... args) {
         return detailedError(error, null, args);
     }
 

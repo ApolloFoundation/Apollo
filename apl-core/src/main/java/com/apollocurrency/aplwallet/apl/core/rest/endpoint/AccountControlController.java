@@ -31,7 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.SetPhasingOnly
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
-import com.apollocurrency.aplwallet.apl.util.config.Property;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.exception.ParameterException;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;

@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.data.DexTestData;
-import com.apollocurrency.aplwallet.apl.dex.eth.dao.DexTransactionDao;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexTransaction;
+import com.apollocurrency.aplwallet.apl.dex.core.dao.DexTransactionDao;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexTransaction;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;

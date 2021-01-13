@@ -21,7 +21,7 @@ public class RestParameterExceptionMapper implements ExceptionMapper<RestParamet
 
     @Override
     public Response toResponse(RestParameterException exception) {
-        ResponseBuilder responseBuilder = ResponseBuilder.apiError(exception.getErrorInfo(), exception.getArgs());
+        ResponseBuilder responseBuilder = ResponseBuilder.apiError(exception.getApiErrorInfo(), exception.getArgs());
         return responseBuilder.build();
     }
 

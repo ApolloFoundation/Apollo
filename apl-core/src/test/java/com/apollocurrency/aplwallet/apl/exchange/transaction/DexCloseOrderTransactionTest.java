@@ -19,10 +19,10 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexCloseOrderA
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexCloseOrderTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexTransferMoneyTransaction;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderStatus;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.ExchangeContractStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;

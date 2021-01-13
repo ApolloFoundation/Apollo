@@ -14,7 +14,7 @@ public class RestParameterException extends RuntimeException {
     /**
      *
      */
-    private ErrorInfo errorInfo;
+    private ApiErrorInfo apiErrorInfo;
 
     /**
      *
@@ -23,7 +23,7 @@ public class RestParameterException extends RuntimeException {
 
     public RestParameterException(Integer oldErrorCode, Integer errorCode, String message) {
         super(message);
-        this.errorInfo = new ErrorInfo() {
+        this.apiErrorInfo = new ApiErrorInfo() {
             @Override
             public int getErrorCode() {
                 return errorCode;
@@ -41,20 +41,20 @@ public class RestParameterException extends RuntimeException {
         };
     }
 
-    public RestParameterException(ErrorInfo errorInfo, Object... args) {
-        super(errorInfo.getErrorDescription());
-        this.errorInfo = errorInfo;
+    public RestParameterException(ApiErrorInfo apiErrorInfo, Object... args) {
+        super(apiErrorInfo.getErrorDescription());
+        this.apiErrorInfo = apiErrorInfo;
         this.args = args;
     }
 
-    public RestParameterException(Throwable cause, ErrorInfo errorInfo, Object... args) {
-        super(errorInfo.getErrorDescription(), cause);
-        this.errorInfo = errorInfo;
+    public RestParameterException(Throwable cause, ApiErrorInfo apiErrorInfo, Object... args) {
+        super(apiErrorInfo.getErrorDescription(), cause);
+        this.apiErrorInfo = apiErrorInfo;
         this.args = args;
     }
 
-    public ErrorInfo getErrorInfo() {
-        return errorInfo;
+    public ApiErrorInfo getApiErrorInfo() {
+        return apiErrorInfo;
     }
 
     public Object[] getArgs() {

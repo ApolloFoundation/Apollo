@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.dex.eth.contracts;
 
+import com.apollocurrency.aplwallet.apl.dex.core.exception.DexException;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.dex.exchange.exception.DexException;
 import io.reactivex.Flowable;
 import org.web3j.abi.EventEncoder;
 import org.web3j.abi.FunctionEncoder;

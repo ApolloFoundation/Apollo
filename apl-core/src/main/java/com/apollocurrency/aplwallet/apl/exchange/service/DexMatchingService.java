@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexOrderDBMatchingRequest;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderDBMatchingRequest;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 

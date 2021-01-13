@@ -9,8 +9,8 @@ package com.apollocurrency.aplwallet.apl.util.builder;
 import com.apollocurrency.aplwallet.api.dto.BaseDTO;
 import com.apollocurrency.aplwallet.api.response.ResponseBase;
 import com.apollocurrency.aplwallet.api.response.ResponseDone;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrorInfo;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
-import com.apollocurrency.aplwallet.apl.util.exception.ErrorInfo;
 import com.apollocurrency.aplwallet.apl.util.exception.Messages;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,13 +35,13 @@ public class ResponseBuilder {
         return new ResponseBuilder(200);
     }
 
-    public static ResponseBuilder apiError(ErrorInfo error, Object... args) {
+    public static ResponseBuilder apiError(ApiErrorInfo error, Object... args) {
         ResponseBuilder instance = new ResponseBuilder(200);
         instance.error(error, args);
         return instance;
     }
 
-    public static ResponseBuilder detailedApiError(ErrorInfo error, String errorDetails, Object... args) {
+    public static ResponseBuilder detailedApiError(ApiErrorInfo error, String errorDetails, Object... args) {
         ResponseBuilder instance = new ResponseBuilder(200);
         instance.detailedError(error, errorDetails, args);
         return instance;
@@ -59,7 +59,7 @@ public class ResponseBuilder {
         return instance;
     }
 
-    public static ResponseBase createErrorResponse(ErrorInfo error, String errorDetails, Object... args) {
+    public static ResponseBase createErrorResponse(ApiErrorInfo error, String errorDetails, Object... args) {
         String reasonPhrase = Messages.format(error.getErrorDescription(), args);
         return new ResponseBase(error.getErrorCode(), reasonPhrase, errorDetails, (long) error.getOldErrorCode());
     }
@@ -71,14 +71,14 @@ public class ResponseBuilder {
         return this;
     }
 
-    public ResponseBuilder detailedError(ErrorInfo error, String errorDetails, Object... args) {
+    public ResponseBuilder detailedError(ApiErrorInfo error, String errorDetails, Object... args) {
         this.status = 200;
         this.response = createErrorResponse(error, errorDetails, args);
         this.dto = null;
         return this;
     }
 
-    public ResponseBuilder error(ErrorInfo error, Object... args) {
+    public ResponseBuilder error(ApiErrorInfo error, Object... args) {
         return detailedError(error, null, args);
     }
 
@@ -123,7 +123,7 @@ public class ResponseBuilder {
             //this conversion is necessary for POST methods to produce TEXT/HTML content
             stringJsonEntity = mapper.writeValueAsString(entity);
         } catch (JsonProcessingException e) {
-            ErrorInfo internalError = ApiErrors.JSON_SERIALIZATION_EXCEPTION;
+            ApiErrorInfo internalError = ApiErrors.JSON_SERIALIZATION_EXCEPTION;
             String reasonPhrase = Messages.format(internalError.getErrorDescription(), e.getMessage());
             ResponseBase body = new ResponseBase(internalError.getErrorCode(), reasonPhrase, (long) internalError.getOldErrorCode());
             return Response.status(500).entity(body).build();

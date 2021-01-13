@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.dex.exchange.model;
 
+import com.apollocurrency.aplwallet.apl.dex.core.model.ExchangeContractStatus;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;

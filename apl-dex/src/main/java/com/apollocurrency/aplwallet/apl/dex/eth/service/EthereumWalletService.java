@@ -1,14 +1,14 @@
 package com.apollocurrency.aplwallet.apl.dex.eth.service;
 
-import com.apollocurrency.aplwallet.apl.dex.eth.dao.UserErrorMessageDao;
+import com.apollocurrency.aplwallet.apl.dex.core.dao.UserErrorMessageDao;
+import com.apollocurrency.aplwallet.apl.dex.core.exception.DexException;
+import com.apollocurrency.aplwallet.apl.dex.core.exception.NotSufficientFundsException;
+import com.apollocurrency.aplwallet.apl.dex.core.exception.NotValidTransactionException;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.UserErrorMessage;
+import com.apollocurrency.aplwallet.apl.dex.eth.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.dex.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.dex.exchange.exception.DexException;
-import com.apollocurrency.aplwallet.apl.dex.exchange.exception.NotSufficientFundsException;
-import com.apollocurrency.aplwallet.apl.dex.exchange.exception.NotValidTransactionException;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.EthGasInfo;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.UserErrorMessage;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;

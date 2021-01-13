@@ -6,7 +6,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.exception;
 
-public enum ApiErrors implements ErrorInfo {
+public enum ApiErrors implements ApiErrorInfo {
 
     INTERNAL_SERVER_EXCEPTION(0, 100, "Internal error, root cause: %s"),
     BLOCKCHAIN_NOT_INITIALIZED(-1, 101, "Blockchain is not initialized."),

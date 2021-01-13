@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.dto.ShardDTO;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.ShardToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
-import com.apollocurrency.aplwallet.apl.util.config.Property;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

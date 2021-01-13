@@ -3,10 +3,10 @@ package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 import com.apollocurrency.aplwallet.api.trading.SimpleTradingEntry;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCandlestick;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderStatus;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCandlestick;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

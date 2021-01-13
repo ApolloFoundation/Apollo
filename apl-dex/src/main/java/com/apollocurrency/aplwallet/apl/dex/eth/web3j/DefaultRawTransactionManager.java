@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.dex.eth.web3j;
 
-import com.apollocurrency.aplwallet.apl.dex.eth.dao.DexTransactionDao;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexTransaction;
+import com.apollocurrency.aplwallet.apl.dex.core.dao.DexTransactionDao;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexTransaction;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.Hash;
 import org.web3j.crypto.RawTransaction;

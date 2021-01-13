@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexOperation;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOperation;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOperationDao;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import lombok.extern.slf4j.Slf4j;

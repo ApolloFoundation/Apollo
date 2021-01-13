@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.exchange.service.graph;
 
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCandlestick;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCandlestick;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 
 import javax.enterprise.inject.Vetoed;

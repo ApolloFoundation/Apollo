@@ -5,10 +5,10 @@ package com.apollocurrency.aplwallet.apl.core.converter.db;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.mapper.VersionedDerivedEntityMapper;
 import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderStatus;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderType;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderKeyFactory;
 import org.jdbi.v3.core.statement.StatementContext;
 

@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
-import com.apollocurrency.aplwallet.apl.dex.eth.dao.UserErrorMessageDao;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.UserErrorMessage;
+import com.apollocurrency.aplwallet.apl.dex.core.dao.UserErrorMessageDao;
+import com.apollocurrency.aplwallet.apl.dex.core.model.UserErrorMessage;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;

@@ -14,8 +14,8 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.dex.exchange.model.OrderStatus;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
