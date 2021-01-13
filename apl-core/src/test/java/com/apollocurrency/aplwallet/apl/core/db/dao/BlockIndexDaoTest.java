@@ -7,7 +7,10 @@ package com.apollocurrency.aplwallet.apl.core.db.dao;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
@@ -67,7 +70,7 @@ public class BlockIndexDaoTest extends DbContainerBaseTest {
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainConfig.class, DaoConfig.class,
         DerivedDbTablesRegistryImpl.class, BlockIndexDao.class,
-        TransactionRowMapper.class,
+        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionBuilder.class,
         BlockDaoImpl.class, TransactionDaoImpl.class)
         .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))

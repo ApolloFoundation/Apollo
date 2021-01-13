@@ -12,7 +12,12 @@ import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyBasedFileConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
@@ -57,6 +62,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.ReferencedTransactionService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
@@ -76,6 +82,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.impl.PhasingPollServi
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
@@ -158,25 +165,27 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        BlockchainImpl.class, DaoConfig.class,
-        PropertyProducer.class, TransactionApplier.class, FullTextSearchUpdater.class,
-        EntityProducer.class, AccountTable.class,
-        TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
-        GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
-        ReferencedTransactionDaoImpl.class,
-        AppendixApplierRegistry.class,
-        AppendixValidatorRegistry.class,
-        TransactionRowMapper.class,
-        TransactionSerializerImpl.class,
-        TransactionBuilder.class,
-        TaggedDataTable.class,
-        PropertyBasedFileConfig.class,
-        DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
-        PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class, PhasingApprovedResultTable.class,
-        KeyFactoryProducer.class, FeeCalculator.class, AplAppStatus.class,
-        TaggedDataTimestampDao.class,
-        TaggedDataExtendDao.class,
-        FullTextConfigImpl.class,
+            BlockchainImpl.class, DaoConfig.class,
+            PropertyProducer.class, TransactionApplier.class, FullTextSearchUpdater.class,
+            EntityProducer.class, AccountTable.class,
+            TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
+            GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
+            ReferencedTransactionDaoImpl.class,
+            AppendixApplierRegistry.class,
+            AppendixValidatorRegistry.class,
+            TransactionServiceImpl.class, ShardDbExplorerImpl.class,
+            TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+            TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
+            TransactionSerializerImpl.class,
+            TransactionBuilder.class,
+            TaggedDataTable.class,
+            PropertyBasedFileConfig.class,
+            DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
+            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class, PhasingApprovedResultTable.class,
+            KeyFactoryProducer.class, FeeCalculator.class, AplAppStatus.class,
+            TaggedDataTimestampDao.class,
+            TaggedDataExtendDao.class,
+            FullTextConfigImpl.class,
         DerivedDbTablesRegistryImpl.class,
         BlockDaoImpl.class, TransactionDaoImpl.class,
         UnconfirmedTransactionTable.class, AccountService.class, TaskDispatchManager.class)

@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
@@ -18,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
@@ -29,6 +31,7 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -49,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @Slf4j
-//@Tag("slow")
+@Tag("slow")
 @EnableWeld
 class TransactionDaoTest extends DbContainerBaseTest {
 
@@ -68,7 +71,8 @@ class TransactionDaoTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
         .build();
 
-    private TransactionModelToEntityConverter toEntityConverter = new TransactionModelToEntityConverter();
+    private TransactionModelToEntityConverter toEntityConverter;
+    private TransactionEntityToModelConverter toModelConverter;
 
     private TransactionDao dao;
     private TransactionTestData td;
@@ -90,6 +94,10 @@ class TransactionDaoTest extends DbContainerBaseTest {
             new TransactionEntityRowMapper(),
             new PrunableTxRowMapper(td.getTransactionTypeFactory()),
             extension.getDatabaseManager());
+
+        toEntityConverter = new TransactionModelToEntityConverter();
+        toModelConverter = new TransactionEntityToModelConverter(td.getTransactionTypeFactory(),
+            new TransactionBuilder(td.getTransactionTypeFactory()));
     }
 
 
@@ -236,13 +244,13 @@ class TransactionDaoTest extends DbContainerBaseTest {
     void testSaveTransactions() {
         DbUtils.inTransaction(extension, (con) -> dao.saveTransactions(toEntityConverter.convert(List.of(td.NEW_TRANSACTION_1, td.NEW_TRANSACTION_0))));
         List<TransactionEntity> blockTransactions = dao.findBlockTransactions(td.NEW_TRANSACTION_0.getBlockId(), extension.getDatabaseManager().getDataSource());
-        assertEquals(toEntityConverter.convert(List.of(td.NEW_TRANSACTION_1, td.NEW_TRANSACTION_0)), blockTransactions);
+        assertEquals(List.of(td.NEW_TRANSACTION_1, td.NEW_TRANSACTION_0), toModelConverter.convert(blockTransactions));
     }
 
     @Test
     void testGetTransactionsByAccountId() {
         List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 8, (byte) -1, 0, false, false, false, 0, Integer.MAX_VALUE, false, false, true, Integer.MAX_VALUE, 0);
-        assertEquals(toEntityConverter.convert(List.of(td.TRANSACTION_12, td.TRANSACTION_11)), transactions);
+        assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11), toModelConverter.convert(transactions));
     }
 
     @Test
@@ -258,54 +266,51 @@ class TransactionDaoTest extends DbContainerBaseTest {
     @Test
     void testGetPhasedTransactions() {
         List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 0, (byte) 0, 0, false, true, false, 0, Integer.MAX_VALUE, false, false, true, Integer.MAX_VALUE, 0);
-        assertEquals(toEntityConverter.convert(List.of(td.TRANSACTION_13)), transactions);
+        assertEquals(List.of(td.TRANSACTION_13), toModelConverter.convert(transactions));
     }
 
     @Test
     void testGetAllNotPhasedTransactionsWithPagination() {
         List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 0, (byte) 0, 0, false, false, true, 1, 3, false, false, true, td.TRANSACTION_7.getHeight() - 1, 0);
-        assertEquals(toEntityConverter.convert(List.of(td.TRANSACTION_5, td.TRANSACTION_4, td.TRANSACTION_3)), transactions);
+        assertEquals(List.of(td.TRANSACTION_5, td.TRANSACTION_4, td.TRANSACTION_3), toModelConverter.convert(transactions));
     }
 
     @Test
     void testGetExecutedOnlyTransactions() {
         List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 0, (byte) 0, td.TRANSACTION_3.getBlockTimestamp() + 1, false, false, false, 0, Integer.MAX_VALUE, false, true, false, Integer.MAX_VALUE, 0);
-        assertEquals(toEntityConverter.convert(List.of(td.TRANSACTION_9, td.TRANSACTION_8, td.TRANSACTION_7, td.TRANSACTION_6, td.TRANSACTION_5, td.TRANSACTION_4)), transactions);
+        assertEquals(List.of(td.TRANSACTION_9, td.TRANSACTION_8, td.TRANSACTION_7, td.TRANSACTION_6, td.TRANSACTION_5, td.TRANSACTION_4), toModelConverter.convert(transactions));
     }
 
     @Test
     void testGetTransactionsWithMessage() {
         List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 0, (byte) 0, 0, true, false, false, 0, Integer.MAX_VALUE, false, false, true, Integer.MAX_VALUE, 0);
-        assertEquals(toEntityConverter.convert(List.of(td.TRANSACTION_13)), transactions);
+        assertEquals(List.of(td.TRANSACTION_13), toModelConverter.convert(transactions));
         transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_14.getSenderId(), 0, (byte) -1, (byte) -1, 0, true, false, false, 0, Integer.MAX_VALUE, false, false, false, Integer.MAX_VALUE, 0);
-        assertEquals(toEntityConverter.convert(List.of(td.TRANSACTION_14)), transactions);
+        assertEquals(List.of(td.TRANSACTION_14), toModelConverter.convert(transactions));
     }
 
     @Test
     void testGetTransactionsWithPagination() {
         extension.cleanAndPopulateDb();
         List<TransactionEntity> transactions = dao.getTransactions((byte) -1, (byte) -1, 2, 4);
-        assertEquals(toEntityConverter.convert(List.of(td.TRANSACTION_12, td.TRANSACTION_11, td.TRANSACTION_10)), transactions);
+        assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11, td.TRANSACTION_10), toModelConverter.convert(transactions));
     }
 
     @Test
     void testGetTransactionsByType() {
         List<TransactionEntity> transactions = dao.getTransactions((byte) 8, (byte) -1, 0, Integer.MAX_VALUE);
-
-        assertEquals(toEntityConverter.convert(List.of(td.TRANSACTION_12, td.TRANSACTION_11)), transactions);
+        assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11), toModelConverter.convert(transactions));
     }
 
     @Test
     void testGetTransactionsByTypeAndSubtypeWithPagination() {
         List<TransactionEntity> transactions = dao.getTransactions((byte) 0, (byte) 0, 3, 5);
-
-        assertEquals(toEntityConverter.convert(List.of(td.TRANSACTION_8, td.TRANSACTION_7, td.TRANSACTION_6)), transactions);
+        assertEquals(List.of(td.TRANSACTION_8, td.TRANSACTION_7, td.TRANSACTION_6), toModelConverter.convert(transactions));
     }
 
     @Test
     void testGetTransactionCountFoAccountInDataSource() {
         int count = dao.getTransactionCountByFilter(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 0, (byte) 0, td.TRANSACTION_3.getBlockTimestamp() + 1, false, false, false, false, true, false, Integer.MAX_VALUE, 0);
-
         assertEquals(6, count);
     }
 

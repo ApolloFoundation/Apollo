@@ -9,7 +9,12 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DBContainerRootTest;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.BlockIndexDao;
@@ -43,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
@@ -221,12 +227,16 @@ class ShardEngineTest extends DBContainerRootTest {
     private DerivedTablesRegistry registry;
     @Inject
     private CsvExporter cvsExporter;
+    @Inject
+    private TransactionEntityToModelConverter toModelConverter;
 
     {
         weld.addInterceptor(JdbiTransactionalInterceptor.class);
         weld.addBeanClasses(BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
             DerivedDbTablesRegistryImpl.class, JdbiTransactionalInterceptor.class,
-            TransactionRowMapper.class,
+            TransactionServiceImpl.class, ShardDbExplorerImpl.class,
+            TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+            TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
             TransactionBuilder.class,
             TransactionTestData.class, PropertyProducer.class, ShardRecoveryDaoJdbcImpl.class,
             GlobalSyncImpl.class, FullTextConfigImpl.class, FullTextConfig.class,
@@ -458,7 +468,7 @@ class ShardEngineTest extends DBContainerRootTest {
         assertNull(excludedTransaction);
         excludedTransaction = transactionDao.findTransaction(td.TRANSACTION_2.getId(), shardDataSource); // excluded transaction #2
         assertNull(excludedTransaction);
-        assertEquals(td.TRANSACTION_5, transactionDao.findTransaction(td.TRANSACTION_5.getId(), shardDataSource));
+        assertEquals(td.TRANSACTION_5, toModelConverter.convert(transactionDao.findTransaction(td.TRANSACTION_5.getId(), shardDataSource)));
 
 //5.        // create shard db FULL schema + add shard hash info
 //        state = shardEngine.addOrCreateShard(new ShardAddConstrainsDBUpdater(), CommandParamInfo.builder().shardHash(shardHash).shardId(4L).prevBlockData(PrevBlockData.builder().generatorIds(new Long[]{1L, 2L}).prevBlockTimeouts(new Integer[]{3, 4}).prevBlockTimestamps(new Integer[]{5, 6}).build()).build());
