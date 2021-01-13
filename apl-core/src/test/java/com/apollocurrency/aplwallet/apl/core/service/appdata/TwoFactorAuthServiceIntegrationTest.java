@@ -24,6 +24,7 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -56,10 +57,28 @@ public class TwoFactorAuthServiceIntegrationTest extends DbContainerBaseTest {
     private TwoFactorAuthRepository fileRepository = new TwoFactorAuthFileSystemRepository(temporaryFolderExtension.getRoot().toPath());
     private TwoFactorAuthService service;// = new TwoFactorAuthServiceImpl(repository, "test", targetFileRepository);
 
+    @BeforeAll
+    static void beforeAll() {
+        Convert2.init("APL", 0);
+    }
+
     @AfterEach
     void tearDown() {
         dbExtension.cleanAndPopulateDb();
     }
+
+    @Test
+    public void testEnable() {
+        initConfigPrefix();
+        TwoFactorAuthTestData td = new TwoFactorAuthTestData();
+        service = new TwoFactorAuthServiceImpl("test", fileRepository);
+        TwoFactorAuthDetails authDetails = service.enable(td.ACC_3.getId());
+        assertTrue(authDetails.getQrCodeUrl().contains(authDetails.getSecret()));
+        assertTrue(authDetails.getQrCodeUrl().startsWith(TimeBasedOneTimePasswordUtil.qrImageUrl(Convert2.defaultRsAccount(td.ACC_3.getId()),
+            authDetails.getSecret())));
+        assertFalse(service.isEnabled(td.ACC_3.getId()));
+    }
+
 
 
     private void initConfigPrefix() {
@@ -80,6 +99,10 @@ public class TwoFactorAuthServiceIntegrationTest extends DbContainerBaseTest {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         service = new TwoFactorAuthServiceImpl("test", fileRepository);
         TwoFactorAuthDetails authDetails = service.enable(td.ACC_2.getId());
+
+        assertTrue(authDetails.getQrCodeUrl().contains(authDetails.getSecret()));
+        assertTrue(authDetails.getQrCodeUrl().startsWith(TimeBasedOneTimePasswordUtil.qrImageUrl(Convert2.defaultRsAccount(td.ACC_3.getId()),
+            authDetails.getSecret())));
         assertFalse(service.isEnabled(td.ACC_2.getId()));
         // remove 2fa-file after test has passed
         boolean result = fileRepository.delete(td.ACC_2.getId());

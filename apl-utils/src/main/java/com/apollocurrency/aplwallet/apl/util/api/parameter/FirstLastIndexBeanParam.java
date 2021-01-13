@@ -2,17 +2,17 @@
  * Copyright (c)  2018-2020. Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.apl.core.rest.parameter;
-
-import javax.validation.constraints.PositiveOrZero;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.QueryParam;
+package com.apollocurrency.aplwallet.apl.util.api.parameter;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+
+import javax.validation.constraints.PositiveOrZero;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.QueryParam;
 
 @NoArgsConstructor
 @Setter

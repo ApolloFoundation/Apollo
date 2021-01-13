@@ -2,7 +2,7 @@
  * Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.rest.provider;
+package com.apollocurrency.aplwallet.apl.util.api.provider;
 
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.Arch;
