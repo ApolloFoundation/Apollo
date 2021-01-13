@@ -167,6 +167,7 @@ else
     
     cd $1/
     cp -vRa conf* apollo-blockchain
+    cp -vRa conf/* apollo-blockchain/conf
 #    ./replace_dbdir.sh
     
     notify "Creating symlinks..."
