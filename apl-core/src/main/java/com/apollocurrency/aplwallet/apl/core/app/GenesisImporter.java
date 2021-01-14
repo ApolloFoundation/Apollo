@@ -27,7 +27,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
@@ -84,7 +83,7 @@ public class GenesisImporter {
     private final AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
     private final AccountTable accountTable;
     private final ResourceLocator resourceLocator;
-    
+
     @Inject
     public GenesisImporter(
         BlockchainConfig blockchainConfig,
@@ -96,7 +95,7 @@ public class GenesisImporter {
         PropertiesHolder propertiesHolder,
         AccountService accountService,
         AccountPublicKeyService accountPublicKeyService,
-        ResourceLocator resourceLocator    
+        ResourceLocator resourceLocator
     ) {
         this.blockchainConfig =
             Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL");
@@ -114,7 +113,7 @@ public class GenesisImporter {
         this.accountGuaranteedBalanceTable = Objects.requireNonNull(accountGuaranteedBalanceTable, "accountGuaranteedBalanceTable is NULL");
         this.accountTable = Objects.requireNonNull(accountTable, "accountTable is NULL");
         this.resourceLocator =  Objects.requireNonNull(resourceLocator);
-        
+
     }
 
 
@@ -163,7 +162,7 @@ public class GenesisImporter {
         createGenesisTaskIdForStatus();
 
         final String path = GENESIS_ACCOUNTS_JSON;
-        
+
         log.trace("path = {}", path);
         final List<String> publicKeys = new ArrayList<>();
         final Map<String, Long> balances = new HashMap<>();
@@ -263,7 +262,7 @@ public class GenesisImporter {
         final int publicKeyNumber = saveGenesisPublicKeys();
 
         if (loadOnlyPublicKeys) {
-            log.debug("Public Keys were saved in {} ms. The rest of GENESIS is skipped, shard info will be loaded...",
+            log.debug("Public Keys were saved in {} s. The rest of GENESIS is skipped, shard info will be loaded...",
                 (System.currentTimeMillis() - start) / 1000);
             return;
         }

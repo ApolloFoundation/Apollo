@@ -46,4 +46,9 @@ public class PublicKeyAnnouncementAppendixValidator extends AbstractAppendixVali
             throw new AplException.NotValidException("Announced public key does not match recipient accountId");
         }
     }
+
+    @Override
+    public Class<PublicKeyAnnouncementAppendix> forClass() {
+        return PublicKeyAnnouncementAppendix.class;
+    }
 }

@@ -24,4 +24,9 @@ public class PhasingAppendixV2Applier implements AppendixApplier<PhasingAppendix
     public void apply(Transaction transaction, PhasingAppendixV2 appendix, Account senderAccount, Account recipientAccount) {
         phasingPollService.addPoll(transaction, appendix);
     }
+
+    @Override
+    public Class<PhasingAppendixV2> forClass() {
+        return PhasingAppendixV2.class;
+    }
 }

@@ -220,6 +220,7 @@ public class TransactionBuilder {
                 builder.recipientId(recipientId);
             }
             if (attachmentData != null) {
+
                 builder.appendix(MessageAppendix.parse(attachmentData));
                 builder.appendix(EncryptedMessageAppendix.parse(attachmentData));
                 builder.appendix(PublicKeyAnnouncementAppendix.parse(attachmentData));

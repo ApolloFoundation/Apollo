@@ -139,4 +139,9 @@ public class PhasingAppendixValidator implements AppendixValidator<PhasingAppend
         validateFinishHeight(appendix.getFinishHeight(), appendix);
     }
 
+    @Override
+    public Class<PhasingAppendix> forClass() {
+        return PhasingAppendix.class;
+    }
+
 }

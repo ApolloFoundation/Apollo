@@ -52,4 +52,9 @@ public class PrunableEncryptedMessageAppendixValidator extends AbstractAppendixV
             throw new AplException.NotValidException("Encrypted messages cannot be attached to transactions with no recipient");
         }
     }
+
+    @Override
+    public Class<PrunableEncryptedMessageAppendix> forClass() {
+        return PrunableEncryptedMessageAppendix.class;
+    }
 }

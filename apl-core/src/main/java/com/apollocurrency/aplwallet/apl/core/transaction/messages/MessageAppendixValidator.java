@@ -31,4 +31,9 @@ public class MessageAppendixValidator extends AbstractAppendixValidator<MessageA
             throw new AplException.NotValidException("Invalid arbitrary message length: " + length);
         }
     }
+
+    @Override
+    public Class<MessageAppendix> forClass() {
+        return MessageAppendix.class;
+    }
 }
