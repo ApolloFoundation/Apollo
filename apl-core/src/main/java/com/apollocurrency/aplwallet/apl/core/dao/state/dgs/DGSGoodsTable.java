@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.dgs;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.dgs.DGSGoodsMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -70,12 +69,12 @@ public class DGSGoodsTable extends EntityDbTable<DGSGoods> implements Searchable
             @DatabaseSpecificDml(DmlMarker.MERGE)
             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
             PreparedStatement pstmt = con.prepareStatement("INSERT INTO goods (id, seller_id, `name`, "
-                + "description, tags, parsed_tags, `timestamp`, quantity, price, delisted, has_image, height, latest) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) "
-                + "ON DUPLICATE KEY UPDATE id = VALUES(id), seller_id = VALUES(seller_id), `name` = VALUES(`name`), "
-                + "description = VALUES(description), tags = VALUES(tags), parsed_tags = VALUES(parsed_tags), "
-                + "`timestamp` = VALUES(`timestamp`), quantity = VALUES(quantity), price = VALUES(price), "
-                + "delisted = VALUES(delisted), has_image = VALUES(has_image), height = VALUES(height), latest = TRUE",
+                    + "description, tags, parsed_tags, `timestamp`, quantity, price, delisted, has_image, height, latest) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) "
+                    + "ON DUPLICATE KEY UPDATE id = VALUES(id), seller_id = VALUES(seller_id), `name` = VALUES(`name`), "
+                    + "description = VALUES(description), tags = VALUES(tags), parsed_tags = VALUES(parsed_tags), "
+                    + "`timestamp` = VALUES(`timestamp`), quantity = VALUES(quantity), price = VALUES(price), "
+                    + "delisted = VALUES(delisted), has_image = VALUES(has_image), height = VALUES(height), latest = TRUE",
                 Statement.RETURN_GENERATED_KEYS)
         ) {
             int i = 0;

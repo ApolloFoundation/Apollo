@@ -43,6 +43,8 @@
     <module>apl-conf</module>
     <module>apl-exec</module>
     <module>apl-db-updater</module>
+    <module>apl-dex</module>
+    <module>apl-vault-wallet</module>
   </modules>
 
   <properties>

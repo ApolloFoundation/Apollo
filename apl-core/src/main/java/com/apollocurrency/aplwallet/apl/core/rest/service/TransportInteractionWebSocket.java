@@ -11,9 +11,10 @@ import com.apollocurrency.aplwallet.api.transport.TransportStopRequest;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
@@ -162,7 +163,7 @@ public class TransportInteractionWebSocket {
         log.debug("onMessage: {}", message);
 
         try {
-            org.codehaus.jackson.JsonNode parent = new ObjectMapper().readTree(message);
+            JsonNode parent = new ObjectMapper().readTree(message);
             if (parent.has("type")) {
 
                 String type = parent.get("type").asText();

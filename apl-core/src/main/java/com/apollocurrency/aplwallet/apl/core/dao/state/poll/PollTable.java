@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.poll;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
@@ -40,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollC
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
@@ -87,9 +87,9 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
         try (
             @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
             PreparedStatement pstmt = con.prepareStatement("INSERT INTO poll (id, account_id, "
-                + "name, description, `options`, finish_height, voting_model, min_balance, min_balance_model, "
-                + "holding_id, min_num_options, max_num_options, min_range_value, max_range_value, `timestamp`, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    + "name, description, `options`, finish_height, voting_model, min_balance, min_balance_model, "
+                    + "holding_id, min_num_options, max_num_options, min_range_value, max_range_value, `timestamp`, height) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 Statement.RETURN_GENERATED_KEYS)
         ) {
             int i = 0;

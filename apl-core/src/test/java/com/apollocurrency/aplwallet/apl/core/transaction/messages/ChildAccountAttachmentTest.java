@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AddressScope;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
@@ -28,7 +28,7 @@ class ChildAccountAttachmentTest {
     private static final byte[] CHILD_PUBLIC_KEY_2 = Crypto.getPublicKey("0987654321");
 
     ChildAccountAttachment attachment;
-    
+
     @BeforeEach
     void setUp() {
         attachment = new ChildAccountAttachment(AddressScope.IN_FAMILY, 2, List.of(CHILD_PUBLIC_KEY_1, CHILD_PUBLIC_KEY_2));

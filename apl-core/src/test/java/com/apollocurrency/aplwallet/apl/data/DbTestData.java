@@ -49,9 +49,9 @@ public class DbTestData {
 
     public static DbProperties getDbFileProperties(GenericContainer jdbcDatabaseContainer) {
         DbProperties dbProperties = DB_PROPERTIES.deepCopy();
-        dbProperties.setDbUsername(((MariaDBContainer)jdbcDatabaseContainer).getUsername());
-        if (((MariaDBContainer)jdbcDatabaseContainer).getPassword() != null && !((MariaDBContainer)jdbcDatabaseContainer).getPassword().isEmpty()) {
-            dbProperties.setDbPassword(((MariaDBContainer)jdbcDatabaseContainer).getPassword());
+        dbProperties.setDbUsername(((MariaDBContainer) jdbcDatabaseContainer).getUsername());
+        if (((MariaDBContainer) jdbcDatabaseContainer).getPassword() != null && !((MariaDBContainer) jdbcDatabaseContainer).getPassword().isEmpty()) {
+            dbProperties.setDbPassword(((MariaDBContainer) jdbcDatabaseContainer).getPassword());
         }
         if (jdbcDatabaseContainer.getMappedPort(3306) != null) {
             dbProperties.setDatabasePort(jdbcDatabaseContainer.getMappedPort(3306));

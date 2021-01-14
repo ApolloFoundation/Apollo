@@ -3,7 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -68,12 +67,11 @@ public class AccountInfoTable extends VersionedDeletableEntityDbTable<AccountInf
     public void save(Connection con, AccountInfo accountInfo) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
-            @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-            final PreparedStatement pstmt = con.prepareStatement("INSERT INTO account_info "
-                + "(account_id, `name`, description, height, latest, deleted) "
-                + "VALUES (?, ?, ?, ?, TRUE, FALSE) "
-                + "ON DUPLICATE KEY UPDATE account_id = VALUES(account_id), `name` = VALUES(`name`), "
-                + "description = VALUES(description), height = VALUES(height), latest = TRUE, deleted = FALSE",
+            @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE) final PreparedStatement pstmt = con.prepareStatement("INSERT INTO account_info "
+                    + "(account_id, `name`, description, height, latest, deleted) "
+                    + "VALUES (?, ?, ?, ?, TRUE, FALSE) "
+                    + "ON DUPLICATE KEY UPDATE account_id = VALUES(account_id), `name` = VALUES(`name`), "
+                    + "description = VALUES(description), height = VALUES(height), latest = TRUE, deleted = FALSE",
                 Statement.RETURN_GENERATED_KEYS)
         ) {
             int i = 0;

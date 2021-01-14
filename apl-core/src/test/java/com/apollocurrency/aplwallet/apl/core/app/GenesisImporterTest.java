@@ -1,7 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -10,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ShardRecoveryDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
@@ -48,9 +46,14 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.config.ResourceLocator;
+import com.apollocurrency.aplwallet.apl.util.env.config.UserResourceLocator;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import lombok.SneakyThrows;
@@ -60,6 +63,7 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -67,6 +71,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.function.Executable;
 import org.mockito.Mockito;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,16 +85,10 @@ import java.util.Properties;
 import java.util.UUID;
 
 import static com.apollocurrency.aplwallet.apl.core.app.GenesisImporter.BALANCE_NUMBER_TOTAL_PROPERTY_NAME;
-import com.apollocurrency.aplwallet.apl.util.env.config.ResourceLocator;
-import com.apollocurrency.aplwallet.apl.util.env.config.UserResourceLocator;
-import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.spi.Bean;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeAll;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -127,22 +127,22 @@ class GenesisImporterTest extends DbContainerBaseTest {
     TransactionTestData td = new TransactionTestData();
     private ResourceLocator resourceLocator;
 
-    
+
     @BeforeAll
-    public static void beforeAll(){
-        ConfigDirProviderFactory.setup(false, "Apollo", 0, "", null); 
+    public static void beforeAll() {
+        ConfigDirProviderFactory.setup(false, "Apollo", 0, "", null);
     }
-    
+
     static Bean<?> createCfgdDirProviderBean() {
         return MockBean.builder()
-                .types(ConfigDirProvider.class)
-                .scope(ApplicationScoped.class)
-                .creating(
-                            ConfigDirProviderFactory.getConfigDirProvider()
-                         )
-                .build();
+            .types(ConfigDirProvider.class)
+            .scope(ApplicationScoped.class)
+            .creating(
+                ConfigDirProviderFactory.getConfigDirProvider()
+            )
+            .build();
     }
-    
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         AccountTable.class, AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
@@ -152,9 +152,9 @@ class GenesisImporterTest extends DbContainerBaseTest {
         TransactionRowMapper.class, TwoTablesPublicKeyDao.class,
         TransactionBuilder.class,
         TransactionDaoImpl.class, BlockchainImpl.class,
-        BlockDaoImpl.class, 
-        TransactionIndexDao.class, 
-        DaoConfig.class, 
+        BlockDaoImpl.class,
+        TransactionIndexDao.class,
+        DaoConfig.class,
         ApplicationJsonFactory.class,
         UserResourceLocator.class
     )
@@ -215,9 +215,9 @@ class GenesisImporterTest extends DbContainerBaseTest {
             propertiesHolder,
             accountService,
             accountPublicKeyService,
-            resourceLocator                
+            resourceLocator
         );
-        genesisImporter.GENESIS_ACCOUNTS_JSON="data/genesisAccounts-testnet.json";
+        genesisImporter.GENESIS_ACCOUNTS_JSON = "data/genesisAccounts-testnet.json";
         genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
 
         Block block = genesisImporter.newGenesisBlock();
@@ -248,10 +248,10 @@ class GenesisImporterTest extends DbContainerBaseTest {
             propertiesHolder,
             accountService,
             accountPublicKeyService,
-            resourceLocator        
+            resourceLocator
         );
-        genesisImporter.GENESIS_PARAMS_JSON="data/genesisParameters-INCORRECT.json";
-        genesisImporter.GENESIS_ACCOUNTS_JSON="data/genesisAccounts-testnet.json";
+        genesisImporter.GENESIS_PARAMS_JSON = "data/genesisParameters-INCORRECT.json";
+        genesisImporter.GENESIS_ACCOUNTS_JSON = "data/genesisAccounts-testnet.json";
         assertThrows(RuntimeException.class, () -> {
             genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
         });
@@ -281,9 +281,9 @@ class GenesisImporterTest extends DbContainerBaseTest {
             propertiesHolder,
             accountService,
             accountPublicKeyService,
-            resourceLocator        
+            resourceLocator
         );
-        genesisImporter.GENESIS_ACCOUNTS_JSON="data/genesisAccounts-HUGE.json";        
+        genesisImporter.GENESIS_ACCOUNTS_JSON = "data/genesisAccounts-HUGE.json";
         genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
 
         Block block = genesisImporter.newGenesisBlock();
@@ -314,7 +314,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
             accountPublicKeyService,
             resourceLocator
         );
-        genesisImporter.GENESIS_ACCOUNTS_JSON="data/genesisAccounts-testnet.json";
+        genesisImporter.GENESIS_ACCOUNTS_JSON = "data/genesisAccounts-testnet.json";
         genesisImporter.loadGenesisDataFromResources(); // emulate @PostConstruct
         genesisImporter.importGenesisJson(false);
         int count = accountPublicKeyService.getPublicKeysCount();
@@ -351,7 +351,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
             accountPublicKeyService,
             resourceLocator
         );
-        genesisImporter.GENESIS_ACCOUNTS_JSON="unknown_path/genesisAccounts-testnet.json";
+        genesisImporter.GENESIS_ACCOUNTS_JSON = "unknown_path/genesisAccounts-testnet.json";
         assertThrows(RuntimeException.class, () -> genesisImporter.newGenesisBlock());
     }
 
@@ -377,7 +377,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
             resourceLocator
         );
         dataSource.begin();
-        genesisImporter.GENESIS_ACCOUNTS_JSON="data/genesisAccounts-testnet.json";        
+        genesisImporter.GENESIS_ACCOUNTS_JSON = "data/genesisAccounts-testnet.json";
         genesisImporter.importGenesisJson(true);
         int count = accountPublicKeyService.getPublicKeysCount();
         assertEquals(0, count);
@@ -402,7 +402,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
             accountPublicKeyService,
             resourceLocator
         );
-        genesisImporter.GENESIS_ACCOUNTS_JSON="data/genesisAccounts-testnet.json";        
+        genesisImporter.GENESIS_ACCOUNTS_JSON = "data/genesisAccounts-testnet.json";
         assertThrows(RuntimeException.class, () -> genesisImporter.importGenesisJson(false));
     }
 
@@ -421,7 +421,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
             accountPublicKeyService,
             resourceLocator
         );
-        genesisImporter.GENESIS_ACCOUNTS_JSON="data/genesisAccounts-testnet.json";        
+        genesisImporter.GENESIS_ACCOUNTS_JSON = "data/genesisAccounts-testnet.json";
         assertThrows(RuntimeException.class, () -> genesisImporter.importGenesisJson(false));
     }
 
@@ -446,7 +446,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
             accountPublicKeyService,
             resourceLocator
         );
-        genesisImporter.GENESIS_ACCOUNTS_JSON="data/genesisAccounts-testnet.json";        
+        genesisImporter.GENESIS_ACCOUNTS_JSON = "data/genesisAccounts-testnet.json";
         List<Map.Entry<String, Long>> result = genesisImporter.loadGenesisAccounts();
         assertNotNull(result);
         assertEquals(9, result.size()); // genesis is skipped
@@ -468,8 +468,8 @@ class GenesisImporterTest extends DbContainerBaseTest {
             accountPublicKeyService,
             resourceLocator
         );
-        genesisImporter.GENESIS_ACCOUNTS_JSON="data/genesisAccounts-testnet-MISSING-BALANCES.json";
-        
+        genesisImporter.GENESIS_ACCOUNTS_JSON = "data/genesisAccounts-testnet-MISSING-BALANCES.json";
+
         assertThrows(GenesisImportException.class, () -> genesisImporter.loadGenesisAccounts());
     }
 
@@ -498,7 +498,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
             accountPublicKeyService,
             resourceLocator
         );
-        genesisImporter.GENESIS_ACCOUNTS_JSON="data/genesisAccounts-testnet.json";  
+        genesisImporter.GENESIS_ACCOUNTS_JSON = "data/genesisAccounts-testnet.json";
         //WHEN
         final Executable executable =
             () -> genesisImporter.importGenesisJson(true);
@@ -540,7 +540,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
             accountPublicKeyService,
             resourceLocator
         );
-        genesisImporter.GENESIS_ACCOUNTS_JSON="data/genesisAccounts-testnet.json";  
+        genesisImporter.GENESIS_ACCOUNTS_JSON = "data/genesisAccounts-testnet.json";
         //WHEN
         final Executable executable =
             () -> genesisImporter.importGenesisJson(false);
@@ -573,7 +573,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
             accountPublicKeyService,
             resourceLocator
         );
-        genesisImporter.GENESIS_ACCOUNTS_JSON="data/genesisAccounts-testnet.json";  
+        genesisImporter.GENESIS_ACCOUNTS_JSON = "data/genesisAccounts-testnet.json";
         //WHEN
         final Executable executable = () -> genesisImporter.loadGenesisAccounts();
 

@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import java.nio.file.Path;
-
 /**
  * Extract db info such as blockchain height and actual path
  */

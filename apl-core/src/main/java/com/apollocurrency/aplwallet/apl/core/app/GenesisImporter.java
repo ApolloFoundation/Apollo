@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
@@ -18,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.utils.FilterCarriageReturnCharacterInputStream;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.env.config.ResourceLocator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -59,8 +59,8 @@ public class GenesisImporter {
     private static final String EPOCH_BEGINNING_JSON_FIELD_NAME = "epochBeginning";
     public static long CREATOR_ID;
     public static long EPOCH_BEGINNING;
-    public  String GENESIS_PARAMS_JSON="data"+File.separator+"genesisParameters.json";
-    public  String GENESIS_ACCOUNTS_JSON="data"+File.separator+"genesisAccounts.json";
+    public String GENESIS_PARAMS_JSON = "data" + File.separator + "genesisParameters.json";
+    public String GENESIS_ACCOUNTS_JSON = "data" + File.separator + "genesisAccounts.json";
     private final ApplicationJsonFactory jsonFactory;
     /**
      * Represents a total number of public keys in a genesisAccounts.json file.
@@ -112,7 +112,7 @@ public class GenesisImporter {
             propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
         this.accountGuaranteedBalanceTable = Objects.requireNonNull(accountGuaranteedBalanceTable, "accountGuaranteedBalanceTable is NULL");
         this.accountTable = Objects.requireNonNull(accountTable, "accountTable is NULL");
-        this.resourceLocator =  Objects.requireNonNull(resourceLocator);
+        this.resourceLocator = Objects.requireNonNull(resourceLocator);
 
     }
 
@@ -262,7 +262,7 @@ public class GenesisImporter {
         final int publicKeyNumber = saveGenesisPublicKeys();
 
         if (loadOnlyPublicKeys) {
-            log.debug("Public Keys were saved in {} s. The rest of GENESIS is skipped, shard info will be loaded...",
+            log.debug("Public Keys were saved in {} ms. The rest of GENESIS is skipped, shard info will be loaded...",
                 (System.currentTimeMillis() - start) / 1000);
             return;
         }

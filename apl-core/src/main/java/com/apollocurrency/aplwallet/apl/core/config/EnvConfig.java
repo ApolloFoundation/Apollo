@@ -12,7 +12,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class EnvConfig {
- 
+
     @Produces
     @Singleton
     public DirProvider dirProvider() {
@@ -30,7 +30,7 @@ public class EnvConfig {
     public ChainsConfigHolder chainsConfigHolder() {
         return new ChainsConfigHolder();
     }
-    
+
     @Produces
     @Singleton
     public PropertiesHolder propertiesHolder() {

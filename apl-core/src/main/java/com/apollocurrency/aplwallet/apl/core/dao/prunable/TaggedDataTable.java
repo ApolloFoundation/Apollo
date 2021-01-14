@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.dao.prunable;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.tagged.TaggedDataMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -153,13 +152,13 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
             @DatabaseSpecificDml(DmlMarker.MERGE)
             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
             PreparedStatement pstmt = con.prepareStatement("INSERT INTO tagged_data (id, account_id, `name`, description, tags, parsed_tags, "
-                + "`type`, channel, `data`, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) "
-                + "ON DUPLICATE KEY UPDATE id = VALUES(id), account_id = VALUES(account_id), `name` = VALUES(`name`), "
-                + "description = VALUES(description), tags = VALUES(tags), parsed_tags = VALUES(parsed_tags), "
-                + "`type` = VALUES(`type`), channel = VALUES(channel), `data` = VALUES(`data`), is_text = VALUES(is_text), "
-                + "filename = VALUES(filename), block_timestamp = VALUES(block_timestamp), "
-                + "transaction_timestamp = VALUES(transaction_timestamp), height = VALUES(height), latest = TRUE",
+                    + "`type`, channel, `data`, is_text, filename, block_timestamp, transaction_timestamp, height, latest) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) "
+                    + "ON DUPLICATE KEY UPDATE id = VALUES(id), account_id = VALUES(account_id), `name` = VALUES(`name`), "
+                    + "description = VALUES(description), tags = VALUES(tags), parsed_tags = VALUES(parsed_tags), "
+                    + "`type` = VALUES(`type`), channel = VALUES(channel), `data` = VALUES(`data`), is_text = VALUES(is_text), "
+                    + "filename = VALUES(filename), block_timestamp = VALUES(block_timestamp), "
+                    + "transaction_timestamp = VALUES(transaction_timestamp), height = VALUES(height), latest = TRUE",
                 Statement.RETURN_GENERATED_KEYS)
         ) {
             int i = 0;

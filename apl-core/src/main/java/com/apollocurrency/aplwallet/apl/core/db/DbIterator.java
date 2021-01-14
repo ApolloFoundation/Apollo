@@ -38,6 +38,7 @@ public final class DbIterator<T> implements Iterator<T>, Iterable<T>, AutoClosea
 
     /**
      * For unit tests only
+     *
      * @return empty db iterator
      */
     public static DbIterator EmptyDbIterator() {

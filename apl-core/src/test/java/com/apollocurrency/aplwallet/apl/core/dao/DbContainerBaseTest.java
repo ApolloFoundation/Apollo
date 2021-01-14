@@ -9,7 +9,7 @@ import org.testcontainers.junit.jupiter.Container;
 /**
  * An attempt to reuse existing container for multiple tests.
  */
- @Slf4j
+@Slf4j
 public abstract class DbContainerBaseTest {
 
     @Container
