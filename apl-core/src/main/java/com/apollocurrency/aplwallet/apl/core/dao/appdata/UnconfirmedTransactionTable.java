@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
@@ -18,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;

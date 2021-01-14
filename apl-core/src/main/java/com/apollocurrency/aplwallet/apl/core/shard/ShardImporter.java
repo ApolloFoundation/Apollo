@@ -30,7 +30,6 @@ import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -179,7 +178,8 @@ public class ShardImporter {
                         if (parsedTags != null) {
                             String[] tagArray = new String[0];
                             try {
-                                tagArray = mapper.readValue((String)parsedTags, new TypeReference<>() {});
+                                tagArray = mapper.readValue((String) parsedTags, new TypeReference<>() {
+                                });
                             } catch (JsonProcessingException e) {
                                 log.error("Parsing 'parsed_tags' error during CSV importing", e);
                                 throw new RuntimeException(e);

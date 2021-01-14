@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.appdata.funding;
 
-import java.util.List;
-
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.FundingMonitorInstance;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+
+import java.util.List;
 
 public interface FundingMonitorService {
     /**

@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.observer;
 
-import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
-
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
@@ -33,6 +31,8 @@ import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
 
 @Slf4j
 @Singleton

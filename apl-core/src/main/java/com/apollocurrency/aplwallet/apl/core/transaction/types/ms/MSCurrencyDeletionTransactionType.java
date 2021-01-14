@@ -3,7 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -14,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyDeletion;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;

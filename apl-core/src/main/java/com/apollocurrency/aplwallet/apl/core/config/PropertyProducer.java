@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.config;
 
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import javax.enterprise.inject.Produces;

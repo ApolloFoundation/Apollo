@@ -35,6 +35,7 @@ public interface ShardEngine {
      * Prepare shard engine before sharding process beginning
      */
     void prepare();
+
     /**
      * Create either 'initial' shard db with tables only or full schema with all indexes/constrains/PK/FK
      *

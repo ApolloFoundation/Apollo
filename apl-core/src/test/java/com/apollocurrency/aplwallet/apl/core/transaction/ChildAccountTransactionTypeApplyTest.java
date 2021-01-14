@@ -4,14 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
@@ -44,13 +41,17 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -70,7 +71,6 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTest
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Tag;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

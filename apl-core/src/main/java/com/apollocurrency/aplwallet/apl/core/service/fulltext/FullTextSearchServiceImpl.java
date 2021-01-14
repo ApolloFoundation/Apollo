@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
-import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
-
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -23,6 +21,8 @@ import java.sql.Statement;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
 
 @Slf4j
 @Singleton
@@ -244,12 +244,12 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                     DEFAULT_SCHEMA, tableName, Thread.currentThread().getName());
                 operationData.setOperationType(FullTextOperationData.OperationType.INSERT_UPDATE);
                 int i = 0;
-                Object dbId = rs.getObject(i+1); // put DB_ID value
-                operationData.setDbIdValue((BigInteger)dbId);
+                Object dbId = rs.getObject(i + 1); // put DB_ID value
+                operationData.setDbIdValue((BigInteger) dbId);
                 i++;
                 Iterator it = tableData.getIndexColumns().iterator();
                 while (it.hasNext()) {
-                    Object indexedColumnValue = rs.getObject(i+1); // value from table can be null here
+                    Object indexedColumnValue = rs.getObject(i + 1); // value from table can be null here
                     operationData.addColumnData(indexedColumnValue); // when it's null, we'll add "NULL" as data
                     it.next(); // move forward
                     i++;

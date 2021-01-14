@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDao;
@@ -25,11 +24,12 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValida
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ChildAccountAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -105,7 +105,7 @@ public class ChildAccountTransactionTypeTest {
         CHILD_2.setParentId(0L);
         CHILD_2.setMultiSig(false);
 
-        Convert2.init(blockchainConfig);
+        Convert2.init("APL", 1739068987193023818L);
 
         EcBlockData ecBlockData = new EcBlockData(ECBLOCK_ID, ECBLOCK_HEIGHT);
         when(blockchain.getECBlock(300)).thenReturn(ecBlockData);
@@ -357,7 +357,7 @@ public class ChildAccountTransactionTypeTest {
         when(chain.getChainId()).thenReturn(UUID.randomUUID());
         when(blockchainConfig.getChain()).thenReturn(chain);
         when(heightConfig.getMaxBalanceATM()).thenReturn(Long.MAX_VALUE);
-       when(blockchainConfig.isTransactionV2ActiveAtHeight(ECBLOCK_HEIGHT + 1)).thenReturn(true);
+        when(blockchainConfig.isTransactionV2ActiveAtHeight(ECBLOCK_HEIGHT + 1)).thenReturn(true);
         //WHEN
         try {
             txValidator.validateFully(tx);

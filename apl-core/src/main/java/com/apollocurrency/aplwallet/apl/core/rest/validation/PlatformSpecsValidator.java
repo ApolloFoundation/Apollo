@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.validation;
 
-import com.apollocurrency.aplwallet.apl.core.rest.provider.PlatformSpecs;
+import com.apollocurrency.aplwallet.apl.util.api.provider.PlatformSpecs;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;

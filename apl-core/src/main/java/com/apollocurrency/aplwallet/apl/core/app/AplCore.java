@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
@@ -55,6 +54,7 @@ import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -251,9 +251,6 @@ public final class AplCore {
             APIProxy.init();
 //            Generator.init();
             AddOns.init();
-            Helper2FA.init(databaseManager);
-            // do one time '2fa data' migration from db into files. That method is safe for multiple repeatable calls
-            Helper2FA.attemptMoveDataFromDatabase();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 70.1, "Apollo core classes initialization done");
             //signal to API that core is ready to serve requests. Should be removed as soon as all API will be on RestEasy
             ApiSplitFilter.isCoreReady = true;

@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 

@@ -1,13 +1,11 @@
 package com.apollocurrency.aplwallet.apl.core.rest;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
@@ -24,6 +22,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;

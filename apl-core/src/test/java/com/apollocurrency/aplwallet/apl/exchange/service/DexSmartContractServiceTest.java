@@ -1,29 +1,31 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
-import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
-import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
-import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.eth.contracts.DexContract;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
-import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.eth.web3j.ComparableStaticGasProvider;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexTransactionDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DepositedOrderDetails;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexTransaction;
-import com.apollocurrency.aplwallet.apl.exchange.model.EthChainGasInfoImpl;
-import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.EthStationGasInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.dex.core.dao.DexTransactionDao;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DepositedOrderDetails;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexTransaction;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
+import com.apollocurrency.aplwallet.apl.dex.eth.contracts.DexContract;
+import com.apollocurrency.aplwallet.apl.dex.eth.model.EthChainGasInfoImpl;
+import com.apollocurrency.aplwallet.apl.dex.eth.model.EthGasInfo;
+import com.apollocurrency.aplwallet.apl.dex.eth.model.EthStationGasInfo;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.DexBeanProducer;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.DexEthService;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.dex.eth.web3j.ComparableStaticGasProvider;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.vault.KeyStoreService;
+import com.apollocurrency.aplwallet.vault.model.AplWalletKey;
+import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
+import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -89,7 +91,7 @@ class DexSmartContractServiceTest {
     @Mock
     private DexBeanProducer dexBeanProducer;
     private DexSmartContractService service;
-    private EthWalletKey aliceWalletKey;
+    private Credentials walletCredentials;
     private WalletKeysInfo aliceWalletKeysInfo;
     private EthGasInfo gasInfo;
     private byte[] secretHash = new byte[32];
@@ -104,10 +106,10 @@ class DexSmartContractServiceTest {
         PropertiesHolder holder = new PropertiesHolder();
         holder.init(props);
         service = spy(new DexSmartContractService(holder, keyStoreService, dexEthService, ethereumWalletService, dexTransactionDao, dexBeanProducer, null));
-        aliceWalletKey = new EthWalletKey(Credentials.create(ECKeyPair.create(Crypto.getPrivateKey(Convert.parseHexString(ALICE_PRIV_KEY)))));
+        walletCredentials = Credentials.create(ECKeyPair.create(Crypto.getPrivateKey(Convert.parseHexString(ALICE_PRIV_KEY))));
         ApolloFbWallet apolloFbWallet = new ApolloFbWallet();
         apolloFbWallet.addAplKey(new AplWalletKey(Convert.parseHexString(ALICE_PRIV_KEY)));
-        apolloFbWallet.addEthKey(aliceWalletKey);
+        apolloFbWallet.addEthKey(new EthWalletKey(walletCredentials));
         aliceWalletKeysInfo = new WalletKeysInfo(apolloFbWallet, ALICE_PASS);
         gasInfo = new EthChainGasInfoImpl(100.5, 82.3, 53.9);
     }
@@ -147,7 +149,7 @@ class DexSmartContractServiceTest {
     void testDepositEth() throws ExecutionException, AplException.ExecutiveProcessException {
         doReturn(new EthStationGasInfo(25.0, 20.0, 18.0)).when(dexEthService).getEthPriceInfo();
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
-        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(25_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
+        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(25_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), walletCredentials);
         doReturn("hash").when(dexContract).deposit(BigInteger.valueOf(100), BigInteger.TEN);
 
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, BigInteger.TEN, null, DexCurrency.ETH);
@@ -159,7 +161,7 @@ class DexSmartContractServiceTest {
     void testDepositEthWithException() throws ExecutionException, AplException.ExecutiveProcessException {
         doReturn(new EthStationGasInfo(25.0, 20.0, 18.0)).when(dexEthService).getEthPriceInfo();
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
-        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(25_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
+        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(25_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), walletCredentials);
         doThrow(new RuntimeException()).when(dexContract).deposit(BigInteger.valueOf(100), BigInteger.TEN);
 
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, BigInteger.TEN, null, DexCurrency.ETH);
@@ -172,9 +174,9 @@ class DexSmartContractServiceTest {
         BigInteger amount = EthUtil.etherToWei(BigDecimal.ONE);
         doReturn(new EthStationGasInfo(25.0, 20.0, 18.0)).when(dexEthService).getEthPriceInfo();
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
-        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(25_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
+        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(25_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), walletCredentials);
         doReturn(BigInteger.ZERO).when(ethereumWalletService).getAllowance(SWAP_ETH_ADDRESS, ALICE_ETH_ADDRESS, PAX_ETH_ADDRESS);
-        doReturn("approve-hash").when(ethereumWalletService).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS, Constants.ETH_MAX_POS_INT);
+        doReturn("approve-hash").when(ethereumWalletService).sendApproveTransaction(walletCredentials, SWAP_ETH_ADDRESS, Constants.ETH_MAX_POS_INT);
         doReturn("hash").when(dexContract).deposit(BigInteger.valueOf(100), amount, PAX_ETH_ADDRESS);
 
         TransactionReceiptProcessor transactionReceiptProcessor = Mockito.mock(TransactionReceiptProcessor.class);
@@ -191,21 +193,21 @@ class DexSmartContractServiceTest {
         BigInteger amount = EthUtil.etherToWei(BigDecimal.ONE);
         doReturn(new EthStationGasInfo(25.0, 20.0, 18.0)).when(dexEthService).getEthPriceInfo();
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
-        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(25_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
+        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(25_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), walletCredentials);
         doReturn(amount).when(ethereumWalletService).getAllowance(SWAP_ETH_ADDRESS, ALICE_ETH_ADDRESS, PAX_ETH_ADDRESS);
         doReturn("hash").when(dexContract).deposit(BigInteger.valueOf(100), amount, PAX_ETH_ADDRESS);
 
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, amount, null, DexCurrency.PAX);
 
         assertEquals("hash", hash);
-        verify(ethereumWalletService, never()).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS, Constants.ETH_MAX_POS_INT);
+        verify(ethereumWalletService, never()).sendApproveTransaction(walletCredentials, SWAP_ETH_ADDRESS, Constants.ETH_MAX_POS_INT);
     }
 
     @Test
     void testDepositEthWithoutGasPrice() throws ExecutionException, AplException.ExecutiveProcessException, IOException {
         BigInteger amount = BigInteger.valueOf(150_000_000_000_000L);
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
-        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(27_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
+        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(27_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), walletCredentials);
         doReturn("hash").when(dexContract).deposit(BigInteger.valueOf(100), amount);
 
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, amount, 27L, DexCurrency.ETH);
@@ -223,7 +225,7 @@ class DexSmartContractServiceTest {
         assertThrows(RuntimeException.class, () -> service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, amount, 10L, DexCurrency.PAX));
 
         verifyNoInteractions(dexContract);
-        verify(ethereumWalletService, never()).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS, Constants.ETH_MAX_POS_INT);
+        verify(ethereumWalletService, never()).sendApproveTransaction(walletCredentials, SWAP_ETH_ADDRESS, Constants.ETH_MAX_POS_INT);
     }
 
     @Test
@@ -233,7 +235,7 @@ class DexSmartContractServiceTest {
         assertThrows(UnsupportedOperationException.class, () -> service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, BigInteger.TEN, 10L, DexCurrency.APL));
 
         verifyNoInteractions(dexContract);
-        verify(ethereumWalletService, never()).sendApproveTransaction(aliceWalletKey, SWAP_ETH_ADDRESS, Constants.ETH_MAX_POS_INT);
+        verify(ethereumWalletService, never()).sendApproveTransaction(walletCredentials, SWAP_ETH_ADDRESS, Constants.ETH_MAX_POS_INT);
     }
 
     @Test
@@ -289,7 +291,7 @@ class DexSmartContractServiceTest {
         doReturn(Optional.ofNullable(responseReceipt)).when(service).getTxReceipt(Numeric.toHexString(new byte[32]));
         doReturn("0x0").when(responseReceipt).getStatus();
 
-        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(27_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
+        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(27_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), walletCredentials);
         doReturn("hash").when(dexContract).deposit(BigInteger.valueOf(100), BigInteger.TEN);
 
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, BigInteger.TEN, 27L, DexCurrency.ETH);
@@ -345,7 +347,7 @@ class DexSmartContractServiceTest {
     void testDepositWhenStoredPreviousTxIsIncorrect() throws IOException, AplException.ExecutiveProcessException {
         DexTransaction tx = new DexTransaction(1L, new byte[32], new byte[32], DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 150);
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
-        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(10_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
+        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(10_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.DEPOSIT, "100", ALICE_ETH_ADDRESS, 0), walletCredentials);
         doReturn("hash").when(dexContract).deposit(BigInteger.valueOf(100), BigInteger.TEN);
         doReturn(tx).when(dexTransactionDao).get(tx.getParams(), tx.getAccount(), tx.getOperation());
         String empty32Bytes = Numeric.toHexString(new byte[32]);
@@ -363,7 +365,7 @@ class DexSmartContractServiceTest {
     void testRefund() throws ExecutionException, AplException.ExecutiveProcessException {
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
         doReturn(gasInfo).when(dexEthService).getEthPriceInfo();
-        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(100_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.REFUND, empty32EncodedBytes, ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
+        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(100_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.REFUND, empty32EncodedBytes, ALICE_ETH_ADDRESS, 0), walletCredentials);
         doReturn("hash").when(dexContract).refundAndWithdraw(secretHash, true);
 
         boolean r = service.refundAndWithdraw(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true) != null;
@@ -375,7 +377,7 @@ class DexSmartContractServiceTest {
     void testNotSuccessfulRefund() throws ExecutionException, AplException.ExecutiveProcessException {
         doReturn(aliceWalletKeysInfo).when(keyStoreService).getWalletKeysInfo(ALICE_PASS, ALICE_ID);
         doReturn(gasInfo).when(dexEthService).getEthPriceInfo();
-        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(100_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.REFUND, empty32EncodedBytes, ALICE_ETH_ADDRESS, 0), aliceWalletKey.getCredentials());
+        doReturn(dexContract).when(service).createDexContract(new ComparableStaticGasProvider(BigInteger.valueOf(100_000_000_000L), BigInteger.valueOf(400_000)), new DexTransaction(null, null, null, DexTransaction.Op.REFUND, empty32EncodedBytes, ALICE_ETH_ADDRESS, 0), walletCredentials);
 
         boolean r = service.refundAndWithdraw(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true) != null;
 

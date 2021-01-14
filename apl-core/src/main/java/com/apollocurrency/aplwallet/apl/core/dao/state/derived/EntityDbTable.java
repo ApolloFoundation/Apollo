@@ -34,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
-import lombok.Getter;
 import org.slf4j.Logger;
 
 import javax.enterprise.event.Event;

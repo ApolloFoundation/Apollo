@@ -4,16 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
-import com.apollocurrency.aplwallet.api.dto.Status2FA;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TwoFactorAuthServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.api.dto.auth.Status2FA;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
-import com.apollocurrency.aplwallet.apl.testutil.TwoFactorAuthUtil;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthEntity;
+import com.apollocurrency.aplwallet.vault.service.auth.TwoFactorAuthRepository;
+import com.apollocurrency.aplwallet.vault.service.auth.TwoFactorAuthService;
+import com.apollocurrency.aplwallet.vault.service.auth.TwoFactorAuthServiceImpl;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -39,14 +38,12 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 public class TwoFactorAuthServiceTest {
     @Mock
-    private TwoFactorAuthRepository repository;
-    @Mock
     private TwoFactorAuthRepository targetFileRepository;
     private TwoFactorAuthService service;
 
     @BeforeEach
     public void setUp() throws Exception {
-        service = new TwoFactorAuthServiceImpl(repository, "test", targetFileRepository);
+        service = new TwoFactorAuthServiceImpl("test", targetFileRepository);
     }
 
     @Test
@@ -55,7 +52,7 @@ public class TwoFactorAuthServiceTest {
         initConfigPrefix();
         doReturn(true).when(targetFileRepository).add(any(TwoFactorAuthEntity.class));
         TwoFactorAuthDetails twoFactorAuthDetails = service.enable(td.NEW_ENTITY.getAccount());
-        TwoFactorAuthUtil.verifySecretCode(twoFactorAuthDetails, Convert2.defaultRsAccount(td.NEW_ENTITY.getAccount()));
+        verifySecretCode(twoFactorAuthDetails, Convert2.defaultRsAccount(td.NEW_ENTITY.getAccount()));
         assertEquals(Status2FA.OK, twoFactorAuthDetails.getStatus2Fa());
         verify(targetFileRepository, times(1)).add(any(TwoFactorAuthEntity.class));
     }
@@ -77,7 +74,7 @@ public class TwoFactorAuthServiceTest {
         doReturn(td.ENTITY2).when(targetFileRepository).get(td.ACC_2.getId());
 
         TwoFactorAuthDetails details = service.enable(td.ACC_2.getId());
-        TwoFactorAuthUtil.verifySecretCode(details, Convert2.defaultRsAccount(td.ACC_2.getId()));
+        verifySecretCode(details, Convert2.defaultRsAccount(td.ACC_2.getId()));
         assertEquals(td.ACCOUNT2_2FA_SECRET_BASE32, details.getSecret());
     }
 
@@ -146,7 +143,7 @@ public class TwoFactorAuthServiceTest {
         TwoFactorAuthTestData td = new TwoFactorAuthTestData();
         doReturn(td.ENTITY1).when(targetFileRepository).get(td.ACC_1.getId());
 
-        boolean authenticated = TwoFactorAuthUtil.tryAuth(service, td.ACC_1.getId(), td.ACCOUNT1_2FA_SECRET_BASE32, MAX_2FA_ATTEMPTS);
+        boolean authenticated = tryAuth(service, td.ACC_1.getId(), td.ACCOUNT1_2FA_SECRET_BASE32, MAX_2FA_ATTEMPTS);
         verify(targetFileRepository, atMost(MAX_2FA_ATTEMPTS)).get(td.ACC_1.getId());
 
         assertTrue(authenticated);
@@ -222,8 +219,25 @@ public class TwoFactorAuthServiceTest {
     }
 
     private void initConfigPrefix() {
-        BlockchainConfig config = mock(BlockchainConfig.class);
-        doReturn("APL").when(config).getAccountPrefix();
-        Convert2.init(config);
+        Convert2.init("APL", 1739068987193023818L);
+    }
+
+
+    private static void verifySecretCode(TwoFactorAuthDetails details, String accountRS) {
+        Assertions.assertTrue(details.getQrCodeUrl().contains(details.getSecret()));
+        Assertions.assertTrue(details.getQrCodeUrl().startsWith(TimeBasedOneTimePasswordUtil.qrImageUrl(accountRS,
+            details.getSecret())));
+    }
+
+    private boolean tryAuth(TwoFactorAuthService service, long account, String secret, int maxAttempts) throws GeneralSecurityException {
+        // TimeBased code sometimes expire before calling tryAuth method, which will generate another code
+        for (int i = 0; i < maxAttempts; i++) {
+            int currentNumber = (int) TimeBasedOneTimePasswordUtil.generateCurrentNumber(secret);
+            Status2FA status2FA = service.tryAuth(account, currentNumber);
+            if (status2FA == Status2FA.OK) {
+                return true;
+            }
+        }
+        return false;
     }
 }
