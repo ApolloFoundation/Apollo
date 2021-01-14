@@ -30,8 +30,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
@@ -65,14 +63,6 @@ class TransactionDaoTest extends DbContainerBaseTest {
 
     private TransactionDao dao;
     private TransactionTestData td;
-
-    private Path createPath(String fileName) {
-        try {
-            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-        } catch (IOException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
 
     @BeforeEach
     void setUp() {

@@ -1,5 +1,5 @@
-id(-5|20|0)       ,seller_id(-5|20|0),name(12|1020|0),description(12|4000|0)     ,parsed_tags(-1|-1|0),has_image(-7|1|0),tags(12|4000|0),TIMESTAMP(4|11|0),quantity(4|11|0),price(-5|20|0),delisted(-7|1|0),height(4|11|0)
-350597963087434976,200               ,'Some product' ,'Some product Some product','[\"product\",\"some\",\"ptd\",\"test\"]',1,'product some ptd test',41814871,2,100000000000,0,541839
+id(-5|20|0),seller_id(-5|20|0),name(12|1020|0),description(12|4000|0),parsed_tags(-1|-1|0),has_image(-7|1|0),tags(12|4000|0),TIMESTAMP(4|11|0),quantity(4|11|0),price(-5|20|0),delisted(-7|1|0),height(4|11|0)
+350597963087434976,200,'Some product','Some product Some product','[\"product\",\"some\",\"ptd\",\"test\"]',1,'product some ptd test',41814871,2,100000000000,0,541839
 350597963087434976,200,'Some product','Some product Some product','[\"product\",\"some\",\"ptd\",\"test\"]',1,'product some ptd test',41814871,1,100000000000,0,541867
 350597963087434976,200,'Some product','Some product Some product','[\"product\",\"some\",\"ptd\",\"test\"]',1,'product some ptd test',41814871,0,100000000000,0,541874
 -1443882373390424300,9211698109297098287,'Test product','Test','[\"tag\"]',1,'tag',41816306,1,100000000,0,541986
