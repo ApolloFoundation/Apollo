@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadin
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;

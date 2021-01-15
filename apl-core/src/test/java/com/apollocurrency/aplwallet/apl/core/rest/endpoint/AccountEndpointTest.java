@@ -13,7 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverte
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
@@ -35,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.vault.KeyStoreService;
+import com.apollocurrency.aplwallet.vault.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.apollocurrency.aplwallet.vault.service.auth.TwoFactorAuthService;
 import com.apollocurrency.aplwallet.vault.service.auth.TwoFactorAuthServiceImpl;

@@ -23,7 +23,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConve
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
@@ -38,10 +37,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAs
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.apollocurrency.aplwallet.vault.util.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.vault.util.AccountHelper;
@@ -388,7 +388,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-        doReturn(KeyStoreService.Status.OK).when(account2FAService).deleteAccount(twoFactorAuthParameters);
+        doReturn(KMSResponseStatus.OK).when(account2FAService).deleteAccount(twoFactorAuthParameters);
         check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
         verify(account2FAService, times(1)).deleteAccount(twoFactorAuthParameters);
     }

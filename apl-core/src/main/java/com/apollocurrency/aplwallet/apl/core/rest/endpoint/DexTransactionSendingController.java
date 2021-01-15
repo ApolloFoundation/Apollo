@@ -450,7 +450,8 @@ public class DexTransactionSendingController {
     private AccountDetails getAndVerifyAccount(String accountString, String passphrase, int code2FA) throws ParameterException {
         Account account = HttpParameterParserUtil.getAccount(accountString, "sender");
         String decryptedPassphrase = HttpParameterParserUtil.getPassphrase(passphrase, true);
-        validator.validateVaultAccount(account.getId(), passphrase);
+        validator.validateVaultAccount(account.getId());
+
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(account.getId(), passphrase, null);
         twoFactorAuthParameters.setCode2FA(code2FA);
         account2FAService.verify2FA(twoFactorAuthParameters);

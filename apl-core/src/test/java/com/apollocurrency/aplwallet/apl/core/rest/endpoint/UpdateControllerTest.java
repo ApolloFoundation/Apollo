@@ -18,22 +18,16 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV2Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateV2TransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
-import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.api.provider.ByteArrayConverterProvider;
-import com.apollocurrency.aplwallet.apl.util.api.provider.PlatformSpecConverterProvider;
-import com.apollocurrency.aplwallet.apl.util.env.Arch;
-import com.apollocurrency.aplwallet.apl.util.env.OS;
-import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
+import com.apollocurrency.aplwallet.apl.util.api.converter.ByteArrayConverterProvider;
+import com.apollocurrency.aplwallet.apl.util.api.converter.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
-import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.vault.service.KMSv1;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,10 +39,8 @@ import org.skyscreamer.jsonassert.JSONCompareMode;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -67,8 +59,6 @@ class UpdateControllerTest extends AbstractEndpointTest {
     @Mock
     TransactionValidator validator;
     @Mock
-    TransactionSigner transactionSigner;
-    @Mock
     TimeService timeService;
     @Mock
     TransactionProcessor processor;
@@ -77,13 +67,11 @@ class UpdateControllerTest extends AbstractEndpointTest {
     @Mock
     AccountService accountService;
     @Mock
-    KeyStoreService keystoreService = mock(KeyStoreService.class);
+    KMSv1 kmSv1 = mock(KMSv1.class);
     @Mock
     BlockchainConfig blockchainConfig;
 
     UpdateV2TransactionType v2Transaction;
-
-    UpdateV2Attachment attachment = new UpdateV2Attachment("https://test.com", Level.CRITICAL, new Version("1.23.4"), "https://con.com", BigInteger.ONE, Convert.parseHexString("111100ff"), Set.of(new PlatformSpec(OS.WINDOWS, Arch.X86_64), new PlatformSpec(OS.NO_OS, Arch.ARM_64)));
 
     @Override
     @BeforeEach
@@ -97,7 +85,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
             .register(ByteArrayConverterProvider.class)
             .register(LegacyParameterExceptionMapper.class)
             .register(PlatformSpecConverterProvider.class);
-        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, keystoreService, elGamal), transactionCreator, converter, blockchainConfig);
+        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, elGamal, kmSv1), transactionCreator, converter, blockchainConfig);
         dispatcher.getRegistry().addSingletonResource(updateController);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
     }
@@ -138,7 +126,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
         ApolloFbWallet wallet = mock(ApolloFbWallet.class);
         doReturn(Convert.toHexString(Crypto.getKeySeed(Convert.toBytes(SECRET)))).when(wallet).getAplKeySecret();
-        doReturn(wallet).when(keystoreService).getSecretStore(SECRET, ACCOUNT_ID_WITH_SECRET);
+        doReturn(wallet.getAplKeySecret()).when(kmSv1).getAplKeySeed(ACCOUNT_ID_WITH_SECRET, SECRET);
         doReturn(sender).when(accountService).getAccount(Convert.parseHexString(PUBLIC_KEY_SECRET));
         EcBlockData ecBlockData = new EcBlockData(121, 100_000);
         doReturn(ecBlockData).when(blockchain).getECBlock(0);

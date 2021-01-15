@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.apl.util.service.PassphraseGeneratorImpl;
 import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.vault.util.AccountHelper;
@@ -180,7 +181,7 @@ public class Account2FAService {
         return service2FA.isEnabled(accountId);
     }
 
-    public KeyStoreService.Status deleteAccount(long accountId, String passphrase, Integer code) throws RestParameterException {
+    public KMSResponseStatus deleteAccount(long accountId, String passphrase, Integer code) throws RestParameterException {
         if (isEnabled2FA(accountId)) {
             if (code == null) {
                 throw new RestParameterException(ApiErrors.MISSING_PARAM, "code2FA");
@@ -188,12 +189,12 @@ public class Account2FAService {
             Status2FA status2FA = disable2FA(accountId, passphrase, code);
             validate2FAStatus(status2FA, accountId);
         }
-        KeyStoreService.Status status = keyStoreService.deleteKeyStore(passphrase, accountId);
+        KMSResponseStatus status = keyStoreService.deleteKeyStore(passphrase, accountId);
         validateKeyStoreStatus(accountId, status, "deleted");
         return status;
     }
 
-    public KeyStoreService.Status deleteAccount(TwoFactorAuthParameters twoFactorAuthParameters) throws RestParameterException {
+    public KMSResponseStatus deleteAccount(TwoFactorAuthParameters twoFactorAuthParameters) throws RestParameterException {
         return deleteAccount(twoFactorAuthParameters.getAccountId(), twoFactorAuthParameters.getPassphrase(), twoFactorAuthParameters.getCode2FA());
     }
 
@@ -222,7 +223,7 @@ public class Account2FAService {
 
         long aplId = apolloWallet.getAplWalletKey().getId();
 
-        KeyStoreService.Status status = keyStoreService.saveSecretKeyStore(passphrase, aplId, apolloWallet);
+        KMSResponseStatus status = keyStoreService.saveSecretKeyStore(passphrase, aplId, apolloWallet);
         validateKeyStoreStatus(aplId, status, "generated");
 
         WalletKeysInfo walletKeyInfo = new WalletKeysInfo(apolloWallet, passphrase);
@@ -238,8 +239,8 @@ public class Account2FAService {
         }
     }
 
-    private void validateKeyStoreStatus(long accountId, KeyStoreService.Status status, String notPerformedAction) {
-        if (status != KeyStoreService.Status.OK) {
+    private void validateKeyStoreStatus(long accountId, KMSResponseStatus status, String notPerformedAction) {
+        if (status != KMSResponseStatus.OK) {
             log.debug("Vault wallet not " + notPerformedAction + " {} - {}", Convert2.rsAccount(accountId), status);
             throw new RestParameterException(ApiErrors.ACCOUNT_2FA_ERROR, String.format("Vault wallet for account was not %s : %s", notPerformedAction, status.message));
         }

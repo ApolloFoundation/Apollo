@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import com.apollocurrency.aplwallet.api.dto.account.WalletKeysInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.auth.Status2FA;
 import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -7,19 +8,17 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.ExportKeyStore;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
-import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.vault.KeyStoreService;
-import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
+import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.service.KMSv1;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
-import com.apollocurrency.aplwallet.vault.util.FbWalletUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -35,7 +34,7 @@ import org.web3j.crypto.Wallet;
 import org.web3j.crypto.WalletFile;
 
 import javax.annotation.security.PermitAll;
-import javax.enterprise.inject.spi.CDI;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -56,12 +55,21 @@ import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 @Singleton
 public class KeyStoreController {
 
-    private final KeyStoreService keyStoreService = CDI.current().select(KeyStoreService.class).get();
-    private PropertiesHolder propertiesLoader = CDI.current().select(PropertiesHolder.class).get();
-    private SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
-    private Account2FAService account2FAService = CDI.current().select(Account2FAService.class).get();
-    private Integer maxKeyStoreSize = propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize");
+    private KeyStoreService keyStoreService;
+    private KMSv1 kmSv1;
+    private SecureStorageService secureStorageService;
+    private Account2FAService account2FAService;
+    private Integer maxKeyStoreSize;
 
+    @Inject
+    public KeyStoreController(KeyStoreService keyStoreService, KMSv1 kmSv1, SecureStorageService secureStorageService,
+                              Account2FAService account2FAService, Integer maxKeyStoreSize) {
+        this.keyStoreService = keyStoreService;
+        this.kmSv1 = kmSv1;
+        this.secureStorageService = secureStorageService;
+        this.account2FAService = account2FAService;
+        this.maxKeyStoreSize = maxKeyStoreSize;
+    }
 
     @POST
     @Path("/accountInfo")
@@ -80,7 +88,7 @@ public class KeyStoreController {
         String passphraseStr = HttpParameterParserUtil.getPassphrase(passphraseReq, true);
         long accountId = HttpParameterParserUtil.getAccountId(account, "account", true);
 
-        if (!keyStoreService.isKeyStoreForAccountExist(accountId)) {
+        if (!kmSv1.isWalletExist(accountId)) {
             return Response.status(Response.Status.OK)
                 .entity(JSON.toString(
                     JSONResponses.vaultWalletError(accountId,
@@ -89,16 +97,19 @@ public class KeyStoreController {
                 ).build();
         }
 
-        WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphraseStr, accountId);
-        if (keyStore == null) {
-            return ResponseBuilder.apiError(ApiErrors.INCORRECT_PARAM, "passphrase", "account: " + Convert2.defaultRsAccount(accountId)).build();
+        WalletKeysInfoDTO keyStoreInfo = kmSv1.getWalletInfo(accountId, passphraseStr);
+
+        if(keyStoreInfo == null){
+            return Response.status(Response.Status.OK)
+                .entity(JSON.toString(
+                    JSONResponses.vaultWalletError(0, "import",
+                        "KeyStore or passPhrase is not valid.")
+                    )
+                ).build();
         }
-        keyStore.setPassphrase(null);
 
-        secureStorageService.addUserPassPhrase(accountId, passphraseStr);
-
-        Response.ResponseBuilder response = Response.ok(keyStore.toJSON_v2());
-        return response.build();
+         secureStorageService.addUserPassPhrase(accountId, passphraseStr);
+         return Response.ok(keyStoreInfo).build();
     }
 
 
@@ -123,7 +134,6 @@ public class KeyStoreController {
 
         byte[] keyStore = null;
         String passPhrase = null;
-        ApolloFbWallet fbWallet;
 
         try {
             ServletFileUpload upload = new ServletFileUpload();
@@ -156,18 +166,7 @@ public class KeyStoreController {
                     ).build();
             }
 
-            fbWallet = FbWalletUtil.buildWallet(keyStore, passPhrase);
-
-            if (fbWallet == null) {
-                return Response.status(Response.Status.OK)
-                    .entity(JSON.toString(
-                        JSONResponses.vaultWalletError(0, "import",
-                            "KeyStore or passPhrase is not valid.")
-                        )
-                    ).build();
-            }
-
-            KeyStoreService.Status status = keyStoreService.saveSecretKeyStore(passPhrase, fbWallet);
+            KMSResponseStatus status = kmSv1.storeWallet(keyStore, passPhrase);
 
             if (status.isOK()) {
                 return Response.status(200).build();

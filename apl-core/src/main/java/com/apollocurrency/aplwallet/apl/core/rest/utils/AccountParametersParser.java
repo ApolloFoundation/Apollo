@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.rest.utils;
 
-import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -10,23 +9,14 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
-import com.apollocurrency.aplwallet.vault.KeyStoreService;
-import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
-import org.jboss.resteasy.core.interception.jaxrs.PostMatchContainerRequestContext;
-import org.jboss.resteasy.spi.HttpRequest;
+import com.apollocurrency.aplwallet.vault.service.KMSv1;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.MultivaluedMap;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.INCORRECT_VALUE;
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.MISSING_PARAM_LIST;
-import static com.apollocurrency.aplwallet.vault.service.auth.Account2FAService.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
 
 @Singleton
 public class AccountParametersParser {
@@ -39,21 +29,13 @@ public class AccountParametersParser {
 
     private final ElGamalEncryptor elGamal;
     private final AccountService accountService;
-    private final KeyStoreService keyStoreService;
+    private final KMSv1 kmSv1;
 
     @Inject
-    public AccountParametersParser(AccountService accountService, KeyStoreService keyStoreService, ElGamalEncryptor elGamalEncryptor) {
+    public AccountParametersParser(AccountService accountService, ElGamalEncryptor elGamalEncryptor, KMSv1 kmSv1) {
         this.elGamal = elGamalEncryptor;
         this.accountService = accountService;
-        this.keyStoreService = keyStoreService;
-    }
-
-    public static TwoFactorAuthParameters get2FARequestAttribute(org.jboss.resteasy.spi.HttpRequest request) {
-        TwoFactorAuthParameters params2FA = (TwoFactorAuthParameters) request.getAttribute(TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME);
-        if (params2FA == null) {
-            throw new RestParameterException(ApiErrors.INTERNAL_SERVER_EXCEPTION, "Can't locate the 2FA request attribute.");
-        }
-        return params2FA;
+        this.kmSv1 = kmSv1;
     }
 
     public static long getAccountId(HttpServletRequest req, boolean isMandatory) {
@@ -94,19 +76,11 @@ public class AccountParametersParser {
         return parameter;
     }
 
-    public Map<String, String> parseRequestParameters(ContainerRequestContext requestContext, String... params) {
-        Map<String, String> parsedParams = new HashMap<>();
-        HttpRequest httpRequest = ((PostMatchContainerRequestContext) requestContext).getHttpRequest();
-        MultivaluedMap<String, String> requestParams = httpRequest.getDecodedFormParameters();
-        requestParams.putAll(requestContext.getUriInfo().getQueryParameters(true));
-        Arrays.stream(params).forEach(p -> parsedParams.put(p, requestParams.getFirst(p)));
-        return parsedParams;
-    }
-
     public byte[] getKeySeed(HttpServletRequest req, long senderId, boolean isMandatory) {
         byte[] secretBytes = getSecretBytes(req, senderId, isMandatory);
         return secretBytes == null ? null : Crypto.getKeySeed(secretBytes);
     }
+
 
     public byte[] getSecretBytes(HttpServletRequest req, long senderId, boolean isMandatory) {
         String secretPhrase = getSecretPhrase(req, false);
@@ -123,14 +97,15 @@ public class AccountParametersParser {
         return null;
     }
 
-    public byte[] getKeySeed(String passphrase, long accountId) {
-        ApolloFbWallet fbWallet = keyStoreService.getSecretStore(passphrase, accountId);
 
-        if (fbWallet == null) {
+    private byte[] getKeySeed(String passphrase, long accountId) {
+        String seed = kmSv1.getAplKeySeed(accountId, passphrase);
+
+        if (seed == null) {
             throw new RestParameterException(ApiErrors.BAD_CREDENTIALS, " account id or passphrase are not valid");
         }
 
-        return Convert.parseHexString(fbWallet.getAplKeySecret());
+        return Convert.parseHexString(seed);
     }
 
     public Account getSenderAccount(HttpServletRequest req, String accountName) {
@@ -198,6 +173,7 @@ public class AccountParametersParser {
                             throw new RestParameterException(ApiErrors.MISSING_PARAM_LIST, secretPhraseParam + "," + publicKeyParam + "," + passphraseParam);
                         }
                     } else {
+
                         byte[] keySeed = getKeySeed(passphrase, accountId);
                         return Crypto.getPublicKey(keySeed);
                     }

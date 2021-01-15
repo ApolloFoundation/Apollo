@@ -9,9 +9,7 @@ import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.vault.KeyStoreService;
-import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
-import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.service.KMSv1;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -20,13 +18,13 @@ import java.math.BigInteger;
 @Singleton
 public class DexApiValidator {
     private final EthereumWalletService walletService;
-    private final KeyStoreService keyStoreService;
+    private final KMSv1 kmSv1;
     private final AccountService accountService;
 
     @Inject
-    public DexApiValidator(EthereumWalletService walletService, KeyStoreService keyStoreService, AccountService accountService) {
+    public DexApiValidator(EthereumWalletService walletService, KMSv1 kmSv1, AccountService accountService) {
         this.walletService = walletService;
-        this.keyStoreService = keyStoreService;
+        this.kmSv1 = kmSv1;
         this.accountService = accountService;
     }
 
@@ -48,7 +46,6 @@ public class DexApiValidator {
     }
 
     public void validateEthAccountForDeposit(long account, String passphrase, String walletAddress, BigInteger amountWei, DexCurrency currency) throws ParameterException {
-        validateVaultAccount(account, passphrase);
         validateEthAccount(account, passphrase, walletAddress);
         validateEthPaxAccountBalance(amountWei, walletAddress, currency);
     }
@@ -61,24 +58,22 @@ public class DexApiValidator {
         }
     }
 
-    public void validateVaultAccount(long sender, String passphrase) throws ParameterException {
-        WalletKeysInfo walletKeysInfo = keyStoreService.getWalletKeysInfo(passphrase, sender);
-        if (walletKeysInfo == null) {
+    public void validateVaultAccount(long sender) throws ParameterException {
+        if (!kmSv1.isWalletExist(sender)) {
             throw new ParameterException(JSONResponses.incorrect("account or passphrase", "Bad credentials"));
         }
     }
 
     public void validateEthAccount(long sender, String passphrase, String ethWalletAddress) throws ParameterException {
-        WalletKeysInfo walletKeysInfo = keyStoreService.getWalletKeysInfo(passphrase, sender);
-        EthWalletKey ethWallet = walletKeysInfo.getEthWalletForAddress(ethWalletAddress);
-        if (ethWallet == null) {
+        validateVaultAccount(sender);
+        if (kmSv1.isEthKeyExist(sender, passphrase, ethWalletAddress)) {
             throw new ParameterException(JSONResponses.incorrect(DexApiConstants.WALLET_ADDRESS, "Account  does not own the specified eth address"));
         }
     }
 
     public void validateParametersForOrderTransaction(long sender, String passphrase, OrderType orderType, long orderAmountGwei, long pairRateGwei, String walletAddress, DexCurrency currency) throws ParameterException {
         validatePairedCurrency(currency);
-        validateVaultAccount(sender, passphrase);
+        validateVaultAccount(sender);
 
         validateOrderAccountBalance(sender, passphrase, orderType, orderAmountGwei, pairRateGwei, walletAddress, currency);
 

@@ -34,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverte
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
@@ -59,9 +58,10 @@ import com.apollocurrency.aplwallet.apl.util.api.parameter.LongParameter;
 import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
-import com.apollocurrency.aplwallet.vault.KeyStoreService;
+import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -630,7 +630,7 @@ public class AccountController {
         ResponseBuilder response = ResponseBuilder.startTiming();
         TwoFactorAuthParameters params2FA = RestParametersParser.get2FARequestAttribute(request);
 
-        KeyStoreService.Status status = account2FAService.deleteAccount(params2FA);
+        KMSResponseStatus status = account2FAService.deleteAccount(params2FA);
 
         AccountKeyDTO dto = new AccountKeyDTO(Long.toUnsignedString(params2FA.getAccountId()),
             Convert2.rsAccount(params2FA.getAccountId()),
