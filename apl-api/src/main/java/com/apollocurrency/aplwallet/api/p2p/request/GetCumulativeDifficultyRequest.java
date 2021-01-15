@@ -12,10 +12,10 @@ import java.util.UUID;
 @Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GetCumulativeDifficultyRequest extends BaseP2PRequest {
-    private static final String requestType = "getCumulativeDifficulty";
+    private static final String REQUEST_TYPE = "getCumulativeDifficulty";
 
     public GetCumulativeDifficultyRequest(UUID chainId) {
-        super(requestType, chainId);
+        super(REQUEST_TYPE, chainId);
     }
 
 }
