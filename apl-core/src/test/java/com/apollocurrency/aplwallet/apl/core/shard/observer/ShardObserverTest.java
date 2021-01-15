@@ -92,7 +92,7 @@ public class ShardObserverTest {
         // prepare tes data
         Shard shard = mock(Shard.class);
         doReturn(latestShardHeight).when(shard).getShardHeight();
-        doReturn(shard).when(shardService).getLastShard();
+        doReturn(shard).when(shardService).getLastCompletedOrArchivedShard();
         Block block = td.BLOCK_1;
         block.setHeight(currentBlockHeight);
         blockchainConfigUpdater.onBlockPopped(block); // simulate setting 'current' and 'previous' config
@@ -174,7 +174,7 @@ public class ShardObserverTest {
         // prepare tes data
         Shard shard = mock(Shard.class);
         doReturn(latestShardHeight).when(shard).getShardHeight();
-        doReturn(shard).when(shardService).getLastShard();
+        doReturn(shard).when(shardService).getLastCompletedOrArchivedShard();
         Block block = td.BLOCK_1;
         block.setHeight(currentBlockHeight);
         blockchainConfigUpdater.onBlockPopped(block); // simulate setting 'current' and 'previous' config
@@ -219,7 +219,7 @@ public class ShardObserverTest {
         // prepare tes data
         Shard shard = mock(Shard.class);
         doReturn(latestShardHeight).when(shard).getShardHeight();
-        doReturn(shard).when(shardService).getLastShard();
+        doReturn(shard).when(shardService).getLastCompletedOrArchivedShard();
         Block block = td.BLOCK_1;
         block.setHeight(currentBlockHeight);
         blockchainConfigUpdater.onBlockPopped(block); // simulate setting 'current' and 'previous' config
@@ -242,8 +242,10 @@ public class ShardObserverTest {
             // 4. isShardingCalled - check if sharding was really executed
             // 5. mocked random Value - simulate random divergence
             arguments(0, 2247000, 0, false, 323),
+            arguments(0, 2247001, 0, false, 323),
             arguments(0, 2271324, 2250000, true, 323),
-            arguments(0, 2271217, 2250000, true, 216)
+            arguments(0, 2271217, 2250000, true, 216),
+            arguments(0, 2271060, 2250000, true, 59)
         );
     }
 
@@ -259,7 +261,7 @@ public class ShardObserverTest {
         // prepare tes data
         Shard shard = mock(Shard.class);
         doReturn(latestShardHeight).when(shard).getShardHeight();
-        doReturn(shard).when(shardService).getLastShard();
+        doReturn(shard).when(shardService).getLastCompletedOrArchivedShard();
         Block block = td.BLOCK_1;
         block.setHeight(currentBlockHeight);
         blockchainConfigUpdater.onBlockPopped(block); // simulate setting 'current' and 'previous' config
