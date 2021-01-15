@@ -117,7 +117,7 @@ public abstract class UpdateAttachment extends AbstractAttachment {
 
     @Override
     public void putMyJSON(JSONObject attachment) {
-        attachment.put("os", os.getCompatibleName());
+        attachment.put("platform", os.getCompatibleName());
         attachment.put("architecture", architecture.getCompatibleName());
         JSONObject urlJson = new JSONObject();
         urlJson.put("first", Convert.toHexString(url.getFirst()));
