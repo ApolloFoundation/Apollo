@@ -41,4 +41,9 @@ public class PrunablePlainMessageValidator extends AbstractAppendixValidator<Pru
             throw new AplException.NotCurrentlyValidException("Message has been pruned prematurely");
         }
     }
+
+    @Override
+    public Class<PrunablePlainMessageAppendix> forClass() {
+        return PrunablePlainMessageAppendix.class;
+    }
 }

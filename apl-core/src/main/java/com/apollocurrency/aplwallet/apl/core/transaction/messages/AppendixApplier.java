@@ -16,4 +16,9 @@ public interface AppendixApplier<T extends Appendix> {
      * @param recipientAccount transaction's recipient account, may be null
      */
     void apply(Transaction transaction, T appendix, Account senderAccount, Account recipientAccount);
+
+    /**
+     * @return class instance for which application has to be performed
+     */
+    Class<T> forClass();
 }

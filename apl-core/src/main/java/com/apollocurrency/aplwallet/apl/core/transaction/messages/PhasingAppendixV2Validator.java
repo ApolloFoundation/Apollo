@@ -62,6 +62,11 @@ public class PhasingAppendixV2Validator implements AppendixValidator<PhasingAppe
     }
 
     @Override
+    public Class<PhasingAppendixV2> forClass() {
+        return PhasingAppendixV2.class;
+    }
+
+    @Override
     public void validateAtFinish(Transaction transaction, PhasingAppendixV2 appendix, int blockHeight) throws AplException.ValidationException {
         phasingAppendixValidator.validateAtFinish(transaction, appendix, blockHeight);
     }

@@ -262,7 +262,7 @@ public class GenesisImporter {
         final int publicKeyNumber = saveGenesisPublicKeys();
 
         if (loadOnlyPublicKeys) {
-            log.debug("Public Keys were saved in {} ms. The rest of GENESIS is skipped, shard info will be loaded...",
+            log.debug("Public Keys were saved in {} s. The rest of GENESIS is skipped, shard info will be loaded...",
                 (System.currentTimeMillis() - start) / 1000);
             return;
         }
