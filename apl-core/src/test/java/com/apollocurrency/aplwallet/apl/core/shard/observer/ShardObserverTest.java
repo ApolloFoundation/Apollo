@@ -123,19 +123,18 @@ public class ShardObserverTest {
             arguments(0, 220, 0, false),
             arguments(0, 225, 0, false),
             arguments(0, 226, 220, true),
-            arguments(0, 227, 220, true),
-            arguments(0, 231, 220, true),
+            arguments(0, 227, 220, false),
             arguments(220, 239, 0, false),
             arguments(220, 244, 0, false),
-            arguments(220, 247, 240, true),
-            arguments(0, 247, 220, true), // missed one of previous shards
+            arguments(220, 246, 240, true),
+            arguments(0, 246, 240, true), // missed one of previous shard, (rollback 3 + divergence 3)
             arguments(580, 606, 600, true),
             arguments(600, 636, 0, false),
             arguments(600, 960, 0, false),
             arguments(600, 1506, 1500, true),
-            arguments(1000, 2508, 1500, true),
+            arguments(1000, 2506, 2500, true),
             arguments(1500, 2003, 2000, false),
-            arguments(1500, 2008, 2000, true),
+            arguments(1500, 2006, 2000, true),
             arguments(2000, 2238, 0, false),
             arguments(2000, 2999, 0, false),
             arguments(2000, 3006, 0, false),
@@ -201,7 +200,7 @@ public class ShardObserverTest {
             arguments(6000, 10144, 8000, true, 143),
             arguments(6000, 10144, 8000, true, 143),
             arguments(8000, 12273, 10000, true, 272),
-            arguments(8000, 12274, 10000, true, 272),
+            arguments(8000, 12274, 10000, false, 272),
             arguments(10000, 22144, 20000, true, 143),
             arguments(20000, 32144, 30000, true, 143),
             arguments(30000, 42144, 40000, true, 143)
@@ -286,8 +285,8 @@ public class ShardObserverTest {
             arguments(200000, 204076, 202000, false, 78),
             arguments(200000, 204078, 202000, false, 78),
             arguments(200000, 204079, 202000, true, 78), // only one exact match for division on frequency will trigger
-            arguments(200000, 204100, 202000, false, 78),
-            arguments(204000, 208109, 206000, true, 78)
+            arguments(204000, 208079, 206000, true, 78),
+            arguments(200000, 204100, 202000, false, 78)
         );
     }
 
