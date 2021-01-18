@@ -202,12 +202,13 @@ public class TrimObserver {
                     randomTrimHeightIncrease, trimHeight, block.getHeight(), shardingFrequency, isConfigJustUpdated, isShardingOnTrimHeight);
             }
             synchronized (lock) {
-                scheduleTrimHeight =
-                    (block.getHeight() + randomTrimHeightIncrease - maxRollback) > 0 ?
-                        block.getHeight() + randomTrimHeightIncrease - maxRollback
-                        : block.getHeight() + randomTrimHeightIncrease; // increase next trim height with possible divergence
-                log.debug("Schedule next trim for height={} at {}", scheduleTrimHeight, block.getHeight());
-                trimHeights.add(scheduleTrimHeight);
+                if (block.getHeight() + (randomTrimHeightIncrease - maxRollback) > 0) {
+                    scheduleTrimHeight = block.getHeight() + (randomTrimHeightIncrease - maxRollback);
+                    log.debug("Schedule next trim for height={} at {}", scheduleTrimHeight, block.getHeight());
+                    trimHeights.add(scheduleTrimHeight);
+                } else {
+                    log.debug("Schedule trim SKIPPED at height={} due to low current height", block.getHeight());
+                }
             }
         } else {
             log.trace("Skip Trim schedule on block height='{}' NOT div % by trimFreq={}", block.getHeight(), trimFrequency);
