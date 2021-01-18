@@ -145,19 +145,17 @@ public class ShardObserverTest {
             arguments(4000, 4456, 0, false),
             arguments(4000, 5006, 0, false),
             arguments(4000, 5106, 5100, true),
-            arguments(4000, 5137, 5100, true),
-            arguments(5900, 6006, 6000, true),
-            arguments(5900, 6006, 6000, true),
-            arguments(5800, 6006, 5900, true),
-            arguments(5400, 6006, 5500, true),
+            arguments(4800, 5006, 5100, false),
+            arguments(4800, 5106, 5100, true),
+            arguments(5400, 5606, 5600, true),
+            arguments(5800, 6006, 6000, true), // missing 5900, but 6000 wll be computed
             arguments(5900, 6006, 6000, true),
             arguments(5900, 6006, 6000, true),
             arguments(6000, 7005, 0, false),
             arguments(6000, 7005, 0, false),
             arguments(6000, 7006, 7000, true),
-            arguments(6000, 7016, 7000, true),
-            arguments(6000, 7916, 7000, true),
-            arguments(7000, 8007, 8000, true)
+            arguments(6000, 7916, 7000, false),
+            arguments(7000, 8006, 8000, true)
         );
     }
 
