@@ -158,12 +158,6 @@ public class ShardObserver {
                 probableShardingHeight > configHeight.getHeight(),
                 currentBlockHeight);
 
-            // real sharding data is prepared here !!
-            result.setTimeToDoNextShard(true);
-            result.setNextShardHeightValue(plannedShardHeight);
-            log.debug("computeNextShard(): Time for sharding is OK. currentBlockHeight: {}, plannedShardHeight={}, result={}",
-                currentBlockHeight, plannedShardHeight, result);
-
             plannedShardHeight = probableShardingHeight;
             howLateWeCanBe = plannedShardHeight + randomShardHeightDivergence;
             log.debug("probable match on {}: howLateWeCanBe={}, plannedShardHeight={}, randomShardHeightDivergence={}",
