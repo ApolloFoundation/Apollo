@@ -97,7 +97,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.apollocurrency.aplwallet.vault.VaultKeyStoreServiceImpl;
-import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
@@ -147,8 +146,7 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
 
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
-    Account2FAService account2FAService = mock(Account2FAService.class);
-    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath(), ntpTimeConfig.time(), account2FAService);
+    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath());
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private PeersService peersService = mock(PeersService.class);
     private GeneratorService generatorService = mock(GeneratorService.class);

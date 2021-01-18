@@ -9,18 +9,14 @@
  import com.apollocurrency.aplwallet.apl.util.AplCollectionUtils;
  import com.apollocurrency.aplwallet.apl.util.Convert2;
  import com.apollocurrency.aplwallet.apl.util.JSON;
- import com.apollocurrency.aplwallet.apl.util.NtpTime;
  import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
  import com.apollocurrency.aplwallet.vault.model.AplWalletKey;
  import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
  import com.apollocurrency.aplwallet.vault.model.EncryptedSecretBytesDetails;
  import com.apollocurrency.aplwallet.vault.model.SecretBytesDetails;
  import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
- import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
+ import com.apollocurrency.aplwallet.vault.util.AccountHelper;
  import com.apollocurrency.aplwallet.vault.util.FbWalletUtil;
- import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
- import com.fasterxml.jackson.databind.ObjectMapper;
- import com.fasterxml.jackson.databind.ObjectWriter;
  import io.firstbridge.cryptolib.CryptoNotValidException;
  import io.firstbridge.cryptolib.container.FbWallet;
  import org.slf4j.Logger;
@@ -53,22 +49,18 @@
      private static final String FORMAT = "v%d_%s---%s";
      private Path keystoreDirPath;
      private Integer version;
-     private NtpTime ntpTime;
-     private Account2FAService account2FAService;
 
      @Inject
-     public VaultKeyStoreServiceImpl(@Named("keystoreDirPath") Path keystoreDir, NtpTime ntpTime, Account2FAService account2FAService) {
-         this(keystoreDir, CURRENT_KEYSTORE_VERSION, ntpTime);
-         this.account2FAService = account2FAService;
+     public VaultKeyStoreServiceImpl(@Named("keystoreDirPath") Path keystoreDir) {
+         this(keystoreDir, CURRENT_KEYSTORE_VERSION);
      }
 
-     VaultKeyStoreServiceImpl(Path keystoreDir, Integer version, NtpTime ntpTime) {
+     VaultKeyStoreServiceImpl(Path keystoreDir, Integer version) {
          if (version < 0) {
              throw new IllegalArgumentException("version should not be negative");
          }
          this.version = version;
          this.keystoreDirPath = keystoreDir;
-         this.ntpTime = ntpTime;
          if (!Files.exists(keystoreDirPath)) {
              try {
                  Files.createDirectories(keystoreDirPath);
@@ -168,34 +160,19 @@
          byte[] secretBytes = secretBytesDetails.getSecretBytes();
 
          try {
-             account2FAService.generateUserWallet(passphrase, secretBytes);
+             ApolloFbWallet apolloWallet = AccountHelper.generateApolloWallet(secretBytes);
+             KeyStoreService.Status status = saveSecretKeyStore(passphrase, apolloWallet);
+
+             if (status != KeyStoreService.Status.OK) {
+                 return false;
+             }
          } catch (RestParameterException e) {
              LOG.error(e.getMessage(), e);
              return false;
          }
-
          return true;
      }
 
-
-     @Deprecated
-     @Override
-     public Status saveSecretBytes(String passphrase, byte[] secretBytes) {
-         if (!isAvailable()) {
-             return Status.NOT_AVAILABLE;
-         }
-         Objects.requireNonNull(passphrase);
-         Objects.requireNonNull(secretBytes);
-         long accountId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(secretBytes)));
-         Path keyPath = makeTargetPathForNewAccount(accountId);
-         if (keyPath == null) {
-             return Status.DUPLICATE_FOUND;
-         }
-         EncryptedSecretBytesDetails secretBytesDetails = makeEncryptedSecretBytesDetails(passphrase, secretBytes, accountId);
-         boolean saved = storeJSONSecretBytes(keyPath, secretBytesDetails);
-
-         return saved ? Status.OK : Status.WRITE_ERROR;
-     }
 
      public Status saveSecretKeyStore(String passphrase, ApolloFbWallet fbWallet) {
          String aplKeySecret = fbWallet.getAplKeySecret();
@@ -324,15 +301,6 @@
          Files.delete(path);
      }
 
-     @Deprecated
-     private EncryptedSecretBytesDetails makeEncryptedSecretBytesDetails(String passphrase, byte[] secretBytes, long accountId) {
-         byte[] nonce = generateBytes(16);
-         long timestamp = ntpTime.getTime();
-         byte[] key = Crypto.getKeySeed(passphrase, nonce, Convert.longToBytes(timestamp));
-         byte[] encryptedSecretBytes = Crypto.aesEncrypt(secretBytes, key);
-         return new EncryptedSecretBytesDetails(encryptedSecretBytes, accountId, version, nonce, timestamp);
-     }
-
      private Path makeTargetPathForNewAccount(long accountId) {
          if (isNewVersionOfKeyStoreForAccountExist(accountId)) {
              LOG.debug("Account already exist");
@@ -358,20 +326,6 @@
 
          return path != null;
      }
-
-     public boolean storeJSONSecretBytes(Path keyPath, EncryptedSecretBytesDetails secretBytesDetails) {
-         try {
-             ObjectMapper mapper = JSON.getMapper();
-             ObjectWriter writer = mapper.writer(new DefaultPrettyPrinter());
-             Files.createFile(keyPath);
-             writer.writeValue(keyPath.toFile(), secretBytesDetails);
-             return true;
-         } catch (IOException e) {
-             LOG.debug("Unable to save secretBytes to " + keyPath, e);
-             return false;
-         }
-     }
-
 
      private boolean isStorageVersionLatest(Path path) {
          return CURRENT_KEYSTORE_VERSION.equals(FbWalletUtil.getWalletFileVersion(path));
