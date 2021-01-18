@@ -36,4 +36,9 @@ public class PrunableEncryptedMessageLoader implements PrunableLoader<PrunableEn
     public void restorePrunableData(Transaction transaction, PrunableEncryptedMessageAppendix appendix, int blockTimestamp, int height) {
         messageService.add(transaction, appendix, blockTimestamp, height);
     }
+
+    @Override
+    public Class<PrunableEncryptedMessageAppendix> forClass() {
+        return PrunableEncryptedMessageAppendix.class;
+    }
 }

@@ -26,4 +26,9 @@ public class PublicKeyAnnouncementAppendixApplier implements AppendixApplier<Pub
             accountPublicKeyService.apply(recipientAccount, appendix.getPublicKey());
         }
     }
+
+    @Override
+    public Class<PublicKeyAnnouncementAppendix> forClass() {
+        return PublicKeyAnnouncementAppendix.class;
+    }
 }

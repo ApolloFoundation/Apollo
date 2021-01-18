@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.ReflectionUtil;
 
 import javax.enterprise.inject.Instance;
 import javax.inject.Singleton;
@@ -23,7 +22,7 @@ public class PrunableLoadingService {
 
     public void initLoaders(Instance<PrunableLoader<?>> prunableLoaderInstances) {
         prunableLoaderInstances.iterator().forEachRemaining(e-> {
-            loaders.put(ReflectionUtil.parametrizedClass(e.getClass()), e);
+            loaders.put(e.forClass(), e);
         });
     }
 
