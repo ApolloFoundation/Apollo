@@ -174,7 +174,7 @@ class TrimObserverTest {
             doReturn(3987).when(blockchain).getHeight();
         });
         waitTrim(List.of(3987));
-        assertFalse(observer.isTrimDerivedTablesEnabled()); // YL fix
+        assertFalse(observer.isTrimDerivedTablesEnabled()); // depends on call trimService.trimDerivedTables(3987, true)
         fireBlockPushed(7000);
         doReturn(7001).when(blockchain).getHeight();
         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
