@@ -203,7 +203,7 @@ public class TrimObserver {
             }
             synchronized (lock) {
                 if (block.getHeight() + (randomTrimHeightIncrease - maxRollback) > 0) {
-                    scheduleTrimHeight = block.getHeight() + (randomTrimHeightIncrease - maxRollback);
+                    scheduleTrimHeight = block.getHeight() - (randomTrimHeightIncrease + maxRollback); // below rollback height
                     log.debug("Schedule next trim for height={} at {}", scheduleTrimHeight, block.getHeight());
                     trimHeights.add(scheduleTrimHeight);
                 } else {

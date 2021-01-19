@@ -146,13 +146,13 @@ class TrimObserverTest {
         fireBlockPushed(6000); // accepted, + random height increase
         fireBlockPushed(6001); // skipped
         CompletableFuture.runAsync(() -> {
-            doReturn(5000).when(blockchain).getHeight();
+            doReturn(-1).when(blockchain).getHeight();
             ThreadUtils.sleep(100);
-            doReturn(6000).when(blockchain).getHeight();
+            doReturn(3000).when(blockchain).getHeight();
             ThreadUtils.sleep(100);
-            doReturn(6014).when(blockchain).getHeight();
+            doReturn(3987).when(blockchain).getHeight();
         });
-        waitTrim(List.of(5000, 6013)); // doesn't work, test hangs here
+        waitTrim(List.of(3000, 3987)); // doesn't work, test hangs here
     }
 
     @Test
@@ -162,24 +162,24 @@ class TrimObserverTest {
             trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
             }).fire(new TrimConfig(false, false));
             return null;
-        }).when(trimService).trimDerivedTables(5013, true);
+        }).when(trimService).trimDerivedTables(3987, true);
 
         fireBlockPushed(4998);
         fireBlockPushed(4999);
         fireBlockPushed(5000);
         fireBlockPushed(6000);
         CompletableFuture.runAsync(() -> {
-            doReturn(5000).when(blockchain).getHeight();
+            doReturn(2987).when(blockchain).getHeight();
             ThreadUtils.sleep(100);
-            doReturn(6000).when(blockchain).getHeight();
+            doReturn(3987).when(blockchain).getHeight();
         });
-        waitTrim(List.of(5013));
-        assertFalse(observer.isTrimDerivedTablesEnabled());
+        waitTrim(List.of(3987));
+        assertFalse(observer.isTrimDerivedTablesEnabled()); // YL fix
         fireBlockPushed(7000);
         doReturn(7001).when(blockchain).getHeight();
         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
         }).fire(new TrimConfig(true, false));
-        waitTrim(List.of(6013, 7000));
+        waitTrim(List.of(3987, 5000));
     }
 
     private void waitTrim(List<Integer> heights) {
