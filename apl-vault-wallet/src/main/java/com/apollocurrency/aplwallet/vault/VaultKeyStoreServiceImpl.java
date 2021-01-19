@@ -215,11 +215,6 @@
      }
 
      @Override
-     public boolean isSecretStoreExist(long accountId) {
-         return findKeyStorePathWithLatestVersion(accountId) != null;
-     }
-
-     @Override
      public ApolloFbWallet getSecretStore(String passphrase, long accountId) {
          Objects.requireNonNull(passphrase);
 
@@ -328,9 +323,7 @@
      }
 
      public boolean isKeyStoreForAccountExist(long accountId) {
-         Path path = findKeyStorePathWithLatestVersion(accountId);
-
-         return path != null;
+         return findKeyStorePathWithLatestVersion(accountId) != null;
      }
 
      private boolean isStorageVersionLatest(Path path) {

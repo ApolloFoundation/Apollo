@@ -33,7 +33,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
-import com.apollocurrency.aplwallet.vault.KeyStoreService;
+import com.apollocurrency.aplwallet.vault.service.KMSv1;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.google.common.cache.LoadingCache;
 import org.junit.jupiter.api.BeforeEach;
@@ -95,9 +95,9 @@ class DexServiceTest {
     @Mock
     AccountService accountService;
     @Mock
-    KeyStoreService keyStoreService;
-    @Mock
     Account2FAService account2FAService;
+    @Mock
+    KMSv1 kmSv1;
 
     DexOrder order = new DexOrder(2L, 100L, "from-address", "to-address", OrderType.BUY, OrderStatus.OPEN, DexCurrency.APL, 127_000_000L, DexCurrency.ETH, BigDecimal.valueOf(0.0001), 500);
     DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrency.APL, 10000L, DexCurrency.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259, "", "");
@@ -117,7 +117,7 @@ class DexServiceTest {
         TransactionSerializer serializer = new TransactionSerializerImpl(mock(PrunableLoadingService.class));
         dexService = new DexService(ethWalletService, dexOrderDao, dexOrderTable, transactionProcessor, dexSmartContractService, secureStorageService,
             dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService,
-            approvedResultTable, mandatoryTransactionDao, serializer, accountService, blockchainConfig, cache, dexConfig, keyStoreService, account2FAService);
+            approvedResultTable, mandatoryTransactionDao, serializer, accountService, blockchainConfig, cache, dexConfig, account2FAService, kmSv1);
     }
 
     @Test

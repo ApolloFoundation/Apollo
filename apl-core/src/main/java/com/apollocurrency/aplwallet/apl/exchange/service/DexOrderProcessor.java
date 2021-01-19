@@ -48,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
+import com.apollocurrency.aplwallet.vault.service.KMSv1;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import lombok.extern.slf4j.Slf4j;
 import org.web3j.utils.Numeric;
@@ -116,6 +117,7 @@ public class DexOrderProcessor {
     private Blockchain blockchain;
     private final BlockchainConfig blockchainConfig;
     private final Account2FAService account2FAService;
+    private final KMSv1 kmSv1;
 
     @Inject
     public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService,
@@ -129,7 +131,8 @@ public class DexOrderProcessor {
                              @Property(name = "apl.dex.orderProcessor.delay", defaultValue = "" + DEFAULT_DEX_OFFER_PROCESSOR_DELAY) int processingDelay,
                              DexConfig dexConfig,
                              BlockchainConfig blockchainConfig,
-                             Account2FAService account2FAService
+                             Account2FAService account2FAService,
+                             KMSv1 kmSv1
     ) {
 
         this.secureStorageService = secureStorageService;
@@ -151,6 +154,7 @@ public class DexOrderProcessor {
         this.dexConfig = dexConfig;
         this.blockchainConfig = blockchainConfig;
         this.account2FAService = account2FAService;
+        this.kmSv1 = kmSv1;
     }
 
     @PostConstruct
@@ -807,7 +811,7 @@ public class DexOrderProcessor {
         try {
             String passphrase = secureStorageService.getUserPassPhrase(accountId);
 
-            List<String> addresses = dexSmartContractService.getEthUserAddresses(passphrase, accountId);
+            List<String> addresses = kmSv1.getEthWalletAddresses(accountId, passphrase);
 
             for (String address : addresses) {
                 try {
@@ -843,7 +847,7 @@ public class DexOrderProcessor {
 
     public void refundExpiredAtomicSwaps(long accountId) {
         String passphrase = secureStorageService.getUserPassPhrase(accountId);
-        List<String> addresses = dexSmartContractService.getEthUserAddresses(passphrase, accountId);
+        List<String> addresses = kmSv1.getEthWalletAddresses(accountId, passphrase);
         for (String address : addresses) {
             try {
                 List<ExpiredSwap> expiredSwaps = dexSmartContractService.getExpiredSwaps(address);

@@ -1,33 +1,39 @@
 package com.apollocurrency.aplwallet.vault.service;
 
-import com.apollocurrency.aplwallet.api.dto.account.WalletKeysInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.vault.ExportKeyStore;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
 import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.vault.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.vault.util.FbWalletUtil;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.List;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Singleton
 public class KMSv1Impl implements KMSv1 {
 
     private final KeyStoreService keyStoreService;
-    private final WalletKeysConverter walletKeysConverter;
 
     @Inject
-    public KMSv1Impl(KeyStoreService keyStoreService, WalletKeysConverter walletKeysConverter) {
+    public KMSv1Impl(KeyStoreService keyStoreService) {
         this.keyStoreService = keyStoreService;
-        this.walletKeysConverter = walletKeysConverter;
     }
 
 
     @Override
     public boolean isWalletExist(long accountId) {
-        return keyStoreService.isSecretStoreExist(accountId);
+        return keyStoreService.isKeyStoreForAccountExist(accountId);
     }
 
     @Override
@@ -38,18 +44,12 @@ public class KMSv1Impl implements KMSv1 {
     }
 
     @Override
-    public WalletKeysInfoDTO getWalletInfo(long accountId, String passphrase) {
-        WalletKeysInfo walletKeysInfo = keyStoreService.getWalletKeysInfo(passphrase, accountId);
-
-        if(walletKeysInfo != null){
-            return walletKeysConverter.apply(walletKeysInfo);
-        }
-
-        return null;
+    public WalletKeysInfo getWalletInfo(long accountId, String passphrase) {
+        return keyStoreService.getWalletKeysInfo(passphrase, accountId);
     }
 
     @Override
-    public String getAplKeySeed(long accountId, String passphrase) {
+    public String getAplPrivateKey(long accountId, String passphrase) {
         ApolloFbWallet fbWallet = keyStoreService.getSecretStore(passphrase, accountId);
         return fbWallet != null ? fbWallet.getAplKeySecret() : null;
     }
@@ -63,5 +63,41 @@ public class KMSv1Impl implements KMSv1 {
         }
 
         return keyStoreService.saveSecretKeyStore(passPhrase, apolloFbWallet);
+    }
+
+
+    @Override
+    public ExportKeyStore exportKeyStore(long accountId, String passphrase) throws RestParameterException {
+        File keyStore = keyStoreService.getSecretStoreFile(accountId, passphrase);
+        if (keyStore == null) {
+            return null;
+        }
+        try {
+            return new ExportKeyStore(Files.readAllBytes(keyStore.toPath()), keyStore.getName());
+        } catch (IOException e) {
+            throw new RestParameterException(ApiErrors.EXPORT_KEY_READ_WALLET);
+        }
+    }
+
+    @Override
+    public EthWalletKey getEthWallet(long accountId, String passphrase, String ethAddress) throws RestParameterException {
+        WalletKeysInfo keysInfo = keyStoreService.getWalletKeysInfo(passphrase, accountId);
+        if (keysInfo == null) {
+            throw new RestParameterException(ApiErrors.NOT_FOUND_WALLET);
+        }
+        EthWalletKey ethWalletKey = keysInfo.getEthWalletForAddress(ethAddress);
+        if (ethWalletKey == null) {
+            throw new RestParameterException(ApiErrors.NOT_FOUND_ETH_ACCOUNT);
+        }
+
+        return ethWalletKey;
+    }
+
+    @Override
+    public List<String> getEthWalletAddresses(long accountId, String passphrase) {
+        WalletKeysInfo walletKeysInfo = keyStoreService.getWalletKeysInfo(passphrase, accountId);
+        return walletKeysInfo.getEthWalletKeys().stream()
+            .map(k -> k.getCredentials().getAddress())
+            .collect(Collectors.toList());
     }
 }

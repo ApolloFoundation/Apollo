@@ -1,22 +1,22 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.account.WalletKeysInfoDTO;
 import com.apollocurrency.aplwallet.api.dto.auth.Status2FA;
 import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.api.dto.vault.ExportKeyStore;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.model.ExportKeyStore;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
-import com.apollocurrency.aplwallet.vault.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
 import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.vault.service.KMSv1;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,9 +45,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 
 import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 
@@ -55,16 +53,14 @@ import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 @Singleton
 public class KeyStoreController {
 
-    private KeyStoreService keyStoreService;
     private KMSv1 kmSv1;
     private SecureStorageService secureStorageService;
     private Account2FAService account2FAService;
     private Integer maxKeyStoreSize;
 
     @Inject
-    public KeyStoreController(KeyStoreService keyStoreService, KMSv1 kmSv1, SecureStorageService secureStorageService,
+    public KeyStoreController(KMSv1 kmSv1, SecureStorageService secureStorageService,
                               Account2FAService account2FAService, Integer maxKeyStoreSize) {
-        this.keyStoreService = keyStoreService;
         this.kmSv1 = kmSv1;
         this.secureStorageService = secureStorageService;
         this.account2FAService = account2FAService;
@@ -97,7 +93,7 @@ public class KeyStoreController {
                 ).build();
         }
 
-        WalletKeysInfoDTO keyStoreInfo = kmSv1.getWalletInfo(accountId, passphraseStr);
+        WalletKeysInfo keyStoreInfo = kmSv1.getWalletInfo(accountId, passphraseStr);
 
         if(keyStoreInfo == null){
             return Response.status(Response.Status.OK)
@@ -107,9 +103,10 @@ public class KeyStoreController {
                     )
                 ).build();
         }
-
          secureStorageService.addUserPassPhrase(accountId, passphraseStr);
-         return Response.ok(keyStoreInfo).build();
+
+         WalletKeysConverter walletKeysConverter = new WalletKeysConverter();
+         return Response.ok(walletKeysConverter.apply(keyStoreInfo)).build();
     }
 
 
@@ -204,7 +201,7 @@ public class KeyStoreController {
             long accountId = HttpParameterParserUtil.getAccountId(account, "account", true);
 
 
-            if (!keyStoreService.isKeyStoreForAccountExist(accountId)) {
+            if (!kmSv1.isWalletExist(accountId)) {
                 return Response.status(Response.Status.OK)
                     .entity(JSON.toString(JSONResponses.vaultWalletError(accountId,
                         "get account information", "Key for this account is not exist."))
@@ -217,21 +214,22 @@ public class KeyStoreController {
                 twoFactorAuthParameters.setCode2FA(code2FA);
 
                 Status2FA status2FA = account2FAService.verify2FA(twoFactorAuthParameters);
-                if (!status2FA.OK.equals(status2FA)) {
+                if (!status2FA.isOK()) {
                     return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.error2FA(status2FA, accountId))).build();
                 }
             }
 
-            File keyStore = keyStoreService.getSecretStoreFile(accountId, passphraseStr);
-
+            ExportKeyStore keyStore = kmSv1.exportKeyStore(accountId, passphraseStr);
             if (keyStore == null) {
                 throw new ParameterException(JSONResponses.incorrect("account id or passphrase"));
             }
 
-            Response.ResponseBuilder response = Response.ok(new ExportKeyStore(Files.readAllBytes(keyStore.toPath()), keyStore.getName()).toJSON());
+            Response.ResponseBuilder response = Response.ok(keyStore);
             return response.build();
         } catch (ParameterException ex) {
             return Response.status(Response.Status.OK).entity(JSON.toString(ex.getErrorResponse())).build();
+        } catch (RestParameterException e){
+            return Response.status(Response.Status.OK).entity(e.getApiErrorInfo()).build();
         }
     }
 
@@ -250,34 +248,29 @@ public class KeyStoreController {
                                         @Parameter(description = "2fa code for account if enabled") @FormParam("code2FA") @DefaultValue("0") int code) throws ParameterException {
         String aplVaultPassphrase = HttpParameterParserUtil.getPassphrase(passphrase, true);
         long accountId = HttpParameterParserUtil.getAccountId(account, "account", true);
+        String passwordToEncryptEthKeystore = StringUtils.isBlank(ethKeystorePassword) ? aplVaultPassphrase : ethKeystorePassword;
 
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(accountId, aplVaultPassphrase, null);
         twoFactorAuthParameters.setCode2FA(code);
         account2FAService.verify2FA(twoFactorAuthParameters);
 
-        if (!keyStoreService.isKeyStoreForAccountExist(accountId)) {
+        if (!kmSv1.isWalletExist(accountId)) {
             return Response.status(Response.Status.OK)
                 .entity(JSON.toString(JSONResponses.vaultWalletError(accountId,
                     "get account information", "Key for this account is not exist."))
                 ).build();
         }
-
-        WalletKeysInfo keysInfo = keyStoreService.getWalletKeysInfo(aplVaultPassphrase, accountId);
-
-        if (keysInfo == null) {
-            throw new ParameterException(JSONResponses.incorrect("account id or passphrase"));
-        }
-
-        String passwordToEncryptEthKeystore = StringUtils.isBlank(ethKeystorePassword) ? aplVaultPassphrase : ethKeystorePassword;
-        EthWalletKey ethKeyToExport = keysInfo.getEthWalletForAddress(ethAccountAddress);
-        if (ethKeyToExport == null) {
-            throw new ParameterException(JSONResponses.incorrect("ethAddress"));
-        }
         try {
-            WalletFile walletFile = Wallet.createStandard(passwordToEncryptEthKeystore, ethKeyToExport.getCredentials().getEcKeyPair());
-            return Response.ok(walletFile).build();
-        } catch (CipherException e) {
-            return ResponseBuilder.apiError(ApiErrors.WEB3J_CRYPTO_ERROR, ThreadUtils.getStackTraceSilently(e), e.getMessage()).build();
+            EthWalletKey ethWalletKey = kmSv1.getEthWallet(accountId, aplVaultPassphrase, ethAccountAddress);
+
+            try {
+                WalletFile walletFile = Wallet.createStandard(passwordToEncryptEthKeystore, ethWalletKey.getCredentials().getEcKeyPair());
+                return Response.ok(walletFile).build();
+            } catch (CipherException e) {
+                return ResponseBuilder.apiError(ApiErrors.WEB3J_CRYPTO_ERROR, ThreadUtils.getStackTraceSilently(e), e.getMessage()).build();
+            }
+        } catch (RestParameterException ex) {
+            return Response.status(Response.Status.OK).entity(ex.getApiErrorInfo()).build();
         }
     }
 }

@@ -11,5 +11,9 @@ public enum Status2FA {
     INTERNAL_ERROR,
     NOT_ENABLED,
     ALREADY_ENABLED,
-    NOT_CONFIRMED
+    NOT_CONFIRMED;
+
+    public boolean isOK(){
+        return this.equals(Status2FA.OK);
+    }
 }

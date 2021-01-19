@@ -77,9 +77,8 @@ import com.apollocurrency.aplwallet.apl.util.cache.CacheProducer;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
-import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
-import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.service.KMSv1;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.google.common.cache.Cache;
 import com.google.common.cache.LoadingCache;
@@ -113,11 +112,9 @@ public class DexService {
     private DexContractDao dexContractDao;
     private TransactionProcessor transactionProcessor;
     private SecureStorageService secureStorageService;
-    private KeyStoreService keyStoreService;
     private MandatoryTransactionDao mandatoryTransactionDao;
     private final TransactionSerializer transactionSerializer;
     private LoadingCache<Long, OrderFreezing> orderFreezingCache;
-
     private DexOrderTransactionCreator dexOrderTransactionCreator;
     private TimeService timeService;
     private Blockchain blockchain;
@@ -126,7 +123,8 @@ public class DexService {
     private BlockchainConfig blockchainConfig;
     private AccountService accountService;
     private DexConfig dexConfig;
-    private final Account2FAService account2FAService;
+    private Account2FAService account2FAService;
+    private KMSv1 kmSv1;
 
     private Integer MAX_PAGES_FOR_SEARCH = 10;
 
@@ -139,7 +137,7 @@ public class DexService {
                       BlockchainConfig blockchainConfig,
                       @CacheProducer
                       @CacheType(DexOrderFreezingCacheConfig.CACHE_NAME) Cache<Long, OrderFreezing> cache,
-                      DexConfig dexConfig, KeyStoreService keyStoreService, Account2FAService account2FAService) {
+                      DexConfig dexConfig, Account2FAService account2FAService, KMSv1 kmSv1) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOrderDao = dexOrderDao;
         this.dexOrderTable = dexOrderTable;
@@ -160,8 +158,8 @@ public class DexService {
         this.blockchainConfig = blockchainConfig;
         this.accountService = accountService;
         this.dexConfig = dexConfig;
-        this.keyStoreService = keyStoreService;
         this.account2FAService = account2FAService;
+        this.kmSv1 = kmSv1;
     }
 
 
@@ -204,29 +202,8 @@ public class DexService {
         return dexContractDao.getAll(dexContractDBRequest);
     }
 
-    public List<ExchangeContract> getDexContracts(DexContractDBRequest dexContractDBRequest, List<ExchangeContractStatus> exchangeContractStatuses) {
-        //TODO use list of ExchangeContractStatus for jdbi instead of list of Integer
-        return dexContractDao.getAllWithMultipleStatuses(dexContractDBRequest,
-            exchangeContractStatuses
-                .stream()
-                .map(ExchangeContractStatus::ordinal)
-                .collect(Collectors.toList())
-        );
-    }
-
-
     public List<ExchangeContract> getDexContractsByCounterOrderId(Long counterOrderId) {
         return dexContractTable.getAllByCounterOrder(counterOrderId);
-    }
-
-
-    public ExchangeContract getDexContractByOrderId(Long orderId) {
-        return dexContractTable.getLastByOrder(orderId);
-    }
-
-
-    public ExchangeContract getDexContractByCounterOrderId(Long counterOrderId) {
-        return dexContractTable.getLastByCounterOrder(counterOrderId);
     }
 
     /**
@@ -340,9 +317,7 @@ public class DexService {
 
     public String withdraw(long accountId, String secretPhrase, String fromAddress, String toAddress, BigDecimal amount, DexCurrency currencies, Long transferFee) throws AplException.ExecutiveProcessException {
         if (currencies != null && currencies.isEthOrPax()) {
-            WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(secretPhrase, accountId);
-            EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
-
+            EthWalletKey ethWalletKey = kmSv1.getEthWallet(accountId, secretPhrase, fromAddress);
             return ethereumWalletService.transfer(ethWalletKey.getCredentials(), fromAddress, toAddress, amount, transferFee, currencies);
         } else {
             throw new AplException.ExecutiveProcessException("Withdraw not supported for " + currencies.getCurrencyCode());

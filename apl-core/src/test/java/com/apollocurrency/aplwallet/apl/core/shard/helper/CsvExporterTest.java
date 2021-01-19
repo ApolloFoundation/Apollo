@@ -48,7 +48,6 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
@@ -109,8 +108,6 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ServiceModeDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
-import com.apollocurrency.aplwallet.vault.KeyStoreService;
-import com.apollocurrency.aplwallet.vault.VaultKeyStoreServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.jboss.weld.junit.MockBean;
@@ -163,41 +160,36 @@ class CsvExporterTest extends DbContainerBaseTest {
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbFileProperties(createPath("csvExporterDb").toAbsolutePath().toString()));
     @Inject
-    ShardDao shardDao;
+    private ShardDao shardDao;
     @Inject
-    AccountTable accountTable;
+    private PrunableMessageTable messageTable;
     @Inject
-    AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
+    private DGSGoodsTable goodsTable;
     @Inject
-    PrunableMessageTable messageTable;
+    private DerivedTablesRegistry registry;
     @Inject
-    TaggedDataTable taggedDataTable;
+    private DexOrderTable dexOrderTable;
+    private CsvExporter csvExporter;
     @Inject
-    DGSGoodsTable goodsTable;
+    private CsvEscaper translator;
     @Inject
-    DerivedTablesRegistry registry;
+    private Event<DeleteOnTrimData> deleteOnTrimDataEvent;
     @Inject
-    DexOrderTable dexOrderTable;
-    CsvExporter csvExporter;
+    private DerivedTablesRegistry derivedTablesRegistry;
     @Inject
-    CsvEscaper translator;
-    @Inject
-    Event<DeleteOnTrimData> deleteOnTrimDataEvent;
-    //    private LuceneFullTextSearchEngine ftlEngine = new LuceneFullTextSearchEngine(time, createPath("indexDirPath")); // prod data test
-//    private FullTextSearchService ftlService = new FullTextSearchServiceImpl(extension.getDatabaseManager(),
-//        ftlEngine, Set.of("tagged_data", "currency"), "PUBLIC"); // prod data test
-    //    private KeyStoreService keyStore = new VaultKeyStoreServiceImpl(createPath("keystorePath"), time); // prod data test
-    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-    PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
-    TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
-    KeyStoreService keyStore = new VaultKeyStoreServiceImpl(temporaryFolderExtension.newFolder("keystorePath").toPath());
-    PeersService peersService = mock(PeersService.class);
-    GeneratorService generatorService = mock(GeneratorService.class);
-    TransactionTestData td = new TransactionTestData();
-    BlockSerializer blockSerializer = mock(BlockSerializer.class);
-    MemPool memPool = mock(MemPool.class);
-    UnconfirmedTransactionProcessingService unconfirmedTransactionProcessingService = mock(UnconfirmedTransactionProcessingService.class);
+    private FullTextConfig fullTextConfig;
+
+    private Path dataExportPath;
+    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
+    private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
+    private PeersService peersService = mock(PeersService.class);
+    private GeneratorService generatorService = mock(GeneratorService.class);
+    private TransactionTestData td = new TransactionTestData();
+    private BlockSerializer blockSerializer = mock(BlockSerializer.class);
+    private MemPool memPool = mock(MemPool.class);
+    private UnconfirmedTransactionProcessingService unconfirmedTransactionProcessingService = mock(UnconfirmedTransactionProcessingService.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -241,7 +233,6 @@ class CsvExporterTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessorImpl.class, BlockchainProcessor.class))
 //            .addBeans(MockBean.of(ftlEngine, FullTextSearchEngine.class)) // prod data test
 //            .addBeans(MockBean.of(ftlService, FullTextSearchService.class)) // prod data test
-        .addBeans(MockBean.of(keyStore, KeyStoreService.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(mock(AccountService.class), AccountServiceImpl.class, AccountService.class))
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
@@ -289,13 +280,6 @@ class CsvExporterTest extends DbContainerBaseTest {
         "id(-5|20|0),version(4|11|0),TIMESTAMP(4|11|0),previous_block_id(-5|20|0),total_amount(-5|20|0),total_fee(-5|20|0),payload_length(4|11|0),previous_block_hash(-2|32|0),cumulative_difficulty(-3|65535|0),base_target(-5|20|0),next_block_id(-5|20|0),height(4|11|0),generation_signature(-2|32|0),block_signature(-2|64|0),payload_hash(-2|32|0),generator_id(-5|20|0),timeout(4|11|0)",
         "6438949995368593549,4,73600,-5580266015477525080,0,200000000,207,b'qBVH25/pjrIk083BIPcwXTuCnxYr6zv3GXUODPSNvp0=',b'At+1GWz0FbA=',23058430050,7551185434952726924,8000,b'Wxv0Y/IC7A1KtCqWNJdu1Ht3xGLR3iXj/qPo6qit2PY=',b'mS6suKw7y7fb2/y2NzGK2rGQ1IQ7ANqJYf0272Bxjw9azKRmLP3PhEfMUR1eNqtMMhwYU4LzV38BBsK/ufgO5g==',b'i9+Y+8TPzwtm36pojOfvkGP4sXSO4jjCPoIJ8HHPzuc=',6415509874415488619,0"
     );
-    @Inject
-    private Blockchain blockchain;
-    @Inject
-    private DerivedTablesRegistry derivedTablesRegistry;
-    @Inject
-    private FullTextConfig fullTextConfig;
-    private Path dataExportPath;
 
     public CsvExporterTest() throws Exception {
     }

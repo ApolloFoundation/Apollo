@@ -2,9 +2,7 @@
  * Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.model;
-
-import org.json.simple.JSONObject;
+package com.apollocurrency.aplwallet.api.dto.vault;
 
 public class ExportKeyStore {
 
@@ -32,11 +30,4 @@ public class ExportKeyStore {
         this.fileName = fileName;
     }
 
-    public JSONObject toJSON() {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("file", this.file);
-        jsonObject.put("fileName", this.fileName);
-
-        return jsonObject;
-    }
 }

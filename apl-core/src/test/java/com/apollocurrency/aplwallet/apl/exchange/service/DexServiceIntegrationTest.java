@@ -36,7 +36,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
-import com.apollocurrency.aplwallet.vault.KeyStoreService;
+import com.apollocurrency.aplwallet.vault.service.KMSv1;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -81,7 +81,7 @@ class DexServiceIntegrationTest {
             PhasingApprovedResultTable.class,
             BlockchainConfig.class,
             DexConfig.class,
-            KeyStoreService.class,
+            KMSv1.class,
             BlockchainImpl.class,
             Account2FAService.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))

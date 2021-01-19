@@ -99,7 +99,7 @@ public class AccountParametersParser {
 
 
     private byte[] getKeySeed(String passphrase, long accountId) {
-        String seed = kmSv1.getAplKeySeed(accountId, passphrase);
+        String seed = kmSv1.getAplPrivateKey(accountId, passphrase);
 
         if (seed == null) {
             throw new RestParameterException(ApiErrors.BAD_CREDENTIALS, " account id or passphrase are not valid");

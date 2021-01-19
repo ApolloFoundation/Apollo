@@ -33,13 +33,6 @@ public interface KeyStoreService {
     KMSResponseStatus saveSecretKeyStore(String passphrase, Long accountId, FbWallet fbWallet);
 
     /**
-     * Return true if secret store exist for this account. (Function for internal use)
-     * @param accountId
-     * @return true/false
-     */
-    boolean isSecretStoreExist(long accountId);
-
-    /**
      * Return secret bytes if key exists for accountId and can be decrypted by passphrase
      *
      * @param passphrase - string, which consist of random words for keySeed decryption
