@@ -69,7 +69,7 @@ public class TransactionEntityToModelConverter implements Converter<TransactionE
                 .blockTimestamp(entity.getBlockTimestamp())
                 .fullHash(entity.getFullHash())
                 .ecBlockHeight(entity.getEcBlockHeight())
-                .ecBlockId(entity.getBlockId())
+                .ecBlockId(entity.getEcBlockId())
                 .dbId(entity.getDbId())
                 .index(entity.getIndex())
                 .recipientId(entity.getRecipientId());
