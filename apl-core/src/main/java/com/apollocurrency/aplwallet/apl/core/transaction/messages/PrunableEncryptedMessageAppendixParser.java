@@ -22,4 +22,9 @@ public class PrunableEncryptedMessageAppendixParser implements AppendixParser<Pr
         }
         return new PrunableEncryptedMessageAppendix(jsonData);
     }
+
+    @Override
+    public Class<PrunableEncryptedMessageAppendix> forClass() {
+        return PrunableEncryptedMessageAppendix.class;
+    }
 }

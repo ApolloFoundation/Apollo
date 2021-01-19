@@ -22,7 +22,7 @@ import java.util.Set;
  * @author andrii.zinchenko@firstbridge.io
  */
 @Slf4j
-@NoArgsConstructor(access = AccessLevel.NONE)
+@NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class SignatureToolFactory {
 
     private static final SignatureVerifier[] validators = new SignatureVerifier[]

@@ -36,4 +36,9 @@ public class PrunablePlainMessageLoader implements PrunableLoader<PrunablePlainM
     public void restorePrunableData(Transaction transaction, PrunablePlainMessageAppendix appendix, int blockTimestamp, int height) {
         messageService.add(transaction, appendix, blockTimestamp, height);
     }
+
+    @Override
+    public Class<PrunablePlainMessageAppendix> forClass() {
+        return PrunablePlainMessageAppendix.class;
+    }
 }

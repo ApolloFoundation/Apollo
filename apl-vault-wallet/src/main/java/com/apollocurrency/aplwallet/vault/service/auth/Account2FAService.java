@@ -40,17 +40,15 @@ public class Account2FAService {
     public static final String PUBLIC_KEY_PARAM_NAME = "publicKey";
 
     private final TwoFactorAuthService service2FA;
-    private final PassphraseGeneratorImpl passphraseGenerator;
     private final ElGamalEncryptor elGamal;
     private final KeyStoreService keyStoreService;
+    private final PassphraseGeneratorImpl passphraseGenerator = new PassphraseGeneratorImpl();
 
     @Inject
-    public Account2FAService(TwoFactorAuthService service2FA, KeyStoreService keyStoreService, ElGamalEncryptor elGamal,
-                             PassphraseGeneratorImpl passphraseGenerator) {
+    public Account2FAService(TwoFactorAuthService service2FA, KeyStoreService keyStoreService, ElGamalEncryptor elGamal) {
         this.keyStoreService = keyStoreService;
         this.elGamal = elGamal;
         this.service2FA = service2FA;
-        this.passphraseGenerator = passphraseGenerator;
     }
 
     /**

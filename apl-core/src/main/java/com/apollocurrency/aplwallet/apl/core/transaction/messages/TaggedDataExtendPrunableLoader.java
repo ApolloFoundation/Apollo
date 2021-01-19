@@ -21,4 +21,9 @@ public class TaggedDataExtendPrunableLoader extends TaggedDataPrunableLoader<Tag
     public void restorePrunableData(Transaction transaction, TaggedDataExtendAttachment appendix, int blockTimestamp, int height) {
 
     }
+
+    @Override
+    public Class<TaggedDataExtendAttachment> forClass() {
+        return TaggedDataExtendAttachment.class;
+    }
 }

@@ -7,16 +7,12 @@ package com.apollocurrency.aplwallet.apl.core.service.appdata;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
-import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.vault.VaultKeyStoreServiceImpl;
-import com.apollocurrency.aplwallet.vault.model.EncryptedSecretBytesDetails;
 import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
 import com.apollocurrency.aplwallet.vault.model.SecretBytesDetails;
-import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -27,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
@@ -38,9 +33,6 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.anyLong;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -66,7 +58,6 @@ public class KeyStoreServiceTest {
     private static final String SECRET_BYTES_1 = "44a2868161a651682bdf938b16c485f359443a2c53bd3e752046edef20d11567";
     private static final String SECRET_BYTES_2 = "146c55cbdc5f33390d207d6d08030c3dd4012c3f775ed700937a893786393dbf";
     private NtpTime time = mock(NtpTime.class);
-    private Account2FAService account2FAService = mock(Account2FAService.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
 
     @WeldSetup
@@ -81,7 +72,7 @@ public class KeyStoreServiceTest {
     @BeforeEach
     void setUp() throws Exception {
         tempDirectory = Files.createTempDirectory("keystore-test");
-        keyStore = new VaultKeyStoreServiceImpl(tempDirectory, time, account2FAService);
+        keyStore = new VaultKeyStoreServiceImpl(tempDirectory);
         Files.write(tempDirectory.resolve("---" + ACCOUNT1), encryptedKeyJSON.getBytes());
         Convert2.init("APL", 1739068987193023818L);
     }
@@ -99,32 +90,32 @@ public class KeyStoreServiceTest {
             Files.delete(tempDirectory);
         }
     }
-
-    @Test
-    @Execution(ExecutionMode.SAME_THREAD)
+/*
+    saveSecretBytes was deleted.
+ */
     public void testSaveKey() throws Exception {
-        VaultKeyStoreServiceImpl keyStoreSpy = spy(keyStore);
-
-        KMSResponseStatus status = keyStoreSpy.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_2));
-        assertEquals(KMSResponseStatus.OK, status);
-        verify(keyStoreSpy, times(1)).storeJSONSecretBytes(any(Path.class), any(EncryptedSecretBytesDetails.class));
-        verify(keyStoreSpy, times(1)).findKeyStorePathWithLatestVersion(anyLong());
-
-        assertEquals(2, FileUtils.countElementsOfDirectory(tempDirectory));
-
-        String rsAcc = Convert2.defaultRsAccount(Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(Convert.parseHexString(SECRET_BYTES_2)))));
-
-        try (Stream<Path> paths = Files.list(tempDirectory)) {
-            Path encryptedKeyPath = paths.filter(path -> path.getFileName().toString().endsWith(rsAcc)).findFirst().orElseThrow(() -> new RuntimeException("No encrypted key found for " + rsAcc + " account"));
-
-            EncryptedSecretBytesDetails KeyDetails = JSON.getMapper().readValue(encryptedKeyPath.toFile(), EncryptedSecretBytesDetails.class);
-
-            byte[] actualKey = Crypto.aesDecrypt(KeyDetails.getEncryptedSecretBytes(), Crypto.getKeySeed(PASSPHRASE,
-                KeyDetails.getNonce(), Convert.longToBytes(KeyDetails.getTimestamp())));
-
-            assertEquals(SECRET_BYTES_2, Convert.toHexString(actualKey));
-            assertEquals(ACCOUNT2, rsAcc);
-        }
+//        VaultKeyStoreServiceImpl keyStoreSpy = spy(keyStore);
+//
+//        KMSResponseStatus status = keyStoreSpy.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_2));
+//        assertEquals(KMSResponseStatus.OK, status);
+//        verify(keyStoreSpy, times(1)).storeJSONSecretBytes(any(Path.class), any(EncryptedSecretBytesDetails.class));
+//        verify(keyStoreSpy, times(1)).findKeyStorePathWithLatestVersion(anyLong());
+//
+//        assertEquals(2, FileUtils.countElementsOfDirectory(tempDirectory));
+//
+//        String rsAcc = Convert2.defaultRsAccount(Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(Convert.parseHexString(SECRET_BYTES_2)))));
+//
+//        try (Stream<Path> paths = Files.list(tempDirectory)) {
+//            Path encryptedKeyPath = paths.filter(path -> path.getFileName().toString().endsWith(rsAcc)).findFirst().orElseThrow(() -> new RuntimeException("No encrypted key found for " + rsAcc + " account"));
+//
+//            EncryptedSecretBytesDetails KeyDetails = JSON.getMapper().readValue(encryptedKeyPath.toFile(), EncryptedSecretBytesDetails.class);
+//
+//            byte[] actualKey = Crypto.aesDecrypt(KeyDetails.getEncryptedSecretBytes(), Crypto.getKeySeed(PASSPHRASE,
+//                KeyDetails.getNonce(), Convert.longToBytes(KeyDetails.getTimestamp())));
+//
+//            assertEquals(SECRET_BYTES_2, Convert.toHexString(actualKey));
+//            assertEquals(ACCOUNT2, rsAcc);
+//        }
     }
 
 
@@ -170,10 +161,12 @@ public class KeyStoreServiceTest {
         assertEquals(KMSResponseStatus.NOT_FOUND, secretBytesDetails.getExtractStatus());
     }
 
-    //    @Test
+    /*
+    saveSecretBytes was deleted.
+ */
     public void testSaveDuplicateKey() throws IOException {
-        KMSResponseStatus status = keyStore.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_1));
-        assertEquals(KMSResponseStatus.DUPLICATE_FOUND, status);
+//        KMSResponseStatus status = keyStore.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_1));
+//        assertEquals(KMSResponseStatus.DUPLICATE_FOUND, status);
     }
 
     //    @Test
@@ -198,11 +191,11 @@ public class KeyStoreServiceTest {
 
     //    @Test
     public void testDeleteIOError() throws IOException, ParameterException {
-        VaultKeyStoreServiceImpl spiedKeyStore = Mockito.spy(keyStore);
-        doThrow(new IOException()).when(spiedKeyStore).deleteFile(any(Path.class));
-        KMSResponseStatus status = spiedKeyStore.deleteKeyStore(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
-        assertEquals(KMSResponseStatus.DELETE_ERROR, status);
-        verify(spiedKeyStore, times(1)).deleteFile(any(Path.class));
+//        VaultKeyStoreServiceImpl spiedKeyStore = Mockito.spy(keyStore);
+//        doThrow(new IOException()).when(spiedKeyStore).deleteFile(any(Path.class));
+//        KMSResponseStatus status = spiedKeyStore.deleteKeyStore(PASSPHRASE, Convert.parseAccountId(ACCOUNT1));
+//        assertEquals(KMSResponseStatus.DELETE_ERROR, status);
+//        verify(spiedKeyStore, times(1)).deleteFile(any(Path.class));
     }
 
     @Test
@@ -219,18 +212,20 @@ public class KeyStoreServiceTest {
         }
     }
 
-    @Test
+    /*
+    saveSecretBytes was deleted.
+    */
     @Execution(ExecutionMode.SAME_THREAD)
     public void testSaveNotAvailable() throws IOException {
-        Path path = tempDirectory.resolve(".local");
-        try {
-            Files.createFile(path);
-            KMSResponseStatus status = keyStore.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_2));
-            assertEquals(KMSResponseStatus.NOT_AVAILABLE, status);
-
-        } finally {
-            Files.deleteIfExists(path);
-        }
+//        Path path = tempDirectory.resolve(".local");
+//        try {
+//            Files.createFile(path);
+//            KMSResponseStatus status = keyStore.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_2));
+//            assertEquals(KMSResponseStatus.NOT_AVAILABLE, status);
+//
+//        } finally {
+//            Files.deleteIfExists(path);
+//        }
     }
 
     @Test

@@ -88,16 +88,6 @@ public interface KeyStoreService {
     boolean isKeyStoreForAccountExist(long accountId);
 
     /**
-     * Save encrypted by passphrase secretBytes to keystore
-     *
-     * @param passphrase  - string, which consist of random words for encryption
-     * @param secretBytes - secret array of bytes which will be stored into keystore
-     * @return OK - if secretBytes were saved successfully, otherwise returned status hold error cause
-     */
-    @Deprecated
-    KMSResponseStatus saveSecretBytes(String passphrase, byte[] secretBytes);
-
-    /**
      * Remove secret bytes from keystore if secret bytes exist for accountId and can be decrypted by passphrase
      *
      * @param passphrase - string, which consist of random words for secret bytes decryption
