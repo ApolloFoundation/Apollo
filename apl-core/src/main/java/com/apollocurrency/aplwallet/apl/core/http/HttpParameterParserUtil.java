@@ -66,7 +66,7 @@ import com.apollocurrency.aplwallet.apl.util.Search;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
-import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
+import com.apollocurrency.aplwallet.vault.service.KMSv1;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
@@ -146,7 +146,7 @@ public final class HttpParameterParserUtil {
     private static CurrencyService currencyService;
     private static ShufflingService shufflingService;
     private static TransactionBuilder transactionBuilder;
-    private static Account2FAService account2FAService;
+    private static KMSv1 kmSv1;
 
     private HttpParameterParserUtil() {
     } // never
@@ -533,7 +533,7 @@ public final class HttpParameterParserUtil {
         }
         String passphrase = Convert.emptyToNull(HttpParameterParserUtil.getPassphrase(req, false));
         if (passphrase != null) {
-            return lookupAccount2FAService().findAplSecretBytes(senderId, passphrase);
+            return lookupAccountKMSv1().getAplSecretBytes(senderId, passphrase);
         }
         if (isMandatory) {
             throw new ParameterException("Secret phrase or valid passphrase + accountId required", null, incorrect("secretPhrase",
@@ -596,7 +596,7 @@ public final class HttpParameterParserUtil {
                             throw new ParameterException(missing(secretPhraseParam, publicKeyParam, passphraseParam));
                         }
                     } else {
-                        byte[] secretBytes = lookupAccount2FAService().findAplSecretBytes(accountId, passphrase);
+                        byte[] secretBytes = lookupAccountKMSv1().getAplSecretBytes(accountId, passphrase);
 
                         return Crypto.getPublicKey(Crypto.getKeySeed(secretBytes));
                     }
@@ -1246,11 +1246,11 @@ public final class HttpParameterParserUtil {
         return transactionBuilder;
     }
 
-    private static Account2FAService lookupAccount2FAService() {
-        if (account2FAService == null) {
-            account2FAService = CDI.current().select(Account2FAService.class).get();
+    private static KMSv1 lookupAccountKMSv1() {
+        if (kmSv1 == null) {
+            kmSv1 = CDI.current().select(KMSv1.class).get();
         }
-        return account2FAService;
+        return kmSv1;
     }
 
     public static class PrivateTransactionsAPIData {

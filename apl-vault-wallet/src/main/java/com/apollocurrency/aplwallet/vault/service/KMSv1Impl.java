@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.vault.service;
 
 import com.apollocurrency.aplwallet.api.dto.vault.ExportKeyStore;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import com.apollocurrency.aplwallet.vault.KeyStoreService;
@@ -49,9 +50,9 @@ public class KMSv1Impl implements KMSv1 {
     }
 
     @Override
-    public String getAplPrivateKey(long accountId, String passphrase) {
+    public byte[] getAplSecretBytes(long accountId, String passphrase) {
         ApolloFbWallet fbWallet = keyStoreService.getSecretStore(passphrase, accountId);
-        return fbWallet != null ? fbWallet.getAplKeySecret() : null;
+        return fbWallet != null ? Convert.parseHexString(fbWallet.getAplKeySecret()) : null;
     }
 
     @Override

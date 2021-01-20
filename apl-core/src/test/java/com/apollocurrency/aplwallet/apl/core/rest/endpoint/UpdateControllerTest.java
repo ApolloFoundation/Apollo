@@ -126,7 +126,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
         ApolloFbWallet wallet = mock(ApolloFbWallet.class);
         doReturn(Convert.toHexString(Crypto.getKeySeed(Convert.toBytes(SECRET)))).when(wallet).getAplKeySecret();
-        doReturn(wallet.getAplKeySecret()).when(kmSv1).getAplPrivateKey(ACCOUNT_ID_WITH_SECRET, SECRET);
+        doReturn(Convert.parseHexString(wallet.getAplKeySecret())).when(kmSv1).getAplSecretBytes(ACCOUNT_ID_WITH_SECRET, SECRET);
         doReturn(sender).when(accountService).getAccount(Convert.parseHexString(PUBLIC_KEY_SECRET));
         EcBlockData ecBlockData = new EcBlockData(121, 100_000);
         doReturn(ecBlockData).when(blockchain).getECBlock(0);

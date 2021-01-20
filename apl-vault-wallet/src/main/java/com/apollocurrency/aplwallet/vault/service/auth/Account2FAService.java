@@ -196,18 +196,6 @@ public class Account2FAService {
         return deleteAccount(twoFactorAuthParameters.getAccountId(), twoFactorAuthParameters.getPassphrase(), twoFactorAuthParameters.getCode2FA());
     }
 
-    public byte[] findAplSecretBytes(long accountId, String passphrase) throws RestParameterException {
-        ApolloFbWallet fbWallet = keyStoreService.getSecretStore(passphrase, accountId);
-        if (fbWallet == null) {
-            throw new RestParameterException(ApiErrors.INCORRECT_PARAM_VALUE, String.format("%s, account=%d", "account id or passphrase", accountId));
-        }
-        return Convert.parseHexString(fbWallet.getAplKeySecret());
-    }
-
-    public byte[] findAplSecretBytes(TwoFactorAuthParameters twoFactorAuthParameters) throws RestParameterException {
-        return findAplSecretBytes(twoFactorAuthParameters.getAccountId(), twoFactorAuthParameters.getPassphrase());
-    }
-
     public WalletKeysInfo generateUserWallet(String passphrase) throws RestParameterException {
         return generateUserWallet(passphrase, null);
     }
@@ -242,6 +230,17 @@ public class Account2FAService {
             log.debug("Vault wallet not " + notPerformedAction + " {} - {}", Convert2.rsAccount(accountId), status);
             throw new RestParameterException(ApiErrors.ACCOUNT_2FA_ERROR, String.format("Vault wallet for account was not %s : %s", notPerformedAction, status.message));
         }
+    }
+
+    /**
+     * For public use the com.apollocurrency.aplwallet.vault.service.KMSv1#getAplSecretBytes(long, java.lang.String)
+     */
+    private byte[] findAplSecretBytes(long accountId, String passphrase) throws RestParameterException {
+        ApolloFbWallet fbWallet = keyStoreService.getSecretStore(passphrase, accountId);
+        if (fbWallet == null) {
+            throw new RestParameterException(ApiErrors.INCORRECT_PARAM_VALUE, String.format("%s, account=%d", "account id or passphrase", accountId));
+        }
+        return Convert.parseHexString(fbWallet.getAplKeySecret());
     }
 
 }

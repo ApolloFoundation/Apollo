@@ -20,13 +20,6 @@ import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.MISSING_
 
 @Singleton
 public class AccountParametersParser {
-    public static final String SENDER_PARAM_NAME = "sender";
-    public static final String DEADLINE_PARAM_NAME = "deadline";
-    public static final String AMOUNT_PARAM_NAME = "amountATM";
-    public static final String FEE_PARAM_NAME = "feeATM";
-    public static final String RECIPIENT_PARAM_NAME = "recipientId";
-    public static final String PUBLIC_KEY_PARAM_NAME = "recipientId";
-
     private final ElGamalEncryptor elGamal;
     private final AccountService accountService;
     private final KMSv1 kmSv1;
@@ -89,23 +82,12 @@ public class AccountParametersParser {
         }
         String passphrase = Convert.emptyToNull(getPassphrase(req, false));
         if (passphrase != null) {
-            return getKeySeed(passphrase, senderId);
+            return getSecretBytes(passphrase, senderId);
         }
         if (isMandatory) {
             throw new RestParameterException(MISSING_PARAM_LIST, "secretPhrase, passphrase + accountId");
         }
         return null;
-    }
-
-
-    private byte[] getKeySeed(String passphrase, long accountId) {
-        String seed = kmSv1.getAplPrivateKey(accountId, passphrase);
-
-        if (seed == null) {
-            throw new RestParameterException(ApiErrors.BAD_CREDENTIALS, " account id or passphrase are not valid");
-        }
-
-        return Convert.parseHexString(seed);
     }
 
     public Account getSenderAccount(HttpServletRequest req, String accountName) {
@@ -173,8 +155,7 @@ public class AccountParametersParser {
                             throw new RestParameterException(ApiErrors.MISSING_PARAM_LIST, secretPhraseParam + "," + publicKeyParam + "," + passphraseParam);
                         }
                     } else {
-
-                        byte[] keySeed = getKeySeed(passphrase, accountId);
+                        byte[] keySeed = getSecretBytes(passphrase, accountId);
                         return Crypto.getPublicKey(keySeed);
                     }
                 } else {
@@ -224,5 +205,13 @@ public class AccountParametersParser {
 
     public Account getSenderAccount(HttpServletRequest req) {
         return getSenderAccount(req, null);
+    }
+
+    private byte[] getSecretBytes(String passphrase, long accountId) {
+        byte[] secretBytes = kmSv1.getAplSecretBytes(accountId, passphrase);
+        if (secretBytes == null) {
+            throw new RestParameterException(ApiErrors.BAD_CREDENTIALS, " account id or passphrase are not valid");
+        }
+        return secretBytes;
     }
 }

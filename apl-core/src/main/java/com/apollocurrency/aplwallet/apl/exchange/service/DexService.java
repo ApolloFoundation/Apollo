@@ -79,7 +79,6 @@ import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
 import com.apollocurrency.aplwallet.vault.service.KMSv1;
-import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.google.common.cache.Cache;
 import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
@@ -123,7 +122,6 @@ public class DexService {
     private BlockchainConfig blockchainConfig;
     private AccountService accountService;
     private DexConfig dexConfig;
-    private Account2FAService account2FAService;
     private KMSv1 kmSv1;
 
     private Integer MAX_PAGES_FOR_SEARCH = 10;
@@ -137,7 +135,7 @@ public class DexService {
                       BlockchainConfig blockchainConfig,
                       @CacheProducer
                       @CacheType(DexOrderFreezingCacheConfig.CACHE_NAME) Cache<Long, OrderFreezing> cache,
-                      DexConfig dexConfig, Account2FAService account2FAService, KMSv1 kmSv1) {
+                      DexConfig dexConfig, KMSv1 kmSv1) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOrderDao = dexOrderDao;
         this.dexOrderTable = dexOrderTable;
@@ -158,7 +156,6 @@ public class DexService {
         this.blockchainConfig = blockchainConfig;
         this.accountService = accountService;
         this.dexConfig = dexConfig;
-        this.account2FAService = account2FAService;
         this.kmSv1 = kmSv1;
     }
 
@@ -612,7 +609,7 @@ public class DexService {
                 .passphrase(passphrase)
                 .publicKey(accountService.getPublicKeyByteArray(userAccountId))
                 .senderAccount(accountService.getAccount(userAccountId))
-                .keySeed(Crypto.getKeySeed(account2FAService.findAplSecretBytes(userAccountId, passphrase)))
+                .keySeed(Crypto.getKeySeed(kmSv1.getAplSecretBytes(userAccountId, passphrase)))
                 .deadlineValue("1440")
                 .feeATM(Math.multiplyExact(blockchainConfig.getOneAPL(), 2))
                 .broadcast(true)

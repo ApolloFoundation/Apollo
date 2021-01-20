@@ -719,7 +719,7 @@ public class DexOrderProcessor {
 
 
     private CreateTransactionRequest buildRequest(String passphrase, Long accountId, Attachment attachment, Long feeATM) {
-        byte[] keySeed = Crypto.getKeySeed(account2FAService.findAplSecretBytes(accountId, passphrase));
+        byte[] keySeed = Crypto.getKeySeed(kmSv1.getAplSecretBytes(accountId, passphrase));
         CreateTransactionRequest transferMoneyReq = CreateTransactionRequest
             .builder()
             .passphrase(passphrase)

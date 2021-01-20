@@ -26,7 +26,7 @@ public interface KMSv1 {
 
     WalletKeysInfo getWalletInfo(long accountId, String passphrase);
 
-    String getAplPrivateKey(long accountId, String passphrase);
+    byte[] getAplSecretBytes(long accountId, String passphrase);
 
     KMSResponseStatus storeWallet(byte[] wallet, String passphrase);
 

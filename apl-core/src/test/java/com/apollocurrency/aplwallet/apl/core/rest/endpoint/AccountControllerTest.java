@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.FirstLastIndexParser;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.AccountParametersParser;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
@@ -42,6 +42,7 @@ import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.vault.rest.converter.WalletKeysConverter;
+import com.apollocurrency.aplwallet.vault.service.KMSv1;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.apollocurrency.aplwallet.vault.util.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.vault.util.AccountHelper;
@@ -105,7 +106,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AccountControllerTest extends AbstractEndpointTest {
-
     public static final String PUBLIC_KEY_HEX = "e03f00485cabc82491d05297acd9d140f62d61d86f16ba4bcf2a922482a4617d";
     public static final String ACCOUNT_RS = "APL-5MRD-NBKX-X5EJ-3UP2M";
     public static final long ACCOUNT_ID = 1838236804542746347L;
@@ -118,7 +118,6 @@ class AccountControllerTest extends AbstractEndpointTest {
     public AccountDTO accountDTO;
     public AccountAsset accountAsset;
     public AccountCurrency accountCurrency;
-
     private AccountController endpoint;
 
     @Mock
@@ -140,21 +139,22 @@ class AccountControllerTest extends AbstractEndpointTest {
     @Mock
     private CurrencyService currencyService;
     @Mock
-    PrunableLoadingService prunableLoadingService;
+    private PrunableLoadingService prunableLoadingService;
+    @Mock
+    private KMSv1 kmSv1;
+    @Mock
+    private Account2FAService account2FAService;
+    @Mock
+    private AccountStatisticsService accountStatisticsService = Mockito.mock(AccountStatisticsService.class);
+    @Mock
+    private AssetService assetService = Mockito.mock(AssetService.class);
+    @Mock
+    private AccountParametersParser accountParametersParser = Mockito.mock(AccountParametersParser.class);
 
     private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter(prunableLoadingService));
     private BlockConverter blockConverter = new BlockConverter(
         blockchain, transactionConverter,
         mock(PhasingPollService.class), mock(AccountService.class));
-
-    @Mock
-    private Account2FAService account2FAService;
-
-    private FirstLastIndexParser indexParser = new FirstLastIndexParser(100);
-    @Mock
-    private AccountStatisticsService accountStatisticsService = Mockito.mock(AccountStatisticsService.class);
-    @Mock
-    private AssetService assetService = Mockito.mock(AssetService.class);
 
     private Block GENESIS_BLOCK, LAST_BLOCK, NEW_BLOCK;
     private Block BLOCK_0, BLOCK_1, BLOCK_2, BLOCK_3;
@@ -182,7 +182,9 @@ class AccountControllerTest extends AbstractEndpointTest {
             100,
             accountStatisticsService,
             assetService,
-            currencyService
+            currencyService,
+            accountParametersParser,
+            kmSv1
         );
 
         dispatcher.getRegistry().addSingletonResource(endpoint);
@@ -412,15 +414,14 @@ class AccountControllerTest extends AbstractEndpointTest {
     @Test
     void exportKey_withPassPhraseAndAccountAndCode2FA() throws URISyntaxException, IOException {
         String uri = "/accounts/export-key";
-        byte[] secretBytes = SECRET.getBytes();
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
-        doReturn(twoFactorAuthParameters).when(account2FAService).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null, null);
 
-        doReturn(secretBytes).when(account2FAService).findAplSecretBytes(twoFactorAuthParameters);
+        doReturn(SECRET.getBytes()).when(kmSv1).getAplSecretBytes(ACCOUNT_ID, PASSPHRASE);
+
         check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
-        verify(account2FAService, times(1)).create2FAParameters(ACCOUNT_RS, PASSPHRASE, null, null);
-        verify(account2FAService, times(1)).findAplSecretBytes(twoFactorAuthParameters);
+
+        verify(kmSv1, times(1)).getAplSecretBytes(ACCOUNT_ID, PASSPHRASE);
     }
 
     @Test
