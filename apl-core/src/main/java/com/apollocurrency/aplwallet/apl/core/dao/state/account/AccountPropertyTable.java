@@ -60,8 +60,7 @@ public class AccountPropertyTable extends VersionedDeletableEntityDbTable<Accoun
     @Override
     public void save(Connection con, AccountProperty accountProperty) throws SQLException {
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE)
-            final PreparedStatement pstmt = con.prepareStatement("INSERT INTO account_property "
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("INSERT INTO account_property "
                 + "(id, recipient_id, setter_id, property, `VALUE`, height, latest, deleted) "
                 + "VALUES (?, ?, ?, ?, ?, ?, TRUE, FALSE) "
                 + "ON DUPLICATE KEY UPDATE id = VALUES(id), recipient_id = VALUES(recipient_id), setter_id = VALUES(setter_id), "

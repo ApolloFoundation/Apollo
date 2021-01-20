@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.exception;
 
 import com.apollocurrency.aplwallet.api.response.ResponseBase;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -10,10 +11,10 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 @Provider
-public class LegacyParameterExceptionMapper implements ExceptionMapper<com.apollocurrency.aplwallet.apl.core.http.ParameterException> {
+public class LegacyParameterExceptionMapper implements ExceptionMapper<ParameterException> {
 
     @Override
-    public Response toResponse(com.apollocurrency.aplwallet.apl.core.http.ParameterException exception) {
+    public Response toResponse(ParameterException exception) {
         Object responseEntity;
         if (exception.getErrorResponse() != null) {
             try {

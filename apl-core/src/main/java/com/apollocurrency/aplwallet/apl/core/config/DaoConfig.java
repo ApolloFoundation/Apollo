@@ -8,16 +8,14 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.BlockIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.UserErrorMessageDao;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexCandlestickDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOperationDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.OrderScanDao;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
@@ -71,16 +69,6 @@ public class DaoConfig {
     @Produces
     private MandatoryTransactionDao mandatoryTransactionDao() {
         return createDaoInterfaceProxy(MandatoryTransactionDao.class);
-    }
-
-    @Produces
-    private DexTransactionDao dexTransactionDao() {
-        return createDaoInterfaceProxy(DexTransactionDao.class);
-    }
-
-    @Produces
-    private UserErrorMessageDao userErrorMessage() {
-        return createDaoInterfaceProxy(UserErrorMessageDao.class);
     }
 
     @Produces

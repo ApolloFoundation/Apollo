@@ -4,11 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl;
 
-import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
-import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
+import com.apollocurrency.aplwallet.vault.model.AplWalletKey;
+import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
+import com.apollocurrency.aplwallet.vault.util.AccountGeneratorUtil;
+import com.apollocurrency.aplwallet.vault.util.AccountHelper;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -38,7 +39,7 @@ public class AccountGeneratorImplTest {
 
     @Test
     public void testGenerateAccountEth() throws Exception {
-        EthWalletKey actualAcc = accountGenerator.generateEth();
+        EthWalletKey actualAcc = AccountHelper.generateNewEthAccount();
 
         assertNotNull(actualAcc);
         assertNotNull(actualAcc.getCredentials());

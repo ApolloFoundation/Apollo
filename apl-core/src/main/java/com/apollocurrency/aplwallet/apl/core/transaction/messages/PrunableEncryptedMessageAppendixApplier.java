@@ -33,4 +33,9 @@ public class PrunableEncryptedMessageAppendixApplier implements AppendixApplier<
             messageService.add(transaction, appendix);
         }
     }
+
+    @Override
+    public Class<PrunableEncryptedMessageAppendix> forClass() {
+        return PrunableEncryptedMessageAppendix.class;
+    }
 }

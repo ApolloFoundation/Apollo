@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.account.Account2FADTO;
 import com.apollocurrency.aplwallet.apl.core.converter.Converter;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 
 public class Account2FAConverter implements Converter<TwoFactorAuthParameters, Account2FADTO> {
     @Override

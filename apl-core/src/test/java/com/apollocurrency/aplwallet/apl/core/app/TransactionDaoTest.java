@@ -77,14 +77,6 @@ class TransactionDaoTest extends DbContainerBaseTest {
     private TransactionDao dao;
     private TransactionTestData td;
 
-    private Path createPath(String fileName) {
-        try {
-            return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
-        } catch (IOException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
     @BeforeEach
     void setUp() {
         td = new TransactionTestData();

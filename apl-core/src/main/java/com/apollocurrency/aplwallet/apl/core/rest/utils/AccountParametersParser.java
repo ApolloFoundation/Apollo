@@ -1,18 +1,17 @@
 package com.apollocurrency.aplwallet.apl.core.rest.utils;
 
+import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.http.ElGamalEncryptor;
-import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
+import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
+import com.apollocurrency.aplwallet.vault.KeyStoreService;
+import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
 import org.jboss.resteasy.core.interception.jaxrs.PostMatchContainerRequestContext;
 import org.jboss.resteasy.spi.HttpRequest;
 
@@ -25,9 +24,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.apollocurrency.aplwallet.apl.core.rest.ApiErrors.INCORRECT_VALUE;
-import static com.apollocurrency.aplwallet.apl.core.rest.ApiErrors.MISSING_PARAM_LIST;
-import static com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
+import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.INCORRECT_VALUE;
+import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.MISSING_PARAM_LIST;
+import static com.apollocurrency.aplwallet.vault.service.auth.Account2FAService.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
 
 @Singleton
 public class AccountParametersParser {
@@ -43,7 +42,7 @@ public class AccountParametersParser {
     private final KeyStoreService keyStoreService;
 
     @Inject
-    public AccountParametersParser(AccountService accountService, Blockchain blockchain, KeyStoreService keyStoreService, ElGamalEncryptor elGamalEncryptor) {
+    public AccountParametersParser(AccountService accountService, KeyStoreService keyStoreService, ElGamalEncryptor elGamalEncryptor) {
         this.elGamal = elGamalEncryptor;
         this.accountService = accountService;
         this.keyStoreService = keyStoreService;

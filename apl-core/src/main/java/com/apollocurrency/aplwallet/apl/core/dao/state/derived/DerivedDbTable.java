@@ -32,7 +32,6 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -81,9 +80,10 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     }
 
     @Override
-    public void trim(int height, boolean isSharding) { }
+    public void trim(int height, boolean isSharding) {
+    }
 
-//    @PostConstruct // can be used, but keep eyes on 'PublicKeyTable' which is not gets into derivedDbTablesRegistry
+    //    @PostConstruct // can be used, but keep eyes on 'PublicKeyTable' which is not gets into derivedDbTablesRegistry
     public void init() {
         derivedDbTablesRegistry.registerDerivedTable(this);
         log.debug("Register derived class: {}", this.getClass().getName());

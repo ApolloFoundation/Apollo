@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import com.apollocurrency.aplwallet.apl.core.config.Property;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 
 import javax.inject.Inject;
 import java.sql.Connection;
@@ -32,7 +32,7 @@ public class H2DbInfoExtractor implements DbInfoExtractor {
     protected void shutdownDb() {
         try (Connection connection = DriverManager.getConnection("jdbc:mariadb://localhost:3306/apollo_new", "root", "12");
              Statement statement = connection.createStatement();
-        ){
+        ) {
             statement.execute("SHUTDOWN");
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);

@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.dao.appdata.factory;
 
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
 import org.jdbi.v3.core.argument.AbstractArgumentFactory;
 import org.jdbi.v3.core.argument.Argument;
 import org.jdbi.v3.core.config.ConfigRegistry;

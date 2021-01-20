@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.files.statcheck;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.spongycastle.util.Arrays;
+import org.bouncycastle.util.Arrays;
 
 /**
  * Entity that have hash and could be sorted by it

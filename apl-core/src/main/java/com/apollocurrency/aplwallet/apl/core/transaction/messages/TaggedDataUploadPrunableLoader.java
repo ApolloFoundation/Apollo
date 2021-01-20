@@ -22,4 +22,9 @@ public class TaggedDataUploadPrunableLoader extends TaggedDataPrunableLoader<Tag
     public void restorePrunableData(Transaction transaction, TaggedDataUploadAttachment appendix, int blockTimestamp, int height) {
         taggedDataService.restore(transaction, appendix, blockTimestamp, height);
     }
+
+    @Override
+    public Class<TaggedDataUploadAttachment> forClass() {
+        return TaggedDataUploadAttachment.class;
+    }
 }

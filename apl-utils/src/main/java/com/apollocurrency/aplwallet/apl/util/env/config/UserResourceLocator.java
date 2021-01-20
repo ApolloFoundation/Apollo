@@ -45,8 +45,8 @@ public class UserResourceLocator implements ResourceLocator {
         InputStream is = classloader.getResourceAsStream(path);
         if (is != null) {
             log.info("Located in resources, resource={}", path);
-        }else{
-            log.warn("Can not find resource at: {}",path);
+        } else {
+            log.warn("Can not find resource at: {}", path);
         }
 
         return Optional.ofNullable(is);

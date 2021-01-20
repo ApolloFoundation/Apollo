@@ -15,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvExportException
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -44,7 +43,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.BLOCK_T
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_INDEX_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_TABLE_NAME;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * {@inheritDoc}
@@ -400,12 +398,12 @@ public class CsvExporterImpl implements CsvExporter {
                         // sometimes DB_ID can have a SQL type mapped to BigDecimal or Long (depends on table)
                         Object rawObjectValue = csvExportData.getLastRow().get(minMaxValue.getColumn().toLowerCase());
                         if (rawObjectValue instanceof Long) {
-                            Long longValue = (Long)rawObjectValue;
+                            Long longValue = (Long) rawObjectValue;
                             BigDecimal bidDecimalId = new BigDecimal(longValue);
                             bidDecimalId = bidDecimalId.add(BigDecimal.ONE);
                             minMaxValue.setMin(bidDecimalId);
                         } else if (rawObjectValue instanceof BigInteger) {
-                            BigDecimal bidDecimalId = new BigDecimal((BigInteger)rawObjectValue);
+                            BigDecimal bidDecimalId = new BigDecimal((BigInteger) rawObjectValue);
                             bidDecimalId = bidDecimalId.add(BigDecimal.ONE);
                             minMaxValue.setMin(bidDecimalId);
                         } else {

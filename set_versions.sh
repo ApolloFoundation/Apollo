@@ -1,7 +1,7 @@
 #!/bin/sh
 # Define versions
 if [ -z "${1}" ] ; then
-    NEW_VERSION=1.47.4
+    NEW_VERSION=1.48.0
 else
     NEW_VERSION=$1
 fi

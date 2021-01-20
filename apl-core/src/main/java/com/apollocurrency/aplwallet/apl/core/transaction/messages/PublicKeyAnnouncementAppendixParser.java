@@ -17,4 +17,9 @@ public class PublicKeyAnnouncementAppendixParser implements AppendixParser<Publi
         }
         return new PublicKeyAnnouncementAppendix(jsonData);
     }
+
+    @Override
+    public Class<PublicKeyAnnouncementAppendix> forClass() {
+        return PublicKeyAnnouncementAppendix.class;
+    }
 }

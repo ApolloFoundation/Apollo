@@ -12,7 +12,8 @@ import com.apollocurrency.aplwallet.apl.core.model.AplQueryObject;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,15 +56,23 @@ class FindTransactionServiceImplTest {
 
     FindTransactionService findTransactionService;
 
-    static int startTime = Convert2.toEpochTime(1596090615500L);
-    static int endTime = Convert2.toEpochTime(1596182761726L);
+    static int startTime;
+    static int endTime;
+
+    static {
+        Convert2.init("APL", 0);
+        startTime = Convert2.toEpochTime(1596090615500L);
+        endTime = Convert2.toEpochTime(1596182761726L);
+    }
+
+    @BeforeAll
+    static void beforeAll() {
+        Convert2.init("APL", 0);
+    }
 
     @BeforeEach
     void setUp() {
-
-        findTransactionService = new FindTransactionServiceImpl(transactionService, memPool,
-            blockChainInfoService, txReceiptMapper);
-
+        findTransactionService = new FindTransactionServiceImpl(databaseManager, transactionDao, memPool, blockChainInfoService, txReceiptMapper);
     }
 
     @Test

@@ -19,4 +19,9 @@ public class PhasingAppendixParser implements AppendixParser<PhasingAppendix> {
         }
         return null;
     }
+
+    @Override
+    public Class<PhasingAppendix> forClass() {
+        return PhasingAppendix.class;
+    }
 }

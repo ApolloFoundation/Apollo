@@ -3,9 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.rest.exception;
 
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.Response;

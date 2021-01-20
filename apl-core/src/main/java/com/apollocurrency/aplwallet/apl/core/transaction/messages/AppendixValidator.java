@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
 public interface AppendixValidator<T extends Appendix> {
 
@@ -18,7 +18,7 @@ public interface AppendixValidator<T extends Appendix> {
     void validateStateDependent(Transaction transaction, T appendix, int validationHeight) throws AplException.ValidationException;
 
     /**
-     * Phasing transaction will be validated by this method instead of {@link AppendixValidator#validate(Transaction, Appendix, int)} when will be approved and executed
+     * Phasing transaction will be validated by this method instead of {@link AppendixValidator#validateStateDependent(Transaction, Appendix, int)} + {@link AppendixValidator#validateStateIndependent(Transaction, Appendix, int)}  when will be approved and executed
      * @param transaction transaction to validate
      * @param appendix transaction's appendix to validate
      * @param blockHeight blockchain height for validation
@@ -36,4 +36,10 @@ public interface AppendixValidator<T extends Appendix> {
      * @throws AplException.ValidationException when validation fails
      */
     void validateStateIndependent(Transaction transaction, T appendix, int validationHeight) throws AplException.ValidationException;
+
+
+    /**
+     * @return class instance for which validation has to be performed
+     */
+    Class<T> forClass();
 }

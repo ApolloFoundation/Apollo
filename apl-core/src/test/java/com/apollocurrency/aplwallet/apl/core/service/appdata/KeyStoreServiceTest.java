@@ -4,17 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
-import com.apollocurrency.aplwallet.apl.core.app.EncryptedSecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.SecretBytesDetails;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.VaultKeyStoreServiceImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
-import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.vault.KeyStoreService;
+import com.apollocurrency.aplwallet.vault.VaultKeyStoreServiceImpl;
+import com.apollocurrency.aplwallet.vault.model.SecretBytesDetails;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -31,15 +29,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Random;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.anyLong;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -73,26 +68,16 @@ public class KeyStoreServiceTest {
         .addBeans(MockBean.of(time, NtpTime.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .build();
-    private byte[] secretBytes = generateSecretBytes();
-    private byte[] nonce = new byte[16];
     private Path tempDirectory;
     private VaultKeyStoreServiceImpl keyStore;
 
-    private byte[] generateSecretBytes() {
-        byte secretBytes[] = new byte[32];
-        Random random = new Random();
-        random.nextBytes(secretBytes);
-        return secretBytes;
-    }
 
     @BeforeEach
     void setUp() throws Exception {
-//        Crypto.getSecureRandom().nextBytes(nonce);
         tempDirectory = Files.createTempDirectory("keystore-test");
-        keyStore = new VaultKeyStoreServiceImpl(tempDirectory, 0, time);
+        keyStore = new VaultKeyStoreServiceImpl(tempDirectory);
         Files.write(tempDirectory.resolve("---" + ACCOUNT1), encryptedKeyJSON.getBytes());
-        doReturn("APL").when(blockchainConfig).getAccountPrefix();
-        Convert2.init(blockchainConfig);
+        Convert2.init("APL", 1739068987193023818L);
     }
 
     @AfterEach
@@ -108,32 +93,32 @@ public class KeyStoreServiceTest {
             Files.delete(tempDirectory);
         }
     }
-
-    @Test
-    @Execution(ExecutionMode.SAME_THREAD)
+/*
+    saveSecretBytes was deleted.
+ */
     public void testSaveKey() throws Exception {
-        VaultKeyStoreServiceImpl keyStoreSpy = spy(keyStore);
-
-        KeyStoreService.Status status = keyStoreSpy.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_2));
-        assertEquals(KeyStoreService.Status.OK, status);
-        verify(keyStoreSpy, times(1)).storeJSONSecretBytes(any(Path.class), any(EncryptedSecretBytesDetails.class));
-        verify(keyStoreSpy, times(1)).findKeyStorePathWithLatestVersion(anyLong());
-
-        assertEquals(2, FileUtils.countElementsOfDirectory(tempDirectory));
-
-        String rsAcc = Convert2.defaultRsAccount(Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(Convert.parseHexString(SECRET_BYTES_2)))));
-
-        try (Stream<Path> paths = Files.list(tempDirectory)) {
-            Path encryptedKeyPath = paths.filter(path -> path.getFileName().toString().endsWith(rsAcc)).findFirst().orElseThrow(() -> new RuntimeException("No encrypted key found for " + rsAcc + " account"));
-
-            EncryptedSecretBytesDetails KeyDetails = JSON.getMapper().readValue(encryptedKeyPath.toFile(), EncryptedSecretBytesDetails.class);
-
-            byte[] actualKey = Crypto.aesDecrypt(KeyDetails.getEncryptedSecretBytes(), Crypto.getKeySeed(PASSPHRASE,
-                KeyDetails.getNonce(), Convert.longToBytes(KeyDetails.getTimestamp())));
-
-            assertEquals(SECRET_BYTES_2, Convert.toHexString(actualKey));
-            assertEquals(ACCOUNT2, rsAcc);
-        }
+//        VaultKeyStoreServiceImpl keyStoreSpy = spy(keyStore);
+//
+//        KeyStoreService.Status status = keyStoreSpy.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_2));
+//        assertEquals(KeyStoreService.Status.OK, status);
+//        verify(keyStoreSpy, times(1)).storeJSONSecretBytes(any(Path.class), any(EncryptedSecretBytesDetails.class));
+//        verify(keyStoreSpy, times(1)).findKeyStorePathWithLatestVersion(anyLong());
+//
+//        assertEquals(2, FileUtils.countElementsOfDirectory(tempDirectory));
+//
+//        String rsAcc = Convert2.defaultRsAccount(Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(Convert.parseHexString(SECRET_BYTES_2)))));
+//
+//        try (Stream<Path> paths = Files.list(tempDirectory)) {
+//            Path encryptedKeyPath = paths.filter(path -> path.getFileName().toString().endsWith(rsAcc)).findFirst().orElseThrow(() -> new RuntimeException("No encrypted key found for " + rsAcc + " account"));
+//
+//            EncryptedSecretBytesDetails KeyDetails = JSON.getMapper().readValue(encryptedKeyPath.toFile(), EncryptedSecretBytesDetails.class);
+//
+//            byte[] actualKey = Crypto.aesDecrypt(KeyDetails.getEncryptedSecretBytes(), Crypto.getKeySeed(PASSPHRASE,
+//                KeyDetails.getNonce(), Convert.longToBytes(KeyDetails.getTimestamp())));
+//
+//            assertEquals(SECRET_BYTES_2, Convert.toHexString(actualKey));
+//            assertEquals(ACCOUNT2, rsAcc);
+//        }
     }
 
 
@@ -179,10 +164,12 @@ public class KeyStoreServiceTest {
         assertEquals(KeyStoreService.Status.NOT_FOUND, secretBytesDetails.getExtractStatus());
     }
 
-    //    @Test
+    /*
+    saveSecretBytes was deleted.
+ */
     public void testSaveDuplicateKey() throws IOException {
-        KeyStoreService.Status status = keyStore.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_1));
-        assertEquals(KeyStoreService.Status.DUPLICATE_FOUND, status);
+//        KeyStoreService.Status status = keyStore.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_1));
+//        assertEquals(KeyStoreService.Status.DUPLICATE_FOUND, status);
     }
 
     //    @Test
@@ -228,18 +215,20 @@ public class KeyStoreServiceTest {
         }
     }
 
-    @Test
+    /*
+    saveSecretBytes was deleted.
+    */
     @Execution(ExecutionMode.SAME_THREAD)
     public void testSaveNotAvailable() throws IOException {
-        Path path = tempDirectory.resolve(".local");
-        try {
-            Files.createFile(path);
-            KeyStoreService.Status status = keyStore.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_2));
-            assertEquals(KeyStoreService.Status.NOT_AVAILABLE, status);
-
-        } finally {
-            Files.deleteIfExists(path);
-        }
+//        Path path = tempDirectory.resolve(".local");
+//        try {
+//            Files.createFile(path);
+//            KeyStoreService.Status status = keyStore.saveSecretBytes(PASSPHRASE, Convert.parseHexString(SECRET_BYTES_2));
+//            assertEquals(KeyStoreService.Status.NOT_AVAILABLE, status);
+//
+//        } finally {
+//            Files.deleteIfExists(path);
+//        }
     }
 
     @Test
