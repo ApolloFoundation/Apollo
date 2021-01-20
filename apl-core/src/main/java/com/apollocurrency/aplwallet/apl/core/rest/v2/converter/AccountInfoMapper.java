@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.rest.v2.converter;
 import com.apollocurrency.aplwallet.api.v2.model.AccountInfoResp;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.converter.Converter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.Converter;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 
 import javax.inject.Singleton;

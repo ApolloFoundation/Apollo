@@ -72,7 +72,7 @@ class FindTransactionServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        findTransactionService = new FindTransactionServiceImpl(databaseManager, transactionDao, memPool, blockChainInfoService, txReceiptMapper);
+        findTransactionService = new FindTransactionServiceImpl(transactionService, memPool, blockChainInfoService, txReceiptMapper);
     }
 
     @Test
