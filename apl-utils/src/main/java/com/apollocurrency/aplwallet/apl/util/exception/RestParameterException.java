@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.util.exception;
@@ -11,18 +11,13 @@ package com.apollocurrency.aplwallet.apl.util.exception;
  */
 public class RestParameterException extends RuntimeException {
 
-    /**
-     *
-     */
-    private ApiErrorInfo apiErrorInfo;
+    private final ApiErrorInfo apiErrorInfo;
 
-    /**
-     *
-     */
-    private Object[] args;
+    private final Object[] args;
 
     public RestParameterException(Integer oldErrorCode, Integer errorCode, String message) {
         super(message);
+        this.args = null;
         this.apiErrorInfo = new ApiErrorInfo() {
             @Override
             public int getErrorCode() {
@@ -42,13 +37,13 @@ public class RestParameterException extends RuntimeException {
     }
 
     public RestParameterException(ApiErrorInfo apiErrorInfo, Object... args) {
-        super(apiErrorInfo.getErrorDescription());
+        super(format(apiErrorInfo.getErrorDescription(), args));
         this.apiErrorInfo = apiErrorInfo;
         this.args = args;
     }
 
     public RestParameterException(Throwable cause, ApiErrorInfo apiErrorInfo, Object... args) {
-        super(apiErrorInfo.getErrorDescription(), cause);
+        super(format(apiErrorInfo.getErrorDescription(), args), cause);
         this.apiErrorInfo = apiErrorInfo;
         this.args = args;
     }
@@ -59,5 +54,9 @@ public class RestParameterException extends RuntimeException {
 
     public Object[] getArgs() {
         return args;
+    }
+
+    private static String format(String format, Object... args) {
+        return Messages.format(format, args);
     }
 }

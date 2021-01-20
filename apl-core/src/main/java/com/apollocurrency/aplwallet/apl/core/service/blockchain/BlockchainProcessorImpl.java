@@ -306,16 +306,17 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (propertiesHolder.getBooleanProperty("apl.forceScan")) {
                     scan(0, propertiesHolder.getBooleanProperty("apl.forceValidate"));
                 } else {
-                    boolean rescan;
-                    boolean validate;
-                    int height;
+                    boolean rescan = false;
+                    boolean validate = false;
+                    int height = -1;
                     try (Connection con = databaseManager.getDataSource().getConnection();
                          Statement stmt = con.createStatement();
                          ResultSet rs = stmt.executeQuery("SELECT * FROM scan")) {
-                        rs.next();
-                        rescan = rs.getBoolean("rescan");
-                        validate = rs.getBoolean("validate");
-                        height = rs.getInt("height");
+                        if (rs.next()) {
+                            rescan = rs.getBoolean("rescan");
+                            validate = rs.getBoolean("validate");
+                            height = rs.getInt("height");
+                        }
                     } catch (SQLException e) {
                         throw new RuntimeException(e.toString(), e);
                     }

@@ -149,27 +149,28 @@ public class Account2FAService {
         TwoFactorAuthParameters params2FA = create2FAParameters(accountStr,
             passphraseParam, secretPhraseParam, publicKeyParam);
         params2FA.setCode2FA(code2FA);
-        if (isEnabled2FA(params2FA.getAccountId())) {
-            Status2FA status2FA = verify2FA(params2FA);
-            params2FA.setStatus2FA(status2FA);
-        }
+        params2FA.setStatus2FA(
+            verify2FA(params2FA)
+        );
         return params2FA;
     }
 
     public Status2FA verify2FA(TwoFactorAuthParameters params2FA) throws RestParameterException {
-        if (params2FA.getCode2FA() == null) {
-            throw new RestParameterException(ApiErrors.MISSING_PARAM, "code2FA");
-        }
+        Status2FA status2FA = Status2FA.NOT_ENABLED;
+        if (isEnabled2FA(params2FA.getAccountId())) {
+            if (params2FA.getCode2FA() == null) {
+                throw new RestParameterException(ApiErrors.MISSING_PARAM, "code2FA");
+            }
 
-        Status2FA status2FA;
-        if (params2FA.isPassphrasePresent()) {
-            findAplSecretBytes(params2FA.getAccountId(), params2FA.getPassphrase());
-            status2FA = service2FA.tryAuth(params2FA.getAccountId(), params2FA.getCode2FA());
-            validate2FAStatus(status2FA, params2FA.getAccountId());
-        } else {
-            long accountId = Convert.getId(Crypto.getPublicKey(params2FA.getSecretPhrase()));
-            status2FA = service2FA.tryAuth(accountId, params2FA.getCode2FA());
-            validate2FAStatus(status2FA, accountId);
+            if (params2FA.isPassphrasePresent()) {
+                findAplSecretBytes(params2FA.getAccountId(), params2FA.getPassphrase());
+                status2FA = service2FA.tryAuth(params2FA.getAccountId(), params2FA.getCode2FA());
+                validate2FAStatus(status2FA, params2FA.getAccountId());
+            } else {
+                long accountId = Convert.getId(Crypto.getPublicKey(params2FA.getSecretPhrase()));
+                status2FA = service2FA.tryAuth(accountId, params2FA.getCode2FA());
+                validate2FAStatus(status2FA, accountId);
+            }
         }
         return status2FA;
     }
