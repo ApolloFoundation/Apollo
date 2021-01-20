@@ -5,70 +5,58 @@
 package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.List;
 import java.util.Set;
 
 public interface BlockDao {
 
-    Block findBlock(long blockId, TransactionalDataSource dataSource);
+    BlockEntity findBlock(long blockId, TransactionalDataSource dataSource);
 
     boolean hasBlock(long blockId);
 
-    Block findFirstBlock();
+    BlockEntity findFirstBlock();
 
     boolean hasBlock(long blockId, int height, TransactionalDataSource dataSource);
 
     long findBlockIdAtHeight(int height, TransactionalDataSource dataSource);
 
-    Block findBlockAtHeight(int height, TransactionalDataSource dataSource);
+    BlockEntity findBlockAtHeight(int height, TransactionalDataSource dataSource);
 
-    Block findLastBlock();
+    BlockEntity findLastBlock();
 
-    DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
+    List<BlockEntity> getBlocksByAccount(TransactionalDataSource dataSource, long accountId, int from, int to, int timestamp);
 
-    @Deprecated
-    DbIterator<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp);
-
-    DbIterator<Block> getBlocksByAccount(TransactionalDataSource dataSource, long accountId, int from, int to, int timestamp);
-
-    DbIterator<Block> getBlocks(TransactionalDataSource dataSource, int from, int to, int timestamp);
-
-    @Deprecated
-    Long getBlockCount(int from, int to);
+    List<BlockEntity> getBlocks(TransactionalDataSource dataSource, int from, int to, int timestamp);
 
     Long getBlockCount(TransactionalDataSource dataSource, int from, int to);
-
-    @Deprecated
-    int getBlockCount(long accountId);
 
     int getBlockCount(TransactionalDataSource dataSource, long accountId);
 
     List<Long> getBlockIdsAfter(int height, int limit);
 
-    List<Block> getBlocksAfter(int height, List<Long> blockList, List<Block> result, TransactionalDataSource dataSource, int index);
+    List<BlockEntity> getBlocksAfter(int height, List<Long> blockList, List<Block> result, TransactionalDataSource dataSource, int index);
 
-    List<Block> getBlocksAfter(int height, List<Long> blockList, List<Block> result, Connection connection, int index);
+    List<BlockEntity> getBlocksAfter(int height, List<Long> blockList, List<Block> result, Connection connection, int index);
 
     Block findBlockWithVersion(int skipCount, int version);
 
     List<byte[]> getBlockSignaturesFrom(int from, int to);
 
-    Block findLastBlock(int timestamp);
+    BlockEntity findLastBlock(int timestamp);
 
     Set<Long> getBlockGenerators(int startHeight, int limit);
 
-    Block loadBlock(Connection con, ResultSet rs);
+    List<BlockEntity> getBlocks(Connection con, PreparedStatement pstmt);
 
-    void saveBlock(Block block);
+    void saveBlock(BlockEntity block);
 
     //set next_block_id to null instead of 0 to indicate successful block push
-    void commit(Block block);
+    void commit(BlockEntity block);
 
     void deleteBlocksFromHeight(int height);
 
@@ -79,7 +67,7 @@ public interface BlockDao {
      * @param blockId id of the block, after which all blocks with transactions should be deleted inclusive
      * @return current last block in blockchain after deletion
      */
-    Block deleteBlocksFrom(long blockId);
+    BlockEntity deleteBlocksFrom(long blockId);
 
     void deleteAll();
 }

@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
@@ -30,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.appdata.BlockIndex;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
@@ -45,7 +47,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadin
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
@@ -81,6 +82,7 @@ public class BlockchainImpl implements Blockchain {
     private final ShardDbExplorer shardDbExplorer;
     private final PrunableLoadingService prunableService;
     private final PublicKeyDao publicKeyDao;
+    private final BlockEntityToModelConverter blockEntityToModelConverter;
 
     private final AtomicReference<Block> lastBlock;
     private final AtomicReference<Block> shardInitialBlock;
@@ -96,7 +98,8 @@ public class BlockchainImpl implements Blockchain {
                           ShardRecoveryDao shardRecoveryDao,
                           ShardDbExplorer shardDbExplorer,
                           PrunableLoadingService prunableService,
-                          PublicKeyDao publicKeyDao) {
+                          PublicKeyDao publicKeyDao,
+                          BlockEntityToModelConverter blockEntityToModelConverter) {
         this.blockDao = blockDao;
         this.transactionService = transactionService;
         this.timeService = timeService;
@@ -108,6 +111,7 @@ public class BlockchainImpl implements Blockchain {
         this.shardDbExplorer = shardDbExplorer;
         this.prunableService = prunableService;
         this.publicKeyDao = publicKeyDao;
+        this.blockEntityToModelConverter = blockEntityToModelConverter;
         this.lastBlock = new AtomicReference<>();
         this.shardInitialBlock = new AtomicReference<>();
     }
@@ -178,7 +182,9 @@ public class BlockchainImpl implements Blockchain {
         int blockchainHeight = getHeight();
         int calculatedFrom = blockchainHeight - from;
         int calculatedTo = blockchainHeight - to;
-        return loadBlockData(CollectionUtil.toList(blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp)));
+        return loadBlockData(
+            blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp)
+        );
     }
 
     /**
@@ -198,33 +204,31 @@ public class BlockchainImpl implements Blockchain {
         int totalToFetch = to - from;
         log.trace("start getBlocksStream( from={} / {}, to={} / {}, timestamp={} ): , currentHeight={}, totalToFetch={}",
             from, calculatedFrom, to, calculatedTo, timestamp, blockchainHeight, totalToFetch);
-        List<Block> allSourcesList = new ArrayList<>(); // complete list from all sources
+        List<BlockEntity> allSourcesList = new ArrayList<>(); // complete list from all sources
         // select possibly - none, one, two shard's records by specified height range
         List<Shard> foundShards = shardDao.getCompletedBetweenBlockHeight(calculatedTo, calculatedFrom); // reverse params
         log.trace("getBlocksStream( from={}, to={} ): foundShards=[{}] / shardIds={}, currentHeight={}",
             calculatedFrom, calculatedTo, foundShards.size(), foundShards.stream().map(Shard::getShardId).collect(Collectors.toList()), blockchainHeight);
-        if (foundShards.size() == 0) {
+        if (foundShards.isEmpty()) {
             // select blocks from main database only
-            DbIterator<Block> iterator = blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
-            allSourcesList.addAll(CollectionUtil.toList(iterator));
+            allSourcesList.addAll(blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp));
         } else {
             // loop over ONE or SEVERAL available shards
-            for (Shard shard: foundShards) {
+            for (Shard shard : foundShards) {
                 // get shard data source trying to fetch records
                 TransactionalDataSource dataSource =
                     ((ShardManagement) databaseManager).getOrInitFullShardDataSourceById(shard.getShardId());
                 // make select on blocks from shard
                 log.trace("getBlocksStream -> getBlocks( from={}, to={} ): shardIds={}",
                     calculatedFrom, calculatedTo, dataSource.getDbIdentity());
-                DbIterator<Block> iterator = blockDao.getBlocks(dataSource, calculatedFrom, calculatedTo, timestamp);
-                allSourcesList.addAll(CollectionUtil.toList(iterator));
+                allSourcesList.addAll(blockDao.getBlocks(dataSource, calculatedFrom, calculatedTo, timestamp));
             }
             // add possible blocks from main database (if any)
-            DbIterator<Block> iterator = blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
-            allSourcesList.addAll(CollectionUtil.toList(iterator));
+            allSourcesList.addAll(blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp));
         }
         log.trace("DONE getBlocksStream( from={}, to={} ): foundShards=[{}] / shardIds={}, currentHeight={}",
             calculatedFrom, calculatedTo, foundShards.size(), foundShards.stream().map(Shard::getShardId).collect(Collectors.toList()), blockchainHeight);
+
         return loadBlockData(allSourcesList);
     }
 
@@ -234,29 +238,29 @@ public class BlockchainImpl implements Blockchain {
         return loadBlockData(blockDao.findFirstBlock());
     }
 
-    private Block loadBlockData(Block block) {
-        if (block == null) {
+    private Block loadBlockData(BlockEntity blockEntity) {
+        if (blockEntity == null) {
             return null;
         }
-        PublicKey publicKey = publicKeyDao.searchAll(block.getGeneratorId());
+        Block block = blockEntityToModelConverter.convert(blockEntity);
+        PublicKey publicKey = publicKeyDao.searchAll(blockEntity.getGeneratorId());
         if (publicKey != null) {
             block.setGeneratorPublicKey(publicKey.getPublicKey());
         } else {
             //special case when scan was failed and no public keys in db exist
-            log.warn("No public key for generator's account {} on block {} at {}", block.getGeneratorId(), block.getId(), block.getHeight());
+            log.warn("No public key for generator's account {} on block {} at {}", blockEntity.getGeneratorId(), blockEntity.getId(), blockEntity.getHeight());
         }
         return block;
     }
 
-    private List<Block> loadBlockData(List<Block> blocks) {
-        blocks.forEach(this::loadBlockData);
-        return blocks;
+    private List<Block> loadBlockData(List<BlockEntity> blocks) {
+        return blocks.stream().map(this::loadBlockData).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     @Override
     public List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp) {
-        return loadBlockData(CollectionUtil.toList(blockDao.getBlocksByAccount(null, accountId, from, to, timestamp)));
+        return loadBlockData(blockDao.getBlocksByAccount(null, accountId, from, to, timestamp));
     }
 
     @Transactional(readOnly = true)
@@ -306,7 +310,7 @@ public class BlockchainImpl implements Blockchain {
     @Override
     @Transactional(readOnly = true)
     public Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
-        Block block = loadBlockData(blockDao.loadBlock(con, rs));
+        Block block = loadBlockData(blockDao.getBlock(con, rs));
         if (loadTransactions) {
             List<Transaction> blockTransactions = this.getOrLoadTransactions(block);
             block.setTransactions(blockTransactions);
