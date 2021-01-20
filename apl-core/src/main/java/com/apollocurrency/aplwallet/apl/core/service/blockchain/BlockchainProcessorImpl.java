@@ -537,13 +537,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private void addBlock(Block block) {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection()) {
-            blockchain.saveBlock(con, block);
-            blockchain.setLastBlock(block);
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        blockchain.saveBlock(block);
+        blockchain.setLastBlock(block);
     }
 
     private void checkResumeDownloadDecideShardImport() {

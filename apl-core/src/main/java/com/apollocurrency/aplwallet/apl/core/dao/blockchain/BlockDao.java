@@ -26,19 +26,9 @@ public interface BlockDao {
 
     long findBlockIdAtHeight(int height, TransactionalDataSource dataSource);
 
-//    Map<Long, Block> getBlockCache();
-
-//    SortedMap<Integer, Block> getHeightMap();
-
     Block findBlockAtHeight(int height, TransactionalDataSource dataSource);
 
-//    int getBlockCacheSize();
-
-//    Map<Long, Transaction> getTransactionCache();
-
     Block findLastBlock();
-
-//    DbIterator<Block> getAllBlocks();
 
     DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt);
 
@@ -61,14 +51,11 @@ public interface BlockDao {
 
     List<Long> getBlockIdsAfter(int height, int limit);
 
-//    List<Block> getBlocksAfter(long blockId, int limit, List<Block> result);
-
     List<Block> getBlocksAfter(int height, List<Long> blockList, List<Block> result, TransactionalDataSource dataSource, int index);
 
     List<Block> getBlocksAfter(int height, List<Long> blockList, List<Block> result, Connection connection, int index);
 
     Block findBlockWithVersion(int skipCount, int version);
-
 
     List<byte[]> getBlockSignaturesFrom(int from, int to);
 
@@ -78,7 +65,7 @@ public interface BlockDao {
 
     Block loadBlock(Connection con, ResultSet rs);
 
-    void saveBlock(Connection con, Block block);
+    void saveBlock(Block block);
 
     //set next_block_id to null instead of 0 to indicate successful block push
     void commit(Block block);

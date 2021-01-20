@@ -56,11 +56,11 @@ public class UserResourceLocator implements ResourceLocator {
         List<String> searchDirs = new ArrayList<>();
         if (!StringUtils.isBlank(configDir)) { //load just from confDir
             searchDirs.add(configDir);
-        } else { //go trough standard search order and load all
+        }// else { //go trough standard search order and load all
             searchDirs.add(dirProvider.getInstallationConfigLocation() + File.separator + dirProvider.getConfigName());
             searchDirs.add(dirProvider.getSysConfigLocation() + File.separator + dirProvider.getConfigName());
             searchDirs.add(dirProvider.getUserConfigLocation() + File.separator + dirProvider.getConfigName());
-        }
+        //}
         if (log.isTraceEnabled()) {
             log.trace("The directory list:");
             searchDirs.forEach(s -> log.trace("  {}", s));

@@ -692,7 +692,7 @@ public class TransactionImpl implements Transaction {
         }
 
         @Override
-        public TransactionImpl build() throws AplException.NotValidException {
+        public TransactionImpl build() {
             if (!ecBlockSet) {
                 throw new IllegalStateException("Ec block was not set for transaction");
             }

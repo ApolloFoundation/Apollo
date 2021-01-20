@@ -364,11 +364,11 @@ public class GetMoreBlocksThread implements Runnable {
             }
 
             if (response == null) {
-                log.debug("null response from peer {} while getNeBlockIdst", peer.getHostWithPort());
+                log.debug("null response from peer {} while getNextBlockIds", peer.getHostWithPort());
                 return Collections.emptyList();
             }
             List<String> nextBlockIds = response.getNextBlockIds();
-            if (nextBlockIds == null || nextBlockIds.size() == 0) {
+            if (nextBlockIds == null || nextBlockIds.isEmpty()) {
                 break;
             }
             // prevent overloading with blockIds
@@ -379,8 +379,8 @@ public class GetMoreBlocksThread implements Runnable {
             }
             boolean matching = true;
             int count = 0;
-            for (Object nextBlockId : nextBlockIds) {
-                long blockId = Convert.parseUnsignedLong((String) nextBlockId);
+            for (String nextBlockId : nextBlockIds) {
+                long blockId = Convert.parseUnsignedLong(nextBlockId);
                 if (matching) {
                     if (blockchain.hasBlock(blockId)) {
                         matchId = blockId;

@@ -293,6 +293,7 @@ public class TransactionValidator {
             log.trace("#MULTI_SIG# verify credential={}", signatureCredential);
         }
         if (!signatureCredential.validateCredential(keyValidator)) {
+            log.trace("#MULTI_SIG# Credential verification failed, credential={}", signatureCredential);
             return false;
         }
 

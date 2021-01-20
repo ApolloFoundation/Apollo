@@ -28,10 +28,12 @@ import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextCon
 @Singleton
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 public class FullTextSearchServiceImpl implements FullTextSearchService {
-    private FullTextSearchEngine fullTextSearchEngine;
-    private Map<String, String> fullTextSearchIndexedTables;
-    private String schemaName;
-    private DatabaseManager databaseManager;
+    public static final String FTL_INDEXES_TABLE = "ftl_indexes";
+    public static final String UNABLE_TO_CREATE_LUCENE_SEARCH_INDEX_FOR_TABLE_MSG = "Unable to create Lucene search index for table ";
+    private final FullTextSearchEngine fullTextSearchEngine;
+    private final Map<String, String> fullTextSearchIndexedTables;
+    private final String schemaName;
+    private final DatabaseManager databaseManager;
 
     @Inject
     public FullTextSearchServiceImpl(DatabaseManager databaseManager, FullTextSearchEngine fullTextSearchEngine,
@@ -52,8 +54,8 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
      * @throws SQLException Unable to drop fulltext index
      */
     public void dropIndex(Connection conn, String schema, String table) throws SQLException {
-        String upperSchema = schema.toUpperCase();
-        String upperTable = table.toUpperCase();
+        String upperSchema = schema.toLowerCase();
+        String upperTable = table.toLowerCase();
         boolean reindex = false;
         //
         // Drop an existing database trigger
@@ -61,10 +63,12 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         try (Statement qstmt = conn.createStatement();
              Statement stmt = conn.createStatement()) {
             try (ResultSet rs = qstmt.executeQuery(String.format(
-                "SELECT columns FROM ftl_indexes WHERE `table` = '%s'",
+                "SELECT columns FROM " + FTL_INDEXES_TABLE
+                    + " WHERE `schema` = '%s' AND `table` = '%s'",
                 upperSchema, upperTable))) {
                 if (rs.next()) {
-                    stmt.execute(String.format("DELETE FROM ftl_indexes WHERE `table` = '%s'",
+                    stmt.execute(String.format("DELETE FROM " + FTL_INDEXES_TABLE
+                            + " WHERE `schema` = '%s' AND `table` = '%s'",
                         upperSchema, upperTable));
                     reindex = true;
                 }
@@ -93,8 +97,8 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         } catch (IOException e) {
             throw new RuntimeException("Unable to init fulltext engine", e);
         }
-        String fullTextTableName = "ftl_indexes"; // store lucene indexed data: table + schema + columns
-        log.debug("fullTextTableName = {}", fullTextTableName);
+        // store lucene indexed data: table + schema + columns
+        log.debug("fullTextTableName = {}", FTL_INDEXES_TABLE);
         try (Connection conn = databaseManager.getDataSource().getConnection();
              Statement stmt = conn.createStatement();
              Statement qstmt = conn.createStatement()) {
@@ -103,11 +107,13 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             //
             boolean alreadyInitialized = true;
             boolean indexesInfoTableExist = false;
-            try (ResultSet rs = qstmt.executeQuery("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES "
-                + "WHERE TABLE_NAME = 'ftl_indexes'")) {
+            try (ResultSet rs = qstmt.executeQuery(
+                "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES "
+                    + "WHERE TABLE_NAME = '" + FTL_INDEXES_TABLE + "'"
+                    + "  AND TABLE_SCHEMA = '" + databaseManager.getBaseDbProperties().getDbName() + "'")) {
                 while (rs.next()) {
                     indexesInfoTableExist = true;
-                    if (!rs.getString(1).startsWith(fullTextTableName)) {
+                    if (!rs.getString(1).startsWith(FTL_INDEXES_TABLE)) {
                         alreadyInitialized = false;
                     }
                 }
@@ -124,7 +130,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             //
             // Create our schema and table
             //
-            boolean createResult = stmt.execute("CREATE TABLE IF NOT EXISTS ftl_indexes "
+            boolean createResult = stmt.execute("CREATE TABLE IF NOT EXISTS " + FTL_INDEXES_TABLE + " "
                 + "(`schema` VARCHAR(20), `table` VARCHAR(100), columns VARCHAR(200), PRIMARY KEY(`schema`, `table`))");
             log.info("fulltext table is created = '{}'", createResult);
             //
@@ -133,8 +139,8 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             // will be closed when dropped.  The H2 Lucene V3 trigger initialization will work with
             // Lucene V5, so we are able to open the database using the Lucene V5 library files.
             //
-            Long recordCount = -1L;
-            try (ResultSet rs = qstmt.executeQuery("SELECT count(*) as count FROM ftl_indexes")) {
+            long recordCount = -1L;
+            try (ResultSet rs = qstmt.executeQuery("SELECT count(*) as count FROM " + FTL_INDEXES_TABLE)) {
                 while (rs.next()) {
                     recordCount = rs.getLong("count");
                 }
@@ -160,25 +166,28 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             String indexedColumns = fullTextSearchIndexedTables.get(tableName);
             if (indexedColumns == null) {
                 String error = String.format(
-                    "Something wrong with Searchable Tables registration, because '%s' is not found in Map, sorry...", tableName);
+                    "Something wrong with Searchable Tables registration, because '%s' is not found in Map, sorry..."
+                    , tableName);
                 throw new RuntimeException(error);
             }
             // check if record has been inserted before
-            log.debug("select record count from ftl_indexes '{}.{}'", this.schemaName.toLowerCase(), tableName.toLowerCase());
+            log.debug("select record count from " + FTL_INDEXES_TABLE + " '{}.{}'"
+                , this.schemaName.toLowerCase(), tableName.toLowerCase());
             ResultSet rs = stmt.executeQuery(
-                String.format("SELECT count(*) as count FROM ftl_indexes WHERE `schema` = '%s' AND `table` = '%s'",
+                String.format("SELECT count(*) as count FROM " + FTL_INDEXES_TABLE
+                        + " WHERE `schema` = '%s' AND `table` = '%s'",
                     this.schemaName.toLowerCase(), tableName.toLowerCase()));
             if (rs.next() && rs.getLong("count") == 0) {
-                log.debug("found 0 count from ftl_indexes...");
+                log.debug("found 0 count from " + FTL_INDEXES_TABLE + "...");
                 // insert if empty
-                stmt.execute(String.format("INSERT INTO ftl_indexes VALUES('%s', '%s', '%s')",
+                stmt.execute(String.format("INSERT INTO " + FTL_INDEXES_TABLE + " VALUES('%s', '%s', '%s')",
                     this.schemaName.toLowerCase(), tableName.toLowerCase(), indexedColumns.trim().toLowerCase()));
                 reindex(conn, tableName, schemaName);
             }
             log.info("Lucene search index created for table '{}'", tableName);
         } catch (SQLException exc) {
             log.error("Unable to create Lucene search index for table '{}'", tableName);
-            throw new SQLException("Unable to create Lucene search index for table " + tableName, exc);
+            throw new SQLException(UNABLE_TO_CREATE_LUCENE_SEARCH_INDEX_FOR_TABLE_MSG + tableName, exc);
         }
     }
 
@@ -193,7 +202,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
         // Drop records about stored 'searchable' and indexed tables
         //
         try (Statement stmt = conn.createStatement()) {
-            stmt.execute("DROP TABLE ftl_indexes");
+            stmt.execute("DROP TABLE " + FTL_INDEXES_TABLE);
         }
         //
         // Delete the Lucene index
@@ -254,7 +263,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                     it.next(); // move forward
                     i++;
                 }
-                if (operationData.getColumnsWithData().size() > 0) {
+                if (!operationData.getColumnsWithData().isEmpty()) {
                     log.debug("Index data = {}", operationData);
                     fullTextSearchEngine.indexRow(operationData, tableData);
                     insertedDocsCount++;
@@ -328,7 +337,8 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             //
             boolean isTableDataExist = false;
             try (Statement stmt = con.createStatement()) {
-                ResultSet rs = stmt.executeQuery(String.format("SELECT count(*) as count FROM ftl_indexes WHERE `schema` = '%s' AND `table` = '%s'",
+                ResultSet rs = stmt.executeQuery(String.format("SELECT count(*) as count FROM " + FTL_INDEXES_TABLE
+                        + " WHERE `schema` = '%s' AND `table` = '%s'",
                     upperSchema.toLowerCase(), table1.toLowerCase()));
                 if (rs.next()) {
                     isTableDataExist = rs.getLong("count") > 0;
@@ -339,13 +349,13 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             //
             if (!isTableDataExist) {
                 try (Statement stmt = con.createStatement()) {
-                    stmt.execute(String.format("INSERT INTO ftl_indexes VALUES('%s', '%s', '%s')",
+                    stmt.execute(String.format("INSERT INTO " + FTL_INDEXES_TABLE + " VALUES('%s', '%s', '%s')",
                         upperSchema.toLowerCase(), table1.toLowerCase(), fullTextSearchColumns.toLowerCase()));
                     reindex(con, table1, schemaName);
                     log.info("Lucene search index created for table " + table1);
                 } catch (SQLException exc) {
-                    log.error("Unable to create Lucene search index for table " + table1);
-                    throw new SQLException("Unable to create Lucene search index for table " + table1, exc);
+                    log.error(UNABLE_TO_CREATE_LUCENE_SEARCH_INDEX_FOR_TABLE_MSG + table1);
+                    throw new SQLException(UNABLE_TO_CREATE_LUCENE_SEARCH_INDEX_FOR_TABLE_MSG + table1, exc);
                 }
             }
         }

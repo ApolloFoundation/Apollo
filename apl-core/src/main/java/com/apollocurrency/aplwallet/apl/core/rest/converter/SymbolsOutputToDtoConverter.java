@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.SymbolsOutputDTO;
 import com.apollocurrency.aplwallet.api.trading.SymbolsOutput;
+import com.apollocurrency.aplwallet.apl.core.converter.Converter;
 
 /**
  * @author Serhiy Lymar
