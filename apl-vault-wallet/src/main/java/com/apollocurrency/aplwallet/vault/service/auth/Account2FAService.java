@@ -156,7 +156,7 @@ public class Account2FAService {
     }
 
     public Status2FA verify2FA(TwoFactorAuthParameters params2FA) throws RestParameterException {
-        Status2FA status2FA = null;
+        Status2FA status2FA = Status2FA.NOT_ENABLED;
         if (isEnabled2FA(params2FA.getAccountId())) {
             if (params2FA.getCode2FA() == null) {
                 throw new RestParameterException(ApiErrors.MISSING_PARAM, "code2FA");
