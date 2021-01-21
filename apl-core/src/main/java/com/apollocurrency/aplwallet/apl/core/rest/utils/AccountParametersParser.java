@@ -155,8 +155,8 @@ public class AccountParametersParser {
                             throw new RestParameterException(ApiErrors.MISSING_PARAM_LIST, secretPhraseParam + "," + publicKeyParam + "," + passphraseParam);
                         }
                     } else {
-                        byte[] keySeed = getSecretBytes(passphrase, accountId);
-                        return Crypto.getPublicKey(keySeed);
+                        byte[] secretBytes = getSecretBytes(passphrase, accountId);
+                        return Crypto.getPublicKey(Crypto.getKeySeed(secretBytes));
                     }
                 } else {
 
