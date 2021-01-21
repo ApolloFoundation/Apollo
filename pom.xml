@@ -82,7 +82,7 @@
       <id>dev</id>
       <properties>
         <zipExecutionPhase>none</zipExecutionPhase>
-<!--        <excludeTestTags>slow</excludeTestTags>-->
+        <excludeTestTags>slow</excludeTestTags>
       </properties>
     </profile>
     <!-- The Configuration of the production profile -->
@@ -93,7 +93,7 @@
       </activation>
       <properties>
         <zipExecutionPhase>package</zipExecutionPhase>
-<!--        <excludeTestTags>slow</excludeTestTags>-->
+        <excludeTestTags>slow</excludeTestTags>
       </properties>
     </profile>
   </profiles>
