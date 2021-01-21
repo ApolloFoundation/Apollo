@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.auth.Status2FA;
 import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.api.dto.vault.ExportKeyStore;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -213,10 +212,7 @@ public class KeyStoreController {
                 TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(accountId, passphraseStr, null);
                 twoFactorAuthParameters.setCode2FA(code2FA);
 
-                Status2FA status2FA = account2FAService.verify2FA(twoFactorAuthParameters);
-                if (!status2FA.isOK()) {
-                    return Response.status(Response.Status.OK).entity(JSON.toString(JSONResponses.error2FA(status2FA, accountId))).build();
-                }
+                account2FAService.verify2FA(twoFactorAuthParameters);
             }
 
             ExportKeyStore keyStore = kmSv1.exportKeyStore(accountId, passphraseStr);

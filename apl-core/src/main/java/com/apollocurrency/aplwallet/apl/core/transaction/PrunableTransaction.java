@@ -23,11 +23,7 @@ public class PrunableTransaction {
     }
 
     public PrunableTransaction(long id, TransactionType transactionType, boolean prunableAttachment, boolean prunablePlainMessage) {
-        this.id = id;
-        this.transactionType = transactionType;
-        this.prunableAttachment = prunableAttachment;
-        this.prunablePlainMessage = prunablePlainMessage;
-        this.prunableEncryptedMessage = false;
+        this(id, transactionType, prunableAttachment, prunablePlainMessage, false);
     }
 
     public long getId() {

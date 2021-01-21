@@ -2,26 +2,23 @@ package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 
 public interface TransactionDao {
 
-    Transaction findTransaction(long transactionId, TransactionalDataSource dataSource);
+    TransactionEntity findTransaction(long transactionId, TransactionalDataSource dataSource);
 
-    Transaction findTransaction(long transactionId, int height, TransactionalDataSource dataSource);
+    TransactionEntity findTransaction(long transactionId, int height, TransactionalDataSource dataSource);
 
-    Transaction findTransactionByFullHash(byte[] fullHash, TransactionalDataSource dataSource);
+    TransactionEntity findTransactionByFullHash(byte[] fullHash, TransactionalDataSource dataSource);
 
-    Transaction findTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource);
+    TransactionEntity findTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource);
 
     boolean hasTransaction(long transactionId, TransactionalDataSource dataSource);
 
@@ -33,31 +30,23 @@ public interface TransactionDao {
 
     byte[] getFullHash(long transactionId, TransactionalDataSource dataSource);
 
-    Transaction loadTransaction(Connection con, ResultSet rs) throws AplException.NotValidException;
-
-    List<Transaction> findBlockTransactions(long blockId, TransactionalDataSource dataSource);
+    List<TransactionEntity> findBlockTransactions(long blockId, TransactionalDataSource dataSource);
 
     long getBlockTransactionsCount(long blockId, TransactionalDataSource dataSource);
 
-    List<Transaction> findBlockTransactions(Connection con, long blockId);
+    List<PrunableTransaction> findPrunableTransactions(int minTimestamp, int maxTimestamp);
 
-    List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp);
-
-    void saveTransactions(Connection con, List<Transaction> transactions);
+    void saveTransactions(List<TransactionEntity> transactions);
 
     int getTransactionCount();
 
     Long getTransactionCount(TransactionalDataSource dataSource, int from, int to);
 
-    List<Transaction> loadTransactionList(Connection conn, PreparedStatement pstmt) throws SQLException, AplException.NotValidException;
-
-//    DbIterator<Transaction> getAllTransactions();
-
-    List<Transaction> getTransactions(TransactionalDataSource dataSource,
-                                      long accountId, int numberOfConfirmations, byte type, byte subtype,
-                                      int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                      int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
-                                      int height, int prunableExpiration);
+    List<TransactionEntity> getTransactions(TransactionalDataSource dataSource,
+                                            long accountId, int numberOfConfirmations, byte type, byte subtype,
+                                            int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+                                            int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
+                                            int height, int prunableExpiration);
 
     int getTransactionCountByFilter(TransactionalDataSource dataSource,
                                     long accountId, int numberOfConfirmations, byte type, byte subtype,
@@ -65,15 +54,17 @@ public interface TransactionDao {
                                     boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
                                     int height, int prunableExpiration);
 
-    List<Transaction> getTransactions(byte type, byte subtype, int from, int to);
+    List<TransactionEntity> getTransactions(byte type, byte subtype, int from, int to);
 
-    List<Transaction> getTransactions(int fromDbId, int toDbId);
+    List<TransactionEntity> getTransactionsChatHistory(long account1, long account2, int from, int to);
+
+    List<TransactionEntity> getTransactions(int fromDbId, int toDbId);
 
     List<TransactionDbInfo> getTransactionsBeforeHeight(int height);
 
     int getTransactionCount(long accountId, byte type, byte subtype);
 
-    List<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
+    List<TransactionEntity> getTransactions(Connection con, PreparedStatement pstmt);
 
     int getTransactionsCount(List<Long> accounts, byte type, byte subtype,
                              int startTime, int endTime,

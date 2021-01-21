@@ -39,7 +39,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
@@ -692,7 +691,7 @@ public class TransactionImpl implements Transaction {
         }
 
         @Override
-        public TransactionImpl build() throws AplException.NotValidException {
+        public TransactionImpl build() {
             if (!ecBlockSet) {
                 throw new IllegalStateException("Ec block was not set for transaction");
             }

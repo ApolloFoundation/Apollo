@@ -11,7 +11,12 @@ import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyBasedFileConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
@@ -52,6 +57,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.ReferencedTransactionService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
@@ -69,6 +75,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountS
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.TaggedDataServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvReader;
@@ -191,7 +198,9 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         AppendixApplierRegistry.class,
         AppendixValidatorRegistry.class,
         DataTagDao.class,
-        TransactionRowMapper.class,
+        TransactionServiceImpl.class, ShardDbExplorerImpl.class,
+        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TransactionBuilder.class, TransactionSerializerImpl.class,
         KeyFactoryProducer.class, FeeCalculator.class,
         TaggedDataTimestampDao.class,
