@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
-import com.apollocurrency.aplwallet.vault.service.KMSv1;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -32,11 +32,11 @@ public class ExportKey extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-        KMSv1 kmSv1 = CDI.current().select(KMSv1.class).get();
+        KMSService KMSService = CDI.current().select(KMSService.class).get();
         String passphrase = HttpParameterParserUtil.getPassphrase(request, true);
         long accountId = HttpParameterParserUtil.getAccountId(request, true);
 
-        byte[] secretBytes = kmSv1.getAplSecretBytes(accountId, passphrase);
+        byte[] secretBytes = KMSService.getAplSecretBytes(accountId, passphrase);
 
         JSONObject response = new JSONObject();
         JSONData.putAccount(response, "account", accountId);

@@ -78,7 +78,7 @@ import com.apollocurrency.aplwallet.apl.util.cache.CacheType;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
-import com.apollocurrency.aplwallet.vault.service.KMSv1;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 import com.google.common.cache.Cache;
 import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
@@ -122,7 +122,7 @@ public class DexService {
     private BlockchainConfig blockchainConfig;
     private AccountService accountService;
     private DexConfig dexConfig;
-    private KMSv1 kmSv1;
+    private KMSService KMSService;
 
     private Integer MAX_PAGES_FOR_SEARCH = 10;
 
@@ -135,7 +135,7 @@ public class DexService {
                       BlockchainConfig blockchainConfig,
                       @CacheProducer
                       @CacheType(DexOrderFreezingCacheConfig.CACHE_NAME) Cache<Long, OrderFreezing> cache,
-                      DexConfig dexConfig, KMSv1 kmSv1) {
+                      DexConfig dexConfig, KMSService KMSService) {
         this.ethereumWalletService = ethereumWalletService;
         this.dexOrderDao = dexOrderDao;
         this.dexOrderTable = dexOrderTable;
@@ -156,7 +156,7 @@ public class DexService {
         this.blockchainConfig = blockchainConfig;
         this.accountService = accountService;
         this.dexConfig = dexConfig;
-        this.kmSv1 = kmSv1;
+        this.KMSService = KMSService;
     }
 
 
@@ -314,7 +314,7 @@ public class DexService {
 
     public String withdraw(long accountId, String secretPhrase, String fromAddress, String toAddress, BigDecimal amount, DexCurrency currencies, Long transferFee) throws AplException.ExecutiveProcessException {
         if (currencies != null && currencies.isEthOrPax()) {
-            EthWalletKey ethWalletKey = kmSv1.getEthWallet(accountId, secretPhrase, fromAddress);
+            EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, secretPhrase, fromAddress);
             return ethereumWalletService.transfer(ethWalletKey.getCredentials(), fromAddress, toAddress, amount, transferFee, currencies);
         } else {
             throw new AplException.ExecutiveProcessException("Withdraw not supported for " + currencies.getCurrencyCode());
@@ -609,7 +609,7 @@ public class DexService {
                 .passphrase(passphrase)
                 .publicKey(accountService.getPublicKeyByteArray(userAccountId))
                 .senderAccount(accountService.getAccount(userAccountId))
-                .keySeed(Crypto.getKeySeed(kmSv1.getAplSecretBytes(userAccountId, passphrase)))
+                .keySeed(Crypto.getKeySeed(KMSService.getAplSecretBytes(userAccountId, passphrase)))
                 .deadlineValue("1440")
                 .feeATM(Math.multiplyExact(blockchainConfig.getOneAPL(), 2))
                 .broadcast(true)

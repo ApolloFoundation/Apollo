@@ -42,7 +42,7 @@ import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.vault.rest.converter.WalletKeysConverter;
-import com.apollocurrency.aplwallet.vault.service.KMSv1;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.apollocurrency.aplwallet.vault.util.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.vault.util.AccountHelper;
@@ -141,7 +141,7 @@ class AccountControllerTest extends AbstractEndpointTest {
     @Mock
     private PrunableLoadingService prunableLoadingService;
     @Mock
-    private KMSv1 kmSv1;
+    private KMSService KMSService;
     @Mock
     private Account2FAService account2FAService;
     @Mock
@@ -184,7 +184,7 @@ class AccountControllerTest extends AbstractEndpointTest {
             assetService,
             currencyService,
             accountParametersParser,
-            kmSv1
+            KMSService
         );
 
         dispatcher.getRegistry().addSingletonResource(endpoint);
@@ -417,11 +417,11 @@ class AccountControllerTest extends AbstractEndpointTest {
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-        doReturn(SECRET.getBytes()).when(kmSv1).getAplSecretBytes(ACCOUNT_ID, PASSPHRASE);
+        doReturn(SECRET.getBytes()).when(KMSService).getAplSecretBytes(ACCOUNT_ID, PASSPHRASE);
 
         check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
 
-        verify(kmSv1, times(1)).getAplSecretBytes(ACCOUNT_ID, PASSPHRASE);
+        verify(KMSService, times(1)).getAplSecretBytes(ACCOUNT_ID, PASSPHRASE);
     }
 
     @Test

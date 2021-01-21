@@ -63,7 +63,7 @@ import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.vault.rest.converter.WalletKeysConverter;
-import com.apollocurrency.aplwallet.vault.service.KMSv1;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
@@ -130,7 +130,7 @@ public class AccountController {
     private AccountStatisticsService accountStatisticsService;
     private AssetService assetService;
     private CurrencyService currencyService;
-    private KMSv1 kmSv1;
+    private KMSService KMSService;
 
     @Inject
     public AccountController(Blockchain blockchain,
@@ -152,7 +152,7 @@ public class AccountController {
                              AssetService assetService,
                              CurrencyService currencyService,
                              AccountParametersParser accountParametersParser,
-                             KMSv1 kmSv1) {
+                             KMSService KMSService) {
 
         this.blockchain = blockchain;
         this.account2FAService = account2FAService;
@@ -173,7 +173,7 @@ public class AccountController {
         this.assetService = assetService;
         this.currencyService =  currencyService;
         this.accountParametersParser = accountParametersParser;
-        this.kmSv1 = kmSv1;
+        this.KMSService = KMSService;
     }
 
     @Path("/account")
@@ -609,7 +609,7 @@ public class AccountController {
         twoFactorAuthParameters.setCode2FA(code);
         account2FAService.verify2FA(twoFactorAuthParameters);
 
-        byte[] secretBytes = kmSv1.getAplSecretBytes(accountId, passphrase);
+        byte[] secretBytes = KMSService.getAplSecretBytes(accountId, passphrase);
 
         AccountKeyDTO dto = new AccountKeyDTO(
             Long.toUnsignedString(accountId),

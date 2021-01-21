@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
-import com.apollocurrency.aplwallet.vault.service.KMSv1;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -22,13 +22,13 @@ import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.MISSING_
 public class AccountParametersParser {
     private final ElGamalEncryptor elGamal;
     private final AccountService accountService;
-    private final KMSv1 kmSv1;
+    private final KMSService KMSService;
 
     @Inject
-    public AccountParametersParser(AccountService accountService, ElGamalEncryptor elGamalEncryptor, KMSv1 kmSv1) {
+    public AccountParametersParser(AccountService accountService, ElGamalEncryptor elGamalEncryptor, KMSService KMSService) {
         this.elGamal = elGamalEncryptor;
         this.accountService = accountService;
-        this.kmSv1 = kmSv1;
+        this.KMSService = KMSService;
     }
 
     public static long getAccountId(HttpServletRequest req, boolean isMandatory) {
@@ -208,7 +208,7 @@ public class AccountParametersParser {
     }
 
     private byte[] getSecretBytes(String passphrase, long accountId) {
-        byte[] secretBytes = kmSv1.getAplSecretBytes(accountId, passphrase);
+        byte[] secretBytes = KMSService.getAplSecretBytes(accountId, passphrase);
         if (secretBytes == null) {
             throw new RestParameterException(ApiErrors.BAD_CREDENTIALS, " account id or passphrase are not valid");
         }

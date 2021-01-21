@@ -22,12 +22,12 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
-public class KMSv1Impl implements KMSv1 {
+public class KMSServiceImpl implements KMSService {
 
     private final KeyStoreService keyStoreService;
 
     @Inject
-    public KMSv1Impl(KeyStoreService keyStoreService) {
+    public KMSServiceImpl(KeyStoreService keyStoreService) {
         this.keyStoreService = keyStoreService;
     }
 

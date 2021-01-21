@@ -66,7 +66,7 @@ import com.apollocurrency.aplwallet.apl.util.Search;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
-import com.apollocurrency.aplwallet.vault.service.KMSv1;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
@@ -146,7 +146,7 @@ public final class HttpParameterParserUtil {
     private static CurrencyService currencyService;
     private static ShufflingService shufflingService;
     private static TransactionBuilder transactionBuilder;
-    private static KMSv1 kmSv1;
+    private static KMSService KMSService;
 
     private HttpParameterParserUtil() {
     } // never
@@ -1246,11 +1246,11 @@ public final class HttpParameterParserUtil {
         return transactionBuilder;
     }
 
-    private static KMSv1 lookupAccountKMSv1() {
-        if (kmSv1 == null) {
-            kmSv1 = CDI.current().select(KMSv1.class).get();
+    private static KMSService lookupAccountKMSv1() {
+        if (KMSService == null) {
+            KMSService = CDI.current().select(KMSService.class).get();
         }
-        return kmSv1;
+        return KMSService;
     }
 
     public static class PrivateTransactionsAPIData {

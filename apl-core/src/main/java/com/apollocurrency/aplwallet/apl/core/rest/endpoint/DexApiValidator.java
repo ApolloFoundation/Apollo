@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.vault.service.KMSv1;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -18,13 +18,13 @@ import java.math.BigInteger;
 @Singleton
 public class DexApiValidator {
     private final EthereumWalletService walletService;
-    private final KMSv1 kmSv1;
+    private final KMSService KMSService;
     private final AccountService accountService;
 
     @Inject
-    public DexApiValidator(EthereumWalletService walletService, KMSv1 kmSv1, AccountService accountService) {
+    public DexApiValidator(EthereumWalletService walletService, KMSService KMSService, AccountService accountService) {
         this.walletService = walletService;
-        this.kmSv1 = kmSv1;
+        this.KMSService = KMSService;
         this.accountService = accountService;
     }
 
@@ -59,14 +59,14 @@ public class DexApiValidator {
     }
 
     public void validateVaultAccount(long sender) throws ParameterException {
-        if (!kmSv1.isWalletExist(sender)) {
+        if (!KMSService.isWalletExist(sender)) {
             throw new ParameterException(JSONResponses.incorrect("account or passphrase", "Bad credentials"));
         }
     }
 
     public void validateEthAccount(long sender, String passphrase, String ethWalletAddress) throws ParameterException {
         validateVaultAccount(sender);
-        if (kmSv1.isEthKeyExist(sender, passphrase, ethWalletAddress)) {
+        if (KMSService.isEthKeyExist(sender, passphrase, ethWalletAddress)) {
             throw new ParameterException(JSONResponses.incorrect(DexApiConstants.WALLET_ADDRESS, "Account  does not own the specified eth address"));
         }
     }

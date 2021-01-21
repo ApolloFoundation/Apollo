@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
-import com.apollocurrency.aplwallet.vault.service.KMSv1;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,7 +67,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
     @Mock
     AccountService accountService;
     @Mock
-    KMSv1 kmSv1 = mock(KMSv1.class);
+    KMSService KMSService = mock(KMSService.class);
     @Mock
     BlockchainConfig blockchainConfig;
 
@@ -85,7 +85,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
             .register(ByteArrayConverterProvider.class)
             .register(LegacyParameterExceptionMapper.class)
             .register(PlatformSpecConverterProvider.class);
-        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, elGamal, kmSv1), transactionCreator, converter, blockchainConfig);
+        UpdateController updateController = new UpdateController(new AccountParametersParser(accountService, elGamal, KMSService), transactionCreator, converter, blockchainConfig);
         dispatcher.getRegistry().addSingletonResource(updateController);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
     }
@@ -126,7 +126,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
         sender.setPublicKey(new PublicKey(sender.getId(), null, 0));
         ApolloFbWallet wallet = mock(ApolloFbWallet.class);
         doReturn(Convert.toHexString(Crypto.getKeySeed(Convert.toBytes(SECRET)))).when(wallet).getAplKeySecret();
-        doReturn(Convert.parseHexString(wallet.getAplKeySecret())).when(kmSv1).getAplSecretBytes(ACCOUNT_ID_WITH_SECRET, SECRET);
+        doReturn(Convert.parseHexString(wallet.getAplKeySecret())).when(KMSService).getAplSecretBytes(ACCOUNT_ID_WITH_SECRET, SECRET);
         doReturn(sender).when(accountService).getAccount(Convert.parseHexString(PUBLIC_KEY_SECRET));
         EcBlockData ecBlockData = new EcBlockData(121, 100_000);
         doReturn(ecBlockData).when(blockchain).getECBlock(0);

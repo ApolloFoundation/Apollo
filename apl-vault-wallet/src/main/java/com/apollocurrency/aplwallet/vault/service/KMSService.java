@@ -7,7 +7,7 @@ import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 
 import java.util.List;
 
-public interface KMSv1 {
+public interface KMSService {
     /**
      * Is Vault wallet exist for this account.
      * @param accountId user apl account.

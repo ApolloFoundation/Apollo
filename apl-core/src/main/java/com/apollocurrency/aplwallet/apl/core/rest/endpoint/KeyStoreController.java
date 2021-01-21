@@ -1,9 +1,10 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
@@ -18,7 +19,7 @@ import com.apollocurrency.aplwallet.vault.model.UserKeyStore;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.vault.rest.converter.UserKeyStoreConverter;
 import com.apollocurrency.aplwallet.vault.rest.converter.WalletKeysConverter;
-import com.apollocurrency.aplwallet.vault.service.KMSv1;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -54,15 +55,15 @@ import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 @Singleton
 public class KeyStoreController {
 
-    private KMSv1 kmSv1;
+    private KMSService KMSService;
     private SecureStorageService secureStorageService;
     private Account2FAService account2FAService;
     private Integer maxKeyStoreSize;
 
     @Inject
-    public KeyStoreController(KMSv1 kmSv1, SecureStorageService secureStorageService,
+    public KeyStoreController(KMSService KMSService, SecureStorageService secureStorageService,
                               Account2FAService account2FAService, PropertiesHolder propertiesLoader) {
-        this.kmSv1 = kmSv1;
+        this.KMSService = KMSService;
         this.secureStorageService = secureStorageService;
         this.account2FAService = account2FAService;
         this.maxKeyStoreSize = propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize");;
@@ -87,9 +88,9 @@ public class KeyStoreController {
     public Response getAccountInfo(@FormParam("account") String account,
                                    @FormParam("passphrase") String passphraseReq) throws ParameterException {
         String passphraseStr = HttpParameterParserUtil.getPassphrase(passphraseReq, true);
-        long accountId = HttpParameterParserUtil.getAccountId(account, "account", true);
+        long accountId = RestParametersParser.parseAccountId(account);
 
-        if (!kmSv1.isWalletExist(accountId)) {
+        if (!KMSService.isWalletExist(accountId)) {
             return Response.status(Response.Status.OK)
                 .entity(JSON.toString(
                     JSONResponses.vaultWalletError(accountId,
@@ -98,7 +99,7 @@ public class KeyStoreController {
                 ).build();
         }
 
-        WalletKeysInfo keyStoreInfo = kmSv1.getWalletInfo(accountId, passphraseStr);
+        WalletKeysInfo keyStoreInfo = KMSService.getWalletInfo(accountId, passphraseStr);
 
         if(keyStoreInfo == null){
             return Response.status(Response.Status.OK)
@@ -168,7 +169,7 @@ public class KeyStoreController {
                     ).build();
             }
 
-            KMSResponseStatus status = kmSv1.storeWallet(keyStore, passPhrase);
+            KMSResponseStatus status = KMSService.storeWallet(keyStore, passPhrase);
 
             if (status.isOK()) {
                 return Response.status(200).build();
@@ -198,30 +199,23 @@ public class KeyStoreController {
                     schema = @Schema(implementation = Response.class)))
         }
     )
+    @Secured2FA
     @PermitAll
     public Response downloadKeyStore(@FormParam("account") String account,
                                      @FormParam("passPhrase") String passphraseReq, @Context HttpServletRequest request) throws ParameterException, IOException {
         try {
             String passphraseStr = HttpParameterParserUtil.getPassphrase(passphraseReq, true);
-            long accountId = HttpParameterParserUtil.getAccountId(account, "account", true);
+            long accountId = RestParametersParser.parseAccountId(account);
 
 
-            if (!kmSv1.isWalletExist(accountId)) {
+            if (!KMSService.isWalletExist(accountId)) {
                 return Response.status(Response.Status.OK)
                     .entity(JSON.toString(JSONResponses.vaultWalletError(accountId,
                         "get account information", "Key for this account is not exist."))
                     ).build();
             }
 
-            if (account2FAService.isEnabled2FA(accountId)) {
-                int code2FA = HttpParameterParserUtil.getInt(request, "code2FA", 0, Integer.MAX_VALUE, false);
-                TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(accountId, passphraseStr, null);
-                twoFactorAuthParameters.setCode2FA(code2FA);
-
-                account2FAService.verify2FA(twoFactorAuthParameters);
-            }
-
-            UserKeyStore keyStore = kmSv1.exportUserKeyStore(accountId, passphraseStr);
+            UserKeyStore keyStore = KMSService.exportUserKeyStore(accountId, passphraseStr);
             if (keyStore == null) {
                 throw new ParameterException(JSONResponses.incorrect("account id or passphrase"));
             }
@@ -238,7 +232,7 @@ public class KeyStoreController {
 
     @POST
     @Path("/eth")
-//    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Secured2FA
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(tags = {"keyStore"}, summary = "Export eth keystore",
         description = "Generate eth keystore for specified account in json format fully compatible with original geth keystore. Required 2fa code for accounts with enabled 2fa.",
@@ -250,21 +244,17 @@ public class KeyStoreController {
                                         @Parameter(description = "New password to encrypt eth key, if omitted apl passphrase will be used instead (not recommended)") @FormParam("ethKeystorePassword") String ethKeystorePassword,
                                         @Parameter(description = "2fa code for account if enabled") @FormParam("code2FA") @DefaultValue("0") int code) throws ParameterException {
         String aplVaultPassphrase = HttpParameterParserUtil.getPassphrase(passphrase, true);
-        long accountId = HttpParameterParserUtil.getAccountId(account, "account", true);
+        long accountId = RestParametersParser.parseAccountId(account);
         String passwordToEncryptEthKeystore = StringUtils.isBlank(ethKeystorePassword) ? aplVaultPassphrase : ethKeystorePassword;
 
-        TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(accountId, aplVaultPassphrase, null);
-        twoFactorAuthParameters.setCode2FA(code);
-        account2FAService.verify2FA(twoFactorAuthParameters);
-
-        if (!kmSv1.isWalletExist(accountId)) {
+        if (!KMSService.isWalletExist(accountId)) {
             return Response.status(Response.Status.OK)
                 .entity(JSON.toString(JSONResponses.vaultWalletError(accountId,
                     "get account information", "Key for this account is not exist."))
                 ).build();
         }
         try {
-            EthWalletKey ethWalletKey = kmSv1.getEthWallet(accountId, aplVaultPassphrase, ethAccountAddress);
+            EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, aplVaultPassphrase, ethAccountAddress);
 
             try {
                 WalletFile walletFile = Wallet.createStandard(passwordToEncryptEthKeystore, ethWalletKey.getCredentials().getEcKeyPair());
