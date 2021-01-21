@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.cache.NullCacheProducerForTests;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
@@ -62,9 +63,6 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -116,6 +114,7 @@ class BlockchainTest extends DBContainerRootTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(TransactionDaoImpl.class, BlockchainImpl.class, BlockDaoImpl.class,
+        BlockEntityRowMapper.class,
         TransactionIndexDao.class, DaoConfig.class, JdbiTransactionalInterceptor.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
         TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
@@ -138,6 +137,8 @@ class BlockchainTest extends DBContainerRootTest {
         .build();
     @Inject
     private Blockchain blockchain;
+    @Inject
+    private BlockEntityRowMapper blockEntityRowMapper;
     private TransactionTestData txd;
     private BlockTestData btd;
 
@@ -374,34 +375,6 @@ class BlockchainTest extends DBContainerRootTest {
         Block lastBlock = blockchain.findLastBlock();
 
         assertEquals(btd.LAST_BLOCK, lastBlock);
-    }
-
-    @Test
-    void testLoadBlock() {
-        DbUtils.checkAndRunInTransaction(extension, (con) -> {
-            try (Statement stmt = con.createStatement()) {
-                ResultSet rs = stmt.executeQuery("select * from block where id = " + btd.BLOCK_13.getId());
-                rs.next();
-                Block block = blockchain.loadBlock(con, rs, true);
-                assertEquals(btd.BLOCK_13, block);
-                assertEquals(List.of(txd.TRANSACTION_14), btd.BLOCK_13.getTransactions());
-            } catch (SQLException ignored) {
-            }
-        });
-    }
-
-    @Test
-    void testLoadBlockWithoutTransactions() {
-        DbUtils.checkAndRunInTransaction(extension, (con) -> {
-            try (Statement stmt = con.createStatement()) {
-                ResultSet rs = stmt.executeQuery("select * from block where id = " + btd.BLOCK_10.getId());
-                assertTrue(rs.next());
-                Block block = blockchain.loadBlock(con, rs, false);
-                assertEquals(btd.BLOCK_10, block);
-                assertNull(block.getTransactions());
-            } catch (SQLException ignored) {
-            }
-        });
     }
 
     @Test

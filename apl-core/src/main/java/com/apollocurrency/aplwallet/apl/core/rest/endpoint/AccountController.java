@@ -397,7 +397,7 @@ public class AccountController {
         @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).")
         @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
-        @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
+        @Parameter(description = "A zero-based index to the first, last block to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
         @BeanParam FirstLastIndexBeanParam indexBeanParam
     ) {
 
@@ -433,7 +433,7 @@ public class AccountController {
         @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
         @Parameter(description = "The earliest block (in seconds since the genesis block) to retrieve (optional).")
         @QueryParam("timestamp") @DefaultValue("-1") @ValidTimestamp int timestamp,
-        @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
+        @Parameter(description = "A zero-based index to the first, last block to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
         @BeanParam FirstLastIndexBeanParam indexBeanParam,
         @Parameter(description = "Include transactions detail info")
         @QueryParam("includeTransaction") @DefaultValue("false") boolean includeTransaction
@@ -443,9 +443,14 @@ public class AccountController {
         indexBeanParam.adjustIndexes(maxAPIFetchRecords);
 
         List<Block> blocks = accountService.getAccountBlocks(accountId, indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex(), timestamp);
+        if (includeTransaction) {
+            blocks.forEach(block -> blockchain.getOrLoadTransactions(block));
+            blockConverter.setAddTransactions(true);
+        }
 
         BlocksResponse dto = new BlocksResponse();
         dto.setBlocks(blockConverter.convert(blocks));
+        blockConverter.setAddTransactions(false);
 
         return response.bind(dto).build();
     }
@@ -500,7 +505,7 @@ public class AccountController {
         @QueryParam("height") @DefaultValue("-1") @ValidBlockchainHeight int height,
         @Parameter(description = "Include additional currency info (optional)")
         @QueryParam("includeCurrencyInfo") @DefaultValue("false") boolean includeCurrencyInfo,
-        @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
+        @Parameter(description = "A zero-based index to the first, last currency to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
         @BeanParam FirstLastIndexBeanParam indexBeanParam
     ) {
 
@@ -550,7 +555,7 @@ public class AccountController {
     public Response getAccountCurrentAskOrderIds(
         @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class)) @QueryParam("account") @NotNull AccountIdParameter accountIdParameter,
         @Parameter(description = "The asset ID.") @QueryParam("asset") LongParameter assetId,
-        @Parameter(description = "A zero-based index to the first, last asset ID to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
+        @Parameter(description = "A zero-based index to the first, last currency to retrieve (optional).", schema = @Schema(implementation = FirstLastIndexBeanParam.class))
         @BeanParam FirstLastIndexBeanParam indexBeanParam
     ) {
 

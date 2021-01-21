@@ -22,13 +22,12 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.util.List;
 import java.util.Set;
 
@@ -77,14 +76,16 @@ public interface Blockchain {
 
     Block findFirstBlock();
 
+    Block loadBlockData(BlockEntity blockEntity);
+
+    List<Block> loadBlockData(List<BlockEntity> blocks);
+
     @Deprecated
     List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp);
 
     List<Block> getBlocksByAccountFromShards(long accountId, int from, int to, int timestamp);
 
     Block findLastBlock();
-
-    Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions);
 
     void saveBlock(Block block);
 
@@ -95,7 +96,6 @@ public interface Blockchain {
     Long getBlockCount(TransactionalDataSource dataSource, int from, int to);
 
     int getBlockCount(long accountId);
-
 
     Block getShardInitialBlock();
 

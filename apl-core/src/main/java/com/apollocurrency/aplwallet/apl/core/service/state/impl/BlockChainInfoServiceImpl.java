@@ -86,13 +86,8 @@ public class BlockChainInfoServiceImpl implements BlockChainInfoService {
     }
 
     @Override
-    public List<Block> getBlocks(long accountId, int from, int to, int timestamp) {
-        return blockchain.getBlocksByAccount(accountId, from, to, timestamp);
-    }
-
-    @Override
-    public List<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp) {
-        return blockchain.getBlocksByAccountFromShards(accountId, from, to, timestamp);
+    public List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp) {
+        return lookupBlockchain().getBlocksByAccountFromShards(accountId, from, to, timestamp);
     }
 
     @Override
@@ -102,7 +97,7 @@ public class BlockChainInfoServiceImpl implements BlockChainInfoService {
 
     @Override
     public boolean isTrimming(){
-        return blockchainProcessor.isTrimming();
+        return lookupBlockchainProcessor().isTrimming();
     }
 
 }

@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -92,9 +91,9 @@ public class BlockDaoImpl implements BlockDao {
         try (Connection con = databaseManager.getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block order by db_id LIMIT 1")) {
             try (ResultSet rs = pstmt.executeQuery()) {
-                Block block = null;
+                BlockEntity block = null;
                 if (rs.next()) {
-                    block = getBlock(con, rs);
+                    block = entityRowMapper.map(rs, null);
                 }
                 return block;
             }
@@ -141,16 +140,16 @@ public class BlockDaoImpl implements BlockDao {
 
     @Transactional(readOnly = true)
     @Override
-    public Block findBlockAtHeight(int height, TransactionalDataSource dataSource) {
+    public BlockEntity findBlockAtHeight(int height, TransactionalDataSource dataSource) {
         // Check the cache
         // Search the database
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height = ?")) {
             pstmt.setInt(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {
-                Block block;
+                BlockEntity block;
                 if (rs.next()) {
-                    block = getBlock(con, rs);
+                    block = entityRowMapper.map(rs, null);
                 } else {
                     throw new BlockNotFoundException("Block at height " + height + " not found in database!");
                 }
@@ -162,16 +161,16 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public Block findLastBlock() {
+    public BlockEntity findLastBlock() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
              PreparedStatement pstmt = con.prepareStatement(
                  "SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY `timestamp` DESC LIMIT 1")) {
-            Block block = null;
+            BlockEntity block = null;
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    block = getBlock(con, rs);
+                    block = entityRowMapper.map(rs, null);
                 }
             }
             return block;
@@ -201,7 +200,7 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public List<Block> getBlocksByAccount(TransactionalDataSource dataSource, long accountId, int from, int to, int timestamp) {
+    public List<BlockEntity> getBlocksByAccount(TransactionalDataSource dataSource, long accountId, int from, int to, int timestamp) {
         LOG.trace("start getBlocksByAccount DbIter(dataSource={}, accountId={}, from={}, to={}, timestamp={} )...",
             dataSource != null ? dataSource.getDbIdentity() : null, accountId, from, to, timestamp);
         if (dataSource == null) {
@@ -227,7 +226,7 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public List<Block> getBlocks(TransactionalDataSource dataSource, int from, int to, int timestamp) {
+    public List<BlockEntity> getBlocks(TransactionalDataSource dataSource, int from, int to, int timestamp) {
         LOG.debug("start getBlocks DbIter( from={}, to={}, timestamp={} )...", from, to, timestamp);
         Connection con = null;
         if (dataSource == null) {
@@ -248,7 +247,7 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public Long getBlockCount(TransactionalDataSource dataSource, int from, int to) {
+    public long getBlockCount(TransactionalDataSource dataSource, int from, int to) {
         if (dataSource == null) {
             // select from main db
             dataSource = databaseManager.getDataSource();
@@ -308,7 +307,7 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public List<Block> getBlocksAfter(int height, List<Long> blockIdList, List<Block> result, TransactionalDataSource dataSource, int index) {
+    public List<BlockEntity> getBlocksAfter(int height, List<Long> blockIdList, List<BlockEntity> result, TransactionalDataSource dataSource, int index) {
         // Search the database
         try (Connection con = dataSource.getConnection()) {
             return getBlocksAfter(height, blockIdList, result, con, index);
@@ -318,7 +317,7 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public List<Block> getBlocksAfter(int height, List<Long> blockIdList, List<Block> result, Connection con, int index) {
+    public List<BlockEntity> getBlocksAfter(int height, List<Long> blockIdList, List<BlockEntity> result, Connection con, int index) {
         // Search the database
         try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
             + "WHERE height > ? "
@@ -327,7 +326,7 @@ public class BlockDaoImpl implements BlockDao {
             pstmt.setInt(2, blockIdList.size() - index);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    Block block = this.getBlock(con, rs);
+                    BlockEntity block = entityRowMapper.map(rs, null);
                     if (block.getId() != blockIdList.get(index++)) {
                         LOG.debug("Block id {} not equal to {}", block.getId(), blockIdList.get(index - 1));
                         break;
@@ -342,7 +341,7 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public Block findBlockWithVersion(int skipCount, int version) {
+    public BlockEntity findBlockWithVersion(int skipCount, int version) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
@@ -350,10 +349,10 @@ public class BlockDaoImpl implements BlockDao {
             int i = 0;
             pstmt.setInt(++i, version);
             pstmt.setInt(++i, skipCount);
-            Block block = null;
+            BlockEntity block = null;
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    block = getBlock(con, rs);
+                    block = entityRowMapper.map(rs, null);
                 }
             }
             return block;
@@ -363,15 +362,15 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public Block findLastBlock(int timestamp) {
+    public BlockEntity findLastBlock(int timestamp) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE `timestamp` <= ? ORDER BY `timestamp` DESC LIMIT 1")) {
             pstmt.setInt(1, timestamp);
-            Block block = null;
+            BlockEntity block = null;
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    block = getBlock(con, rs);
+                    block = entityRowMapper.map(rs, null);
                 }
             }
             return block;
@@ -415,7 +414,7 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public void saveBlock(Block block) {
+    public void saveBlock(BlockEntity block) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
             try (Connection con = dataSource.getConnection();
@@ -458,11 +457,11 @@ public class BlockDaoImpl implements BlockDao {
 
     //set next_block_id to null instead of 0 to indicate successful block push
     @Override
-    public void commit(Block block) {
+    public void commit(long blockId) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = NULL WHERE id = ?")) {
-            pstmt.setLong(1, block.getId());
+            pstmt.setLong(1, blockId);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -493,11 +492,11 @@ public class BlockDaoImpl implements BlockDao {
      * {@inheritDoc}
      */
     @Override
-    public Block deleteBlocksFrom(long blockId) {
+    public BlockEntity deleteBlocksFrom(long blockId) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         boolean inTransaction = dataSource.isInTransaction();
         if (!inTransaction) {
-            Block lastBlock;
+            BlockEntity lastBlock;
             try {
                 dataSource.begin();
                 lastBlock = deleteBlocksFrom(blockId);
@@ -535,7 +534,7 @@ public class BlockDaoImpl implements BlockDao {
                         dataSource.commit(false);
                     }
                 }
-                Block lastBlock = findLastBlock();
+                BlockEntity lastBlock = findLastBlock();
                 if (lastBlock == null) {
                     // should never happen, but possible in rare error cases
                     LOG.warn("Block was not found in 'main db' by blockId = {}", blockId);

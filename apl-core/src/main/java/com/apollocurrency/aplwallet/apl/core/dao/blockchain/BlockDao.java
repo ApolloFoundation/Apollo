@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 
 import java.sql.Connection;
@@ -33,17 +32,17 @@ public interface BlockDao {
 
     List<BlockEntity> getBlocks(TransactionalDataSource dataSource, int from, int to, int timestamp);
 
-    Long getBlockCount(TransactionalDataSource dataSource, int from, int to);
+    long getBlockCount(TransactionalDataSource dataSource, int from, int to);
 
     int getBlockCount(TransactionalDataSource dataSource, long accountId);
 
     List<Long> getBlockIdsAfter(int height, int limit);
 
-    List<BlockEntity> getBlocksAfter(int height, List<Long> blockList, List<Block> result, TransactionalDataSource dataSource, int index);
+    List<BlockEntity> getBlocksAfter(int height, List<Long> blockList, List<BlockEntity> result, TransactionalDataSource dataSource, int index);
 
-    List<BlockEntity> getBlocksAfter(int height, List<Long> blockList, List<Block> result, Connection connection, int index);
+    List<BlockEntity> getBlocksAfter(int height, List<Long> blockList, List<BlockEntity> result, Connection connection, int index);
 
-    Block findBlockWithVersion(int skipCount, int version);
+    BlockEntity findBlockWithVersion(int skipCount, int version);
 
     List<byte[]> getBlockSignaturesFrom(int from, int to);
 
@@ -56,7 +55,7 @@ public interface BlockDao {
     void saveBlock(BlockEntity block);
 
     //set next_block_id to null instead of 0 to indicate successful block push
-    void commit(BlockEntity block);
+    void commit(long blockId);
 
     void deleteBlocksFromHeight(int height);
 
