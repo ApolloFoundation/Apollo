@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2018-2010 Apollo Foundation.
+ * Copyright (c)  2021-2022 Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.util.api.converter;

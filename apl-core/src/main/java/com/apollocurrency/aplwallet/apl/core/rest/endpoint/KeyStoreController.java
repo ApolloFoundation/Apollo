@@ -20,7 +20,6 @@ import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.vault.rest.converter.UserKeyStoreConverter;
 import com.apollocurrency.aplwallet.vault.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.vault.service.KMSService;
-import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -57,15 +56,13 @@ public class KeyStoreController {
 
     private KMSService KMSService;
     private SecureStorageService secureStorageService;
-    private Account2FAService account2FAService;
     private Integer maxKeyStoreSize;
 
     @Inject
     public KeyStoreController(KMSService KMSService, SecureStorageService secureStorageService,
-                              Account2FAService account2FAService, PropertiesHolder propertiesLoader) {
+                              PropertiesHolder propertiesLoader) {
         this.KMSService = KMSService;
         this.secureStorageService = secureStorageService;
-        this.account2FAService = account2FAService;
         this.maxKeyStoreSize = propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize");;
     }
 
