@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS 'block'
+CREATE TABLE IF NOT EXISTS `block`
 (
     `db_id`                 bigint(20) unsigned NOT NULL,
     `id`                    bigint(20)          NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS 'block'
     DEFAULT CHARSET = utf8mb4
     COLLATE = utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS 'transaction'
+CREATE TABLE IF NOT EXISTS `transaction`
 (
     `db_id`                            bigint(20) unsigned NOT NULL,
     `id`                               bigint(20)          NOT NULL,
