@@ -1,15 +1,10 @@
-/*
- * Copyright © 2018-2020 Apollo Foundation
- */
+package com.apollocurrency.aplwallet.vault.model;
 
-package com.apollocurrency.aplwallet.api.dto.vault;
-
-public class ExportKeyStore {
-
+public class UserKeyStore {
     private byte[] file;
     private String fileName;
 
-    public ExportKeyStore(byte[] file, String name) {
+    public UserKeyStore(byte[] file, String name) {
         this.file = file;
         this.fileName = name;
     }

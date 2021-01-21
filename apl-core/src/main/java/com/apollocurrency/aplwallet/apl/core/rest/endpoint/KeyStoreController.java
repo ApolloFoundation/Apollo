@@ -1,7 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.api.dto.vault.ExportKeyStore;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
@@ -12,9 +11,12 @@ import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
 import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
+import com.apollocurrency.aplwallet.vault.model.UserKeyStore;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.rest.converter.UserKeyStoreConverter;
 import com.apollocurrency.aplwallet.vault.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.vault.service.KMSv1;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
@@ -59,11 +61,15 @@ public class KeyStoreController {
 
     @Inject
     public KeyStoreController(KMSv1 kmSv1, SecureStorageService secureStorageService,
-                              Account2FAService account2FAService, Integer maxKeyStoreSize) {
+                              Account2FAService account2FAService, PropertiesHolder propertiesLoader) {
         this.kmSv1 = kmSv1;
         this.secureStorageService = secureStorageService;
         this.account2FAService = account2FAService;
-        this.maxKeyStoreSize = maxKeyStoreSize;
+        this.maxKeyStoreSize = propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize");;
+    }
+
+    // Dont't delete. For RESTEASY.
+    public KeyStoreController() {
     }
 
     @POST
@@ -215,12 +221,13 @@ public class KeyStoreController {
                 account2FAService.verify2FA(twoFactorAuthParameters);
             }
 
-            ExportKeyStore keyStore = kmSv1.exportKeyStore(accountId, passphraseStr);
+            UserKeyStore keyStore = kmSv1.exportUserKeyStore(accountId, passphraseStr);
             if (keyStore == null) {
                 throw new ParameterException(JSONResponses.incorrect("account id or passphrase"));
             }
 
-            Response.ResponseBuilder response = Response.ok(keyStore);
+            UserKeyStoreConverter userKeyStoreConverter = new UserKeyStoreConverter();
+            Response.ResponseBuilder response = Response.ok(userKeyStoreConverter.apply(keyStore));
             return response.build();
         } catch (ParameterException ex) {
             return Response.status(Response.Status.OK).entity(JSON.toString(ex.getErrorResponse())).build();

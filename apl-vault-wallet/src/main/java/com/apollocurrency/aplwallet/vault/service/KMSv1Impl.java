@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.vault.service;
 
-import com.apollocurrency.aplwallet.api.dto.vault.ExportKeyStore;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
@@ -8,6 +7,7 @@ import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
 import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
+import com.apollocurrency.aplwallet.vault.model.UserKeyStore;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import com.apollocurrency.aplwallet.vault.util.FbWalletUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -68,13 +68,13 @@ public class KMSv1Impl implements KMSv1 {
 
 
     @Override
-    public ExportKeyStore exportKeyStore(long accountId, String passphrase) throws RestParameterException {
+    public UserKeyStore exportUserKeyStore(long accountId, String passphrase) throws RestParameterException {
         File keyStore = keyStoreService.getSecretStoreFile(accountId, passphrase);
         if (keyStore == null) {
             return null;
         }
         try {
-            return new ExportKeyStore(Files.readAllBytes(keyStore.toPath()), keyStore.getName());
+            return new UserKeyStore(Files.readAllBytes(keyStore.toPath()), keyStore.getName());
         } catch (IOException e) {
             throw new RestParameterException(ApiErrors.EXPORT_KEY_READ_WALLET);
         }
