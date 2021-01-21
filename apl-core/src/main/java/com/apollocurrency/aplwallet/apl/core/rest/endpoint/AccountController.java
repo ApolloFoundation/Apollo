@@ -591,8 +591,8 @@ public class AccountController {
                 content = @Content(mediaType = "text/html",
                     schema = @Schema(implementation = AccountKeyDTO.class)))
         })
+    @Secured2FA
     @PermitAll
-    //TODO: It's a good idea to protect the exportkey method by @Secured2FA annotation
     public Response exportKey(@Parameter(description = "The secret passphrase of the account.", required = true)
                               @FormParam("passphrase") @NotNull String passphrase,
                               @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
@@ -605,11 +605,7 @@ public class AccountController {
         long accountId = accountIdParameter.get();
         String passphraseStr = accountParametersParser.getPassphrase(passphrase, true);
 
-        TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(accountId, passphraseStr, null);
-        twoFactorAuthParameters.setCode2FA(code);
-        account2FAService.verify2FA(twoFactorAuthParameters);
-
-        byte[] secretBytes = KMSService.getAplSecretBytes(accountId, passphrase);
+        byte[] secretBytes = KMSService.getAplSecretBytes(accountId, passphraseStr);
 
         AccountKeyDTO dto = new AccountKeyDTO(
             Long.toUnsignedString(accountId),

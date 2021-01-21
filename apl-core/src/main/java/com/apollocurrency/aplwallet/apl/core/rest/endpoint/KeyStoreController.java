@@ -1,18 +1,16 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
-import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
 import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
 import com.apollocurrency.aplwallet.vault.model.UserKeyStore;
@@ -54,16 +52,18 @@ import static com.apollocurrency.aplwallet.apl.core.http.BlockEventSource.LOG;
 @Singleton
 public class KeyStoreController {
 
+    private UserKeyStoreConverter userKeyStoreConverter = new UserKeyStoreConverter();
+
     private KMSService KMSService;
     private SecureStorageService secureStorageService;
     private Integer maxKeyStoreSize;
 
     @Inject
     public KeyStoreController(KMSService KMSService, SecureStorageService secureStorageService,
-                              PropertiesHolder propertiesLoader) {
+                              @Property(name = "apl.maxKeyStoreFileSize") Integer maxKeyStoreSize)  {
         this.KMSService = KMSService;
         this.secureStorageService = secureStorageService;
-        this.maxKeyStoreSize = propertiesLoader.getIntProperty("apl.maxKeyStoreFileSize");;
+        this.maxKeyStoreSize = maxKeyStoreSize;
     }
 
     // Dont't delete. For RESTEASY.
@@ -88,23 +88,13 @@ public class KeyStoreController {
         long accountId = RestParametersParser.parseAccountId(account);
 
         if (!KMSService.isWalletExist(accountId)) {
-            return Response.status(Response.Status.OK)
-                .entity(JSON.toString(
-                    JSONResponses.vaultWalletError(accountId,
-                        "get account information", "Key for this account is not exist.")
-                    )
-                ).build();
+            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Key for this account is not exist.").build();
         }
 
         WalletKeysInfo keyStoreInfo = KMSService.getWalletInfo(accountId, passphraseStr);
 
         if(keyStoreInfo == null){
-            return Response.status(Response.Status.OK)
-                .entity(JSON.toString(
-                    JSONResponses.vaultWalletError(0, "import",
-                        "KeyStore or passPhrase is not valid.")
-                    )
-                ).build();
+            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "KeyStore or passPhrase is not valid.").build();
         }
          secureStorageService.addUserPassPhrase(accountId, passphraseStr);
 
@@ -148,22 +138,13 @@ public class KeyStoreController {
                 } else if ("passPhrase".equals(item.getFieldName())) {
                     passPhrase = IOUtils.toString(item.openStream());
                 } else {
-                    return Response.status(Response.Status.OK)
-                        .entity(JSON.toString(
-                            JSONResponses.vaultWalletError(0, "import",
-                                "Failed to upload file. Unknown parameter: " + item.getFieldName())
-                            )
-                        ).build();
+                    return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR,
+                        "Failed to upload file. Unknown parameter:"  + item.getFieldName()).build();
                 }
             }
 
             if (passPhrase == null || keyStore == null || keyStore.length == 0) {
-                return Response.status(Response.Status.OK)
-                    .entity(JSON.toString(
-                        JSONResponses.vaultWalletError(0, "import",
-                            "Parameter 'passPhrase' or 'keyStore' is null")
-                        )
-                    ).build();
+                return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Parameter 'passPhrase' or 'keyStore' is null").build();
             }
 
             KMSResponseStatus status = KMSService.storeWallet(keyStore, passPhrase);
@@ -171,15 +152,11 @@ public class KeyStoreController {
             if (status.isOK()) {
                 return Response.status(200).build();
             } else {
-                return Response.status(Response.Status.OK)
-                    .entity(JSON.toString(
-                        JSONResponses.vaultWalletError(0, "import", status.message)
-                        )
-                    ).build();
+                return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR,  status.message).build();
             }
         } catch (Exception ex) {
             LOG.error(ex.getMessage(), ex);
-            return Response.status(Response.Status.BAD_REQUEST).entity("Failed to upload file.").build();
+            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Failed to upload file.").build();
         }
 
     }
@@ -206,24 +183,18 @@ public class KeyStoreController {
 
 
             if (!KMSService.isWalletExist(accountId)) {
-                return Response.status(Response.Status.OK)
-                    .entity(JSON.toString(JSONResponses.vaultWalletError(accountId,
-                        "get account information", "Key for this account is not exist."))
-                    ).build();
+                return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Key for this account is not exist.").build();
             }
 
             UserKeyStore keyStore = KMSService.exportUserKeyStore(accountId, passphraseStr);
             if (keyStore == null) {
-                throw new ParameterException(JSONResponses.incorrect("account id or passphrase"));
+                return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Incorrect account id or passphrase").build();
             }
 
-            UserKeyStoreConverter userKeyStoreConverter = new UserKeyStoreConverter();
             Response.ResponseBuilder response = Response.ok(userKeyStoreConverter.apply(keyStore));
             return response.build();
-        } catch (ParameterException ex) {
-            return Response.status(Response.Status.OK).entity(JSON.toString(ex.getErrorResponse())).build();
         } catch (RestParameterException e){
-            return Response.status(Response.Status.OK).entity(e.getApiErrorInfo()).build();
+            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, e.getApiErrorInfo()).build();
         }
     }
 
@@ -245,10 +216,7 @@ public class KeyStoreController {
         String passwordToEncryptEthKeystore = StringUtils.isBlank(ethKeystorePassword) ? aplVaultPassphrase : ethKeystorePassword;
 
         if (!KMSService.isWalletExist(accountId)) {
-            return Response.status(Response.Status.OK)
-                .entity(JSON.toString(JSONResponses.vaultWalletError(accountId,
-                    "get account information", "Key for this account is not exist."))
-                ).build();
+            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Key for this account is not exist.").build();
         }
         try {
             EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, aplVaultPassphrase, ethAccountAddress);
@@ -260,7 +228,7 @@ public class KeyStoreController {
                 return ResponseBuilder.apiError(ApiErrors.WEB3J_CRYPTO_ERROR, ThreadUtils.getStackTraceSilently(e), e.getMessage()).build();
             }
         } catch (RestParameterException ex) {
-            return Response.status(Response.Status.OK).entity(ex.getApiErrorInfo()).build();
+            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, ex.getApiErrorInfo()).build();
         }
     }
 }
