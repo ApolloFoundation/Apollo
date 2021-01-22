@@ -1086,7 +1086,7 @@ CREATE TABLE IF NOT EXISTS `shuffling_data`
     `db_id`                 bigint(20) unsigned NOT NULL AUTO_INCREMENT,
     `shuffling_id`          bigint(20) NOT NULL,
     `account_id`            bigint(20) NOT NULL,
-    `data`                  longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`data`)),
+    `data`                  blob NOT NULL,
     `transaction_timestamp` int(11)    NOT NULL,
     `height`                int(11)    NOT NULL,
     UNIQUE KEY `db_id` (`db_id`),
