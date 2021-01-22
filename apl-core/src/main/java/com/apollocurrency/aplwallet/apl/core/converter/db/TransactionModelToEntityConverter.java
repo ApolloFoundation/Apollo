@@ -4,11 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.converter.db;
 
-import com.apollocurrency.aplwallet.apl.core.converter.Converter;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
+import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

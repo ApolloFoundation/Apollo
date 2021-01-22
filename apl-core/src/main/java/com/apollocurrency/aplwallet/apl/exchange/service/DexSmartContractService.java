@@ -30,9 +30,8 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
-import com.apollocurrency.aplwallet.vault.KeyStoreService;
 import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
-import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 import lombok.extern.slf4j.Slf4j;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.core.RemoteCall;
@@ -63,7 +62,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -75,21 +73,20 @@ public class DexSmartContractService {
 
     private final String smartContractAddress;
     private final String paxContractAddress;
-    private final KeyStoreService keyStoreService;
     private final DexEthService dexEthService;
     private final EthereumWalletService ethereumWalletService;
     private final DexTransactionDao dexTransactionDao;
     private final DexBeanProducer dexBeanProducer;
     private final TaskDispatchManager taskManager;
+    private final KMSService KMSService;
 
     private Map<String, Object> idLocks = Collections.synchronizedMap(new HashMap<>());
     private Set<String> locksToRemoveLater = ConcurrentHashMap.newKeySet();
 
     @Inject
-    public DexSmartContractService(PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService,
+    public DexSmartContractService(PropertiesHolder propertiesHolder, DexEthService dexEthService,
                                    EthereumWalletService ethereumWalletService, DexTransactionDao dexTransactionDao,
-                                   DexBeanProducer dexBeanProducer, TaskDispatchManager taskDispatchManager) {
-        this.keyStoreService = keyStoreService;
+                                   DexBeanProducer dexBeanProducer, TaskDispatchManager taskDispatchManager, KMSService KMSService) {
         this.smartContractAddress = propertiesHolder.getStringProperty("apl.eth.swap.proxy.contract.address");
         this.paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
         this.dexEthService = dexEthService;
@@ -97,6 +94,7 @@ public class DexSmartContractService {
         this.dexTransactionDao = dexTransactionDao;
         this.taskManager = taskDispatchManager;
         this.dexBeanProducer = dexBeanProducer;
+        this.KMSService = KMSService;
     }
 
     @PostConstruct
@@ -126,7 +124,7 @@ public class DexSmartContractService {
      * @return String transaction hash.
      */
     public String deposit(String passphrase, Long offerId, Long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrency currency) throws AplException.ExecutiveProcessException {
-        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+        EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, passphrase, fromAddress);
         Long gasPrice = gas;
         if (gasPrice == null) {
             gasPrice = getEthGasPrice();
@@ -166,7 +164,7 @@ public class DexSmartContractService {
      * @return String transaction hash.
      */
     public String withdraw(String passphrase, long accountId, String fromAddress, BigInteger orderId, Long gas) throws AplException.ExecutiveProcessException {
-        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+        EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, passphrase, fromAddress);
 
         Long gasPrice = gas;
         if (gasPrice == null) {
@@ -178,7 +176,7 @@ public class DexSmartContractService {
 
 
     public String initiate(String passphrase, long accountId, String fromAddress, Long orderId, byte[] secretHash, String recipient, Integer refundTimestamp, Long gas) throws AplException.ExecutiveProcessException {
-        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+        EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, passphrase, fromAddress);
         Long gasPrice = gas;
         if (gasPrice == null) {
             gasPrice = getEthGasPrice();
@@ -188,14 +186,14 @@ public class DexSmartContractService {
     }
 
     public String approve(String passphrase, byte[] secret, String fromAddress, long accountId) throws AplException.ExecutiveProcessException {
-        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+        EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, passphrase, fromAddress);
 
         return approve(ethWalletKey.getCredentials(), secret, getEthGasPrice());
 
     }
 
     public String refund(byte[] secretHash, String passphrase, String fromAddress, long accountId, boolean waitConfirmation) throws AplException.ExecutiveProcessException {
-        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+        EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, passphrase, fromAddress);
 
         String params = Numeric.toHexString(secretHash);
         String identifier = fromAddress + params + DexTransaction.Op.REFUND;
@@ -213,7 +211,7 @@ public class DexSmartContractService {
     }
 
     public String refundAndWithdraw(byte[] secretHash, String passphrase, String fromAddress, long accountId, boolean waitConfirmation) throws AplException.ExecutiveProcessException {
-        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+        EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, passphrase, fromAddress);
 
         String params = Numeric.toHexString(secretHash);
         String identifier = fromAddress + params + DexTransaction.Op.REFUND;
@@ -307,14 +305,6 @@ public class DexSmartContractService {
         DepositedOrderDetails depositedOrderDetails = getDepositedOrderDetails(userAddress, orderId);
 
         return depositedOrderDetails != null && depositedOrderDetails.isCreated() && !depositedOrderDetails.isWithdrawn() && depositedOrderDetails.getAmount().compareTo(amountEth) == 0;
-    }
-
-    public List<String> getEthUserAddresses(String passphrase, Long accountId) {
-        WalletKeysInfo walletKeysInfo = keyStoreService.getWalletKeysInfo(passphrase, accountId);
-
-        return walletKeysInfo.getEthWalletKeys().stream()
-            .map(k -> k.getCredentials().getAddress())
-            .collect(Collectors.toList());
     }
 
     private String approve(Credentials credentials, byte[] secret, Long gasPrice) {
@@ -500,18 +490,6 @@ public class DexSmartContractService {
             log.error(e.getMessage(), e);
         }
         return null;
-    }
-
-    private EthWalletKey getEthWalletKey(String passphrase, Long accountId, String fromAddress) throws AplException.ExecutiveProcessException {
-        WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
-        if (keyStore == null) {
-            throw new AplException.ExecutiveProcessException("User wallet wasn't found.");
-        }
-        EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
-        if (ethWalletKey == null) {
-            throw new AplException.ExecutiveProcessException("Wallet's address wasn't found. " + fromAddress);
-        }
-        return ethWalletKey;
     }
 
     private Long getEthGasPrice() throws AplException.ExecutiveProcessException {

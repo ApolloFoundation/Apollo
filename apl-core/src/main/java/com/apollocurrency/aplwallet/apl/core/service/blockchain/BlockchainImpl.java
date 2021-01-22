@@ -45,7 +45,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadin
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;

@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
-import com.apollocurrency.aplwallet.apl.core.converter.Converter;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -14,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadin
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;

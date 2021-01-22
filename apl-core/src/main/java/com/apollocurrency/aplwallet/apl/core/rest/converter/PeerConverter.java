@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.PeerDTO;
-import com.apollocurrency.aplwallet.apl.core.converter.Converter;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
+import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
 import java.util.ArrayList;
 import java.util.List;

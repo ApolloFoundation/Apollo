@@ -13,6 +13,7 @@
  import com.apollocurrency.aplwallet.vault.model.AplWalletKey;
  import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
  import com.apollocurrency.aplwallet.vault.model.EncryptedSecretBytesDetails;
+ import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
  import com.apollocurrency.aplwallet.vault.model.SecretBytesDetails;
  import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
  import com.apollocurrency.aplwallet.vault.util.AccountHelper;
@@ -83,7 +84,7 @@
          Path secretPath = findKeyStorePathWithLatestVersion(accountId);
 
          if (secretPath == null) {
-             return new SecretBytesDetails(null, Status.NOT_FOUND);
+             return new SecretBytesDetails(null, KMSResponseStatus.NOT_FOUND);
          }
 
          try {
@@ -94,13 +95,13 @@
 
              long actualAccId = Convert.getId(Crypto.getPublicKey(Crypto.getKeySeed(decryptedSecretBytes)));
              if (accountId != actualAccId) {
-                 return new SecretBytesDetails(null, Status.BAD_CREDENTIALS);
+                 return new SecretBytesDetails(null, KMSResponseStatus.BAD_CREDENTIALS);
              }
-             return new SecretBytesDetails(decryptedSecretBytes, Status.OK);
+             return new SecretBytesDetails(decryptedSecretBytes, KMSResponseStatus.OK);
          } catch (IOException e) {
-             return new SecretBytesDetails(null, Status.READ_ERROR);
+             return new SecretBytesDetails(null, KMSResponseStatus.READ_ERROR);
          } catch (RuntimeException e) {
-             return new SecretBytesDetails(null, Status.DECRYPTION_ERROR);
+             return new SecretBytesDetails(null, KMSResponseStatus.DECRYPTION_ERROR);
          }
      }
 
@@ -154,16 +155,16 @@
      public boolean migrateOldKeyStorageToTheNew(String passphrase, long accountId) {
          SecretBytesDetails secretBytesDetails = getSecretBytesV0(passphrase, accountId);
 
-         if (secretBytesDetails.getExtractStatus() != Status.OK) {
+         if (secretBytesDetails.getExtractStatus() != KMSResponseStatus.OK) {
              return false;
          }
          byte[] secretBytes = secretBytesDetails.getSecretBytes();
 
          try {
              ApolloFbWallet apolloWallet = AccountHelper.generateApolloWallet(secretBytes);
-             KeyStoreService.Status status = saveSecretKeyStore(passphrase, apolloWallet);
+             KMSResponseStatus status = saveSecretKeyStore(passphrase, apolloWallet);
 
-             if (status != KeyStoreService.Status.OK) {
+             if (status != KMSResponseStatus.OK) {
                  return false;
              }
          } catch (RestParameterException e) {
@@ -174,7 +175,7 @@
      }
 
 
-     public Status saveSecretKeyStore(String passphrase, ApolloFbWallet fbWallet) {
+     public KMSResponseStatus saveSecretKeyStore(String passphrase, ApolloFbWallet fbWallet) {
          String aplKeySecret = fbWallet.getAplKeySecret();
 
          AplWalletKey aplWalletKey = new AplWalletKey(Convert.parseHexString(aplKeySecret));
@@ -183,34 +184,34 @@
      }
 
      @Override
-     public Status saveSecretKeyStore(String passphrase, Long accountId, FbWallet fbWallet) {
+     public KMSResponseStatus saveSecretKeyStore(String passphrase, Long accountId, FbWallet fbWallet) {
          byte[] salt = generateBytes(12);
          Path path;
 
          try {
              if (isNewVersionOfKeyStoreForAccountExist(accountId)) {
-                 return Status.DUPLICATE_FOUND;
+                 return KMSResponseStatus.DUPLICATE_FOUND;
              }
 
              byte[] key = fbWallet.keyFromPassPhrase(passphrase, salt);
              path = makeTargetPathForNewAccount(accountId);
 
              if (path == null) {
-                 return Status.BAD_CREDENTIALS;
+                 return KMSResponseStatus.BAD_CREDENTIALS;
              }
 
              fbWallet.saveFile(path.toString(), key, salt);
          } catch (IOException e) {
              LOG.error(e.getMessage(), e);
-             return Status.WRITE_ERROR;
+             return KMSResponseStatus.WRITE_ERROR;
          } catch (CryptoNotValidException e) {
              LOG.error(e.getMessage(), e);
-             return Status.BAD_CREDENTIALS;
+             return KMSResponseStatus.BAD_CREDENTIALS;
          }
 
          LOG.info("Created new key store for account " + accountId + ", path - " + path.toString());
 
-         return Status.OK;
+         return KMSResponseStatus.OK;
      }
 
      @Override
@@ -220,7 +221,7 @@
          Path secretPath = findKeyStorePathWithLatestVersion(accountId);
 
          if (secretPath == null) {
-             LOG.warn("VaultWallet : " + Status.NOT_FOUND);
+             LOG.warn("VaultWallet : " + KMSResponseStatus.NOT_FOUND);
              return null;
          }
 
@@ -250,7 +251,7 @@
          ApolloFbWallet fbWallet = getSecretStore(passphrase, accountId);
 
          if (fbWallet == null) {
-             LOG.warn("VaultWallet : " + Status.NOT_FOUND);
+             LOG.warn("VaultWallet : " + KMSResponseStatus.NOT_FOUND);
              return null;
          }
          return new WalletKeysInfo(fbWallet, passphrase);
@@ -271,30 +272,30 @@
      }
 
      @Override
-     public Status deleteKeyStore(String passphrase, long accountId) {
+     public KMSResponseStatus deleteKeyStore(String passphrase, long accountId) {
          if (!isAvailable()) {
-             return Status.NOT_AVAILABLE;
+             return KMSResponseStatus.NOT_AVAILABLE;
          }
 
          FbWallet fbWallet = getSecretStore(passphrase, accountId);
          if (fbWallet == null || AplCollectionUtils.isEmpty(fbWallet.getAllData())) {
-             return Status.BAD_CREDENTIALS;
+             return KMSResponseStatus.BAD_CREDENTIALS;
          }
          List<Path> secretPaths = findKeyStorePaths(accountId);
 
          return deleteFileWithStatus(secretPaths);
      }
 
-     public Status deleteFileWithStatus(List<Path> paths) {
+     public KMSResponseStatus deleteFileWithStatus(List<Path> paths) {
          try {
              for (Path path : paths) {
                  deleteFile(path);
              }
          } catch (IOException e) {
              LOG.debug("Unable to delete file. " + paths.get(0), e);
-             return Status.DELETE_ERROR;
+             return KMSResponseStatus.DELETE_ERROR;
          }
-         return Status.OK;
+         return KMSResponseStatus.OK;
      }
 
      public void deleteFile(Path path) throws IOException {
@@ -322,9 +323,7 @@
      }
 
      public boolean isKeyStoreForAccountExist(long accountId) {
-         Path path = findKeyStorePathWithLatestVersion(accountId);
-
-         return path != null;
+         return findKeyStorePathWithLatestVersion(accountId) != null;
      }
 
      private boolean isStorageVersionLatest(Path path) {

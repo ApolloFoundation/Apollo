@@ -2,7 +2,7 @@
  *  Copyright © 2018-2020 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.util.api.provider;
+package com.apollocurrency.aplwallet.apl.util.api.converter;
 
 import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
 import lombok.Getter;

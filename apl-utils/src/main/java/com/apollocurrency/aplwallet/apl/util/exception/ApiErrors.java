@@ -45,6 +45,11 @@ public enum ApiErrors implements ApiErrorInfo {
     NOT_ENOUGH_FUNDS(6, 2028, "Not enough %s funds"),
     TX_VALIDATION_FAILED(-1, 2029, "Failed to validate tx: %s"),
     CUSTOM_ERROR_MESSAGE(8, 2030, "{0}"),
+
+    //KMS
+    EXPORT_KEY_READ_WALLET(0, 2201, "Can't read wallet."),
+    NOT_FOUND_WALLET(0, 2202, "Incorrect account id or passphrase"),
+    NOT_FOUND_ETH_ACCOUNT(0, 2203, "Incorrect ethereum address"),
     ;
 
     private int oldErrorCode;

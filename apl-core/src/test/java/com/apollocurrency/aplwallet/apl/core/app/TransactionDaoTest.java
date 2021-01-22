@@ -35,8 +35,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
