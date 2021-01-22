@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.utils.FilterCarriageReturnCharacterInputStream;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.env.config.ResourceLocator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -130,6 +131,8 @@ public class GenesisImporter {
                 .orElseThrow(() -> new RuntimeException("Failed to load genesis parameters"));
             loadGenesisDataFromIS(is);
         }
+        //TODO Move it somewhere
+        Convert2.init(blockchainConfig.getAccountPrefix(), EPOCH_BEGINNING);
     }
 
     public void loadGenesisDataFromIS(InputStream is) {

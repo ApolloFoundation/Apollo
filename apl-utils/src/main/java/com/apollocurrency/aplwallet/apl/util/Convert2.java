@@ -29,9 +29,9 @@ import java.util.Objects;
 public final class Convert2 {
     private static final String ACCOUNT_PREFIX_IS_NULL_MSG = "AccountPrefix is null";
     private static final String EPOCH_BEGINNING_IS_NULL_MSG = "EpochBeginning is null";
-    private static String accountPrefix;
-    private static Long epochBeginning;
-    private static boolean initialized = false;
+    private volatile static String accountPrefix;
+    private volatile static Long epochBeginning;
+    private volatile static boolean initialized = false;
 
     Convert2() {
     }
