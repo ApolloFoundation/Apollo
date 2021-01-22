@@ -5,16 +5,14 @@
 package com.apollocurrency.aplwallet.vault.model;
 
 
-import com.apollocurrency.aplwallet.vault.KeyStoreService;
-
 import java.util.Arrays;
 import java.util.Objects;
 
 public class SecretBytesDetails {
     private byte[] secretBytes;
-    private KeyStoreService.Status extractStatus;
+    private KMSResponseStatus extractStatus;
 
-    public SecretBytesDetails(byte[] secretBytes, KeyStoreService.Status extractStatus) {
+    public SecretBytesDetails(byte[] secretBytes, KMSResponseStatus extractStatus) {
         this.secretBytes = secretBytes;
         this.extractStatus = extractStatus;
     }
@@ -32,7 +30,7 @@ public class SecretBytesDetails {
         return secretBytes;
     }
 
-    public KeyStoreService.Status getExtractStatus() {
+    public KMSResponseStatus getExtractStatus() {
         return extractStatus;
     }
 

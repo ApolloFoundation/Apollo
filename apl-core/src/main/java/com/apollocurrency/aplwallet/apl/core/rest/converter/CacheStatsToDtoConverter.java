@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.CacheStatsDTO;
-import com.apollocurrency.aplwallet.apl.core.converter.Converter;
+import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.google.common.cache.CacheStats;
 
 public class CacheStatsToDtoConverter implements Converter<CacheStats, CacheStatsDTO> {

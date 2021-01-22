@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.vault;
 
 import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
+import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
 import com.apollocurrency.aplwallet.vault.model.SecretBytesDetails;
 import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
 import io.firstbridge.cryptolib.container.FbWallet;
@@ -20,7 +21,7 @@ public interface KeyStoreService {
      * @param fbWallet   - secret array of bytes which will be stored into keystore
      * @return OK - if secretBytes were saved successfully, otherwise returned status hold error cause
      */
-    Status saveSecretKeyStore(String passphrase, ApolloFbWallet fbWallet);
+    KMSResponseStatus saveSecretKeyStore(String passphrase, ApolloFbWallet fbWallet);
 
     /**
      * Save encrypted by passphrase secretStore in the json format.
@@ -29,7 +30,7 @@ public interface KeyStoreService {
      * @param fbWallet   - secret array of bytes which will be stored into keystore
      * @return OK - if secretBytes were saved successfully, otherwise returned status hold error cause
      */
-    Status saveSecretKeyStore(String passphrase, Long accountId, FbWallet fbWallet);
+    KMSResponseStatus saveSecretKeyStore(String passphrase, Long accountId, FbWallet fbWallet);
 
     /**
      * Return secret bytes if key exists for accountId and can be decrypted by passphrase
@@ -86,7 +87,7 @@ public interface KeyStoreService {
      * @param accountId  - id of account, which secretBytes should be deleted
      * @return status of deletion
      */
-    Status deleteKeyStore(String passphrase, long accountId);
+    KMSResponseStatus deleteKeyStore(String passphrase, long accountId);
 
     /**
      * Get Key Store as a file.
@@ -97,30 +98,4 @@ public interface KeyStoreService {
      */
     File getSecretStoreFile(Long accountId, String passphrase);
 
-    enum Status {
-        NOT_FOUND("Bad credentials"),
-        DELETE_ERROR("Internal delete error"),
-        DUPLICATE_FOUND("Already exist"),
-        BAD_CREDENTIALS("Bad credentials"),
-        READ_ERROR("Internal read error"),
-        WRITE_ERROR("Internal write error"),
-        DECRYPTION_ERROR("Bad credentials"),
-        NOT_AVAILABLE("Something went wrong"),
-        OK("OK");
-
-        public String message;
-
-        Status(String message) {
-            this.message = message;
-        }
-
-        public boolean isOK() {
-            return this.message.equals(Status.OK.message);
-        }
-
-        public boolean isDuplicate() {
-            return this.message.equals(Status.DUPLICATE_FOUND.message);
-        }
-
-    }
 }

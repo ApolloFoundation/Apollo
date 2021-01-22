@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.api.dto.auth.Status2FA;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -618,10 +617,6 @@ public final class JSONResponses {
             default:
                 throw new RuntimeException("Error not found for currency: " + currency);
         }
-    }
-
-    public static JSONStreamAware error2FA(Status2FA status2FA, long accountId) {
-        return accountError(accountId, String.valueOf(status2FA));
     }
 
     public static JSONStreamAware vaultWalletError(long accountId, String notPerformedAction, String errorDetails) {

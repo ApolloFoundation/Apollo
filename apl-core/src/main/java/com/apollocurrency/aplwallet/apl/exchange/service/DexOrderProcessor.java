@@ -48,6 +48,7 @@ import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import lombok.extern.slf4j.Slf4j;
 import org.web3j.utils.Numeric;
@@ -116,6 +117,7 @@ public class DexOrderProcessor {
     private Blockchain blockchain;
     private final BlockchainConfig blockchainConfig;
     private final Account2FAService account2FAService;
+    private final KMSService KMSService;
 
     @Inject
     public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService,
@@ -129,7 +131,8 @@ public class DexOrderProcessor {
                              @Property(name = "apl.dex.orderProcessor.delay", defaultValue = "" + DEFAULT_DEX_OFFER_PROCESSOR_DELAY) int processingDelay,
                              DexConfig dexConfig,
                              BlockchainConfig blockchainConfig,
-                             Account2FAService account2FAService
+                             Account2FAService account2FAService,
+                             KMSService KMSService
     ) {
 
         this.secureStorageService = secureStorageService;
@@ -151,6 +154,7 @@ public class DexOrderProcessor {
         this.dexConfig = dexConfig;
         this.blockchainConfig = blockchainConfig;
         this.account2FAService = account2FAService;
+        this.KMSService = KMSService;
     }
 
     @PostConstruct
@@ -715,7 +719,7 @@ public class DexOrderProcessor {
 
 
     private CreateTransactionRequest buildRequest(String passphrase, Long accountId, Attachment attachment, Long feeATM) {
-        byte[] keySeed = Crypto.getKeySeed(account2FAService.findAplSecretBytes(accountId, passphrase));
+        byte[] keySeed = Crypto.getKeySeed(KMSService.getAplSecretBytes(accountId, passphrase));
         CreateTransactionRequest transferMoneyReq = CreateTransactionRequest
             .builder()
             .passphrase(passphrase)
@@ -807,7 +811,7 @@ public class DexOrderProcessor {
         try {
             String passphrase = secureStorageService.getUserPassPhrase(accountId);
 
-            List<String> addresses = dexSmartContractService.getEthUserAddresses(passphrase, accountId);
+            List<String> addresses = KMSService.getEthWalletAddresses(accountId, passphrase);
 
             for (String address : addresses) {
                 try {
@@ -843,7 +847,7 @@ public class DexOrderProcessor {
 
     public void refundExpiredAtomicSwaps(long accountId) {
         String passphrase = secureStorageService.getUserPassPhrase(accountId);
-        List<String> addresses = dexSmartContractService.getEthUserAddresses(passphrase, accountId);
+        List<String> addresses = KMSService.getEthWalletAddresses(accountId, passphrase);
         for (String address : addresses) {
             try {
                 List<ExpiredSwap> expiredSwaps = dexSmartContractService.getExpiredSwaps(address);

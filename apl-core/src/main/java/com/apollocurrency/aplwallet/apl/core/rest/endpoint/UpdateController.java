@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.update.UpdateV
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.Level;
 import com.apollocurrency.aplwallet.apl.util.Version;
-import com.apollocurrency.aplwallet.apl.util.api.provider.PlatformSpecs;
+import com.apollocurrency.aplwallet.apl.util.api.converter.PlatformSpecs;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

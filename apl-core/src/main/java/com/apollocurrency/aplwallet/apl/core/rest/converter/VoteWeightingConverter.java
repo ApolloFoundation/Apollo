@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.account.VoteWeightingDTO;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.converter.Converter;
+import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
 public class VoteWeightingConverter implements Converter<VoteWeighting, VoteWeightingDTO> {
 
