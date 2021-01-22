@@ -417,11 +417,11 @@ class AccountControllerTest extends AbstractEndpointTest {
         TwoFactorAuthParameters twoFactorAuthParameters = new TwoFactorAuthParameters(ACCOUNT_ID, PASSPHRASE, null);
         twoFactorAuthParameters.setCode2FA(CODE_2FA);
 
-        doReturn(SECRET.getBytes()).when(KMSService).getAplSecretBytes(ACCOUNT_ID, PASSPHRASE);
+        doReturn(SECRET.getBytes()).when(KMSService).getAplSecretBytes(ACCOUNT_ID, null);
 
         check2FA_withPassPhraseAndAccountAndCode2FA(uri, twoFactorAuthParameters);
 
-        verify(KMSService, times(1)).getAplSecretBytes(ACCOUNT_ID, PASSPHRASE);
+        verify(KMSService, times(1)).getAplSecretBytes(ACCOUNT_ID, null);
     }
 
     @Test
