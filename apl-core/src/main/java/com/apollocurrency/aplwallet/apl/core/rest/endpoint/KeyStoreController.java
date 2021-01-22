@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
-import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
 import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
 import com.apollocurrency.aplwallet.vault.model.UserKeyStore;
@@ -25,6 +24,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
+import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.IOUtils;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
@@ -142,23 +142,22 @@ public class KeyStoreController {
                         "Failed to upload file. Unknown parameter:"  + item.getFieldName()).build();
                 }
             }
-
-            if (passPhrase == null || keyStore == null || keyStore.length == 0) {
-                return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Parameter 'passPhrase' or 'keyStore' is null").build();
-            }
-
-            KMSResponseStatus status = KMSService.storeWallet(keyStore, passPhrase);
-
-            if (status.isOK()) {
-                return Response.status(200).build();
-            } else {
-                return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR,  status.message).build();
-            }
-        } catch (Exception ex) {
+        } catch (FileUploadException | IOException ex) {
             LOG.error(ex.getMessage(), ex);
             return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Failed to upload file.").build();
         }
 
+        if (passPhrase == null || keyStore == null || keyStore.length == 0) {
+            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Parameter 'passPhrase' or 'keyStore' is null").build();
+        }
+
+        KMSResponseStatus status = KMSService.storeWallet(keyStore, passPhrase);
+
+        if (status.isOK()) {
+            return Response.status(200).build();
+        } else {
+            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR,  status.message).build();
+        }
     }
 
 
@@ -177,25 +176,21 @@ public class KeyStoreController {
     @PermitAll
     public Response downloadKeyStore(@FormParam("account") String account,
                                      @FormParam("passPhrase") String passphraseReq, @Context HttpServletRequest request) throws ParameterException, IOException {
-        try {
-            String passphraseStr = HttpParameterParserUtil.getPassphrase(passphraseReq, true);
-            long accountId = RestParametersParser.parseAccountId(account);
+        String passphraseStr = HttpParameterParserUtil.getPassphrase(passphraseReq, true);
+        long accountId = RestParametersParser.parseAccountId(account);
 
 
-            if (!KMSService.isWalletExist(accountId)) {
-                return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Key for this account is not exist.").build();
-            }
-
-            UserKeyStore keyStore = KMSService.exportUserKeyStore(accountId, passphraseStr);
-            if (keyStore == null) {
-                return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Incorrect account id or passphrase").build();
-            }
-
-            Response.ResponseBuilder response = Response.ok(userKeyStoreConverter.apply(keyStore));
-            return response.build();
-        } catch (RestParameterException e){
-            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, e.getApiErrorInfo()).build();
+        if (!KMSService.isWalletExist(accountId)) {
+            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Key for this account is not exist.").build();
         }
+
+        UserKeyStore keyStore = KMSService.exportUserKeyStore(accountId, passphraseStr);
+        if (keyStore == null) {
+            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Incorrect account id or passphrase").build();
+        }
+
+        Response.ResponseBuilder response = Response.ok(userKeyStoreConverter.apply(keyStore));
+        return response.build();
     }
 
     @POST
@@ -218,17 +213,14 @@ public class KeyStoreController {
         if (!KMSService.isWalletExist(accountId)) {
             return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, "Key for this account is not exist.").build();
         }
-        try {
-            EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, aplVaultPassphrase, ethAccountAddress);
 
-            try {
-                WalletFile walletFile = Wallet.createStandard(passwordToEncryptEthKeystore, ethWalletKey.getCredentials().getEcKeyPair());
-                return Response.ok(walletFile).build();
-            } catch (CipherException e) {
-                return ResponseBuilder.apiError(ApiErrors.WEB3J_CRYPTO_ERROR, ThreadUtils.getStackTraceSilently(e), e.getMessage()).build();
-            }
-        } catch (RestParameterException ex) {
-            return ResponseBuilder.apiError(ApiErrors.ACCOUNT_2FA_ERROR, ex.getApiErrorInfo()).build();
+        EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, aplVaultPassphrase, ethAccountAddress);
+
+        try {
+            WalletFile walletFile = Wallet.createStandard(passwordToEncryptEthKeystore, ethWalletKey.getCredentials().getEcKeyPair());
+            return Response.ok(walletFile).build();
+        } catch (CipherException e) {
+            return ResponseBuilder.apiError(ApiErrors.WEB3J_CRYPTO_ERROR, ThreadUtils.getStackTraceSilently(e), e.getMessage()).build();
         }
     }
 }
