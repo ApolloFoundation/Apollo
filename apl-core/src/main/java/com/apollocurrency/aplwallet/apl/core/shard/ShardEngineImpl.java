@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
@@ -39,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 
@@ -438,7 +438,8 @@ public class ShardEngineImpl implements ShardEngine {
         checkRequiredParameters(paramInfo);
         long startTime = System.currentTimeMillis();
         List<TableInfo> allTables = paramInfo.getTableInfoList();
-        log.debug("Starting EXPORT data from 'derived tables' + [{}] tables...", allTables.size());
+        log.debug("Starting EXPORT data from 'derived tables' = [{}]", allTables.size());
+        log.trace("Starting EXPORT data from 'derived tables' = {}", allTables);
 
         ShardRecovery recovery = getOrCreateRecovery(CSV_EXPORT_STARTED);
         if (recovery.getState().getValue() >= CSV_EXPORT_FINISHED.getValue()) {
@@ -508,7 +509,6 @@ public class ShardEngineImpl implements ShardEngine {
         try {
             trimService.waitTrimming();
             // distinguish usual trim and trim within sharding process
-//            return trimService.doTrimDerivedTablesOnHeightLocked(height, true);
             return trimService.doTrimDerivedTablesOnHeight(height, true);
         } catch (Exception e) {
             databaseManager.getDataSource().rollback(false);
@@ -543,6 +543,7 @@ public class ShardEngineImpl implements ShardEngine {
                                     Set<String> excludedColumns, int pruningTime,
                                     String sortColumn) {
         DerivedTableInterface derivedTable = registry.getDerivedTable(info.getName());
+        log.trace("Export derived: {} (isPrunable = {}) = {}", info.getName(), info.isPrunable(), derivedTable != null ? derivedTable.getName() : "NULL");
         if (derivedTable != null) {
             if (!info.isPrunable()) {
                 // not prunable table
@@ -583,7 +584,7 @@ public class ShardEngineImpl implements ShardEngine {
             log.debug("Skip already exported table: {}", tableName);
         } else {
             Path tableCsvPath = csvExporter.getDataExportPath().resolve(tableName + CsvAbstractBase.CSV_FILE_EXTENSION);
-            log.trace("Exporting '{}' into file : '{}'...", tableName, tableCsvPath);
+            log.debug("Exporting '{}' into file : '{}'...", tableName, tableCsvPath);
             FileUtils.deleteFileIfExistsAndHandleException(tableCsvPath, (e) -> {
                 durableTaskUpdateByState(state, null, null);
                 throw new RuntimeException("Unable to remove not finished csv file: " + tableCsvPath.toAbsolutePath().toString());

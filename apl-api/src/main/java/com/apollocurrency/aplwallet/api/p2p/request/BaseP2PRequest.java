@@ -5,10 +5,12 @@ package com.apollocurrency.aplwallet.api.p2p.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.StringJoiner;
 import java.util.UUID;
 
 /**
@@ -19,6 +21,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@EqualsAndHashCode
 public class BaseP2PRequest {
 
     public final Integer protocol = 1;
@@ -28,5 +31,14 @@ public class BaseP2PRequest {
     public BaseP2PRequest(String requestType, UUID chainId) {
         this.requestType = requestType;
         this.chainId = chainId;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", BaseP2PRequest.class.getSimpleName() + "[", "]")
+            .add("protocol=" + protocol)
+            .add("requestType='" + requestType + "'")
+            .add("chainId=" + chainId)
+            .toString();
     }
 }

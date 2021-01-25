@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AddressScope;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.Getter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -42,8 +42,8 @@ public class ChildAccountAttachment extends AbstractAttachment {
 
     public ChildAccountAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        this.addressScope = AddressScope.from(((Long) attachmentData.get("addressScope")).intValue());
-        this.childCount = (short) (((Long) attachmentData.get("childCount")).intValue());
+        this.addressScope = AddressScope.from(((Number) attachmentData.get("addressScope")).intValue());
+        this.childCount = (short) (((Number) attachmentData.get("childCount")).intValue());
         childPublicKey = new LinkedList<>();
         List<?> keys = (List<?>) attachmentData.get("childPublicKeys");
         for (Object publicKey : keys) {

@@ -14,6 +14,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class EnvConfig {
+
     @Produces
     @Singleton
     public DirProvider dirProvider() {
@@ -31,14 +32,15 @@ public class EnvConfig {
     public ChainsConfigHolder chainsConfigHolder() {
         return new ChainsConfigHolder();
     }
+
     @Produces
     @Singleton
     public PropertiesHolder propertiesHolder() {
         return new PropertiesHolder();
     }
 
-//    @Named("applicationDirName")
     @Produces
+    @Named("applicationDirName")
     public String applicationDirName() {
         return Constants.APPLICATION_DIR_NAME;
     }

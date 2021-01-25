@@ -1,14 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.cache.NullCacheProducerForTests;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DBContainerRootTest;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
@@ -20,11 +15,14 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
@@ -38,6 +36,9 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalInterceptor;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import io.quarkus.test.junit.QuarkusTest;
@@ -117,7 +118,9 @@ class BlockchainTest extends DBContainerRootTest {
 /*    @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(TransactionDaoImpl.class, BlockchainImpl.class, BlockDaoImpl.class,
         TransactionIndexDao.class, DaoConfig.class, JdbiTransactionalInterceptor.class,
-        TransactionRowMapper.class,
+        TransactionServiceImpl.class, ShardDbExplorerImpl.class,
+        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TransactionBuilder.class,
         BlockIndexServiceImpl.class, NullCacheProducerForTests.class)
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
@@ -411,7 +414,7 @@ class BlockchainTest extends DBContainerRootTest {
         btd.NEW_BLOCK.setTransactions(newTransactions);
 
         DbUtils.checkAndRunInTransaction(extension, (con) -> {
-            blockchain.saveBlock(con, btd.NEW_BLOCK);
+            blockchain.saveBlock(btd.NEW_BLOCK);
             blockchain.commit(btd.NEW_BLOCK);
         });
 
@@ -1139,6 +1142,7 @@ class BlockchainTest extends DBContainerRootTest {
         assertEquals(2, transactionCount);
     }
 
+/*
     @Test
     void testGetTransactionsByPreparedStatementOnConnection() {
         DbUtils.checkAndRunInTransaction(extension, (con) -> {
@@ -1151,11 +1155,12 @@ class BlockchainTest extends DBContainerRootTest {
             }
         });
     }
+*/
 
     @Test
     void testFindPrunableTransactionsStartingFromFirstPrunableTransactionTimestampExclusive() {
         DbUtils.checkAndRunInTransaction(extension, (con) -> {
-            List<PrunableTransaction> prunableTransactions = blockchain.findPrunableTransactions(con, txd.TRANSACTION_13.getTimestamp() + 1, Integer.MAX_VALUE);
+            List<PrunableTransaction> prunableTransactions = blockchain.findPrunableTransactions(txd.TRANSACTION_13.getTimestamp() + 1, Integer.MAX_VALUE);
             assertEquals(1, prunableTransactions.size());
             assertEquals(txd.TRANSACTION_14.getId(), prunableTransactions.get(0).getId());
         });
@@ -1164,7 +1169,7 @@ class BlockchainTest extends DBContainerRootTest {
     @Test
     void testFindPrunableTransactionsBetweenTxTimestampsInclusive() {
         DbUtils.checkAndRunInTransaction(extension, (con) -> {
-            List<PrunableTransaction> prunableTransactions = blockchain.findPrunableTransactions(con, txd.TRANSACTION_13.getTimestamp(), txd.TRANSACTION_14.getTimestamp());
+            List<PrunableTransaction> prunableTransactions = blockchain.findPrunableTransactions(txd.TRANSACTION_13.getTimestamp(), txd.TRANSACTION_14.getTimestamp());
             assertEquals(2, prunableTransactions.size());
             assertEquals(txd.TRANSACTION_14.getId(), prunableTransactions.get(1).getId());
             assertEquals(txd.TRANSACTION_13.getId(), prunableTransactions.get(0).getId());
@@ -1216,14 +1221,14 @@ class BlockchainTest extends DBContainerRootTest {
 
     @Test
     void testGetTransactionCountBetweenMinMaxHeights() {
-        Long count = blockchain.getTransactionCount(extension.getDatabaseManager().getDataSource(), 0, Integer.MAX_VALUE);
+        Long count = blockchain.getTransactionCount(0, Integer.MAX_VALUE);
         assertEquals(6, count);
     }
 
 
     @Test
     void testGetTransactionCountBetweenHeights() {
-        Long count = blockchain.getTransactionCount(extension.getDatabaseManager().getDataSource(), txd.TRANSACTION_10.getHeight(), txd.TRANSACTION_13.getHeight());
+        Long count = blockchain.getTransactionCount(txd.TRANSACTION_10.getHeight(), txd.TRANSACTION_13.getHeight());
         assertEquals(4, count);
     }
 

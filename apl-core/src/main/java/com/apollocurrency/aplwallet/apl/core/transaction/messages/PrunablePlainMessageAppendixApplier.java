@@ -32,4 +32,9 @@ public class PrunablePlainMessageAppendixApplier implements AppendixApplier<Prun
             messageService.add(transaction, appendix);
         }
     }
+
+    @Override
+    public Class<PrunablePlainMessageAppendix> forClass() {
+        return PrunablePlainMessageAppendix.class;
+    }
 }

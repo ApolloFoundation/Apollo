@@ -7,12 +7,11 @@ package com.apollocurrency.aplwallet.apl.core.app.cdi.transaction;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiTransactionalInterceptor;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import io.quarkus.test.junit.QuarkusTest;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import lombok.extern.slf4j.Slf4j;
+import io.quarkus.test.junit.QuarkusTest;
 /*import org.jboss.weld.environment.se.Weld;
 import org.jboss.weld.junit.AbstractWeldInitiator;
 import org.jboss.weld.junit.MockBean;
@@ -41,7 +40,6 @@ import static org.mockito.Mockito.verify;
 @Tag("slow")
 @QuarkusTest
 public class JdbiInterceptorTest extends DbContainerBaseTest {
-
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer);
 

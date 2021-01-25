@@ -46,7 +46,7 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
     public AccountLedgerTable(PropertiesHolder propertiesHolder,
                               DerivedTablesRegistry derivedDbTablesRegistry,
                               DatabaseManager databaseManager) {
-        super("account_ledger", derivedDbTablesRegistry, databaseManager, null);
+        super("account_ledger", derivedDbTablesRegistry, databaseManager, null, null);
         this.propertiesHolder = propertiesHolder;
         trimKeep = propertiesHolder.getIntProperty("apl.ledgerTrimKeep", 30000);
     }

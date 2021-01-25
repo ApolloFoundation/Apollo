@@ -30,7 +30,6 @@ import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -167,7 +166,9 @@ public class ShardImporter {
                 log.debug("start importing '{}'...", table);
                 aplAppStatus.durableTaskUpdate(genesisTaskId, "Loading '" + table + "'", 0.6);
                 long rowsImported;
-                if (ShardConstants.ACCOUNT_TABLE_NAME.equalsIgnoreCase(table) || ShardConstants.ACCOUNT_ASSET_TABLE_NAME.equalsIgnoreCase(table) || ShardConstants.ACCOUNT_CURRENCY_TABLE_NAME.equalsIgnoreCase(table)) {
+                if (ShardConstants.ACCOUNT_TABLE_NAME.equalsIgnoreCase(table)
+                    || ShardConstants.ACCOUNT_ASSET_TABLE_NAME.equalsIgnoreCase(table)
+                    || ShardConstants.ACCOUNT_CURRENCY_TABLE_NAME.equalsIgnoreCase(table)) {
                     rowsImported = csvImporter.importCsvWithDefaultParams(table, 100, true,
                         Map.of("height", blockchain.findFirstBlock().getHeight()));
                 } else if (ShardConstants.TAGGED_DATA_TABLE_NAME.equalsIgnoreCase(table)) {
@@ -177,7 +178,8 @@ public class ShardImporter {
                         if (parsedTags != null) {
                             String[] tagArray = new String[0];
                             try {
-                                tagArray = mapper.readValue((String)parsedTags, new TypeReference<>() {});
+                                tagArray = mapper.readValue((String) parsedTags, new TypeReference<>() {
+                                });
                             } catch (JsonProcessingException e) {
                                 log.error("Parsing 'parsed_tags' error during CSV importing", e);
                                 throw new RuntimeException(e);

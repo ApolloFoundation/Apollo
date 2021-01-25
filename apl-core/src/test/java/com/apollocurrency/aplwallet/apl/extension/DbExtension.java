@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -27,6 +28,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -35,7 +38,7 @@ import static org.mockito.Mockito.mock;
 @Slf4j
 public class DbExtension implements BeforeEachCallback, AfterAllCallback, BeforeAllCallback {
     private DbManipulator manipulator;
-    private FullTextSearchService ftl;
+    private FullTextSearchService fullTextSearchService;
     private Map<String, List<String>> tableWithColumns;
     private Path indexDir;
     private LuceneFullTextSearchEngine luceneFullTextSearchEngine;
@@ -45,13 +48,13 @@ public class DbExtension implements BeforeEachCallback, AfterAllCallback, Before
                        PropertiesHolder propertiesHolder,
                        String schemaScriptPath,
                        String dataScriptPath) {
-        log.trace("JdbcUrl: {}", ((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl());
+        log.trace("JdbcUrl: {}", ((MariaDBContainer) jdbcDatabaseContainer).getJdbcUrl());
 
-        log.trace("Username: {}", ((MariaDBContainer)jdbcDatabaseContainer).getUsername());
-        dbProperties.setDbUsername(((MariaDBContainer)jdbcDatabaseContainer).getUsername());
-        log.trace("User pass: {}", ((MariaDBContainer)jdbcDatabaseContainer).getPassword());
-        dbProperties.setDbPassword(((MariaDBContainer)jdbcDatabaseContainer).getPassword());
-        log.trace("DriverClassName: {}", ((MariaDBContainer)jdbcDatabaseContainer).getDriverClassName());
+        log.trace("Username: {}", ((MariaDBContainer) jdbcDatabaseContainer).getUsername());
+        dbProperties.setDbUsername(((MariaDBContainer) jdbcDatabaseContainer).getUsername());
+        log.trace("User pass: {}", ((MariaDBContainer) jdbcDatabaseContainer).getPassword());
+        dbProperties.setDbPassword(((MariaDBContainer) jdbcDatabaseContainer).getPassword());
+        log.trace("DriverClassName: {}", ((MariaDBContainer) jdbcDatabaseContainer).getDriverClassName());
         log.trace("MappedPort: {}", jdbcDatabaseContainer.getMappedPort(3306));
         if (jdbcDatabaseContainer.getMappedPort(3306) != null) {
             dbProperties.setDatabasePort(jdbcDatabaseContainer.getMappedPort(3306));
@@ -60,7 +63,7 @@ public class DbExtension implements BeforeEachCallback, AfterAllCallback, Before
         dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
         dbProperties.setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
 
-        log.trace("DockerDaemonInfo: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
+//        log.trace("DockerDaemonInfo: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
         log.trace("DockerImageName: {}", jdbcDatabaseContainer.getDockerImageName());
         log.trace("ContainerId: {}", jdbcDatabaseContainer.getContainerId());
         log.trace("BoundPortNumbers: {}", jdbcDatabaseContainer.getBoundPortNumbers());
@@ -93,10 +96,21 @@ public class DbExtension implements BeforeEachCallback, AfterAllCallback, Before
         this(jdbcDatabaseContainer, DbTestData.getInMemDbProps(), null, null, null);
     }
 
+    public FullTextSearchService getFullTextSearchService() {
+        return fullTextSearchService;
+    }
+
     @Override
     public void beforeEach(ExtensionContext context) {
-        if (ftl != null) {
-            initFtl();
+        if (context != null && context.getTags().contains("skip-fts-init")) {
+            // skip init for some tests
+            if (fullTextSearchService == null) {
+                initFtl();
+            }
+        } else {
+            if (fullTextSearchService != null) {
+                initFtl();
+            }
         }
     }
 
@@ -108,7 +122,7 @@ public class DbExtension implements BeforeEachCallback, AfterAllCallback, Before
     @Override
     public void beforeAll(ExtensionContext context) {
         manipulator.populate();
-        if (ftl != null) {
+        if (fullTextSearchService != null) {
             initFtl();
         }
     }
@@ -124,35 +138,46 @@ public class DbExtension implements BeforeEachCallback, AfterAllCallback, Before
 
     public void shutdownDbAndDelete() throws IOException {
         manipulator.shutdown();
-        if (ftl != null) {
-            ftl.shutdown();
+        if (fullTextSearchService != null) {
+            fullTextSearchService.shutdown();
+            FileUtils.deleteDirectory(indexDir.toFile());
+            fullTextSearchService = null; // for next unit test run
         }
     }
+
 
     private void createFtl() {
         try {
             this.indexDir = Files.createTempDirectory("indexDir");
-            this.luceneFullTextSearchEngine = new LuceneFullTextSearchEngine(mock(NtpTime.class), indexDir);
-            this.ftl = new FullTextSearchServiceImpl(manipulator.getDatabaseManager(), luceneFullTextSearchEngine, tableWithColumns.keySet(), "PUBLIC");
+            this.luceneFullTextSearchEngine = new LuceneFullTextSearchEngine(mock(NtpTime.class), indexDir, null);
+            Map<String, String> tableColumnsMap = new HashMap<>(5);
+            Iterator<String> iterator = tableWithColumns.keySet().iterator();
+            while (iterator.hasNext()) {
+                String tableName = iterator.next();
+                List<String> columns = tableWithColumns.get(tableName);
+                String columnsJoined = String.join(",", columns);
+                tableColumnsMap.put(tableName, columnsJoined);
+            }
+            this.fullTextSearchService = new FullTextSearchServiceImpl(manipulator.getDatabaseManager(),
+                luceneFullTextSearchEngine, tableColumnsMap, "public");
         } catch (IOException e) {
             throw new RuntimeException("Unable to init ftl", e);
         }
     }
 
     private void initFtl() {
-        ftl.init();
+        fullTextSearchService.init();
         tableWithColumns.forEach((table, columns) -> DbUtils.inTransaction(getDatabaseManager(), (con) -> {
             try {
-                ftl.createSearchIndex(con, table, String.join(",", columns));
+                if (columns.size() > 0) {
+                    fullTextSearchService.createSearchIndex(con, table, String.join(",", columns));
+                } else {
+                    log.warn("NOTHING for fields... ");
+                }
             } catch (SQLException e) {
                 throw new RuntimeException("Unable to create index for table " + table, e);
             }
         }));
-    }
-
-
-    public FullTextSearchService getFtl() {
-        return ftl;
     }
 
     public LuceneFullTextSearchEngine getLuceneFullTextSearchEngine() {

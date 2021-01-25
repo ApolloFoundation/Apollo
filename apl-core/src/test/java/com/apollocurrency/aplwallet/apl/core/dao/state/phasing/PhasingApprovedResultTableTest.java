@@ -33,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Tag("slow")
 @QuarkusTest
 class PhasingApprovedResultTableTest extends DbContainerBaseTest {
-
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer);
 

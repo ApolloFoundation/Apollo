@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.entity.appdata.funding;
 
 import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import lombok.ToString;
 
 @ToString

@@ -49,7 +49,6 @@ import static org.mockito.Mockito.mock;
 @Tag("slow")
 @QuarkusTest
 class AccountLeaseTableTest extends DbContainerBaseTest {
-
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
     @Inject

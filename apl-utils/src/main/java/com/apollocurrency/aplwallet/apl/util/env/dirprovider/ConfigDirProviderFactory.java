@@ -42,7 +42,7 @@ public class ConfigDirProviderFactory {
         configDir = configDirP;
     }
 
-    public static ConfigDirProvider createConfigDirProvider() {
+    private static ConfigDirProvider createConfigDirProvider() {
         ConfigDirProvider res;
         if (RuntimeEnvironment.getInstance().isUnixRuntime()) {
             res = new UnixConfigDirProvider(applicationName, isService, netIdx, uuidOrPart);
@@ -67,7 +67,7 @@ public class ConfigDirProviderFactory {
                 String dir = Path.of(p, ConfigDirProvider.CONFIGS_DIR_NAME).toAbsolutePath().toString();
                 try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(dir))) {
                     for (Path path : stream) {
-                        //at the mopment we chack directories only
+                        //at the moment we check directories only
                         if (Files.isDirectory(path)) {
                             String fname = path.getFileName().toString();
                             if (fname.toLowerCase().startsWith(uuidOrPart)) {

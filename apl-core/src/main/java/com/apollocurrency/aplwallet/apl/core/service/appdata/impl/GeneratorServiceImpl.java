@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.runnable.GenerateBlocksTask;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
@@ -20,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import lombok.extern.slf4j.Slf4j;
 
@@ -288,8 +288,11 @@ public class GeneratorServiceImpl implements GeneratorService {
         if (!suspendForging) {
             globalSync.updateLock();
             suspendForging = true;
+            if (generateBlocksTask != null) {
+                generateBlocksTask.setSuspendForging(suspendForging);
+            }
             globalSync.updateUnlock();
-            log.info("Block generation was suspended");
+            log.info("Block generation was suspended = {}", suspendForging);
         }
     }
 
@@ -298,8 +301,11 @@ public class GeneratorServiceImpl implements GeneratorService {
         if (suspendForging) {
             globalSync.updateLock();
             suspendForging = false;
+            if (generateBlocksTask != null) {
+                generateBlocksTask.setSuspendForging(suspendForging);
+            }
             globalSync.updateUnlock();
-            log.debug("Forging was resumed");
+            log.debug("Forging was resumed = {}", !suspendForging);
         }
     }
 

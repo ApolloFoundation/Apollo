@@ -20,4 +20,9 @@ public class PrunablePlainMessageAppendixParser implements AppendixParser<Prunab
         }
         return new PrunablePlainMessageAppendix(jsonData);
     }
+
+    @Override
+    public Class<PrunablePlainMessageAppendix> forClass() {
+        return PrunablePlainMessageAppendix.class;
+    }
 }

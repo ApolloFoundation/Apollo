@@ -1,4 +1,5 @@
-DELETE from currency_mint;
+DELETE
+from currency_mint;
 
 INSERT INTO currency_mint
 (DB_ID, CURRENCY_ID   , ACCOUNT_ID  ,   COUNTER, HEIGHT  , LATEST , DELETED ) VALUES

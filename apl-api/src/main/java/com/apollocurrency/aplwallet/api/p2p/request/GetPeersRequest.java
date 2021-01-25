@@ -8,10 +8,10 @@ import java.util.UUID;
 
 public class GetPeersRequest extends BaseP2PRequest {
 
-    private static final String requestType = "getPeers";
+    private static final String REQUEST_TYPE = "getPeers";
 
     public GetPeersRequest(UUID chainId) {
-        super(requestType, chainId);
+        super(REQUEST_TYPE, chainId);
     }
 
 }

@@ -1,18 +1,16 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEventType;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.core.model.dex.TransferTransactionInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -22,33 +20,36 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
+import com.apollocurrency.aplwallet.apl.dex.config.DexConfig;
+import com.apollocurrency.aplwallet.apl.dex.core.exception.NotValidTransactionException;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DBSortOrder;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexContractDBRequest;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOperation;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderSortBy;
+import com.apollocurrency.aplwallet.apl.dex.core.model.ExchangeContractStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.ExpiredSwap;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderHeightId;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
+import com.apollocurrency.aplwallet.apl.dex.core.model.SwapDataInfo;
+import com.apollocurrency.aplwallet.apl.dex.eth.model.EthDepositInfo;
+import com.apollocurrency.aplwallet.apl.dex.eth.model.EthDepositsWithOffset;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
-import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
-import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexContractDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOperation;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
-import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwap;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderHeightId;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
-import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.TransferTransactionInfo;
-import com.apollocurrency.aplwallet.apl.exchange.utils.DexCurrencyValidator;
+import com.apollocurrency.aplwallet.apl.exchange.util.DexCurrencyValidator;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import lombok.extern.slf4j.Slf4j;
 import org.web3j.utils.Numeric;
 
@@ -70,10 +71,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_1;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_2;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_3;
-import static com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus.STEP_4;
+import static com.apollocurrency.aplwallet.apl.dex.core.model.ExchangeContractStatus.STEP_1;
+import static com.apollocurrency.aplwallet.apl.dex.core.model.ExchangeContractStatus.STEP_2;
+import static com.apollocurrency.aplwallet.apl.dex.core.model.ExchangeContractStatus.STEP_3;
+import static com.apollocurrency.aplwallet.apl.dex.core.model.ExchangeContractStatus.STEP_4;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_ERROR_IN_PARAMETER;
 import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 
@@ -115,6 +116,8 @@ public class DexOrderProcessor {
     private DexConfig dexConfig;
     private Blockchain blockchain;
     private final BlockchainConfig blockchainConfig;
+    private final Account2FAService account2FAService;
+    private final KMSService KMSService;
 
     @Inject
     public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService,
@@ -127,7 +130,9 @@ public class DexOrderProcessor {
                              @Property(name = "apl.dex.orderProcessor.enabled", defaultValue = "true") boolean startProcessor,
                              @Property(name = "apl.dex.orderProcessor.delay", defaultValue = "" + DEFAULT_DEX_OFFER_PROCESSOR_DELAY) int processingDelay,
                              DexConfig dexConfig,
-                             BlockchainConfig blockchainConfig
+                             BlockchainConfig blockchainConfig,
+                             Account2FAService account2FAService,
+                             KMSService KMSService
     ) {
 
         this.secureStorageService = secureStorageService;
@@ -148,6 +153,8 @@ public class DexOrderProcessor {
         this.accountService = accountService;
         this.dexConfig = dexConfig;
         this.blockchainConfig = blockchainConfig;
+        this.account2FAService = account2FAService;
+        this.KMSService = KMSService;
     }
 
     @PostConstruct
@@ -711,8 +718,8 @@ public class DexOrderProcessor {
     }
 
 
-    private CreateTransactionRequest buildRequest(String passphrase, Long accountId, Attachment attachment, Long feeATM) throws ParameterException {
-        byte[] keySeed = Crypto.getKeySeed(Helper2FA.findAplSecretBytes(accountId, passphrase));
+    private CreateTransactionRequest buildRequest(String passphrase, Long accountId, Attachment attachment, Long feeATM) {
+        byte[] keySeed = Crypto.getKeySeed(KMSService.getAplSecretBytes(accountId, passphrase));
         CreateTransactionRequest transferMoneyReq = CreateTransactionRequest
             .builder()
             .passphrase(passphrase)
@@ -804,7 +811,7 @@ public class DexOrderProcessor {
         try {
             String passphrase = secureStorageService.getUserPassPhrase(accountId);
 
-            List<String> addresses = dexSmartContractService.getEthUserAddresses(passphrase, accountId);
+            List<String> addresses = KMSService.getEthWalletAddresses(accountId, passphrase);
 
             for (String address : addresses) {
                 try {
@@ -840,7 +847,7 @@ public class DexOrderProcessor {
 
     public void refundExpiredAtomicSwaps(long accountId) {
         String passphrase = secureStorageService.getUserPassPhrase(accountId);
-        List<String> addresses = dexSmartContractService.getEthUserAddresses(passphrase, accountId);
+        List<String> addresses = KMSService.getEthWalletAddresses(accountId, passphrase);
         for (String address : addresses) {
             try {
                 List<ExpiredSwap> expiredSwaps = dexSmartContractService.getExpiredSwaps(address);

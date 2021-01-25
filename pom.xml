@@ -5,7 +5,7 @@
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apollo-blockchain</artifactId>
-  <version>1.47.3</version>
+  <version>1.49.0</version>
   <packaging>pom</packaging>
   <name>apollo-blockchain</name>
 
@@ -43,6 +43,8 @@
     <module>apl-conf</module>
     <module>apl-exec</module>
     <module>apl-db-updater</module>
+    <module>apl-dex</module>
+    <module>apl-vault-wallet</module>
   </modules>
 
   <properties>
@@ -54,7 +56,7 @@
     <maven.compiler.target>11</maven.compiler.target>
     <surefire-plugin.version>2.22.2</surefire-plugin.version>
     <compile-plugin.version>3.8.1</compile-plugin.version>
-    <quarkus-plugin.version>1.10.2.Final</quarkus-plugin.version>
+    <quarkus-plugin.version>1.11.0.Final</quarkus-plugin.version>
     <!-- cross-platform zip distribution -->
     <zip-file-name>apollo-blockchain</zip-file-name>
     <zip-format>zip</zip-format>
@@ -63,7 +65,7 @@
     <antifraud.version>1.0.11</antifraud.version>
 
     <!-- We have to define this property and change it accordingly for correct version of packages -->
-    <apl-bom-ext.version>1.0.5</apl-bom-ext.version>
+    <apl-bom-ext.version>1.0.6</apl-bom-ext.version>
     <base-dist-dir>ApolloWallet/apollo-blockchain</base-dist-dir>
 
     <build-helper-maven-plugin.version>1.9.1</build-helper-maven-plugin.version>
@@ -92,7 +94,7 @@
       </activation>
       <properties>
         <zipExecutionPhase>package</zipExecutionPhase>
-        <excludeTestTags/>
+        <excludeTestTags>slow</excludeTestTags>
       </properties>
     </profile>
     <profile>

@@ -18,7 +18,6 @@
     "project": "Apollo",
     "initialSupply": 30000000000,
     "decimals": 8,
-    "genesisLocation": "conf/data/genesisAccounts-testnet.json",
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 3000,
       "dexExpiredContractWithFinishedPhasingHeightAndStep3": 5000,
@@ -69,7 +68,7 @@
         }
       },
       {
-        "height": 135600,
+        "height": 76000,
         "maxNumberOfTransactions": 255,
         "maxArbitraryMessageLength": 160,
         "maxNumberOfChildAccounts": 10,

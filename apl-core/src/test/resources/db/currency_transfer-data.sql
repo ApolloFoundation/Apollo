@@ -1,4 +1,5 @@
-delete from currency_transfer;
+delete
+from currency_transfer;
 
 INSERT INTO currency_transfer
 (DB_ID, ID,                 CURRENCY_ID,            SENDER_ID,          RECIPIENT_ID,           UNITS,      `TIMESTAMP`, HEIGHT) VALUES

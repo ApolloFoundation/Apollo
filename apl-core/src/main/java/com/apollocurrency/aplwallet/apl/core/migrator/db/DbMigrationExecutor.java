@@ -3,20 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.migrator.MigrationExecutor;
-import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-
-import javax.inject.Inject;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * <p>Provide database specific components for migration, also add special {@link DbMigrationExecutor#afterMigration} and

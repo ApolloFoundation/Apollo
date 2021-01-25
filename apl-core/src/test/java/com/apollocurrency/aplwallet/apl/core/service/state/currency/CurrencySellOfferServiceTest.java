@@ -48,7 +48,6 @@ import static org.mockito.Mockito.mock;
 @Tag("slow")
 @QuarkusTest
 class CurrencySellOfferServiceTest extends DbContainerBaseTest {
-
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(mariaDBContainer);
 

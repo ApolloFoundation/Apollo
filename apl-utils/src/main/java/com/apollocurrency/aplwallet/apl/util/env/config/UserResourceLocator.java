@@ -8,10 +8,12 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -23,9 +25,10 @@ public class UserResourceLocator implements ResourceLocator {
     private final ConfigDirProvider dirProvider;
     private final String configDir;
 
-    public UserResourceLocator(ConfigDirProvider dirProvider, String configDir) {
+    @Inject
+    public UserResourceLocator(ConfigDirProvider dirProvider) {
         this.dirProvider = dirProvider;
-        this.configDir = configDir;
+        this.configDir = dirProvider.getConfigName();
     }
 
     @Override
@@ -36,10 +39,14 @@ public class UserResourceLocator implements ResourceLocator {
 
     private Optional<InputStream> locateInResources(String resourceName) {
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-
-        InputStream is = classloader.getResourceAsStream(resourceName);
+        //Windows uses path with backslashes but in java resources it should be simple slash
+        Path p = Path.of(dirProvider.getConfigName(), resourceName);
+        String path = p.normalize().toString().replaceAll("\\\\", "/");
+        InputStream is = classloader.getResourceAsStream(path);
         if (is != null) {
-            log.info("Located in resources, resource={}", resourceName);
+            log.info("Located in resources, resource={}", path);
+        } else {
+            log.warn("Can not find resource at: {}", path);
         }
 
         return Optional.ofNullable(is);
@@ -49,11 +56,11 @@ public class UserResourceLocator implements ResourceLocator {
         List<String> searchDirs = new ArrayList<>();
         if (!StringUtils.isBlank(configDir)) { //load just from confDir
             searchDirs.add(configDir);
-        } else { //go trough standard search order and load all
+        }// else { //go trough standard search order and load all
             searchDirs.add(dirProvider.getInstallationConfigLocation() + File.separator + dirProvider.getConfigName());
             searchDirs.add(dirProvider.getSysConfigLocation() + File.separator + dirProvider.getConfigName());
             searchDirs.add(dirProvider.getUserConfigLocation() + File.separator + dirProvider.getConfigName());
-        }
+        //}
         if (log.isTraceEnabled()) {
             log.trace("The directory list:");
             searchDirs.forEach(s -> log.trace("  {}", s));

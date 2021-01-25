@@ -17,6 +17,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  *
  * @deprecated MariaDb doesn't support that command as a many other databases
  * @author yuriy.larin
+ * @deprecated MariaDb doesn't support that command as a many other databases
  */
 public class BackupDbBeforeShardCommand implements DataMigrateOperation {
     private static final Logger log = getLogger(BackupDbBeforeShardCommand.class);

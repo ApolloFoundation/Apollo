@@ -26,17 +26,17 @@ import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExcepti
 import com.apollocurrency.aplwallet.apl.core.rest.exception.IllegalArgumentExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.CharsetRequestFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FAInterceptor;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.SecurityInterceptor;
-import com.apollocurrency.aplwallet.apl.core.rest.provider.ByteArrayConverterProvider;
-import com.apollocurrency.aplwallet.apl.core.rest.provider.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
+import com.apollocurrency.aplwallet.apl.util.api.converter.ByteArrayConverterProvider;
+import com.apollocurrency.aplwallet.apl.util.api.converter.PlatformSpecConverterProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -90,6 +90,7 @@ public final class API {
 
     private static final Logger LOG = getLogger(API.class);
     private static final String[] DISABLED_HTTP_METHODS = {"TRACE", "OPTIONS", "HEAD"};
+    public static final String DEFAULT_WEBUI_DIR = "apollo-web-ui";
     public static final String INDEX_HTML = "index.html";
     public static int openAPIPort;
     public static int openAPISSLPort;
@@ -182,27 +183,44 @@ public final class API {
         isOpenAPI = openAPIPort > 0 || openAPISSLPort > 0;
     }
 
+
+    private static boolean isWebUIHere(Path webUiPath) {
+        boolean res = false;
+        if (Files.exists(webUiPath)
+            && Files.isDirectory(webUiPath)
+            && Files.exists(webUiPath.resolve(INDEX_HTML))) {
+            log.debug("Web UI index.html foind in: {}.", webUiPath.toString());
+            res = true;
+        }
+        return res;
+    }
+
     public static String findWebUiDir() {
         final Path binDir = DirProvider.getBinDir();
-        boolean useHtmlStub = false;
-        final String webUIlocation = propertiesHolder.getStringProperty("apl.apiResourceBase");
-        Path webUiPath = null;
+        boolean useHtmlStub = true;
+        final String webUIlocation = propertiesHolder.getStringProperty("apl.apiResourceBase", DEFAULT_WEBUI_DIR);
+        Path webUiPath = Path.of(DEFAULT_WEBUI_DIR);
         try {
             Path lp = Path.of(webUIlocation);
             if (lp.isAbsolute()) {
                 webUiPath = lp;
+                if (isWebUIHere(webUiPath)) {
+                    log.debug("Cannot find index.html in: {}. Gonna use html-stub.", webUiPath.toString());
+                    useHtmlStub = false;
+                }
             } else {
                 webUiPath = binDir.resolve(webUIlocation);
-            }
-            if (!Files.exists(webUiPath)
-                    || !Files.isDirectory(webUiPath)
-                    || !Files.exists(webUiPath.resolve(INDEX_HTML))) {
-                log.debug("Cannot find index.html in: {}. Gonna use html-stub.", webUiPath.toString());
-                useHtmlStub = true;
+                if (isWebUIHere(webUiPath)) {
+                    useHtmlStub = false;
+                } else {
+                    webUiPath = binDir.getParent().resolve(webUIlocation);
+                    if (isWebUIHere(webUiPath)) {
+                        useHtmlStub = false;
+                    }
+                }
             }
         } catch (InvalidPathException ipe) {
             log.debug("Cannot resolve apl.webUIDir: {} within DirProvider.getBinDir(): {}. Gonna use html-stub.", webUIlocation, binDir.toString());
-            useHtmlStub = true;
         }
 
         if (useHtmlStub) {

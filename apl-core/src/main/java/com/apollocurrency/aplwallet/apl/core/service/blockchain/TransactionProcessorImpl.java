@@ -20,13 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -42,9 +40,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.MultiLock;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -133,9 +133,26 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     @Override
+    public void validateBeforeBroadcast(Transaction transaction) throws AplException.ValidationException {
+        if (blockchain.hasTransaction(transaction.getId())) {
+            throw new AplException.ExistingTransactionException("Transaction " + transaction.getId() + " is already saved in blockchain");
+        }
+        if (memPool.hasUnconfirmedTransaction(transaction.getId())) {
+            throw new AplException.ExistingTransactionException("Transaction " + transaction.getId() + " is already saved in mempool");
+        }
+        transactionValidator.validateSignatureWithTxFee(transaction);
+        transactionValidator.validateFully(transaction);
+        UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, timeService.systemTimeMillis());
+        UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
+        if (!validationResult.isOk()) {
+            throw new AplException.NotValidException(validationResult.getErrorDescription());
+        }
+    }
+
+    @Override
     public void broadcast(Transaction transaction) throws AplException.ValidationException {
         if (blockchain.hasTransaction(transaction.getId())) {
-//                log.info("Transaction {} already in blockchain, will not broadcast again", transaction.getStringId());
+            log.debug("Transaction {} already in blockchain, will not broadcast again", transaction.getStringId());
             return;
         }
         if (memPool.hasUnconfirmedTransaction(transaction.getId())) {
@@ -161,7 +178,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             if (status == TxSavingStatus.ALREADY_EXIST) {
                 throw new RuntimeException("Transaction " + transaction.getId() + " was already broadcasted");
             }
-            //                log.debug("Accepted new transaction {}", transaction.getStringId());
+            log.debug("Accepted new transaction {}", transaction.getStringId());
             List<Transaction> acceptedTransactions = Collections.singletonList(unconfirmedTransaction);
             peers.sendToSomePeers(acceptedTransactions);
             txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(acceptedTransactions);
@@ -203,8 +220,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         returned.forEach(e -> {
             try {
                 memPool.softBroadcast(e);
-            } catch (AplException.ValidationException ignored) {}
+            } catch (AplException.ValidationException ignored) {
+            }
         });
+        if (!returned.isEmpty()) {
+            log.warn("Return {} txs back to pending queue. Mempool is full", returned.size());
+        }
     }
 
     private boolean requireBroadcast(Transaction tx) {
@@ -341,8 +362,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                             continue;
                         }
                         if (memPool.isAlreadyBroadcasted(transaction)) {
-//                    log.debug("Received back transaction " + transaction.getStringId()
-//                        + " that we broadcasted, will not forward again to peers");
+                            log.debug("Received back transaction " + transaction.getStringId()
+                                + " that we broadcasted, will not forward again to peers");
                         } else {
                             sendToPeersTransactions.add(unconfirmedTransaction);
                         }

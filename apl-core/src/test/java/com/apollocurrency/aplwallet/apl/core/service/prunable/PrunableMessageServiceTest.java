@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.prunable;
 
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
@@ -32,8 +31,9 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import io.quarkus.test.junit.QuarkusTest;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import lombok.extern.slf4j.Slf4j;
+import io.quarkus.test.junit.QuarkusTest;
 /*import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -59,7 +59,6 @@ import static org.mockito.Mockito.mock;
 @Tag("slow")
 @QuarkusTest
 class PrunableMessageServiceTest extends DbContainerBaseTest {
-
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), null, null, "db/prunable-message-data.sql");
     Blockchain blockchain = mock(Blockchain.class);

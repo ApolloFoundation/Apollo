@@ -3,9 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -24,7 +24,7 @@ public class PhasingAppendixV2 extends PhasingAppendix {
 
     public PhasingAppendixV2(JSONObject attachmentData) {
         super(attachmentData);
-        Long phasingFinishTime = (Long) attachmentData.get("phasingFinishTime");
+        Number phasingFinishTime = (Number) attachmentData.get("phasingFinishTime");
 
         this.finishTime = phasingFinishTime != null ? phasingFinishTime.intValue() : -1;
     }

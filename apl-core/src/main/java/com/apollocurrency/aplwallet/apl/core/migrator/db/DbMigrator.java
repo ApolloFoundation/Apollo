@@ -4,19 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.migrator.db;
 
-import com.apollocurrency.aplwallet.apl.core.migrator.Migrator;
-import org.slf4j.Logger;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-import static org.slf4j.LoggerFactory.getLogger;
-
 /**
  * Implement db migration specific algorithm
  */

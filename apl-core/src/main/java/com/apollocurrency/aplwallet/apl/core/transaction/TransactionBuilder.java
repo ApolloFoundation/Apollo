@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
@@ -23,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProce
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
@@ -220,6 +220,7 @@ public class TransactionBuilder {
                 builder.recipientId(recipientId);
             }
             if (attachmentData != null) {
+
                 builder.appendix(MessageAppendix.parse(attachmentData));
                 builder.appendix(EncryptedMessageAppendix.parse(attachmentData));
                 builder.appendix(PublicKeyAnnouncementAppendix.parse(attachmentData));

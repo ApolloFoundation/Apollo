@@ -12,7 +12,7 @@ import org.json.simple.JSONObject;
 /**
  * @author andrii.zinchenko@firstbridge.io
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.NONE)
 public class TransactionUtils {
     public static boolean convertAppendixToString(StringBuilder builder, Appendix appendix) {
         if (appendix != null) {

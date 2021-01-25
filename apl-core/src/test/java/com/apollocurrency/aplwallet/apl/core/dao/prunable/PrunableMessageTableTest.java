@@ -46,7 +46,6 @@ import static org.mockito.Mockito.mock;
 @Tag("slow")
 @QuarkusTest
 class PrunableMessageTableTest extends DbContainerBaseTest {
-
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), null, null, "db/prunable-message-data.sql");
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);

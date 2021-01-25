@@ -9,6 +9,7 @@ import javax.inject.Singleton;
 import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
 @Singleton
 public class AccountAssetConverter implements Converter<AccountAsset, AccountAssetDTO> {

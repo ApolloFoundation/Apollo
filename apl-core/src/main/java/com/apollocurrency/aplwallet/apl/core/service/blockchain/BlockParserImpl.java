@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -13,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -77,9 +77,11 @@ public class BlockParserImpl implements BlockParser {
         }
     }
 
-    private Transaction parseTransaction(JSONObject jsonObject) throws AplException.NotValidException {
+    private Transaction parseTransaction(JSONObject jsonObject) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
         TransactionImpl tx = transactionBuilder.newTransactionBuilder(jsonObject).build();
-        transactionValidator.verifySignature(tx);
+        if (!transactionValidator.checkSignature(null, tx)) {
+            throw new AplException.NotValidException("Invalid signature of tx: " + tx.getStringId());
+        }
         return tx;
     }
 

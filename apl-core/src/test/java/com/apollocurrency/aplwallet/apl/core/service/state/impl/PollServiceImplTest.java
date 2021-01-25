@@ -3,7 +3,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollResultTable;
@@ -14,9 +13,13 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollOptionResultService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,11 +28,16 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -58,6 +66,10 @@ class PollServiceImplTest {
 
     @Mock
     private BlockchainImpl blockchain;
+    @Mock
+    private FullTextSearchUpdater fullTextSearchUpdater;
+    @Mock
+    private FullTextSearchService fullTextSearchService;
 
     private PollServiceImpl pollService;
 
@@ -70,7 +82,9 @@ class PollServiceImplTest {
             converter,
             pollOptionResultService,
             voteTable,
-            blockchain
+            blockchain,
+            fullTextSearchUpdater,
+            fullTextSearchService
         );
     }
 
@@ -220,25 +234,26 @@ class PollServiceImplTest {
     }
 
     @Test
-    void searchPolls() {
+    void searchPolls() throws SQLException {
         //GIVEN
         final int from = 10;
         final int to = 50;
         final String query = "query";
         final boolean includeFinished = true;
         final int height = 1440;
-        when(blockChainInfoService.getHeight()).thenReturn(height);
         @SuppressWarnings("unchecked") final DbIterator<Poll> pollIterator = mock(DbIterator.class);
-        when(pollTable.searchPolls(query, includeFinished, from, to, height))
-            .thenReturn(pollIterator);
+        doReturn("poll").when(pollTable).getTableName();
         @SuppressWarnings("unchecked") final Stream<Poll> polls = mock(Stream.class);
         when(converter.convert(pollIterator)).thenReturn(polls);
+        ResultSet rs = mock(ResultSet.class);
+        doReturn(rs).when(fullTextSearchService).search("public", "poll", query, Integer.MAX_VALUE, 0);
 
         //WHEN
         final Stream<Poll> actualPolls = pollService.searchPolls(query, includeFinished, from, to);
+        assertNotNull(actualPolls);
 
         //THEN
-        assertEquals(polls, actualPolls);
+        verify(fullTextSearchService).search("public", "poll", query, Integer.MAX_VALUE, 0);
     }
 
     @Test
@@ -263,12 +278,17 @@ class PollServiceImplTest {
         when(blockChainInfoService.getLastBlockTimestamp()).thenReturn(timestamp);
         final int height = 1000;
         when(blockChainInfoService.getHeight()).thenReturn(height);
+        doReturn("poll").when(pollTable).getTableName();
+        Poll poll = mock(Poll.class);
+        doReturn(10L).when(poll).getDbId();
+        doReturn(poll).when(pollTable).addPoll(transaction, attachment, timestamp, height);
 
         //WHEN
         pollService.addPoll(transaction, attachment);
 
         //THEN
         verify(pollTable).addPoll(transaction, attachment, timestamp, height);
+        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
     }
 
     @ParameterizedTest

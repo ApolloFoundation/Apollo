@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.exception;
 
 import com.apollocurrency.aplwallet.api.response.ResponseBase;
+import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -22,11 +23,7 @@ public class ParameterExceptionMapper implements ExceptionMapper<ParameterExcept
     public Response toResponse(ParameterException exception) {
         Object responseEntity;
 
-        if (exception.getErrorResponseNode() != null) {
-
-            responseEntity = exception.getErrorResponseNode().toString();
-
-        } else if (exception.getErrorResponse() != null) {
+        if (exception.getErrorResponse() != null) {
             try {
                 StringWriter writer = new StringWriter();
                 exception.getErrorResponse().writeJSONString(writer);

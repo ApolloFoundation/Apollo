@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 
 import java.util.Collection;
@@ -40,6 +40,8 @@ public interface TransactionProcessor {
     void rebroadcastAllUnconfirmedTransactions();
 
     void removeUnconfirmedTransaction(Transaction transaction);
+
+    void validateBeforeBroadcast(Transaction transaction) throws AplException.ValidationException;
 
     void broadcast(Transaction transaction) throws AplException.ValidationException;
 

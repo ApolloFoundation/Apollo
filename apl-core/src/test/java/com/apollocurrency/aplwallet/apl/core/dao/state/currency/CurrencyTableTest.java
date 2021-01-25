@@ -47,7 +47,6 @@ import static org.mockito.Mockito.mock;
 @Tag("slow")
 @QuarkusTest
 class CurrencyTableTest extends DbContainerBaseTest {
-
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/currency-data.sql", "db/schema.sql");
 

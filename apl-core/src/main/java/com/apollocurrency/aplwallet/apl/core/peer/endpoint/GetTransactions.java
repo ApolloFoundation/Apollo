@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -37,6 +38,7 @@ import java.util.Objects;
 /**
  * Get the transactions
  */
+@Slf4j
 @Singleton
 public class GetTransactions extends PeerRequestHandler {
     private PropertiesHolder propertiesHolder;// = CDI.current().select(PropertiesHolder.class).get();
@@ -65,6 +67,9 @@ public class GetTransactions extends PeerRequestHandler {
         // Return the transactions to the caller
         //
         if (transactionIds != null) {
+            if (log.isTraceEnabled()) {
+                log.trace("blockchain.getTransaction idList={}", transactionIds.toJSONString());
+            }
             transactionIds.forEach(transactionId -> {
                 long id = Long.parseUnsignedLong((String) transactionId);
                 Transaction transaction = blockchain.getTransaction(id);

@@ -16,7 +16,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 #if [[ "$unamestr" == 'Linux' ]]; then
 
 #    cd secureTransport
-    sudo "${APL_TOP_DIR}"/secureTransport/runClient.sh 
+    sudo "${APL_TOP_DIR}"/../secureTransport/runClient.sh 
     cd ..
 #fi
 

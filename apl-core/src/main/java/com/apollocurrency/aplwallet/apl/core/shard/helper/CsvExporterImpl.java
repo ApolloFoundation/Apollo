@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaper;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvExportException;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriter;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvWriterImpl;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -43,14 +43,14 @@ import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.BLOCK_T
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.SHARD_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_INDEX_TABLE_NAME;
 import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.TRANSACTION_TABLE_NAME;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * {@inheritDoc}
  */
+@Slf4j
 @Singleton
 public class CsvExporterImpl implements CsvExporter {
-    private static final Logger log = getLogger(CsvExporterImpl.class);
+
     private static final Set<String> DEFAULT_EXCLUDED_COLUMNS = Set.of("db_id", "latest", "deleted");
     private static final String EXPORT_TABLE_EXCEPTION_MESSAGE = "Exporting table exception %s";
     private final CsvEscaper translator;
@@ -93,6 +93,8 @@ public class CsvExporterImpl implements CsvExporter {
     }
 
     private long exportDerivedTableByUniqueLongColumnPagination(String table, MinMaxValue minMaxValue, int batchLimit, Set<String> excludedColumns) {
+        log.trace("exportDerivedTableByUniqueLongColumnPagination: {}, minMaxValue = {}, batchLimit = {}, excludedColumns = {}",
+            table, minMaxValue, batchLimit, excludedColumns);
         return exportTable(table, "WHERE  " + minMaxValue.getColumn() + " BETWEEN ? and ? and height <= ? ORDER BY " + minMaxValue.getColumn() + " LIMIT ?", minMaxValue, excludedColumns, (pstmt, minMaxColumnValue, totalProcessed) -> {
             pstmt.setBigDecimal(1, minMaxColumnValue.getMin());
             pstmt.setBigDecimal(2, minMaxColumnValue.getMax());
@@ -103,6 +105,8 @@ public class CsvExporterImpl implements CsvExporter {
 
     @Override
     public long exportDerivedTableCustomSort(DerivedTableInterface derivedTableInterface, int targetHeight, int batchLimit, Set<String> excludedColumns, String sortColumn) {
+        log.trace("exportDerivedTableCustomSort: {}, targetHeight = {}, batchLimit = {}, excludedColumns = {}, sortColumn={}",
+            derivedTableInterface, targetHeight, batchLimit, excludedColumns, sortColumn);
         return exportTable(derivedTableInterface.getName(), "WHERE height <= ? ORDER BY " + sortColumn + " LIMIT ? OFFSET ?", derivedTableInterface.getMinMaxValue(targetHeight), excludedColumns, (pstmt, minMaxId, totalProcessed) -> {
             pstmt.setInt(1, targetHeight);
             pstmt.setInt(2, batchLimit);
@@ -165,7 +169,7 @@ public class CsvExporterImpl implements CsvExporter {
                     }
                     totalCount += processedCount;
                 } while (processedCount > 0); //keep processing while not found more rows
-                log.trace("Table = {}, exported rows = {}", SHARD_TABLE_NAME, totalCount);
+                log.debug("Table = {}, exported rows = {}", SHARD_TABLE_NAME, totalCount);
             } else {
                 // skipped empty table
                 log.debug("Skipped exporting Table = {}", SHARD_TABLE_NAME);
@@ -361,6 +365,8 @@ public class CsvExporterImpl implements CsvExporter {
         Objects.requireNonNull(condition, "Condition sql should not be null");
         Objects.requireNonNull(table, "Table should not be null");
         Objects.requireNonNull(minMaxValue, "MinMaxValue should not be null");
+        log.trace("exportTable: {}, = {}, minMaxValue = {}, excludedColumns = {}",
+            table, condition, minMaxValue, excludedColumns);
         // skip hard coded table
         if (excludeTables.contains(table.toLowerCase())) {
             // skip not needed table
@@ -411,11 +417,11 @@ public class CsvExporterImpl implements CsvExporter {
                     }
                     totalCount += processedCount;
                 } while (processedCount > 0); //keep processing while not found more rows
-                log.trace("Table = {}, exported rows = {} in {} sec", table, totalCount,
+                log.debug("Table = {}, exported rows = {} in {} sec", table, totalCount,
                     (System.currentTimeMillis() - start) / 1000);
             } else {
                 // skipped empty table
-                log.debug("Skipped exporting Table = {}", table);
+                log.debug("Skipped exporting Table = {} because min/max count = {}", table, minMaxValue);
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -7,6 +7,7 @@ import javax.inject.Singleton;
 
 import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
+import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
 /**
  * @author Serhiy Lymar

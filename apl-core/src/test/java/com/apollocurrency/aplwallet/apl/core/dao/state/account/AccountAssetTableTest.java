@@ -24,6 +24,8 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import io.quarkus.test.junit.QuarkusTest;
 import lombok.extern.slf4j.Slf4j;
 /*import org.jboss.weld.junit.MockBean;
+import lombok.extern.slf4j.Slf4j;
+import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;*/
@@ -53,7 +55,6 @@ import static org.mockito.Mockito.mock;
 @Tag("slow")
 @QuarkusTest
 class AccountAssetTableTest extends DbContainerBaseTest {
-
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
     @Inject

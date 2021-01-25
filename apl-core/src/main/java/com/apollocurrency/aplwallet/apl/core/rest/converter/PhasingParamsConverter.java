@@ -8,6 +8,7 @@ import javax.inject.Singleton;
 
 import com.apollocurrency.aplwallet.api.dto.account.PhasingParamsDTO;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
 import java.util.ArrayList;
 import java.util.List;

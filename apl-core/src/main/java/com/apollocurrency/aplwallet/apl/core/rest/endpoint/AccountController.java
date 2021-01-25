@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.api.dto.account.AccountDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountKeyDTO;
 import com.apollocurrency.aplwallet.api.dto.account.AccountsCountDto;
 import com.apollocurrency.aplwallet.api.dto.account.WalletKeysInfoDTO;
+import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsCountResponse;
 import com.apollocurrency.aplwallet.api.response.AccountAssetsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountBlockIdsResponse;
@@ -21,35 +22,25 @@ import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAskOrderIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountNotFoundResponse;
 import com.apollocurrency.aplwallet.api.response.BlocksResponse;
-import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthDetails;
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FAConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.Account2FADetailsConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.WalletKeysConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
-import com.apollocurrency.aplwallet.apl.core.rest.parameter.FirstLastIndexBeanParam;
-import com.apollocurrency.aplwallet.apl.core.rest.parameter.LongParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.AccountParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidBlockchainHeight;
 import com.apollocurrency.aplwallet.apl.core.rest.validation.ValidTimestamp;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
@@ -60,9 +51,20 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.api.parameter.FirstLastIndexBeanParam;
+import com.apollocurrency.aplwallet.apl.util.api.parameter.LongParameter;
+import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.vault.model.KMSResponseStatus;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
+import com.apollocurrency.aplwallet.vault.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.vault.rest.converter.WalletKeysConverter;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -111,9 +113,10 @@ public class AccountController {
 
     public static int maxAPIFetchRecords;
     private Blockchain blockchain;
-    private Account2FAHelper account2FAHelper;
+    private Account2FAService account2FAService;
     private AccountService accountService;
     private AccountPublicKeyService accountPublicKeyService;
+    private AccountParametersParser accountParametersParser;
     private AccountAssetService accountAssetService;
     private AccountCurrencyService accountCurrencyService;
     private AccountAssetConverter accountAssetConverter;
@@ -127,10 +130,11 @@ public class AccountController {
     private AccountStatisticsService accountStatisticsService;
     private AssetService assetService;
     private CurrencyService currencyService;
+    private KMSService KMSService;
 
     @Inject
     public AccountController(Blockchain blockchain,
-                             Account2FAHelper account2FAHelper,
+                             Account2FAService account2FAService,
                              AccountService accountService,
                              AccountPublicKeyService accountPublicKeyService,
                              AccountAssetService accountAssetService,
@@ -146,10 +150,12 @@ public class AccountController {
                              @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords,
                              AccountStatisticsService accountStatisticsService,
                              AssetService assetService,
-                             CurrencyService currencyService) {
+                             CurrencyService currencyService,
+                             AccountParametersParser accountParametersParser,
+                             KMSService KMSService) {
 
         this.blockchain = blockchain;
-        this.account2FAHelper = account2FAHelper;
+        this.account2FAService = account2FAService;
         this.accountService = accountService;
         this.accountPublicKeyService = accountPublicKeyService;
         this.accountAssetService = accountAssetService;
@@ -165,7 +171,9 @@ public class AccountController {
         maxAPIFetchRecords = maxAPIrecords;
         this.accountStatisticsService = accountStatisticsService;
         this.assetService = assetService;
-        this. currencyService =  currencyService;
+        this.currencyService =  currencyService;
+        this.accountParametersParser = accountParametersParser;
+        this.KMSService = KMSService;
     }
 
     @Path("/account")
@@ -207,7 +215,7 @@ public class AccountController {
                     "account", accountId));
             accountErrorResponse.setAccount(Long.toUnsignedString(accountId));
             accountErrorResponse.setAccountRS(Convert2.rsAccount(accountId));
-            accountErrorResponse.set2FA(account2FAHelper.isEnabled2FA(accountId));
+            accountErrorResponse.set2FA(account2FAService.isEnabled2FA(accountId));
             return response.error(accountErrorResponse).build();
         }
 
@@ -254,7 +262,7 @@ public class AccountController {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
 
-        WalletKeysInfo walletKeysInfo = account2FAHelper.generateUserWallet(passphrase);
+        WalletKeysInfo walletKeysInfo = account2FAService.generateUserWallet(passphrase);
 
         if (walletKeysInfo == null) {
             return response.error(ApiErrors.ACCOUNT_GENERATION_ERROR).build();
@@ -583,22 +591,25 @@ public class AccountController {
                 content = @Content(mediaType = "text/html",
                     schema = @Schema(implementation = AccountKeyDTO.class)))
         })
+    @Secured2FA
     @PermitAll
-    //TODO: It's a good idea to protect the exportkey method by @Secured2FA annotation
     public Response exportKey(@Parameter(description = "The secret passphrase of the account.", required = true)
                               @FormParam("passphrase") @NotNull String passphrase,
                               @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
-                              @FormParam("account") @NotNull AccountIdParameter accountIdParameter
+                              @FormParam("account") @NotNull AccountIdParameter accountIdParameter,
+                              @Parameter(description = "2fa code for account if enabled")
+                              @FormParam("code2FA") @DefaultValue("0") int code
+
     ) {
         ResponseBuilder response = ResponseBuilder.startTiming();
-        accountIdParameter.get();
-        TwoFactorAuthParameters params2FA = account2FAHelper.create2FAParameters(accountIdParameter.getRawData(), passphrase, null, null);
+        long accountId = accountIdParameter.get();
+        String passphraseStr = accountParametersParser.getPassphrase(passphrase, true);
 
-        byte[] secretBytes = account2FAHelper.findAplSecretBytes(params2FA);
+        byte[] secretBytes = KMSService.getAplSecretBytes(accountId, passphraseStr);
 
         AccountKeyDTO dto = new AccountKeyDTO(
-            Long.toUnsignedString(params2FA.getAccountId()),
-            Convert2.rsAccount(params2FA.getAccountId()),
+            Long.toUnsignedString(accountId),
+            Convert2.rsAccount(accountId),
             null, Convert.toHexString(secretBytes));
 
         return response.bind(dto).build();
@@ -630,7 +641,7 @@ public class AccountController {
         ResponseBuilder response = ResponseBuilder.startTiming();
         TwoFactorAuthParameters params2FA = RestParametersParser.get2FARequestAttribute(request);
 
-        KeyStoreService.Status status = account2FAHelper.deleteAccount(params2FA);
+        KMSResponseStatus status = account2FAService.deleteAccount(params2FA);
 
         AccountKeyDTO dto = new AccountKeyDTO(Long.toUnsignedString(params2FA.getAccountId()),
             Convert2.rsAccount(params2FA.getAccountId()),
@@ -665,7 +676,7 @@ public class AccountController {
         ResponseBuilder response = ResponseBuilder.startTiming();
         TwoFactorAuthParameters params2FA = RestParametersParser.get2FARequestAttribute(request);
 
-        account2FAHelper.confirm2FA(params2FA);
+        account2FAService.confirm2FA(params2FA);
         Account2FADTO dto = faConverter.convert(params2FA);
 
         return response.bind(dto).build();
@@ -698,7 +709,7 @@ public class AccountController {
         ResponseBuilder response = ResponseBuilder.startTiming();
         TwoFactorAuthParameters params2FA = RestParametersParser.get2FARequestAttribute(request);
 
-        account2FAHelper.disable2FA(params2FA);
+        account2FAService.disable2FA(params2FA);
 
         Account2FADTO dto = faConverter.convert(params2FA);
 
@@ -726,9 +737,9 @@ public class AccountController {
     ) {
 
         ResponseBuilder response = ResponseBuilder.startTiming();
-        TwoFactorAuthParameters params2FA = account2FAHelper.create2FAParameters(accountStr, passphraseParam, secretPhraseParam, null);
+        TwoFactorAuthParameters params2FA = account2FAService.create2FAParameters(accountStr, passphraseParam, secretPhraseParam, null);
 
-        TwoFactorAuthDetails twoFactorAuthDetails = account2FAHelper.enable2FA(params2FA);
+        TwoFactorAuthDetails twoFactorAuthDetails = account2FAService.enable2FA(params2FA);
 
         Account2FADetailsDTO dto = faDetailsConverter.convert(twoFactorAuthDetails);
         faDetailsConverter.addAccount(dto, params2FA.getAccountId());

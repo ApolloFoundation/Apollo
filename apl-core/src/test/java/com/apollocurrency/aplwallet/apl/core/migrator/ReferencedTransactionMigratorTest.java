@@ -55,7 +55,6 @@ import static org.mockito.Mockito.mock;
 @Tag("slow")
 @QuarkusTest
 class ReferencedTransactionMigratorTest extends DbContainerBaseTest {
-
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(mariaDBContainer);
     TransactionTestData td = new TransactionTestData();

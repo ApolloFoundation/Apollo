@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Credential;
@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.signature.SignatureVerifier;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryPaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -66,12 +67,14 @@ class TransactionSignatureTest {
     AccountService accountService;
     @Mock
     AccountPublicKeyService accountPublicKeyService;
+    @Mock
+    Blockchain blockchain;
 
 
     @SneakyThrows
     @BeforeEach
     void setUp() {
-        CreateChildTransactionType createChildTransactionType = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService);
+        CreateChildTransactionType createChildTransactionType = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain);
         OrdinaryPaymentTransactionType paymentTransactionType = new OrdinaryPaymentTransactionType(blockchainConfig, accountService);
         TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(createChildTransactionType, paymentTransactionType)));
         transaction = builder.newTransactionBuilder(txJsonObject).build();

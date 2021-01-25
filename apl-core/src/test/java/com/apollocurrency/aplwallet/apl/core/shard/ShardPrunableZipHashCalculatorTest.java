@@ -58,7 +58,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @Tag("slow")
 @QuarkusTest
 class ShardPrunableZipHashCalculatorTest extends DbContainerBaseTest {
-
     DerivedTablesRegistry registry = mock(DerivedTablesRegistry.class);
     Zip zip = spy(new ZipImpl());
     ShardDao shardDao = mock(ShardDao.class);
