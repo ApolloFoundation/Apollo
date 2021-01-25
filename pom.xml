@@ -124,7 +124,7 @@
           <version>${surefire-plugin.version}</version>
           <configuration>
             <useSystemClassLoader>false</useSystemClassLoader>
-<!--            <excludedGroups>${excludeTestTags}</excludedGroups>-->
+            <excludedGroups>${excludeTestTags}</excludedGroups>
 <!--
             <properties>
               <includeTags>${includeTestTags}</includeTags>

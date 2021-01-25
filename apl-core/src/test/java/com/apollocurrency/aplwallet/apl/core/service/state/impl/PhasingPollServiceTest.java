@@ -9,6 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
@@ -116,11 +118,7 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
     private PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
     private BlockDao blockDao = mock(BlockDao.class);
 
-    {
-        BlockTestData blockTestData = new BlockTestData();
-        doReturn(blockTestData.BLOCK_0).when(blockDao).findLastBlock();
-        doReturn(blockTestData.BLOCK_3).when(blockDao).findFirstBlock();
-    }
+    BlockTestData blockTestData = new BlockTestData();
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -144,6 +142,7 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
         AccountGuaranteedBalanceTable.class,
         DerivedDbTablesRegistryImpl.class,
         TransactionDaoImpl.class,
+        BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         BlockchainConfig.class, GenesisPublicKeyTable.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -176,6 +175,8 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
     @Inject
     BlockchainConfig blockchainConfig;
 
+    @Inject
+    BlockModelToEntityConverter toEntityConverter;
 
     @BeforeEach
     void setUp() {
@@ -187,6 +188,8 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
             100000000L, 30000000000L)
         );
         doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).searchAll(-208393164898941117L);
+        doReturn(toEntityConverter.convert(blockTestData.BLOCK_0)).when(blockDao).findLastBlock();
+        doReturn(toEntityConverter.convert(blockTestData.BLOCK_3)).when(blockDao).findFirstBlock();
     }
 
     @Test

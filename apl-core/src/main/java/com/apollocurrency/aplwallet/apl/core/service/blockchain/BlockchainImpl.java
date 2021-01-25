@@ -20,16 +20,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.BlockIndex;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
@@ -42,7 +44,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorer;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
-import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -50,9 +51,6 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -80,6 +78,8 @@ public class BlockchainImpl implements Blockchain {
     private final ShardDbExplorer shardDbExplorer;
     private final PrunableLoadingService prunableService;
     private final PublicKeyDao publicKeyDao;
+    private final BlockEntityToModelConverter blockEntityToModelConverter;
+    private final BlockModelToEntityConverter blockModelToEntityConverter;
 
     private final AtomicReference<Block> lastBlock;
     private final AtomicReference<Block> shardInitialBlock;
@@ -95,7 +95,9 @@ public class BlockchainImpl implements Blockchain {
                           ShardRecoveryDao shardRecoveryDao,
                           ShardDbExplorer shardDbExplorer,
                           PrunableLoadingService prunableService,
-                          PublicKeyDao publicKeyDao) {
+                          PublicKeyDao publicKeyDao,
+                          BlockEntityToModelConverter blockEntityToModelConverter,
+                          BlockModelToEntityConverter blockModelToEntityConverter) {
         this.blockDao = blockDao;
         this.transactionService = transactionService;
         this.timeService = timeService;
@@ -107,6 +109,8 @@ public class BlockchainImpl implements Blockchain {
         this.shardDbExplorer = shardDbExplorer;
         this.prunableService = prunableService;
         this.publicKeyDao = publicKeyDao;
+        this.blockEntityToModelConverter = blockEntityToModelConverter;
+        this.blockModelToEntityConverter = blockModelToEntityConverter;
         this.lastBlock = new AtomicReference<>();
         this.shardInitialBlock = new AtomicReference<>();
     }
@@ -177,7 +181,9 @@ public class BlockchainImpl implements Blockchain {
         int blockchainHeight = getHeight();
         int calculatedFrom = blockchainHeight - from;
         int calculatedTo = blockchainHeight - to;
-        return loadBlockData(CollectionUtil.toList(blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp)));
+        return loadBlockData(
+            blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp)
+        );
     }
 
     /**
@@ -197,33 +203,31 @@ public class BlockchainImpl implements Blockchain {
         int totalToFetch = to - from;
         log.trace("start getBlocksStream( from={} / {}, to={} / {}, timestamp={} ): , currentHeight={}, totalToFetch={}",
             from, calculatedFrom, to, calculatedTo, timestamp, blockchainHeight, totalToFetch);
-        List<Block> allSourcesList = new ArrayList<>(); // complete list from all sources
+        List<BlockEntity> allSourcesList = new ArrayList<>(); // complete list from all sources
         // select possibly - none, one, two shard's records by specified height range
         List<Shard> foundShards = shardDao.getCompletedBetweenBlockHeight(calculatedTo, calculatedFrom); // reverse params
         log.trace("getBlocksStream( from={}, to={} ): foundShards=[{}] / shardIds={}, currentHeight={}",
             calculatedFrom, calculatedTo, foundShards.size(), foundShards.stream().map(Shard::getShardId).collect(Collectors.toList()), blockchainHeight);
-        if (foundShards.size() == 0) {
+        if (foundShards.isEmpty()) {
             // select blocks from main database only
-            DbIterator<Block> iterator = blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
-            allSourcesList.addAll(CollectionUtil.toList(iterator));
+            allSourcesList.addAll(blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp));
         } else {
             // loop over ONE or SEVERAL available shards
-            for (Shard shard: foundShards) {
+            for (Shard shard : foundShards) {
                 // get shard data source trying to fetch records
                 TransactionalDataSource dataSource =
                     ((ShardManagement) databaseManager).getOrInitFullShardDataSourceById(shard.getShardId());
                 // make select on blocks from shard
                 log.trace("getBlocksStream -> getBlocks( from={}, to={} ): shardIds={}",
                     calculatedFrom, calculatedTo, dataSource.getDbIdentity());
-                DbIterator<Block> iterator = blockDao.getBlocks(dataSource, calculatedFrom, calculatedTo, timestamp);
-                allSourcesList.addAll(CollectionUtil.toList(iterator));
+                allSourcesList.addAll(blockDao.getBlocks(dataSource, calculatedFrom, calculatedTo, timestamp));
             }
             // add possible blocks from main database (if any)
-            DbIterator<Block> iterator = blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp);
-            allSourcesList.addAll(CollectionUtil.toList(iterator));
+            allSourcesList.addAll(blockDao.getBlocks(null, calculatedFrom, calculatedTo, timestamp));
         }
         log.trace("DONE getBlocksStream( from={}, to={} ): foundShards=[{}] / shardIds={}, currentHeight={}",
             calculatedFrom, calculatedTo, foundShards.size(), foundShards.stream().map(Shard::getShardId).collect(Collectors.toList()), blockchainHeight);
+
         return loadBlockData(allSourcesList);
     }
 
@@ -233,29 +237,31 @@ public class BlockchainImpl implements Blockchain {
         return loadBlockData(blockDao.findFirstBlock());
     }
 
-    private Block loadBlockData(Block block) {
-        if (block == null) {
+    @Override
+    public Block loadBlockData(BlockEntity blockEntity) {
+        if (blockEntity == null) {
             return null;
         }
-        PublicKey publicKey = publicKeyDao.searchAll(block.getGeneratorId());
+        Block block = blockEntityToModelConverter.convert(blockEntity);
+        PublicKey publicKey = publicKeyDao.searchAll(blockEntity.getGeneratorId());
         if (publicKey != null) {
             block.setGeneratorPublicKey(publicKey.getPublicKey());
         } else {
             //special case when scan was failed and no public keys in db exist
-            log.warn("No public key for generator's account {} on block {} at {}", block.getGeneratorId(), block.getId(), block.getHeight());
+            log.warn("No public key for generator's account {} on block {} at {}", blockEntity.getGeneratorId(), blockEntity.getId(), blockEntity.getHeight());
         }
         return block;
     }
 
-    private List<Block> loadBlockData(List<Block> blocks) {
-        blocks.forEach(this::loadBlockData);
-        return blocks;
+    @Override
+    public List<Block> loadBlockData(List<BlockEntity> blocks) {
+        return blocks.stream().map(this::loadBlockData).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     @Override
     public List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp) {
-        return loadBlockData(CollectionUtil.toList(blockDao.getBlocksByAccount(null, accountId, from, to, timestamp)));
+        return loadBlockData(blockDao.getBlocksByAccount(null, accountId, from, to, timestamp));
     }
 
     @Transactional(readOnly = true)
@@ -265,30 +271,30 @@ public class BlockchainImpl implements Blockchain {
         int totalToFetch = to - from;
         log.trace("start getBlocksByAccountStream, accountId = {}, timestamp={}, from={}, to={}, in total={}",
             accountId, timestamp, from, to, totalToFetch);
-        List<Block> finalResult = new ArrayList<>(totalToFetch);
-        DbIterator<Block> iterator = blockDao.getBlocksByAccount(null, accountId, from, to, timestamp); // fetch from main db
-        finalResult.addAll(CollectionUtil.toList(iterator));
+        List<BlockEntity> finalResult = new ArrayList<>(totalToFetch);
+        // fetch from main db
+        finalResult.addAll(
+            blockDao.getBlocksByAccount(null, accountId, from, to, timestamp)
+        );
         log.trace("getBlocksByAccountStream from main db, accountId = {}, timestamp={}, from={}, to={} in {} ms",
             accountId, timestamp, from, to, System.currentTimeMillis() - start);
-        if (finalResult.size() >= totalToFetch) {
-            return finalResult;
-        }
-        int nextTo = to - finalResult.size(); // decrease upper limit
-        Iterator<TransactionalDataSource> fullDataSources = ((ShardManagement) databaseManager).getAllFullDataSourcesIterator();
-        // loop shards
-        while (fullDataSources.hasNext()) {
-            long startShard = System.currentTimeMillis();
-            TransactionalDataSource dataSource = fullDataSources.next();
-            iterator = blockDao.getBlocksByAccount(dataSource, accountId, from, nextTo, timestamp);
-            List<Block> fetchedFromShard = CollectionUtil.toList(iterator);
-            log.trace("getBlocksByAccountStream, accountId = {} from shard db[{}] = fetched [{}] in {} ms", accountId, dataSource.getDbIdentity(),
-                fetchedFromShard.size(), (System.currentTimeMillis() - startShard) );
-            nextTo -= fetchedFromShard.size(); // decrease upper limit
-            finalResult.addAll(fetchedFromShard);
-            if (finalResult.size() >= totalToFetch + 1) {
-                log.trace("getBlocksByAccountStream STOP loop from shard={}, accountId = {}, timestamp={}, from={}, nextTo={} in {} ms",
-                    dataSource.getDbIdentity(), accountId, timestamp, from, nextTo, System.currentTimeMillis() - startShard);
-                break;
+        if (finalResult.size() < totalToFetch) {
+            int nextTo = to - finalResult.size(); // decrease upper limit
+            Iterator<TransactionalDataSource> fullDataSources = ((ShardManagement) databaseManager).getAllFullDataSourcesIterator();
+            // loop shards
+            while (fullDataSources.hasNext()) {
+                long startShard = System.currentTimeMillis();
+                TransactionalDataSource dataSource = fullDataSources.next();
+                List<BlockEntity> fetchedFromShard = blockDao.getBlocksByAccount(dataSource, accountId, from, nextTo, timestamp);
+                log.trace("getBlocksByAccountStream, accountId = {} from shard db[{}] = fetched [{}] in {} ms", accountId, dataSource.getDbIdentity(),
+                    fetchedFromShard.size(), (System.currentTimeMillis() - startShard));
+                nextTo -= fetchedFromShard.size(); // decrease upper limit
+                finalResult.addAll(fetchedFromShard);
+                if (finalResult.size() >= totalToFetch + 1) {
+                    log.trace("getBlocksByAccountStream STOP loop from shard={}, accountId = {}, timestamp={}, from={}, nextTo={} in {} ms",
+                        dataSource.getDbIdentity(), accountId, timestamp, from, nextTo, System.currentTimeMillis() - startShard);
+                    break;
+                }
             }
         }
         log.trace("DONE getBlocksByAccountStream[{}], accountId = {}, timestamp={}, from={}, to={} in {} ms",
@@ -302,26 +308,16 @@ public class BlockchainImpl implements Blockchain {
         return loadBlockData(blockDao.findLastBlock());
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
-        Block block = loadBlockData(blockDao.loadBlock(con, rs));
-        if (loadTransactions) {
-            List<Transaction> blockTransactions = this.getOrLoadTransactions(block);
-            block.setTransactions(blockTransactions);
-        }
-        return block;
-    }
-
     @Transactional
     @Override
     public void saveBlock(Block block) {
         if (block != null) {
-            blockDao.saveBlock(block);
+            blockDao.saveBlock(blockModelToEntityConverter.convert(block));
             transactionService.saveTransactions(this.getOrLoadTransactions(block));
         }
     }
 
+    @Override
     public List<Transaction> getOrLoadTransactions(Block parentBlock) {
         if (parentBlock.getTransactions() == null || parentBlock.getTransactions().size() == 0) {
             List<Transaction> blockTransactions = this.getBlockTransactions(parentBlock.getId());
@@ -347,7 +343,7 @@ public class BlockchainImpl implements Blockchain {
     @Transactional
     @Override
     public void commit(Block block) {
-        blockDao.commit(block);
+        blockDao.commit(block.getId());
     }
 
     @Override
@@ -406,7 +402,7 @@ public class BlockchainImpl implements Blockchain {
     private Integer getBlockHeight(long blockId) {
         Integer height = blockIndexService.getHeight(blockId);
         if (height == null) {
-            Block block = blockDao.findBlock(blockId, databaseManager.getDataSource());
+            BlockEntity block = blockDao.findBlock(blockId, databaseManager.getDataSource());
             if (block != null) {
                 height = block.getHeight();
             }
@@ -428,7 +424,7 @@ public class BlockchainImpl implements Blockchain {
             log.trace("blockIdList is empty");
             return Collections.emptyList();
         }
-        List<Block> result = new ArrayList<>();
+        List<BlockEntity> entityList = new ArrayList<>();
         TransactionalDataSource dataSource;
         long time = System.currentTimeMillis();
         Integer fromBlockHeight = getBlockHeight(blockId);
@@ -437,36 +433,41 @@ public class BlockchainImpl implements Blockchain {
             int prevSize;
             do {
                 dataSource = shardDbExplorer.getDataSourceWithShardingByHeight(fromBlockHeight + 1); //should return datasource, where such block exist or default datasource
-                log.trace("Datasource - {}", dataSource.getUrl());
-                prevSize = result.size();
-                try (Connection con = dataSource.getConnection()) { //get blocks and transactions in one connection
-                    if (log.isTraceEnabled()) {
-                        log.trace("Try to find bloks: from={} prevSize={} idList={} ",
-                            fromBlockHeight,
-                            prevSize,
-                            blockIdList.stream().map(Long::toUnsignedString).collect(Collectors.joining(","))
-                        );
-                    }
-                    blockDao.getBlocksAfter(fromBlockHeight, blockIdList, result, con, prevSize);
-                    log.trace("Found {} blocks.", result.size() - prevSize);
-                    for (int i = prevSize; i < result.size(); i++) {
-                        Block block = result.get(i);
-                        List<Transaction> blockTransactions = this.getOrLoadTransactions(block);
-                        log.trace("Loaded {} transaction.", blockTransactions != null ? blockTransactions.size() : 0);
-                        block.setTransactions(blockTransactions);
-                    }
-                    if (result.size() - 1 >= 0) {
-                        fromBlockHeight = getBlockHeight(blockIdList.get(result.size() - 1));
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException(e.toString(), e);
+                prevSize = entityList.size();
+                if (log.isTraceEnabled()) {
+                    log.trace("Datasource - {}", dataSource.getUrl());
+                    log.trace("Try to find bloks: from={} prevSize={} idList={} ",
+                        fromBlockHeight,
+                        prevSize,
+                        blockIdList.stream().map(Long::toUnsignedString).collect(Collectors.joining(","))
+                    );
                 }
-            } while (result.size() != prevSize && dataSource != databaseManager.getDataSource() && shardDbExplorer.getDataSourceWithShardingByHeight(fromBlockHeight + 1) != dataSource);
+                blockDao.getBlocksAfter(fromBlockHeight, blockIdList, entityList, dataSource, prevSize);
+                log.trace("Found {} blocks.", entityList.size() - prevSize);
+                if (entityList.size() - 1 >= 0) {
+                    fromBlockHeight = getBlockHeight(blockIdList.get(entityList.size() - 1));
+                }
+            } while (entityList.size() != prevSize && dataSource != databaseManager.getDataSource() && shardDbExplorer.getDataSourceWithShardingByHeight(fromBlockHeight + 1) != dataSource);
+        }
+        List<Block> result;
+        if (entityList.isEmpty()) {
+            result = Collections.EMPTY_LIST;
+        } else {
+            result = loadBlockData(entityList);//load the generator public key
+            for (Block block : result) {
+                List<Transaction> blockTransactions = this.getOrLoadTransactions(block);
+                if (log.isTraceEnabled()) {
+                    log.trace("Block id={} height={} Loaded {} transaction.",
+                        block.getId(),
+                        block.getHeight(),
+                        blockTransactions != null ? blockTransactions.size() : 0);
+                }
+            }
         }
         if (log.isTraceEnabled()) {
             log.trace("getBlocksAfter time {}", System.currentTimeMillis() - time);
         }
-        return loadBlockData(result);
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -498,7 +499,7 @@ public class BlockchainImpl implements Blockchain {
             return block;
         }
         TransactionalDataSource dataSource = shardDbExplorer.getDataSourceWithShardingByHeight(height);
-        return blockDao.findBlockAtHeight(height, dataSource);
+        return blockEntityToModelConverter.convert(blockDao.findBlockAtHeight(height, dataSource));
     }
 
     @Override
@@ -515,12 +516,12 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public EcBlockData getECBlock(int timestamp) {
         Block block = getLastBlock(timestamp);
-        Block shardInitialBlock = getShardInitialBlock();
+        Block shardInitBlk = getShardInitialBlock();
         if (block == null) {
-            return new EcBlockData(shardInitialBlock.getId(), shardInitialBlock.getHeight());
+            return new EcBlockData(shardInitBlk.getId(), shardInitBlk.getHeight());
         }
-        int height = Math.max(block.getHeight() - 720, shardInitialBlock.getHeight());
-        Block ecBlock = blockDao.findBlockAtHeight(height, databaseManager.getDataSource());
+        int height = Math.max(block.getHeight() - 720, shardInitBlk.getHeight());
+        BlockEntity ecBlock = blockDao.findBlockAtHeight(height, databaseManager.getDataSource());
         return new EcBlockData(ecBlock.getId(), ecBlock.getHeight());
     }
 
