@@ -5,6 +5,9 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
@@ -163,6 +166,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
         TransactionBuilder.class,
         TransactionDaoImpl.class, BlockchainImpl.class,
         BlockDaoImpl.class,
+        BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         TransactionIndexDao.class,
         DaoConfig.class,
         ApplicationJsonFactory.class,

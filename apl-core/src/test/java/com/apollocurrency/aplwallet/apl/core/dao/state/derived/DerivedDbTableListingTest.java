@@ -11,6 +11,9 @@ import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyBasedFileConfig;
 import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
@@ -166,17 +169,19 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
             TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
             TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
             TransactionSerializerImpl.class,
-            TransactionBuilder.class,
-            TaggedDataTable.class,
-            PropertyBasedFileConfig.class,
-            DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
-            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class, PhasingApprovedResultTable.class,
-            KeyFactoryProducer.class, FeeCalculator.class, AplAppStatus.class,
-            TaggedDataTimestampDao.class,
-            TaggedDataExtendDao.class,
-            FullTextConfigImpl.class,
+        TransactionBuilder.class,
+        TaggedDataTable.class,
+        PropertyBasedFileConfig.class,
+        DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
+        PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class, PhasingApprovedResultTable.class,
+        KeyFactoryProducer.class, FeeCalculator.class, AplAppStatus.class,
+        TaggedDataTimestampDao.class,
+        TaggedDataExtendDao.class,
+        FullTextConfigImpl.class,
         DerivedDbTablesRegistryImpl.class,
-        BlockDaoImpl.class, TransactionDaoImpl.class,
+        BlockDaoImpl.class,
+        BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
+        TransactionDaoImpl.class,
         UnconfirmedTransactionTable.class, AccountService.class, TaskDispatchManager.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
