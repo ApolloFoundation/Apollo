@@ -198,6 +198,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
     void setUp() {
         doReturn(config).when(blockchainConfig).getCurrentConfig();
         doReturn(chain).when(blockchainConfig).getChain();
+        doReturn("APL").when(blockchainConfig).getAccountPrefix();
         doReturn(3000000000000000000L).when(config).getMaxBalanceATM();
         doReturn(100L).when(config).getInitialBaseTarget();
 
