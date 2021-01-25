@@ -40,8 +40,6 @@ public interface BlockDao {
 
     List<BlockEntity> getBlocksAfter(int height, List<Long> blockList, List<BlockEntity> result, TransactionalDataSource dataSource, int index);
 
-    List<BlockEntity> getBlocksAfter(int height, List<Long> blockList, List<BlockEntity> result, Connection connection, int index);
-
     BlockEntity findBlockWithVersion(int skipCount, int version);
 
     List<byte[]> getBlockSignaturesFrom(int from, int to);

@@ -51,8 +51,6 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -435,23 +433,19 @@ public class BlockchainImpl implements Blockchain {
             int prevSize;
             do {
                 dataSource = shardDbExplorer.getDataSourceWithShardingByHeight(fromBlockHeight + 1); //should return datasource, where such block exist or default datasource
-                log.trace("Datasource - {}", dataSource.getUrl());
                 prevSize = entityList.size();
-                try (Connection con = dataSource.getConnection()) { //get blocks and transactions in one connection
-                    if (log.isTraceEnabled()) {
-                        log.trace("Try to find bloks: from={} prevSize={} idList={} ",
-                            fromBlockHeight,
-                            prevSize,
-                            blockIdList.stream().map(Long::toUnsignedString).collect(Collectors.joining(","))
-                        );
-                    }
-                    blockDao.getBlocksAfter(fromBlockHeight, blockIdList, entityList, con, prevSize);
-                    log.trace("Found {} blocks.", entityList.size() - prevSize);
-                    if (entityList.size() - 1 >= 0) {
-                        fromBlockHeight = getBlockHeight(blockIdList.get(entityList.size() - 1));
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException(e.toString(), e);
+                if (log.isTraceEnabled()) {
+                    log.trace("Datasource - {}", dataSource.getUrl());
+                    log.trace("Try to find bloks: from={} prevSize={} idList={} ",
+                        fromBlockHeight,
+                        prevSize,
+                        blockIdList.stream().map(Long::toUnsignedString).collect(Collectors.joining(","))
+                    );
+                }
+                blockDao.getBlocksAfter(fromBlockHeight, blockIdList, entityList, dataSource, prevSize);
+                log.trace("Found {} blocks.", entityList.size() - prevSize);
+                if (entityList.size() - 1 >= 0) {
+                    fromBlockHeight = getBlockHeight(blockIdList.get(entityList.size() - 1));
                 }
             } while (entityList.size() != prevSize && dataSource != databaseManager.getDataSource() && shardDbExplorer.getDataSourceWithShardingByHeight(fromBlockHeight + 1) != dataSource);
         }
@@ -459,7 +453,7 @@ public class BlockchainImpl implements Blockchain {
         if (entityList.isEmpty()) {
             result = Collections.EMPTY_LIST;
         } else {
-            result = loadBlockData(entityList);
+            result = loadBlockData(entityList);//load the generator public key
             for (Block block : result) {
                 List<Transaction> blockTransactions = this.getOrLoadTransactions(block);
                 if (log.isTraceEnabled()) {
