@@ -266,6 +266,17 @@ class MultiSigData implements MultiSig {
     static class ParserV3 extends Parser{
 
         /**
+         * Parse the byte array (V3 structure) and build the multisig object
+         *
+         * @param buffer input data array
+         * @return the multisig object
+         */
+        @Override
+        public Signature parse(ByteBuffer buffer) {
+            return parse(new RlpReader(buffer.array()));
+        }
+
+        /**
          * Parse the RLP encoded structure and build the multisig object
          *
          * @param reader the RLP encoded data reader

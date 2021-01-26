@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.NONE)
 public class RlpConverter {
 
     public static byte[] toByteArray(RlpType value) {
@@ -48,19 +48,19 @@ public class RlpConverter {
         return ((RlpString) value).asPositiveBigInteger();
     }
 
-    public <T> List<T> toList(List<RlpType> list, Function<RlpType, T> mapper) {
+    public static <T> List<T> toList(List<RlpType> list, Function<RlpType, T> mapper) {
         return list.stream().map(mapper).collect(Collectors.toList());
     }
 
-    public List<String> toStringList(List<RlpType> list) {
+    public static List<String> toStringList(List<RlpType> list) {
         return toList(list, RlpConverter::toString);
     }
 
-    public List<Long> toLongList(List<RlpType> list) {
+    public static List<Long> toLongList(List<RlpType> list) {
         return toList(list, RlpConverter::toLong);
     }
 
-    public List<BigInteger> toBigIntegerList(List<RlpType> list) {
+    public static List<BigInteger> toBigIntegerList(List<RlpType> list) {
         return toList(list, RlpConverter::toBigInteger);
     }
 }

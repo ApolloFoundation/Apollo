@@ -154,7 +154,7 @@ public class TransactionCreator {
             }
             //build transaction, this transaction is UNSIGNED
             transaction = builder.build();
-            if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
+            if (transaction.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
                 int effectiveHeight = blockchain.getHeight();
                 @TransactionFee(FeeMarker.CALCULATOR)
                 long minFee = feeCalculator.getMinimumFeeATM(transaction, effectiveHeight);
