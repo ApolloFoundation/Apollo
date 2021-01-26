@@ -66,7 +66,6 @@ import com.apollocurrency.aplwallet.apl.core.http.post.GenerateToken;
 import com.apollocurrency.aplwallet.apl.core.http.post.IssueAsset;
 import com.apollocurrency.aplwallet.apl.core.http.post.IssueCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.post.LeaseBalance;
-import com.apollocurrency.aplwallet.apl.core.http.post.LuceneReindex;
 import com.apollocurrency.aplwallet.apl.core.http.post.MarkHost;
 import com.apollocurrency.aplwallet.apl.core.http.post.PlaceAskOrder;
 import com.apollocurrency.aplwallet.apl.core.http.post.PlaceBidOrder;

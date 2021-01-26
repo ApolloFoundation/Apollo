@@ -110,7 +110,7 @@ public class DataSourceWrapper implements DataSource {
         String passwordlessUrlString = "jdbc:%s://%s:%d/%s?user=%s%s"; // skip password for 'password less mode' (in docker container)
         String tempDbName = dbProperties.getDbName();
         if (isSystemDb) {
-            tempDbName = "testdb".equalsIgnoreCase(dbProperties.getDbName()) ?  dbProperties.getDbName() : DbProperties.DB_SYSTEM_NAME;
+            tempDbName = "testdb".equalsIgnoreCase(dbProperties.getDbName()) ? dbProperties.getDbName() : DbProperties.DB_SYSTEM_NAME;
         }
         if (dbProperties.getDbPassword() != null && !dbProperties.getDbPassword().isEmpty()) {
             finalDbUrl = String.format(

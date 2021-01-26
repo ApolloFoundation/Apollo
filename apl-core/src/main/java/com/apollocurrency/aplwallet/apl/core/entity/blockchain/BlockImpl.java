@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 
@@ -33,12 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-//TODO Refactoring this class to make pojo.
 public final class BlockImpl implements Block {
-
-    private static Blockchain blockchain;
-    private static TransactionSerializer transactionSerializer;
-
     private final int version;
     private final int timestamp;
     private final long previousBlockId;

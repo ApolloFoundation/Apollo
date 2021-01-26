@@ -20,13 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.db.TransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
@@ -42,9 +40,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.MultiLock;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -220,7 +220,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         returned.forEach(e -> {
             try {
                 memPool.softBroadcast(e);
-            } catch (AplException.ValidationException ignored) {}
+            } catch (AplException.ValidationException ignored) {
+            }
         });
         if (!returned.isEmpty()) {
             log.warn("Return {} txs back to pending queue. Mempool is full", returned.size());
@@ -361,8 +362,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                             continue;
                         }
                         if (memPool.isAlreadyBroadcasted(transaction)) {
-                    log.debug("Received back transaction " + transaction.getStringId()
-                        + " that we broadcasted, will not forward again to peers");
+                            log.debug("Received back transaction " + transaction.getStringId()
+                                + " that we broadcasted, will not forward again to peers");
                         } else {
                             sendToPeersTransactions.add(unconfirmedTransaction);
                         }

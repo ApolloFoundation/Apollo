@@ -24,7 +24,7 @@ public interface FindTransactionService {
 
     /**
      * Returns transaction given the transaction id up to the specified height.
-     * Looks for transactions in both transaction table in the unconfirmed and confirmed.
+     * Looks for transaction in the transaction table.
      *
      * @param transactionId the transaction id
      * @param height        the blockchain height (optional)

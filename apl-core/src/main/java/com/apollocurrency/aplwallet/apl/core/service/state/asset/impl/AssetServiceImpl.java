@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.asset.impl;
 
-import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
-
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTable;
@@ -15,9 +13,9 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDeleteService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
@@ -35,6 +33,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 import java.util.stream.Stream;
+
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
 
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 @Slf4j
@@ -173,6 +173,7 @@ public class AssetServiceImpl implements AssetService {
 
     /**
      * compose db_id list for in (id,..id) SQL luceneQuery
+     *
      * @param luceneQuery lucene language luceneQuery pattern
      * @return composed sql luceneQuery part
      */
@@ -201,9 +202,9 @@ public class AssetServiceImpl implements AssetService {
     }
 
     public DbIterator<Asset> fetchAssetByParams(int from, int to,
-                                                      StringBuffer inRangeClause,
-                                                      DbClause dbClause,
-                                                      String sort) {
+                                                StringBuffer inRangeClause,
+                                                DbClause dbClause,
+                                                String sort) {
         Objects.requireNonNull(inRangeClause, "inRangeClause is NULL");
         Objects.requireNonNull(dbClause, "dbClause is NULL");
         Objects.requireNonNull(sort, "sort is NULL");

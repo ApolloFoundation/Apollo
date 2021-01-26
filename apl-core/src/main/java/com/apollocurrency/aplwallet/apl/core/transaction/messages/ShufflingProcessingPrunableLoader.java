@@ -32,4 +32,9 @@ public class ShufflingProcessingPrunableLoader implements PrunableLoader<Shuffli
     public void restorePrunableData(Transaction transaction, ShufflingProcessingAttachment appendix, int blockTimestamp, int height) {
         shufflingService.restoreData(appendix.getShufflingId(), transaction.getSenderId(), appendix.getData(), transaction.getTimestamp(), height);
     }
+
+    @Override
+    public Class<ShufflingProcessingAttachment> forClass() {
+        return ShufflingProcessingAttachment.class;
+    }
 }

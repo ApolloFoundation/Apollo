@@ -59,8 +59,7 @@ public class PublicKeyTable extends EntityDbTable<PublicKey> implements EntityDb
     @Override
     public void save(Connection con, PublicKey publicKey) throws SQLException {
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE)
-            final PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + table
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + table
                 + " (account_id, public_key, height, latest) "
                 + "VALUES (?, ?, ?, TRUE) "
                 + "ON DUPLICATE KEY UPDATE "

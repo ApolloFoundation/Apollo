@@ -12,4 +12,9 @@ public interface PrunableLoader<T extends Appendix> {
 
     void restorePrunableData(Transaction transaction, T appendix, int blockTimestamp, int height);
 
+    /**
+     * @return class instance for which prunable loading has to be performed
+     */
+    Class<T> forClass();
+
 }

@@ -8,7 +8,7 @@ import org.flywaydb.core.api.output.MigrateResult;
 @Slf4j
 public class AplDBUpdater implements DBUpdater {
 
-    public void update(String url, String user, String password){
+    public void update(String url, String user, String password) {
         Flyway flyway =
             Flyway.configure()
                 .dataSource(url, user, password)

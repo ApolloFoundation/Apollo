@@ -1,6 +1,11 @@
 # How to create and install local MyRocks DB docker image
 
-Dockerfile file to build container image in folder /unit-test-Docker-Image is official script from repo https://github.com/docker-library/mariadb and modified to our needs. 
+Dockerfile file uses official script from repo
+for building container's image in folder 
+/unit-test-Docker-Image
+Original script is :
+https://github.com/docker-library/mariadb/blob/master/10.5/
+and it is modified to our needs. 
 
 MariaDb in docker info - https://hub.docker.com/_/mariadb/
 
@@ -12,7 +17,7 @@ https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-o
 
 #### 1. Run console commands to build custom Apollo mariadb docker image
 
-1.1 Go to sub folder to build new image :
+1.1 Go to sub folder to build a new image :
 
 $ cd unit-test-Docker-Image
 

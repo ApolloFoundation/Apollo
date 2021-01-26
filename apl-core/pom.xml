@@ -10,7 +10,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.48.0</version>
+    <version>1.48.2</version>
   </parent>
   <artifactId>apl-core</artifactId>
   <name>apl-core</name>
@@ -35,19 +35,31 @@
     </dependency>
     <dependency>
       <groupId>com.apollocurrency</groupId>
-      <artifactId>apl-db-updater</artifactId>
-      <version>${project.version}</version>
+        <artifactId>apl-db-updater</artifactId>
+        <version>${project.version}</version>
     </dependency>
 
-    <!-- EXT BOM DEPENDENCIES -->
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-    </dependency>
+      <dependency>
+          <groupId>com.apollocurrency</groupId>
+          <artifactId>apl-dex</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+          <groupId>com.apollocurrency</groupId>
+          <artifactId>apl-vault-wallet</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+
+      <!-- EXT BOM DEPENDENCIES -->
+      <dependency>
+          <groupId>ch.qos.logback</groupId>
+          <artifactId>logback-classic</artifactId>
+      </dependency>
+      <dependency>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+      </dependency>
 
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
@@ -107,21 +119,6 @@
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-multipart-provider</artifactId>
     </dependency>
-
-    <!--
-        <dependency> &lt;!&ndash; may be NEEDED by FAT JAR in run-time &ndash;&gt;
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-jaxrs</artifactId>
-        </dependency>
-        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-tracing-api</artifactId>
-        </dependency>
-        <dependency> &lt;!&ndash; NEEDED by FAT JAR in run-time&ndash;&gt;
-          <groupId>org.apache.httpcomponents</groupId>
-          <artifactId>httpcore-nio</artifactId>
-        </dependency>
-    -->
 
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
@@ -286,11 +283,8 @@
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>com.j256.two-factor-auth</groupId>
-      <artifactId>two-factor-auth</artifactId>
-    </dependency>
-    <dependency>
+
+      <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
     </dependency>
@@ -331,40 +325,6 @@
     <dependency>
       <groupId>com.apollocurrency.antifraud</groupId>
       <artifactId>antifraud</artifactId>
-    </dependency>
-
-    <!-- Ethereum API -->
-    <dependency>
-      <groupId>org.web3j</groupId>
-      <artifactId>core</artifactId>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/org.ethereum/ethereumj-core -->
-    <dependency>
-      <groupId>org.ethereum</groupId>
-      <artifactId>ethereumj-core</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-context</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-orm</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-tx</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.madgag.spongycastle</groupId>
-          <artifactId>prov</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.ethereum</groupId>
-          <artifactId>rocksdbjni</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>

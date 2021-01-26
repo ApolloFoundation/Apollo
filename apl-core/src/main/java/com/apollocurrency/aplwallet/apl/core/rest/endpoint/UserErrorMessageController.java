@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.apl.exchange.model.UserErrorMessage;
-import com.apollocurrency.aplwallet.apl.exchange.service.UserErrorMessageService;
+import com.apollocurrency.aplwallet.apl.core.service.state.UserErrorMessageService;
+import com.apollocurrency.aplwallet.apl.dex.core.model.UserErrorMessage;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

@@ -4,11 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
+
+import java.math.BigDecimal;
 
 @Data
 @AllArgsConstructor

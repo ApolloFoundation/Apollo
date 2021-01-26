@@ -1,4 +1,5 @@
-delete from currency_supply;
+delete
+from currency_supply;
 
 INSERT INTO currency_supply
 (DB_ID, ID,                 CURRENT_SUPPLY, CURRENT_RESERVE_PER_UNIT_ATM, HEIGHT, LATEST, DELETED) VALUES

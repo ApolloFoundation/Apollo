@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthEntity;
 import org.apache.commons.codec.binary.Base32;
 
 public class TwoFactorAuthTestData extends AccountTestData {

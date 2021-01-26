@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * Class to keep information about data changes in DB to be propagated into Lucene

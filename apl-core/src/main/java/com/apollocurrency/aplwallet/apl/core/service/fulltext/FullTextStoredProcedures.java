@@ -15,7 +15,7 @@ import java.sql.SQLException;
  * Provide stored procedures, used for fulltext search.
  * Should be removed as soon as possible, but now this class should exists due to {@link EntityDbTable#search(String, DbClause, int, int, String)}
  * Deep refactoring of EntityDbTable and dependent classes required to resolve issue
- * 
+ *
  * @deprecated
  */
 @Deprecated

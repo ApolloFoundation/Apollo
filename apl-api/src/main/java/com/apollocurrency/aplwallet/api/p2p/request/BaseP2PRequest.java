@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.StringJoiner;
 import java.util.UUID;
 
 /**
@@ -30,5 +31,14 @@ public class BaseP2PRequest {
     public BaseP2PRequest(String requestType, UUID chainId) {
         this.requestType = requestType;
         this.chainId = chainId;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", BaseP2PRequest.class.getSimpleName() + "[", "]")
+            .add("protocol=" + protocol)
+            .add("requestType='" + requestType + "'")
+            .add("chainId=" + chainId)
+            .toString();
     }
 }
