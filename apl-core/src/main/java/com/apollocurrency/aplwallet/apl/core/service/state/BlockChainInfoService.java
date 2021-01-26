@@ -24,10 +24,7 @@ public interface BlockChainInfoService {
 
     Block getLastBlock();
 
-    @Deprecated
-    List<Block> getBlocks(long accountId, int from, int to, int timestamp);
-
-    List<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp);
+    List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp);
 
     int getLastBlockTimestamp();
 

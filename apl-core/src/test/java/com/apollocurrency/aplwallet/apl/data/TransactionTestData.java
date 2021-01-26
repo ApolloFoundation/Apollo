@@ -113,13 +113,16 @@ public class TransactionTestData {
     public Transaction NEW_TRANSACTION_0;
     public Transaction NEW_TRANSACTION_1;
 
-    public ReferencedTransaction REFERENCED_TRANSACTION_0 ;
-    public ReferencedTransaction REFERENCED_TRANSACTION_1 ;
-    public ReferencedTransaction REFERENCED_TRANSACTION_2 ;
-    public ReferencedTransaction REFERENCED_TRANSACTION_3 ;
-    public ReferencedTransaction REFERENCED_TRANSACTION_4 ;
-    public ReferencedTransaction REFERENCED_TRANSACTION_5 ;
-    public ReferencedTransaction REFERENCED_TRANSACTION_6 ;
+    public Transaction TRANSACTION_V2_1;
+    public Transaction TRANSACTION_V2_2;
+
+    public ReferencedTransaction REFERENCED_TRANSACTION_0;
+    public ReferencedTransaction REFERENCED_TRANSACTION_1;
+    public ReferencedTransaction REFERENCED_TRANSACTION_2;
+    public ReferencedTransaction REFERENCED_TRANSACTION_3;
+    public ReferencedTransaction REFERENCED_TRANSACTION_4;
+    public ReferencedTransaction REFERENCED_TRANSACTION_5;
+    public ReferencedTransaction REFERENCED_TRANSACTION_6;
     public ReferencedTransaction REFERENCED_TRANSACTION_7;
     public ReferencedTransaction REFERENCED_TRANSACTION_8;
     public ReferencedTransaction REFERENCED_TRANSACTION_9;
@@ -181,6 +184,7 @@ public class TransactionTestData {
         NEW_TRANSACTION_0 = buildTransaction(1854970739572493540L, 570432, -2393094257044436049L, 43031981, (short) 1440, null, (short) 1, 0, 2500000000L, "e44cf6400f2ebe19f0270ad9dd608eaa05fd67d9210f96431ec54e928f1d67fc", "5de61cc2d4c6f2f9356e050b9f071e70f23ffa939ac85b96eba2af8d6197d20323fb55762544f6a06befeb940c39aaca9aaac9b410853419e11aee96741cf6d0", 43029026, (byte) 1, (byte) 1, 7821792282123976600L, "129749b75f13a861a24619f5994dc24ed63df7bd49ce6331f68517a8c611ef1d", null, false, (byte) 1, false, false, false, 569669, 3522593573338414470L, false, false, false, false, "010e616c696173666f7264656c6574650e007777772e64656c6574652e636f6d");
         NEW_TRANSACTION_1 = buildTransaction(-3727347706778021725L, 570432, -2393094257044436049L, 43031981, (short) 1440, null, (short) 0, 0, 400000000, "a310214f02cd45cc50ae427baba04644d3dc631880010ce268470d1f296321a1", "a21327a4cbd416bf3760686944d609e9219629325e04dba7cc412d7488ef240689342eed703c203cc4a17ad6d7251af8b634932affdef603e14ce988118a7b68", 43021658, (byte) 3, (byte) 0, 7821792282123976600L, "129749b75f13a861a24619f5994dc24ed63df7bd49ce6331f68517a8c611ef1d", null, false, (byte) 1, false, false, false, 569541, 6726658595929558334L, false, false, false, false, "010e0050726f64756374466f7253616c651f006465736372697074696f6e206f662070726f6475637420666f722053616c6504006175746f0a0000000a00000000000000");
         NOT_SAVED_TRANSACTION = buildTransaction(-5176698353372716962L, BLOCK_10_HEIGHT, BLOCK_10_ID, BLOCK_10_TIMESTAMP, (short) 1440, 5338910736239317247L, (short) 204, 900000000L, 100000000L, "5ea0de6146ac28b8b64d4f7f1ccbd1c7b2e43397221ef7ed3fa10c4ec0581d43", "afb31f67c1101c2eae312da60b7087b122cada3c929ac032e3b3a6079f61a905bb6787128a2c37bd76bdc8640d82762589fbe31cc145f11ba0359bd55800501d", 33614539, (byte) 0, (byte) 0, -7834552789888196284L, "7f7aee80a5f9b4460945ef564099c6774fd92f031e4773d9da467924d274004c", null, false, (byte) 1, false, false, false, 0, -107868771406622438L, false, false, false, false, null);
+        TRANSACTION_V2_1 = buildTransaction(-5558468054444673854L, BLOCK_10_HEIGHT, BLOCK_10_ID, BLOCK_10_TIMESTAMP, (short) 1440, 7649455923293388179L, (short) 0, 35500000000L, 100000000, "5ea0de6146ac28b8b64d4f7f1ccbd1c7b2e43397221ef7ed3fa10c4ec0581d43", "4d53494700000000020039dc2e813bb45ff0c3eafbed56c02be9fe3da9691cb0ffd8b897ab5dcb7e9b70d44ace089e710908acc3be46c5c6d34dc95813c8cb4c2f68ad0ab19b10def07fdf16c9d787ddb951fd14af33957458d911f944ebdb2780db5c4fa87af3b75ff63a08016beaaf761a820cff3fe723d3048563db5790f18663f98282c5ba3b1f9bc0cb864c054f0d7b9ce02e769134f8c4", 86652701, (byte) 0, (byte) 0, 6935955567226948703L, "fd14af33957458d99c8abf3d31839a58c21fa0689f99526ef48ad70ae271a46d", null, false, (byte) 2, false, false, false, 25606, 4105716013512048697L, false, false, false, false, null);
         REFERENCED_TRANSACTION_0 = new ReferencedTransaction(10L, TRANSACTION_INDEX_0.getTransactionId(), TRANSACTION_INDEX_1.getTransactionId(), 100);
         REFERENCED_TRANSACTION_1 = new ReferencedTransaction(20L, TRANSACTION_INDEX_1.getTransactionId(), TRANSACTION_INDEX_2.getTransactionId(), 200);
         REFERENCED_TRANSACTION_2 = new ReferencedTransaction(30L, TRANSACTION_INDEX_2.getTransactionId(), TRANSACTION_INDEX_3.getTransactionId(), 300);

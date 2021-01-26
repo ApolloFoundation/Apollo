@@ -7,6 +7,9 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.dgs;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
@@ -79,7 +82,9 @@ public class DGSPublicFeedbackTableTest extends ValuesDbTableTest<DGSPublicFeedb
         FullTextConfigImpl.class,
         DGSPublicFeedbackTable.class,
         DerivedDbTablesRegistryImpl.class,
-        BlockDaoImpl.class, TransactionDaoImpl.class,
+        BlockDaoImpl.class,
+        BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
+        TransactionDaoImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
         TransactionRowMapper.class, TransactionEntityRowMapper.class, TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionBuilder.class,

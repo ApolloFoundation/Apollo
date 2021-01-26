@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksThread;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.OptionDAO;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
@@ -173,6 +174,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
 //    private final FullTextSearchService fullTextSearchProvider;
     private final TaskDispatchManager taskDispatchManager;
     private final Blockchain blockchain;
+    private final BlockEntityRowMapper blockEntityRowMapper;
     private final TransactionProcessor transactionProcessor;
     private final TimeService timeService;
     private final PrunableRestorationService prunableRestorationService;
@@ -213,6 +215,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    BlockchainConfigUpdater blockchainConfigUpdater,
                                    PrunableRestorationService prunableRestorationService,
                                    Blockchain blockchain,
+                                   BlockEntityRowMapper blockEntityRowMapper,
                                    PeersService peersService,
                                    TransactionProcessor transactionProcessor,
 //                                   FullTextSearchService fullTextSearchProvider,
@@ -257,6 +260,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.prunableRestorationService = prunableRestorationService;
 
         this.blockchain = blockchain;
+        this.blockEntityRowMapper = blockEntityRowMapper;
         this.peersService = peersService;
         this.transactionProcessor = transactionProcessor;
 //        this.fullTextSearchProvider = fullTextSearchProvider;
@@ -1141,10 +1145,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         log.debug("<< popOffWithRescan to height = " + height);
     }
 
-    private int getBlockVersion(int previousBlockHeight) {
-        return 3;
-    }
-
     private boolean isValidTransactionVersion(int transactionVersion, int previousBlockHeight) {
         return transactionValidator.isValidVersion(transactionVersion);
     }
@@ -1340,7 +1340,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             String scanTaskId = aplAppStatus.durableTaskStart("Blockchain scan", "Rollback derived tables and scan blockchain blocks and transactions from given height to extract and save derived data", true);
             blockchainProcessorState.setScanning(true);
             try (Connection con = dataSource.getConnection();
-                 PreparedStatement pstmtSelect = con.prepareStatement("SELECT * FROM block WHERE " + (height > shardInitialHeight ? "height >= ? AND " : "")
+                 PreparedStatement pstmtSelectFromBlockByHeightAndDbId = con.prepareStatement("SELECT * FROM block WHERE " + (height > shardInitialHeight ? "height >= ? AND " : "")
                      + " db_id >= ? ORDER BY db_id ASC LIMIT 50000");
                  PreparedStatement pstmtDone = con.prepareStatement("UPDATE scan SET rescan = FALSE, height = 0, validate = FALSE")) {
                 blockchainProcessorState.setInitialScanHeight(blockchain.getHeight());
@@ -1394,7 +1394,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 int pstmtSelectIndex = 1;
                 if (height > shardInitialHeight) {
-                    pstmtSelect.setInt(pstmtSelectIndex++, height);
+                    pstmtSelectFromBlockByHeightAndDbId.setInt(pstmtSelectIndex++, height);
                 }
                 aplAppStatus.durableTaskUpdate(scanTaskId, 25.0, "Scanning blocks");
 
@@ -1406,12 +1406,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 outer:
                 while (hasMore) {
                     hasMore = false;
-                    pstmtSelect.setLong(pstmtSelectIndex, dbId);
-                    try (ResultSet rs = pstmtSelect.executeQuery()) {
+                    pstmtSelectFromBlockByHeightAndDbId.setLong(pstmtSelectIndex, dbId);
+                    try (ResultSet rs = pstmtSelectFromBlockByHeightAndDbId.executeQuery()) {
                         while (rs.next()) {
                             try {
                                 dbId = rs.getLong("db_id");
-                                currentBlock = blockchain.loadBlock(con, rs, true);
+                                currentBlock = blockchain.loadBlockData(
+                                    blockEntityRowMapper.map(rs, null)
+                                );
                                 blockchain.getOrLoadTransactions(currentBlock); // load transactions
                                 if (currentBlock.getHeight() > shardInitialHeight) {
 //                                    blockchain.getOrLoadTransactions(currentBlock);

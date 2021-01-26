@@ -203,7 +203,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<Block> getAccountBlocks(long accountId, int from, int to, int timestamp) {
-        return blockChainInfoService.getBlocksByAccountStream(accountId, from, to, timestamp);
+        return blockChainInfoService.getBlocksByAccount(accountId, from, to, timestamp);
     }
 
     /**
