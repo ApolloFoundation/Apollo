@@ -23,7 +23,7 @@ import java.util.Set;
  * @author andrii.zinchenko@firstbridge.io
  */
 @Slf4j
-@NoArgsConstructor(access = AccessLevel.NONE)
+@NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class SignatureToolFactory {
 
     //TODO: read from properties, example: "elliptic-curve=Curve25519", "pk-size=32"

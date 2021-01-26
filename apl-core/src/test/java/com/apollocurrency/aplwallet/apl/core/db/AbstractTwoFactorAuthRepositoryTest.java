@@ -4,12 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.TwoFactorAuthRepository;
-import com.apollocurrency.aplwallet.apl.core.entity.appdata.TwoFactorAuthEntity;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.data.TwoFactorAuthTestData;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthEntity;
+import com.apollocurrency.aplwallet.vault.service.auth.TwoFactorAuthRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
@@ -17,16 +16,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 
 @Slf4j
 public abstract class AbstractTwoFactorAuthRepositoryTest extends DbContainerBaseTest {
 
     static {
-        BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-        doReturn("APL").when(blockchainConfig).getAccountPrefix();
-        Convert2.init(blockchainConfig);
+        Convert2.init("APL", 1739068987193023818L);
     }
 
     protected TwoFactorAuthRepository repository;

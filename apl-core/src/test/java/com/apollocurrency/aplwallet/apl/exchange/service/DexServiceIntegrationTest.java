@@ -27,15 +27,17 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadin
 import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexTransferMoneyTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryPaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
-import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
+import com.apollocurrency.aplwallet.apl.dex.config.DexConfig;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderFreezing;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
 import com.apollocurrency.aplwallet.apl.testutil.WeldUtils;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -61,25 +63,27 @@ class DexServiceIntegrationTest {
     TransactionTestData td = new TransactionTestData();
     @WeldSetup
     WeldInitiator weld = WeldUtils.from(List.of(TransactionRowMapper.class,
-        TransactionBuilder.class,TransactionSerializerImpl.class,
+        TransactionBuilder.class, TransactionSerializerImpl.class,
         DexService.class, CacheProducer.class),
         List.of(EthereumWalletService.class,
-        DexOrderDao.class,
-        DexOrderTable.class,
-        TransactionProcessor.class,
-        DexSmartContractService.class,
-        SecureStorageService.class,
-        DexContractTable.class,
-        MandatoryTransactionDao.class,
-        DexOrderTransactionCreator.class,
-        TimeService.class,
-        DexContractDao.class,
-        Blockchain.class,
-        IDexMatcherInterface.class,
-        PhasingApprovedResultTable.class,
-        BlockchainConfig.class,
-        DexConfig.class,
-        BlockchainImpl.class))
+            DexOrderDao.class,
+            DexOrderTable.class,
+            TransactionProcessor.class,
+            DexSmartContractService.class,
+            SecureStorageService.class,
+            DexContractTable.class,
+            MandatoryTransactionDao.class,
+            DexOrderTransactionCreator.class,
+            TimeService.class,
+            DexContractDao.class,
+            Blockchain.class,
+            IDexMatcherInterface.class,
+            PhasingApprovedResultTable.class,
+            BlockchainConfig.class,
+            DexConfig.class,
+            KMSService.class,
+            BlockchainImpl.class,
+            Account2FAService.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
         .addBeans(MockBean.of(mock(AccountService.class), AccountService.class, AccountServiceImpl.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))

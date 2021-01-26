@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.transaction.ReflectionUtil;
-
 import javax.enterprise.inject.Instance;
 import javax.inject.Singleton;
 import java.util.Collection;
@@ -20,10 +18,10 @@ public class AppendixApplierRegistry {
 
 
     void init(Instance<AppendixApplier<?>> instances) {
-        instances.iterator().forEachRemaining(e-> appliers.put(ReflectionUtil.parametrizedClass(e.getClass()), e));
+        instances.iterator().forEachRemaining(e -> appliers.put(e.forClass(), e));
     }
     public AppendixApplierRegistry(Collection<AppendixApplier<?>> appliers) {
-        appliers.iterator().forEachRemaining(e-> this.appliers.put(ReflectionUtil.parametrizedClass(e.getClass()), e));
+        appliers.iterator().forEachRemaining(e -> this.appliers.put(e.forClass(), e));
     }
 
     public <T extends Appendix> AppendixApplier<T> getFor(T t) {

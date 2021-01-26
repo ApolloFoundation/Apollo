@@ -27,6 +27,7 @@ import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -315,5 +316,11 @@ public final class JSON {
         ObjectMapper mapper = JSON.getMapper();
         ObjectWriter writer = mapper.writer(new DefaultPrettyPrinter());
         writer.writeValue(path.toFile(), object);
+    }
+
+    public static <T> void writeJson(File file, T object) throws IOException {
+        ObjectMapper mapper = JSON.getMapper();
+        ObjectWriter writer = mapper.writer(new DefaultPrettyPrinter());
+        writer.writeValue(file, object);
     }
 }

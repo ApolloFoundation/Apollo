@@ -68,9 +68,9 @@ public class FullTextSearchUpdater implements TransactionCallback {
 
         fullTextSearchService.init(); // tables and their indexed columns should be in DB after init() call
         try (Connection con = dataSource.getConnection();
-            ResultSet rs = con.createStatement().executeQuery("SELECT `table` FROM ftl_indexes")) {
+             ResultSet rs = con.createStatement().executeQuery("SELECT `table` FROM ftl_indexes")) {
             while (rs.next()) {
-                String tableName =  rs.getString("table");
+                String tableName = rs.getString("table");
                 try { // initialize map structure for future use
                     TableData tableData = this.readTableData(con, fullTextConfig.getSchema(), tableName);
                     this.tableDataMap.put(tableName.toLowerCase(), tableData);

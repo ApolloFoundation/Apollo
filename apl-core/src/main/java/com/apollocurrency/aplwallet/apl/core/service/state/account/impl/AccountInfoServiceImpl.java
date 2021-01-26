@@ -14,9 +14,9 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -120,6 +120,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
 
     /**
      * compose db_id list for in (id,..id) SQL luceneQuery
+     *
      * @param luceneQuery lucene language luceneQuery pattern
      * @return composed sql luceneQuery part
      */
@@ -148,9 +149,9 @@ public class AccountInfoServiceImpl implements AccountInfoService {
     }
 
     public DbIterator<AccountInfo> fetchAccountInfoByParams(int from, int to,
-                                                      StringBuffer inRangeClause,
-                                                      DbClause dbClause,
-                                                      String sort) {
+                                                            StringBuffer inRangeClause,
+                                                            DbClause dbClause,
+                                                            String sort) {
         Objects.requireNonNull(inRangeClause, "inRangeClause is NULL");
         Objects.requireNonNull(dbClause, "dbClause is NULL");
         Objects.requireNonNull(sort, "sort is NULL");

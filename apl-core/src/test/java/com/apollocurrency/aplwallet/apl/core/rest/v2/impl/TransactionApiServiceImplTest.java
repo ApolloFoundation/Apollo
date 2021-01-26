@@ -27,8 +27,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFa
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -86,7 +86,7 @@ class TransactionApiServiceImplTest {
     @BeforeEach
     void setUp() {
         transactionBuilder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain))));
-        Convert2.init(blockchainConfig);
+        Convert2.init("APL", 1739068987193023818L);
         txReceiptMapper = new TxReceiptMapper(blockChainInfoService);
         transactionInfoMapper = new TransactionInfoMapper(blockchain, prunableLoadingService);
         transactionApiService = new TransactionApiServiceImpl(memPool, blockchain, txReceiptMapper, transactionInfoMapper, transactionBuilder);

@@ -20,10 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
-import static com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable.FINISH_HEIGHT;
-import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
-
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -38,9 +34,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.Vote;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollOptionResultService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
@@ -48,6 +44,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollC
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -60,6 +57,9 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+
+import static com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable.FINISH_HEIGHT;
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
 
 @Singleton
 @Slf4j
@@ -115,7 +115,7 @@ public class PollServiceImpl implements PollService {
         final BlockchainImpl blockchain,
         final FullTextSearchUpdater fullTextSearchUpdater,
         final FullTextSearchService fullTextSearchService
-        ) {
+    ) {
         this.blockChainInfoService = blockChainInfoService;
         this.pollTable = pollTable;
         this.pollResultTable = pollResultTable;
@@ -241,6 +241,7 @@ public class PollServiceImpl implements PollService {
 
     /**
      * compose db_id list for in (id,..id) SQL luceneQuery
+     *
      * @param luceneQuery lucene language luceneQuery pattern
      * @return composed sql luceneQuery part
      */
@@ -269,9 +270,9 @@ public class PollServiceImpl implements PollService {
     }
 
     public DbIterator<Poll> fetchPollByParams(int from, int to,
-                                                      StringBuffer inRangeClause,
-                                                      DbClause dbClause,
-                                                      String sort) {
+                                              StringBuffer inRangeClause,
+                                              DbClause dbClause,
+                                              String sort) {
         Objects.requireNonNull(inRangeClause, "inRangeClause is NULL");
         Objects.requireNonNull(dbClause, "dbClause is NULL");
         Objects.requireNonNull(sort, "sort is NULL");

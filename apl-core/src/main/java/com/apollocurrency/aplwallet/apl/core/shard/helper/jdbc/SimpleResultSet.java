@@ -154,7 +154,8 @@ public class SimpleResultSet implements ResultSet, ResultSetMetaData {
             String error = String.format("Incorrect java from type by data name/sql/presision/scale: '%s | %s | %s | %s'",
                 name, sqlType, precision, scale);
             log.error(error);
-            throw new RuntimeException(error);        }
+            throw new RuntimeException(error);
+        }
         addColumn(name, sqlType, sqlTypeClass.getTypeName(), precision, scale);
     }
 

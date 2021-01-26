@@ -17,9 +17,14 @@ public class EncryptToSelfMessageAppendixParser implements AppendixParser<Encryp
         if (!Appendix.hasAppendix(EncryptToSelfMessageAppendix.appendixName, jsonData)) {
             return null;
         }
-        if (((Map<?,?>) jsonData.get("encryptToSelfMessage")).get("data") == null) {
+        if (((Map<?, ?>) jsonData.get("encryptToSelfMessage")).get("data") == null) {
             throw new RuntimeException("Unencrypted message to self is not supported");
         }
         return new EncryptToSelfMessageAppendix(jsonData);
+    }
+
+    @Override
+    public Class<EncryptToSelfMessageAppendix> forClass() {
+        return EncryptToSelfMessageAppendix.class;
     }
 }

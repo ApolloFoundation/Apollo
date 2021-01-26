@@ -41,9 +41,9 @@
       <logger name="com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService" level="off" additivity="false">
         <appender-ref ref="STDOUT"/>
       </logger>
-      <logger name="com.apollocurrency.aplwallet.apl.core.service.appdata.impl.VaultKeyStoreServiceImpl" level="off"
+      <logger name="com.apollocurrency.aplwallet.vault.VaultKeyStoreServiceImpl" level="off"
               additivity="false">
-        <appender-ref ref="STDOUT"/>
+          <appender-ref ref="STDOUT"/>
       </logger>
       <logger name="com.zaxxer.hikari.pool.HikariPool" level="off" additivity="false">
         <appender-ref ref="STDOUT"/>

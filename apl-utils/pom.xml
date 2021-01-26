@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.48.0</version>
+    <version>1.48.2</version>
   </parent>
 
   <artifactId>apl-utils</artifactId>
@@ -33,6 +33,12 @@
           <artifactId>junit-bom</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-api</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <!-- EXT BOM DEPENDENCIES -->
@@ -109,11 +115,31 @@
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
     </dependency>
+
+    <dependency>
+      <groupId>javax.ws.rs</groupId>
+      <artifactId>javax.ws.rs-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.weld.servlet</groupId>
+      <artifactId>weld-servlet-shaded</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-sqlobject</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.web3j</groupId>
       <artifactId>rlp</artifactId>
       <version>${web3j-rlp.version}</version>
     </dependency>
+
     <!-- unit tests -->
     <dependency>
       <groupId>org.junit.platform</groupId>
@@ -128,6 +154,11 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.weld</groupId>
+      <artifactId>weld-junit5</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

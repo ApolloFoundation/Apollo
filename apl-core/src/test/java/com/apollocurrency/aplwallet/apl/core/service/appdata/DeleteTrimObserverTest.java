@@ -68,7 +68,7 @@ class DeleteTrimObserverTest {
         trimEvent.select(new AnnotationLiteral<TrimEvent>() {})
             .fireAsync(new DeleteOnTrimData(false, Collections.emptySet(), "some_table"));
         try {
-            Thread.sleep(1000);
+            Thread.sleep(200);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

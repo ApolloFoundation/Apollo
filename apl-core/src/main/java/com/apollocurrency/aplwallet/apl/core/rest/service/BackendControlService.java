@@ -14,11 +14,12 @@ import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
-import com.apollocurrency.aplwallet.apl.core.converter.Converter;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import lombok.Setter;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -136,8 +137,7 @@ public class BackendControlService {
     }
 
     private boolean chekDataBaseOK() {
-        Block b = blockDao.findLastBlock();
-        boolean res = b != null;
-        return res;
+        BlockEntity b = blockDao.findLastBlock();
+        return b != null;
     }
 }

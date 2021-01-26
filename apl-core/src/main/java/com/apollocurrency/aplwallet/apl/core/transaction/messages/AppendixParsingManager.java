@@ -9,7 +9,6 @@ import org.json.simple.JSONObject;
 
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
-import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -23,15 +22,11 @@ public class AppendixParsingManager {
 
     @Inject
     public AppendixParsingManager(Instance<AppendixParser<?>> instances) {
-        instances.iterator().forEachRemaining(e-> parsers.put(parameterClass(e.getClass()), e));
+        instances.iterator().forEachRemaining(e -> parsers.put(e.forClass(), e));
     }
 
     public AppendixParsingManager(Collection<AppendixParser<?>> parsers) {
-        this.parsers.putAll(parsers.stream().collect(Collectors.toMap(e-> parameterClass(e.getClass()), Function.identity())));
-    }
-
-    private Class<?> parameterClass(Class<?> parametrizedClass) {
-        return (Class<?>) ((ParameterizedType) parametrizedClass.getGenericSuperclass()).getActualTypeArguments()[0];
+        this.parsers.putAll(parsers.stream().collect(Collectors.toMap(AppendixParser::forClass, Function.identity())));
     }
 
     public List<? extends Appendix> parseAppendices(JSONObject object) {

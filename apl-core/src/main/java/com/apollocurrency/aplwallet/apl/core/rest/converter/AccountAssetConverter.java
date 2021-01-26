@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.dto.account.AccountAssetDTO;
 import com.apollocurrency.aplwallet.apl.core.converter.Converter;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
+import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
 public class AccountAssetConverter implements Converter<AccountAsset, AccountAssetDTO> {
 

@@ -4,26 +4,26 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
-import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
-import com.apollocurrency.aplwallet.apl.exchange.dao.EthGasStationInfoDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
-import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
+import com.apollocurrency.aplwallet.apl.dex.config.DexConfig;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
+import com.apollocurrency.aplwallet.apl.dex.core.model.SwapDataInfo;
+import com.apollocurrency.aplwallet.apl.dex.eth.model.EthGasInfo;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.EthGasStationInfoService;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -55,7 +55,7 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.OFFER_VALIDATE_OK;
 public class DexValidationServiceImpl implements IDexValidator {
     private final DexSmartContractService dexSmartContractService;
     private final EthereumWalletService ethereumWalletService;
-    private final EthGasStationInfoDao ethGasStationInfoDao;
+    private final EthGasStationInfoService ethGasStationInfoService;
     private final AccountService accountService;
     private final TimeService timeService;
     private final PhasingPollService phasingPollService;
@@ -64,7 +64,7 @@ public class DexValidationServiceImpl implements IDexValidator {
     private final BlockchainConfig blockchainConfig;
 
     @Inject
-    DexValidationServiceImpl(DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, EthGasStationInfoDao ethGasStationInfoDao,
+    DexValidationServiceImpl(DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService, EthGasStationInfoService ethGasStationInfoService,
                              AccountService accountService,
                              TimeService timeService,
                              PhasingPollService phasingPollService,
@@ -74,7 +74,7 @@ public class DexValidationServiceImpl implements IDexValidator {
     ) {
         this.dexSmartContractService = Objects.requireNonNull(dexSmartContractService, "dexSmartContractService is null");
         this.ethereumWalletService = Objects.requireNonNull(ethereumWalletService, "ethereumWalletService is null");
-        this.ethGasStationInfoDao = Objects.requireNonNull(ethGasStationInfoDao, "ethGasStationInfoDao is null");
+        this.ethGasStationInfoService = Objects.requireNonNull(ethGasStationInfoService, "ethGasStationInfoDao is null");
         this.accountService = Objects.requireNonNull(accountService, "accountService is null");
         this.timeService = Objects.requireNonNull(timeService, "timeService is null");
         this.phasingPollService = Objects.requireNonNull(phasingPollService, "phasingPollService is null");
@@ -126,7 +126,7 @@ public class DexValidationServiceImpl implements IDexValidator {
     boolean checkGasPayingAbility(DexOrder hisOrder) {
         EthGasInfo ethGasInfo = null;
         try {
-            ethGasInfo = ethGasStationInfoDao.getEthPriceInfo();
+            ethGasInfo = ethGasStationInfoService.getEthPriceInfo();
 
             if (ethGasInfo == null) {
                 log.error("Exception got while getting eth gas price: ");

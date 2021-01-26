@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
-import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
-
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
@@ -25,9 +23,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataExten
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataTimestamp;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
@@ -47,6 +45,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
 
 @Slf4j
 @Singleton
@@ -255,6 +255,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
 
     /**
      * compose db_id list for in (id,..id) SQL luceneQuery
+     *
      * @param luceneQuery lucene language luceneQuery pattern
      * @return composed sql luceneQuery part
      */
@@ -283,9 +284,9 @@ public class TaggedDataServiceImpl implements TaggedDataService {
     }
 
     public DbIterator<TaggedData> fetchTaggedDataByParams(int from, int to,
-                                                      StringBuffer inRangeClause,
-                                                      DbClause dbClause,
-                                                      String sort) {
+                                                          StringBuffer inRangeClause,
+                                                          DbClause dbClause,
+                                                          String sort) {
         Objects.requireNonNull(inRangeClause, "inRangeClause is NULL");
         Objects.requireNonNull(dbClause, "dbClause is NULL");
         Objects.requireNonNull(sort, "sort is NULL");

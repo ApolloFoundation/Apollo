@@ -1128,7 +1128,8 @@ components:
             query:
               $ref: '#/components/schemas/QueryObject'
     TxReceipt:
-      description: Transaction receipt
+      description: Transaction receipt. The lightweight and compact representation of the blockchain transaction.
+        Doesn't support the transaction type conversion.
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object

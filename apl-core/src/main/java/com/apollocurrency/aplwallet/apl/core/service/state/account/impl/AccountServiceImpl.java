@@ -20,14 +20,11 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
-import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
-import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.utils.AccountGeneratorUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
@@ -206,7 +203,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<Block> getAccountBlocks(long accountId, int from, int to, int timestamp) {
-        return blockChainInfoService.getBlocksByAccountStream(accountId, from, to, timestamp);
+        return blockChainInfoService.getBlocksByAccount(accountId, from, to, timestamp);
     }
 
     /**
@@ -500,16 +497,6 @@ public class AccountServiceImpl implements AccountService {
         }
 
         return balances;
-    }
-
-    @Override
-    public ApolloFbWallet generateUserAccounts(byte[] secretApl) {
-        ApolloFbWallet apolloWallet = new ApolloFbWallet();
-        AplWalletKey aplAccount = secretApl == null ? AccountGeneratorUtil.generateApl() : new AplWalletKey(secretApl);
-
-        apolloWallet.addAplKey(aplAccount);
-        apolloWallet.addEthKey(AccountGeneratorUtil.generateEth());
-        return apolloWallet;
     }
 
     //Delegated from AccountPublicKeyService

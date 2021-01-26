@@ -9,12 +9,17 @@ import org.json.simple.JSONObject;
 import javax.inject.Singleton;
 
 @Singleton
-public class MessageAppendixParser implements AppendixParser<MessageAppendix>{
+public class MessageAppendixParser implements AppendixParser<MessageAppendix> {
     @Override
     public MessageAppendix parse(JSONObject jsonData) {
         if (!Appendix.hasAppendix(MessageAppendix.appendixName, jsonData)) {
             return null;
         }
         return new MessageAppendix(jsonData);
+    }
+
+    @Override
+    public Class<MessageAppendix> forClass() {
+        return MessageAppendix.class;
     }
 }

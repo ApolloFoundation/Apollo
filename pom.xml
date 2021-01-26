@@ -5,7 +5,7 @@
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apollo-blockchain</artifactId>
-  <version>1.48.0</version>
+  <version>1.48.2</version>
   <packaging>pom</packaging>
   <name>apollo-blockchain</name>
 
@@ -43,6 +43,8 @@
     <module>apl-conf</module>
     <module>apl-exec</module>
     <module>apl-db-updater</module>
+    <module>apl-dex</module>
+    <module>apl-vault-wallet</module>
   </modules>
 
   <properties>
@@ -62,7 +64,7 @@
     <antifraud.version>1.0.11</antifraud.version>
 
     <!-- We have to define this property and change it accordingly for correct version of packages -->
-    <apl-bom-ext.version>1.0.4</apl-bom-ext.version>
+    <apl-bom-ext.version>1.0.5</apl-bom-ext.version>
     <base-dist-dir>ApolloWallet/apollo-blockchain</base-dist-dir>
 
     <build-helper-maven-plugin.version>1.9.1</build-helper-maven-plugin.version>

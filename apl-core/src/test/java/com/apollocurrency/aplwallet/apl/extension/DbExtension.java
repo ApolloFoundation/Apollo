@@ -18,7 +18,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.extension.AfterAllCallback;
-import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -50,13 +49,13 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
                        PropertiesHolder propertiesHolder,
                        String schemaScriptPath,
                        String dataScriptPath) {
-        log.trace("JdbcUrl: {}", ((MariaDBContainer)jdbcDatabaseContainer).getJdbcUrl());
+        log.trace("JdbcUrl: {}", ((MariaDBContainer) jdbcDatabaseContainer).getJdbcUrl());
 
-        log.trace("Username: {}", ((MariaDBContainer)jdbcDatabaseContainer).getUsername());
-        dbProperties.setDbUsername(((MariaDBContainer)jdbcDatabaseContainer).getUsername());
-        log.trace("User pass: {}", ((MariaDBContainer)jdbcDatabaseContainer).getPassword());
-        dbProperties.setDbPassword(((MariaDBContainer)jdbcDatabaseContainer).getPassword());
-        log.trace("DriverClassName: {}", ((MariaDBContainer)jdbcDatabaseContainer).getDriverClassName());
+        log.trace("Username: {}", ((MariaDBContainer) jdbcDatabaseContainer).getUsername());
+        dbProperties.setDbUsername(((MariaDBContainer) jdbcDatabaseContainer).getUsername());
+        log.trace("User pass: {}", ((MariaDBContainer) jdbcDatabaseContainer).getPassword());
+        dbProperties.setDbPassword(((MariaDBContainer) jdbcDatabaseContainer).getPassword());
+        log.trace("DriverClassName: {}", ((MariaDBContainer) jdbcDatabaseContainer).getDriverClassName());
         log.trace("MappedPort: {}", jdbcDatabaseContainer.getMappedPort(3306));
         if (jdbcDatabaseContainer.getMappedPort(3306) != null) {
             dbProperties.setDatabasePort(jdbcDatabaseContainer.getMappedPort(3306));
@@ -65,7 +64,7 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
         dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
         dbProperties.setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
 
-        log.trace("DockerDaemonInfo: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
+//        log.trace("DockerDaemonInfo: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
         log.trace("DockerImageName: {}", jdbcDatabaseContainer.getDockerImageName());
         log.trace("ContainerId: {}", jdbcDatabaseContainer.getContainerId());
         log.trace("BoundPortNumbers: {}", jdbcDatabaseContainer.getBoundPortNumbers());
@@ -172,7 +171,7 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
         tableWithColumns.forEach((table, columns) -> DbUtils.inTransaction(getDatabaseManager(), (con) -> {
             try {
                 if (columns.size() > 0) {
-                    fullTextSearchService.createSearchIndex(con, table,  String.join(",", columns));
+                    fullTextSearchService.createSearchIndex(con, table, String.join(",", columns));
                 } else {
                     log.warn("NOTHING for fields... ");
                 }
