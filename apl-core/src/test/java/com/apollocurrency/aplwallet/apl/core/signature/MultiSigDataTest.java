@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +41,7 @@ class MultiSigDataTest extends AbstractSigData {
 
         //THEN
         assertEquals(1, multiSigData.getThresholdParticipantCount());
-        assertEquals(DEFAULT_MULTISIG_V3_PARAMS, multiSigData.getParams());
+        assertEquals(Collections.emptyList(), multiSigData.getParams());
         assertEquals(8 + 2 + 8 + 64, multiSigData.getSize());
     }
 

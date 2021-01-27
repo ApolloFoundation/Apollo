@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.AccountPropertyDTO;
-import com.apollocurrency.aplwallet.apl.core.converter.Converter;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 

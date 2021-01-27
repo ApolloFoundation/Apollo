@@ -153,13 +153,15 @@ public interface Transaction {
 
     List<AbstractAppendix> getAppendages();
 
+    byte[] getAppendagesBytes();
+
     int getECBlockHeight();
 
     long getECBlockId();
 
     /**
      * Transaction V3 properties
-    */
+     */
     String getChainId();
 
     /**
