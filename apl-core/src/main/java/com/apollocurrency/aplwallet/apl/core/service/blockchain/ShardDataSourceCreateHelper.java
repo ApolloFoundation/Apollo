@@ -27,7 +27,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class ShardDataSourceCreateHelper {
     public static final int MAX_CACHE_SIZE = 16 * 1024; // 16mb
-    public static final int MAX_CONNECTIONS = 60;
+    public static final int MAX_CONNECTIONS = 10; // change from 60 to 10 for every shard
     public static final int MAX_MEMORY_ROWS = 10_000;
     private static final Logger log = getLogger(ShardDataSourceCreateHelper.class);
     private final DatabaseManager databaseManager;
