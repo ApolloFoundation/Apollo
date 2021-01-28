@@ -13,10 +13,8 @@ public class LedgerEntry {
     private Long ledgerId;
     private boolean isTransactionEvent;
     private Long balance;
-    //   private AccountLedger.LedgerHolding holdingType;
     private Long change;
     private String block;
-    //    private AccountLedger.LedgerEvent eventType;
     private String event;
     private BasicAccount account;
     private Long height;
@@ -46,14 +44,6 @@ public class LedgerEntry {
         return balance;
     }
 
-//    public AccountLedger.LedgerHolding getHoldingType() {
-//        return holdingType;
-//    }
-//
-//    public void setHoldingType(AccountLedger.LedgerHolding holdingType) {
-//        this.holdingType = holdingType;
-//    }
-
     public void setBalance(Long balance) {
         this.balance = balance;
     }
@@ -69,14 +59,6 @@ public class LedgerEntry {
     public String getBlock() {
         return block;
     }
-//
-//    public AccountLedger.LedgerEvent getEventType() {
-//        return eventType;
-//    }
-//
-//    public void setEventType(AccountLedger.LedgerEvent eventType) {
-//        this.eventType = eventType;
-//    }
 
     public void setBlock(String block) {
         this.block = block;
@@ -105,12 +87,6 @@ public class LedgerEntry {
     public Long getTimestamp() {
         return timestamp;
     }
-
-//    @Override
-//    public int hashCode() {
-//
-//        return Objects.hash(getLedgerId(), isTransactionEvent(), getBalance(), getHoldingType(), getChange(), getBlock(), getEventType(), getEvent(), getAccount(), getHeight(), getTimestamp(), getTransaction());
-//    }
 
     public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
@@ -147,20 +123,10 @@ public class LedgerEntry {
     public String toString() {
         return "LedgerEntry{" +
             "balance=" + balance +
-//                ", holdingType=" + holdingType +
             ", change=" + change +
-//                ", eventType=" + eventType +
             ", transaction=" + transaction +
             '}';
     }
-
-//    public boolean isPrivate() {
-//        return AccountLedger.LedgerEvent.PRIVATE_PAYMENT == eventType;
-//    }
-
-//    public boolean isPublic() {
-//        return !isPrivate();
-//    }
 
     public boolean isNull() {
         return ledgerId == null && account == null && block == null && timestamp == null;

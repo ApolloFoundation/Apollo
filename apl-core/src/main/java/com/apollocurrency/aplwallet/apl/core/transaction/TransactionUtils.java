@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,43 @@ public class TransactionUtils {
             }
         }
         return false;
+    }
+
+    public static byte getVersionSubtypeByte(Transaction transaction) {
+        return (byte) ((transaction.getVersion() << 4) & 0xf0 | transaction.getType().getSpec().getSubtype() & 0x0f);
+    }
+
+    public static int getTransactionFlags(Transaction transaction) {
+        int flags = 0;
+        int position = 1;
+        if (transaction.getMessage() != null) {
+            flags |= position;
+        }
+        position <<= 1;
+        if (transaction.getEncryptedMessage() != null) {
+            flags |= position;
+        }
+        position <<= 1;
+        if (transaction.getPublicKeyAnnouncement() != null) {
+            flags |= position;
+        }
+        position <<= 1;
+        if (transaction.getEncryptToSelfMessage() != null) {
+            flags |= position;
+        }
+        position <<= 1;
+        if (transaction.getPhasing() != null) {
+            flags |= position;
+        }
+        position <<= 1;
+        if (transaction.getPrunablePlainMessage() != null) {
+            flags |= position;
+        }
+        position <<= 1;
+        if (transaction.getPrunableEncryptedMessage() != null) {
+            flags |= position;
+        }
+        return flags;
     }
 
 }

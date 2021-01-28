@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
+import com.apollocurrency.aplwallet.apl.core.transaction.bind.WriteBuffer;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
@@ -53,6 +54,17 @@ public abstract class AbstractAppendix implements Appendix {
 
     public int getMyFullSize() {
         return getMySize();
+    }
+
+    @Override
+    public void putBytes(WriteBuffer buffer) {
+        if (version > 0) {
+            buffer.write(version);
+        }
+        ByteBuffer appBuffer = ByteBuffer.allocate(getMySize());
+        putBytes(appBuffer);
+
+        buffer.write(appBuffer.array());
     }
 
     @Override

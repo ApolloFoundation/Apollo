@@ -53,6 +53,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionUtils.getTransactionFlags;
+
 @Slf4j
 public class TransactionImpl implements Transaction {
 
@@ -543,36 +545,7 @@ public class TransactionImpl implements Transaction {
     }
 
     private int getFlags() {
-        int flags = 0;
-        int position = 1;
-        if (message != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (encryptedMessage != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (publicKeyAnnouncement != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (encryptToSelfMessage != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (phasing != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (prunablePlainMessage != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (prunableEncryptedMessage != null) {
-            flags |= position;
-        }
-        return flags;
+        return getTransactionFlags(this);
     }
 
     /**
