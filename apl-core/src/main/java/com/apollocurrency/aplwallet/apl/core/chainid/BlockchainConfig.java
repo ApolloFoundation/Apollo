@@ -10,12 +10,15 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -267,5 +270,29 @@ public class BlockchainConfig {
 
     public void resetJustUpdated() {
         this.isJustUpdated = false; // reset flag
+    }
+
+    /**
+     * @param fromHeight height from which height configs should be fetched (inclusive)
+     * @param toHeight height to which height configs should be fetched (exclusive)
+     * @return ordered list of height configs (from lover height to higher) between given heights
+     */
+    public List<HeightConfig> getAllActiveConfigsBetweenHeights(int fromHeight, int toHeight) {
+        if (fromHeight >= toHeight) {
+            throw new IllegalArgumentException("fromHeight should be lesser than toHeight, given: fromHeight=" + fromHeight + ", toHeight=" + toHeight);
+        }
+        HeightConfig configAtHeight = getConfigAtHeight(fromHeight - 1); // active config at the beginning of [fromHeight; toHeight] range
+
+        ArrayList<HeightConfig> heightConfigs = new ArrayList<>(heightConfigMap
+            .entrySet()
+            .stream()
+            .filter(e -> e.getKey() >= fromHeight && e.getKey() < toHeight)
+            .map(Map.Entry::getValue)
+            .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(HeightConfig::getHeight)))));
+        if (configAtHeight != null) {
+            heightConfigs.add(configAtHeight);
+        }
+        return heightConfigs;
+
     }
 }

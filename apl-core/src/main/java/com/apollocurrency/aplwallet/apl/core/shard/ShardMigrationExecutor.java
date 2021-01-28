@@ -11,9 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.db.ShardAddConstraintsSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.db.ShardInitTableSchemaVersion;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
-import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.BackupDbBeforeShardCommand;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CopyDataCommand;
@@ -61,9 +58,6 @@ public class ShardMigrationExecutor {
     private final DerivedTablesRegistry derivedTablesRegistry;
     private final PrevBlockInfoExtractor prevBlockInfoExtractor;
     private volatile boolean backupDb;
-    private BlockchainProcessor blockchainProcessor;
-    private PeersService peers;
-    private GeneratorService generatorService;
 
     @Inject
     public ShardMigrationExecutor(ShardEngine shardEngine,
@@ -73,10 +67,7 @@ public class ShardMigrationExecutor {
                                   ExcludedTransactionDbIdExtractor excludedTransactionDbIdExtractor,
                                   PrevBlockInfoExtractor prevBlockInfoExtractor,
                                   DerivedTablesRegistry registry,
-                                  BlockchainProcessor blockchainProcessor,
-                                  PeersService peers,
-                                  @Property(value = "apl.sharding.backupDb", defaultValue = "false") boolean backupDb,
-                                  GeneratorService generatorService) {
+                                  @Property(value = "apl.sharding.backupDb", defaultValue = "false") boolean backupDb) {
         this.shardEngine = Objects.requireNonNull(shardEngine, "managementReceiver is NULL");
         this.migrateStateEvent = Objects.requireNonNull(migrateStateEvent, "migrateStateEvent is NULL");
         this.shardHashCalculator = Objects.requireNonNull(shardHashCalculator, "sharding hash calculator is NULL");
@@ -85,9 +76,6 @@ public class ShardMigrationExecutor {
         this.derivedTablesRegistry = Objects.requireNonNull(registry, "derived table registry is null");
         this.backupDb = backupDb;
         this.prevBlockInfoExtractor = Objects.requireNonNull(prevBlockInfoExtractor);
-        this.peers = peers;
-        this.blockchainProcessor = blockchainProcessor;
-        this.generatorService = generatorService;
     }
 
     public boolean backupDb() {
@@ -208,20 +196,7 @@ public class ShardMigrationExecutor {
         dataMigrateOperations.add(shardOperation);
     }
 
-    private void stopNetOperations() {
-        peers.suspend();
-        generatorService.suspendForging();
-        blockchainProcessor.suspendBlockchainDownloading();
-    }
-
-    private void resumeNetOperations() {
-        peers.resume();
-        blockchainProcessor.resumeBlockchainDownloading();
-        generatorService.resumeForging();
-    }
-
     public MigrateState executeAllOperations() {
-        stopNetOperations();
         long start = System.currentTimeMillis();
         log.debug("START SHARDING...");
         MigrateState state = MigrateState.INIT;
@@ -236,7 +211,6 @@ public class ShardMigrationExecutor {
             }
         }
         log.debug("FINISHED SHARDING ----- '{}' in {} ms", state, System.currentTimeMillis() - start);
-        resumeNetOperations();
         return state;
     }
 

@@ -6,9 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.config.TrimConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
@@ -29,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.file.Files;
@@ -54,7 +51,6 @@ public class ShardService {
     private final ShardMigrationExecutor shardMigrationExecutor;
     private final AplAppStatus aplAppStatus;
     private final PropertiesHolder propertiesHolder;
-    private final Event<TrimConfig> trimEvent;
     private final Event<DbHotSwapConfig> dbEvent;
     private final TrimService trimService;
     private final GlobalSync globalSync;
@@ -66,7 +62,7 @@ public class ShardService {
                         DirProvider dirProvider, Zip zip, DatabaseManager databaseManager,
                         BlockchainConfig blockchainConfig, ShardRecoveryDao shardRecoveryDao,
                         ShardMigrationExecutor shardMigrationExecutor, AplAppStatus aplAppStatus,
-                        PropertiesHolder propertiesHolder, Event<TrimConfig> trimEvent, GlobalSync globalSync,
+                        PropertiesHolder propertiesHolder, GlobalSync globalSync,
                         TrimService trimService, Event<DbHotSwapConfig> dbEvent) {
         this.shardDao = shardDao;
         this.blockchainProcessor = blockchainProcessor;
@@ -79,7 +75,6 @@ public class ShardService {
         this.shardMigrationExecutor = shardMigrationExecutor;
         this.aplAppStatus = aplAppStatus;
         this.propertiesHolder = propertiesHolder;
-        this.trimEvent = trimEvent;
         this.trimService = trimService;
         this.dbEvent = dbEvent;
         this.globalSync = globalSync;
@@ -95,12 +90,6 @@ public class ShardService {
 
     public List<Shard> getAllShards() {
         return shardDao.getAllShard();
-    }
-
-    private void updateTrimConfig(boolean enableTrim, boolean clearQueue) {
-        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
-        }).fire(new TrimConfig(enableTrim, clearQueue));
-
     }
 
     public boolean isSharding() {
@@ -127,7 +116,6 @@ public class ShardService {
                 }
             }
 
-            updateTrimConfig(false, true);
             blockchainProcessor.suspendBlockchainDownloading();
             try {
                 log.debug("Waiting finish of last trim");
@@ -164,7 +152,6 @@ public class ShardService {
                 }
             } finally {
                 blockchainProcessor.resumeBlockchainDownloading();
-                updateTrimConfig(true, false);
             }
         } else {
             log.debug("Backup before shard {} does not exist", shardId);
@@ -256,7 +243,6 @@ public class ShardService {
                 Shard lastShard = shardDao.getLastShard();
                 if (lastShard == null || newShardBlockHeight > lastShard.getShardHeight()) {
                     isSharding = true;
-                    updateTrimConfig(false, false);
                     // quick create records for new Shard and Recovery process for later use
                     long nextShardId = shardDao.getNextShardId();
                     log.debug("Prepare for next sharding = '{}' at currentBlockchainHeight = '{}', newShardBlockHeight = '{}'",
@@ -266,7 +252,6 @@ public class ShardService {
                     this.shardingProcess = CompletableFuture.supplyAsync(() -> performSharding(newShardBlockHeight, nextShardId, MigrateState.INIT));
                     this.shardingProcess.handle((result, ex) -> {
                         blockchain.setShardInitialBlock(blockchain.findFirstBlock());
-                        updateTrimConfig(true, false);
                         isSharding = false;
                         return result;
                     });

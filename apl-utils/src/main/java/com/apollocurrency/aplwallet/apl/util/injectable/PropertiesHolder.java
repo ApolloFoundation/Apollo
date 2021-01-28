@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import lombok.extern.slf4j.Slf4j;
@@ -123,7 +124,7 @@ public class PropertiesHolder {
     }
 
     public int MAX_ROLLBACK() {
-        return Math.max(getIntProperty("apl.maxRollback"), 720);
+        return Math.max(getIntProperty("apl.maxRollback"), Constants.MAX_AUTO_ROLLBACK);
     }
 
     public int FORGING_DELAY() {

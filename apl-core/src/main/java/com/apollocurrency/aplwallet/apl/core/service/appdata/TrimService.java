@@ -32,7 +32,6 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.DEFAULT_PRUNABLE_U
 public class TrimService {
     @Getter
     private final int maxRollback;
-    private final int trimFrequency;
     private final DatabaseManager dbManager;
     private final DerivedTablesRegistry dbTablesRegistry;
     private final TrimDao trimDao;
@@ -48,14 +47,13 @@ public class TrimService {
                        TimeService timeService,
                        Event<TrimConfig> trimConfigEvent,
                        TrimDao trimDao,
-                       @Property(value = "apl.maxRollback", defaultValue = "720") int maxRollback
+                       @Property(value = "apl.maxRollback", defaultValue = "" + Constants.MAX_AUTO_ROLLBACK) int maxRollback
     ) {
         this.maxRollback = maxRollback;
         this.trimDao = Objects.requireNonNull(trimDao, "trimDao is NULL");
         this.dbManager = Objects.requireNonNull(databaseManager, "Database manager cannot be null");
         this.dbTablesRegistry = Objects.requireNonNull(derivedDbTablesRegistry, "Db tables registry cannot be null");
         this.timeService = Objects.requireNonNull(timeService, "EpochTime should not be null");
-        this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
         this.trimConfigEvent = Objects.requireNonNull(trimConfigEvent, "TrimConfig event should not be null");
     }
 
@@ -64,38 +62,6 @@ public class TrimService {
         return trimEntry == null ? 0 : Math.max(trimEntry.getHeight() - maxRollback, 0);
     }
 
-
-    public void init(int height, int shardInitialBlockHeight) {
-        log.debug("TRIM: init() at height = {}, shard initial height={}", height, shardInitialBlockHeight);
-        lock.lock();
-        try {
-            TrimEntry trimEntry = trimDao.get();
-            if (trimEntry == null) {
-                log.info("Trim was not saved previously (existing database on new code). Skip trim");
-                trimDao.save(new TrimEntry(null, height, true));
-                return;
-            }
-            int lastTrimHeight = trimEntry.getHeight();
-            log.info("Last trim height '{}' was done? ='{}', supplied height {}",
-                lastTrimHeight, trimEntry.isDone(), height);
-            if (lastTrimHeight < shardInitialBlockHeight) {
-                //we need to change the lastTrimHeight value according to the first block in the latest shard
-                lastTrimHeight = shardInitialBlockHeight;
-                log.info("Set last trim height to shard initial block height={}", lastTrimHeight);
-            }
-            if (!trimEntry.isDone()) {
-                log.info("Finish trim at height {}", lastTrimHeight);
-                trimDerivedTables(lastTrimHeight, false);
-            }
-            //TODO: Do we really need to do so many iterations or something about two-three heights from tail would be enough?
-            for (int i = lastTrimHeight + trimFrequency; i <= height; i += trimFrequency) {
-                log.info("Perform trim on height {}", i);
-                trimDerivedTables(i, false);
-            }
-        } finally {
-            lock.unlock();
-        }
-    }
 
     public void trimDerivedTables(int height, boolean async) {
         log.debug("TRIM: trimDerivedTables on height={}, async={}", height, async);
@@ -189,7 +155,7 @@ public class TrimService {
         int epochTime = timeService.getEpochTime();
         int pruningTime = epochTime - epochTime % DEFAULT_PRUNABLE_UPDATE_PERIOD;
 
-        for (DerivedTableInterface table : dbTablesRegistry.getDerivedTables()) {
+        for (DerivedTableInterface<?> table : dbTablesRegistry.getDerivedTables()) {
             long startTime = System.currentTimeMillis();
             table.prune(pruningTime);
             table.trim(height, isSharding);
