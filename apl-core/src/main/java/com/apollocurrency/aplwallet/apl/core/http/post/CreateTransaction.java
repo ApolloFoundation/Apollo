@@ -242,9 +242,11 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
                 throw new AplException.NotValidException(NOT_ENOUGH_APL);
             }
 
-            signer.sign(transaction, txRequest.getKeySeed());
+            if (txRequest.getKeySeed() != null) {
+                signer.sign(transaction, txRequest.getKeySeed());
+            }
 
-            if (txRequest.isBroadcast()) {
+            if (txRequest.isBroadcast() && transaction.getSignature() != null) {
                 lookupTransactionProcessor().broadcast(transaction);
             } else if (txRequest.isValidate()) {
                 validator.validateFully(transaction);
