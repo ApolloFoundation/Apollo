@@ -43,6 +43,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventBinding.literal;
@@ -57,6 +58,7 @@ import static com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil.toList;
 public class AccountServiceImpl implements AccountService {
 
     public static final int EFFECTIVE_BALANCE_CONFIRMATIONS = 1440;
+    public static final Set<Integer> BLOCK_HEIGHTS = Set.of(6851525, 6851444);
 
     private final AccountTable accountTable;
     private final AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
@@ -225,7 +227,7 @@ public class AccountServiceImpl implements AccountService {
         if (account.getPublicKey() == null) {
             account.setPublicKey(accountPublicKeyService.getPublicKey(account.getId()));
         }
-        if (account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null || height - account.getPublicKey().getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
+        if ((account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null || height - account.getPublicKey().getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) && !BLOCK_HEIGHTS.contains(height)) {
             if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
                 log.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
                     height,
