@@ -17,11 +17,11 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class TransactionSerializerImpl implements TransactionSerializer {
+public class TransactionJsonSerializerImpl implements TransactionJsonSerializer {
     private final PrunableLoadingService prunableService;
 
     @Inject
-    public TransactionSerializerImpl(PrunableLoadingService prunableService) {
+    public TransactionJsonSerializerImpl(PrunableLoadingService prunableService) {
         this.prunableService = prunableService;
     }
 

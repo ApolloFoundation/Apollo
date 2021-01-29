@@ -15,8 +15,8 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.PhasingPollServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializerImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.dex.config.DexConfig;
 import com.apollocurrency.aplwallet.apl.dex.core.model.DBSortOrder;
@@ -111,7 +111,7 @@ class DexServiceTest {
 
     @BeforeEach
     void setUp() {
-        TransactionSerializer serializer = new TransactionSerializerImpl(mock(PrunableLoadingService.class));
+        TransactionJsonSerializer serializer = new TransactionJsonSerializerImpl(mock(PrunableLoadingService.class));
         dexService = new DexService(ethWalletService, dexOrderDao, dexOrderTable, transactionProcessor, dexSmartContractService, secureStorageService,
             dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService,
             approvedResultTable, mandatoryTransactionDao, serializer, accountService, blockchainConfig, cache, dexConfig, KMSService);

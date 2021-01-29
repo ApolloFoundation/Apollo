@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -40,7 +40,7 @@ import javax.inject.Singleton;
 @Singleton
 public class GetTransactions extends PeerRequestHandler {
     private static PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-    private static TransactionSerializer transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
+    private static TransactionJsonSerializer transactionJsonSerializer = CDI.current().select(TransactionJsonSerializer.class).get();
 
     public GetTransactions() {
     }
@@ -65,7 +65,7 @@ public class GetTransactions extends PeerRequestHandler {
                 long id = Long.parseUnsignedLong((String) transactionId);
                 Transaction transaction = blockchain.getTransaction(id);
                 if (transaction != null) {
-                    JSONObject transactionJSON = transactionSerializer.toJson(transaction);
+                    JSONObject transactionJSON = transactionJsonSerializer.toJson(transaction);
                     transactionArray.add(transactionJSON);
                 }
             });

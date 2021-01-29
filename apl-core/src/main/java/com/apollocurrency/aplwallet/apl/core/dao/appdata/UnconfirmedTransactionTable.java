@@ -16,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -40,13 +40,13 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
 
     private final LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory;
     private final TransactionBuilder transactionBuilder;
-    private final TransactionSerializer transactionSerializer;
+    private final TransactionJsonSerializer transactionJsonSerializer;
     private final IteratorToStreamConverter<UnconfirmedTransaction> streamConverter;
 
     @Inject
     public UnconfirmedTransactionTable(LongKeyFactory<UnconfirmedTransaction> transactionKeyFactory,
                                        TransactionBuilder transactionBuilder,
-                                       TransactionSerializer transactionSerializer,
+                                       TransactionJsonSerializer transactionJsonSerializer,
                                        DerivedTablesRegistry derivedDbTablesRegistry,
                                        DatabaseManager databaseManager,
                                        Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
@@ -54,7 +54,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
             derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
         this.transactionKeyFactory = transactionKeyFactory;
         this.transactionBuilder = transactionBuilder;
-        this.transactionSerializer = transactionSerializer;
+        this.transactionJsonSerializer = transactionJsonSerializer;
         this.streamConverter = new IteratorToStreamConverter<>();
     }
 
@@ -88,7 +88,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
             pstmt.setLong(++i, unconfirmedTransaction.getFeePerByte());
             pstmt.setInt(++i, unconfirmedTransaction.getExpiration());
             pstmt.setBytes(++i, unconfirmedTransaction.getCopyTxBytes());
-            JSONObject prunableJSON = transactionSerializer.getPrunableAttachmentJSON(unconfirmedTransaction);
+            JSONObject prunableJSON = transactionJsonSerializer.getPrunableAttachmentJSON(unconfirmedTransaction);
             if (prunableJSON != null) {
                 pstmt.setString(++i, prunableJSON.toJSONString());
             } else {

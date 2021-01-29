@@ -95,7 +95,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializerImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator;
@@ -220,7 +220,7 @@ class CsvExporterTest extends DbContainerBaseTest {
         TaggedDataTimestampDao.class,
         TaggedDataExtendDao.class,
         FullTextConfigImpl.class,
-        DirProvider.class, TransactionSerializerImpl.class,
+        DirProvider.class, TransactionJsonSerializerImpl.class,
         AplAppStatus.class, PrunableMessageTable.class,
         PhasingPollResultTable.class,
         PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class,

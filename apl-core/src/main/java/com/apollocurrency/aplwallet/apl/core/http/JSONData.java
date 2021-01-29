@@ -95,7 +95,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferSe
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
@@ -147,7 +147,7 @@ public final class JSONData {
     private static ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
     private static FundingMonitorService fundingMonitorService = CDI.current().select(FundingMonitorService.class).get();
     private static PrunableLoadingService prunableLoadingService = CDI.current().select(PrunableLoadingService.class).get();
-    private static TransactionSerializer transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
+    private static TransactionJsonSerializer transactionJsonSerializer = CDI.current().select(TransactionJsonSerializer.class).get();
 
     private JSONData() {
     } // never
@@ -1351,7 +1351,7 @@ public final class JSONData {
     }
 
     public static void putPrunableAttachment(JSONObject json, Transaction transaction) {
-        JSONObject prunableAttachment = transactionSerializer.getPrunableAttachmentJSON(transaction);
+        JSONObject prunableAttachment = transactionJsonSerializer.getPrunableAttachmentJSON(transaction);
         if (prunableAttachment != null) {
             json.put("prunableAttachmentJSON", prunableAttachment);
         }

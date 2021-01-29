@@ -70,7 +70,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
@@ -169,7 +169,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final ShardsDownloadService shardDownloader;
     private final ShardDao shardDao;
     private final PrunableLoadingService prunableService;
-    private final TransactionSerializer transactionSerializer;
+    private final TransactionJsonSerializer transactionJsonSerializer;
     private final PeersService peersService;
     private final BlockchainConfigUpdater blockchainConfigUpdater;
     private final FullTextSearchService fullTextSearchProvider;
@@ -210,7 +210,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    TaskDispatchManager taskDispatchManager, Event<List<Transaction>> txEvent,
                                    Event<BlockchainConfig> blockchainEvent,
                                    TransactionBuilder transactionBuilder, ShardDao shardDao,
-                                   PrunableLoadingService prunableService, TransactionSerializer transactionSerializer, TimeService timeService,
+                                   PrunableLoadingService prunableService, TransactionJsonSerializer transactionJsonSerializer, TimeService timeService,
                                    AccountService accountService,
                                    AccountControlPhasingService accountControlPhasingService,
                                    BlockchainConfigUpdater blockchainConfigUpdater,
@@ -244,7 +244,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.dexService = dexService;
         this.transactionBuilder = transactionBuilder;
         this.prunableService = prunableService;
-        this.transactionSerializer = transactionSerializer;
+        this.transactionJsonSerializer = transactionJsonSerializer;
         this.networkService = getNetworkServiceExecutor();
         this.blockApplier = blockApplier;
         this.aplAppStatus = aplAppStatus;
@@ -1440,12 +1440,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                             byte[] transactionBytes = transaction.bytes();
                                             if (!Arrays.equals(transactionBytes, transactionBuilder.newTransactionBuilder(transactionBytes).build().bytes())) {
                                                 throw new AplException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
-                                                    + transactionSerializer.toJson(transaction).toJSONString());
+                                                    + transactionJsonSerializer.toJson(transaction).toJSONString());
                                             }
-                                            JSONObject transactionJSON = (JSONObject) JSONValue.parse(transactionSerializer.toJson(transaction).toJSONString());
+                                            JSONObject transactionJSON = (JSONObject) JSONValue.parse(transactionJsonSerializer.toJson(transaction).toJSONString());
                                             if (!Arrays.equals(transactionBytes, transactionBuilder.newTransactionBuilder(transactionJSON).build().bytes())) {
                                                 throw new AplException.NotValidException("Transaction JSON cannot be parsed back to the same transaction: "
-                                                    + transactionSerializer.toJson(transaction).toJSONString());
+                                                    + transactionJsonSerializer.toJson(transaction).toJSONString());
                                             }
                                         }
                                     }

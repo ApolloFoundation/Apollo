@@ -83,7 +83,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializerImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator;
@@ -158,17 +158,17 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             BlockchainImpl.class, DaoConfig.class,
-            PropertyProducer.class, TransactionApplier.class, FullTextSearchUpdater.class,
-            EntityProducer.class, AccountTable.class,
-            TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
-            GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
-            ReferencedTransactionDaoImpl.class,
-            AppendixApplierRegistry.class,
-            AppendixValidatorRegistry.class,
-            TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-            TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
-            TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
-            TransactionSerializerImpl.class,
+        PropertyProducer.class, TransactionApplier.class, FullTextSearchUpdater.class,
+        EntityProducer.class, AccountTable.class,
+        TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
+        GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
+        ReferencedTransactionDaoImpl.class,
+        AppendixApplierRegistry.class,
+        AppendixValidatorRegistry.class,
+        TransactionServiceImpl.class, ShardDbExplorerImpl.class,
+        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
+        TransactionJsonSerializerImpl.class,
         TransactionBuilder.class,
         TaggedDataTable.class,
         PropertyBasedFileConfig.class,

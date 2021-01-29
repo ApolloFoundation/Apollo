@@ -20,7 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializerImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
@@ -63,7 +63,7 @@ class DexServiceIntegrationTest {
     TransactionTestData td = new TransactionTestData();
     @WeldSetup
     WeldInitiator weld = WeldUtils.from(List.of(TransactionRowMapper.class,
-        TransactionBuilder.class,TransactionSerializerImpl.class,
+        TransactionBuilder.class, TransactionJsonSerializerImpl.class,
         DexService.class, CacheProducer.class),
         List.of(EthereumWalletService.class,
         DexOrderDao.class,
