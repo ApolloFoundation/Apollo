@@ -7,6 +7,8 @@ import io.firstbridge.process.db.DbControl;
 import io.firstbridge.process.db.DbRunParams;
 import io.firstbridge.process.impl.MariaDbRunParamsBuilder;
 import io.firstbridge.process.impl.MariaDbControl;
+import jnr.ffi.provider.jffi.CodegenUtils;
+
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -20,39 +22,44 @@ import java.time.Duration;
 public class MariaDbProcess {
 
     private final DbControl dbControl;
-    private final DbRunParams dbParams;
     private static Path confFile;
-    
+
+    public MariaDbProcess(DbControl dbControl) {
+        this.dbControl = dbControl;
+    }
+
     public MariaDbProcess(Path dbDataDir, Path dbInstallDir) {
 
         confFile = Path.of("my-apl-user.conf");
 
-        dbParams = new MariaDbRunParamsBuilder()
+        DbRunParams dbParams = new MariaDbRunParamsBuilder()
                 .dbConfigFile(confFile)
                 .dbDataDir(dbDataDir)
                 .dbInstallDir(dbInstallDir)
-                .redirectErr(Path.of("maria_err.log"))
                 .redirectOut(Path.of("maria_out.log"))
                 .dbUser("apl")
                 .dbPassword("apl")
                 .build();
         dbControl = new MariaDbControl(dbParams);
     }
-    
+
     public static MariaDbProcess findRunning(Path dbDataDir, Path dbInstallDir){
         MariaDbProcess process = null;
         DbRunParams params = new MariaDbRunParamsBuilder()
                 .dbConfigFile(confFile)
                 .dbDataDir(dbDataDir)
                 .dbInstallDir(dbInstallDir)
-                .redirectErr(Path.of("maria_err.log"))
                 .redirectOut(Path.of("maria_out.log"))
                 .dbUser("apl")
                 .dbPassword("apl")
                 .build();
+        MariaDbControl control = new MariaDbControl(params);
+        if( control.findRunning()){
+            process = new MariaDbProcess(control);
+        }
         return process;
     }
-    
+
     public boolean isOK() {
         boolean res = dbControl.isOK();
         return res;

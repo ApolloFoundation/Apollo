@@ -74,6 +74,8 @@ public class Apollo {
     public static Path logDirPath = Paths.get("");
     public static RuntimeMode runtimeMode;
     public static DirProvider dirProvider;
+    //initially we do not have control over  MariaDB process, it could be startted externally or system-wide
+    public static MariaDbProcess mariaDbProcess = null;
     //We have dir provider configured in logback.xml so should init log later
     private static Logger log;
     private static AplContainer container;
@@ -238,15 +240,7 @@ public class Apollo {
             setLogLevel(args.debug);
         }
 
-//check webUI
-        System.out.println("=== Bin directory is: " + DirProvider.getBinDir().toAbsolutePath());
-        /* at the moment we do it in build time
-
-        Future<Boolean> unzipRes;
-        WebUiExtractor we = new WebUiExtractor(dirProvider);
-        ExecutorService execService = Executors.newFixedThreadPool(1);
-        unzipRes = execService.submit(we);
-         */
+        System.out.println("=== INFO: Bin directory of apollo-blockchain is: " + DirProvider.getBinDir().toAbsolutePath()+" ===");
 
         runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
         runtimeMode.init(); // instance is NOT PROXIED by CDI !!
@@ -255,7 +249,12 @@ public class Apollo {
         if (!saveStartParams(argv, args.pidFile, configDirProvider)) {
             System.exit(PosixExitCodes.EX_CANTCREAT.exitCode());
         }
-
+        //check running or run data base server
+        if(!checkOrRunDatabaseServer()){
+            System.err.println(" ERROR! MariaDB process is not running and can not be started from Apollo!");
+            System.err.println(" Please install apollo-mariadb package at the same directory level as apollo-blockchain package.");
+            System.exit(PosixExitCodes.EX_SOFTWARE.exitCode());
+        }
         //Configure CDI Container builder
         AplContainerBuilder aplContainerBuilder = AplContainer.builder().containerId("MAIN-APL-CDI")
             // do not use recursive scan because it violates the restriction to
@@ -309,6 +308,11 @@ public class Apollo {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();
         }
+    }
+
+    private static boolean checkOrRunDatabaseServer() {
+        boolean res = false;
+        return res;
     }
 
     public static void shutdownWeldContainer() {
