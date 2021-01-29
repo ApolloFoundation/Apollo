@@ -146,15 +146,21 @@ public class ShardingScheduler {
 
     public synchronized void scheduleSharding(int height, int blockchainHeight) {
         if (!shardingFailed && config.isCreateShards()) {
-            shardHeights.add();
+            ShardScheduledRecord record = new ShardScheduledRecord(shardingDelayMs(), height, blockchainHeight, System.currentTimeMillis());
+            shardHeights.add(record);
+            log.info("Schedule new shard creation at height {}, blockchain height {}, delay {} min", height, blockchainHeight, record.timeDelay / 60 / 1000);
             updateTrimConfig(false, true);
         } else {
             log.warn("Sharding is disabled, last shard failed '{}', disabled by props '{}'", shardingFailed, !config.isCreateShards());
         }
     }
 
-    private ShardScheduledRecord record(int shardHeight, int blockchainHeight) {
-        return new ShardScheduledRecord(random.nextInt(3000 * 1000) + 600 * 1000, shardHeight, blockchainHeight, System.currentTimeMillis());
+    private long shardingDelayMs() {
+        if (config.shardDelayed()) {
+            return 1000 * 60 * random.nextInt(config.getMaxDelay() - config.getMinDelay() + 1) + config.getMinDelay() ;
+        } else {
+            return 0;
+        }
     }
 
     private void logErrorAndDisableSharding(String error, Object... args) {

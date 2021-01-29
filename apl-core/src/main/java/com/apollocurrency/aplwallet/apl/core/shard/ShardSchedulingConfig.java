@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.Data;
 
 import javax.inject.Singleton;
@@ -26,11 +26,18 @@ public class ShardSchedulingConfig {
     public ShardSchedulingConfig(@Property(name = "apl.shard.minDelay", defaultValue = "" + DEFAULT_MIN_DELAY) int minDelay,
                                  @Property(name = "apl.shard.maxDelay", defaultValue = ""  + DEFAULT_MAX_DELAY) int maxDelay,
                                  @Property(name = "apl.noshardcreate", defaultValue = "false") boolean noShardCreate,
-                                 @Property(name = "apl.maxRollback", defaultValue = "" + PropertiesHolder.DEFAULT_MAX_ROLLBACK) int maxRollback
+                                 @Property(name = "apl.maxRollback", defaultValue = "" + Constants.MAX_AUTO_ROLLBACK) int maxRollback
                                  ) {
+        if (maxDelay <= minDelay) {
+            throw new IllegalArgumentException("Sharding max delay should be greater than min delay, but got minDelay = " + minDelay + ", maxDelay = " + maxDelay);
+        }
         this.minDelay = minDelay;
         this.maxDelay = maxDelay;
         this.maxRollback = maxRollback;
         this.createShards = !noShardCreate;
+    }
+
+    public boolean shardDelayed() {
+        return minDelay >= 0 && maxDelay > 0;
     }
 }
