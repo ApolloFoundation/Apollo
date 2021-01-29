@@ -214,7 +214,7 @@ class ShardImporterTest {
     void testImportShardWhenZipCorrupted() {
         doReturn(Paths.get("")).when(downloadableFilesManager).mapFileIdToLocalPath("fileId");
         assertThrows(ShardArchiveProcessingException.class, () -> shardImporter.importShard(
-            new ShardPresentData(null, "fileId", List.of()), List.of())
+            new ShardPresentData(null, "fileId", List.of()), List.of(), true)
         );
         verify(aplAppStatus).durableTaskFinished(any(), anyBoolean(), anyString());
     }
@@ -226,7 +226,7 @@ class ShardImporterTest {
         doNothing().when(genesisImporter).importGenesisJson(true);
 
         assertThrows(IllegalStateException.class, () -> shardImporter.importShard(
-            new ShardPresentData(null, "fileId", List.of()), List.of("block_index"))
+            new ShardPresentData(null, "fileId", List.of()), List.of("block_index"), true)
         );
         verify(aplAppStatus, times(4)).durableTaskUpdate(any(), anyString(), anyDouble());
         verify(aplAppStatus).durableTaskFinished(any(), anyBoolean(), anyString());
@@ -241,7 +241,7 @@ class ShardImporterTest {
         doThrow(new IllegalArgumentException()).when(aplAppStatus).durableTaskUpdate(null, "Loading 'shard'", 0.6);
 
         assertThrows(RuntimeException.class, () -> shardImporter.importShard(
-            new ShardPresentData(null, "fileId", List.of()), List.of())
+            new ShardPresentData(null, "fileId", List.of()), List.of(), true)
         );
         verify(aplAppStatus).durableTaskFinished(any(), anyBoolean(), anyString());
     }
@@ -254,7 +254,7 @@ class ShardImporterTest {
         doReturn(List.of()).when(derivedTablesRegistry).getDerivedTables();
 
         shardImporter.importShard(
-            new ShardPresentData(null, "fileId", List.of()), List.of(ShardConstants.SHARD_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME));
+            new ShardPresentData(null, "fileId", List.of()), List.of(ShardConstants.SHARD_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME), true);
         verify(aplAppStatus, times(3)).durableTaskUpdate(any(), anyString(), anyDouble());
         verify(aplAppStatus).durableTaskFinished(null, false, "Shard data import"); //success
     }
@@ -271,7 +271,7 @@ class ShardImporterTest {
         doReturn(lastShard).when(shardDao).getLastShard();
 
         shardImporter.importShard(
-            new ShardPresentData(lastShard.getShardId(), "fileId", List.of()), List.of(ShardConstants.TRANSACTION_INDEX_TABLE_NAME));
+            new ShardPresentData(lastShard.getShardId(), "fileId", List.of()), List.of(ShardConstants.TRANSACTION_INDEX_TABLE_NAME), true);
 
         verify(shardDao).updateShard(lastShard);
         assertEquals(ShardState.CREATED_BY_ARCHIVE, lastShard.getShardState());
@@ -305,7 +305,7 @@ class ShardImporterTest {
 
         DbUtils.inTransaction(dataSource, (con) -> {
             shardImporter.importShard(
-                new ShardPresentData(null, "fileId", List.of()), List.of(ShardConstants.SHARD_TABLE_NAME));
+                new ShardPresentData(null, "fileId", List.of()), List.of(ShardConstants.SHARD_TABLE_NAME), true);
             dataSource.commit(false);
         });
 
@@ -338,7 +338,7 @@ class ShardImporterTest {
         doReturn(derivedTableNames).when(derivedTablesRegistry).getDerivedTableNames();
 
         assertThrows(RuntimeException.class, () -> shardImporter.importShard(
-            new ShardPresentData(null, "fileId", List.of()), List.of(ShardConstants.SHARD_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME))
+            new ShardPresentData(null, "fileId", List.of()), List.of(ShardConstants.SHARD_TABLE_NAME, ShardConstants.TRANSACTION_INDEX_TABLE_NAME), true)
         );
 
         verify(aplAppStatus).durableTaskFinished(null, true, "Shard data import");
@@ -383,7 +383,7 @@ class ShardImporterTest {
         doReturn(chain).when(blockchainConfig).getChain();
 
         shardImporter.importLastShard(1);
-        verify(aplAppStatus, times(6)).durableTaskUpdate(any(), anyString(), anyDouble());
+        verify(aplAppStatus, times(3)).durableTaskUpdate(any(), anyString(), anyDouble()); // number of tables imported
         verify(aplAppStatus).durableTaskFinished(null, false, "Shard data import");
     }
 }

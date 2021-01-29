@@ -38,7 +38,8 @@ If  ( (fso.FolderExists(WScript.Arguments(0))) AND (fso.FolderExists( WScript.Ar
 rem	WScript.Echo "remove_jre.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34)
 	Shell.CurrentDirectory = WScript.Arguments(1)
 	Shell.Run "install_libs.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34) & " " & Wscript.Arguments(4), 1, True
-	Shell.Run "update.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34) & " " & Wscript.Arguments(1), 1, True
+	WScript.Echo "update.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34) & " " & chr(34) & Wscript.Arguments(1) & chr(34), 1, True
+	Shell.Run "update.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34) & " " & chr(34) & Wscript.Arguments(1) & chr(34), 1, True
 	
 	Wscript.Echo "Subfolders were copied"
 	Dim ParentDir
