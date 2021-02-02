@@ -309,9 +309,21 @@ public class Apollo {
             t.printStackTrace();
         }
     }
+    private static boolean checkDbWithJDBC(){
+        boolean res = false;
+        String host = propertiesHolder.getStringProperty("apl.databaseHost","localhost");
+        Integer port = propertiesHolder.getIntProperty("apl.databasePort");
+        String sbUser = propertiesHolder.getStringProperty("apl.dbUsername");
+        String dbPa    .dbPassword(propertiesHolder.getStringProperty("apl.dbPassword", null, true))
+        String dbURL = "";
+        return res;
+    }
 
     private static boolean checkOrRunDatabaseServer() {
-        boolean res = false;
+        boolean res = checkDbWithJDBC();
+        if(!res){
+
+        }
         return res;
     }
 
