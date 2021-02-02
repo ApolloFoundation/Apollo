@@ -72,10 +72,10 @@ OS name: "linux", version: "5.9.12-200.fc33.x86_64", arch: "amd64", family: "uni
    7. If output looks similar to example, you can perform build step.
 
 ### Linux/MacOS
-   * run `./mvnw` (or `./mvnc -DskipTests` for skipping tests)
+   * run `./mvnw clean install` (or `./mvnc -DskipTests clean install` for skipping tests)
 
 ### Windows
-   * run ``mvnw.bat` (or `mvnw.bat -DskipTests` for skipping tests)  
+   * run `mvnw.bat clean install` (or `mvnw.bat -DskipTests` for skipping tests)  
 
 ###Other modules required to build Apollo components
 
