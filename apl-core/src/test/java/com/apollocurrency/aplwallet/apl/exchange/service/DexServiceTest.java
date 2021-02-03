@@ -33,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.vault.service.KMSService;
 import com.google.common.cache.LoadingCache;
 import org.junit.jupiter.api.BeforeEach;
@@ -85,8 +86,14 @@ class DexServiceTest {
     PhasingApprovedResultTable approvedResultTable;
     @Mock
     MandatoryTransactionService mandatoryTransactionService;
-    @Mock
-    BlockchainConfig blockchainConfig;
+
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
+
+    {
+        doReturn(chain).when(blockchainConfig).getChain();
+    }
+
     @Mock
     LoadingCache<Long, OrderFreezing> cache;
     @Mock

@@ -26,7 +26,7 @@ public interface MandatoryTransactionDao {
     List<MandatoryTransactionEntity> getAll(@Bind("fromDbId") long fromDbId, @Bind("limit") int limit);
 
     @Transactional
-    @SqlUpdate("INSERT into mandatory_transaction(id, transaction_bytes, required_tx_hash) VALUES (:getId, :getCopyTxBytes, :getRequiredTxHash)")
+    @SqlUpdate("INSERT into mandatory_transaction(id, transaction_bytes, required_tx_hash) VALUES (:getId, :getTransactionBytes, :getRequiredTxHash)")
     void insert(@BindMethods MandatoryTransactionEntity mandatoryTransaction);
 
     @Transactional

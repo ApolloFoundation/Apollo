@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 import com.apollocurrency.aplwallet.api.dto.account.AccountControlPhasingDTO;
 import com.apollocurrency.aplwallet.api.response.AccountControlPhasingResponse;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
@@ -16,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountContro
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.AccountControlPhasingTestData;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -59,23 +59,29 @@ class AccountControlControllerTest extends AbstractEndpointTest {
     private static Long recipientId = 3254132361968154094L;
 
     @Mock
-    private AccountControlPhasingService accountControlPhasingService = mock(AccountControlPhasingService.class);
+    private AccountControlPhasingService accountControlPhasingService;
+
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
+
+    {
+        doReturn(chain).when(blockchainConfig).getChain();
+    }
+
     @Mock
-    private HeightConfig heightConfig = mock(HeightConfig.class);
+    private TransactionCreator txCreator;
     @Mock
-    private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-    @Mock
-    private TransactionCreator txCreator = mock(TransactionCreator.class);
-    @Mock
-    private AccountService accountService = mock(AccountService.class);
+    private AccountService accountService;
     @Mock
     HttpServletRequest req;
+    @Mock
+    PrunableLoadingService loadingService;
 
     @BeforeEach
     void setUp() {
         super.setUp();
         endpoint = new AccountControlController(
-            accountControlPhasingService, blockchainConfig, txCreator, accountService, new UnconfirmedTransactionConverter(mock(PrunableLoadingService.class)), 100);
+                accountControlPhasingService, blockchainConfig, txCreator, accountService, new UnconfirmedTransactionConverter(loadingService), 100);
         dispatcher.getRegistry().addSingletonResource(endpoint);
         dispatcher.getDefaultContextObjects().put(HttpServletRequest.class, req);
         actd = new AccountControlPhasingTestData();

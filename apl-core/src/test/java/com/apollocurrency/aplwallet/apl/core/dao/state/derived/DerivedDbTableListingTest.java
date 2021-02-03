@@ -20,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToMod
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
@@ -158,26 +159,27 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
             BlockchainImpl.class, DaoConfig.class,
-        PropertyProducer.class, TransactionApplier.class, FullTextSearchUpdater.class,
-        EntityProducer.class, AccountTable.class,
-        TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
-        GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
-        ReferencedTransactionDaoImpl.class,
-        AppendixApplierRegistry.class,
-        AppendixValidatorRegistry.class,
-        TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
-        TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
-        TransactionJsonSerializerImpl.class,
-        TransactionBuilderFactory.class,
-        TaggedDataTable.class,
-        PropertyBasedFileConfig.class,
-        DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
-        PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class, PhasingApprovedResultTable.class,
-        KeyFactoryProducer.class, FeeCalculator.class, AplAppStatus.class,
-        TaggedDataTimestampDao.class,
-        TaggedDataExtendDao.class,
-        FullTextConfigImpl.class,
+            PropertyProducer.class, TransactionApplier.class, FullTextSearchUpdater.class,
+            EntityProducer.class, AccountTable.class,
+            TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
+            GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
+            ReferencedTransactionDaoImpl.class,
+            AppendixApplierRegistry.class,
+            AppendixValidatorRegistry.class,
+            TransactionServiceImpl.class, ShardDbExplorerImpl.class,
+            TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+            TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
+            UnconfirmedTransactionEntityRowMapper.class,
+            TransactionJsonSerializerImpl.class,
+            TransactionBuilderFactory.class,
+            TaggedDataTable.class,
+            PropertyBasedFileConfig.class,
+            DataTagDao.class, PhasingPollServiceImpl.class, PhasingPollResultTable.class,
+            PhasingPollLinkedTransactionTable.class, PhasingPollVoterTable.class, PhasingVoteTable.class, PhasingPollTable.class, PhasingApprovedResultTable.class,
+            KeyFactoryProducer.class, FeeCalculator.class, AplAppStatus.class,
+            TaggedDataTimestampDao.class,
+            TaggedDataExtendDao.class,
+            FullTextConfigImpl.class,
         DerivedDbTablesRegistryImpl.class,
         BlockDaoImpl.class,
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,

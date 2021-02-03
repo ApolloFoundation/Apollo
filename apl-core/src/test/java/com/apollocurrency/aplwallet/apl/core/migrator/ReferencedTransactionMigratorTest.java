@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.migrator;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
@@ -61,11 +62,11 @@ class ReferencedTransactionMigratorTest extends DbContainerBaseTest {
 
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(
-        ChainsConfigHolder.class, BlockchainConfig.class, FullTextConfigImpl.class,
-        TransactionRowMapper.class,
-        TransactionBuilderFactory.class,
-        DerivedDbTablesRegistryImpl.class,
-        ReferencedTransactionDaoImpl.class)
+            ChainsConfigHolder.class, BlockchainConfig.class, FullTextConfigImpl.class,
+            TransactionRowMapper.class, TransactionEntityRowMapper.class,
+            TransactionBuilderFactory.class,
+            DerivedDbTablesRegistryImpl.class,
+            ReferencedTransactionDaoImpl.class)
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(Mockito.mock(Blockchain.class), BlockchainImpl.class))
         .addBeans(MockBean.of(Mockito.mock(TimeService.class), TimeService.class, TimeServiceImpl.class))
