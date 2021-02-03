@@ -15,6 +15,8 @@ del /S /F /Q %1\VERSION*
 del /S /F /Q %1\LICENSE*
 del /S /F /Q %1\META-INF
 del /S /F /Q %1\update*
+del /S /F /Q %1\..\apollo-web-ui
+del /S /F /Q %1\..\apollo-tools
 
 robocopy %1 %1\.. /S
 robocopy %2 %1\.. /S

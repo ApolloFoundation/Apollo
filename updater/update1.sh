@@ -113,21 +113,8 @@ then
 	cp -f $1/conf/chains.json $1/conf/chains.json.backup
 	rm -f $1/conf/chains.json
     fi
-    
-#may be we have to remove garbage    
-#    rm -f $1/*.sh
-# check this
 
-# Commented Old version of Garbage removal
-#    rm -f $1/*.bat
-#    rm -f $1/*.vbs
-#    rm -rf $1/META-INF
-#    rm -rf $1/html
-#    rm -rf $1/bin/*
-#    rm -rf $1/sbin/*
-#    rm -rf $1/lib/*
-#    rm -rf $1/webui/*
-#    rm -rf $1/*.jar
+
     notify "Removing old version..."
     notify "Removing garbage..."
     rm -rfv $1/bin
@@ -144,46 +131,34 @@ then
     rm -rfv $1/META-INF
     rm -rfv $1/update*
 
-if [[ -d $1/../Uninstaller ]]; then
     cd $1/..
+    rm -rfv apollo-web-ui
+    rm -rfv apollo-tools
 
     chmod 755 $1/../apollo-blockchain/bin/*.sh
 
     cd $1/..
     chmod 755 $1/../apollo-desktop/bin/*.sh
     
-#    ./replace_dbdir.sh
     notify "Removing old version..."
     
     notify "Moving extra files..."
     cp -Rfv $1/* $1/..
     cd $1/..
-    rm -rfv $1
+#    rm -rfv $1
     cp -Rfv $2/* .
 
-else
-    notify "Copying update files...."
-    cp -vRa $2/* $1/
-    
-    cd $1/
-    cp -vRa conf* apollo-blockchain
-    cp -vRa conf/* apollo-blockchain/conf
+#    cd $1/
+#    cp -vRa conf* apollo-blockchain
+#    cp -vRa conf/* apollo-blockchain/conf
 #    ./replace_dbdir.sh
     
-    notify "Creating symlinks..."
-    ln -s apollo-blockchain/bin bin
+#    notify "Creating symlinks..."
+#    ln -s apollo-blockchain/bin bin
  
-fi
 
     chmod 755 apollo-blockchain/bin/*.sh
     chmod 755 apollo-desktop/bin/*.sh
-    chmod 755 tor/tor
-    chmod 755 secureTransport/securenodexchg
-    chmod 755 secureTransport/runClient.sh
-
-
-
-
 
     if [[ "$unamestr" == 'Darwin' ]]; then
         
@@ -201,9 +176,9 @@ fi
 
     if [[ "$unamestr" == 'Linux' ]]; then
 
-	chmod 755 $1/tor/tor
-	chmod 755 $1/secureTransport/securenodexchg
-	chmod 755 $1/secureTransport/runClient.sh
+	chmod 755 tor/tor
+	chmod 755 secureTransport/securenodexchg
+	chmod 755 secureTransport/runClient.sh
     fi
 
 #    rm -rf apollo-wallet-deps-${VERSION}.tar.gz
