@@ -43,13 +43,13 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_D
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 
 @Vetoed
-public final class DGSPurchase extends CreateTransaction {
+public final class DGSPurchase extends CreateTransactionHandler {
 
     private DGSService service = CDI.current().select(DGSService.class).get();
 
     public DGSPurchase() {
         super(new APITag[]{APITag.DGS, APITag.CREATE_TRANSACTION},
-            "goods", "priceATM", "quantity", "deliveryDeadlineTimestamp");
+                "goods", "priceATM", "quantity", "deliveryDeadlineTimestamp");
     }
 
     @Override

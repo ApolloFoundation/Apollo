@@ -2,7 +2,7 @@
  * Copyright (c)  2018-2021. Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.apl.core.transaction.common;
+package com.apollocurrency.aplwallet.apl.core.io;
 
 import java.math.BigInteger;
 
@@ -16,6 +16,10 @@ public interface NamedBuffer extends WriteBuffer {
     WriteBuffer put(String tag, byte[] value);
 
     WriteBuffer put(String tag, boolean value);
+
+    WriteBuffer put(String tag, short value);
+
+    WriteBuffer put(String tag, int value);
 
     WriteBuffer put(String tag, long value);
 
@@ -35,6 +39,16 @@ public interface NamedBuffer extends WriteBuffer {
 
     @Override
     default WriteBuffer write(boolean value) {
+        return put("", value);
+    }
+
+    @Override
+    default WriteBuffer write(short value) {
+        return put("", value);
+    }
+
+    @Override
+    default WriteBuffer write(int value) {
         return put("", value);
     }
 

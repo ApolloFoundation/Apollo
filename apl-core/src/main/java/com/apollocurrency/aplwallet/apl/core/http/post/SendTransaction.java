@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -43,7 +43,7 @@ import java.util.Collections;
  * Unlike {@link BroadcastTransaction}, does not validate the transaction and requires adminPassword parameter to avoid
  * abuses. Also does not re-broadcast the transaction and does not store it as unconfirmed transaction.
  * <p>
- * Clients first submit their transaction using {@link CreateTransaction} without providing the secret phrase.<br>
+ * Clients first submit their transaction using {@link CreateTransactionHandler} without providing the secret phrase.<br>
  * In response the client receives the unsigned transaction JSON and transaction bytes.
  * <p>
  * The client then signs and submits the signed transaction using {@link SendTransaction}

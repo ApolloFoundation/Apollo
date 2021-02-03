@@ -2,8 +2,9 @@
  * Copyright (c)  2018-2021. Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.apl.core.transaction.common;
+package com.apollocurrency.aplwallet.apl.core.io;
 
+import lombok.Getter;
 import org.json.simple.JSONObject;
 
 import java.math.BigInteger;
@@ -13,7 +14,8 @@ import java.util.Objects;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public class JsonBuffer implements NamedBuffer {
+public class JsonBuffer extends AbstractWriteBuffer implements NamedBuffer {
+    @Getter
     private final JSONObject jsonObject;
 
     public JsonBuffer() {
@@ -23,6 +25,11 @@ public class JsonBuffer implements NamedBuffer {
     public JsonBuffer(JSONObject jsonObject) {
         Objects.requireNonNull(jsonObject);
         this.jsonObject = jsonObject;
+    }
+
+    @Override
+    public WriteBuffer write(byte data) {
+        return put("", data);
     }
 
     @Override
@@ -44,8 +51,21 @@ public class JsonBuffer implements NamedBuffer {
     }
 
     @Override
+    public WriteBuffer put(String tag, short value) {
+        jsonObject.put(tag, value);
+        return this;
+    }
+
+    @Override
+    public WriteBuffer put(String tag, int value) {
+        jsonObject.put(tag, value);
+        return this;
+    }
+
+    @Override
     public WriteBuffer put(String tag, long value) {
-        return null;
+        jsonObject.put(tag, value);
+        return this;
     }
 
     @Override

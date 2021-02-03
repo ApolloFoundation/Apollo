@@ -5,10 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata.funding;
 
 import com.apollocurrency.aplwallet.apl.core.app.runnable.FundingMonitorProcessEventsThread;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.FundingMonitorInstance;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
@@ -21,12 +22,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetS
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPropertyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.signature.DocumentSigner;
-import com.apollocurrency.aplwallet.apl.core.signature.Signature;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
@@ -54,7 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
 
 /**
  * Monitor account balances based on account properties
@@ -80,10 +76,6 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
      */
     private static Map<Long, List<MonitoredAccount>> accounts = Collections.synchronizedMap(new HashMap<>());
     /**
-     * Process semaphore
-     */
-    private static final Semaphore processSemaphore = new Semaphore(0);
-    /**
      * Pending updates
      */
     private final ConcurrentLinkedQueue<MonitoredAccount> pendingEvents = new ConcurrentLinkedQueue<>();
@@ -99,8 +91,12 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
     private final AccountCurrencyService accountCurrencyService;
     private final AccountPropertyService accountPropertyService;
     private final TaskDispatchManager taskDispatchManager;
-    private final DocumentSigner documentSigner;
-    private final TransactionBuilder transactionBuilder;
+    private final TransactionBuilderFactory transactionBuilderFactory;
+    private final TransactionSigner signerService;
+
+    //TODO Use TransactionVersionValidator#getActualVersion()
+    private final int transactionVersion = 1;//transaction version during the funding routine
+
     /**
      * Maximum number of monitors
      */
@@ -125,7 +121,9 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
                                      AccountCurrencyService accountCurrencyService,
                                      AccountPropertyService accountPropertyService,
                                      FeeCalculator feeCalculator,
-                                     TaskDispatchManager taskDispatchManager, TransactionBuilder transactionBuilder) {
+                                     TaskDispatchManager taskDispatchManager,
+                                     TransactionBuilderFactory transactionBuilderFactory,
+                                     TransactionSigner signerService) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
         this.blockchain = Objects.requireNonNull(blockchain);
@@ -135,12 +133,12 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
         this.accountAssetService = Objects.requireNonNull(accountAssetService);
         this.accountCurrencyService = Objects.requireNonNull(accountCurrencyService);
         this.accountPropertyService = Objects.requireNonNull(accountPropertyService);
-        this.transactionBuilder = transactionBuilder;
+        this.transactionBuilderFactory = transactionBuilderFactory;
         /** Maximum number of monitors */
         MAX_MONITORS = this.propertiesHolder.getIntProperty("apl.maxNumberOfMonitors");
         this.taskDispatchManager = taskDispatchManager;
         this.feeCalculator = feeCalculator;
-        this.documentSigner = SignatureToolFactory.selectBuilder(1).orElseThrow(UnsupportedTransactionVersion::new);
+        this.signerService = signerService;
     }
 
 
@@ -519,7 +517,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
         FundingMonitorInstance monitor = monitoredAccount.getMonitor();
         if (targetAccount.getBalanceATM() < monitoredAccount.getThreshold()) {
             int timestamp = blockchain.getLastBlockTimestamp();
-            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
+            Transaction.Builder builder = transactionBuilderFactory.newTransactionBuilder(transactionVersion, monitor.getPublicKey(),
                 monitoredAccount.getAmount(), 0, (short) 1440, Attachment.ORDINARY_PAYMENT, timestamp)
                 .recipientId(monitoredAccount.getAccountId())
                 .ecBlockData(blockchain.getECBlock(timestamp));
@@ -527,18 +525,11 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
             Transaction transaction = builder.build();
             long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight());
             transaction.setFeeATM(minimumFeeATM);
-            Signature signature = documentSigner.sign(
-                transaction.getUnsignedBytes(),
-                SignatureToolFactory.createCredential(
-                    1,
-                    monitor.getKeySeed()
-                )
-            );
-            transaction.sign(signature);
             if (Math.addExact(monitoredAccount.getAmount(), transaction.getFeeATM()) > fundingAccount.getUnconfirmedBalanceATM()) {
                 log.warn("Funding account {} has insufficient funds; funding transaction discarded",
                     monitor.getAccountName());
             } else {
+                signerService.sign(transaction, monitor.getKeySeed());
                 transactionProcessor.broadcast(transaction);
                 monitoredAccount.setHeight(blockchain.getHeight());
                 log.debug("{} funding transaction {} for {} {} submitted from {} to {}",
@@ -578,25 +569,18 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
         } else if (targetAsset == null || targetAsset.getQuantityATU() < monitoredAccount.getThreshold()) {
             Attachment attachment = new ColoredCoinsAssetTransfer(monitor.getHoldingId(), monitoredAccount.getAmount());
             int timestamp = blockchain.getLastBlockTimestamp();
-            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
+            Transaction.Builder builder = transactionBuilderFactory.newTransactionBuilder(transactionVersion, monitor.getPublicKey(),
                 0, 0, (short) 1440, attachment, timestamp)
                 .recipientId(monitoredAccount.getAccountId())
                 .ecBlockData(blockchain.getECBlock(timestamp));
 
             Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
-            Signature signature = documentSigner.sign(
-                transaction.getUnsignedBytes(),
-                SignatureToolFactory.createCredential(
-                    1,
-                    monitor.getKeySeed()
-                )
-            );
-            transaction.sign(signature);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
                 log.warn("Funding account {} has insufficient funds; funding transaction discarded",
                     monitor.getAccountName());
             } else {
+                signerService.sign(transaction, monitor.getKeySeed());
                 transactionProcessor.broadcast(transaction);
                 monitoredAccount.setHeight(blockchain.getHeight());
                 log.debug("ASSET funding transaction {} submitted for {} units from {} to {}",
@@ -631,25 +615,18 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.getThreshold()) {
             Attachment attachment = new MonetarySystemCurrencyTransfer(monitor.getHoldingId(), monitoredAccount.getAmount());
             int timestamp = blockchain.getLastBlockTimestamp();
-            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(monitor.getPublicKey(),
+            Transaction.Builder builder = transactionBuilderFactory.newTransactionBuilder(transactionVersion, monitor.getPublicKey(),
                 0, 0, (short) 1440, attachment, timestamp)
                 .recipientId(monitoredAccount.getAccountId())
                 .ecBlockData(blockchain.getECBlock(timestamp));
 
             Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
-            Signature signature = documentSigner.sign(
-                transaction.getUnsignedBytes(),
-                SignatureToolFactory.createCredential(
-                    1,
-                    monitor.getKeySeed()
-                )
-            );
-            transaction.sign(signature);
             if (transaction.getFeeATM() > fundingAccount.getUnconfirmedBalanceATM()) {
                 log.warn("Funding account {} has insufficient funds; funding transaction discarded",
                     monitor.getAccountName());
             } else {
+                signerService.sign(transaction, monitor.getKeySeed());
                 transactionProcessor.broadcast(transaction);
                 monitoredAccount.setHeight(blockchain.getHeight());
                 log.debug("CURRENCY funding transaction {} submitted for {} units from {} to {}",

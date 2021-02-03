@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.app.runnable;
 import com.apollocurrency.aplwallet.api.p2p.request.GetUnconfirmedTransactionsRequest;
 import com.apollocurrency.aplwallet.api.p2p.respons.GetUnconfirmedTransactionsResponse;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;

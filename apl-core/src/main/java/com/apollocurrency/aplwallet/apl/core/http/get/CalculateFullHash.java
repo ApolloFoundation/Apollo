@@ -20,12 +20,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
+import com.apollocurrency.aplwallet.apl.core.io.Result;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionWrapperHelper;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -58,8 +61,13 @@ public final class CalculateFullHash extends AbstractAPIRequestHandler {
         JSONObject response = new JSONObject();
         try {
             Transaction transaction = HttpParameterParserUtil.parseTransaction(unsignedTransactionJSONString, unsignedBytesString, null).build();
+
+            Result unsignedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+            txBContext.createSerializer(transaction.getVersion())
+                .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), unsignedTxBytes);
+
             MessageDigest digest = Crypto.sha256();
-            digest.update(transaction.getUnsignedBytes());
+            digest.update(unsignedTxBytes.array());
             byte[] fullHash = digest.digest(Convert.parseHexString(signatureHashString));
             response.put("fullHash", Convert.toHexString(fullHash));
         } catch (AplException.NotValidException e) {

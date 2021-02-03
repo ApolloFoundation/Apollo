@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.PhasingPollServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.MandatoryTransactionService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializerImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
@@ -32,7 +33,6 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.vault.service.KMSService;
 import com.google.common.cache.LoadingCache;
 import org.junit.jupiter.api.BeforeEach;
@@ -84,7 +84,7 @@ class DexServiceTest {
     @Mock
     PhasingApprovedResultTable approvedResultTable;
     @Mock
-    MandatoryTransactionDao mandatoryTransactionDao;
+    MandatoryTransactionService mandatoryTransactionService;
     @Mock
     BlockchainConfig blockchainConfig;
     @Mock
@@ -111,10 +111,10 @@ class DexServiceTest {
 
     @BeforeEach
     void setUp() {
-        TransactionJsonSerializer serializer = new TransactionJsonSerializerImpl(mock(PrunableLoadingService.class));
+        TransactionJsonSerializer serializer = new TransactionJsonSerializerImpl(mock(PrunableLoadingService.class), blockchainConfig);
         dexService = new DexService(ethWalletService, dexOrderDao, dexOrderTable, transactionProcessor, dexSmartContractService, secureStorageService,
             dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService,
-            approvedResultTable, mandatoryTransactionDao, serializer, accountService, blockchainConfig, cache, dexConfig, KMSService);
+            approvedResultTable, mandatoryTransactionService, serializer, accountService, blockchainConfig, cache, dexConfig, KMSService);
     }
 
     @Test

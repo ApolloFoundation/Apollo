@@ -5,8 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShufflingEvent;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSigner;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffler;
@@ -21,12 +22,8 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflerService;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.signature.DocumentSigner;
-import com.apollocurrency.aplwallet.apl.core.signature.Signature;
-import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
@@ -68,10 +65,12 @@ public class ShufflerServiceImpl implements ShufflerService {
     private final FeeCalculator feeCalculator;
     private final BlockchainProcessor blockchainProcessor;
     private final AccountService accountService;
-    private final TransactionBuilder transactionBuilder;
+    private final TransactionBuilderFactory transactionBuilderFactory;
     private final int MAX_SHUFFLERS;
+    //TODO Use TransactionVersionValidator#getActualVersion()
+    private final int transactionVersion = 1;//transaction version during the shuffling routine
 
-    private final DocumentSigner documentSigner;
+    private final TransactionSigner signerService;
 
     private final Map<String, Map<Long, Shuffler>> shufflingsMap = new ConcurrentHashMap<>();
     private final Map<Integer, Set<String>> expirations = new ConcurrentHashMap<>();
@@ -80,7 +79,8 @@ public class ShufflerServiceImpl implements ShufflerService {
     public ShufflerServiceImpl(PropertiesHolder propertiesLoade, MemPool memPool,
                                Blockchain blockchain, GlobalSync globalSync, ShufflingService shufflingService,
                                FeeCalculator feeCalculator, BlockchainProcessor blockchainProcessor,
-                               AccountService accountService, TransactionBuilder transactionBuilder) {
+                               AccountService accountService, TransactionBuilderFactory transactionBuilderFactory,
+                               TransactionSigner signerService) {
         this.memPool = memPool;
         this.blockchain = blockchain;
         this.globalSync = globalSync;
@@ -89,8 +89,8 @@ public class ShufflerServiceImpl implements ShufflerService {
         this.blockchainProcessor = blockchainProcessor;
         this.accountService = accountService;
         this.MAX_SHUFFLERS = propertiesLoade.getIntProperty("apl.maxNumberOfShufflers");
-        this.transactionBuilder = transactionBuilder;
-        this.documentSigner = SignatureToolFactory.selectBuilder(1).orElseThrow(UnsupportedTransactionVersion::new);
+        this.transactionBuilderFactory = transactionBuilderFactory;
+        this.signerService = signerService;
     }
 
     @Override
@@ -476,26 +476,21 @@ public class ShufflerServiceImpl implements ShufflerService {
                 return;
             }
         }
-        //TODO Use TransactionVersionValidator#getActualVersion()
-        int version = 1;
+
         try {
             int timestamp = blockchain.getLastBlockTimestamp();
-            Transaction.Builder builder = transactionBuilder.newTransactionBuilder(version,
-                Crypto.getPublicKey(Crypto.getKeySeed(shuffler.getSecretBytes())),
+            byte[] keySeed = Crypto.getKeySeed(shuffler.getSecretBytes());
+            Transaction.Builder builder = transactionBuilderFactory.newTransactionBuilder(transactionVersion,
+                Crypto.getPublicKey(keySeed),
                 0, 0,
                 (short) 1440, attachment, timestamp)
                 .ecBlockData(blockchain.getECBlock(timestamp));
 
             Transaction transaction = builder.build();
             transaction.setFeeATM(feeCalculator.getMinimumFeeATM(transaction, blockchain.getHeight()));
-            Signature signature = documentSigner.sign(
-                transaction.getUnsignedBytes(),
-                SignatureToolFactory.createCredential(
-                    1,
-                    Crypto.getKeySeed(shuffler.getSecretBytes())
-                )
-            );
-            transaction.sign(signature);
+
+            signerService.sign(transaction, keySeed);
+
             shuffler.setFailedTransaction(null);
             shuffler.setFailureCause(null);
             Account participantAccount = accountService.getAccount(shuffler.getAccountId());

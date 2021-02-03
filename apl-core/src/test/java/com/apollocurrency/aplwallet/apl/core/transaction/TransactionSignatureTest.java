@@ -4,8 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
+import com.apollocurrency.aplwallet.apl.core.io.Result;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -13,9 +15,11 @@ import com.apollocurrency.aplwallet.apl.core.signature.Credential;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureVerifier;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryPaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
@@ -32,6 +36,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionSignatureTest {
@@ -58,6 +63,8 @@ class TransactionSignatureTest {
     SignatureVerifier signatureVerifier;
     Credential credential;
 
+    TxBContext txBContext;
+
     TransactionSignatureTest() throws ParseException {
     }
 
@@ -69,6 +76,8 @@ class TransactionSignatureTest {
     AccountPublicKeyService accountPublicKeyService;
     @Mock
     Blockchain blockchain;
+    @Mock
+    Chain chain;
 
 
     @SneakyThrows
@@ -76,10 +85,12 @@ class TransactionSignatureTest {
     void setUp() {
         CreateChildTransactionType createChildTransactionType = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain);
         OrdinaryPaymentTransactionType paymentTransactionType = new OrdinaryPaymentTransactionType(blockchainConfig, accountService);
-        TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(createChildTransactionType, paymentTransactionType)));
-        transaction = builder.newTransactionBuilder(txJsonObject).build();
+        TransactionBuilderFactory builderFactory = new TransactionBuilderFactory(new CachedTransactionTypeFactory(List.of(createChildTransactionType, paymentTransactionType)));
+        transaction = builderFactory.newTransactionBuilder(txJsonObject).build();
         signatureVerifier = SignatureToolFactory.selectValidator(1).get();
         credential = SignatureToolFactory.createCredential(1, transaction.getSenderPublicKey());
+        doReturn(chain).when(blockchainConfig).getChain();
+        txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }
 
     @Test
@@ -88,10 +99,12 @@ class TransactionSignatureTest {
         Signature signature = transaction.getSignature();
         String signatureHexString = signature.getHexString();
         String sigStr = Convert.toHexString(signature.bytes());
+        Result unsignedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion())
+            .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), unsignedTxBytes);
 
         //WHEN
-
-        boolean rc = signatureVerifier.verify(transaction.getUnsignedBytes(), signature, credential);
+        boolean rc = signatureVerifier.verify(unsignedTxBytes.array(), signature, credential);
 
         //THEN
         assertNotNull(signature);

@@ -47,7 +47,7 @@ import javax.servlet.http.HttpServletRequest;
  * <p>This transaction is allowed only when the currency is {@link CurrencyType#CLAIMABLE} and is already active.<br>
  */
 @Vetoed
-public final class CurrencyReserveClaim extends CreateTransaction {
+public final class CurrencyReserveClaim extends CreateTransactionHandler {
 
     public CurrencyReserveClaim() {
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "units");

@@ -15,10 +15,10 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
+package com.apollocurrency.aplwallet.apl.core.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
@@ -34,21 +34,19 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public interface Transaction {
 
+    Transaction getTransactionImpl();
+
     boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates);
 
     long getId();
-
-    long getDbId();
 
     String getStringId();
 
@@ -56,7 +54,9 @@ public interface Transaction {
 
     boolean hasValidSignature();
 
-    void withValidSignature();
+    default boolean isValidSignature() {
+        return hasValidSignature();
+    }
 
     byte[] getSenderPublicKey();
 
@@ -100,8 +100,6 @@ public interface Transaction {
 
     byte[] referencedTransactionFullHash();
 
-    void sign(Signature signature);
-
     Signature getSignature();
 
     String getFullHashString();
@@ -112,17 +110,13 @@ public interface Transaction {
 
     Attachment getAttachment();
 
-    default byte[] getCopyTxBytes() {
-        byte[] txBytes = bytes();
-        return Arrays.copyOf(txBytes, txBytes.length);
-    }
-
-    byte[] bytes();
-
-    byte[] getUnsignedBytes();
-
     byte getVersion();
 
+    /**
+     * The transaction size in bytes. It's calculated during the signing routine.
+     *
+     * @return transaction size in bytes
+     */
     int getFullSize();
 
     MessageAppendix getMessage();
@@ -171,11 +165,13 @@ public interface Transaction {
 
     interface Builder {
 
-        Builder recipientId(long recipientId);
+        Transaction build() throws AplException.NotValidException;
 
-        default Builder recipientRs(String recipientRS) {
-            return recipientId(Convert.parseAccountId(recipientRS));
-        }
+        Builder id(long id);
+
+        Builder signature(Signature signature);
+
+        Builder recipientId(long recipientId);
 
         Builder referencedTransactionFullHash(String referencedTransactionFullHash);
 
@@ -201,14 +197,18 @@ public interface Transaction {
 
         Builder ecBlockData(EcBlockData ecBlockData);
 
-        Builder dbId(long dbId);
-
         Builder ecBlockId(long blockId);
 
-        Builder signature(Signature signature);
+        Builder blockId(long blockId);
 
-        Transaction build() throws AplException.NotValidException;
+        Builder height(int height);
 
-        TransactionImpl.BuilderImpl blockId(long blockId);
+        Builder senderId(long senderId);
+
+        Builder fullHash(byte[] fullHash);
+
+        Builder blockTimestamp(int blockTimestamp);
+
+        Builder index(short index);
     }
 }

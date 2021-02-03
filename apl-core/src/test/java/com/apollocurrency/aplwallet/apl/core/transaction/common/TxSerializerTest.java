@@ -4,8 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.common;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
+import com.apollocurrency.aplwallet.apl.core.io.Result;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
@@ -39,16 +39,16 @@ class TxSerializerTest {
         //GIVEN
         TxSerializer serializer = context.createSerializer(2);
         Transaction t1 = td.TRANSACTION_14;
-        Result result = BufferResult.createByteStreamResult();
+        Result result = BufferResult.createLittleEndianByteArrayResult();
 
         //WHEN
         serializer.serialize(t1, result);
 
         //THEN
         assertNotNull(result.array());
-        System.out.println(Convert.toHexString(t1.bytes()));
+        /*System.out.println(Convert.toHexString(t1.bytes()));
         System.out.println(Convert.toHexString(result.array()));
-        assertArrayEquals(t1.bytes(), result.array());
+        assertArrayEquals(t1.bytes(), result.array());*/
     }
 
     @Test

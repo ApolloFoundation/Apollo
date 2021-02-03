@@ -7,8 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
@@ -81,7 +81,7 @@ class TransactionProcessorTest {
     private GlobalSync globalSync = mock(GlobalSync.class);
     private TaskDispatchManager taskDispatchManager = mock(TaskDispatchManager.class);
     private AccountPublicKeyService accountPublicKeyService = mock(AccountPublicKeyService.class);
-    private TransactionBuilder transactionBuilder = mock(TransactionBuilder.class);
+    private TransactionBuilderFactory transactionBuilderFactory = mock(TransactionBuilderFactory.class);
     private PrunableLoadingService prunableLoadingService = mock(PrunableLoadingService.class);
     private TransactionTypeFactory transactionTypeFactory = mock(TransactionTypeFactory.class);
     private UnconfirmedTransactionProcessingService processingService = mock(UnconfirmedTransactionProcessingService.class);
@@ -124,7 +124,7 @@ class TransactionProcessorTest {
         td = new TransactionTestData();
         service = new TransactionProcessorImpl(transactionValidator,
             listEvent, databaseManager,
-            globalSync, timeService, blockchainConfig, peersService, blockchain, transactionBuilder, prunableLoadingService, processingService, memPool);
+            globalSync, timeService, blockchainConfig, peersService, blockchain, transactionBuilderFactory, prunableLoadingService, processingService, memPool);
     }
 
     @Test

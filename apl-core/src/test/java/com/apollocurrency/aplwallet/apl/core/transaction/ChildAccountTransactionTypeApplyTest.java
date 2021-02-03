@@ -16,8 +16,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransact
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -121,7 +121,7 @@ class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
         AppendixValidatorRegistry.class,
         TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         ReferencedTransactionDaoImpl.class,
-        TransactionBuilder.class,
+        TransactionBuilderFactory.class,
         TransactionValidator.class, TransactionApplier.class
     )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -169,7 +169,7 @@ class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
     void applyAttachment() throws AplException.NotValidException {
         //GIVEN
         CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain);
-        TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(type)));
+        TransactionBuilderFactory builder = new TransactionBuilderFactory(new CachedTransactionTypeFactory(List.of(type)));
         byte[] tx = Convert.parseHexString(SIGNED_TX_1_HEX);
         Transaction.Builder txBuilder = builder.newTransactionBuilder(tx);
         Transaction newTx = txBuilder.build();
@@ -178,12 +178,6 @@ class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
         when(publicKeyDao.searchAll(senderId)).thenReturn(new PublicKey(senderId, newTx.getSenderPublicKey(), newTx.getHeight()));
 
         assertNotNull(newTx);
-
-        byte[] txBytes = newTx.getCopyTxBytes();
-        byte[] txUnsignedBytes = newTx.getUnsignedBytes();
-
-        String txStr = Convert.toHexString(txBytes);
-        String txUnsignedStr = Convert.toHexString(txUnsignedBytes);
 
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx));

@@ -69,7 +69,7 @@ import javax.servlet.http.HttpServletRequest;
 
 @Deprecated
 @Vetoed
-public final class SetPhasingOnlyControl extends CreateTransaction {
+public final class SetPhasingOnlyControl extends CreateTransactionHandler {
 
     public SetPhasingOnlyControl() {
         super(new APITag[]{APITag.ACCOUNT_CONTROL, APITag.CREATE_TRANSACTION}, "controlVotingModel", "controlQuorum", "controlMinBalance",

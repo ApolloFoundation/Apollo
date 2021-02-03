@@ -15,10 +15,10 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
+package com.apollocurrency.aplwallet.apl.core.blockchain;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -359,7 +359,6 @@ public final class BlockImpl implements Block {
         for (Transaction transaction : this.blockTransactions) {
             transaction.setBlock(this);
             transaction.setIndex(index++);
-            transaction.bytes();
             transaction.getAppendages();
         }
     }

@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
-import com.apollocurrency.aplwallet.apl.core.transaction.common.WriteBuffer;
+import com.apollocurrency.aplwallet.apl.core.io.WriteBuffer;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;

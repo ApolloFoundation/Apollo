@@ -4,11 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSigner;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSignerImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDao;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AddressScope;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
@@ -91,11 +93,11 @@ public class ChildAccountTransactionTypeTest {
     AppendixValidatorRegistry validatorRegistry = mock(AppendixValidatorRegistry.class);
 
     CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain);
-    TransactionBuilder builder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(type)));
+    TransactionBuilderFactory builder = new TransactionBuilderFactory(new CachedTransactionTypeFactory(List.of(type)));
     TransactionVersionValidator txVersionValidator = new TransactionVersionValidator(blockchainConfig, blockchain);
     TransactionApplier txApplier = new TransactionApplier(blockchainConfig, referencedTransactionDao, accountService, accountPublicKeyService, prunableLoadingService, applierRegistry);
     TransactionValidator txValidator = new TransactionValidator(blockchainConfig, phasingPollService, blockchain, calculator, accountService, accountPublicKeyService, accountControlPhasingService, txVersionValidator, prunableLoadingService, validatorRegistry);
-    TransactionSigner txSigner = new TransactionSigner(accountPublicKeyService);
+    TransactionSigner txSigner = new TransactionSignerImpl(blockchainConfig);
     TransactionCreator txCreator = new TransactionCreator(txValidator, propertiesHolder, timeService, calculator, blockchain, processor, new CachedTransactionTypeFactory(List.of(type)), builder, txSigner);
 
     @BeforeEach
@@ -129,12 +131,6 @@ public class ChildAccountTransactionTypeTest {
             .build();
         Transaction tx = txCreator.createTransactionThrowingException(request);
         assertNotNull(tx);
-
-        byte[] txBytes = tx.getCopyTxBytes();
-        byte[] txUnsignedBytes = tx.getUnsignedBytes();
-
-        String txStr = Convert.toHexString(txBytes);
-        String txUnsignedStr = Convert.toHexString(txUnsignedBytes);
 
         //WHEN
         txApplier.apply(tx);

@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
@@ -33,11 +33,11 @@ import java.nio.ByteOrder;
 
 @Singleton
 @Slf4j
-public class TransactionBuilder {
+public class TransactionBuilderFactory {
     private final TransactionTypeFactory factory;
 
     @Inject
-    public TransactionBuilder(TransactionTypeFactory factory) {
+    public TransactionBuilderFactory(TransactionTypeFactory factory) {
         this.factory = factory;
     }
 
@@ -90,7 +90,6 @@ public class TransactionBuilder {
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey, amountATM, feeATM,
                 deadline, attachment, timestamp, transactionType)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
-                .signature(signature)
                 .ecBlockHeight(ecBlockHeight)
                 .ecBlockId(ecBlockId);
             if (transactionType.canHaveRecipient()) {
@@ -176,7 +175,7 @@ public class TransactionBuilder {
      * Use com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter
      */
     @Deprecated
-    public TransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws AplException.NotValidException {
+    public Transaction.Builder newTransactionBuilder(JSONObject transactionData) throws AplException.NotValidException {
 
         try {
             byte type = ((Long) transactionData.get("type")).byteValue();
@@ -212,7 +211,6 @@ public class TransactionBuilder {
                 amountATM, feeATM, deadline,
                 attachment, timestamp, transactionType)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
-                .signature(signature)
                 .ecBlockHeight(ecBlockHeight)
                 .ecBlockId(ecBlockId);
             if (transactionType.canHaveRecipient()) {

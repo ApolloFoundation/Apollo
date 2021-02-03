@@ -37,7 +37,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT_PROPERTY_VALUE_LENGTH;
 
 @Vetoed
-public final class SetAccountProperty extends CreateTransaction {
+public final class SetAccountProperty extends CreateTransactionHandler {
 
     public SetAccountProperty() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "property", "value");

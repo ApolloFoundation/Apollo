@@ -4,7 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.common;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
+import com.apollocurrency.aplwallet.apl.core.io.ByteArrayStream;
+import com.apollocurrency.aplwallet.apl.core.io.JsonBuffer;
+import com.apollocurrency.aplwallet.apl.core.io.Result;
+import com.apollocurrency.aplwallet.apl.core.io.WriteBuffer;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -23,6 +28,7 @@ import java.util.Objects;
 @Slf4j
 public abstract class AbstractTxSerializer implements TxSerializer {
 
+    @Getter
     private final TxBContextImpl context;
 
     @Getter
@@ -68,7 +74,6 @@ public abstract class AbstractTxSerializer implements TxSerializer {
     }
 
     protected void write(Transaction transaction, JsonBuffer json) {
-
         json.put("id", Long.toUnsignedString(transaction.getId()));
         json.put("version", transaction.getVersion());
         TransactionType type = transaction.getType();

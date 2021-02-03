@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
@@ -48,7 +48,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -145,7 +145,7 @@ public final class HttpParameterParserUtil {
     private static CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
     private static CurrencyService currencyService;
     private static ShufflingService shufflingService;
-    private static TransactionBuilder transactionBuilder;
+    private static TransactionBuilderFactory transactionBuilderFactory;
     private static KMSService KMSService;
 
     private HttpParameterParserUtil() {
@@ -1239,11 +1239,11 @@ public final class HttpParameterParserUtil {
         return shufflingService;
     }
 
-    private static TransactionBuilder lookupTransactionBuilder() {
-        if (transactionBuilder == null) {
-            transactionBuilder = CDI.current().select(TransactionBuilder.class).get();
+    private static TransactionBuilderFactory lookupTransactionBuilder() {
+        if (transactionBuilderFactory == null) {
+            transactionBuilderFactory = CDI.current().select(TransactionBuilderFactory.class).get();
         }
-        return transactionBuilder;
+        return transactionBuilderFactory;
     }
 
     private static KMSService lookupAccountKMSv1() {

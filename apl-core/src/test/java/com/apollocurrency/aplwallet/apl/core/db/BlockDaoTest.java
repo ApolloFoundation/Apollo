@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -82,7 +82,7 @@ class BlockDaoTest extends DbContainerBaseTest {
             new TransactionEntityRowMapper(),
             new PrunableTxRowMapper(txd.getTransactionTypeFactory()),
             extension.getDatabaseManager());
-        toModelConverter = new TransactionEntityToModelConverter(txd.getTransactionTypeFactory(), new TransactionBuilder(txd.getTransactionTypeFactory()));
+        toModelConverter = new TransactionEntityToModelConverter(txd.getTransactionTypeFactory(), new TransactionBuilderFactory(txd.getTransactionTypeFactory()));
         blockEntityToModelConverter = new BlockEntityToModelConverter();
         blockModelToEntityConverter = new BlockModelToEntityConverter();
     }

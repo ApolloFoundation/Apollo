@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.converter.db;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
@@ -46,7 +46,6 @@ public class TransactionModelToEntityConverter implements Converter<Transaction,
             .blockTimestamp(model.getBlockTimestamp())
             .fullHash(model.getFullHash())
             .index(model.getIndex())
-            .dbId(model.getDbId())
             .senderPublicKey(model.getSenderPublicKey())
 
             .hasMessage(model.getMessage() != null)

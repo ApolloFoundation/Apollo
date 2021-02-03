@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
@@ -77,7 +77,6 @@ public class TransactionDTOConverter implements Converter<TransactionDTO, Transa
                 txDto.getDeadline(),
                 attachment, txDto.getTimestamp(), transactionType)
                 .referencedTransactionFullHash(txDto.getReferencedTransactionFullHash())
-                .signature(signature)
                 .ecBlockHeight(ecBlockHeight)
                 .ecBlockId(ecBlockId);
             if (transactionType.canHaveRecipient()) {
@@ -92,8 +91,8 @@ public class TransactionDTOConverter implements Converter<TransactionDTO, Transa
             builder.appendix(PhasingAppendixFactory.parse(attachmentData));
             builder.appendix(PrunablePlainMessageAppendix.parse(attachmentData));
             builder.appendix(PrunableEncryptedMessageAppendix.parse(attachmentData));
-            builder.signature(signature);
 
+            builder.signature(signature);
             return builder.build();
         } catch (RuntimeException | AplException.NotValidException e) {
             log.debug("Failed to parse transaction: " + txDto.toString());

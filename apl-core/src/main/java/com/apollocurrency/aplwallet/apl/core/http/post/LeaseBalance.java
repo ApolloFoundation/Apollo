@@ -36,7 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 
 @Deprecated
 @Vetoed
-public final class LeaseBalance extends CreateTransaction {
+public final class LeaseBalance extends CreateTransactionHandler {
 
     public LeaseBalance() {
         super(new APITag[]{APITag.FORGING, APITag.ACCOUNT_CONTROL, APITag.CREATE_TRANSACTION}, "period", "recipient");

@@ -2,11 +2,12 @@
  * Copyright (c)  2018-2021. Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.apl.core.transaction.common;
+package com.apollocurrency.aplwallet.apl.core.io;
 
 import lombok.Getter;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Objects;
 
 /**
@@ -22,7 +23,13 @@ public class BufferResult implements Result {
         this.buffer = buffer;
     }
 
-    public static BufferResult createByteStreamResult() {
+    public static BufferResult createLittleEndianByteArrayResult() {
+        ByteArrayStream buffer = new ByteArrayStream();
+        buffer.setOrder(ByteOrder.LITTLE_ENDIAN);
+        return new BufferResult(buffer);
+    }
+
+    public static BufferResult createByteArrayResult() {
         return new BufferResult(new ByteArrayStream());
     }
 
@@ -35,6 +42,10 @@ public class BufferResult implements Result {
 
     public static BufferResult createJsonResult() {
         return new BufferResult(new JsonBuffer());
+    }
+
+    public static BufferResult createJsonResult(JsonBuffer buffer) {
+        return new BufferResult(buffer);
     }
 
     @Override

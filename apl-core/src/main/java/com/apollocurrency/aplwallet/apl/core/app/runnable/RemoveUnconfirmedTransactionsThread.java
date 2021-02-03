@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionHelper;
+import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -64,7 +64,7 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
     }
 
     private void removeNotValidTransactions() {
-        TransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> memPool.getAllProcessedStream().forEach(e -> {
+        DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> memPool.getAllProcessedStream().forEach(e -> {
             if (!transactionProcessor.isFullyValidTransaction(e)) {
                 transactionProcessor.removeUnconfirmedTransaction(e);
             }
@@ -84,7 +84,7 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
         if (expiredTransactionsCount > 0) {
             log.trace("Found {} unc txs to remove", expiredTransactionsCount);
             TransactionalDataSource dataSource = databaseManager.getDataSource();
-            TransactionHelper.executeInTransaction(dataSource, () -> memPool.getExpiredTxsStream(epochTime).forEach(e-> transactionProcessor.removeUnconfirmedTransaction(e.getTransaction())));
+            DbTransactionHelper.executeInTransaction(dataSource, () -> memPool.getExpiredTxsStream(epochTime).forEach(e -> transactionProcessor.removeUnconfirmedTransaction(e.getTransactionImpl())));
         }
     }
 }

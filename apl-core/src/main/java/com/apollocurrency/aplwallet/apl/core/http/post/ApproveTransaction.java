@@ -44,13 +44,13 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.TOO_MANY_
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION_FULL_HASH;
 
 @Vetoed
-public class ApproveTransaction extends CreateTransaction {
+public class ApproveTransaction extends CreateTransactionHandler {
 
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
 
     public ApproveTransaction() {
         super(new APITag[]{APITag.CREATE_TRANSACTION, APITag.PHASING}, "transactionFullHash", "transactionFullHash", "transactionFullHash",
-            "revealedSecret", "revealedSecretIsText");
+                "revealedSecret", "revealedSecretIsText");
     }
 
     @Override
