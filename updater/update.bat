@@ -21,8 +21,6 @@ del /S /F /Q %1\..\apollo-tools
 robocopy %1 %1\.. /S
 robocopy %2 %1\.. /S
 
-del /S /F /Q %1
-rmdir /S /Q %1
 
 
 
