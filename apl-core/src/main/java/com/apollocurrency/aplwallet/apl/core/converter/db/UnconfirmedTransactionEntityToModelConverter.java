@@ -15,6 +15,7 @@ import org.json.simple.JSONValue;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Objects;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -30,6 +31,7 @@ public class UnconfirmedTransactionEntityToModelConverter implements Converter<U
 
     @Override
     public UnconfirmedTransaction apply(UnconfirmedTransactionEntity entity) {
+        Objects.requireNonNull(entity);
         try {
             JSONObject prunableAttachments = null;
             if (entity.getPrunableAttachmentJsonString() != null) {

@@ -112,13 +112,6 @@ public interface Transaction {
 
     byte getVersion();
 
-    /**
-     * The transaction size in bytes. It's calculated during the signing routine.
-     *
-     * @return transaction size in bytes
-     */
-//    int getFullSize();
-
     MessageAppendix getMessage();
 
     EncryptedMessageAppendix getEncryptedMessage();

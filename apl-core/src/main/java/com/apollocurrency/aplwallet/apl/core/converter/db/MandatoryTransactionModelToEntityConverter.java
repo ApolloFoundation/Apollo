@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Objects;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -31,6 +32,7 @@ public class MandatoryTransactionModelToEntityConverter implements Converter<Man
 
     @Override
     public MandatoryTransactionEntity apply(MandatoryTransaction model) {
+        Objects.requireNonNull(model);
         Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(model.getVersion()).serialize(model.getTransactionImpl(), signedTxBytes);
         return new MandatoryTransactionEntity(model.getId(), signedTxBytes.array(), model.getRequiredTxHash());

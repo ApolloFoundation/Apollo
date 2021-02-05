@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
+import java.util.Objects;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -33,6 +34,7 @@ public class UnconfirmedTransactionModelToEntityConverter implements Converter<U
 
     @Override
     public UnconfirmedTransactionEntity apply(UnconfirmedTransaction model) {
+        Objects.requireNonNull(model);
         UnconfirmedTransactionEntity.UnconfirmedTransactionEntityBuilder builder = UnconfirmedTransactionEntity.builder()
             .id(model.getId())
             .transactionHeight(model.getHeight())

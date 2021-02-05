@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Objects;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -28,6 +29,7 @@ public class MandatoryTransactionEntityToModelConverter implements Converter<Man
 
     @Override
     public MandatoryTransaction apply(MandatoryTransactionEntity entity) {
+        Objects.requireNonNull(entity);
         try {
             Transaction tx = transactionBuilderFactory.newTransaction(entity.getTransactionBytes());
             MandatoryTransaction model = new MandatoryTransaction(tx, entity.getRequiredTxHash());
