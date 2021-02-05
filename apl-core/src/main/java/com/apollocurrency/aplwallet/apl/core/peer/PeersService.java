@@ -932,7 +932,6 @@ public class PeersService {
     }
 
     public BlockchainState getMyBlockchainState() {
-        checkBlockchainState();
         return currentBlockchainState;
     }
 
