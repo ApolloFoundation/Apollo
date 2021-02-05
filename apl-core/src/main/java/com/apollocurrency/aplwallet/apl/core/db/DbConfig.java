@@ -16,10 +16,11 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.UUID;
 
+
 @Singleton
 public class DbConfig {
-    private PropertiesHolder propertiesHolder;
-    private ChainsConfigHolder chainsConfigHolder;
+    private final PropertiesHolder propertiesHolder;
+    private final ChainsConfigHolder chainsConfigHolder;
 
     @Inject
     public DbConfig(PropertiesHolder propertiesHolder, ChainsConfigHolder chainsConfigHolder) {

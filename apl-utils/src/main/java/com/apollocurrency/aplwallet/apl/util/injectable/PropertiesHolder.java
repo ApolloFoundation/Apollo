@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.Vetoed;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,7 +15,6 @@ import java.util.List;
 import java.util.Properties;
 
 @Slf4j
-@Vetoed
 public class PropertiesHolder {
 
     private Properties properties;

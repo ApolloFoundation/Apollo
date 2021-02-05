@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
@@ -24,10 +25,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.HEALTH_CHECK_INTERVAL;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
+import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Produces;
+
 
 /**
- * Runtime environment for AplCores (singleton) TODO: make it injectable
- * singleton
+ * Runtime environment for AplCores (singleton)
  *
  * @author alukin@gmail.com
  */
@@ -39,14 +49,40 @@ public class AplCoreRuntime {
     private final AplAppStatus aplAppStatus;
     private final PeersService peers;
     private RuntimeMode runtimeMode;
-
+    
+    
+    private PropertiesHolder propertieHolder;
+    private ChainsConfigHolder chainsConfigHolder;
+    private DbConfig dbConfig;
+    private DirProvider dirProvider;
+    
     // WE CAN'T use @Inject here for 'RuntimeMode' instance because it has several candidates (in CDI hierarchy)
-    public AplCoreRuntime() {
+    public AplCoreRuntime() {        
         this.databaseManager = CDI.current().select(DatabaseManager.class).get();
         this.aplAppStatus = CDI.current().select(AplAppStatus.class).get();
         this.peers = CDI.current().select(PeersService.class).get();
     }
+    
+    @Produces @ApplicationScoped
+    public PropertiesHolder getPropertieHolder() {
+        return propertieHolder;
+    }
 
+    @Produces @ApplicationScoped
+    public ChainsConfigHolder getChainsConfigHolder() {
+        return chainsConfigHolder;
+    }
+
+    @Produces @ApplicationScoped
+    public DbConfig getDbConfig() {
+        return dbConfig;
+    }
+    
+    @Produces @ApplicationScoped
+    public DirProvider getDirProvider() {
+        return dirProvider;
+    }    
+    
     public static void logSystemProperties() {
         String[] loggedProperties = new String[]{
             "java.version",
@@ -73,8 +109,18 @@ public class AplCoreRuntime {
     }
 
     public void init(RuntimeMode runtimeMode,
-                     TaskDispatchManager taskManager) {
+                     TaskDispatchManager taskManager,
+                     DirProvider dirProvider,
+                     Properties properties,
+                     Map<UUID, Chain> chains
+                     ) 
+    {
         this.runtimeMode = runtimeMode;
+        this.propertieHolder = new PropertiesHolder();
+        this.propertieHolder.init(properties);        
+        this.chainsConfigHolder = new ChainsConfigHolder(chains);
+        this.dbConfig = new DbConfig(propertieHolder, chainsConfigHolder);
+        
         TaskDispatcher taskDispatcher = taskManager.newScheduledDispatcher("AplCoreRuntime-periodics");
         taskDispatcher.schedule(Task.builder()
             .name("Core-health")
