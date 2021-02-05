@@ -13,6 +13,7 @@ import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  *
@@ -58,10 +59,14 @@ public abstract class AbstractAppendix implements Appendix {
 
     @Override
     public void putBytes(WriteBuffer buffer) {
-        ByteBuffer appBuffer = ByteBuffer.allocate(getSize());
-        putBytes(appBuffer);
+        int size = getSize();
+        if (size > 0) {
+            ByteBuffer appBuffer = ByteBuffer.allocate(size);
+            appBuffer.order(ByteOrder.LITTLE_ENDIAN);
+            putBytes(appBuffer);
 
-        buffer.write(appBuffer.array());
+            buffer.write(appBuffer.array());
+        }
     }
 
     @Override

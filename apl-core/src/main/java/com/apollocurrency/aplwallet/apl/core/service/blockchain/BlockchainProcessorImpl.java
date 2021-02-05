@@ -53,7 +53,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
-import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
+import com.apollocurrency.aplwallet.apl.core.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.io.Result;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -71,7 +71,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountContro
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
@@ -835,9 +835,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             calculatedTotalAmount += transaction.getAmountATM();
             calculatedTotalFee += transaction.getFeeATM();
-            payloadLength += transaction.getFullSize();
             Result result = getTxByteArrayResult(transaction);
             digest.update(result.array());
+            payloadLength += result.payloadSize();
         }
         if (calculatedTotalAmount != block.getTotalAmountATM() || calculatedTotalFee != block.getTotalFeeATM()) {
             throw new BlockNotAcceptedException(
@@ -855,7 +855,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     private Result getTxByteArrayResult(Transaction transaction) {
-        Result result = BufferResult.createLittleEndianByteArrayResult();
+        Result result = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion())
             .serialize(transaction, result);
         return result;
@@ -921,7 +921,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
                     MessagingPhasingVoteCasting voteCasting = (MessagingPhasingVoteCasting) transaction.getAttachment();
                     voteCasting.getTransactionFullHashes().forEach(hash -> {
-                        PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.fullHashToId(hash));
+                        PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.transactionFullHashToId(hash));
                         if (phasingPoll.allowEarlyFinish()
                             && (phasingPoll.getFinishHeight() > block.getHeight()
                             || phasingPoll.getFinishTime() > block.getTimestamp())
@@ -938,7 +938,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     if (result != null && result.isApproved()) {
                         MessagingPhasingVoteCasting phasingVoteCasting = (MessagingPhasingVoteCasting) phasedTransaction.getAttachment();
                         phasingVoteCasting.getTransactionFullHashes().forEach(hash -> {
-                            PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.fullHashToId(hash));
+                            PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.transactionFullHashToId(hash));
                             if (phasingPoll.allowEarlyFinish()
                                 && (phasingPoll.getFinishHeight() > block.getHeight()
                                 || phasingPoll.getFinishTime() > block.getTimestamp())
@@ -1181,7 +1181,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
                 int prevNumberOfNewTransactions = sortedTransactions.size();
                 for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
-                    int transactionLength = unconfirmedTransaction.getTransactionImpl().getFullSize();
+                    int transactionLength = unconfirmedTransaction.getFullSize();
                     if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > maxPayloadLength) {
                         continue;
                     }
@@ -1259,12 +1259,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         for (UnconfirmedTransaction unconfirmedTransaction : sortedTransactions) {
             Transaction transaction = unconfirmedTransaction.getTransactionImpl();
             blockTransactions.add(transaction);
-            Result signedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+            Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
             txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
             digest.update(signedTxBytes.array());
             totalAmountATM += transaction.getAmountATM();
             totalFeeATM += transaction.getFeeATM();
-            payloadLength += transaction.getFullSize();
+            payloadLength += signedTxBytes.payloadSize();
         }
         byte[] payloadHash = digest.digest();
         digest.update(previousBlock.getGenerationSignature());
@@ -1456,7 +1456,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                             byte[] transactionBytes = getTxByteArrayResult(transaction).array();
                                             if (!Arrays.equals(transactionBytes,
                                                 getTxByteArrayResult(
-                                                    transactionBuilderFactory.newTransactionBuilder(transactionBytes).build()
+                                                    transactionBuilderFactory.newTransaction(transactionBytes)
                                                 ).array())) {
                                                 throw new AplException.NotValidException("Transaction bytes cannot be parsed back to the same transaction: "
                                                     + transactionJsonSerializer.toJson(transaction).toJSONString());
@@ -1464,7 +1464,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                             JSONObject transactionJSON = (JSONObject) JSONValue.parse(transactionJsonSerializer.toJson(transaction).toJSONString());
                                             if (!Arrays.equals(transactionBytes,
                                                 getTxByteArrayResult(
-                                                    transactionBuilderFactory.newTransactionBuilder(transactionJSON).build()
+                                                    transactionBuilderFactory.newTransaction(transactionJSON)
                                                 ).array())) {
                                                 throw new AplException.NotValidException("Transaction JSON cannot be parsed back to the same transaction: "
                                                     + transactionJsonSerializer.toJson(transaction).toJSONString());

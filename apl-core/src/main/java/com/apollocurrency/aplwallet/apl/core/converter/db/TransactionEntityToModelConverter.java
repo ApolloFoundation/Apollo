@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
@@ -55,7 +55,7 @@ public class TransactionEntityToModelConverter implements Converter<TransactionE
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
             }
             TransactionType transactionType = factory.findTransactionType(entity.getType(), entity.getSubtype());
-            Transaction.Builder builder = transactionBuilderFactory.newTransactionBuilder(entity.getVersion(), entity.getSenderPublicKey(),
+            Transaction.Builder builder = transactionBuilderFactory.newUnsignedTransactionBuilder(entity.getVersion(), entity.getSenderPublicKey(),
                 entity.getAmountATM(), entity.getFeeATM(), entity.getDeadline(),
                 transactionType != null ? transactionType.parseAttachment(buffer) : null,
                 entity.getTimestamp())

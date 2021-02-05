@@ -22,6 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.blockchain;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -271,8 +272,7 @@ public final class BlockImpl implements Block {
                 throw new IllegalStateException("Block is not signed yet");
             }
 //            assuming that calculation of id will work only for generated blocks
-            byte[] hash = Crypto.sha256().digest(bytes());
-            BigInteger bigInteger = new BigInteger(1, new byte[]{hash[7], hash[6], hash[5], hash[4], hash[3], hash[2], hash[1], hash[0]});
+            BigInteger bigInteger = AplIdGenerator.BLOCK.getId(bytes());
             id = bigInteger.longValue();
             stringId = bigInteger.toString();
         }

@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
 import com.apollocurrency.aplwallet.apl.core.io.JsonBuffer;
+import com.apollocurrency.aplwallet.apl.core.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.io.Result;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
@@ -36,7 +36,7 @@ public class TransactionJsonSerializerImpl implements TransactionJsonSerializer 
 
     @Override
     public byte[] serialize(Transaction transaction) {
-        Result byteArrayTx = BufferResult.createLittleEndianByteArrayResult();
+        Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion())
             .serialize(transaction, byteArrayTx);
         return byteArrayTx.array();
@@ -44,7 +44,7 @@ public class TransactionJsonSerializerImpl implements TransactionJsonSerializer 
 
     @Override
     public byte[] serializeUnsigned(Transaction transaction) {
-        Result byteArrayTx = BufferResult.createLittleEndianByteArrayResult();
+        Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion())
             .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), byteArrayTx);
         return byteArrayTx.array();
@@ -57,7 +57,7 @@ public class TransactionJsonSerializerImpl implements TransactionJsonSerializer 
             prunableService.loadPrunable(transaction, appendage, false);
         }
         JsonBuffer buffer = new JsonBuffer();
-        Result byteArrayTx = BufferResult.createJsonResult(buffer);
+        Result byteArrayTx = PayloadResult.createJsonResult(buffer);
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, byteArrayTx);
         return buffer.getJsonObject();
     }

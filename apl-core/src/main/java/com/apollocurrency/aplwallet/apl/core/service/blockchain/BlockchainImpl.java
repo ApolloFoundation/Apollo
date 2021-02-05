@@ -610,7 +610,7 @@ public class BlockchainImpl implements Blockchain {
     }
 
     private boolean hasShardTransactionByFullHash(byte[] fullHash, int height) {
-        long id = Convert.fullHashToId(fullHash);
+        long id = Convert.transactionFullHashToId(fullHash);
         TransactionIndex transactionIndex = transactionIndexDao.getByTransactionId(id);
         byte[] hash = getTransactionIndexFullHash(transactionIndex);
         return Arrays.equals(hash, fullHash)
@@ -631,7 +631,7 @@ public class BlockchainImpl implements Blockchain {
         if (transaction != null) {
             txHeight = transaction.getHeight();
         } else if (hasShardTransactionByFullHash(fullHash, heightLimit)) {
-            txHeight = transactionIndexDao.getTransactionHeightByTransactionId(Convert.fullHashToId(fullHash));
+            txHeight = transactionIndexDao.getTransactionHeightByTransactionId(Convert.transactionFullHashToId(fullHash));
         }
         return txHeight;
     }

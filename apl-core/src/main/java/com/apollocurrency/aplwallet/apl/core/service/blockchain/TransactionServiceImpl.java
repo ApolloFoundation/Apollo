@@ -78,7 +78,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public Transaction findTransactionCrossShardingByFullHash(byte[] fullHash, int height) {
-        TransactionalDataSource dataSource = shardDbExplorer.getDatasourceWithShardingByTransactionId(Convert.fullHashToId(fullHash));
+        TransactionalDataSource dataSource = shardDbExplorer.getDatasourceWithShardingByTransactionId(Convert.transactionFullHashToId(fullHash));
         TransactionEntity entity = transactionDao.findTransactionByFullHash(fullHash, height, dataSource);
         return toModelConverter.convert(entity);
     }

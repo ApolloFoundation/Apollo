@@ -20,8 +20,8 @@ public class TxSerializerV3Impl extends AbstractTxSerializer {
     }
 
     @Override
-    public void write(Transaction transaction, WriteBuffer buffer) {
-
+    public int write(Transaction transaction, WriteBuffer buffer) {
+        int payloadSize = 0;
         //header
         buffer
             .write(transaction.getType().getSpec().getType())
@@ -47,7 +47,8 @@ public class TxSerializerV3Impl extends AbstractTxSerializer {
             }
             buffer.write(attachmentsList.build());
 */
+        payloadSize += buffer.size();
 
-
+        return payloadSize;
     }
 }

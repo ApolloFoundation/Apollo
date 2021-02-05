@@ -29,12 +29,12 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
-import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
+import com.apollocurrency.aplwallet.apl.core.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.io.Result;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TransactionSchedulerService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionWrapperHelper;
@@ -99,16 +99,16 @@ public final class ScheduleCurrencyBuy extends CreateTransactionHandler {
                     response.put("scheduled", false);
                     return response;
                 }
-                transaction = transactionBuilderFactory.newTransactionBuilder((JSONObject) response.get("transactionJSON")).build();
+                transaction = transactionBuilderFactory.newTransaction((JSONObject) response.get("transactionJSON"));
             } else {
                 response = new JSONObject();
-                transaction = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON).build();
+                transaction = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
 
-                Result unsignedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+                Result unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
                 txBContext.createSerializer(transaction.getVersion())
                     .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), unsignedTxBytes);
 
-                Result signedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+                Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
                 txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
 
                 JSONObject json = JSONData.unconfirmedTransaction(transaction);

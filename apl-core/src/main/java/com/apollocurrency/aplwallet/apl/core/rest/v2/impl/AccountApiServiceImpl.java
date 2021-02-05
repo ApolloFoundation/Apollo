@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AddressScope;
-import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
+import com.apollocurrency.aplwallet.apl.core.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.io.Result;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
@@ -97,7 +97,7 @@ public class AccountApiServiceImpl implements AccountApiService {
             .build();
 
         Transaction transaction = transactionCreator.createTransactionThrowingException(txRequest);
-        Result signedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+        Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
         response.setTx(Convert.toHexString(signedTxBytes.array()));
 
@@ -139,7 +139,7 @@ public class AccountApiServiceImpl implements AccountApiService {
             .build();
 
         Transaction transaction = transactionCreator.createTransactionThrowingException(txRequest);
-        Result signedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+        Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
 
         response.setTx(Convert.toHexString(signedTxBytes.array()));
@@ -182,7 +182,7 @@ public class AccountApiServiceImpl implements AccountApiService {
             .build();
 
         Transaction transaction = transactionCreator.createTransactionThrowingException(txRequest);
-        Result unsignedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+        Result unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion())
             .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), unsignedTxBytes);
 

@@ -198,11 +198,6 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public int getFullSize() {
-        return 0;
-    }
-
-    @Override
     public MessageAppendix getMessage() {
         return null;
     }

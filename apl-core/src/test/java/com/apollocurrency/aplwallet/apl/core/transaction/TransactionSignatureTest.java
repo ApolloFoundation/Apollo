@@ -5,8 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
+import com.apollocurrency.aplwallet.apl.core.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.io.Result;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
@@ -37,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionSignatureTest {
@@ -68,28 +70,29 @@ class TransactionSignatureTest {
     TransactionSignatureTest() throws ParseException {
     }
 
-    @Mock
-    BlockchainConfig blockchainConfig;
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
+
+    {
+        doReturn(chain).when(blockchainConfig).getChain();
+    }
+
     @Mock
     AccountService accountService;
     @Mock
     AccountPublicKeyService accountPublicKeyService;
     @Mock
     Blockchain blockchain;
-    @Mock
-    Chain chain;
-
 
     @SneakyThrows
     @BeforeEach
     void setUp() {
         CreateChildTransactionType createChildTransactionType = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain);
         OrdinaryPaymentTransactionType paymentTransactionType = new OrdinaryPaymentTransactionType(blockchainConfig, accountService);
-        TransactionBuilderFactory builderFactory = new TransactionBuilderFactory(new CachedTransactionTypeFactory(List.of(createChildTransactionType, paymentTransactionType)));
-        transaction = builderFactory.newTransactionBuilder(txJsonObject).build();
+        TransactionBuilderFactory builderFactory = new TransactionBuilderFactory(new CachedTransactionTypeFactory(List.of(createChildTransactionType, paymentTransactionType)), blockchainConfig);
+        transaction = builderFactory.newTransaction(txJsonObject);
         signatureVerifier = SignatureToolFactory.selectValidator(1).get();
         credential = SignatureToolFactory.createCredential(1, transaction.getSenderPublicKey());
-        doReturn(chain).when(blockchainConfig).getChain();
         txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }
 
@@ -99,7 +102,7 @@ class TransactionSignatureTest {
         Signature signature = transaction.getSignature();
         String signatureHexString = signature.getHexString();
         String sigStr = Convert.toHexString(signature.bytes());
-        Result unsignedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+        Result unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion())
             .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), unsignedTxBytes);
 

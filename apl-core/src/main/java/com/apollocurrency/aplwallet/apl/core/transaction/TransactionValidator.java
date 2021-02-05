@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
+import com.apollocurrency.aplwallet.apl.core.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.io.Result;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
@@ -172,9 +172,9 @@ public class TransactionValidator {
             AppendixValidator<AbstractAppendix> validator = validatorRegistry.getValidatorFor(appendage);
             doAppendixFullValidation(validatingAtFinish, validator, transaction, appendage);
         }
-        Result byteArrayTx = BufferResult.createLittleEndianByteArrayResult();
+        Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, byteArrayTx);
-        int fullSize = transaction.getFullSize();
+        int fullSize = byteArrayTx.payloadSize();
         if (fullSize > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
             throw new AplException.NotValidException("Transaction size " + fullSize + " exceeds maximum payload size");
         }
@@ -309,7 +309,7 @@ public class TransactionValidator {
         if (transaction.getSignature() != null && transaction.getSignature().isVerified()) {
             return true;
         } else {
-            Result byteArrayTx = BufferResult.createLittleEndianByteArrayResult();
+            Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
             txBContext.createSerializer(transaction.getVersion())
                 .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), byteArrayTx);
 
@@ -324,7 +324,7 @@ public class TransactionValidator {
                 byteArrayTx.array(), transaction.getSignature(), signatureCredential
             );
             if (verifiedOk) {
-                ((TransactionImpl) transaction).withValidSignature(verifiedOk);
+                ((TransactionImpl) transaction.getTransactionImpl()).withValidSignature(verifiedOk);
             }
             return verifiedOk;
         }

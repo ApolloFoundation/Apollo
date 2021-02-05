@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
-import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
+import com.apollocurrency.aplwallet.apl.core.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.io.Result;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionWrapperHelper;
@@ -65,11 +65,11 @@ public final class GetTransactionBytes extends AbstractAPIRequestHandler {
         Blockchain blockchain = lookupBlockchain();
         transaction = blockchain.getTransaction(transactionId);
 
-        Result unsignedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+        Result unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion())
             .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), unsignedTxBytes);
 
-        Result signedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+        Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
 
         JSONObject response = new JSONObject();

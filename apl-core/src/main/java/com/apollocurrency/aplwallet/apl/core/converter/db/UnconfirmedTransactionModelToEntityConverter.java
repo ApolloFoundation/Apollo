@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.converter.db;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransactionEntity;
-import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
+import com.apollocurrency.aplwallet.apl.core.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.io.Result;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
@@ -44,7 +44,7 @@ public class UnconfirmedTransactionModelToEntityConverter implements Converter<U
         if (prunableJSON != null) {
             builder.prunableAttachmentJsonString(prunableJSON.toJSONString());
         }
-        Result signedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+        Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(model.getVersion()).serialize(model, signedTxBytes);
         builder.transactionBytes(signedTxBytes.array());
 

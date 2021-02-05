@@ -5,12 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionCreator;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,15 +31,18 @@ public class RebroadcastTransactionsThread implements Runnable {
     private final MemPool memPool;
     private final PeersService peers;
     private final Blockchain blockchain;
+    private final UnconfirmedTransactionCreator unconfirmedTransactionCreator;
 
     public RebroadcastTransactionsThread(TimeService timeService,
                                          MemPool memPool,
                                          PeersService peers,
-                                         Blockchain blockchain) {
+                                         Blockchain blockchain,
+                                         UnconfirmedTransactionCreator unconfirmedTransactionCreator) {
         this.timeService = Objects.requireNonNull(timeService);
         this.memPool = Objects.requireNonNull(memPool);
         this.peers = Objects.requireNonNull(peers);
         this.blockchain = Objects.requireNonNull(blockchain);
+        this.unconfirmedTransactionCreator = Objects.requireNonNull(unconfirmedTransactionCreator);
         log.info("Created 'RebroadcastTransactionsThread' instance");
     }
 
@@ -68,7 +71,9 @@ public class RebroadcastTransactionsThread implements Runnable {
                 if (transaction.getExpiration() < curTime || blockchain.hasTransaction(transaction.getId())) {
                     memPool.removeBroadcastedTransaction(transaction);
                 } else if (transaction.getTimestamp() < curTime - 30) {
-                    transactionList.add(new UnconfirmedTransaction(transaction, Convert2.fromEpochTime(transaction.getTimestamp())));
+                    transactionList.add(
+                        unconfirmedTransactionCreator.from(transaction, Convert2.fromEpochTime(transaction.getTimestamp()))
+                    );
                 }
             }
 

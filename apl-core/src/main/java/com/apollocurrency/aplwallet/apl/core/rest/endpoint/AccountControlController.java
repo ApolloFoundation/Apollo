@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
+import com.apollocurrency.aplwallet.apl.core.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.io.Result;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
@@ -437,11 +437,11 @@ public class AccountControlController {
         Transaction transaction = txCreator.createTransactionThrowingException(txRequest);
         log.trace("leaseBalance transaction = {}", transaction);
 
-        Result unsignedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+        Result unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion())
             .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), unsignedTxBytes);
 
-        Result signedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+        Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
 
         UnconfirmedTransactionDTO txDto = unconfirmedTransactionConverter.convert(transaction);

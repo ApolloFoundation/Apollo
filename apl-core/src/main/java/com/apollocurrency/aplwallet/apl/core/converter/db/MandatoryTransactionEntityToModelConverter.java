@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.converter.db;
 import com.apollocurrency.aplwallet.apl.core.blockchain.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
@@ -29,7 +29,7 @@ public class MandatoryTransactionEntityToModelConverter implements Converter<Man
     @Override
     public MandatoryTransaction apply(MandatoryTransactionEntity entity) {
         try {
-            Transaction tx = transactionBuilderFactory.newTransactionBuilder(entity.getTransactionBytes()).build();
+            Transaction tx = transactionBuilderFactory.newTransaction(entity.getTransactionBytes());
             MandatoryTransaction model = new MandatoryTransaction(tx, entity.getRequiredTxHash());
             return model;
         } catch (AplException.NotValidException e) {

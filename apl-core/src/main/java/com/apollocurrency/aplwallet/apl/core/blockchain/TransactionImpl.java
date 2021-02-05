@@ -37,11 +37,10 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.extern.slf4j.Slf4j;
 
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -49,6 +48,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionUtils.calculateFullHash;
 
 @Slf4j
 public class TransactionImpl implements Transaction {
@@ -85,7 +85,6 @@ public class TransactionImpl implements Transaction {
     private volatile long senderId;
     private volatile byte[] fullHash;
     private volatile boolean hasValidSignature = false;
-    private int fullSize = -1;
 
     TransactionImpl(BuilderImpl builder) {
 
@@ -143,17 +142,9 @@ public class TransactionImpl implements Transaction {
 
     final void sign(Signature signature, Result unsignedRawTransaction) {
         this.signature = signature;
-        this.fullSize = unsignedRawTransaction.size() + signature.getSize();
-
-        //calculate transaction Id and full hash
-        byte[] signatureHash = Crypto.sha256().digest(signature.bytes());
-
-        MessageDigest digest = Crypto.sha256();
-        digest.update(unsignedRawTransaction.array());
-        this.fullHash = digest.digest(signatureHash);
-
-        id = Convert.fullHashToId(fullHash);
-        stringId = Long.toUnsignedString(id);
+        this.fullHash = calculateFullHash(unsignedRawTransaction.array(), signature.bytes());
+        this.id = AplIdGenerator.TRANSACTION.getIdByHash(fullHash).longValue();
+        this.stringId = Long.toUnsignedString(id);
     }
 
     @Override
@@ -223,14 +214,6 @@ public class TransactionImpl implements Transaction {
     @Override
     public byte getVersion() {
         return version;
-    }
-
-    @Override
-    public int getFullSize() {
-        if (fullSize <= 0) {
-            throwSignaturePreConditionError("FULL_SIZE");
-        }
-        return fullSize;
     }
 
     @Override
@@ -316,17 +299,25 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public String getFullHashString() {
-        return Convert.toHexString(getFullHash());
-    }
-
-    @Override
     public byte[] getFullHash() {
         if (fullHash == null) {
             throwSignaturePreConditionError("FULL_HASH");
         }
         return fullHash;
     }
+
+    @Override
+    public String getFullHashString() {
+        return Convert.toHexString(getFullHash());
+    }
+
+/*    @Override
+    public int getFullSize() {
+        if (fullSize <= 0) {
+            throwSignaturePreConditionError("FULL_SIZE");
+        }
+        return fullSize;
+    }*/
 
     @Override
     public long getSenderId() {

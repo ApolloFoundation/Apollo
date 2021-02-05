@@ -5,9 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.common;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
 import com.apollocurrency.aplwallet.apl.core.io.ByteArrayStream;
 import com.apollocurrency.aplwallet.apl.core.io.JsonBuffer;
+import com.apollocurrency.aplwallet.apl.core.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.io.Result;
 import com.apollocurrency.aplwallet.apl.core.io.WriteBuffer;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
@@ -39,7 +39,7 @@ public abstract class AbstractTxSerializer implements TxSerializer {
         this.context = context;
     }
 
-    public abstract void write(Transaction transaction, WriteBuffer buffer);
+    public abstract int write(Transaction transaction, WriteBuffer buffer);
 
     @Override
     public void serialize(Transaction transaction, Result result) {
@@ -50,8 +50,8 @@ public abstract class AbstractTxSerializer implements TxSerializer {
     private WriteBuffer createBuffer(Result result) {
         WriteBuffer writeBuffer;
         // use context properties
-        if (result instanceof BufferResult) {
-            writeBuffer = ((BufferResult) result).getBuffer();
+        if (result instanceof PayloadResult) {
+            writeBuffer = ((PayloadResult) result).getBuffer();
         } else {
             writeBuffer = new ByteArrayStream();
         }
@@ -63,7 +63,10 @@ public abstract class AbstractTxSerializer implements TxSerializer {
             if (buffer instanceof JsonBuffer) {
                 write(transaction, ((JsonBuffer) buffer));
             } else {
-                write(transaction, buffer);
+                int payloadSize = write(transaction, buffer);
+                if (result instanceof PayloadResult) {
+                    ((PayloadResult) result).setPayloadSize(payloadSize);
+                }
             }
         } catch (RuntimeException e) {
             if (transaction.getSignature() != null && log.isDebugEnabled()) {

@@ -117,7 +117,7 @@ public interface Transaction {
      *
      * @return transaction size in bytes
      */
-    int getFullSize();
+//    int getFullSize();
 
     MessageAppendix getMessage();
 

@@ -8,14 +8,14 @@ import com.apollocurrency.aplwallet.api.v2.model.TransactionInfoResp;
 import com.apollocurrency.aplwallet.api.v2.model.TxRequest;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
+import com.apollocurrency.aplwallet.apl.core.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.io.Result;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TransactionInfoMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
@@ -90,16 +90,16 @@ public class TransactionApiServiceImpl implements TransactionApiService {
                 log.trace("API_V2: Broadcast transaction: tx={}", req.getTx());
             }
             byte[] tx = Convert.parseHexString(req.getTx());
-            Transaction.Builder txBuilder = transactionBuilderFactory.newTransactionBuilder(tx);
-            Transaction newTx = txBuilder.build();
-            Result signedTxBytes = BufferResult.createLittleEndianByteArrayResult();
+            Transaction newTx = transactionBuilderFactory.newTransaction(tx);
+
+            Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
             txBContext.createSerializer(newTx.getVersion()).serialize(newTx, signedTxBytes);
 
             if (log.isTraceEnabled()) {
                 log.trace("API_V2: parsed transaction=[{}] attachment={}", newTx.getType(), newTx.getAttachment());
+                log.trace(" Given {}", req.getTx());
+                log.trace("Actual {}", Convert.toHexString(signedTxBytes.array()));
             }
-            log.warn("Given {}", req.getTx());
-            log.warn("Actua {}", Convert.toHexString(signedTxBytes.array()));
 
             boolean rc = memPool.softBroadcast(newTx);
             if (rc) {

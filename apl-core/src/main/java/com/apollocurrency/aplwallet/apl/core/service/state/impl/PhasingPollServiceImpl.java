@@ -225,8 +225,8 @@ public class PhasingPollServiceImpl implements PhasingPollService {
             List<byte[]> linkedFullHashes = new ArrayList<>();
             Collections.addAll(linkedFullHashes, appendix.getLinkedFullHashes());
             List<PhasingPollLinkedTransaction> phasingPollLinkedTransactions = linkedFullHashes
-                .stream()
-                .map(fullHash -> new PhasingPollLinkedTransaction(null, poll.getHeight(), poll.getId(), Convert.fullHashToId(fullHash), fullHash))
+                    .stream()
+                    .map(fullHash -> new PhasingPollLinkedTransaction(null, poll.getHeight(), poll.getId(), Convert.transactionFullHashToId(fullHash), fullHash))
                 .collect(Collectors.toList());
             linkedTransactionTable.insert(phasingPollLinkedTransactions);
         }

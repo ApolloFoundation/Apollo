@@ -266,7 +266,7 @@ public class ShufflingServiceImpl implements ShufflingService {
 
     @Override
     public Shuffling getShuffling(byte[] fullHash) {
-        long shufflingId = Convert.fullHashToId(fullHash);
+        long shufflingId = Convert.transactionFullHashToId(fullHash);
         Shuffling shuffling = shufflingTable.getShuffling(shufflingId);
         if (shuffling != null && !Arrays.equals(getFullHash(shuffling.getId()), fullHash)) {
             log.debug("Shuffling with different hash {} but same id found for hash {}",

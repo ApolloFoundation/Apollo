@@ -33,15 +33,17 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 public class UnconfirmedTransaction extends WrappedTransaction {
     private final long arrivalTimestamp;
     private final long feePerByte;
+    private final int fullSize;
 
-    public UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp) {
+/*    public UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp) {
         this(transaction, arrivalTimestamp, transaction.getFeeATM() / transaction.getFullSize());
-    }
+    }*/
 
-    public UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp, long feePerByte) {
+    public UnconfirmedTransaction(Transaction transaction, long arrivalTimestamp, long feePerByte, int fullSize) {
         super(transaction);
         this.arrivalTimestamp = arrivalTimestamp;
         this.feePerByte = feePerByte;
+        this.fullSize = fullSize;
     }
 
     public long getArrivalTimestamp() {
@@ -50,6 +52,10 @@ public class UnconfirmedTransaction extends WrappedTransaction {
 
     public long getFeePerByte() {
         return feePerByte;
+    }
+
+    public int getFullSize() {
+        return fullSize;
     }
 
     @Override

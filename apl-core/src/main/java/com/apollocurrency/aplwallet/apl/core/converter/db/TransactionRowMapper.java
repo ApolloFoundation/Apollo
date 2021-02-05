@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
@@ -90,7 +90,7 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
             }
             TransactionType transactionType = factory.findTransactionType(type, subtype);
-            Transaction.Builder builder = transactionBuilderFactory.newTransactionBuilder(version, senderPublicKey,
+            Transaction.Builder builder = transactionBuilderFactory.newUnsignedTransactionBuilder(version, senderPublicKey,
                 amountATM, feeATM, deadline, transactionType != null ? transactionType.parseAttachment(buffer) : null, timestamp)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
                 .blockId(blockId)

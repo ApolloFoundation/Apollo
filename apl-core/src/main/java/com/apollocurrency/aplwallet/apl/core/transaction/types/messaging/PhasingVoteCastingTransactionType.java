@@ -89,7 +89,7 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
         List<byte[]> hashes = attachment.getTransactionFullHashes();
         long voterId = transaction.getSenderId();
         for (byte[] hash : hashes) {
-            long phasedTransactionId = Convert.fullHashToId(hash);
+            long phasedTransactionId = Convert.transactionFullHashToId(hash);
             PhasingPollResult result = phasingPollService.getResult(phasedTransactionId);
             if (result != null) {
                 throw new AplException.NotCurrentlyValidException("Phasing poll " + phasedTransactionId + " is already finished");
@@ -150,7 +150,7 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
             throw new AplException.NotValidException("No more than " + Constants.MAX_PHASING_VOTE_TRANSACTIONS + " votes allowed for two-phased multi-voting");
         }
         for (byte[] hash : hashes) {
-            long phasedTransactionId = Convert.fullHashToId(hash);
+            long phasedTransactionId = Convert.transactionFullHashToId(hash);
             if (phasedTransactionId == 0) {
                 throw new AplException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
             }
@@ -162,7 +162,7 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
         MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
         List<byte[]> hashes = attachment.getTransactionFullHashes();
         for (byte[] hash : hashes) {
-            phasingPollService.addVote(transaction, senderAccount, Convert.fullHashToId(hash));
+            phasingPollService.addVote(transaction, senderAccount, Convert.transactionFullHashToId(hash));
         }
     }
 

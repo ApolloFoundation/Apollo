@@ -55,7 +55,7 @@ public final class ShufflingRegistration extends AbstractAttachment implements S
 
     @Override
     public long getShufflingId() {
-        return Convert.fullHashToId(shufflingFullHash);
+        return Convert.transactionFullHashToId(shufflingFullHash);
     }
 
     @Override

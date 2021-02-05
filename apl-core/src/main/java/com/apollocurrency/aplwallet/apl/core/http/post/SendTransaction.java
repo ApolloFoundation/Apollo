@@ -27,12 +27,13 @@ import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionCreator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 
@@ -64,8 +65,17 @@ import java.util.Collections;
 @Vetoed
 public final class SendTransaction extends AbstractAPIRequestHandler {
 
+    private UnconfirmedTransactionCreator unconfirmedTransactionCreator;
+
     public SendTransaction() {
         super(new APITag[]{APITag.TRANSACTIONS}, "transactionJSON", "transactionBytes", "prunableAttachmentJSON");
+    }
+
+    protected UnconfirmedTransactionCreator lookupUnconfirmedTransactionCreator() {
+        if (unconfirmedTransactionCreator == null) {
+            unconfirmedTransactionCreator = CDI.current().select(UnconfirmedTransactionCreator.class).get();
+        }
+        return unconfirmedTransactionCreator;
     }
 
     @Override
@@ -77,12 +87,14 @@ public final class SendTransaction extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         try {
-            Transaction.Builder builder = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
-            UnconfirmedTransaction transaction = new UnconfirmedTransaction(builder.build(), timeService.systemTimeMillis());
+            Transaction tx = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
+
+            UnconfirmedTransaction transaction = lookupUnconfirmedTransactionCreator().from(tx, timeService.systemTimeMillis());
+
             lookupPeersService().sendToSomePeers(Collections.singletonList(transaction));
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transaction.getFullHashString());
-        } catch (AplException.NotValidException | RuntimeException e) {
+        } catch (RuntimeException e) {
             JSONData.putException(response, e, "Failed to broadcast transaction");
         }
         return response;

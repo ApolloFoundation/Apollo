@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
@@ -23,18 +23,17 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
-import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
@@ -83,6 +82,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     private final MemPool memPool;
     private final DatabaseManager databaseManager;
     private final UnconfirmedTransactionProcessingService processingService;
+    private final UnconfirmedTransactionCreator unconfirmedTransactionCreator;
     private final MultiLock multiLock = new MultiLock(1000);
     private final ExecutorService executor = Executors.newSingleThreadExecutor(new NamedThreadFactory("AfterBlockPushTxRemovingPool"));
 
@@ -95,7 +95,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                                     BlockchainConfig blockchainConfig,
                                     PeersService peers,
                                     Blockchain blockchain, TransactionBuilderFactory transactionBuilderFactory,
-                                    PrunableLoadingService prunableService, UnconfirmedTransactionProcessingService processingService,
+                                    PrunableLoadingService prunableService,
+                                    UnconfirmedTransactionProcessingService processingService,
+                                    UnconfirmedTransactionCreator unconfirmedTransactionCreator,
                                     MemPool memPool) {
         this.transactionValidator = validator;
         this.txsEvent = Objects.requireNonNull(txEvent);
@@ -108,6 +110,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         this.transactionBuilderFactory = transactionBuilderFactory;
         this.prunableService = prunableService;
         this.processingService = processingService;
+        this.unconfirmedTransactionCreator = unconfirmedTransactionCreator;
         this.memPool = memPool;
     }
 
@@ -141,7 +144,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         }
         transactionValidator.validateSignatureWithTxFee(transaction);
         transactionValidator.validateFully(transaction);
-        UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, timeService.systemTimeMillis());
+        UnconfirmedTransaction unconfirmedTransaction = unconfirmedTransactionCreator.from(transaction, timeService.systemTimeMillis());
         UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
         if (!validationResult.isOk()) {
             throw new AplException.NotValidException(validationResult.getErrorDescription());
@@ -160,7 +163,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         }
         transactionValidator.validateSignatureWithTxFee(transaction);
         transactionValidator.validateLightly(transaction);
-        UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, timeService.systemTimeMillis());
+        UnconfirmedTransaction unconfirmedTransaction = unconfirmedTransactionCreator.from(transaction, timeService.systemTimeMillis());
         boolean broadcastLater = lookupBlockchainProcessor().isProcessingBlock();
         if (broadcastLater) {
             memPool.broadcastLater(transaction);
@@ -192,7 +195,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
             List<UnconfirmedTransaction> toBroadcast = transactions.stream()
                 .filter(this::requireBroadcast)
-                .map(e -> new UnconfirmedTransaction(e, timeService.systemTimeMillis()))
+                .map(e -> unconfirmedTransactionCreator.from(e, timeService.systemTimeMillis()))
                 .collect(Collectors.toList());
             for (UnconfirmedTransaction tx : toBroadcast) {
                 try {
@@ -319,8 +322,11 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             }
             log.trace("Process later tx {}", transaction.getId());
             transaction.unsetBlock();
-            memPool.processLater(new UnconfirmedTransaction(
-                transaction, Math.min(currentTime, Convert2.fromEpochTime(transaction.getTimestamp())))
+            memPool.processLater(
+                unconfirmedTransactionCreator.from(
+                    transaction,
+                    Math.min(currentTime, Convert2.fromEpochTime(transaction.getTimestamp()))
+                )
             );
         }
     }
@@ -347,7 +353,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             for (Transaction transaction : transactions) {
                 try {
                     receivedTransactions.add(transaction);
-                    UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, arrivalTimestamp);
+                    UnconfirmedTransaction unconfirmedTransaction = unconfirmedTransactionCreator.from(transaction, arrivalTimestamp);
                     UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
                     if (validationResult.isOk()) {
                         transactionValidator.validateSignatureWithTxFee(transaction);
@@ -498,7 +504,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
 
     public Transaction parseTransaction(JSONObject transactionData) throws AplException.NotValidException {
-        Transaction transaction = transactionBuilderFactory.newTransactionBuilder(transactionData).build();
+        Transaction transaction = transactionBuilderFactory.newTransaction(transactionData);
         if (!transactionValidator.checkSignature(transaction)) {
             throw new AplException.NotValidException("Invalid transaction signature for transaction " + transaction.getId());
         }

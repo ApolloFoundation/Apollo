@@ -23,7 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurren
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPropertyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyTransfer;
@@ -51,6 +51,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator.DEFAULT_VERSION;
 
 /**
  * Monitor account balances based on account properties
@@ -95,7 +97,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
     private final TransactionSigner signerService;
 
     //TODO Use TransactionVersionValidator#getActualVersion()
-    private final int transactionVersion = 1;//transaction version during the funding routine
+    private final int transactionVersion = DEFAULT_VERSION;//transaction version during the funding routine
 
     /**
      * Maximum number of monitors
@@ -517,7 +519,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
         FundingMonitorInstance monitor = monitoredAccount.getMonitor();
         if (targetAccount.getBalanceATM() < monitoredAccount.getThreshold()) {
             int timestamp = blockchain.getLastBlockTimestamp();
-            Transaction.Builder builder = transactionBuilderFactory.newTransactionBuilder(transactionVersion, monitor.getPublicKey(),
+            Transaction.Builder builder = transactionBuilderFactory.newUnsignedTransactionBuilder(transactionVersion, monitor.getPublicKey(),
                 monitoredAccount.getAmount(), 0, (short) 1440, Attachment.ORDINARY_PAYMENT, timestamp)
                 .recipientId(monitoredAccount.getAccountId())
                 .ecBlockData(blockchain.getECBlock(timestamp));
@@ -569,7 +571,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
         } else if (targetAsset == null || targetAsset.getQuantityATU() < monitoredAccount.getThreshold()) {
             Attachment attachment = new ColoredCoinsAssetTransfer(monitor.getHoldingId(), monitoredAccount.getAmount());
             int timestamp = blockchain.getLastBlockTimestamp();
-            Transaction.Builder builder = transactionBuilderFactory.newTransactionBuilder(transactionVersion, monitor.getPublicKey(),
+            Transaction.Builder builder = transactionBuilderFactory.newUnsignedTransactionBuilder(transactionVersion, monitor.getPublicKey(),
                 0, 0, (short) 1440, attachment, timestamp)
                 .recipientId(monitoredAccount.getAccountId())
                 .ecBlockData(blockchain.getECBlock(timestamp));
@@ -615,7 +617,7 @@ public class FundingMonitorServiceImpl implements FundingMonitorService {
         } else if (targetCurrency == null || targetCurrency.getUnits() < monitoredAccount.getThreshold()) {
             Attachment attachment = new MonetarySystemCurrencyTransfer(monitor.getHoldingId(), monitoredAccount.getAmount());
             int timestamp = blockchain.getLastBlockTimestamp();
-            Transaction.Builder builder = transactionBuilderFactory.newTransactionBuilder(transactionVersion, monitor.getPublicKey(),
+            Transaction.Builder builder = transactionBuilderFactory.newUnsignedTransactionBuilder(transactionVersion, monitor.getPublicKey(),
                 0, 0, (short) 1440, attachment, timestamp)
                 .recipientId(monitoredAccount.getAccountId())
                 .ecBlockData(blockchain.getECBlock(timestamp));

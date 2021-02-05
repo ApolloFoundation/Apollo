@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttach
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -52,6 +53,13 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class TransactionCreatorTest {
     public static final long TEST_LOCAL_ONE_APL = 100000000L;
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
+
+    {
+        doReturn(chain).when(blockchainConfig).getChain();
+    }
+
     @Mock
     TransactionValidator validator;
     @Mock
@@ -69,8 +77,7 @@ class TransactionCreatorTest {
     TransactionBuilderFactory transactionBuilderFactory;
 
     TransactionTypeFactory transactionTypeFactory;
-    @Mock
-    BlockchainConfig blockchainConfig;
+
     @Mock
     AccountService accountService;
     Account sender;
@@ -85,7 +92,7 @@ class TransactionCreatorTest {
         sender = new Account(Convert.parseAccountId(accountRS), 1000 * TEST_LOCAL_ONE_APL, 100 * TEST_LOCAL_ONE_APL, 0L, 0L, 0);
         transactionType = new CustomTransactionType(blockchainConfig, accountService);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(transactionType));
-        transactionBuilderFactory = new TransactionBuilderFactory(transactionTypeFactory);
+        transactionBuilderFactory = new TransactionBuilderFactory(transactionTypeFactory, blockchainConfig);
         txCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor, transactionTypeFactory, transactionBuilderFactory, transactionSigner);
     }
 

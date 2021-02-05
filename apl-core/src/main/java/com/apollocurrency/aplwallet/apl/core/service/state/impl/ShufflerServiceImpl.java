@@ -23,7 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.ShufflerService;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
@@ -48,6 +48,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator.DEFAULT_VERSION;
+
 /**
  * The Shuffler service
  * <p>
@@ -68,7 +70,7 @@ public class ShufflerServiceImpl implements ShufflerService {
     private final TransactionBuilderFactory transactionBuilderFactory;
     private final int MAX_SHUFFLERS;
     //TODO Use TransactionVersionValidator#getActualVersion()
-    private final int transactionVersion = 1;//transaction version during the shuffling routine
+    private final int transactionVersion = DEFAULT_VERSION;//transaction version during the shuffling routine
 
     private final TransactionSigner signerService;
 
@@ -134,7 +136,7 @@ public class ShufflerServiceImpl implements ShufflerService {
                 }
                 map.put(accountId, shuffler);
                 log.info("Started shuffler for account {}, shuffling {}",
-                    Long.toUnsignedString(accountId), Long.toUnsignedString(Convert.fullHashToId(shufflingFullHash)));
+                    Long.toUnsignedString(accountId), Long.toUnsignedString(Convert.transactionFullHashToId(shufflingFullHash)));
             } else if (!Arrays.equals(shuffler.getRecipientPublicKey(), recipientPublicKey)) {
                 throw new ShufflerException.DuplicateShufflerException("A shuffler with different recipientPublicKey already started");
             } else if (!Arrays.equals(shuffler.getShufflingFullHash(), shufflingFullHash)) {
@@ -480,7 +482,7 @@ public class ShufflerServiceImpl implements ShufflerService {
         try {
             int timestamp = blockchain.getLastBlockTimestamp();
             byte[] keySeed = Crypto.getKeySeed(shuffler.getSecretBytes());
-            Transaction.Builder builder = transactionBuilderFactory.newTransactionBuilder(transactionVersion,
+            Transaction.Builder builder = transactionBuilderFactory.newUnsignedTransactionBuilder(transactionVersion,
                 Crypto.getPublicKey(keySeed),
                 0, 0,
                 (short) 1440, attachment, timestamp)

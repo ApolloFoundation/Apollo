@@ -80,7 +80,7 @@ public class MandatoryTransactionServiceImpl implements MandatoryTransactionServ
                             MandatoryTransactionEntity prevRequiredTxEntity = null;
                             boolean brodcast = true; // broadcast current tx
                             while (requiredTxHash != null) {
-                                long id = Convert.fullHashToId(requiredTxHash);
+                                long id = Convert.transactionFullHashToId(requiredTxHash);
                                 MandatoryTransactionEntity requiredTxEntity = dao.get(id);
                                 boolean requiredTxConfirmed = blockchain.hasTransaction(requiredTxEntity.getId());
                                 if (requiredTxConfirmed) {

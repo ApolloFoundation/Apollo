@@ -54,7 +54,7 @@ public class ReferencedTransactionService {
                 || height - referencedTransactionHeight > blockchainConfig.getCurrentConfig().getReferencedTransactionHeightSpan()) {
                 return false;
             }
-            hash = getReferencedFullHash(Convert.fullHashToId(hash));
+            hash = getReferencedFullHash(Convert.transactionFullHashToId(hash));
         }
         return true;
     }

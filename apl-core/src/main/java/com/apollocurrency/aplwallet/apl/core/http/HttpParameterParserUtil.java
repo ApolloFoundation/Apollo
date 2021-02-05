@@ -48,7 +48,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
@@ -820,7 +820,7 @@ public final class HttpParameterParserUtil {
         return query;
     }
 
-    public static Transaction.Builder parseTransaction(String transactionJSON, String transactionBytes, String prunableAttachmentJSON) throws ParameterException {
+    public static Transaction parseTransaction(String transactionJSON, String transactionBytes, String prunableAttachmentJSON) throws ParameterException {
         if (transactionBytes == null && transactionJSON == null) {
             throw new ParameterException(MISSING_TRANSACTION_BYTES_OR_JSON);
         }
@@ -833,7 +833,7 @@ public final class HttpParameterParserUtil {
         if (transactionJSON != null) {
             try {
                 JSONObject json = (JSONObject) JSONValue.parseWithException(transactionJSON);
-                return lookupTransactionBuilder().newTransactionBuilder(json);
+                return lookupTransactionBuilderFactory().newTransaction(json);
             } catch (AplException.ValidationException | RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
@@ -844,7 +844,7 @@ public final class HttpParameterParserUtil {
             try {
                 byte[] bytes = Convert.parseHexString(transactionBytes);
                 JSONObject prunableAttachments = prunableAttachmentJSON == null ? null : (JSONObject) JSONValue.parseWithException(prunableAttachmentJSON);
-                return lookupTransactionBuilder().newTransactionBuilder(bytes, prunableAttachments);
+                return lookupTransactionBuilderFactory().newTransaction(bytes, prunableAttachments);
             } catch (AplException.ValidationException | RuntimeException | ParseException e) {
                 LOG.debug(e.getMessage(), e);
                 JSONObject response = new JSONObject();
@@ -1239,7 +1239,7 @@ public final class HttpParameterParserUtil {
         return shufflingService;
     }
 
-    private static TransactionBuilderFactory lookupTransactionBuilder() {
+    private static TransactionBuilderFactory lookupTransactionBuilderFactory() {
         if (transactionBuilderFactory == null) {
             transactionBuilderFactory = CDI.current().select(TransactionBuilderFactory.class).get();
         }

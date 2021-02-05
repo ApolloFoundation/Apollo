@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.slf4j.Logger;
 
@@ -137,9 +138,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
                 return false;
             }
 
-            BigInteger hit = new BigInteger(1, new byte[]{generationSignatureHash[7], generationSignatureHash[6],
-                generationSignatureHash[5], generationSignatureHash[4], generationSignatureHash[3],
-                generationSignatureHash[2], generationSignatureHash[1], generationSignatureHash[0]});
+            BigInteger hit = AplIdGenerator.BLOCK.getIdByHash(generationSignatureHash);
 
             boolean ret = generatorService.verifyHit(
                 hit, BigInteger.valueOf(effectiveBalance), previousBlock,

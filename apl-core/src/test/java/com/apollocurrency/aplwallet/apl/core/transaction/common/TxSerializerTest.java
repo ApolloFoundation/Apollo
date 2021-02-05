@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.common;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.io.BufferResult;
+import com.apollocurrency.aplwallet.apl.core.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.io.Result;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -39,7 +39,7 @@ class TxSerializerTest {
         //GIVEN
         TxSerializer serializer = context.createSerializer(2);
         Transaction t1 = td.TRANSACTION_14;
-        Result result = BufferResult.createLittleEndianByteArrayResult();
+        Result result = PayloadResult.createLittleEndianByteArrayResult();
 
         //WHEN
         serializer.serialize(t1, result);
@@ -56,7 +56,7 @@ class TxSerializerTest {
         //GIVEN
         TxSerializer serializer = context.createSerializer(2);
         Transaction t1 = td.TRANSACTION_14;
-        BufferResult result = BufferResult.createJsonResult();
+        PayloadResult result = PayloadResult.createJsonResult();
 
         //WHEN
         serializer.serialize(t1, result);
