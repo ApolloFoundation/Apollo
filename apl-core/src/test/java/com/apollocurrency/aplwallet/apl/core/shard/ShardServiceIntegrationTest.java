@@ -99,7 +99,7 @@ public class ShardServiceIntegrationTest {
 
     @Test
     void testGetAllShards() {
-        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService, dbEvent);
+        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, globalSync, trimService, dbEvent);
         List<Shard> allShards = shardService.getAllShards();
 
         assertEquals(ShardTestData.SHARDS, allShards);
@@ -107,7 +107,7 @@ public class ShardServiceIntegrationTest {
 
     @Test
     void testGetAllCompletedShards() {
-        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService, dbEvent);
+        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, globalSync, trimService, dbEvent);
         List<Shard> allShards = shardService.getAllCompletedShards();
 
         assertEquals(List.of(ShardTestData.SHARD_1), allShards);
@@ -115,7 +115,7 @@ public class ShardServiceIntegrationTest {
 
     @Test
     void testGetAllCompletedOrArchivedShards() {
-        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService, dbEvent);
+        shardService = new ShardService(createShardDao(), blockchainProcessor, blockchain, dirProvider, zip, extension.getDatabaseManager(), blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, globalSync, trimService, dbEvent);
 
         List<Shard> shards = shardService.getAllCompletedOrArchivedShards();
 
@@ -132,7 +132,7 @@ public class ShardServiceIntegrationTest {
         Event firedEvent = mock(Event.class);
         doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
         });
-        shardService = new ShardService(createShardDao(databaseManager.getJdbiHandleFactory()), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService, dbEvent);
+        shardService = new ShardService(createShardDao(databaseManager.getJdbiHandleFactory()), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, globalSync, trimService, dbEvent);
         Files.createFile(dbDir.resolve("apl-blockchain-shard-2-chain." + DbProperties.DB_EXTENSION)); // to be deleted
         Files.createFile(dbDir.resolve("apl-blockchain-shard-1-chain." + DbProperties.DB_EXTENSION)); // to be replaced
         Files.createFile(dbDir.resolve("apl-blockchain-shard-0-chain." + DbProperties.DB_EXTENSION)); // to be saved

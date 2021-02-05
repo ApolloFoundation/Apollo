@@ -100,7 +100,7 @@ public class ShardServiceTest {
 
     @BeforeEach
     void setUp() {
-        shardService = new ShardService(shardDao, blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, trimEvent, globalSync, trimService, dbEvent);
+        shardService = new ShardService(shardDao, blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, globalSync, trimService, dbEvent);
     }
 
     @Test

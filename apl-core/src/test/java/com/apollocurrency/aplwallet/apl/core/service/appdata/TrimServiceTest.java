@@ -28,8 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -74,121 +72,8 @@ class TrimServiceTest {
 
     @Test
     void testInitWithNullTrimEntry() {
-        trimService.init(2000, 0);
+//        trimService.init(2000, 0);
         verify(trimDao).save(new TrimEntry(null, 2000, true));
-    }
-
-    @Test
-    void testInitWithExistingNotFinishedTrimEntry() {
-        TrimEntry entry = new TrimEntry(1L, 5000, false);
-        doReturn(entry).when(trimDao).get();
-        doReturn(List.of(derivedTable)).when(registry).getDerivedTables();
-        TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
-        doReturn(dataSource).when(databaseManager).getDataSource();
-        Event firedEvent = mock(Event.class);
-        doReturn(firedEvent).when(event).select(new AnnotationLiteral<TrimEvent>() {
-        });
-        doReturn(entry).when(trimDao).save(entry);
-        doReturn(7300).when(timeService).getEpochTime();
-
-        trimService.init(5999, 0);
-
-        verify(globalSync, never()).readLock();
-        verify(globalSync, never()).readUnlock();
-        verify(trimDao).clear();
-        verify(trimDao, times(2)).save(new TrimEntry(1L, 5000, true));
-        verify(dataSource).begin();
-        verify(dataSource).commit(true);
-        verify(firedEvent, never()).fire(new TrimData(4000, 5000, 7200));
-        verify(timeService).getEpochTime();
-        verify(derivedTable).trim(4000, false);
-    }
-
-    @Test
-    void testInitWithExistingNotFinishedTrimEntryAndShardInitialBlock() {
-        TrimEntry entry = new TrimEntry(1L, 5000, false);
-        doReturn(entry).when(trimDao).get();
-        doReturn(List.of(derivedTable)).when(registry).getDerivedTables();
-        TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
-        doReturn(dataSource).when(databaseManager).getDataSource();
-        Event firedEvent = mock(Event.class);
-        doReturn(firedEvent).when(event).select(new AnnotationLiteral<TrimEvent>() {
-        });
-        doReturn(entry).when(trimDao).save(entry);
-        doReturn(new TrimEntry(1L, 5500, false)).when(trimDao).save(new TrimEntry(null, 5500, false));
-        doReturn(7300).when(timeService).getEpochTime();
-
-        trimService.init(5999, 5500);
-
-        verify(globalSync, never()).readLock();
-        verify(globalSync, never()).readUnlock();
-        verify(trimDao).clear();
-        verify(trimDao).save(new TrimEntry(null, 5500, false));
-        verify(trimDao).save(new TrimEntry(1L, 5500, true));
-        verify(dataSource).begin();
-        verify(dataSource).commit(true);
-        verify(firedEvent, never()).fire(new TrimData(4500, 5500, 7200));
-        verify(timeService).getEpochTime();
-        verify(derivedTable).trim(4500, false);
-    }
-
-    @Test
-    void testInitWithExistingOldTrimEntry() {
-        doReturn(new TrimEntry(1L, 7000, true)).when(trimDao).get();
-        doReturn(List.of(derivedTable, derivedTable)).when(registry).getDerivedTables();
-        TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
-        doReturn(dataSource).when(databaseManager).getDataSource();
-        Event firedEvent = mock(Event.class);
-        doReturn(firedEvent).when(event).select(new AnnotationLiteral<TrimEvent>() {
-        });
-        mockTrimEntries(8000, 10000, 1000);
-        doReturn(8000).when(timeService).getEpochTime();
-
-        trimService.init(10500, 0);
-
-        verify(globalSync, never()).readLock();
-        verify(globalSync, never()).readUnlock();
-        verify(trimDao, times(3)).clear();
-        verify(dataSource, times(3)).begin();
-        verify(dataSource, times(3)).commit(true);
-        verify(firedEvent, never()).fire(new TrimData(7000, 8000, 7200));
-        verify(firedEvent, never()).fire(new TrimData(8000, 9000, 7200));
-        verify(firedEvent, never()).fire(new TrimData(9000, 10000, 7200));
-        verify(timeService, times(3)).getEpochTime();
-        verify(derivedTable, times(6)).trim(anyInt(), anyBoolean());
-    }
-
-    @Test
-    void testInitWithExistingOldNotFinishedTrimEntry() {
-        doReturn(new TrimEntry(1L, 10000, false)).when(trimDao).get();
-        doReturn(new TrimEntry(1L, 10000, false)).when(trimDao).save(new TrimEntry(1L, 10000, false));
-        doReturn(new TrimEntry(1L, 10000, true)).when(trimDao).save(new TrimEntry(1L, 10000, true));
-        doReturn(List.of(derivedTable)).when(registry).getDerivedTables();
-        TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
-        doReturn(dataSource).when(databaseManager).getDataSource();
-        Event firedEvent = mock(Event.class);
-        doReturn(firedEvent).when(event).select(new AnnotationLiteral<TrimEvent>() {
-        });
-        doReturn(7199).when(timeService).getEpochTime();
-        mockTrimEntries(10000, 11000, 1000);
-
-        trimService.init(11999, 0);
-
-        verify(globalSync, never()).readLock();
-        verify(globalSync, never()).readUnlock();
-        verify(trimDao, times(2)).clear();
-        verify(dataSource, times(2)).begin();
-        verify(dataSource, times(2)).commit(true);
-        verify(firedEvent, never()).fire(new TrimData(9000, 10000, 3600));
-        verify(firedEvent, never()).fire(new TrimData(10000, 11000, 3600));
-        verify(derivedTable, times(2)).trim(anyInt(), anyBoolean());
-        verify(derivedTable, times(2)).prune(3600);
-    }
-
-    private void mockTrimEntries(int initialHeight, int finishHeight, int step) {
-        for (int i = initialHeight; i <= finishHeight; i += step) {
-            doReturn(new TrimEntry(1L, i, false)).when(trimDao).save(new TrimEntry(null, i, false));
-        }
     }
 
     @Test

@@ -42,10 +42,8 @@ public class BlockchainConfig {
     private long shufflingDepositAtm;
     private int guaranteedBalanceConfirmations;
     private volatile HeightConfig currentConfig;
-    private volatile Optional<HeightConfig> previousConfig = Optional.empty(); // keep a previous config for easy access
     private Chain chain;
     private TreeMap<Integer, HeightConfig> heightConfigMap = new TreeMap<>();
-    private volatile boolean isJustUpdated = false;
 
     public BlockchainConfig() {
     }
@@ -241,35 +239,11 @@ public class BlockchainConfig {
      * @param currentConfig configuration to be assigned as current
      */
     public void setCurrentConfig(HeightConfig currentConfig) {
-        this.previousConfig = Optional.ofNullable(this.currentConfig);
         this.currentConfig = currentConfig;
-        this.isJustUpdated = true; // setup flag to catch chains.json config change on APPLY_BLOCK
     }
 
     public Chain getChain() {
         return chain;
-    }
-
-    public Optional<HeightConfig> getPreviousConfig() {
-        return previousConfig;
-    }
-
-    public void setPreviousConfig(Optional<HeightConfig> previousConfig) {
-        this.previousConfig = previousConfig;
-    }
-
-    /**
-     * Flag to catch configuration changing
-     * // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
-     *
-     * @return if config was recently updated to new height
-     */
-    public boolean isJustUpdated() {
-        return isJustUpdated;
-    }
-
-    public void resetJustUpdated() {
-        this.isJustUpdated = false; // reset flag
     }
 
     /**

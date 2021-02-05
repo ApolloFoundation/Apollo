@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.config.TrimConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,12 +30,13 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class TrimObserver {
     private static final Logger log = LoggerFactory.getLogger(TrimObserver.class);
+    private static final int QUEUE_NO_SPEEDUP_SIZE_THRESHOLD = 3;
+    public static final int MIN_ALLOWED_TRIM_DELAY = 50;
     private final TrimService trimService;
     private final Object lock = new Object();
     private final Queue<Integer> trimHeights = new PriorityQueue<>(); // will sort heights from lowest to highest automatically
@@ -44,7 +44,7 @@ public class TrimObserver {
     private final int trimFrequency;
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("apl-task-random-trim"));
     private final Blockchain blockchain;
-    private final long trimDelay;
+    private final int trimDelay;
     private final Random random;
     /**
      * Callable task for method to run. Next run is scheduled as soon as previous has finished
@@ -54,10 +54,8 @@ public class TrimObserver {
             // Do work.
             processScheduledTrimEvent();
         } finally {
-            // Reschedule next new Callable with next random delay within 5 sec range
-            synchronized (lock) {
+            // Reschedule next new Callable with next random delay within timeDelay sec range
                 scheduleTrimTask();
-            }
         }
         return null;
     };
@@ -66,12 +64,12 @@ public class TrimObserver {
     @Inject
     public TrimObserver (TrimService trimService,
                          @Property(value = "apl.trimProcessingDelay", defaultValue = "500") int trimDelay,
-                         @Property(value = "apl.trimFrequency", defaultValue = "1000")
+                         @Property(value = "apl.trimFrequency", defaultValue = "1000") int trimFrequency,
                          Random random,
                          Blockchain blockchain) {
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
-        this.trimFrequency = Constants.DEFAULT_TRIM_FREQUENCY;
+        this.trimFrequency = trimFrequency;
         this.trimDelay = trimDelay;
         this.random = random == null ? new Random() : random;
     }
@@ -84,17 +82,15 @@ public class TrimObserver {
 
     private void scheduleTrimTask() {
         long delay = calculateDelay();
-        executorService.schedule(taskToCall, delay, TimeUnit.SECONDS);
+        executorService.schedule(taskToCall, delay, TimeUnit.MILLISECONDS);
     }
 
     private long calculateDelay() {
-        long delay;
-        if (trimHeights.size() >= 3 || trimDelay < 0) {
-            delay = 2; // speedup trims
-        } else {
-            long correctedTrimDelay  = Math.max(trimDelay, 50);
-            long minTrimDelay = trimDelay / 4;
-            delay = ThreadLocalRandom.current().nextLong(correctedTrimDelay - minTrimDelay) + minTrimDelay;
+        long delay = 0;
+        if (trimHeights.size() <= QUEUE_NO_SPEEDUP_SIZE_THRESHOLD && trimDelay >= 0) {
+            int correctedTrimDelay  = Math.max(trimDelay, MIN_ALLOWED_TRIM_DELAY);
+            int minTrimDelay = trimDelay / 4;
+            delay = 1000L * random.nextInt(correctedTrimDelay - minTrimDelay) + minTrimDelay;
         }
         return delay;
     }

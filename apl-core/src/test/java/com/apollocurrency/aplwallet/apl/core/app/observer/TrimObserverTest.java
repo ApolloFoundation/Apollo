@@ -8,13 +8,11 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
+import com.apollocurrency.aplwallet.apl.core.config.PropertyProducer;
 import com.apollocurrency.aplwallet.apl.core.config.TrimConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -49,15 +47,12 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @Execution(ExecutionMode.CONCURRENT)
 class TrimObserverTest {
     TrimService trimService = mock(TrimService.class);
-    BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    HeightConfig config = Mockito.mock(HeightConfig.class);
     Random random = Mockito.mock(Random.class);
     Blockchain blockchain = mock(Blockchain.class);
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(TrimObserver.class)
+    WeldInitiator weld = WeldInitiator.from(TrimObserver.class, PropertyProducer.class)
         .addBeans(MockBean.of(trimService, TrimService.class))
-        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(random, Random.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class))
@@ -71,23 +66,17 @@ class TrimObserverTest {
 
 
     public TrimObserverTest() {
-        doReturn(config).when(blockchainConfig).getCurrentConfig();
-        doReturn(12).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random
         doReturn(2000).when(propertiesHolder).getIntProperty("apl.maxRollback", 720);
-        doReturn(200).when(propertiesHolder).getIntProperty("apl.trimProcessingDelay", 2000);
-
+        doReturn(-1).when(propertiesHolder).getIntProperty("apl.trimProcessingDelay", 500);
+        doReturn(1000).when(propertiesHolder).getIntProperty("apl.trimFrequency", 1000);
     }
 
     @BeforeEach
     void setUp() {
-        doReturn(true).when(config).isShardingEnabled();
-        doReturn(true).when(propertiesHolder).getBooleanProperty("apl.noshardcreate");
     }
 
     @Test
     void testOnTrimConfigUpdated() {
-        doReturn(5000).when(config).getShardingFrequency();
-
         assertTrue(observer.isTrimDerivedTablesEnabled());
         fireBlockPushed(5000);
         fireBlockPushed(6000);
@@ -139,11 +128,10 @@ class TrimObserverTest {
 
     @Test
     void testOnBlockPushed() {
-        doReturn(3000).when(config).getShardingFrequency();
 
         fireBlockPushed(4999); // skippped
-        fireBlockPushed(5000); // accepted, no random height increase
-        fireBlockPushed(6000); // accepted, + random height increase
+        fireBlockPushed(5000); // accepted
+        fireBlockPushed(6000); // accepted
         fireBlockPushed(6001); // skipped
         CompletableFuture.runAsync(() -> {
             doReturn(5000).when(blockchain).getHeight();
@@ -152,17 +140,16 @@ class TrimObserverTest {
             ThreadUtils.sleep(100);
             doReturn(6014).when(blockchain).getHeight();
         });
-        waitTrim(List.of(5000, 6013)); // doesn't work, test hangs here
+        waitTrim(List.of(5000, 6000));
     }
 
     @Test
     void testOnBlockPushedWithDisabledTrim() throws InterruptedException {
-        doReturn(5000).when(config).getShardingFrequency();
         doAnswer(invocation -> {
             trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
             }).fire(new TrimConfig(false, false));
             return null;
-        }).when(trimService).trimDerivedTables(5013, true);
+        }).when(trimService).trimDerivedTables(5000, true);
 
         fireBlockPushed(4998);
         fireBlockPushed(4999);
@@ -173,13 +160,13 @@ class TrimObserverTest {
             ThreadUtils.sleep(100);
             doReturn(6000).when(blockchain).getHeight();
         });
-        waitTrim(List.of(5013));
+        waitTrim(List.of(5000));
         assertFalse(observer.isTrimDerivedTablesEnabled());
         fireBlockPushed(7000);
         doReturn(7001).when(blockchain).getHeight();
         trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
         }).fire(new TrimConfig(true, false));
-        waitTrim(List.of(6013, 7000));
+        waitTrim(List.of(6000, 7000));
     }
 
     private void waitTrim(List<Integer> heights) {

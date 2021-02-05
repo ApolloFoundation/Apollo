@@ -136,13 +136,13 @@ public class TrimService {
         }
     }
 
-    public int doTrimDerivedTablesOnHeightLocked(int height, boolean isSharding) {
-        return doTrimDerivedTablesOnHeight(height, isSharding);
+    public int doTrimDerivedTablesOnHeightLocked(int height) {
+        return doTrimDerivedTablesOnHeight(height);
     }
 
     @Transactional
-    public int doTrimDerivedTablesOnHeight(int height, boolean isSharding) {
-        log.debug("TRIM: doTrimDerivedTablesOnHeight on height={}, isSharding={}", height, isSharding);
+    public int doTrimDerivedTablesOnHeight(int height) {
+        log.debug("TRIM: doTrimDerivedTablesOnHeight on height={}", height);
         long start = System.currentTimeMillis();
 
         TransactionalDataSource dataSource = dbManager.getDataSource();
@@ -158,7 +158,7 @@ public class TrimService {
         for (DerivedTableInterface<?> table : dbTablesRegistry.getDerivedTables()) {
             long startTime = System.currentTimeMillis();
             table.prune(pruningTime);
-            table.trim(height, isSharding);
+            table.trim(height);
             dataSource.commit(false);
             long duration = System.currentTimeMillis() - startTime;
             // do not log trim duration here, instead go to the logback config and enable trace logs for BasicDbTable class

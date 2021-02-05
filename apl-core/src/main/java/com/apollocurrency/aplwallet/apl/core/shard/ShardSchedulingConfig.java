@@ -6,11 +6,14 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
-@Data
+@Getter
+@Setter
 @Singleton
 public class ShardSchedulingConfig {
     private static final int DEFAULT_MIN_DELAY = 10; // minutes
@@ -23,6 +26,7 @@ public class ShardSchedulingConfig {
 
 
 
+    @Inject
     public ShardSchedulingConfig(@Property(name = "apl.shard.minDelay", defaultValue = "" + DEFAULT_MIN_DELAY) int minDelay,
                                  @Property(name = "apl.shard.maxDelay", defaultValue = ""  + DEFAULT_MAX_DELAY) int maxDelay,
                                  @Property(name = "apl.noshardcreate", defaultValue = "false") boolean noShardCreate,
@@ -33,7 +37,7 @@ public class ShardSchedulingConfig {
         }
         this.minDelay = minDelay;
         this.maxDelay = maxDelay;
-        this.maxRollback = maxRollback;
+        this.maxRollback = Math.max(maxRollback, Constants.MAX_AUTO_ROLLBACK);
         this.createShards = !noShardCreate;
     }
 

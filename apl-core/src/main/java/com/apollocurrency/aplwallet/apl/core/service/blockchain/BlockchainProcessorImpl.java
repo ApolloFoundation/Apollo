@@ -68,6 +68,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardingScheduler;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
@@ -185,6 +186,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final BlockSerializer blockSerializer;
     private final ConsensusManager consensusManager;
     private final MemPool memPool;
+    private final ShardingScheduler shardingScheduler;
 
     /**
      * Three blocks are used for internal calculations on assigning previous block
@@ -219,7 +221,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    GetNextBlocksResponseParser getNextBlocksResponseParser,
                                    BlockSerializer blockSerializer,
                                    ConsensusManager consensusManager,
-                                   MemPool memPool) {
+                                   MemPool memPool,
+                                   ShardingScheduler shardingScheduler) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = blockchainConfig;
         this.validator = validator;
@@ -263,6 +266,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.getNextBlocksResponseParser = getNextBlocksResponseParser;
         this.blockSerializer = blockSerializer;
         this.consensusManager = consensusManager;
+        this.shardingScheduler = shardingScheduler;
 
         configureBackgroundTasks();
     }
@@ -294,7 +298,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             .task(() -> {
                 checkResumeDownloadDecideShardImport(); // continue blockchain automatically or try import genesis / shard data
                 if (blockchain.getShardInitialBlock() != null) { // prevent NPE on empty node
-                    trimService.init(blockchain.getHeight(), blockchain.getShardInitialBlock().getHeight()); // try to perform all not performed trims
+                    shardingScheduler.init(blockchain.getHeight(), trimService.getLastTrimHeight()); // try to perform all not performed trims
                 } else {
                     trimService.resetTrim();
                 }
@@ -461,7 +465,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     blockchain.deleteAll();
                     dbTables.getDerivedTables().forEach(DerivedTableInterface::truncate);
                     ((DatabaseManagerImpl) databaseManager).closeAllShardDataSources();
-                    trimService.trimDerivedTables(0, false);
+                    trimService.resetTrim();
                     DirProvider dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
                     Path dataExportDir = dirProvider.getDataExportDir();
                     FileUtils.clearDirectorySilently(dataExportDir);
