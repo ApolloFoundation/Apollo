@@ -5,8 +5,10 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
@@ -30,8 +32,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollVoterT
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTable;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
@@ -61,7 +61,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
@@ -72,7 +71,7 @@ import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
-import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
@@ -117,12 +116,18 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
     private TransactionTestData ttd = new TransactionTestData();
     private PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
     private BlockDao blockDao = mock(BlockDao.class);
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
+
+    {
+        doReturn(chain).when(blockchainConfig).getChain();
+    }
 
     BlockTestData blockTestData = new BlockTestData();
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        BlockchainImpl.class, DaoConfig.class,
         PhasingPollServiceImpl.class,
         GlobalSyncImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
@@ -143,7 +148,8 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
         DerivedDbTablesRegistryImpl.class,
         TransactionDaoImpl.class,
         BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
-        BlockchainConfig.class, GenesisPublicKeyTable.class)
+        GenesisPublicKeyTable.class)
+        .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
@@ -172,8 +178,6 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
 
     PhasingTestData ptd;
     BlockTestData btd;
-    @Inject
-    BlockchainConfig blockchainConfig;
 
     @Inject
     BlockModelToEntityConverter toEntityConverter;
@@ -182,11 +186,6 @@ public class PhasingPollServiceTest extends DbContainerBaseTest {
     void setUp() {
         ptd = new PhasingTestData();
         btd = new BlockTestData();
-
-        blockchainConfig.setCurrentConfig(new HeightConfig(
-            new BlockchainProperties(1, 1, 1, 1, 1, 1, 1, 1L),
-            100000000L, 30000000000L)
-        );
         doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).searchAll(-208393164898941117L);
         doReturn(toEntityConverter.convert(blockTestData.BLOCK_0)).when(blockDao).findLastBlock();
         doReturn(toEntityConverter.convert(blockTestData.BLOCK_3)).when(blockDao).findFirstBlock();

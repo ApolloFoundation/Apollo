@@ -91,6 +91,7 @@ import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
@@ -149,6 +150,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     static PropertiesHolder propertiesHolder = initPropertyHolder();
     private static BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
     private static HeightConfig heightConfig = mock(HeightConfig.class);
     private final Path dataExportDirPath = createPath("targetDb");
     private final Bean<Path> dataExportDir = MockBean.of(dataExportDirPath.toAbsolutePath(), Path.class);
@@ -244,6 +246,7 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
         // return the same dir for both CDI components
         dataExportDir.getQualifiers().add(new NamedLiteral("dataExportDir")); // for CsvExporter
         doReturn(dataExportDirPath).when(dirProvider).getDataExportDir(); // for Zip
+        doReturn(chain).when(blockchainConfig).getChain();
     }
 
     @BeforeAll

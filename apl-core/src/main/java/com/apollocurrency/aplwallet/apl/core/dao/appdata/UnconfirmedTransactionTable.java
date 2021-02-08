@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConv
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransactionEntity;
@@ -33,20 +34,24 @@ import java.util.stream.Stream;
 @Singleton
 public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransactionEntity> {
 
-    private final LongKeyFactory<UnconfirmedTransactionEntity> transactionKeyFactory;
+    private static final LongKeyFactory<UnconfirmedTransactionEntity> transactionKeyFactory = new LongKeyFactory<>("id") {
+        @Override
+        public DbKey newKey(UnconfirmedTransactionEntity unconfirmedTransaction) {
+            return new LongKey(unconfirmedTransaction.getId());
+        }
+    };
+
     private final UnconfirmedTransactionEntityRowMapper entityRowMapper;
 
     private final IteratorToStreamConverter<UnconfirmedTransactionEntity> streamConverter;
 
     @Inject
-    public UnconfirmedTransactionTable(LongKeyFactory<UnconfirmedTransactionEntity> transactionKeyFactory,
-                                       UnconfirmedTransactionEntityRowMapper entityRowMapper,
+    public UnconfirmedTransactionTable(UnconfirmedTransactionEntityRowMapper entityRowMapper,
                                        DerivedTablesRegistry derivedDbTablesRegistry,
                                        DatabaseManager databaseManager,
                                        Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("unconfirmed_transaction", transactionKeyFactory, false, null,
-                derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
-        this.transactionKeyFactory = transactionKeyFactory;
+            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
         this.entityRowMapper = entityRowMapper;
         this.streamConverter = new IteratorToStreamConverter<>();
     }

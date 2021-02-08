@@ -137,9 +137,15 @@ class GenesisImporterTest extends DbContainerBaseTest {
     TransactionTestData td = new TransactionTestData();
     private ResourceLocator resourceLocator;
 
+    {
+        doReturn(config).when(blockchainConfig).getCurrentConfig();
+        doReturn(chain).when(blockchainConfig).getChain();
+        doReturn("APL").when(blockchainConfig).getAccountPrefix();
+
+    }
 
     @BeforeAll
-    public static void beforeAll(){
+    public static void beforeAll() {
         ConfigDirProviderFactory.setup(false, "Apollo", 0, "", null);
     }
 
@@ -200,9 +206,6 @@ class GenesisImporterTest extends DbContainerBaseTest {
 
     @BeforeEach
     void setUp() {
-        doReturn(config).when(blockchainConfig).getCurrentConfig();
-        doReturn(chain).when(blockchainConfig).getChain();
-        doReturn("APL").when(blockchainConfig).getAccountPrefix();
         doReturn(3000000000000000000L).when(config).getMaxBalanceATM();
         doReturn(100L).when(config).getInitialBaseTarget();
 

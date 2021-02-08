@@ -42,20 +42,20 @@ class MandatoryTransactionDaoTest extends DbContainerBaseTest {
     @Mock
     TimeService timeService;
 
-    MandatoryTransactionDao dao;
+    MandatoryTransactionDao mandatoryTransactionDao;
     private MandatoryTransactionEntity cancelTx;
     private MandatoryTransactionEntity orderTx;
 
     @BeforeEach
     void setUp() {
-        dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(extension.getDatabaseManager().getJdbiHandleFactory(), MandatoryTransactionDao.class);
-        orderTx = new MandatoryTransactionEntity(20L, Convert.parseHexString(orderBytes), null);
-        cancelTx = new MandatoryTransactionEntity(10L, Convert.parseHexString(cancelBytes), Convert.parseHexString("2f23970cdc290b328e922ab0de51c288066e8579237c7b0fd45add2d064f5ff6"));
+        mandatoryTransactionDao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(extension.getDatabaseManager().getJdbiHandleFactory(), MandatoryTransactionDao.class);
+        orderTx = new MandatoryTransactionEntity(20L, 3606021951720989487L, Convert.parseHexString(orderBytes), null);
+        cancelTx = new MandatoryTransactionEntity(10L, 749837771503999228L, Convert.parseHexString(cancelBytes), Convert.parseHexString("2f23970cdc290b328e922ab0de51c288066e8579237c7b0fd45add2d064f5ff6"));
     }
 
     @Test
     void testGetById() {
-        MandatoryTransactionEntity tx = dao.get(749837771503999228L);
+        MandatoryTransactionEntity tx = mandatoryTransactionDao.get(749837771503999228L);
 
         assertEquals(cancelTx, tx);
     }
@@ -64,14 +64,14 @@ class MandatoryTransactionDaoTest extends DbContainerBaseTest {
     void testGetAll() {
         extension.cleanAndPopulateDb();
 
-        List<MandatoryTransactionEntity> all = dao.getAll(0L, 3);
+        List<MandatoryTransactionEntity> all = mandatoryTransactionDao.getAll(0L, 3);
 
         assertEquals(List.of(cancelTx, orderTx), all);
     }
 
     @Test
     void testGetAllWithPagination() {
-        List<MandatoryTransactionEntity> all = dao.getAll(10, 3);
+        List<MandatoryTransactionEntity> all = mandatoryTransactionDao.getAll(10, 3);
 
         assertEquals(List.of(orderTx), all);
     }
@@ -80,20 +80,20 @@ class MandatoryTransactionDaoTest extends DbContainerBaseTest {
     void testInsert() {
         extension.cleanAndPopulateDb();
 
-        MandatoryTransactionEntity newTx = new MandatoryTransactionEntity(12345L, new byte[]{1, 2, 3, 4, 5}, null);
+        MandatoryTransactionEntity newTx = new MandatoryTransactionEntity(21L, 12345L, new byte[]{1, 2, 3, 4, 5}, null);
 
-        dao.insert(newTx);
+        mandatoryTransactionDao.insert(newTx);
 
-        List<MandatoryTransactionEntity> all = dao.getAll(0, 10);
+        List<MandatoryTransactionEntity> all = mandatoryTransactionDao.getAll(0, 10);
 
         assertEquals(List.of(cancelTx, orderTx, newTx), all);
     }
 
     @Test
     void testDelete() {
-        dao.delete(3606021951720989487L);
+        mandatoryTransactionDao.delete(3606021951720989487L);
 
-        List<MandatoryTransactionEntity> all = dao.getAll(0, 3);
+        List<MandatoryTransactionEntity> all = mandatoryTransactionDao.getAll(0, 3);
 
         assertEquals(List.of(cancelTx), all);
     }
