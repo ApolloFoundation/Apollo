@@ -35,7 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 
 @Vetoed
-public final class ShufflingVerify extends CreateTransaction {
+public final class ShufflingVerify extends CreateTransactionHandler {
 
     public ShufflingVerify() {
         super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shuffling", "shufflingStateHash");

@@ -11,8 +11,8 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShardPresentEve
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionHelper;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardPresentData;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -76,7 +76,7 @@ public class ShardDownloadPresenceObserver {
     public void onShardPresent(@ObservesAsync @ShardPresentEvent(ShardPresentEventType.SHARD_PRESENT) ShardPresentData shardPresentData) {
         log.debug("Catching fired 'SHARD_PRESENT' event for {}", shardPresentData);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        TransactionHelper.executeInTransaction(dataSource, () -> {
+        DbTransactionHelper.executeInTransaction(dataSource, () -> {
             try (Connection con = dataSource.getConnection()) {
                 // create Lucene search indexes first
                 createLuceneSearchIndexes(con);
@@ -120,7 +120,7 @@ public class ShardDownloadPresenceObserver {
     private void cleanUpPreviouslyImportedData() {
         log.debug("start CleanUp after UNSUCCESSFUL zip import...");
         TransactionalDataSource dataSource = databaseManager.getDataSource();
-        TransactionHelper.executeInTransaction(dataSource, () -> {
+        DbTransactionHelper.executeInTransaction(dataSource, () -> {
             try {
                 blockchain.deleteAll();
                 derivedTablesRegistry.getDerivedTables().forEach(DerivedTableInterface::truncate);
@@ -143,7 +143,7 @@ public class ShardDownloadPresenceObserver {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         log.info("Genesis block not in database, starting from scratch");
         try {
-            TransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
+            DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
                 try (Connection con = dataSource.getConnection()) {
                     // create first genesis block, but do not save it to db here
                     Block genesisBlock = genesisImporter.newGenesisBlock();

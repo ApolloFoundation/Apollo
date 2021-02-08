@@ -34,7 +34,7 @@ import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class DeleteCurrency extends CreateTransaction {
+public final class DeleteCurrency extends CreateTransactionHandler {
 
     public DeleteCurrency() {
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency");

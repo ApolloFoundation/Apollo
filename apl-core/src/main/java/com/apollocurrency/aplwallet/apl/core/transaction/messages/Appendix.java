@@ -20,9 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
+import com.apollocurrency.aplwallet.apl.core.io.WriteBuffer;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import org.json.simple.JSONObject;
@@ -38,6 +39,8 @@ public interface Appendix {
     int getSize();
 
     int getFullSize();
+
+    void putBytes(WriteBuffer buffer);
 
     /**
      * @deprecated use {@link #putBytes(RlpList.RlpListBuilder)}

@@ -32,7 +32,7 @@ import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class ShufflingCancel extends CreateTransaction {
+public final class ShufflingCancel extends CreateTransactionHandler {
 
     public ShufflingCancel() {
         super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shuffling", "cancellingAccount", "shufflingStateHash");

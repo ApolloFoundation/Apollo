@@ -1,14 +1,14 @@
 package com.apollocurrency.aplwallet.apl.core.rest;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -31,6 +31,8 @@ import lombok.Data;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator.DEFAULT_VERSION;
+
 @Singleton
 public class TransactionCreator {
     private final TransactionValidator validator;
@@ -40,11 +42,11 @@ public class TransactionCreator {
     private final Blockchain blockchain;
     private final TransactionProcessor processor;
     private final TransactionTypeFactory typeFactory;
-    private final TransactionBuilder transactionBuilder;
-    private final TransactionSigner signer;
+    private final TransactionBuilderFactory transactionBuilderFactory;
+    private final TransactionSigner signerService;
 
     @Inject
-    public TransactionCreator(TransactionValidator validator, PropertiesHolder propertiesHolder, TimeService timeService, FeeCalculator feeCalculator, Blockchain blockchain, TransactionProcessor processor, TransactionTypeFactory typeFactory, TransactionBuilder transactionBuilder, TransactionSigner signer) {
+    public TransactionCreator(TransactionValidator validator, PropertiesHolder propertiesHolder, TimeService timeService, FeeCalculator feeCalculator, Blockchain blockchain, TransactionProcessor processor, TransactionTypeFactory typeFactory, TransactionBuilderFactory transactionBuilderFactory, TransactionSigner signer) {
         this.validator = validator;
         this.propertiesHolder = propertiesHolder;
         this.timeService = timeService;
@@ -52,12 +54,12 @@ public class TransactionCreator {
         this.blockchain = blockchain;
         this.processor = processor;
         this.typeFactory = typeFactory;
-        this.transactionBuilder = transactionBuilder;
-        this.signer = signer;
+        this.transactionBuilderFactory = transactionBuilderFactory;
+        this.signerService = signer;
     }
 
     public TransactionCreationData createTransaction(CreateTransactionRequest txRequest) {
-        int version = txRequest.getVersion() != null ? txRequest.getVersion() : 1;
+        int version = txRequest.getVersion() != null ? txRequest.getVersion() : DEFAULT_VERSION;
 
         TransactionCreationData tcd = new TransactionCreationData();
         EncryptedMessageAppendix encryptedMessage = null;
@@ -76,7 +78,7 @@ public class TransactionCreator {
         PrunablePlainMessageAppendix prunablePlainMessage = txRequest.isMessageIsPrunable() ? (PrunablePlainMessageAppendix) txRequest.getMessage() : null;
 
         PublicKeyAnnouncementAppendix publicKeyAnnouncement = null;
-        if (txRequest.getRecipientPublicKey() != null && transactionType.canHaveRecipient()) {
+        if (txRequest.getRecipientPublicKey() != null) {
             publicKeyAnnouncement = new PublicKeyAnnouncementAppendix(Convert.parseHexString(txRequest.getRecipientPublicKey()));
         }
         if (txRequest.getKeySeed() == null && txRequest.getSecretPhrase() != null) {
@@ -97,9 +99,9 @@ public class TransactionCreator {
             return tcd;
         }
 
-        int deadline;
+        short deadline;
         try {
-            deadline = Integer.parseInt(txRequest.getDeadlineValue());
+            deadline = Short.parseShort(txRequest.getDeadlineValue());
             if (deadline < 1) {
                 tcd.setErrorType(TransactionCreationData.ErrorType.INCORRECT_DEADLINE);
                 return tcd;
@@ -123,19 +125,13 @@ public class TransactionCreator {
         try {
             Transaction.Builder builder;
             if(version < 3) {
-                builder = transactionBuilder.newTransactionBuilder(version, txRequest.getPublicKey(),
+                builder = transactionBuilderFactory.newUnsignedTransactionBuilder(version, txRequest.getPublicKey(),
                     txRequest.getAmountATM(), txRequest.getFeeATM(),
-                    (short) deadline, txRequest.getAttachment(), timestamp);
+                    deadline, txRequest.getAttachment(), timestamp)
+                    .referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
             }else{
-                builder = transactionBuilder.newTransactionBuilder(txRequest.getChainId(), version,
-                    txRequest.getPublicKey(), txRequest.getNonce(),
-                    txRequest.getAmount(), txRequest.getFuelLimit(), txRequest.getFuelPrice(),
-                    deadline, timestamp,
-                    txRequest.getAttachment()
-                );
+                builder = ....
             }
-
-            builder.referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
             if (transactionType.canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());
             }
@@ -155,7 +151,7 @@ public class TransactionCreator {
             }
             //build transaction, this transaction is UNSIGNED
             transaction = builder.build();
-            if (transaction.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
+            if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
                 int effectiveHeight = blockchain.getHeight();
                 @TransactionFee(FeeMarker.CALCULATOR)
                 long minFee = feeCalculator.getMinimumFeeATM(transaction, effectiveHeight);
@@ -176,11 +172,11 @@ public class TransactionCreator {
             //Sign transaction
             if (version < 2) { //tx v1
                 if (txRequest.getKeySeed() != null) {
-                    signer.sign(transaction, txRequest.getKeySeed());
+                    signerService.sign(transaction, txRequest.getKeySeed());
                 }
             } else {//tx version >= 2
                 if (txRequest.getCredential() != null) {
-                    signer.sign(transaction, txRequest.getCredential());
+                    signerService.sign(transaction, txRequest.getCredential());
                 }
             }
 
@@ -229,7 +225,7 @@ public class TransactionCreator {
     }
 
     @Data
-    static class TransactionCreationData {
+    public static class TransactionCreationData {
         Transaction tx;
         String error = "";
         ErrorType errorType;

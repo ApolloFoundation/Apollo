@@ -108,7 +108,7 @@ class SignatureToolFactoryTest extends AbstractSigData {
         byte[] document = "The document".getBytes();
         Credential signCredential = SignatureToolFactory.createCredential(1, Crypto.getKeySeed(secretPhrase));
         Credential verifyCredential = SignatureToolFactory.createCredential(1, Crypto.getPublicKey(secretPhrase));
-        DocumentSigner documentSigner = SignatureToolFactory.selectBuilder(1).get();
+        DocumentSigner documentSigner = SignatureToolFactory.selectSigner(1).get();
         SignatureVerifier signatureVerifier = SignatureToolFactory.selectValidator(1).get();
 
         //WHEN
@@ -131,7 +131,7 @@ class SignatureToolFactoryTest extends AbstractSigData {
         byte[] document = "The document".getBytes();
         Credential signCredential = SignatureToolFactory.createCredential(2, Crypto.getKeySeed(secretPhrase1), Crypto.getKeySeed(secretPhrase2));
         Credential verifyCredential = SignatureToolFactory.createCredential(2, Crypto.getPublicKey(secretPhrase2), Crypto.getPublicKey(secretPhrase1));
-        DocumentSigner documentSigner = SignatureToolFactory.selectBuilder(2).get();
+        DocumentSigner documentSigner = SignatureToolFactory.selectSigner(2).get();
         SignatureVerifier signatureVerifier = SignatureToolFactory.selectValidator(2).get();
 
         //WHEN

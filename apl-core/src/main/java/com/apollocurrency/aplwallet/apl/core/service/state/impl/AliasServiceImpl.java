@@ -24,7 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.alias.AliasOfferTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.alias.AliasTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.AliasOffer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;

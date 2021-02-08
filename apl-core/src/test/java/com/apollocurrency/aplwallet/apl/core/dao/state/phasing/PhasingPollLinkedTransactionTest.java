@@ -37,7 +37,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
@@ -76,18 +76,18 @@ public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingP
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
-            GlobalSyncImpl.class,
-            PhasingPollLinkedTransactionTable.class,
-            FullTextConfigImpl.class,
-            DerivedDbTablesRegistryImpl.class,
-            TransactionBuilder.class,
-            TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-            TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
-            TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
-            BlockDaoImpl.class,
-            BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
-            TransactionDaoImpl.class)
+        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        GlobalSyncImpl.class,
+        PhasingPollLinkedTransactionTable.class,
+        FullTextConfigImpl.class,
+        DerivedDbTablesRegistryImpl.class,
+        TransactionBuilderFactory.class,
+        TransactionServiceImpl.class, ShardDbExplorerImpl.class,
+        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
+        BlockDaoImpl.class,
+        BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
+        TransactionDaoImpl.class)
         .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))

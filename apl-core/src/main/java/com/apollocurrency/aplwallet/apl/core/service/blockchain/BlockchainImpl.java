@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
@@ -30,10 +30,10 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.BlockIndex;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TransactionIndex;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -327,7 +327,6 @@ public class BlockchainImpl implements Blockchain {
                 for (Transaction transaction : transactions) {
                     transaction.setBlock(parentBlock);
                     transaction.setIndex(index++);
-                    transaction.bytes();
                     prunableService.loadTransactionPrunables(transaction);
                 }
                 parentBlock.setTransactions(transactions);
@@ -611,7 +610,7 @@ public class BlockchainImpl implements Blockchain {
     }
 
     private boolean hasShardTransactionByFullHash(byte[] fullHash, int height) {
-        long id = Convert.fullHashToId(fullHash);
+        long id = Convert.transactionFullHashToId(fullHash);
         TransactionIndex transactionIndex = transactionIndexDao.getByTransactionId(id);
         byte[] hash = getTransactionIndexFullHash(transactionIndex);
         return Arrays.equals(hash, fullHash)
@@ -632,7 +631,7 @@ public class BlockchainImpl implements Blockchain {
         if (transaction != null) {
             txHeight = transaction.getHeight();
         } else if (hasShardTransactionByFullHash(fullHash, heightLimit)) {
-            txHeight = transactionIndexDao.getTransactionHeightByTransactionId(Convert.fullHashToId(fullHash));
+            txHeight = transactionIndexDao.getTransactionHeightByTransactionId(Convert.transactionFullHashToId(fullHash));
         }
         return txHeight;
     }

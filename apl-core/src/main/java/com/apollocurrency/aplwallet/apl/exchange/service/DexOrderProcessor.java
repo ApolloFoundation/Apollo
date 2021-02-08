@@ -3,8 +3,7 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -16,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.MandatoryTransactionService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexContractAttachment;
@@ -38,7 +38,6 @@ import com.apollocurrency.aplwallet.apl.dex.core.model.SwapDataInfo;
 import com.apollocurrency.aplwallet.apl.dex.eth.model.EthDepositInfo;
 import com.apollocurrency.aplwallet.apl.dex.eth.model.EthDepositsWithOffset;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.util.DexCurrencyValidator;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
@@ -49,7 +48,6 @@ import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import com.apollocurrency.aplwallet.vault.service.KMSService;
-import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import lombok.extern.slf4j.Slf4j;
 import org.web3j.utils.Numeric;
 
@@ -97,7 +95,7 @@ public class DexOrderProcessor {
     private final DexService dexService;
     private final TransactionValidator validator;
     private final DexOrderTransactionCreator dexOrderTransactionCreator;
-    private final MandatoryTransactionDao mandatoryTransactionDao;
+    private final MandatoryTransactionService mandatoryTransactionService;
     private final IDexValidator dexValidator;
     private final DexSmartContractService dexSmartContractService;
     private final EthereumWalletService ethereumWalletService;
@@ -106,24 +104,23 @@ public class DexOrderProcessor {
     private final Map<Long, OrderHeightId> accountCancelOrderMap = new HashMap<>();
     private final Map<Long, OrderHeightId> accountExpiredOrderMap = new HashMap<>();
     private TaskDispatcher taskDispatcher;
-    private TimeService timeService;
+    private final TimeService timeService;
     private ExecutorService backgroundExecutor;
-    private DexOperationService operationService;
-    private AccountService accountService;
-    private volatile boolean processorEnabled = true;
-    private boolean startProcessor;
-    private int processingDelay; // seconds
-    private DexConfig dexConfig;
-    private Blockchain blockchain;
+    private final DexOperationService operationService;
+    private final AccountService accountService;
+    private final boolean processorEnabled = true;
+    private final boolean startProcessor;
+    private final int processingDelay; // seconds
+    private final DexConfig dexConfig;
+    private final Blockchain blockchain;
     private final BlockchainConfig blockchainConfig;
-    private final Account2FAService account2FAService;
-    private final KMSService KMSService;
+    private final KMSService kmsService;
 
     @Inject
     public DexOrderProcessor(SecureStorageService secureStorageService, TransactionValidator validator, DexService dexService,
                              DexOrderTransactionCreator dexOrderTransactionCreator, DexValidationServiceImpl dexValidationServiceImpl,
                              DexSmartContractService dexSmartContractService, EthereumWalletService ethereumWalletService,
-                             MandatoryTransactionDao mandatoryTransactionDao, TaskDispatchManager taskDispatchManager,
+                             MandatoryTransactionService mandatoryTransactionService, TaskDispatchManager taskDispatchManager,
                              AccountService accountService,
                              TimeService timeService,
                              Blockchain blockchain, PhasingPollService phasingPollService, DexOperationService operationService,
@@ -131,15 +128,14 @@ public class DexOrderProcessor {
                              @Property(name = "apl.dex.orderProcessor.delay", defaultValue = "" + DEFAULT_DEX_OFFER_PROCESSOR_DELAY) int processingDelay,
                              DexConfig dexConfig,
                              BlockchainConfig blockchainConfig,
-                             Account2FAService account2FAService,
-                             KMSService KMSService
+                             KMSService kmsService
     ) {
 
         this.secureStorageService = secureStorageService;
         this.dexService = dexService;
         this.dexOrderTransactionCreator = dexOrderTransactionCreator;
         this.dexValidator = dexValidationServiceImpl;
-        this.mandatoryTransactionDao = mandatoryTransactionDao;
+        this.mandatoryTransactionService = mandatoryTransactionService;
         this.dexSmartContractService = dexSmartContractService;
         this.ethereumWalletService = ethereumWalletService;
         this.validator = validator;
@@ -153,8 +149,7 @@ public class DexOrderProcessor {
         this.accountService = accountService;
         this.dexConfig = dexConfig;
         this.blockchainConfig = blockchainConfig;
-        this.account2FAService = account2FAService;
-        this.KMSService = KMSService;
+        this.kmsService = kmsService;
     }
 
     @PostConstruct
@@ -393,11 +388,9 @@ public class DexOrderProcessor {
 
     @Transactional
     void saveAndBroadcastContractWithTransfer(Transaction transferTx, Transaction contractTx) {
-        MandatoryTransaction contractMandatoryTx = new MandatoryTransaction(contractTx, null, null);
-        mandatoryTransactionDao.insert(contractMandatoryTx);
+        mandatoryTransactionService.saveMandatoryTransaction(contractTx, null);
         if (transferTx != null) {
-            MandatoryTransaction transferMandatoryTx = new MandatoryTransaction(transferTx, contractTx.getFullHash(), null);
-            mandatoryTransactionDao.insert(transferMandatoryTx);
+            mandatoryTransactionService.saveMandatoryTransaction(transferTx, contractTx.getFullHash());
             dexService.broadcastWhenConfirmed(transferTx, contractTx);
         } else {
             dexService.broadcast(contractTx);
@@ -719,7 +712,7 @@ public class DexOrderProcessor {
 
 
     private CreateTransactionRequest buildRequest(String passphrase, Long accountId, Attachment attachment, Long feeATM) {
-        byte[] keySeed = Crypto.getKeySeed(KMSService.getAplSecretBytes(accountId, passphrase));
+        byte[] keySeed = Crypto.getKeySeed(kmsService.getAplSecretBytes(accountId, passphrase));
         CreateTransactionRequest transferMoneyReq = CreateTransactionRequest
             .builder()
             .passphrase(passphrase)
@@ -811,7 +804,7 @@ public class DexOrderProcessor {
         try {
             String passphrase = secureStorageService.getUserPassPhrase(accountId);
 
-            List<String> addresses = KMSService.getEthWalletAddresses(accountId, passphrase);
+            List<String> addresses = kmsService.getEthWalletAddresses(accountId, passphrase);
 
             for (String address : addresses) {
                 try {
@@ -847,7 +840,7 @@ public class DexOrderProcessor {
 
     public void refundExpiredAtomicSwaps(long accountId) {
         String passphrase = secureStorageService.getUserPassPhrase(accountId);
-        List<String> addresses = KMSService.getEthWalletAddresses(accountId, passphrase);
+        List<String> addresses = kmsService.getEthWalletAddresses(accountId, passphrase);
         for (String address : addresses) {
             try {
                 List<ExpiredSwap> expiredSwaps = dexSmartContractService.getExpiredSwaps(address);

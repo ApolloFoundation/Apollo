@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBindi
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -150,7 +150,7 @@ class TrimObserverScheduleLogicTest {
 
         int nextTrimHeight1 = simulateFireBlockPushed(1000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertTrue(nextTrimHeight1 >= 1000);
+        assertTrue(nextTrimHeight1 < 1000);
     }
 
     @Test
@@ -161,7 +161,7 @@ class TrimObserverScheduleLogicTest {
         doReturn(5000).when(config).getShardingFrequency();
         int nextTrimHeight1 = simulateFireBlockPushed(1000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertTrue(nextTrimHeight1 >= 1000);
+        assertTrue(nextTrimHeight1 < 1000);
     }
 
     @Test
@@ -177,7 +177,7 @@ class TrimObserverScheduleLogicTest {
 
         int nextTrimHeight1 = simulateFireBlockPushed(6000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertEquals(6013, nextTrimHeight1);
+        assertEquals(3987, nextTrimHeight1);
     }
 
     @Test
@@ -193,7 +193,7 @@ class TrimObserverScheduleLogicTest {
 
         int nextTrimHeight1 = simulateFireBlockPushed(11000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertEquals(11457, nextTrimHeight1);
+        assertEquals(8543, nextTrimHeight1);
     }
 
     @Test
@@ -209,7 +209,7 @@ class TrimObserverScheduleLogicTest {
 
         int nextTrimHeight1 = simulateFireBlockPushed(11000);
         log.debug("nextTrimHeight1 = {}", nextTrimHeight1);
-        assertEquals(12000, nextTrimHeight1);
+        assertEquals(8000, nextTrimHeight1);
     }
 
     @Test
@@ -228,7 +228,7 @@ class TrimObserverScheduleLogicTest {
 
         int nextTrimHeight = simulateFireBlockPushed(14000); // pushed block
         log.debug("nextTrimHeight = {}", nextTrimHeight);
-        assertEquals(14629, nextTrimHeight);
+        assertEquals(11371, nextTrimHeight);
 
         // e.g. config has changed at that point
         doReturn(3000).when(config).getShardingFrequency(); // emulate changed config
@@ -240,12 +240,12 @@ class TrimObserverScheduleLogicTest {
 
         nextTrimHeight = simulateFireBlockPushed(15000);
         log.debug("nextTrimHeight = {}", nextTrimHeight);
-        assertEquals(15629, nextTrimHeight);
+        assertEquals(12371, nextTrimHeight);
 
         doReturn(555).when(random).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1); // emulate random increase
         nextTrimHeight = simulateFireBlockPushed(16000);
         log.debug("nextTrimHeight = {}", nextTrimHeight);
-        assertEquals(16556, nextTrimHeight);
+        assertEquals(13444, nextTrimHeight);
     }
 
     @Test
@@ -263,7 +263,7 @@ class TrimObserverScheduleLogicTest {
 
         int nextTrimHeight = simulateFireBlockPushed(14000); // pushed block
         log.debug("nextTrimHeight = {}", nextTrimHeight);
-        assertEquals(14301, nextTrimHeight);
+        assertEquals(11699, nextTrimHeight);
         verify(random, times(1)).nextInt(Constants.DEFAULT_TRIM_FREQUENCY - 1);
     }
 

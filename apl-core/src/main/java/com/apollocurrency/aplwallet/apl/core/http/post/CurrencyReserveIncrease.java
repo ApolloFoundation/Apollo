@@ -55,7 +55,7 @@ import javax.servlet.http.HttpServletRequest;
  * The list of founders and their ATM investment can be obtained using the {@link GetCurrencyFounders} API.
  */
 @Vetoed
-public final class CurrencyReserveIncrease extends CreateTransaction {
+public final class CurrencyReserveIncrease extends CreateTransactionHandler {
 
     public CurrencyReserveIncrease() {
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "amountPerUnitATM");
@@ -65,7 +65,7 @@ public final class CurrencyReserveIncrease extends CreateTransaction {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Currency currency = HttpParameterParserUtil.getCurrency(req);
         long amountPerUnitATM = HttpParameterParserUtil.getLong(req, "amountPerUnitATM", 1L,
-            CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(), true);
+                CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(), true);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
         Attachment attachment = new MonetarySystemReserveIncrease(currency.getId(), amountPerUnitATM);
         return createTransaction(req, account, attachment);

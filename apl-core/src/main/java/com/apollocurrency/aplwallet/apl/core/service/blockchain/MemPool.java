@@ -1,15 +1,17 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
+import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.MemPoolUnconfirmedTransactionTable;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
@@ -27,12 +29,14 @@ import java.util.stream.Stream;
 @Singleton
 public class MemPool {
 
-
-    private final IteratorToStreamConverter<UnconfirmedTransaction> streamConverter = new IteratorToStreamConverter<>();;
+    private final IteratorToStreamConverter<UnconfirmedTransactionEntity> streamConverter = new IteratorToStreamConverter<>();
+    ;
     private final MemPoolUnconfirmedTransactionTable table;
     private final MemPoolInMemoryState memoryState;
     private final GlobalSync globalSync;
     private final TransactionValidator validator;
+    private final UnconfirmedTransactionEntityToModelConverter toModelConverter;
+    private final UnconfirmedTransactionModelToEntityConverter toEntityConverter;
     private final boolean enableRebroadcasting;
     private final int maxUnconfirmedTransactions;
 
@@ -41,6 +45,8 @@ public class MemPool {
                    MemPoolInMemoryState memoryState,
                    GlobalSync globalSync,
                    TransactionValidator validator,
+                   UnconfirmedTransactionEntityToModelConverter toModelConverter,
+                   UnconfirmedTransactionModelToEntityConverter toEntityConverter,
                    @Property(name = "apl.maxUnconfirmedTransactions", defaultValue = "" + Integer.MAX_VALUE) int maxUnconfirmedTransactions,
                    @Property(name = "apl.enableTransactionRebroadcasting") boolean enableRebroadcasting) {
         this.table = table;
@@ -49,6 +55,8 @@ public class MemPool {
         this.memoryState = memoryState;
         this.globalSync = globalSync;
         this.validator = validator;
+        this.toModelConverter = toModelConverter;
+        this.toEntityConverter = toEntityConverter;
     }
 
     public Transaction getUnconfirmedTransaction(long id) {
@@ -56,7 +64,7 @@ public class MemPool {
         if (transaction != null) {
             return transaction;
         }
-        return table.getById(id);
+        return toModelConverter.convert(table.getById(id));
     }
 
     public boolean hasUnconfirmedTransaction(long id) {
@@ -81,7 +89,7 @@ public class MemPool {
         // Initialize the unconfirmed transaction cache if it hasn't been done yet
         //
         if (!memoryState.isCacheInitialized()) {
-            memoryState.initializeCache(streamConverter.apply(table.getAll(0, -1)));
+            memoryState.initializeCache(streamConverter.apply(table.getAll(0, -1)).map(toModelConverter));
         }
         return memoryState.getFromCache(exclude);
     }
@@ -97,16 +105,16 @@ public class MemPool {
     public boolean addProcessed(UnconfirmedTransaction tx) {
         boolean canSaveTxs = allProcessedCount() < maxUnconfirmedTransactions;
         if (canSaveTxs) {
-            table.insert(tx);
+            table.insert(
+                toEntityConverter.convert(tx)
+            );
             memoryState.putInCache(tx);
         }
         return canSaveTxs;
     }
 
-
-
     public Stream<UnconfirmedTransaction> getAllProcessedStream() {
-        return table.getAllUnconfirmedTransactionsStream();
+        return table.getAllUnconfirmedTransactionsStream().map(toModelConverter);
     }
 
     public int allProcessedCount() {
@@ -133,8 +141,8 @@ public class MemPool {
         return allProcessedCount() >= maxUnconfirmedTransactions;
     }
 
-    public List<UnconfirmedTransaction> getProcessed(int from, int to) {
-        return CollectionUtil.toList(table.getAll(from, to));
+    public Stream<UnconfirmedTransaction> getProcessed(int from, int to) {
+        return streamConverter.convert(table.getAll(from, to)).map(toModelConverter);
     }
 
     public void processLater(UnconfirmedTransaction unconfirmedTransaction) {
@@ -166,7 +174,7 @@ public class MemPool {
     public void rebroadcastAllUnconfirmedTransactions() {
         getAllProcessedStream().forEach(e -> {
             if (enableRebroadcasting) {
-                memoryState.addToBroadcasted(e.getTransaction());
+                memoryState.addToBroadcasted(e.getTransactionImpl());
             }
         });
     }
@@ -200,7 +208,7 @@ public class MemPool {
 
 
     public Stream<UnconfirmedTransaction> getExpiredTxsStream(int epochTime) {
-        return table.getExpiredTxsStream(epochTime);
+        return table.getExpiredTxsStream(epochTime).map(toModelConverter);
     }
 
     public boolean isAlreadyBroadcasted(Transaction transaction) {

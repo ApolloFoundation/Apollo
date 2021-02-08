@@ -37,7 +37,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT_NAME_LENGTH;
 
 @Vetoed
-public final class SetAccountInfo extends CreateTransaction {
+public final class SetAccountInfo extends CreateTransactionHandler {
 
     public SetAccountInfo() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "name", "description");
