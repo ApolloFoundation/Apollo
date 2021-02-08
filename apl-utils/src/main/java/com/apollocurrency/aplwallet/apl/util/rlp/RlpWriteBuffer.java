@@ -19,57 +19,67 @@ import java.util.List;
  *
  * @author andrew.zinchenko@gmail.com
  */
-public class RlpWriteBuffer {
+public class RlpWriteBuffer implements WriteBuffer {
     private byte[] output;
 
     public RlpWriteBuffer() {
         output = new byte[]{};
     }
 
-    public int size(){
+    @Override
+    public int size() {
         return output.length;
     }
 
-    public byte[] toByteArray(){
+    @Override
+    public byte[] toByteArray() {
         return output;
     }
 
-    public RlpWriteBuffer write(byte value) {
+    @Override
+    public WriteBuffer write(byte value) {
         output = Arrays.concatenate(output, RlpEncoder.encode(RlpString.create(value)));
         return this;
     }
 
-    public RlpWriteBuffer write(byte[] value) {
+    @Override
+    public WriteBuffer write(byte[] value) {
         output = Arrays.concatenate(output, RlpEncoder.encode(RlpString.create(value)));
         return this;
     }
 
-    public RlpWriteBuffer write(boolean value) {
-        write((byte) (value?1:0));
+    @Override
+    public WriteBuffer write(boolean value) {
+        write((byte) (value ? 1 : 0));
         return this;
     }
 
-    public RlpWriteBuffer write(long value) {
+    @Override
+    public WriteBuffer write(long value) {
         output = Arrays.concatenate(output, RlpEncoder.encode(RlpString.create(value)));
         return this;
     }
 
-    public RlpWriteBuffer write(String hex) {
+    @Override
+    public WriteBuffer write(String hex) {
         output = Arrays.concatenate(output, RlpEncoder.encode(RlpString.create(hex)));
         return this;
     }
 
-    public RlpWriteBuffer write(BigInteger value) {
+    @Override
+    public WriteBuffer write(BigInteger value) {
         output = Arrays.concatenate(output, RlpEncoder.encode(RlpString.create(value)));
         return this;
     }
 
-    public RlpWriteBuffer write(List<RlpType> list) {
+    @Override
+    public WriteBuffer write(List<RlpType> list) {
         output = Arrays.concatenate(output, RlpEncoder.encode(new RlpList(list)));
         return this;
     }
 
-    public RlpWriteBuffer concat(byte[] bytes) {
+    @Override
+    public WriteBuffer concat(byte[] bytes) {
         output = Arrays.concatenate(output, bytes);
         return this;
     }

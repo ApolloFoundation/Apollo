@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
+import com.apollocurrency.aplwallet.apl.util.rlp.WriteBuffer;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
 
@@ -47,7 +48,7 @@ class SmcPublishContractAttachmentTest {
     @Test
     void putMyBytes() {
         //GIVEN
-        RlpWriteBuffer buffer = new RlpWriteBuffer();
+        WriteBuffer buffer = new RlpWriteBuffer();
         RlpList.RlpListBuilder listBuilder = RlpList.builder();
         expected.putBytes(listBuilder);
         buffer.write(listBuilder.build());

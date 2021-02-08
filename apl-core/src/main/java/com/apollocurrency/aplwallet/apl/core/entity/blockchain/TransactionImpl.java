@@ -41,6 +41,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
+import com.apollocurrency.aplwallet.apl.util.rlp.WriteBuffer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
@@ -310,6 +311,14 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
+    public byte[] getAppendagesBytes() {
+        for (AbstractAppendix appendix : getAppendages()) {
+            appendix.putBytes();
+        }
+        return new byte[0];
+    }
+
+    @Override
     public long getId() {
         if (id == 0) {
             if (signature == null) {
@@ -485,7 +494,7 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public byte[] rlpEncodedTx() {
-        RlpWriteBuffer buffer = new RlpWriteBuffer();
+        WriteBuffer buffer = new RlpWriteBuffer();
 
         rlpUnsignedTx(buffer);
 
@@ -499,14 +508,14 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public byte[] rlpEncodedUnsignedTx(){
-        RlpWriteBuffer buffer = new RlpWriteBuffer();
+        WriteBuffer buffer = new RlpWriteBuffer();
 
         rlpUnsignedTx(buffer);
 
         return buffer.toByteArray();
     }
 
-    private void rlpUnsignedTx(RlpWriteBuffer buffer){
+    private void rlpUnsignedTx(WriteBuffer buffer) {
         //header
         buffer
             .write(type.getSpec().getType())

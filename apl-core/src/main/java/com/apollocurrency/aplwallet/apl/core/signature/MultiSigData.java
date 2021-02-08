@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.util.rlp.RlpConverter;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
+import com.apollocurrency.aplwallet.apl.util.rlp.WriteBuffer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.BufferUnderflowException;
@@ -311,7 +312,7 @@ class MultiSigData implements MultiSig {
         @Override
         public byte[] bytes(Signature signature) {
             MultiSig multiSig = (MultiSig) signature;
-            RlpWriteBuffer buffer = new RlpWriteBuffer();
+            WriteBuffer buffer = new RlpWriteBuffer();
             buffer.write(RlpList.ofStrings(multiSig.getParams()));
             RlpList.RlpListBuilder listBuilder = RlpList.builder();
             multiSig.signaturesMap()

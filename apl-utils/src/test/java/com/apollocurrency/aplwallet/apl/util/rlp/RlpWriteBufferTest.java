@@ -27,7 +27,7 @@ class RlpWriteBufferTest {
         byte[] value = new byte[]{10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
         byte[] expected = Arrays.concatenate(new byte[]{(byte) 0x8B}, value);
         //WHEN
-        RlpWriteBuffer buffer = new RlpWriteBuffer();
+        WriteBuffer buffer = new RlpWriteBuffer();
         byte[] out = buffer.write(value).toByteArray();
         //THEN
         assertArrayEquals(expected, out);
@@ -39,7 +39,7 @@ class RlpWriteBufferTest {
         String value = "The short example string.";
         byte[] expected = Arrays.concatenate(new byte[]{(byte) 0x99}, value.getBytes(StandardCharsets.UTF_8));
         //WHEN
-        RlpWriteBuffer buffer = new RlpWriteBuffer();
+        WriteBuffer buffer = new RlpWriteBuffer();
         byte[] out = buffer.write(value).toByteArray();
         //THEN
         assertArrayEquals(expected, out);
@@ -51,7 +51,7 @@ class RlpWriteBufferTest {
         int value = 1234;//two bytes
         byte[] expected = Arrays.concatenate(new byte[]{(byte) 0x80 + 2}, BigInteger.valueOf(value).toByteArray());
         //WHEN
-        RlpWriteBuffer buffer = new RlpWriteBuffer();
+        WriteBuffer buffer = new RlpWriteBuffer();
         byte[] out = buffer.write(value).toByteArray();
         //THEN
         assertArrayEquals(expected, out);
@@ -63,7 +63,7 @@ class RlpWriteBufferTest {
         long value = 123456L;//three bytes
         byte[] expected = Arrays.concatenate(new byte[]{(byte) 0x80 + 3}, BigInteger.valueOf(value).toByteArray());
         //WHEN
-        RlpWriteBuffer buffer = new RlpWriteBuffer();
+        WriteBuffer buffer = new RlpWriteBuffer();
         byte[] out = buffer.write(value).toByteArray();
         //THEN
         assertArrayEquals(expected, out);
@@ -75,7 +75,7 @@ class RlpWriteBufferTest {
         BigInteger value = new BigInteger("1234567890123456789012345678901234567890");
         byte[] expected = Arrays.concatenate(new byte[]{(byte) 0x91}, value.toByteArray());
         //WHEN
-        RlpWriteBuffer buffer = new RlpWriteBuffer();
+        WriteBuffer buffer = new RlpWriteBuffer();
         byte[] out = buffer.write(value).toByteArray();
         //THEN
         assertArrayEquals(expected, out);
@@ -99,7 +99,7 @@ class RlpWriteBufferTest {
             + Numeric.toHexStringNoPrefix(Arrays.concatenate(new byte[]{(byte) 0x91}, value4.toByteArray()));
 
         //WHEN
-        RlpWriteBuffer buffer = new RlpWriteBuffer();
+        WriteBuffer buffer = new RlpWriteBuffer();
         List<RlpType> list = RlpList.builder()
             .add(value3)
             .add(value2)
