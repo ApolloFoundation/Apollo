@@ -80,7 +80,6 @@ public class Apollo {
     private static Logger log;
     private static AplContainer container;
     private static AplCoreRuntime aplCoreRuntime;
-    private PropertiesHolder propertiesHolder;
 
     private static void setLogLevel(int logLevel) {
         // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
@@ -164,7 +163,7 @@ public class Apollo {
         return null;
     }
 
-    private void initUpdater(String attachmentFilePath, boolean debug) {
+    private void initUpdater(String attachmentFilePath, boolean debug, PropertiesHolder propertiesHolder) {
         if (!propertiesHolder.getBooleanProperty("apl.allowUpdates", false)) {
             return;
         }
@@ -309,7 +308,7 @@ public class Apollo {
 
 // check running or run data base server process. 
         
-        DbConfig dbConfig = new DbConfig(app.propertiesHolder, new ChainsConfigHolder(chains));
+        DbConfig dbConfig = new DbConfig(new PropertiesHolder(applicationProperties), new ChainsConfigHolder(chains));
         if(!checkOrRunDatabaseServer(dbConfig)){
             System.err.println(" ERROR! MariaDB process is not running and can not be started from Apollo!");
             System.err.println(" Please install apollo-mariadb package at the same directory level as apollo-blockchain package.");
@@ -356,11 +355,9 @@ public class Apollo {
         
         aplCoreRuntime.init(runtimeMode, dirProvider, applicationProperties, chains);
 
-
-
         
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
-        blockchainConfigUpdater.updateChain(aplCoreRuntime.getChainsConfigHolder().getActiveChain(), app.propertiesHolder);
+        blockchainConfigUpdater.updateChain(aplCoreRuntime.getChainsConfigHolder().getActiveChain(), aplCoreRuntime.getPropertieHolder());
         
         
         // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
@@ -369,14 +366,14 @@ public class Apollo {
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
        
         if (log != null) {
-            log.trace("{}", app.propertiesHolder.dumpAllProperties()); // dumping all properties
+            log.trace("{}",aplCoreRuntime.getPropertieHolder().dumpAllProperties()); // dumping all properties
         }
         
         try {
             // updated shutdown hook explicitly created with instances
             Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime));
             aplCoreRuntime.addCoreAndInit();
-            app.initUpdater(args.updateAttachmentFile, args.debugUpdater);
+            app.initUpdater(args.updateAttachmentFile, args.debugUpdater, aplCoreRuntime.getPropertieHolder());
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();

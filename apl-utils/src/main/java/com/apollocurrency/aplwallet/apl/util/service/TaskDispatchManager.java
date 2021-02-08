@@ -23,6 +23,9 @@ public class TaskDispatchManager {
     private volatile boolean isTasksStarted = false;
     private PropertiesHolder propertiesHolder;
     private Map<String, TaskDispatcher> dispatchers;
+//just to be proxyable
+    public TaskDispatchManager() {
+    }
 
     public TaskDispatchManager(PropertiesHolder propertiesHolder) {
         this.propertiesHolder = propertiesHolder;

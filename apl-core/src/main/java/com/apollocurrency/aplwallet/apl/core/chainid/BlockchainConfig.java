@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Singleton;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
@@ -20,7 +19,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.enterprise.inject.Vetoed;
-import javax.inject.Inject;
 
 /**
  * <p>This class used as configuration of current working chain. Commonly it mapped to an active chain described in conf/chains.json</p>
@@ -45,6 +43,9 @@ public class BlockchainConfig {
     private Chain chain;
     private TreeMap<Integer, HeightConfig> heightConfigMap = new TreeMap<>();
     private volatile boolean isJustUpdated = false;
+
+    public BlockchainConfig() {
+    }
 
 
     public BlockchainConfig(Chain chain, PropertiesHolder holder) {

@@ -135,12 +135,13 @@ public class AplCoreRuntime {
     {
         this.runtimeMode = runtimeMode;
         this.propertieHolder = new PropertiesHolder(properties);
-        
+        this.taskDispatchManager = new TaskDispatchManager(propertieHolder);
+        this.dirProvider = dirProvider;
         this.chainsConfigHolder = new ChainsConfigHolder(chains);
         Chain chain = chainsConfigHolder.getActiveChain();
-        this.blockchainConfig = new BlockchainConfig(chain, propertieHolder);
         this.dbConfig = new DbConfig(propertieHolder, chainsConfigHolder);
-        taskDispatchManager = new TaskDispatchManager(propertieHolder);
+        this.blockchainConfig = new BlockchainConfig(chain, propertieHolder);       
+
         TaskDispatcher taskDispatcher = taskDispatchManager.newScheduledDispatcher("AplCoreRuntime-periodics");
         
         checkInjects();
