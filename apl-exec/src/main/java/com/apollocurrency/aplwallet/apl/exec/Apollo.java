@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
-import com.apollocurrency.aplwallet.apl.core.migrator.MigratorUtil;
+import com.apollocurrency.aplwallet.apl.core.utils.LegacyDbUtil;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
@@ -322,7 +322,7 @@ public class Apollo {
     private static String getCustomDbPath(UUID chainId, Properties properties) { //maybe better to set dbUrl or add to dirProvider
         String customDbDir = properties.getProperty(CustomDirLocations.DB_DIR_PROPERTY_NAME);
         if (customDbDir != null) {
-            Path legacyHomeDir = MigratorUtil.getLegacyHomeDir();
+            Path legacyHomeDir = LegacyDbUtil.getLegacyHomeDir();
             Path customDbPath = legacyHomeDir.resolve(customDbDir).resolve(chainId.toString().substring(0, 6)).normalize();
             System.out.println("Using custom db path " + customDbPath.toAbsolutePath().toString());
             return customDbPath.toAbsolutePath().toString();
