@@ -19,13 +19,15 @@ import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.enterprise.inject.Vetoed;
+import javax.inject.Inject;
 
 /**
  * <p>This class used as configuration of current working chain. Commonly it mapped to an active chain described in conf/chains.json</p>
  */
 
 @Slf4j
-@Singleton
+@Vetoed
 public class BlockchainConfig {
     static final int DEFAULT_MIN_PRUNABLE_LIFETIME = 14 * 1440 * 60; // two weeks in seconds
 
@@ -44,8 +46,6 @@ public class BlockchainConfig {
     private TreeMap<Integer, HeightConfig> heightConfigMap = new TreeMap<>();
     private volatile boolean isJustUpdated = false;
 
-    public BlockchainConfig() {
-    }
 
     public BlockchainConfig(Chain chain, PropertiesHolder holder) {
         updateChain(chain, holder);

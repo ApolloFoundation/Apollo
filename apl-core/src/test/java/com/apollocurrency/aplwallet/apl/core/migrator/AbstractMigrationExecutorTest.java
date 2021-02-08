@@ -114,7 +114,7 @@ public abstract class AbstractMigrationExecutorTest extends DbContainerBaseTest 
     private void initProperties(boolean delete) {
         properties.put(pathProp, path);
         properties.put(deleteProp, Boolean.toString(delete));
-        propertiesHolder.init(properties);
+        propertiesHolder= new PropertiesHolder(properties);
     }
 
     @Test

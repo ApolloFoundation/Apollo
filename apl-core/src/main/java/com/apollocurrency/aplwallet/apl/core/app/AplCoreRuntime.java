@@ -3,6 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -26,6 +27,8 @@ import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.HEALTH_CHECK_INTERVAL;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -45,22 +48,26 @@ import javax.enterprise.inject.Produces;
 public class AplCoreRuntime {
     private static final Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
     private final List<AplCore> cores = new ArrayList<>();
-    private final DatabaseManager databaseManager;
-    private final AplAppStatus aplAppStatus;
-    private final PeersService peers;
+    private  DatabaseManager databaseManager;
+    private  AplAppStatus aplAppStatus;
+    private  PeersService peers;
     private RuntimeMode runtimeMode;
-    
+    private TaskDispatchManager taskDispatchManager;
     
     private PropertiesHolder propertieHolder;
     private ChainsConfigHolder chainsConfigHolder;
     private DbConfig dbConfig;
     private DirProvider dirProvider;
+    private BlockchainConfig blockchainConfig;
     
-    // WE CAN'T use @Inject here for 'RuntimeMode' instance because it has several candidates (in CDI hierarchy)
+
     public AplCoreRuntime() {        
-        this.databaseManager = CDI.current().select(DatabaseManager.class).get();
-        this.aplAppStatus = CDI.current().select(AplAppStatus.class).get();
-        this.peers = CDI.current().select(PeersService.class).get();
+    }
+    
+    private void checkInjects(){
+        if(databaseManager==null) databaseManager = CDI.current().select(DatabaseManager.class).get();
+        if(aplAppStatus==null) aplAppStatus = CDI.current().select(AplAppStatus.class).get();
+        if(aplAppStatus ==null)peers = CDI.current().select(PeersService.class).get();       
     }
     
     @Produces @ApplicationScoped
@@ -82,6 +89,18 @@ public class AplCoreRuntime {
     public DirProvider getDirProvider() {
         return dirProvider;
     }    
+    @Produces   @ApplicationScoped
+    public ConfigDirProvider configDirProvider() {
+        return ConfigDirProviderFactory.getConfigDirProvider();
+    }
+    @Produces   @ApplicationScoped
+    public TaskDispatchManager getTaskDispatchManager(){
+        return taskDispatchManager;
+    }
+    @Produces @ApplicationScoped
+    public BlockchainConfig getBlockchainConfig(){
+        return blockchainConfig;
+    }
     
     public static void logSystemProperties() {
         String[] loggedProperties = new String[]{
@@ -109,19 +128,22 @@ public class AplCoreRuntime {
     }
 
     public void init(RuntimeMode runtimeMode,
-                     TaskDispatchManager taskManager,
                      DirProvider dirProvider,
                      Properties properties,
                      Map<UUID, Chain> chains
                      ) 
     {
         this.runtimeMode = runtimeMode;
-        this.propertieHolder = new PropertiesHolder();
-        this.propertieHolder.init(properties);        
-        this.chainsConfigHolder = new ChainsConfigHolder(chains);
-        this.dbConfig = new DbConfig(propertieHolder, chainsConfigHolder);
+        this.propertieHolder = new PropertiesHolder(properties);
         
-        TaskDispatcher taskDispatcher = taskManager.newScheduledDispatcher("AplCoreRuntime-periodics");
+        this.chainsConfigHolder = new ChainsConfigHolder(chains);
+        Chain chain = chainsConfigHolder.getActiveChain();
+        this.blockchainConfig = new BlockchainConfig(chain, propertieHolder);
+        this.dbConfig = new DbConfig(propertieHolder, chainsConfigHolder);
+        taskDispatchManager = new TaskDispatchManager(propertieHolder);
+        TaskDispatcher taskDispatcher = taskDispatchManager.newScheduledDispatcher("AplCoreRuntime-periodics");
+        
+        checkInjects();
         taskDispatcher.schedule(Task.builder()
             .name("Core-health")
             .initialDelay(HEALTH_CHECK_INTERVAL * 2)
@@ -158,6 +180,7 @@ public class AplCoreRuntime {
     }
 
     private String getNodeHealth() {
+        checkInjects();
         StringBuilder sb = new StringBuilder("Node health info\n");
         HikariPoolMXBean jmxBean = databaseManager.getDataSource().getJmxBean();
         String usedConnections = null;

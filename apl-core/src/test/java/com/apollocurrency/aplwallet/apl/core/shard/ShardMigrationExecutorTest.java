@@ -412,12 +412,11 @@ class ShardMigrationExecutorTest extends DBContainerRootTest {
     }
 
     private static PropertiesHolder initPropertyHolder() {
-        PropertiesHolder propertiesHolder = new PropertiesHolder();
         Properties properties = new Properties();
         properties.put("apl.trimDerivedTables", true);
         properties.put("apl.maxRollback", 21600);
+        PropertiesHolder propertiesHolder = new PropertiesHolder(properties);
 
-        propertiesHolder.init(properties);
         return propertiesHolder;
 
     }

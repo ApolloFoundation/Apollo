@@ -34,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +81,6 @@ public class Apollo {
     private static AplContainer container;
     private static AplCoreRuntime aplCoreRuntime;
     private PropertiesHolder propertiesHolder;
-    private TaskDispatchManager taskDispatchManager;
 
     private static void setLogLevel(int logLevel) {
         // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
@@ -352,17 +350,17 @@ public class Apollo {
 // ------------------- NOW CDI is up and running, we have feed our configs to beans  
 
 //aplCoreRuntime is the producer for all config holders, initing it with configs
-        aplCoreRuntime.init(runtimeMode, app.taskDispatchManager, dirProvider, applicationProperties, chains);
-  
-        if (log != null) {
-            log.trace("{}", app.propertiesHolder.dumpAllProperties()); // dumping all properties
-        }
-        app.taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
+
+        aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
+        
+        
+        aplCoreRuntime.init(runtimeMode, dirProvider, applicationProperties, chains);
+
+
+
         
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
         blockchainConfigUpdater.updateChain(aplCoreRuntime.getChainsConfigHolder().getActiveChain(), app.propertiesHolder);
-        
-        dirProvider = CDI.current().select(DirProvider.class).get();
         
         
         // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
@@ -370,7 +368,10 @@ public class Apollo {
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
        
-
+        if (log != null) {
+            log.trace("{}", app.propertiesHolder.dumpAllProperties()); // dumping all properties
+        }
+        
         try {
             // updated shutdown hook explicitly created with instances
             Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime));

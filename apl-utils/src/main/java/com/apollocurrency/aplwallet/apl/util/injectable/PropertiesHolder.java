@@ -13,16 +13,24 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import javax.enterprise.inject.Vetoed;
 
 @Slf4j
+@Vetoed
 public class PropertiesHolder {
+    private final Properties properties;
 
-    private Properties properties;
-
-    public void init(Properties properties) {
+/**
+ * This is just for mocking in tests. Please do not use it in the real code
+ */    
+    public PropertiesHolder(){
+        properties = new Properties();
+    }
+    
+    public PropertiesHolder(Properties properties) {
         this.properties = properties;
     }
-
+    
     public int getIntProperty(String name) {
         return getIntProperty(name, 0);
     }

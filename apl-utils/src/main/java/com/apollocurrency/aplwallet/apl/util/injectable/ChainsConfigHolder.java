@@ -10,10 +10,12 @@ import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
 
 import java.util.Map;
 import java.util.UUID;
+import javax.enterprise.inject.Vetoed;
 
 /**
  * Holds all available chains
  */
+@Vetoed
 public class ChainsConfigHolder {
     private Map<UUID, Chain> chains;
 

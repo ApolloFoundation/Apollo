@@ -207,7 +207,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
         doReturn(100L).when(config).getInitialBaseTarget();
 
         testData = new BalancesPublicKeysTestData();
-        propertiesHolder.init(
+        propertiesHolder = new PropertiesHolder(
             getGenesisAccountTotalProperties("230730", "84832")
         );
         resourceLocator = weld.select(ResourceLocator.class).get();
@@ -217,7 +217,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
     @Test
     void newGenesisBlock() {
 
-        propertiesHolder.init(
+        propertiesHolder= new PropertiesHolder(
             getGenesisAccountTotalProperties("10", "10")
         );
         GenesisImporter genesisImporter = new GenesisImporter(
@@ -470,7 +470,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
     @Test
     void loadGenesisAccountsIncorrectKey() {
 
-        propertiesHolder.init(getGenesisAccountTotalProperties("10", "10"));
+        propertiesHolder = new PropertiesHolder((getGenesisAccountTotalProperties("10", "10")));
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
@@ -500,7 +500,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
         final JsonParser jsonParser = mock(JsonParser.class);
         when(jsonFactory.createParser(any(InputStream.class))).thenReturn(jsonParser);
         when(jsonParser.isClosed()).thenReturn(true);
-        propertiesHolder.init(getGenesisAccountTotalProperties("10", "10"));
+        propertiesHolder= new PropertiesHolder(getGenesisAccountTotalProperties("10", "10"));
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,

@@ -26,7 +26,6 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 
 /**
  * @author alukin@gmailcom
@@ -42,7 +41,7 @@ public class ShardInfoDownloaderTest {
     private final PeersService peersService = mock(PeersService.class);
 
     private final Chain chain = mock(Chain.class);
-    private final BlockchainConfig blockchainConfig = spy(new BlockchainConfig());
+    private  BlockchainConfig blockchainConfig;
 
     private ShardInfoDownloader downloader;
 
