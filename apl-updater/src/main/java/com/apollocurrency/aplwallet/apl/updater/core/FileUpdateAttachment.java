@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.util.env.OS;
 import java.util.Objects;
 
 public class FileUpdateAttachment {
-    private OS OS;
+    private OS os;
     private Arch architecture;
     private String urlFirstPart;
     private String urlSecondPart;
@@ -21,8 +21,8 @@ public class FileUpdateAttachment {
     public FileUpdateAttachment() {
     }
 
-    public FileUpdateAttachment(OS OS, Arch architecture, String urlFirstPart, String urlSecondPart, String version, String hash, int level) {
-        this.OS = OS;
+    public FileUpdateAttachment(OS os, Arch architecture, String urlFirstPart, String urlSecondPart, String version, String hash, int level) {
+        this.os = os;
         this.architecture = architecture;
         this.urlFirstPart = urlFirstPart;
         this.urlSecondPart = urlSecondPart;
@@ -37,7 +37,7 @@ public class FileUpdateAttachment {
         if (!(o instanceof FileUpdateAttachment)) return false;
         FileUpdateAttachment that = (FileUpdateAttachment) o;
         return level == that.level &&
-            OS == that.OS &&
+            os == that.os &&
             architecture == that.architecture &&
             Objects.equals(urlFirstPart, that.urlFirstPart) &&
             Objects.equals(urlSecondPart, that.urlSecondPart) &&
@@ -47,15 +47,15 @@ public class FileUpdateAttachment {
 
     @Override
     public int hashCode() {
-        return Objects.hash(OS, architecture, urlFirstPart, urlSecondPart, version, hash, level);
+        return Objects.hash(os, architecture, urlFirstPart, urlSecondPart, version, hash, level);
     }
 
     public OS getOS() {
-        return OS;
+        return os;
     }
 
-    public void setOS(OS OS) {
-        this.OS = OS;
+    public void setOS(String os) {
+        this.os = OS.from(os);
     }
 
     public Arch getArchitecture() {

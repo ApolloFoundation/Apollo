@@ -50,11 +50,14 @@ public class SimpleUrlExtractor implements UrlExtractor {
                     );
                     String decryptedUrl = new String(urlBytes, StandardCharsets.UTF_8);
                     if (urlPattern.matcher(decryptedUrl).matches()) {
-                        LOG.debug("Decrypted url using: " + pair);
+                        LOG.info("Decrypted url '{}' using: {} ", decryptedUrl, pair);
                         return decryptedUrl;
+                    } else {
+                        LOG.error("Decrypted url '{}' does not match pattern '{}'",decryptedUrl, urlPattern );
                     }
                 } catch (GeneralSecurityException e) {
-                    LOG.info("Unable to decrypt using: {}", pair);
+                    // BadPaddingException in case of incorrect certificate pair applied for decryption
+                    LOG.info("Unable to decrypt using: {}, ex: {}", pair, e.toString());
                 }
             }
         }
