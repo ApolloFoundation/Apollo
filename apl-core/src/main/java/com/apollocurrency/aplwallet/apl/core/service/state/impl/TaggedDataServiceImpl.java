@@ -4,19 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataExtend;
@@ -33,8 +34,6 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.enterprise.util.TypeLiteral;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.math.BigInteger;
@@ -51,16 +50,21 @@ import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextCon
 @Slf4j
 @Singleton
 public class TaggedDataServiceImpl implements TaggedDataService {
+    private static final LongKeyFactory<UnconfirmedTransactionEntity> keyFactory = new LongKeyFactory<>("id") {
+        @Override
+        public DbKey newKey(UnconfirmedTransactionEntity unconfirmedTransaction) {
+            return new LongKey(unconfirmedTransaction.getId());
+        }
+    };
 
-    private static LongKeyFactory<UnconfirmedTransaction> keyFactory;
-    private BlockchainConfig blockchainConfig;
-    private Blockchain blockchain;
-    private TaggedDataTable taggedDataTable;
-    private DataTagDao dataTagDao;
-    private TaggedDataTimestampDao taggedDataTimestampDao;
-    private TaggedDataExtendDao taggedDataExtendDao;
-    private TimeService timeService;
-    private FullTextSearchUpdater fullTextSearchUpdater;
+    private final BlockchainConfig blockchainConfig;
+    private final Blockchain blockchain;
+    private final TaggedDataTable taggedDataTable;
+    private final DataTagDao dataTagDao;
+    private final TaggedDataTimestampDao taggedDataTimestampDao;
+    private final TaggedDataExtendDao taggedDataExtendDao;
+    private final TimeService timeService;
+    private final FullTextSearchUpdater fullTextSearchUpdater;
     private final FullTextSearchService fullTextSearchService;
 
     @Inject
@@ -90,10 +94,6 @@ public class TaggedDataServiceImpl implements TaggedDataService {
         log.trace("add TaggedDataUpload: trId = {} / blId={}, height={}, {}",
             transaction.getId(), transaction.getBlockId(), blockchainHeight, attachment);
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime() && attachment.getData() != null) {
-            if (keyFactory == null) {
-                keyFactory = CDI.current().select(new TypeLiteral<LongKeyFactory<UnconfirmedTransaction>>() {
-                }).get();
-            }
             DbKey dbKey = keyFactory.newKey(transaction.getId());
             log.trace("add TaggedDataUpload: dbKey = {}", dbKey);
             TaggedData taggedData = taggedDataTable.get(dbKey);

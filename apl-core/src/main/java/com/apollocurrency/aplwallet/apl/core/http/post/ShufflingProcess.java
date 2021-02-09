@@ -39,7 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PUBLIC_KEY;
 
 @Vetoed
-public final class ShufflingProcess extends CreateTransaction {
+public final class ShufflingProcess extends CreateTransactionHandler {
 
     public ShufflingProcess() {
         super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION},

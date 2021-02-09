@@ -35,7 +35,7 @@ import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class ShufflingRegister extends CreateTransaction {
+public final class ShufflingRegister extends CreateTransactionHandler {
 
     public ShufflingRegister() {
         super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION}, "shufflingFullHash");

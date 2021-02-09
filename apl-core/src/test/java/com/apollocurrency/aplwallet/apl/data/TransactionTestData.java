@@ -1,9 +1,9 @@
 package com.apollocurrency.aplwallet.apl.data;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
@@ -223,7 +223,6 @@ public class TransactionTestData {
             Transaction.Builder builder = new TransactionImpl.BuilderImpl(version, pk,
                 amount, fee, deadline, attach, timestamp, transactionType)
                 .referencedTransactionFullHash(referencedTransactionFullhash)
-                .signature(SignatureToolFactory.createSignature(Convert.parseHexString(signature)))
                 .blockId(blockId)
                 .height(height)
                 .id(id)
@@ -259,6 +258,8 @@ public class TransactionTestData {
             if (hasPrunableEncryptedMessage) {
                 builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
             }
+
+            builder.signature(SignatureToolFactory.createSignature(Convert.parseHexString(signature)));
             return builder.build();
         } catch (AplException.NotValidException e) {
             throw new RuntimeException(e);

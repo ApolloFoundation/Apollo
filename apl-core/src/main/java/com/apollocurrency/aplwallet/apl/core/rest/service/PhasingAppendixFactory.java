@@ -15,6 +15,9 @@ import java.nio.ByteBuffer;
 public class PhasingAppendixFactory {
 
     public static PhasingAppendix build(ByteBuffer buffer) {
+        if (buffer == null) {
+            return null;
+        }
         byte version = buffer.get();
 
         switch (version) {

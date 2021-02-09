@@ -31,7 +31,7 @@ import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class UploadTaggedData extends CreateTransaction {
+public final class UploadTaggedData extends CreateTransactionHandler {
 
     public UploadTaggedData() {
         super("file", new APITag[]{APITag.DATA, APITag.CREATE_TRANSACTION},

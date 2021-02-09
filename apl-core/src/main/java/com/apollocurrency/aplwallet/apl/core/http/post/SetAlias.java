@@ -44,7 +44,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_ALIAS_NAME;
 
 @Vetoed
-public final class SetAlias extends CreateTransaction {
+public final class SetAlias extends CreateTransactionHandler {
     private final AliasService aliasService;
 
     public SetAlias() {

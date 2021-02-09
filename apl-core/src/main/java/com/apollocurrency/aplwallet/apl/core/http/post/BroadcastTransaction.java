@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * The purpose of broadcast transaction is to support client side signing of transactions.
- * Clients first submit their transaction using {@link CreateTransaction} without providing the secret phrase.<br>
+ * Clients first submit their transaction using {@link CreateTransactionHandler} without providing the secret phrase.<br>
  * In response the client receives the unsigned transaction JSON and transaction bytes.
  * <p>
  * The client then signs and submits the signed transaction using {@link BroadcastTransaction}
@@ -71,8 +71,7 @@ public final class BroadcastTransaction extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         try {
-            Transaction.Builder builder = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
-            Transaction transaction = builder.build();
+            Transaction transaction = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
 
             lookupTransactionProcessor().validateBeforeBroadcast(transaction);
             boolean broadcasted = lookupMemPool().softBroadcast(transaction);

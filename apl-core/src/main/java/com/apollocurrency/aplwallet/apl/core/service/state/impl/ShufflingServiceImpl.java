@@ -12,8 +12,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingDataTa
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingParticipantTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
@@ -266,7 +266,7 @@ public class ShufflingServiceImpl implements ShufflingService {
 
     @Override
     public Shuffling getShuffling(byte[] fullHash) {
-        long shufflingId = Convert.fullHashToId(fullHash);
+        long shufflingId = Convert.transactionFullHashToId(fullHash);
         Shuffling shuffling = shufflingTable.getShuffling(shufflingId);
         if (shuffling != null && !Arrays.equals(getFullHash(shuffling.getId()), fullHash)) {
             log.debug("Shuffling with different hash {} but same id found for hash {}",

@@ -40,7 +40,7 @@ import javax.servlet.http.HttpServletRequest;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ORDER;
 
 @Vetoed
-public final class CancelAskOrder extends CreateTransaction {
+public final class CancelAskOrder extends CreateTransactionHandler {
     private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
 
     public CancelAskOrder() {
@@ -50,7 +50,7 @@ public final class CancelAskOrder extends CreateTransaction {
     private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> lookupAskOrderService() {
         if (askOrderService == null) {
             this.askOrderService = CDI.current().select(
-                AskOrderServiceImpl.class,
+                    AskOrderServiceImpl.class,
                 AskOrderService.Literal.INSTANCE
             ).get();
         }

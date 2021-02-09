@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
-import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
@@ -40,7 +39,6 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockVali
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessingTaskScheduler;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.TableRegistryInitializer;
-import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
 import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMonitor;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TxInitializer;
@@ -217,8 +215,6 @@ public final class AplCore {
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 30.0, "Database initialization done");
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 30.1, "Apollo Data migration started");
 
-            ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
-            //migrationManager.executeDataMigration();
             BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
             blockchainConfigUpdater.updateToLatestConfig(); // update config for migrated db
 
@@ -252,8 +248,6 @@ public final class AplCore {
             //signal to API that core is ready to serve requests. Should be removed as soon as all API will be on RestEasy
             ApiSplitFilter.isCoreReady = true;
 
-            PrunableArchiveMigrator migrator = CDI.current().select(PrunableArchiveMigrator.class).get();
-            migrator.migrate();
             // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
             recoverSharding();
 

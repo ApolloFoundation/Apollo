@@ -102,7 +102,7 @@ public class TransactionDaoImpl implements TransactionDao {
     @Transactional(readOnly = true)
     @Override
     public TransactionEntity findTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource) {
-        long transactionId = Convert.fullHashToId(fullHash);
+        long transactionId = Convert.transactionFullHashToId(fullHash);
         // Check the cache
         // Search the database
         try (Connection con = dataSource.getConnection();
@@ -147,13 +147,13 @@ public class TransactionDaoImpl implements TransactionDao {
     @Override
     @Transactional(readOnly = true)
     public boolean hasTransactionByFullHash(byte[] fullHash, TransactionalDataSource dataSource) {
-        return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash), dataSource));
+        return Arrays.equals(fullHash, getFullHash(Convert.transactionFullHashToId(fullHash), dataSource));
     }
 
     @Transactional(readOnly = true)
     @Override
     public boolean hasTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource) {
-        long transactionId = Convert.fullHashToId(fullHash);
+        long transactionId = Convert.transactionFullHashToId(fullHash);
         // Check the block cache
         // Search the database
         try (Connection con = dataSource.getConnection();

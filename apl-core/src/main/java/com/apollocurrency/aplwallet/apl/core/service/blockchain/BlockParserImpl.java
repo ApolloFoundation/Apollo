@@ -4,12 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -27,13 +26,13 @@ import java.util.List;
 public class BlockParserImpl implements BlockParser {
 
     protected AccountService accountService;
-    private final TransactionBuilder transactionBuilder;
+    private final TransactionBuilderFactory transactionBuilderFactory;
     private final TransactionValidator transactionValidator;
 
     @Inject
-    public BlockParserImpl(AccountService accountService, TransactionBuilder transactionBuilder, TransactionValidator transactionValidator) {
+    public BlockParserImpl(AccountService accountService, TransactionBuilderFactory transactionBuilderFactory, TransactionValidator transactionValidator) {
         this.accountService = accountService;
-        this.transactionBuilder = transactionBuilder;
+        this.transactionBuilderFactory = transactionBuilderFactory;
         this.transactionValidator = transactionValidator;
     }
 
@@ -78,7 +77,7 @@ public class BlockParserImpl implements BlockParser {
     }
 
     private Transaction parseTransaction(JSONObject jsonObject) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
-        TransactionImpl tx = transactionBuilder.newTransactionBuilder(jsonObject).build();
+        Transaction tx = transactionBuilderFactory.newTransaction(jsonObject);
         if (!transactionValidator.checkSignature(null, tx)) {
             throw new AplException.NotValidException("Invalid signature of tx: " + tx.getStringId());
         }

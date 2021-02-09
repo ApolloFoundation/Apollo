@@ -22,7 +22,7 @@ import java.time.Duration;
  */
 public class MariaDbProcess {
 
-    private final DbControl dbControl;
+    private DbControl dbControl;
     private static Path confFile;
 
     public MariaDbProcess(DbConfig conf, Path dbInstallDir, Path dbDataDir) {
@@ -40,7 +40,7 @@ public class MariaDbProcess {
         dbControl = new MariaDbControl(dbParams);
     }
 
-    public static MariaDbProcess findRunning(Path dbDataDir, Path dbInstallDir){
+    public static MariaDbProcess findRunning(DbConfig conf, Path dbDataDir, Path dbInstallDir){
         MariaDbProcess process = null;
         DbRunParams params = new MariaDbRunParamsBuilder()
                 .dbConfigFile(confFile)
@@ -52,7 +52,8 @@ public class MariaDbProcess {
                 .build();
         MariaDbControl control = new MariaDbControl(params);
         if( control.findRunning()){
-            process = new MariaDbProcess(control);
+            process = new MariaDbProcess(conf,dbDataDir,dbInstallDir);
+            process.dbControl = control;
         }
         return process;
     }

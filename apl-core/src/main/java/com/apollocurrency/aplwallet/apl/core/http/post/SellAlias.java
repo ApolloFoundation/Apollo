@@ -39,7 +39,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_RECIPIENT;
 
 @Vetoed
-public final class SellAlias extends CreateTransaction {
+public final class SellAlias extends CreateTransactionHandler {
 
     public SellAlias() {
         super(new APITag[]{APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName", "recipient", "priceATM");
