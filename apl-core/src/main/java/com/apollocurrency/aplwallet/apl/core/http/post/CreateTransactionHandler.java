@@ -20,23 +20,29 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSignerImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.HttpRequestToCreateTransactionRequestConverter;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionWrapperHelper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
@@ -62,7 +68,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_D
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_SECRET_PHRASE;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_APL;
 
-public abstract class CreateTransaction extends AbstractAPIRequestHandler {
+public abstract class CreateTransactionHandler extends AbstractAPIRequestHandler {
     private static final String[] commonParameters = new String[]{"secretPhrase", "publicKey", "feeATM",
         "deadline", "referencedTransactionFullHash", "broadcast",
         "message", "messageIsText", "messageIsPrunable",
@@ -75,21 +81,22 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         "recipientPublicKey",
         "ecBlockId", "ecBlockHeight"};
     protected TimeService timeService = CDI.current().select(TimeService.class).get();
+    protected TransactionCreator transactionCreator = CDI.current().select(TransactionCreator.class).get();
     private TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
-    private TransactionSigner signer = CDI.current().select(TransactionSigner.class).get();
+    private TransactionSigner signerService = CDI.current().select(TransactionSignerImpl.class).get();
     private PropertiesHolder propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
     private FeeCalculator feeCalculator = CDI.current().select(FeeCalculator.class).get();
     private TransactionTypeFactory transactionTypeFactory = CDI.current().select(TransactionTypeFactory.class).get();
-    private TransactionBuilder txBuilder = CDI.current().select(TransactionBuilder.class).get();
+    private TransactionBuilderFactory txBuilder = CDI.current().select(TransactionBuilderFactory.class).get();
 
-    public CreateTransaction(APITag[] apiTags, String... parameters) {
+    public CreateTransactionHandler(APITag[] apiTags, String... parameters) {
         super(apiTags, addCommonParameters(parameters));
         if (!getAPITags().contains(APITag.CREATE_TRANSACTION)) {
             throw new RuntimeException("CreateTransaction API " + getClass().getName() + " is missing APITag.CREATE_TRANSACTION tag");
         }
     }
 
-    public CreateTransaction(String fileParameter, APITag[] apiTags, String... parameters) {
+    public CreateTransactionHandler(String fileParameter, APITag[] apiTags, String... parameters) {
         super(fileParameter, apiTags, addCommonParameters(parameters));
         if (!getAPITags().contains(APITag.CREATE_TRANSACTION)) {
             throw new RuntimeException("CreateTransaction API " + getClass().getName() + " is missing APITag.CREATE_TRANSACTION tag");
@@ -125,21 +132,27 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         CreateTransactionRequest createTransactionRequest = HttpRequestToCreateTransactionRequestConverter
             .convert(req, senderAccount, recipientId, amountATM, attachment, broadcast, lookupAccountService());
 
-
         JSONObject response = new JSONObject();
 //do not eat exception here, it is used for error message displaying on UI
         Transaction transaction = createTransactionAndBroadcastIfRequired(createTransactionRequest);
 
         JSONObject transactionJSON = JSONData.unconfirmedTransaction(transaction);
+        Result unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion())
+            .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), unsignedTxBytes);
+
+        Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
+
         response.put("transactionJSON", transactionJSON);
         try {
-            response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
+            response.put("unsignedTransactionBytes", Convert.toHexString(unsignedTxBytes.array()));
         } catch (AplException.NotYetEncryptedException ignore) {
         }
         if (createTransactionRequest.getKeySeed() != null) {
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transactionJSON.get("fullHash"));
-            response.put("transactionBytes", Convert.toHexString(transaction.getCopyTxBytes()));
+            response.put("transactionBytes", Convert.toHexString(signedTxBytes.array()));
             response.put("signatureHash", transactionJSON.get("signatureHash"));
         }
         if (createTransactionRequest.isBroadcast()) {
@@ -151,6 +164,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         return new TransactionResponse(transaction, response);
     }
 
+    //TODO: Adjust this method body for using #TransactionCreator.createTransactionThrowingException(...) and remove duplicated code
     public Transaction createTransactionAndBroadcastIfRequired(CreateTransactionRequest txRequest) throws AplException.ValidationException, ParameterException {
         EncryptedMessageAppendix encryptedMessage = null;
         PrunableEncryptedMessageAppendix prunableEncryptedMessage = null;
@@ -203,7 +217,8 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         int timestamp = timeService.getEpochTime();
         Transaction transaction;
         try {
-            Transaction.Builder builder = txBuilder.newTransactionBuilder(txRequest.getPublicKey(),
+            Transaction.Builder builder = txBuilder.newUnsignedTransactionBuilder((byte) TransactionVersionValidator.DEFAULT_VERSION,
+                txRequest.getPublicKey(),
                 txRequest.getAmountATM(), txRequest.getFeeATM(),
                 deadline, txRequest.getAttachment(), timestamp)
                 .referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
@@ -224,6 +239,8 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
                 EcBlockData ecBlock = blockchain.getECBlock(timestamp);
                 builder.ecBlockData(ecBlock);
             }
+
+            //build transaction
             transaction = builder.build();
 
             if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
@@ -242,7 +259,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
                 throw new AplException.NotValidException(NOT_ENOUGH_APL);
             }
             if (txRequest.getKeySeed() != null) {
-                signer.sign(transaction, txRequest.getKeySeed());
+                signerService.sign(transaction, txRequest.getKeySeed());
             }
 
             if (txRequest.isBroadcast() && transaction.getSignature() != null) {

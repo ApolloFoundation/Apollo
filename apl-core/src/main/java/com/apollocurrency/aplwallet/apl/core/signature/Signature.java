@@ -12,7 +12,14 @@ public interface Signature {
 
     byte[] bytes();
 
-    int getSize();
+    /**
+     * Returns the signature size in bytes
+     *
+     * @return signature size in bytes
+     */
+    default int getSize() {
+        return bytes().length;
+    }
 
     /**
      * Returns signature byte array as a hex string
@@ -22,10 +29,10 @@ public interface Signature {
     String getHexString();
 
     /**
-     * Return true if signature is already verified.
+     * Returns true if signature is already verified.
      * Used to increase the speed of the verification routine and considered as a simple cache
      *
-     * @return
+     * @return true if signature is already verified.
      */
     boolean isVerified();
 

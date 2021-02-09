@@ -1,15 +1,22 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.transaction;
+package com.apollocurrency.aplwallet.apl.core.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
+import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionWrapperHelper;
+import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
@@ -21,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnou
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingProcessingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataExtendAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUploadAttachment;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
@@ -31,28 +39,98 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+
 @Singleton
 @Slf4j
-public class TransactionBuilder {
+public class TransactionBuilderFactory {
     private final TransactionTypeFactory factory;
+    private final BlockchainConfig blockchainConfig;
+    private final TxBContext txBContext;
 
     @Inject
-    public TransactionBuilder(TransactionTypeFactory factory) {
+    public TransactionBuilderFactory(TransactionTypeFactory factory, BlockchainConfig blockchainConfig) {
         this.factory = factory;
+        this.blockchainConfig = blockchainConfig;
+        this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }
 
-    public Transaction.Builder newTransactionBuilder(byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment, int timestamp) {
-        return newTransactionBuilder((byte) 1, senderPublicKey, amountATM, feeATM, deadline, attachment, timestamp);
-    }
-
-    public Transaction.Builder newTransactionBuilder(int version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment, int timestamp) {
+    public Transaction.Builder newUnsignedTransactionBuilder(int version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline, Attachment attachment, int timestamp) {
         TransactionTypes.TransactionTypeSpec spec = attachment.getTransactionTypeSpec();
         TransactionType transactionType = factory.findTransactionType(spec.getType(), spec.getSubtype());
         attachment.bindTransactionType(transactionType);
         return new TransactionImpl.BuilderImpl((byte) version, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment) attachment, timestamp, transactionType);
     }
 
-    public TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws AplException.NotValidException {
+    public Transaction newTransaction(byte[] bytes) throws AplException.NotValidException {
+        TransactionImpl transaction = newTransactionBuilder(bytes).build();
+        reSignTransaction(transaction);
+        return transaction;
+    }
+
+    public Transaction newTransaction(byte[] bytes, JSONObject prunableAttachments) throws AplException.NotValidException {
+        TransactionImpl.BuilderImpl builder = newTransactionBuilder(bytes);
+        if (prunableAttachments != null) {
+            ShufflingProcessingAttachment shufflingProcessing = ShufflingProcessingAttachment.parse(prunableAttachments);
+            if (shufflingProcessing != null) {
+                TransactionType transactionType = factory.findTransactionTypeBySpec(shufflingProcessing.getTransactionTypeSpec());
+                builder.appendix(shufflingProcessing);
+                shufflingProcessing.bindTransactionType(transactionType);
+            }
+            TaggedDataUploadAttachment taggedDataUploadAttachment = TaggedDataUploadAttachment.parse(prunableAttachments);
+            if (taggedDataUploadAttachment != null) {
+                TransactionType transactionType = factory.findTransactionTypeBySpec(taggedDataUploadAttachment.getTransactionTypeSpec());
+                taggedDataUploadAttachment.bindTransactionType(transactionType);
+                builder.appendix(taggedDataUploadAttachment);
+            }
+            TaggedDataExtendAttachment taggedDataExtendAttachment = TaggedDataExtendAttachment.parse(prunableAttachments);
+            if (taggedDataExtendAttachment != null) {
+                TransactionType transactionType = factory.findTransactionTypeBySpec(taggedDataExtendAttachment.getTransactionTypeSpec());
+                taggedDataExtendAttachment.bindTransactionType(transactionType);
+                builder.appendix(taggedDataExtendAttachment);
+            }
+            PrunablePlainMessageAppendix prunablePlainMessage = PrunablePlainMessageAppendix.parse(prunableAttachments);
+            if (prunablePlainMessage != null) {
+                builder.appendix(prunablePlainMessage);
+            }
+            PrunableEncryptedMessageAppendix prunableEncryptedMessage = PrunableEncryptedMessageAppendix.parse(prunableAttachments);
+            if (prunableEncryptedMessage != null) {
+                builder.appendix(prunableEncryptedMessage);
+            }
+        }
+        TransactionImpl transaction = builder.build();
+        reSignTransaction(transaction);
+        return transaction;
+    }
+
+    public Transaction newTransaction(TransactionDTO txDto) {
+        TransactionImpl transaction = newTransactionBuilder(txDto).build();
+        reSignTransaction(transaction);
+        return transaction;
+    }
+
+    /**
+     * Use com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter
+     */
+    @Deprecated
+    public Transaction newTransaction(JSONObject transactionData) throws AplException.NotValidException {
+        TransactionImpl transaction = newTransactionBuilder(transactionData).build();
+        reSignTransaction(transaction);
+        return transaction;
+    }
+
+    private void reSignTransaction(TransactionImpl transaction) {
+        //re-signe transaction
+        PayloadResult unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion())
+            .serialize(
+                TransactionWrapperHelper.createUnsignedTransaction(transaction)
+                , unsignedTxBytes
+            );
+
+        transaction.sign(transaction.getSignature(), unsignedTxBytes);
+    }
+
+    private TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws AplException.NotValidException {
         try {
             ByteBuffer buffer = ByteBuffer.wrap(bytes);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -90,7 +168,6 @@ public class TransactionBuilder {
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey, amountATM, feeATM,
                 deadline, attachment, timestamp, transactionType)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
-                .signature(signature)
                 .ecBlockHeight(ecBlockHeight)
                 .ecBlockId(ecBlockId);
             if (transactionType.canHaveRecipient()) {
@@ -124,8 +201,8 @@ public class TransactionBuilder {
             if ((flags & position) != 0) {
                 builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
             }
-            if (version >= 2) {
-                //read transaction multi-signature V2
+
+            if (version >= 2) {//read transaction multi-signature V2
                 signature = signatureParser.parse(buffer);
             }
             builder.signature(signature);
@@ -139,45 +216,70 @@ public class TransactionBuilder {
         }
     }
 
-    public TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes, JSONObject prunableAttachments) throws AplException.NotValidException {
-        TransactionImpl.BuilderImpl builder = newTransactionBuilder(bytes);
-        if (prunableAttachments != null) {
-            ShufflingProcessingAttachment shufflingProcessing = ShufflingProcessingAttachment.parse(prunableAttachments);
-            if (shufflingProcessing != null) {
-                TransactionType transactionType = factory.findTransactionTypeBySpec(shufflingProcessing.getTransactionTypeSpec());
-                builder.appendix(shufflingProcessing);
-                shufflingProcessing.bindTransactionType(transactionType);
+    private TransactionImpl.BuilderImpl newTransactionBuilder(TransactionDTO txDto) {
+        try {
+            byte[] senderPublicKey = Convert.parseHexString(txDto.getSenderPublicKey());
+            byte version = txDto.getVersion() == null ? 0 : txDto.getVersion();
+
+            SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
+            Signature signature = signatureParser.parse(Convert.parseHexString(txDto.getSignature()));
+
+            int ecBlockHeight = 0;
+            long ecBlockId = 0;
+            if (version > 0) {
+                ecBlockHeight = txDto.getEcBlockHeight();
+                ecBlockId = Convert.parseUnsignedLong(txDto.getEcBlockId());
             }
-            TaggedDataUploadAttachment taggedDataUploadAttachment = TaggedDataUploadAttachment.parse(prunableAttachments);
-            if (taggedDataUploadAttachment != null) {
-                TransactionType transactionType = factory.findTransactionTypeBySpec(taggedDataUploadAttachment.getTransactionTypeSpec());
-                taggedDataUploadAttachment.bindTransactionType(transactionType);
-                builder.appendix(taggedDataUploadAttachment);
+
+            TransactionType transactionType = factory.findTransactionType(txDto.getType(), txDto.getSubtype());
+            if (transactionType == null) {
+                throw new AplException.NotValidException("Invalid transaction type: " + txDto.getType() + ", " + txDto.getSubtype());
             }
-            TaggedDataExtendAttachment taggedDataExtendAttachment = TaggedDataExtendAttachment.parse(prunableAttachments);
-            if (taggedDataExtendAttachment != null) {
-                TransactionType transactionType = factory.findTransactionTypeBySpec(taggedDataExtendAttachment.getTransactionTypeSpec());
-                taggedDataExtendAttachment.bindTransactionType(transactionType);
-                builder.appendix(taggedDataExtendAttachment);
+
+            JSONObject attachmentData;
+            if (!CollectionUtil.isEmpty(txDto.getAttachment())) {
+                attachmentData = new JSONObject(txDto.getAttachment());
+            } else {
+                throw new AplException.NotValidException("Transaction dto {" + txDto + "} has no attachment");
             }
-            PrunablePlainMessageAppendix prunablePlainMessage = PrunablePlainMessageAppendix.parse(prunableAttachments);
-            if (prunablePlainMessage != null) {
-                builder.appendix(prunablePlainMessage);
+
+            //TODO APL-1663 Refactoring TransactionType. (make parseAttachment works with dto instead of json)
+            AbstractAttachment attachment = transactionType.parseAttachment(attachmentData);
+            attachment.bindTransactionType(transactionType);
+            TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey,
+                Convert.parseLong(txDto.getAmountATM()),
+                Convert.parseLong(txDto.getFeeATM()),
+                txDto.getDeadline(),
+                attachment, txDto.getTimestamp(), transactionType)
+                .referencedTransactionFullHash(txDto.getReferencedTransactionFullHash())
+                .ecBlockHeight(ecBlockHeight)
+                .ecBlockId(ecBlockId);
+            if (transactionType.canHaveRecipient()) {
+                long recipientId = Convert.parseUnsignedLong(txDto.getRecipient());
+                builder.recipientId(recipientId);
             }
-            PrunableEncryptedMessageAppendix prunableEncryptedMessage = PrunableEncryptedMessageAppendix.parse(prunableAttachments);
-            if (prunableEncryptedMessage != null) {
-                builder.appendix(prunableEncryptedMessage);
-            }
+
+            builder.appendix(MessageAppendix.parse(attachmentData));
+            builder.appendix(EncryptedMessageAppendix.parse(attachmentData));
+            builder.appendix(PublicKeyAnnouncementAppendix.parse(attachmentData));
+            builder.appendix(EncryptToSelfMessageAppendix.parse(attachmentData));
+            builder.appendix(PhasingAppendixFactory.parse(attachmentData));
+            builder.appendix(PrunablePlainMessageAppendix.parse(attachmentData));
+            builder.appendix(PrunableEncryptedMessageAppendix.parse(attachmentData));
+
+            builder.signature(signature);
+            return builder;
+        } catch (RuntimeException | AplException.NotValidException e) {
+            log.debug("Failed to parse transaction: " + txDto.toString());
+            throw new RuntimeException(e);
         }
-        return builder;
     }
 
     /**
      * Use com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter
      */
     @Deprecated
-    public TransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws AplException.NotValidException {
-
+    private TransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws AplException.NotValidException {
         try {
             byte type = ((Long) transactionData.get("type")).byteValue();
             byte subtype = ((Long) transactionData.get("subtype")).byteValue();
@@ -212,7 +314,6 @@ public class TransactionBuilder {
                 amountATM, feeATM, deadline,
                 attachment, timestamp, transactionType)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
-                .signature(signature)
                 .ecBlockHeight(ecBlockHeight)
                 .ecBlockId(ecBlockId);
             if (transactionType.canHaveRecipient()) {
@@ -220,7 +321,6 @@ public class TransactionBuilder {
                 builder.recipientId(recipientId);
             }
             if (attachmentData != null) {
-
                 builder.appendix(MessageAppendix.parse(attachmentData));
                 builder.appendix(EncryptedMessageAppendix.parse(attachmentData));
                 builder.appendix(PublicKeyAnnouncementAppendix.parse(attachmentData));

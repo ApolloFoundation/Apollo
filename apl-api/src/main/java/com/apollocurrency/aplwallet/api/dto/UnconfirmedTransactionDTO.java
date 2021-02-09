@@ -39,7 +39,7 @@ public class UnconfirmedTransactionDTO extends BaseDTO {
     private String signature;
     private String signatureHash;
     private String fullHash;
-    private String transaction;
+    private String transaction;//unsigned long of transactionId
     @JsonDeserialize(using = UnconfirmedTransactionDTO.AttachmentDeserializer.class)
     private Map<?, ?> attachment;
     private String sender;

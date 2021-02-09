@@ -53,7 +53,7 @@ import javax.servlet.http.HttpServletRequest;
  * For every match between buyer and seller an exchange record is saved, exchange records can be retrieved using the {@link GetExchanges} API
  */
 @Vetoed
-public final class CurrencyBuy extends CreateTransaction {
+public final class CurrencyBuy extends CreateTransactionHandler {
     public CurrencyBuy() {
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units");
     }

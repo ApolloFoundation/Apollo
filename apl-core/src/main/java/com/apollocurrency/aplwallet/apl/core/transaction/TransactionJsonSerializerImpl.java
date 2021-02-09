@@ -4,8 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.util.io.JsonBuffer;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
@@ -17,16 +22,48 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class TransactionSerializerImpl implements TransactionSerializer {
+public class TransactionJsonSerializerImpl implements TransactionJsonSerializer {
+    private final BlockchainConfig blockchainConfig;
     private final PrunableLoadingService prunableService;
+    private final TxBContext txBContext;
 
     @Inject
-    public TransactionSerializerImpl(PrunableLoadingService prunableService) {
+    public TransactionJsonSerializerImpl(PrunableLoadingService prunableService, BlockchainConfig blockchainConfig) {
         this.prunableService = prunableService;
+        this.blockchainConfig = blockchainConfig;
+        this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
+    }
+
+    @Override
+    public byte[] serialize(Transaction transaction) {
+        Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion())
+            .serialize(transaction, byteArrayTx);
+        return byteArrayTx.array();
+    }
+
+    @Override
+    public byte[] serializeUnsigned(Transaction transaction) {
+        Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion())
+            .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), byteArrayTx);
+        return byteArrayTx.array();
     }
 
     @Override
     public JSONObject toJson(Transaction transaction) {
+        //load not expired prunable attachments
+        for (AbstractAppendix appendage : transaction.getAppendages()) {
+            prunableService.loadPrunable(transaction, appendage, false);
+        }
+        JsonBuffer buffer = new JsonBuffer();
+        Result byteArrayTx = PayloadResult.createJsonResult(buffer);
+        txBContext.createSerializer(transaction.getVersion()).serialize(transaction, byteArrayTx);
+        return buffer.getJsonObject();
+    }
+
+    @Override
+    public JSONObject toJsonOld(Transaction transaction) {
         JSONObject json = new JSONObject();
         json.put("id", Long.toUnsignedString(transaction.getId()));
         TransactionType type = transaction.getType();

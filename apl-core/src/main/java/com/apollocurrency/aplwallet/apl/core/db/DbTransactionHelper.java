@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 
-public class TransactionHelper {
+public class DbTransactionHelper {
 
     public static void executeInTransaction(TransactionalDataSource dataSource, TransactionOperation op) {
         TransactionalDataSource.StartedConnection startedConnection = dataSource.beginTransactionIfNotStarted();

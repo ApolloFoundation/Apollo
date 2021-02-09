@@ -151,10 +151,10 @@ class MultiSigData implements MultiSig {
         return new KeyIdImpl(key);
     }
 
-    private static class KeyIdImpl implements KeyId {
+    static class KeyIdImpl implements KeyId {
         private final byte[] key;
 
-        private KeyIdImpl(byte[] key) {
+        KeyIdImpl(byte[] key) {
             this.key = Arrays.copyOf(Objects.requireNonNull(key), KEY_LENGTH);
         }
 
