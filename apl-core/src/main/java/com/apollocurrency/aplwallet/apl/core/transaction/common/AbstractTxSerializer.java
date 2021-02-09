@@ -5,11 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.common;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.io.ByteArrayStream;
-import com.apollocurrency.aplwallet.apl.core.io.JsonBuffer;
-import com.apollocurrency.aplwallet.apl.core.io.PayloadResult;
-import com.apollocurrency.aplwallet.apl.core.io.Result;
-import com.apollocurrency.aplwallet.apl.core.io.WriteBuffer;
+import com.apollocurrency.aplwallet.apl.util.io.ByteArrayStream;
+import com.apollocurrency.aplwallet.apl.util.io.JsonBuffer;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
+import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
