@@ -180,12 +180,16 @@ public class Apollo {
         boolean res = true;
         DbProperties dbConfig = conf.getDbConfig();        
         String dbURL = dbConfig.formatJdbcUrlString(true);
-        Connection conn = null;
+        Connection conn;
         try {
             conn = DriverManager.getConnection(dbURL);
+            if(!conn.isValid(1)){
+                res = false;
+            }            
         } catch (SQLException ex) {
             res = false;
         }
+
         return res;
     }
 
