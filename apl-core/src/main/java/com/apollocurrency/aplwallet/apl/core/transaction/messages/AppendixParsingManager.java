@@ -22,7 +22,7 @@ public class AppendixParsingManager {
 
     @Inject
     public AppendixParsingManager(Instance<AppendixParser<?>> instances) {
-        instances.iterator().forEachRemaining(e-> parsers.put(e.forClass(), e));
+        instances.iterator().forEachRemaining(e -> parsers.put(e.forClass(), e));
     }
 
     public AppendixParsingManager(Collection<AppendixParser<?>> parsers) {

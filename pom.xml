@@ -5,7 +5,7 @@
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apollo-blockchain</artifactId>
-  <version>1.48.2</version>
+  <version>1.48.5</version>
   <packaging>pom</packaging>
   <name>apollo-blockchain</name>
 
@@ -125,11 +125,11 @@
           <configuration>
             <useSystemClassLoader>false</useSystemClassLoader>
             <excludedGroups>${excludeTestTags}</excludedGroups>
-<!--
-            <properties>
-              <includeTags>${includeTestTags}</includeTags>
-            </properties>
--->
+            <!--
+                        <properties>
+                          <includeTags>${includeTestTags}</includeTags>
+                        </properties>
+            -->
           </configuration>
           <dependencies>
             <dependency>

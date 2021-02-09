@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.model.dex;
 
 import com.apollocurrency.aplwallet.api.dto.DexOrderDto;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexOrderAttachmentV2;

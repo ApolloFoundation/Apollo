@@ -12,10 +12,10 @@ import com.apollocurrency.aplwallet.api.p2p.respons.GetMilestoneBlockIdsResponse
 import com.apollocurrency.aplwallet.api.p2p.respons.GetNextBlockIdsResponse;
 import com.apollocurrency.aplwallet.apl.core.app.GetNextBlocksTask;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockchainProcessorState;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.PeerBlock;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.BlockchainProcessorState;
+import com.apollocurrency.aplwallet.apl.core.blockchain.PeerBlock;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;

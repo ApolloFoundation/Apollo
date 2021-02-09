@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.model.dex;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import lombok.Data;
 
 @Data

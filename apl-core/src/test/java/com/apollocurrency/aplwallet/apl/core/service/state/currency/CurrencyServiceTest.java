@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;

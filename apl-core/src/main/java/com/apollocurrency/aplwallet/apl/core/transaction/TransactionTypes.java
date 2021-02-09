@@ -17,6 +17,7 @@ public class TransactionTypes {
     public static final byte TYPE_UPDATE = 8;
     public static final byte TYPE_DEX = 9;
     public static final byte TYPE_CHILD_ACCOUNT = 10;
+    public static final byte TYPE_SMC = 11;
 
     public static final byte SUBTYPE_PAYMENT_ORDINARY_PAYMENT = 0;
     public static final byte SUBTYPE_PAYMENT_PRIVATE_PAYMENT = 1;
@@ -88,6 +89,9 @@ public class TransactionTypes {
 
     public static final byte SUBTYPE_CHILD_CREATE = 0;
     public static final byte SUBTYPE_CHILD_CONVERT_TO = 1;
+
+    public static final byte SUBTYPE_SMC_PUBLISH = 0;
+    public static final byte SUBTYPE_SMC_CALL_METHOD = 1;
 
     private static final Map<Integer, TransactionTypeSpec> ALL_TYPES = new HashMap<>();
 
@@ -164,6 +168,8 @@ public class TransactionTypes {
         CHILD_ACCOUNT_CREATE(TYPE_CHILD_ACCOUNT, SUBTYPE_CHILD_CREATE, "CreateChildAccount"),
         CHILD_ACCOUNT_CONVERT_TO(TYPE_CHILD_ACCOUNT, SUBTYPE_CHILD_CONVERT_TO, "ConvertToChildAccount"),
 
+        SMC_PUBLISH(TYPE_SMC, SUBTYPE_SMC_PUBLISH, "SmcPublish"),
+        SMC_CALL_METHOD(TYPE_SMC, SUBTYPE_SMC_CALL_METHOD, "SmcCallMethod")
         ;
 
         private final byte type;

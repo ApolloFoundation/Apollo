@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.util.Filter;

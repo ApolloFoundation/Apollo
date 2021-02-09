@@ -3,11 +3,13 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import org.json.simple.JSONObject;
 
@@ -16,11 +18,20 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
+@EqualsAndHashCode(callSuper = true)
 public abstract class AbstractAttachment extends AbstractAppendix implements Attachment {
     private TransactionType transactionType;
 
+    /**
+     * @deprecated use {@link #AbstractAttachment(RlpReader)}
+     */
+    @Deprecated(since = "TransactionV3")
     public AbstractAttachment(ByteBuffer buffer) {
         super(buffer);
+    }
+
+    public AbstractAttachment(RlpReader reader) {
+        super(reader);
     }
 
     public AbstractAttachment(JSONObject attachmentData) {

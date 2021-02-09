@@ -22,7 +22,7 @@ import com.apollocurrency.aplwallet.api.response.AccountCurrencyResponse;
 import com.apollocurrency.aplwallet.api.response.AccountCurrentAskOrderIdsResponse;
 import com.apollocurrency.aplwallet.api.response.AccountNotFoundResponse;
 import com.apollocurrency.aplwallet.api.response.BlocksResponse;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
@@ -171,7 +171,7 @@ public class AccountController {
         maxAPIFetchRecords = maxAPIrecords;
         this.accountStatisticsService = accountStatisticsService;
         this.assetService = assetService;
-        this.currencyService =  currencyService;
+        this.currencyService = currencyService;
         this.accountParametersParser = accountParametersParser;
         this.KMSService = KMSService;
     }

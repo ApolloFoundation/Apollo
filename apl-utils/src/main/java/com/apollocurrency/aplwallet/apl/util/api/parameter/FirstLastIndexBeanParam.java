@@ -22,7 +22,9 @@ public class FirstLastIndexBeanParam {
     public static int maxAPIrecords;
 
     @Parameter(description = "A zero-based index to the first record ID to retrieve (optional).")
-    @QueryParam("firstIndex") @DefaultValue("0") @PositiveOrZero
+    @QueryParam("firstIndex")
+    @DefaultValue("0")
+    @PositiveOrZero
     private int firstIndex = 0;
     @Parameter(description = "A zero-based index to the last record ID to retrieve (optional).")
     @QueryParam("lastIndex") @DefaultValue("-1")

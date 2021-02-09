@@ -113,11 +113,11 @@
     </rollingPolicy>
 
     <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-        <maxFileSize>300MB</maxFileSize>
+      <maxFileSize>300MB</maxFileSize>
     </triggeringPolicy>
-      <encoder>
-          <pattern>%d [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
-      </encoder>
+    <encoder>
+      <pattern>%d [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+    </encoder>
   </appender>
 
   <logger name="com.apollocurrency.aplwallet.apl.core.peer" level="DEBUG" additivity="false">

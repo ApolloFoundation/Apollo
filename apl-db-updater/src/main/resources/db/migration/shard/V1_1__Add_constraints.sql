@@ -31,6 +31,6 @@ CREATE INDEX IF NOT EXISTS transaction_recipient_id_idx ON `transaction` (`recip
 CREATE INDEX IF NOT EXISTS transaction_block_timestamp_idx ON `transaction` (`block_timestamp` DESC);
 
 ALTER TABLE `transaction`
-DROP CONSTRAINT IF EXISTS transaction_id_idx;
+    DROP CONSTRAINT IF EXISTS transaction_id_idx;
 
 CREATE UNIQUE INDEX transaction_block_id_transaction_index_idx ON `transaction` (`block_id`, `transaction_index`)

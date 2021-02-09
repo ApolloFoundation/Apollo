@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.NonNull;
 import org.json.simple.JSONArray;
@@ -18,12 +18,12 @@ import javax.inject.Singleton;
 public class BlockSerializer {
 
     private final Blockchain blockchain;
-    private final TransactionSerializer transactionSerializer;
+    private final TransactionJsonSerializer transactionJsonSerializer;
 
     @Inject
-    public BlockSerializer(@NonNull Blockchain blockchain, @NonNull TransactionSerializer transactionSerializer) {
+    public BlockSerializer(@NonNull Blockchain blockchain, @NonNull TransactionJsonSerializer transactionJsonSerializer) {
         this.blockchain = blockchain;
-        this.transactionSerializer = transactionSerializer;
+        this.transactionJsonSerializer = transactionJsonSerializer;
     }
 
     public JSONObject getJSONObject(Block block) {
@@ -45,7 +45,7 @@ public class BlockSerializer {
 
         JSONArray transactionsData = new JSONArray();
         this.blockchain.getOrLoadTransactions(block)
-            .forEach(transaction -> transactionsData.add(transactionSerializer.toJson(transaction)));
+                .forEach(transaction -> transactionsData.add(transactionJsonSerializer.toJson(transaction)));
 
         json.put("transactions", transactionsData);
         return json;

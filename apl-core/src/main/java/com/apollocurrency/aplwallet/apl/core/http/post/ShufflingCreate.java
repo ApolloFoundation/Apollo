@@ -38,11 +38,11 @@ import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class ShufflingCreate extends CreateTransaction {
+public final class ShufflingCreate extends CreateTransactionHandler {
 
     public ShufflingCreate() {
         super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION},
-            "holding", "holdingType", "amount", "participantCount", "registrationPeriod");
+                "holding", "holdingType", "amount", "participantCount", "registrationPeriod");
     }
 
     @Override

@@ -5,13 +5,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -36,6 +38,15 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
             throw new AplException.NotValidException(ex.getMessage());
         }
         this.isCompressed = getVersion() != 2;
+    }
+
+    public AbstractEncryptedMessageAppendix(RlpReader reader) {
+        super(reader);
+        this.isText = reader.readBoolean();
+        this.isCompressed = reader.readBoolean();
+        byte[] data = reader.read();
+        byte[] nonce = reader.read();
+        this.encryptedData = new EncryptedData(data, nonce);
     }
 
     public AbstractEncryptedMessageAppendix(JSONObject attachmentJSON, Map<?,?> encryptedMessageJSON) {
@@ -73,6 +84,15 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
         json.put("nonce", Convert.toHexString(encryptedData.getNonce()));
         json.put("isText", isText);
         json.put("isCompressed", isCompressed);
+    }
+
+    @Override
+    public void putMyBytes(RlpList.RlpListBuilder builder) {
+        builder
+            .add(isText)
+            .add(isCompressed)
+            .add(encryptedData.getData())
+            .add(encryptedData.getNonce());
     }
 
     @Override

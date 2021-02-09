@@ -18,10 +18,10 @@ public class AppendixApplierRegistry {
 
 
     void init(Instance<AppendixApplier<?>> instances) {
-        instances.iterator().forEachRemaining(e-> appliers.put(e.forClass(), e));
+        instances.iterator().forEachRemaining(e -> appliers.put(e.forClass(), e));
     }
     public AppendixApplierRegistry(Collection<AppendixApplier<?>> appliers) {
-        appliers.iterator().forEachRemaining(e-> this.appliers.put(e.forClass(), e));
+        appliers.iterator().forEachRemaining(e -> this.appliers.put(e.forClass(), e));
     }
 
     public <T extends Appendix> AppendixApplier<T> getFor(T t) {

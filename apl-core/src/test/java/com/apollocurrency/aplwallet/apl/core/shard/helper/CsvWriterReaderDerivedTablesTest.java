@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
@@ -20,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToMod
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
@@ -33,7 +35,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInter
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactoryProducer;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollTable;
@@ -61,6 +62,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.ReferencedTransa
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
@@ -89,8 +91,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializerImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator;
@@ -204,8 +205,10 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
         TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
-        TransactionBuilder.class, TransactionSerializerImpl.class,
-        KeyFactoryProducer.class, FeeCalculator.class,
+        UnconfirmedTransactionEntityRowMapper.class,
+        TransactionBuilderFactory.class, TransactionJsonSerializerImpl.class,
+        UnconfirmedTransactionCreator.class,
+        FeeCalculator.class,
         TaggedDataTimestampDao.class,
         TaggedDataExtendDao.class,
         FullTextConfigImpl.class,

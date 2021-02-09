@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,29 +26,38 @@ import java.util.Set;
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class SignatureToolFactory {
 
+    //TODO: read from properties, example: "elliptic-curve=Curve25519", "pk-size=32"
+    private static final List<String> DEFAULT_MULTISIG_V3_PARAMS = List.of();
+
+    private static final SignatureVerifier multiSigValidator = new MultiSigVerifierImpl(DEFAULT_MULTISIG_V3_PARAMS);
+
     private static final SignatureVerifier[] validators = new SignatureVerifier[]
-        {new SignatureVerifierV1(), new MultiSigVerifierImpl()};
+        {new SignatureVerifierV1(), multiSigValidator, multiSigValidator};
 
     private static final SignatureParser[] parsers = new SignatureParser[]
-        {new SigData.Parser(), new MultiSigData.Parser()};
+        {new SigData.Parser(), new MultiSigData.Parser(), new MultiSigData.ParserV3()};
 
-    private static final DocumentSigner[] sigSigners = new DocumentSigner[]
-        {new DocumentSignerV1(), new MultiSigSigner()};
+    private static final DocumentSigner[] docSigners = new DocumentSigner[] {
+            new DocumentSignerV1()
+            , new MultiSigSigner(parsers[1], DEFAULT_MULTISIG_V3_PARAMS)
+            , new MultiSigSigner(parsers[2], DEFAULT_MULTISIG_V3_PARAMS)
+        };
 
     public static Signature createSignature(byte[] signature) {
         return new SigData(Objects.requireNonNull(signature));
     }
 
-    public static Credential createCredential(int version, byte[]... keys) {
+    public static Credential createCredential(int transactionVersion, byte[]... keys) {
         Objects.requireNonNull(keys);
-        switch (version) {
+        switch (transactionVersion) {
             case 0:
             case 1:
                 return new SignatureCredential(keys[0]);
             case 2:
+            case 3:
                 return new MultiSigCredential(keys.length, keys);
             default:
-                throw new UnsupportedTransactionVersion("Can't crate credential a given transaction version: " + version);
+                throw new UnsupportedTransactionVersion("Can't crate credential a given transaction version: " + transactionVersion);
         }
     }
 
@@ -59,8 +69,8 @@ public class SignatureToolFactory {
         return selectTool(transactionVersion, parsers);
     }
 
-    public static Optional<DocumentSigner> selectBuilder(int transactionVersion) {
-        return selectTool(transactionVersion, sigSigners);
+    public static Optional<DocumentSigner> selectSigner(int transactionVersion) {
+        return selectTool(transactionVersion, docSigners);
     }
 
     private static <T> Optional<T> selectTool(int transactionVersion, T[] tools) {
@@ -112,6 +122,11 @@ public class SignatureToolFactory {
     }
 
     static class MultiSigVerifierImpl implements SignatureVerifier {
+        private final List<String> params;
+
+        public MultiSigVerifierImpl(List<String> params) {
+            this.params = params;
+        }
 
         @Override
         public boolean verify(byte[] document, Signature signature, Credential credential) {
@@ -132,6 +147,7 @@ public class SignatureToolFactory {
                             log.debug("Pk already verified, pk={}", Convert.toHexString(pk));
                         }
                     } else {
+                        //TODO: use params in cryptography routine
                         if (Crypto.verify(multiSigData.getSignature(pk), document, pk)) {
                             verifiedPks.add(pk);
                         }
@@ -174,6 +190,14 @@ public class SignatureToolFactory {
     }
 
     static class MultiSigSigner implements DocumentSigner {
+        private final SignatureParser parser;
+        private final List<String> params;
+
+        public MultiSigSigner(SignatureParser parser, List<String> params) {
+            this.parser = parser;
+            this.params = params;
+        }
+
         @Override
         public Signature sign(byte[] document, Credential credential) {
             Objects.requireNonNull(document);
@@ -185,10 +209,11 @@ public class SignatureToolFactory {
             for (byte[] seed : multiSigCredential.getKeys()) {
                 signatures.put(
                     Crypto.getPublicKey(seed),
+                    //TODO: use params in cryptography routine
                     Crypto.sign(document, seed)
                 );
             }
-            MultiSigData multiSigData = new MultiSigData(signatures.size());
+            MultiSigData multiSigData = new MultiSigData(signatures.size(), params, parser);
             signatures.forEach(multiSigData::addSignature);
             if (log.isTraceEnabled()) {
                 log.trace("#MULTI_SIG# sign multi-signature: {}", multiSigData.getHexString());

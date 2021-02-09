@@ -42,13 +42,13 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
 
 @Vetoed
-public final class DGSRefund extends CreateTransaction {
+public final class DGSRefund extends CreateTransactionHandler {
 
     private DGSService service = CDI.current().select(DGSService.class).get();
 
     public DGSRefund() {
         super(new APITag[]{APITag.DGS, APITag.CREATE_TRANSACTION},
-            "purchase", "refundATM");
+                "purchase", "refundATM");
     }
 
     @Override

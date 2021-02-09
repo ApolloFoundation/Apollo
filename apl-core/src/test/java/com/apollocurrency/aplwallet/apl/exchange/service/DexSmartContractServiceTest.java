@@ -102,7 +102,7 @@ class DexSmartContractServiceTest {
         PropertiesHolder holder = new PropertiesHolder();
         holder.init(props);
         service = spy(new DexSmartContractService(holder, dexEthService, ethereumWalletService, dexTransactionDao,
-            dexBeanProducer, null, KMSService));
+                dexBeanProducer, null, KMSService));
         walletCredentials = Credentials.create(ECKeyPair.create(Convert.parseHexString(ALICE_PRIV_KEY)));
         gasInfo = new EthChainGasInfoImpl(100.5, 82.3, 53.9);
     }

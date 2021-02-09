@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountPropertyTable;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountProperty;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;

@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -34,6 +34,7 @@ import org.json.simple.JSONStreamAware;
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Vetoed
 public final class GetUnconfirmedTransactionIds extends AbstractAPIRequestHandler {
@@ -51,9 +52,9 @@ public final class GetUnconfirmedTransactionIds extends AbstractAPIRequestHandle
 
         JSONArray transactionIds = new JSONArray();
         if (accountIds.isEmpty()) {
-            for (UnconfirmedTransaction tx : lookupMemPool().getProcessed(firstIndex, lastIndex)) {
-                transactionIds.add(tx.getStringId());
-            }
+            transactionIds.addAll(lookupMemPool().getProcessed(firstIndex, lastIndex)
+                    .map(UnconfirmedTransaction::getStringId)
+                    .collect(Collectors.toList()));
         } else {
             int limit = DbUtils.calculateLimit(firstIndex, lastIndex);
             if (limit == 0) {

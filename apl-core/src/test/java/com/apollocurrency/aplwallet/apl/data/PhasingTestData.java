@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollLinkedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
@@ -101,13 +101,13 @@ public class PhasingTestData {
         POLL_1_VOTE_0 = new PhasingVote(30L, 8500, POLL_1.getId(), POLL_1_VOTER_0_ID, td.TRANSACTION_9.getId());
         POLL_1_VOTE_1 = new PhasingVote(40L, 8999, POLL_1.getId(), POLL_1_VOTER_1_ID, td.TRANSACTION_10.getId());
         //real linked transactions
-        LINKED_TRANSACTION_0 = new PhasingPollLinkedTransaction(10L, POLL_3.getHeight(), POLL_3.getId(), Convert.fullHashToId(LINKED_TRANSACTION_0_HASH), LINKED_TRANSACTION_0_HASH);
-        LINKED_TRANSACTION_1 = new PhasingPollLinkedTransaction(20L, POLL_3.getHeight(), POLL_3.getId(), Convert.fullHashToId(LINKED_TRANSACTION_1_HASH), LINKED_TRANSACTION_1_HASH);
-        LINKED_TRANSACTION_2 = new PhasingPollLinkedTransaction(30L, POLL_3.getHeight(), POLL_3.getId(), Convert.fullHashToId(LINKED_TRANSACTION_2_HASH), LINKED_TRANSACTION_2_HASH);
+        LINKED_TRANSACTION_0 = new PhasingPollLinkedTransaction(10L, POLL_3.getHeight(), POLL_3.getId(), Convert.transactionFullHashToId(LINKED_TRANSACTION_0_HASH), LINKED_TRANSACTION_0_HASH);
+        LINKED_TRANSACTION_1 = new PhasingPollLinkedTransaction(20L, POLL_3.getHeight(), POLL_3.getId(), Convert.transactionFullHashToId(LINKED_TRANSACTION_1_HASH), LINKED_TRANSACTION_1_HASH);
+        LINKED_TRANSACTION_2 = new PhasingPollLinkedTransaction(30L, POLL_3.getHeight(), POLL_3.getId(), Convert.transactionFullHashToId(LINKED_TRANSACTION_2_HASH), LINKED_TRANSACTION_2_HASH);
         //fake linked transactions
-        FAKE_LINKED_TRANSACTION_0 = new PhasingPollLinkedTransaction(40L, POLL_3.getHeight() + 1, 100, Convert.fullHashToId(LINKED_TRANSACTION_3_HASH), LINKED_TRANSACTION_3_HASH);
-        FAKE_LINKED_TRANSACTION_1 = new PhasingPollLinkedTransaction(50L, POLL_3.getHeight() + 1, 100, Convert.fullHashToId(LINKED_TRANSACTION_4_HASH), LINKED_TRANSACTION_4_HASH);
-        FAKE_LINKED_TRANSACTION_2 = new PhasingPollLinkedTransaction(60L, POLL_3.getHeight() + 2, 200, Convert.fullHashToId(LINKED_TRANSACTION_5_HASH), LINKED_TRANSACTION_5_HASH);
+        FAKE_LINKED_TRANSACTION_0 = new PhasingPollLinkedTransaction(40L, POLL_3.getHeight() + 1, 100, Convert.transactionFullHashToId(LINKED_TRANSACTION_3_HASH), LINKED_TRANSACTION_3_HASH);
+        FAKE_LINKED_TRANSACTION_1 = new PhasingPollLinkedTransaction(50L, POLL_3.getHeight() + 1, 100, Convert.transactionFullHashToId(LINKED_TRANSACTION_4_HASH), LINKED_TRANSACTION_4_HASH);
+        FAKE_LINKED_TRANSACTION_2 = new PhasingPollLinkedTransaction(60L, POLL_3.getHeight() + 2, 200, Convert.transactionFullHashToId(LINKED_TRANSACTION_5_HASH), LINKED_TRANSACTION_5_HASH);
 
         NEW_POLL_PARAMS = new PhasingParams((byte) 0, 0, 3, 0, (byte) 0, new long[]{1, 2, 3});
         NEW_POLL_APPENDIX = new PhasingAppendixV2(td.TRANSACTION_10.getHeight(), 20000, NEW_POLL_PARAMS, new byte[][]{td.TRANSACTION_4.getFullHash(), td.TRANSACTION_5.getFullHash()}, null, (byte) 0);

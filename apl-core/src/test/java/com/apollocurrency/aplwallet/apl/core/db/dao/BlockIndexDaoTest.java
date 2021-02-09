@@ -23,7 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
@@ -74,7 +74,7 @@ public class BlockIndexDaoTest extends DbContainerBaseTest {
         BlockchainConfig.class, DaoConfig.class,
         DerivedDbTablesRegistryImpl.class, BlockIndexDao.class,
         TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
-        TransactionBuilder.class,
+        TransactionBuilderFactory.class,
         BlockDaoImpl.class,
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         TransactionDaoImpl.class)

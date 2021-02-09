@@ -1,8 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSignerImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
@@ -14,8 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateV2TransactionType;
@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.api.converter.ByteArrayConverterProvider;
 import com.apollocurrency.aplwallet.apl.util.api.converter.PlatformSpecConverterProvider;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
@@ -55,6 +56,13 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UpdateControllerTest extends AbstractEndpointTest {
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
+
+    {
+        doReturn(chain).when(blockchainConfig).getChain();
+    }
+
     TransactionCreator transactionCreator;
     @Mock
     HttpServletRequest req;
@@ -70,8 +78,6 @@ class UpdateControllerTest extends AbstractEndpointTest {
     AccountService accountService;
     @Mock
     KMSService KMSService = mock(KMSService.class);
-    @Mock
-    BlockchainConfig blockchainConfig;
 
     UpdateV2TransactionType v2Transaction;
 
@@ -82,7 +88,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
         v2Transaction = new UpdateV2TransactionType(blockchainConfig, accountService);
         UnconfirmedTransactionConverter converter = new UnconfirmedTransactionConverter(mock(PrunableLoadingService.class));
         CachedTransactionTypeFactory txTypeFactory = new CachedTransactionTypeFactory(List.of(v2Transaction));
-        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(mock(PrunableLoadingService.class), blockchainConfig), blockchain, processor, txTypeFactory, new TransactionBuilder(txTypeFactory), mock(TransactionSigner.class));
+        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(mock(PrunableLoadingService.class), blockchainConfig), blockchain, processor, txTypeFactory, new TransactionBuilderFactory(txTypeFactory, blockchainConfig), mock(TransactionSignerImpl.class));
         dispatcher.getProviderFactory()
             .register(ByteArrayConverterProvider.class)
             .register(LegacyParameterExceptionMapper.class)
@@ -153,7 +159,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
         String json = response.getContentAsString();
 //        System.out.println("json = \n" + json);
 
-        JSONAssert.assertEquals("{\"requestProcessingTime\":0,\"type\":8,\"subtype\":3,\"phased\":false,\"timestamp\":0,\"deadline\":1440,\"senderPublicKey\":\"" + PUBLIC_KEY_SECRET + "\",\"amountATM\":\"0\",\"feeATM\":\"100000000\",\"attachment\":{\"serialNumber\":\"1\",\"level\":0,\"signature\":\"111100ff\",\"version.UpdateV2\":1,\"manifestUrl\":\"https://test11.com\",\"cn\":\"https://cn345.com\",\"version\":\"1.23.4\",\"platforms\":[{\"platform\":-1,\"architecture\":2},{\"platform\":1,\"architecture\":1}]},\"sender\":\"" + Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET) +"\",\"senderRS\":\"TEST-" + Crypto.rsEncode(AbstractEndpointTest.ACCOUNT_ID_WITH_SECRET)+ "\",\"height\":2147483647,\"version\":1,\"ecBlockId\":\"121\",\"ecBlockHeight\":100000}", json, JSONCompareMode.LENIENT);
+        JSONAssert.assertEquals("{\"requestProcessingTime\":0,\"type\":8,\"subtype\":3,\"phased\":false,\"timestamp\":0,\"deadline\":1440,\"senderPublicKey\":\"" + PUBLIC_KEY_SECRET + "\",\"amountATM\":\"0\",\"feeATM\":\"100000000\",\"attachment\":{\"serialNumber\":\"1\",\"level\":0,\"signature\":\"111100ff\",\"version.UpdateV2\":1,\"manifestUrl\":\"https://test11.com\",\"cn\":\"https://cn345.com\",\"version\":\"1.23.4\",\"platforms\":[{\"platform\":-1,\"architecture\":2},{\"platform\":1,\"architecture\":1}]},\"sender\":\"" + Long.toUnsignedString(ACCOUNT_ID_WITH_SECRET) + "\",\"senderRS\":\"TEST-" + Crypto.rsEncode(AbstractEndpointTest.ACCOUNT_ID_WITH_SECRET) + "\",\"height\":2147483647,\"version\":1,\"ecBlockId\":\"121\",\"ecBlockHeight\":100000}", json, JSONCompareMode.LENIENT);
         verify(processor).broadcast(any(Transaction.class));
     }
 
