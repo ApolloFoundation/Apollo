@@ -87,12 +87,12 @@ public class DataSourceWrapper implements DataSource {
             if (m.find()) {
                 shardId = m.group(); // store shard id
             }
-            dbUrlTemp = formatJdbcUrlString(dbProperties, false);
+            dbUrlTemp = dbProperties.formatJdbcUrlString(false);
             dbProperties.setDbUrl(dbUrlTemp);
         }
 
         if (StringUtils.isBlank(dbProperties.getSystemDbUrl())) {
-            String systemDbUrl = formatJdbcUrlString(dbProperties, true);
+            String systemDbUrl = dbProperties.formatJdbcUrlString( true);
             dbProperties.setSystemDbUrl(systemDbUrl);
         }
 
@@ -102,40 +102,6 @@ public class DataSourceWrapper implements DataSource {
         this.maxConnections = dbProperties.getMaxConnections();
         this.loginTimeout = dbProperties.getLoginTimeout();
         this.systemDbUrl = dbProperties.getSystemDbUrl();
-    }
-
-    private String formatJdbcUrlString(DbProperties dbProperties, boolean isSystemDb) {
-        String finalDbUrl;
-        String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s%s";
-        String passwordlessUrlString = "jdbc:%s://%s:%d/%s?user=%s%s"; // skip password for 'password less mode' (in docker container)
-        String tempDbName = dbProperties.getDbName();
-        if (isSystemDb) {
-            tempDbName = "testdb".equalsIgnoreCase(dbProperties.getDbName()) ? dbProperties.getDbName() : DbProperties.DB_SYSTEM_NAME;
-        }
-        if (dbProperties.getDbPassword() != null && !dbProperties.getDbPassword().isEmpty()) {
-            finalDbUrl = String.format(
-                fullUrlString,
-                dbProperties.getDbType(),
-                dbProperties.getDatabaseHost(),
-                dbProperties.getDatabasePort(),
-                tempDbName,
-                dbProperties.getDbUsername() != null ? dbProperties.getDbUsername() : "",
-                dbProperties.getDbPassword(),
-                dbProperties.getDbParams() != null ? dbProperties.getDbParams() : ""
-            );
-        } else {
-            // skip password for 'password less mode' (in docker container)
-            finalDbUrl = String.format(
-                passwordlessUrlString,
-                dbProperties.getDbType(),
-                dbProperties.getDatabaseHost(),
-                dbProperties.getDatabasePort(),
-                tempDbName,
-                dbProperties.getDbUsername() != null ? dbProperties.getDbUsername() : "",
-                dbProperties.getDbParams() != null ? dbProperties.getDbParams() : ""
-            );
-        }
-        return finalDbUrl;
     }
 
     @Override
