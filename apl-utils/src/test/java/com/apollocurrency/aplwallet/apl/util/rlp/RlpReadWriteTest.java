@@ -66,8 +66,8 @@ class RlpReadWriteTest {
     @Test
     void testBoolean() {
         //GIVEN
-        boolean valueT = true;
-        boolean valueF = false;
+        final boolean valueT = true;
+        final boolean valueF = false;
         //WHEN
         RlpReader reader = new RlpReader(
             new RlpWriteBuffer()
@@ -87,6 +87,7 @@ class RlpReadWriteTest {
 
     @Test
     void testTx() {
+        //type=11, version=3, subtype=0
         String hexTx = "0b30a432663262363134392d643239652d343163612d386330642d66333334336635353430633682518084058831b9830a20b28837c756067b480e8e01a094c4e9ef9d92275e659aa7f26dcf56d54568739813d2c34559266c8150fabd46808064821388018d636c617373204465616c207b7dc786737472696e67b8524d53494700000000010094c4e9ef9d92275eb35588b8164b43d011bfaa20ecf69561871036d0a99688af42932725e57b3507e395a34b8a35281a500df3627e4cb35e3f3ba5b014fc7615ccbf4d8004f9db64";
         byte[] input = Numeric.hexStringToByteArray(hexTx);
         RlpList list = RlpDecoder.decode(input);

@@ -8,8 +8,8 @@ import com.apollocurrency.aplwallet.api.v2.NotFoundException;
 import com.apollocurrency.aplwallet.api.v2.SmcApiService;
 import com.apollocurrency.aplwallet.api.v2.model.PublishContractReqTest;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionArrayResp;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
@@ -90,11 +90,12 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         Transaction transaction = transactionCreator.createTransactionThrowingException(txRequest);
 
-        response.setTx(
+        //TODO: fix it
+        /*response.setTx(
             Convert.toHexString(
                 transaction.getCopyTxBytes()
             )
-        );
+        );*/
 
         return builder.bind(response).build();
     }

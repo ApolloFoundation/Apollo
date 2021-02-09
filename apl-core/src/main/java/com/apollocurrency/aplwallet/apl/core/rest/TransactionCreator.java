@@ -130,7 +130,11 @@ public class TransactionCreator {
                     deadline, txRequest.getAttachment(), timestamp)
                     .referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
             }else{
-                builder = ....
+                //TODO: fix it
+                builder = transactionBuilderFactory.newUnsignedTransactionBuilder(version, txRequest.getPublicKey(),
+                    txRequest.getAmountATM(), txRequest.getFeeATM(),
+                    deadline, txRequest.getAttachment(), timestamp)
+                    .referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
             }
             if (transactionType.canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());

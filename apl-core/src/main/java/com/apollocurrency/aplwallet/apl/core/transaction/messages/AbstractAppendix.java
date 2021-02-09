@@ -5,9 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
-import com.apollocurrency.aplwallet.apl.core.io.WriteBuffer;
+import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
@@ -58,6 +57,11 @@ public abstract class AbstractAppendix implements Appendix {
 
     public abstract int getMySize();
 
+    /**
+     * Returns the size of payload i.e. payable transaction part
+     *
+     * @return size in bytes
+     */
     public int getMyFullSize() {
         return getMySize();
     }

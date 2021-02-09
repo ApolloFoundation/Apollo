@@ -87,18 +87,18 @@ class SignatureToolFactoryTest extends AbstractSigData {
 
     @Test
     void selectParser() {
-        assertTrue(SignatureToolFactory.createParser(1).isPresent());
-        assertTrue(SignatureToolFactory.createParser(2).isPresent());
-        assertTrue(SignatureToolFactory.createParser(3).isPresent());
-        assertTrue(SignatureToolFactory.createParser(4).isEmpty());
+        assertTrue(SignatureToolFactory.selectParser(1).isPresent());
+        assertTrue(SignatureToolFactory.selectParser(2).isPresent());
+        assertTrue(SignatureToolFactory.selectParser(3).isPresent());
+        assertTrue(SignatureToolFactory.selectParser(4).isEmpty());
     }
 
     @Test
-    void selectBuilder() {
-        assertTrue(SignatureToolFactory.selectBuilder(1).isPresent());
-        assertTrue(SignatureToolFactory.selectBuilder(2).isPresent());
-        assertTrue(SignatureToolFactory.selectBuilder(3).isPresent());
-        assertTrue(SignatureToolFactory.selectBuilder(4).isEmpty());
+    void selectSigner() {
+        assertTrue(SignatureToolFactory.selectSigner(1).isPresent());
+        assertTrue(SignatureToolFactory.selectSigner(2).isPresent());
+        assertTrue(SignatureToolFactory.selectSigner(3).isPresent());
+        assertTrue(SignatureToolFactory.selectSigner(4).isEmpty());
     }
 
     @Test

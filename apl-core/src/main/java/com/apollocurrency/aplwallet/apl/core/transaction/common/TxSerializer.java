@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.common;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.io.Result;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 
 /**
  * @author andrew.zinchenko@gmail.com

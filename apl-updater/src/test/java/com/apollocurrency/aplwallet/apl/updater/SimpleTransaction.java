@@ -294,16 +294,6 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public byte[] rlpEncodedTx() {
-        return new byte[0];
-    }
-
-    @Override
-    public byte[] rlpEncodedUnsignedTx() {
-        return new byte[0];
-    }
-
-    @Override
     public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
         return false;
     }

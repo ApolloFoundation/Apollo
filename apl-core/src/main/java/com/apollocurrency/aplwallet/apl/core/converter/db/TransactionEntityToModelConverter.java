@@ -46,7 +46,7 @@ public class TransactionEntityToModelConverter implements Converter<TransactionE
     public Transaction apply(TransactionEntity entity) {
         try {
 
-            SignatureParser parser = SignatureToolFactory.createParser(entity.getVersion()).orElseThrow(UnsupportedTransactionVersion::new);
+            SignatureParser parser = SignatureToolFactory.selectParser(entity.getVersion()).orElseThrow(UnsupportedTransactionVersion::new);
             Signature signature = parser.parse(entity.getSignatureBytes());
 
             ByteBuffer buffer = null;

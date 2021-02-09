@@ -38,7 +38,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnou
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -141,8 +140,6 @@ public interface Transaction {
 
     List<AbstractAppendix> getAppendages();
 
-    byte[] getAppendagesBytes();
-
     int getECBlockHeight();
 
     long getECBlockId();
@@ -164,20 +161,6 @@ public interface Transaction {
     BigInteger getFuelLimit();
 
     long getLongTimestamp();//int getTimestamp
-
-    /**
-     * Return RLP encoded transaction bytes.
-     * The same as {@link #bytes()} for V2 transaction
-     * @return byte array of the RLP encoded transaction
-     */
-    byte[] rlpEncodedTx();
-
-    /**
-     * Return RLP encoded unsigned transaction bytes.
-     * The same as {@link #getUnsignedBytes()}} for V2 transaction
-     * @return byte array of the RLP encoded transaction
-     */
-    byte[] rlpEncodedUnsignedTx();
 
     /**
      *

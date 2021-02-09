@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.blockchain;
 
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
@@ -14,9 +14,11 @@ import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionUtils;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionWrapperHelper;
 import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
@@ -112,7 +114,7 @@ public class TransactionBuilderFactory {
     }
 
     /**
-     * Use com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter
+     * Use newTransaction(TransactionDTO txDto) or com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter
      */
     @Deprecated
     public Transaction newTransaction(JSONObject transactionData) throws AplException.NotValidException {
@@ -133,26 +135,26 @@ public class TransactionBuilderFactory {
         transaction.sign(transaction.getSignature(), unsignedTxBytes);
     }
 
-    public TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws AplException.NotValidException {
-        byte version = (byte) ((bytes[1] & 0xF0) >> 4);
-        if(version<3){
-            return parseTxV2(bytes);
-        }else{
+    TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws AplException.NotValidException {
+        byte version = TransactionUtils.getVersion(bytes[1]);
+        if (version < 3) {
+            return newTransactionV2Builder(bytes);
+        } else {
             RlpReader reader = new RlpReader(bytes);
-            return parseTxV3(reader);
+            return newTransactionV3Builder(reader);
         }
     }
 
-    private TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws AplException.NotValidException {
+    private TransactionImpl.BuilderImpl newTransactionV2Builder(byte[] bytes) throws AplException.NotValidException {
         try {
             ByteBuffer buffer = ByteBuffer.wrap(bytes);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             byte type = buffer.get();
             byte subtype = buffer.get();
-            byte version = (byte) ((subtype & 0xF0) >> 4);
+            byte version = TransactionUtils.getVersion(subtype);
+            subtype = TransactionUtils.getSubtype(subtype);
             Signature signature = null;
             SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
-            subtype = (byte) (subtype & 0x0F);
             int timestamp = buffer.getInt();
             short deadline = buffer.getShort();
             byte[] senderPublicKey = new byte[32];
@@ -175,6 +177,9 @@ public class TransactionBuilderFactory {
                 ecBlockId = buffer.getLong();
             }
             TransactionType transactionType = factory.findTransactionType(type, subtype);
+            if (transactionType == null) {
+                throw new AplException.NotValidException("Wrong transaction spec: type=" + type + ", subtype=" + subtype + ", version=" + version);
+            }
 
             AbstractAttachment attachment = transactionType.parseAttachment(buffer);
             attachment.bindTransactionType(transactionType);
@@ -215,7 +220,7 @@ public class TransactionBuilderFactory {
                 builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
             }
 
-            if (version >= 2) {//read transaction multi-signature V2
+            if (version == 2) {//read transaction multi-signature V2
                 signature = signatureParser.parse(buffer);
             }
             builder.signature(signature);
@@ -227,6 +232,113 @@ public class TransactionBuilderFactory {
             log.debug("Failed to parse transaction bytes: " + Convert.toHexString(bytes));
             throw e;
         }
+    }
+
+    private TransactionImpl.BuilderImpl newTransactionV3Builder(RlpReader reader) throws AplException.NotValidException {
+        try {
+            //header
+            byte type = reader.readByte();
+            byte subtype = reader.readByte();
+            byte version = TransactionUtils.getVersion(subtype);
+            subtype = TransactionUtils.getSubtype(subtype);
+
+            String chainId = reader.readString();
+            int deadline = reader.readInt();
+            long timestamp = reader.readLong();
+            int ecBlockHeight = reader.readInt();
+            long ecBlockId = reader.readLong();
+            BigInteger nonce = reader.readBigInteger();
+            byte[] senderPublicKey = reader.read();
+            long recipientId = reader.readLong();
+            BigInteger amount = reader.readBigInteger();
+            BigInteger fuelPrice = reader.readBigInteger();
+            BigInteger fuelLimit = reader.readBigInteger();
+
+            //data part
+            byte[] referencedTransactionFullHash = reader.read();
+            referencedTransactionFullHash = Convert.emptyToNull(referencedTransactionFullHash);
+
+            TransactionType transactionType = factory.findTransactionType(type, subtype);
+            if(transactionType == null){
+                throw new AplException.NotValidException("Wrong transaction spec: type="+type+", subtype="+subtype+", version="+version);
+            }
+
+            //attachments
+            AbstractAttachment attachment=null;
+            List<AbstractAppendix> appendages = new ArrayList<>();
+            RlpReader attachmentsListReader = reader.readListReader();
+            while (attachmentsListReader.hasNext()){
+                RlpReader attachmentReader = attachmentsListReader.readListReader();
+                int appendixFlag = attachmentReader.readInt();
+                if (appendixFlag == 0 ){//transaction attachment
+                    attachment = transactionType.parseAttachment(attachmentReader);
+                    attachment.bindTransactionType(transactionType);
+                }else{//transaction appendages
+                    AbstractAppendix appendix = readAppendix(appendixFlag, attachmentReader);
+                    if(appendix!=null){
+                        appendages.add(appendix);
+                    }
+                }
+                if(attachmentReader.hasNext()){
+                    throw new AplException.NotValidException("Wrong transaction attachment structure: type="+type+", subtype="+subtype+", version="+version);
+                }
+            }
+
+            TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(chainId, transactionType, version,
+                senderPublicKey, nonce,amount, fuelLimit, fuelPrice,deadline, timestamp, attachment);
+
+            appendages.forEach(builder::appendix);
+
+            builder.referencedTransactionFullHash(referencedTransactionFullHash)
+                .ecBlockHeight(ecBlockHeight)
+                .ecBlockId(ecBlockId);
+
+            if (transactionType.canHaveRecipient()) {
+                builder.recipientId(recipientId);
+            }
+
+            Signature signature = null;
+            //read transaction multi-signature V2
+            SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
+            signature = signatureParser.parse(reader);
+
+            builder.signature(signature);
+            if (reader.hasNext()) {
+                throw new AplException.NotValidException("Transaction bytes too long");
+            }
+            return builder;
+        } catch (RuntimeException e) {
+            log.debug("Failed to parse RLP-encoded transaction,  reader: " + reader);
+            throw e;
+        }
+    }
+
+    private AbstractAppendix readAppendix(int flag, RlpReader reader) throws AplException.NotValidException {
+        switch (flag){
+            case 1:
+                return new MessageAppendix(reader);
+            case 2:
+                return new EncryptedMessageAppendix(reader);
+            case 4:
+                return new PublicKeyAnnouncementAppendix(reader);
+            case 8:
+                return new EncryptToSelfMessageAppendix(reader);
+            case 16:
+                //TODO: should be implemented
+                //PhasingAppendixFactory.build(reader));
+                break;
+            case 32:
+                //TODO: should be implemented
+                //new PrunablePlainMessageAppendix(reader));
+                break;
+            case 64:
+                //TODO: should be implemented
+                //new PrunableEncryptedMessageAppendix(reader));
+                break;
+            default:
+                throw new AplException.NotValidException("Unexpected value: " + flag);
+        }
+        return null;
     }
 
     private TransactionImpl.BuilderImpl newTransactionBuilder(TransactionDTO txDto) {
@@ -288,115 +400,8 @@ public class TransactionBuilderFactory {
         }
     }
 
-    private TransactionImpl.BuilderImpl parseTxV3(RlpReader reader) throws AplException.NotValidException {
-        try {
-            //header
-            byte type = reader.readByte();
-            byte subtype = reader.readByte();
-            byte version = (byte) ((subtype & 0xF0) >> 4);
-            subtype = (byte) (subtype & 0x0F);
-
-            String chainId = reader.readString();
-            int deadline = reader.readInt();
-            long timestamp = reader.readLong();
-            int ecBlockHeight = reader.readInt();
-            long ecBlockId = reader.readLong();
-            BigInteger nonce = reader.readBigInteger();
-            byte[] senderPublicKey = reader.read();
-            long recipientId = reader.readLong();
-            BigInteger amount = reader.readBigInteger();
-            BigInteger fuelPrice = reader.readBigInteger();
-            BigInteger fuelLimit = reader.readBigInteger();
-
-            //data part
-            byte[] referencedTransactionFullHash = reader.read();
-            referencedTransactionFullHash = Convert.emptyToNull(referencedTransactionFullHash);
-
-            TransactionType transactionType = factory.findTransactionType(type, subtype);
-            if(transactionType == null){
-                throw new AplException.NotValidException("Wrong transaction spec: type="+type+", subtype="+subtype+", version="+version);
-            }
-
-            //attachments
-            AbstractAttachment attachment=null;
-            List<AbstractAppendix> appendages = new ArrayList<>();
-            RlpReader attachmentsListReader = reader.readListReader();
-            while (attachmentsListReader.hasNext()){
-                RlpReader attachmentReader = attachmentsListReader.readListReader();
-                int appendixFlag = attachmentReader.readInt();
-                if (appendixFlag == 0 ){//transaction attachment
-                    attachment = transactionType.parseAttachment(attachmentReader);
-                    attachment.bindTransactionType(transactionType);
-                }else{//transaction appendages
-                    AbstractAppendix appendix = readAppendix(appendixFlag, attachmentReader);
-                    if(appendix!=null){
-                        appendages.add(appendix);
-                    }
-                }
-                if(attachmentReader.hasNext()){
-                    throw new AplException.NotValidException("Wrong transaction attachment structure: type="+type+", subtype="+subtype+", version="+version);
-                }
-            }
-
-            TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(chainId, transactionType, version,
-                senderPublicKey, nonce,amount, fuelLimit, fuelPrice,deadline, timestamp, attachment);
-
-            appendages.forEach(builder::appendix);
-
-            builder.referencedTransactionFullHash(referencedTransactionFullHash)
-                .ecBlockHeight(ecBlockHeight)
-                .ecBlockId(ecBlockId);
-
-            if (transactionType.canHaveRecipient()) {
-                builder.recipientId(recipientId);
-            }
-
-            Signature signature = null;
-            //read transaction multi-signature V2
-            SignatureParser signatureParser = SignatureToolFactory.createParser(version).orElseThrow(UnsupportedTransactionVersion::new);
-            signature = signatureParser.parse(reader);
-
-            builder.signature(signature);
-            if (reader.hasNext()) {
-                throw new AplException.NotValidException("Transaction bytes too long");
-            }
-            return builder;
-        } catch (RuntimeException e) {
-            log.debug("Failed to parse transaction RLP reader: " + reader);
-            throw e;
-        }
-    }
-
-    private AbstractAppendix readAppendix(int flag, RlpReader reader) throws AplException.NotValidException {
-        switch (flag){
-            case 1:
-                return new MessageAppendix(reader);
-            case 2:
-                return new EncryptedMessageAppendix(reader);
-            case 4:
-                return new PublicKeyAnnouncementAppendix(reader);
-            case 8:
-                return new EncryptToSelfMessageAppendix(reader);
-            case 16:
-                //TODO: should be implemented
-                //PhasingAppendixFactory.build(reader));
-                break;
-            case 32:
-                //TODO: should be implemented
-                //new PrunablePlainMessageAppendix(reader));
-                break;
-            case 64:
-                //TODO: should be implemented
-                //new PrunableEncryptedMessageAppendix(reader));
-                break;
-            default:
-                throw new AplException.NotValidException("Unexpected value: " + flag);
-        }
-        return null;
-    }
-
     /**
-     * @deprecated Use com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter
+     * @deprecated Use newTransactionBuilder(TransactionDTO txDto) or com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter
      */
     @Deprecated
     private TransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws AplException.NotValidException {

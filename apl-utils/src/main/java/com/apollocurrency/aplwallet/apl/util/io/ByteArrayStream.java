@@ -1,8 +1,8 @@
 /*
- * Copyright (c)  2018-2021. Apollo Foundation.
+ * Copyright (c) 2018-2021. Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.apl.core.io;
+package com.apollocurrency.aplwallet.apl.util.io;
 
 import lombok.SneakyThrows;
 

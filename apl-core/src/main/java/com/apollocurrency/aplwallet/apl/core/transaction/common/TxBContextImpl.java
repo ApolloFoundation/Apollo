@@ -16,7 +16,7 @@ public class TxBContextImpl extends TxBContext {
     @Getter
     private final Chain chain;
 
-    private TxSerializer txSerializerV1;
+    private TxSerializer txSerializerV2;
     private TxSerializer txSerializerV3;
 
     protected TxBContextImpl(Chain chain) {
@@ -30,10 +30,10 @@ public class TxBContextImpl extends TxBContext {
         switch (version) {
             case 1:
             case 2:
-                if (txSerializerV1 == null) {
-                    txSerializerV1 = new TxSerializerV1Impl(this);
+                if (txSerializerV2 == null) {
+                    txSerializerV2 = new TxSerializerV1Impl(this);
                 }
-                return txSerializerV1;
+                return txSerializerV2;
 
             case 3:
                 if (txSerializerV3 == null) {

@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.rlp;
 
+import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
 import org.bouncycastle.util.Arrays;
 import org.web3j.rlp.RlpEncoder;
 import org.web3j.rlp.RlpList;
@@ -11,6 +12,7 @@ import org.web3j.rlp.RlpString;
 import org.web3j.rlp.RlpType;
 
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 import java.util.List;
 
 /**
@@ -37,6 +39,16 @@ public class RlpWriteBuffer implements WriteBuffer {
     }
 
     @Override
+    public ByteOrder order() {
+        return ByteOrder.BIG_ENDIAN;
+    }
+
+    @Override
+    public ByteOrder setOrder(ByteOrder order) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public WriteBuffer write(byte value) {
         output = Arrays.concatenate(output, RlpEncoder.encode(RlpString.create(value)));
         return this;
@@ -51,6 +63,18 @@ public class RlpWriteBuffer implements WriteBuffer {
     @Override
     public WriteBuffer write(boolean value) {
         write((byte) (value ? 1 : 0));
+        return this;
+    }
+
+    @Override
+    public WriteBuffer write(short value) {
+        output = Arrays.concatenate(output, RlpEncoder.encode(RlpString.create(value)));
+        return this;
+    }
+
+    @Override
+    public WriteBuffer write(int value) {
+        output = Arrays.concatenate(output, RlpEncoder.encode(RlpString.create(value)));
         return this;
     }
 
@@ -72,7 +96,6 @@ public class RlpWriteBuffer implements WriteBuffer {
         return this;
     }
 
-    @Override
     public WriteBuffer write(List<RlpType> list) {
         output = Arrays.concatenate(output, RlpEncoder.encode(new RlpList(list)));
         return this;
