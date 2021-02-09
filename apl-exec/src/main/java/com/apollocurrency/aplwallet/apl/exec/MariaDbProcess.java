@@ -3,11 +3,12 @@
  */
 package com.apollocurrency.aplwallet.apl.exec;
 
+import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import io.firstbridge.process.db.DbControl;
 import io.firstbridge.process.db.DbRunParams;
 import io.firstbridge.process.impl.MariaDbRunParamsBuilder;
 import io.firstbridge.process.impl.MariaDbControl;
-import jnr.ffi.provider.jffi.CodegenUtils;
+
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -24,14 +25,10 @@ public class MariaDbProcess {
     private final DbControl dbControl;
     private static Path confFile;
 
-    public MariaDbProcess(DbControl dbControl) {
-        this.dbControl = dbControl;
-    }
-
-    public MariaDbProcess(Path dbDataDir, Path dbInstallDir) {
+    public MariaDbProcess(DbConfig conf, Path dbInstallDir, Path dbDataDir) {
 
         confFile = Path.of("my-apl-user.conf");
-
+        
         DbRunParams dbParams = new MariaDbRunParamsBuilder()
                 .dbConfigFile(confFile)
                 .dbDataDir(dbDataDir)
@@ -65,7 +62,7 @@ public class MariaDbProcess {
         return res;
     }
 
-    public boolean start() {
+    public boolean startAndWaitWhenReady() {
         boolean res = false;
 
         if (!dbControl.isOK()) {

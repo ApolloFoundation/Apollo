@@ -33,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
@@ -44,6 +45,9 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +66,7 @@ public class Apollo {
     public static final String PID_FILE = "apl.pid";
     public static final String CMD_FILE = "apl.cmdline";
     public static final String APP_FILE = "apl.app";
-
+    public static final String APOLLO_MARIADB_INSTALL_DIR="apollo-mariadb";
     private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
         "socksProxyHost",
         "socksProxyPort",
@@ -80,7 +84,8 @@ public class Apollo {
     private static Logger log;
     private static AplContainer container;
     private static AplCoreRuntime aplCoreRuntime;
-
+    private static MariaDbProcess dbProcess = null;
+    
     private static void setLogLevel(int logLevel) {
         // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
         String packageName = "com.apollocurrency.aplwallet.apl";
@@ -173,18 +178,28 @@ public class Apollo {
 
     private static boolean checkDbWithJDBC(DbConfig conf){
         boolean res = true;
-//        String host = propertiesHolder.getStringProperty("apl.databaseHost","localhost");
-//        Integer port = propertiesHolder.getIntProperty("apl.databasePort");
-//        String sbUser = propertiesHolder.getStringProperty("apl.dbUsername");
-//        String dbPa    prp dbPassword(propertiesHolder.getStringProperty("apl.dbPassword", null, true))
-        String dbURL = "";
+        DbProperties dbConfig = conf.getDbConfig();        
+        String dbURL = dbConfig.formatJdbcUrlString(true);
+        Connection conn = null;
+        try {
+            conn = DriverManager.getConnection(dbURL);
+        } catch (SQLException ex) {
+            res = false;
+        }
         return res;
     }
 
     private static boolean checkOrRunDatabaseServer(DbConfig conf) {
         boolean res = checkDbWithJDBC(conf);
+        //if we have connected to database URL from config, wha have nothing to do
         if(!res){
-            //start DB servewr
+            // if we can not connect to databse, we'll try start it
+            // from Apollo package. If it is first start, data base data dir 
+            // will be initialized
+            Path dbDataDir = dirProvider.getDbDir();
+            Path dbInstalPath = DirProvider.getBinDir().getParent().resolve(APOLLO_MARIADB_INSTALL_DIR);
+            dbProcess = new MariaDbProcess(conf,dbInstalPath,dbDataDir);
+            res = dbProcess.startAndWaitWhenReady();
         }
         return res;
     }

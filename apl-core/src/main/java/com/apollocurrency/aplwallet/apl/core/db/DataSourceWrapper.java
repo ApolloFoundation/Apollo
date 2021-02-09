@@ -61,11 +61,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class DataSourceWrapper implements DataSource {
     private static final Logger log = getLogger(DataSourceWrapper.class);
     private static final String DB_INITIALIZATION_ERROR_TEXT = "DatabaseManager was not initialized!";
-    private static Pattern patternExtractShardNumber = Pattern.compile("shard_\\d+");
+    private static final Pattern patternExtractShardNumber = Pattern.compile("shard_\\d+");
     private final String dbUrl;
     private final String dbName;
     private final String dbUsername;
-    private String dbPassword; // can be empty for a 'passwordless mode' in docker container
+    private final String dbPassword; // can be empty for a 'passwordless mode' in docker container
     private final String systemDbUrl;
     private final int maxConnections;
     private final int loginTimeout;
@@ -77,6 +77,9 @@ public class DataSourceWrapper implements DataSource {
 
 
     public DataSourceWrapper(DbProperties dbProperties) {
+        
+//TODO: clean up this
+        
         //Even though dbUrl is no longer coming from apl-blockchain.properties,
         //DbMigrationExecutor in afterMigration triggers the further creation of DataSourceWrapper
         String dbUrlTemp = dbProperties.getDbUrl();
@@ -91,10 +94,6 @@ public class DataSourceWrapper implements DataSource {
             dbProperties.setDbUrl(dbUrlTemp);
         }
 
-        if (StringUtils.isBlank(dbProperties.getSystemDbUrl())) {
-            String systemDbUrl = dbProperties.formatJdbcUrlString( true);
-            dbProperties.setSystemDbUrl(systemDbUrl);
-        }
 
         this.dbUrl = dbUrlTemp;
         this.dbUsername = dbProperties.getDbUsername();
@@ -164,10 +163,10 @@ public class DataSourceWrapper implements DataSource {
     /**
      * Constructor creates internal DataSource.
      *
-     * @param dbVersion database version related information
+     * @param dbUpdater database version updater
      */
-    public Jdbi initWithJdbi(DBUpdater dbVersion) {
-        initDatasource(dbVersion);
+    public Jdbi initWithJdbi(DBUpdater dbUpdater) {
+        initDatasource(dbUpdater);
         Jdbi jdbi = initJdbi();
         setInitialzed();
         return jdbi;
