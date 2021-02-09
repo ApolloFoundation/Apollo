@@ -30,7 +30,7 @@ import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class SendMoney extends CreateTransaction {
+public final class SendMoney extends CreateTransactionHandler {
 
     public SendMoney() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "amountATM");

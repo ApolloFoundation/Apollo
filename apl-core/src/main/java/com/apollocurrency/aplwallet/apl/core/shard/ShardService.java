@@ -302,6 +302,10 @@ public class ShardService {
         return shardDao.getLastShard();
     }
 
+    public Shard getLastCompletedOrArchivedShard() {
+        return shardDao.getLastCompletedOrArchivedShard();
+    }
+
     public List<Shard> getShardsByBlockHeightRange(int heightFrom, int heightTo) {
         // select possibly - none, one, two shard's records by specified height range
         List<Shard> foundShards = shardDao.getCompletedBetweenBlockHeight(heightFrom, heightTo); // reverse params

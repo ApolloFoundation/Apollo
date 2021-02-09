@@ -7,14 +7,15 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
-import com.apollocurrency.aplwallet.apl.util.rlp.WriteBuffer;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -45,7 +46,7 @@ class SmcCallMethodAttachmentTest {
     @Test
     void putMyBytes() {
         //GIVEN
-        WriteBuffer buffer = new RlpWriteBuffer();
+        RlpWriteBuffer buffer = new RlpWriteBuffer();
         RlpList.RlpListBuilder listBuilder = RlpList.builder();
         expected.putBytes(listBuilder);
         buffer.write(listBuilder.build());

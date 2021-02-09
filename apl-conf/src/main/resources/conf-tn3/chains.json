@@ -51,7 +51,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 50000
+          "frequency": 10000
         },
         "transactionFeeSettings": {
           "feeRates": [
@@ -85,7 +85,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 1000
+          "frequency": 2000
         },
         "transactionFeeSettings": {
           "feeRates": [

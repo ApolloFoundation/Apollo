@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSTagTable;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
@@ -51,7 +51,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountLedgerServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
@@ -93,24 +93,24 @@ public class DGSObserverTest extends DbContainerBaseTest {
     private TransactionTestData td = new TransactionTestData();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-            PropertiesHolder.class, BlockchainConfig.class, DaoConfig.class,
-            GlobalSyncImpl.class,
-            FullTextConfigImpl.class,
-            DGSPublicFeedbackTable.class,
-            TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
-            TransactionBuilder.class,
-            DGSFeedbackTable.class,
-            DGSGoodsTable.class,
-            DGSTagTable.class,
-            DGSPurchaseTable.class,
-            DGSServiceImpl.class,
-            DGSObserver.class,
-            DerivedDbTablesRegistryImpl.class,
-            TimeServiceImpl.class, BlockDaoImpl.class,
-            BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
-            TransactionDaoImpl.class,
-            BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class,
-            BlockchainConfig.class)
+        PropertiesHolder.class, BlockchainConfig.class, DaoConfig.class,
+        GlobalSyncImpl.class,
+        FullTextConfigImpl.class,
+        DGSPublicFeedbackTable.class,
+        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionBuilderFactory.class,
+        DGSFeedbackTable.class,
+        DGSGoodsTable.class,
+        DGSTagTable.class,
+        DGSPurchaseTable.class,
+        DGSServiceImpl.class,
+        DGSObserver.class,
+        DerivedDbTablesRegistryImpl.class,
+        TimeServiceImpl.class, BlockDaoImpl.class,
+        BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
+        TransactionDaoImpl.class,
+        BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class,
+        BlockchainConfig.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))

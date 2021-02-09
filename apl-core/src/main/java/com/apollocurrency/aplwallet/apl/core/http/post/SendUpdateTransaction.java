@@ -24,12 +24,12 @@ import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
 @Deprecated
-public final class SendUpdateTransaction extends CreateTransaction {
+public final class SendUpdateTransaction extends CreateTransactionHandler {
 
     public SendUpdateTransaction() {
         super(new APITag[]{APITag.UPDATE, APITag.CREATE_TRANSACTION}, "architecture", "platform", "hash", "version", "urlFirstPart",
-            "urlSecondPart",
-            "level");
+                "urlSecondPart",
+                "level");
     }
 
     @Override

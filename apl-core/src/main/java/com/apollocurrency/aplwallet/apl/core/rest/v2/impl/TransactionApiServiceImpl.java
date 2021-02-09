@@ -6,13 +6,17 @@ import com.apollocurrency.aplwallet.api.v2.model.BaseResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionInfoResp;
 import com.apollocurrency.aplwallet.api.v2.model.TxRequest;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TransactionInfoMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -31,22 +35,27 @@ import java.util.Objects;
 @RequestScoped
 public class TransactionApiServiceImpl implements TransactionApiService {
 
+    private final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
     private final TxReceiptMapper txReceiptMapper;
     private final TransactionInfoMapper transactionInfoMapper;
-    private final TransactionBuilder transactionBuilder;
+    private final TransactionBuilderFactory transactionBuilderFactory;
     private final MemPool memPool;
+    private final TxBContext txBContext;
 
     @Inject
     public TransactionApiServiceImpl(MemPool memPool,
+                                     BlockchainConfig blockchainConfig,
                                      Blockchain blockchain,
                                      TxReceiptMapper txReceiptMapper,
-                                     TransactionInfoMapper transactionInfoMapper, TransactionBuilder transactionBuilder) {
+                                     TransactionInfoMapper transactionInfoMapper, TransactionBuilderFactory transactionBuilderFactory) {
         this.memPool = Objects.requireNonNull(memPool);
         this.blockchain = Objects.requireNonNull(blockchain);
         this.txReceiptMapper = Objects.requireNonNull(txReceiptMapper);
         this.transactionInfoMapper = Objects.requireNonNull(transactionInfoMapper);
-        this.transactionBuilder = transactionBuilder;
+        this.transactionBuilderFactory = transactionBuilderFactory;
+        this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
+        this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }
 
     /*
@@ -82,13 +91,16 @@ public class TransactionApiServiceImpl implements TransactionApiService {
                 log.trace("API_V2: Broadcast transaction: tx={}", req.getTx());
             }
             byte[] tx = Convert.parseHexString(req.getTx());
-            Transaction.Builder txBuilder = transactionBuilder.newTransactionBuilder(tx);
-            Transaction newTx = txBuilder.build();
+            Transaction newTx = transactionBuilderFactory.newTransaction(tx);
+
+            Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+            txBContext.createSerializer(newTx.getVersion()).serialize(newTx, signedTxBytes);
+
             if (log.isTraceEnabled()) {
                 log.trace("API_V2: parsed transaction=[{}] attachment={}", newTx.getType(), newTx.getAttachment());
+                log.trace(" Given {}", req.getTx());
+                log.trace("Actual {}", Convert.toHexString(signedTxBytes.array()));
             }
-            log.warn("Given {}", req.getTx());
-            log.warn("Actua {}", Convert.toHexString(newTx.getCopyTxBytes()));
 
             boolean rc = memPool.softBroadcast(newTx);
             if (rc) {

@@ -4,8 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
+import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
@@ -13,6 +14,7 @@ import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  *
@@ -55,8 +57,25 @@ public abstract class AbstractAppendix implements Appendix {
 
     public abstract int getMySize();
 
+    /**
+     * Returns the size of payload i.e. payable transaction part
+     *
+     * @return size in bytes
+     */
     public int getMyFullSize() {
         return getMySize();
+    }
+
+    @Override
+    public void putBytes(WriteBuffer buffer) {
+        int size = getSize();
+        if (size > 0) {
+            ByteBuffer appBuffer = ByteBuffer.allocate(size);
+            appBuffer.order(ByteOrder.LITTLE_ENDIAN);
+            putBytes(appBuffer);
+
+            buffer.write(appBuffer.array());
+        }
     }
 
     /**

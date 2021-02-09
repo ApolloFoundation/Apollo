@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.rlp;
 
+import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
 import org.bouncycastle.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.web3j.rlp.RlpType;
@@ -99,23 +100,25 @@ class RlpWriteBufferTest {
             + Numeric.toHexStringNoPrefix(Arrays.concatenate(new byte[]{(byte) 0x91}, value4.toByteArray()));
 
         //WHEN
-        WriteBuffer buffer = new RlpWriteBuffer();
+        RlpWriteBuffer rlpWriteBuffer = new RlpWriteBuffer();
         List<RlpType> list = RlpList.builder()
             .add(value3)
             .add(value2)
             .add(value4)
             .build();
 
-        byte[] out = buffer
-                    .write(value1)
-                    .write(value2)
-                    .write(list)
-                    .write(value4)
-                    .toByteArray();
+        rlpWriteBuffer
+            .write(value1)
+            .write(value2);
+        rlpWriteBuffer
+            .write(list)
+            .write(value4);
+
+        byte[] out = rlpWriteBuffer.toByteArray();
 
         //THEN
         assertNotNull(out);
-        System.out.println(Numeric.toHexString(out));
+        //System.out.println(Numeric.toHexString(out));
 
         assertEquals(expected, Numeric.toHexString(out));
     }

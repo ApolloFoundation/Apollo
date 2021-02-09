@@ -11,20 +11,12 @@ import java.nio.ByteBuffer;
 
 public abstract class SmcAbstractAttachment extends AbstractAttachment {
 
-    public SmcAbstractAttachment(ByteBuffer buffer) {
-        super(buffer);
-    }
-
-    public SmcAbstractAttachment(RlpReader reader) {
+    SmcAbstractAttachment(RlpReader reader) {
         super(reader);
     }
 
-    public SmcAbstractAttachment(JSONObject attachmentData) {
+    SmcAbstractAttachment(JSONObject attachmentData) {
         super(attachmentData);
-    }
-
-    public SmcAbstractAttachment(int version) {
-        super(version);
     }
 
     public SmcAbstractAttachment() {
@@ -42,7 +34,7 @@ public abstract class SmcAbstractAttachment extends AbstractAttachment {
 
     @Override
     public int getMySize() {
-        return -1;
+        return 0;//TODO need to research
     }
 
     @Override

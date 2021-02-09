@@ -52,7 +52,7 @@ public class TxReceiptRowMapper implements RowMapper<TxReceipt> {
             long feeATM = rs.getLong("fee");
             byte version = rs.getByte("version");
 
-            SignatureParser parser = SignatureToolFactory.createParser(version).orElseThrow(UnsupportedTransactionVersion::new);
+            SignatureParser parser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
             ByteBuffer signatureBuffer = ByteBuffer.wrap(rs.getBytes("signature"));
             Signature signature = parser.parse(signatureBuffer);
 

@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,6 +19,8 @@ import java.util.Objects;
 @Slf4j
 @Singleton
 public class TransactionVersionValidator {
+    public static final int DEFAULT_VERSION = 1;
+    public static final int LATEST_VERSION = 2;
     private final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
 
@@ -35,7 +37,7 @@ public class TransactionVersionValidator {
         if (blockchainConfig.isTransactionV2ActiveAtHeight(blockchain.getHeight())) {
             return 2;
         }
-        return 1;
+        return DEFAULT_VERSION;
     }
 
     public boolean isValidVersion(Transaction transaction) {

@@ -4,13 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.converter.db;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
@@ -31,15 +30,19 @@ import java.nio.ByteOrder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/**
+ * @deprecated use #TransactionEntityRowMapper and #TransactionEntityToModelConverter
+ */
+@Deprecated(forRemoval = true)
 @Singleton
 public class TransactionRowMapper implements RowMapper<Transaction> {
     private final TransactionTypeFactory factory;
-    private final TransactionBuilder transactionBuilder;
+    private final TransactionBuilderFactory transactionBuilderFactory;
 
     @Inject
-    public TransactionRowMapper(TransactionTypeFactory factory, TransactionBuilder transactionBuilder) {
+    public TransactionRowMapper(TransactionTypeFactory factory, TransactionBuilderFactory transactionBuilderFactory) {
         this.factory = factory;
-        this.transactionBuilder = transactionBuilder;
+        this.transactionBuilderFactory = transactionBuilderFactory;
     }
 
 
@@ -65,7 +68,7 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
             long ecBlockId = rs.getLong("ec_block_id");
             byte version = rs.getByte("version");
 
-            SignatureParser parser = SignatureToolFactory.createParser(version).orElseThrow(UnsupportedTransactionVersion::new);
+            SignatureParser parser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
             ByteBuffer signatureBuffer = ByteBuffer.wrap(rs.getBytes("signature"));
             Signature signature = parser.parse(signatureBuffer);
 
@@ -87,8 +90,8 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
             }
             TransactionType transactionType = factory.findTransactionType(type, subtype);
-            TransactionImpl.BuilderImpl builder = transactionBuilder.newTransactionBuilder(version, senderPublicKey,
-                amountATM, feeATM, deadline, transactionType != null && buffer != null ? transactionType.parseAttachment(buffer) : null, timestamp)
+            Transaction.Builder builder = transactionBuilderFactory.newUnsignedTransactionBuilder(version, senderPublicKey,
+                amountATM, feeATM, deadline, transactionType != null ? transactionType.parseAttachment(buffer) : null, timestamp)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
                 .blockId(blockId)
                 .height(height)
@@ -98,7 +101,6 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
                 .fullHash(fullHash)
                 .ecBlockHeight(ecBlockHeight)
                 .ecBlockId(ecBlockId)
-                .dbId(dbId)
                 .index(transactionIndex);
 
             if (transactionType != null && transactionType.canHaveRecipient()) {
@@ -129,10 +131,8 @@ public class TransactionRowMapper implements RowMapper<Transaction> {
                 builder.appendix(new PrunableEncryptedMessageAppendix(buffer));
             }
 
-            Transaction transaction = builder.build();
-            transaction.sign(signature);
-
-            return transaction;
+            builder.signature(signature);
+            return builder.build();
 
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

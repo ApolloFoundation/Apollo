@@ -37,19 +37,19 @@ public class SignatureToolFactory {
     private static final SignatureParser[] parsers = new SignatureParser[]
         {new SigData.Parser(), new MultiSigData.Parser(), new MultiSigData.ParserV3()};
 
-    private static final DocumentSigner[] sigSigners = new DocumentSigner[]{
-          new DocumentSignerV1()
-        , new MultiSigSigner(parsers[1], DEFAULT_MULTISIG_V3_PARAMS)
-        , new MultiSigSigner(parsers[2], DEFAULT_MULTISIG_V3_PARAMS)
-    };
+    private static final DocumentSigner[] docSigners = new DocumentSigner[] {
+            new DocumentSignerV1()
+            , new MultiSigSigner(parsers[1], DEFAULT_MULTISIG_V3_PARAMS)
+            , new MultiSigSigner(parsers[2], DEFAULT_MULTISIG_V3_PARAMS)
+        };
 
     public static Signature createSignature(byte[] signature) {
         return new SigData(Objects.requireNonNull(signature));
     }
 
-    public static Credential createCredential(int version, byte[]... keys) {
+    public static Credential createCredential(int transactionVersion, byte[]... keys) {
         Objects.requireNonNull(keys);
-        switch (version) {
+        switch (transactionVersion) {
             case 0:
             case 1:
                 return new SignatureCredential(keys[0]);
@@ -57,7 +57,7 @@ public class SignatureToolFactory {
             case 3:
                 return new MultiSigCredential(keys.length, keys);
             default:
-                throw new UnsupportedTransactionVersion("Can't crate credential a given transaction version: " + version);
+                throw new UnsupportedTransactionVersion("Can't crate credential a given transaction version: " + transactionVersion);
         }
     }
 
@@ -65,12 +65,12 @@ public class SignatureToolFactory {
         return selectTool(transactionVersion, validators);
     }
 
-    public static Optional<SignatureParser> createParser(int transactionVersion) {
+    public static Optional<SignatureParser> selectParser(int transactionVersion) {
         return selectTool(transactionVersion, parsers);
     }
 
-    public static Optional<DocumentSigner> selectBuilder(int transactionVersion) {
-        return selectTool(transactionVersion, sigSigners);
+    public static Optional<DocumentSigner> selectSigner(int transactionVersion) {
+        return selectTool(transactionVersion, docSigners);
     }
 
     private static <T> Optional<T> selectTool(int transactionVersion, T[] tools) {

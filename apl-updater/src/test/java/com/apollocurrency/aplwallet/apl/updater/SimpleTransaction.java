@@ -1,11 +1,11 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -43,6 +43,15 @@ public class SimpleTransaction implements Transaction {
         this(tr.getId(), tr.getType(), tr.getHeight());
     }
 
+    public void setAttachment(Attachment attachment) {
+        this.attachment = attachment;
+    }
+
+    @Override
+    public Transaction getTransactionImpl() {
+        return this;
+    }
+
     @Override
     public boolean isUnconfirmedDuplicate(Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> unconfirmedDuplicates) {
         return false;
@@ -51,15 +60,6 @@ public class SimpleTransaction implements Transaction {
     @Override
     public long getId() {
         return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    @Override
-    public long getDbId() {
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -75,11 +75,6 @@ public class SimpleTransaction implements Transaction {
     @Override
     public boolean hasValidSignature() {
         return true;
-    }
-
-    @Override
-    public void withValidSignature() {
-
     }
 
     @Override
@@ -111,9 +106,11 @@ public class SimpleTransaction implements Transaction {
         return null;
     }
 
+    @Override
     public void setBlock(Block block) {
     }
 
+    @Override
     public void unsetBlock() {
     }
 
@@ -122,6 +119,7 @@ public class SimpleTransaction implements Transaction {
         return 0;
     }
 
+    @Override
     public void setIndex(int index) {
     }
 
@@ -171,10 +169,6 @@ public class SimpleTransaction implements Transaction {
     }
 
     @Override
-    public void sign(Signature signature) {
-    }
-
-    @Override
     public Signature getSignature() {
         return null;
     }
@@ -194,40 +188,13 @@ public class SimpleTransaction implements Transaction {
         return type;
     }
 
-    public void setType(TransactionType type) {
-        this.type = type;
-    }
-
     @Override
     public Attachment getAttachment() {
         return attachment;
     }
 
-    public void setAttachment(Attachment attachment) {
-        this.attachment = attachment;
-    }
-
-    @Override
-    public byte[] getCopyTxBytes() {
-        return new byte[0];
-    }
-
-    public byte[] bytes() {
-        return new byte[0];
-    }
-
-    @Override
-    public byte[] getUnsignedBytes() {
-        return new byte[0];
-    }
-
     @Override
     public byte getVersion() {
-        return 0;
-    }
-
-    @Override
-    public int getFullSize() {
         return 0;
     }
 
@@ -261,10 +228,12 @@ public class SimpleTransaction implements Transaction {
         return null;
     }
 
+    @Override
     public boolean hasPrunablePlainMessage() {
         return false;
     }
 
+    @Override
     public boolean hasPrunableEncryptedMessage() {
         return false;
     }
@@ -322,16 +291,6 @@ public class SimpleTransaction implements Transaction {
     @Override
     public long getLongTimestamp() {
         return 0;
-    }
-
-    @Override
-    public byte[] rlpEncodedTx() {
-        return new byte[0];
-    }
-
-    @Override
-    public byte[] rlpEncodedUnsignedTx() {
-        return new byte[0];
     }
 
     @Override

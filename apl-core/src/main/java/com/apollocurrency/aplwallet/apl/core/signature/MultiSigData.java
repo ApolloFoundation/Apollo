@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.util.rlp.RlpConverter;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
-import com.apollocurrency.aplwallet.apl.util.rlp.WriteBuffer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.BufferUnderflowException;
@@ -34,24 +33,34 @@ import static com.apollocurrency.aplwallet.apl.core.signature.MultiSig.KeyId.KEY
 class MultiSigData implements MultiSig {
     private final SignatureParser parser;
     private final short count;
+    private final byte[] payload;
     private final List<String> signatureParams;
     private final Map<KeyId, byte[]> signaturesMap;
     private boolean verified = false;
 
     public MultiSigData(byte[] publicKey, byte[] signature) {
-        this(1,List.of(), new Parser());
+        this(1, Parser.PAYLOAD_RESERVED, List.of(), new Parser());
         addSignature(publicKey, signature);
     }
 
     public MultiSigData(int count, SignatureParser parser) {
-        this(count, List.of(), parser);
+        this(count, Parser.PAYLOAD_RESERVED, List.of(), parser);
+    }
+
+    public MultiSigData(int count, byte[] payload, SignatureParser parser) {
+        this(count, payload, List.of(), parser);
     }
 
     public MultiSigData(int count, List<String> signatureParams, SignatureParser parser) {
+        this(count, Parser.PAYLOAD_RESERVED, signatureParams, parser);
+    }
+
+    public MultiSigData(int count, byte[] payload, List<String> signatureParams, SignatureParser parser) {
         if (count < 1) {
             throw new IllegalArgumentException("The count is less than 1;");
         }
         this.count = (short) count;
+        this.payload = payload;
         //TODO: parse the signatureParams
         this.signatureParams = signatureParams;
         this.parser = Objects.requireNonNull(parser);
@@ -85,6 +94,11 @@ class MultiSigData implements MultiSig {
     @Override
     public List<String> getParams() {
         return signatureParams;
+    }
+
+    @Override
+    public byte[] getPayload() {
+        return payload;
     }
 
     @Override
@@ -154,10 +168,10 @@ class MultiSigData implements MultiSig {
         return new KeyIdImpl(key);
     }
 
-    private static class KeyIdImpl implements KeyId {
+    static class KeyIdImpl implements KeyId {
         private final byte[] key;
 
-        private KeyIdImpl(byte[] key) {
+        KeyIdImpl(byte[] key) {
             this.key = Arrays.copyOf(Objects.requireNonNull(key), KEY_LENGTH);
         }
 
@@ -312,7 +326,7 @@ class MultiSigData implements MultiSig {
         @Override
         public byte[] bytes(Signature signature) {
             MultiSig multiSig = (MultiSig) signature;
-            WriteBuffer buffer = new RlpWriteBuffer();
+            RlpWriteBuffer buffer = new RlpWriteBuffer();
             buffer.write(RlpList.ofStrings(multiSig.getParams()));
             RlpList.RlpListBuilder listBuilder = RlpList.builder();
             multiSig.signaturesMap()

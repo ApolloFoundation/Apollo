@@ -21,7 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.api.p2p.request.ProcessTransactionsRequest;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.ProcessTransactionsRequestParser;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConverter;

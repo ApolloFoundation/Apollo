@@ -40,7 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
@@ -86,7 +86,7 @@ public class DGSPublicFeedbackTableTest extends ValuesDbTableTest<DGSPublicFeedb
         TransactionDaoImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
         TransactionRowMapper.class, TransactionEntityRowMapper.class, TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
-        TransactionBuilder.class,
+        TransactionBuilderFactory.class,
         GenesisPublicKeyTable.class)
         .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(getDatabaseManager().getJdbi(), Jdbi.class))

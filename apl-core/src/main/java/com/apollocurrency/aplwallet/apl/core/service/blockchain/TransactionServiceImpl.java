@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToMod
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -78,7 +78,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public Transaction findTransactionCrossShardingByFullHash(byte[] fullHash, int height) {
-        TransactionalDataSource dataSource = shardDbExplorer.getDatasourceWithShardingByTransactionId(Convert.fullHashToId(fullHash));
+        TransactionalDataSource dataSource = shardDbExplorer.getDatasourceWithShardingByTransactionId(Convert.transactionFullHashToId(fullHash));
         TransactionEntity entity = transactionDao.findTransactionByFullHash(fullHash, height, dataSource);
         return toModelConverter.convert(entity);
     }
