@@ -27,8 +27,12 @@ tags:
   - name: info
     description: An information
 
+  - name: blockchain
+    description: Operations with blockchain state.
+
 paths:
-  /@@account:
+
+  /@@account/child:
     post:
       tags:
         - account
@@ -127,10 +131,11 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
         - bearerAuth: []
+
   /@@account/{account}:
     get:
       tags:
-        - account
+        - blockchain
       summary: Returns the details account information
       operationId: getAccountInfo
       parameters:
@@ -141,6 +146,24 @@ paths:
           schema:
             type: string
             example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        - name: includeAssets
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: include asserts to the response
+        - name: includeCurrencies
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: include currencies to the response
+        - name: includeLessors
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: include lessors to the response
       responses:
         200:
           description: successful operation
@@ -152,6 +175,175 @@ paths:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
+
+
+  /@@transactions/{transactionId}:
+    get:
+      tags:
+        - blockchain
+      summary: Get transaction object given transaction id.
+      description: Return the detail information about transaction by id.
+      operationId: getTxById
+      parameters:
+        - name: transactionId
+          in: path
+          description: Transaction id
+          required: true
+          schema:
+            type: string
+            format: hex_bytearray
+            example: '1aa130eb6043151ad6040f16701'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionInfoResp'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+
+  /@@transactions:
+    get:
+      tags:
+        - blockchain
+      summary: Get transactions following given filter.
+      operationId: getTxsByFilter
+      description: Return the detail information about transactions by filter.
+      parameters:
+          - in: query
+            name: account
+            description: The account id
+            schema:
+              type: string
+              example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+
+          - in: query
+            name: type
+            description: Transaction type
+            schema:
+              type: string
+              format: int8
+              example: '2'
+
+
+          - in: query
+            name: subtype
+            description: Transaction subtype
+            schema:
+              type: string
+              format: int8
+              example: '2'
+
+          - in: query
+            name: timestamp
+            description: Show transactions with tx_timestamp >= timestamp
+            schema:
+              type: integer
+              format: int64
+              example: 1591696372000
+
+          - in: query
+            name: numberOfConfirmations
+            description: the number of transaction confirmations
+            schema:
+              type: integer
+              format: int32
+
+          - in: query
+            name: withMessage
+            description: show transaction with message
+            schema:
+              type: boolean
+              default: false
+
+          - in: query
+            name: phasedOnly
+            description: show only phased transactions
+            schema:
+              type: boolean
+              default: false
+
+          - in: query
+            name: nonPhasedOnly
+            description: show only non phased transactions
+            schema:
+              type: boolean
+              default: false
+
+          - in: query
+            name: includeExpiredPrunable
+            description: include transactions with expired prunables
+            schema:
+              type: boolean
+              default: false
+
+          - in: query
+            name: includePhasingResult
+            description: include transactions with phasing results
+            schema:
+              type: boolean
+              default: false
+
+          - in: query
+            name: executedOnly
+            description: show only executed transactions
+            schema:
+              type: boolean
+              default: false
+
+          - $ref: '#/components/parameters/offsetParam'
+          - $ref: '#/components/parameters/limitParam'
+
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionInfoResp'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+    post:
+      tags:
+        - blockchain
+      summary: Broadcast a batch of transactions and return the transaction receipt list.
+      description: Asynchronously broadcast the batch of the signed transaction to the network. The transactions are immediately put into an unconfirmed transaction pool in the same order as in the batch and later are sending to the network.
+      operationId: broadcastTxs
+      requestBody:
+        description: an array of signed transactions, each item is a byte array in hex format
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/TxRequest'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+        401:
+          description: Not authenticated
+        403:
+          description: Access token does not have the required scope
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+
   /@@state/blockchain:
     get:
       tags:
@@ -341,96 +533,7 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
         - bearerAuth: []
-  /@@transaction:
-    post:
-      tags:
-        - tx
-      summary: Broadcast transaction and return transaction receipt.
-      description: |
-        Asynchronously broadcast the signed transaction to the network.
-          The transaction is validated and immediately put into an unconfirmed transaction pool
-          for further sending to the blockchain.
-      operationId: broadcastTx
-      requestBody:
-        description: the signed transaction is a byte array in hex format
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TxRequest'
-        required: true
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TxReceipt'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        409:
-          $ref: '#/components/responses/ConflictResource'
-        500:
-          $ref: '#/components/responses/ServerError'
-  /@@transaction/batch:
-    post:
-      tags:
-        - tx
-      summary: Broadcast a batch of transactions and return the transaction receipt list.
-      description: Asynchronously broadcast the batch of the signed transaction to the network. The transactions are immediately put into an unconfirmed transaction pool in the same order as in the batch and later are sending to the network.
-      operationId: broadcastTxBatch
-      requestBody:
-        description: an array of signed transactions, each item is a byte array in hex format
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/TxRequest'
-        required: true
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListResponse'
-        401:
-          description: Not authenticated
-        403:
-          description: Access token does not have the required scope
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-      security:
-        - bearerAuth: []
-  /@@transaction/{transaction}:
-    get:
-      tags:
-        - tx
-      summary: Get transaction object given transaction id.
-      description: Return the detail information about transaction by id.
-      operationId: getTxById
-      parameters:
-        - name: transaction
-          in: path
-          description: Transaction id
-          required: true
-          schema:
-            type: string
-            format: hex_bytearray
-            example: '1aa130eb6043151ad6040f16701'
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionInfoResp'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
+
   /@@operation/count:
     post:
       tags:
@@ -929,10 +1032,13 @@ components:
               type: string
               format: hex_bytearray
               example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
+
+
     AccountInfoResp:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
         - $ref: '#/components/schemas/AccountInfo'
+
     AccountInfo:
       type: object
       required:
@@ -959,12 +1065,98 @@ components:
           type: string
           format: integer
           example: '45225600000000'
+        forgedBalance:
+          type: string
+          format: integer
+          example: '45225600000000'
         status:
           type: string
           enum:
             - created
             - verified
           example: created
+        assetBalances:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetBalance'
+        unconfirmedAssetBalances:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetBalance'
+        currencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Currency'
+
+    AssetBalance:
+      type: object
+      properties:
+        asset:
+          type: string
+          format: hex_bytearray
+          description: Asset id
+          example: 'a2e9b946290b48b69985dc2e5a5860a1'
+        balance:
+          type: integer
+          format: int64
+          description: Asset balance. (ATU)
+          example: 100
+
+    Currency:
+      type: object
+      properties:
+        id:
+          type: string
+          format: hex_bytearray
+          description: Currency id
+          example: 'a2e9b946290b48b69985dc2e5a5860a1'
+
+        account:
+          type: string
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+
+        balance:
+          type: integer
+          format: int64
+          description: Currency balance. (ATU)
+          example: 98400000
+
+        unconfirmedBalance:
+          type: integer
+          format: int64
+          description: Currency unconfirmed balance.
+          example: 98400000
+        name:
+          type: string
+          example: 'TTT'
+        code:
+          type: string
+          example: 'TTT'
+        type:
+          description: |
+            The currency type.
+            There are six types:
+              EXCHANGEABLE = 0;
+              CONTROLLABLE = 1;
+              MINTABLE = 2;
+              NON_SHUFFLEABLE = 3;
+              RESERVABLE = 4;
+              CLAIMABLE = 5;
+          type: integer
+          format: int8
+          example: 1
+        decimals:
+          type: integer
+          format: int8
+          example: 5
+        issuanceHeight:
+          type: integer
+          format: int8
+          example: 0
+        issuerAccount:
+          type: string
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+
     QueryObject:
       type: object
       properties:
@@ -1133,6 +1325,7 @@ components:
               format: int64
               description: the amount of block transaction
               example: 1758
+
     CountResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
@@ -1233,6 +1426,28 @@ components:
             should not be displayed to user. Main purpose is create bug reports with meaningful content.
           type: string
           example: 'Description of failure'
+
+  parameters:
+    offsetParam:
+      in: query
+      name: offset
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: The number of items to skip before starting to collect the result set.
+    limitParam:
+      in: query
+      name: limit
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: The numbers of items to return.
+
   responses:
     BadRequest:
       description: Bad request - malformed request or wrong parameters
