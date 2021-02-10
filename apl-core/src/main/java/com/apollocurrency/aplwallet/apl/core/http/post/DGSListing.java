@@ -43,7 +43,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_NAME;
 
 @Vetoed
-public final class DGSListing extends CreateTransaction {
+public final class DGSListing extends CreateTransactionHandler {
 
     private static final JSONStreamAware MESSAGE_NOT_BINARY;
     private static final JSONStreamAware MESSAGE_NOT_IMAGE;

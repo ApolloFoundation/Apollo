@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS_NOTFORSALE;
 
 @Vetoed
-public final class BuyAlias extends CreateTransaction {
+public final class BuyAlias extends CreateTransactionHandler {
     private final AliasService aliasService;
 
     public BuyAlias() {

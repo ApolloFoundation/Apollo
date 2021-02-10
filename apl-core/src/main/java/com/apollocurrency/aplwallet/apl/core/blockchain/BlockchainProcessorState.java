@@ -2,7 +2,7 @@
  * Copyright © 2020-2021 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
+package com.apollocurrency.aplwallet.apl.core.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 

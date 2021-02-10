@@ -31,7 +31,7 @@ import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class SendMessage extends CreateTransaction {
+public final class SendMessage extends CreateTransactionHandler {
 
     public SendMessage() {
         super(new APITag[]{APITag.MESSAGES, APITag.CREATE_TRANSACTION}, "recipient");

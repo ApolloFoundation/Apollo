@@ -84,7 +84,7 @@ public final class Convert {
 
     public static long getId(byte[] publicKey) {
         byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
-        return Convert.fullHashToId(publicKeyHash);
+        return Convert.transactionFullHashToId(publicKeyHash);
     }
 
     public static String toHexString(byte[] bytes) {
@@ -208,12 +208,11 @@ public final class Convert {
         return "APL-" + Crypto.rsEncode(accountId);
     }
 
-    public static long fullHashToId(byte[] hash) {
+    public static long transactionFullHashToId(byte[] hash) {
         if (hash == null || hash.length < 8) {
             throw new IllegalArgumentException("Invalid hash: " + Arrays.toString(hash));
         }
-        BigInteger bigInteger = new BigInteger(1, new byte[]{hash[7], hash[6], hash[5], hash[4], hash[3], hash[2], hash[1], hash[0]});
-        return bigInteger.longValue();
+        return AplIdGenerator.TRANSACTION.getIdByHash(hash).longValue();
     }
 
     public static byte[] toPartialHash(byte[] hash) {

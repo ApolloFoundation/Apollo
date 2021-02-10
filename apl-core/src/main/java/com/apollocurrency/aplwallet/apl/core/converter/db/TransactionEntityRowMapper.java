@@ -28,9 +28,10 @@ public class TransactionEntityRowMapper implements RowMapper<TransactionEntity> 
     public TransactionEntity mapWithException(ResultSet rs, StatementContext ctx) throws AplException.NotValidException {
         try {
             TransactionEntity entity = TransactionEntity.builder()
-                .version(rs.getByte("version"))
-                .type(rs.getByte("type"))
-                .subtype(rs.getByte("subtype"))
+                    .version(rs.getByte("version"))
+                    .type(rs.getByte("type"))
+                    .subtype(rs.getByte("subtype"))
+                    .id(rs.getLong("id"))
                 .timestamp(rs.getInt("timestamp"))
                 .deadline(rs.getShort("deadline"))
                 .amountATM(rs.getLong("amount"))
@@ -41,7 +42,6 @@ public class TransactionEntityRowMapper implements RowMapper<TransactionEntity> 
                 .signatureBytes(rs.getBytes("signature"))
                 .blockId(rs.getLong("block_id"))
                 .height(rs.getInt("height"))
-                .id(rs.getLong("id"))
                 .senderId(rs.getLong("sender_id"))
                 .recipientId(rs.getLong("recipient_id"))
                 .attachmentBytes(rs.getBytes("attachment_bytes"))

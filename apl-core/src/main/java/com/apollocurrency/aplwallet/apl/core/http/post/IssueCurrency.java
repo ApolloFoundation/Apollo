@@ -92,12 +92,12 @@ import javax.servlet.http.HttpServletRequest;
  * @see com.apollocurrency.aplwallet.apl.crypto.HashFunction
  */
 @Vetoed
-public final class IssueCurrency extends CreateTransaction {
+public final class IssueCurrency extends CreateTransactionHandler {
 
     public IssueCurrency() {
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION},
-            "name", "code", "description", "type", "initialSupply", "reserveSupply", "maxSupply", "issuanceHeight", "minReservePerUnitATM",
-            "minDifficulty", "maxDifficulty", "ruleset", "algorithm", "decimals");
+                "name", "code", "description", "type", "initialSupply", "reserveSupply", "maxSupply", "issuanceHeight", "minReservePerUnitATM",
+                "minDifficulty", "maxDifficulty", "ruleset", "algorithm", "decimals");
     }
 
     @Override

@@ -18,7 +18,7 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
+package com.apollocurrency.aplwallet.apl.core.blockchain;
 
 import java.math.BigInteger;
 import java.util.List;

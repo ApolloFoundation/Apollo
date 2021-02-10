@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
@@ -17,10 +18,11 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +57,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 @Slf4j
 @Tag("slow")
@@ -62,6 +66,13 @@ class BlockDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer);
+
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
+
+    {
+        doReturn(chain).when(blockchainConfig).getChain();
+    }
 
     private BlockDao blockDao;
     private TransactionDaoImpl transactionDao;
@@ -82,7 +93,7 @@ class BlockDaoTest extends DbContainerBaseTest {
             new TransactionEntityRowMapper(),
             new PrunableTxRowMapper(txd.getTransactionTypeFactory()),
             extension.getDatabaseManager());
-        toModelConverter = new TransactionEntityToModelConverter(txd.getTransactionTypeFactory(), new TransactionBuilder(txd.getTransactionTypeFactory()));
+        toModelConverter = new TransactionEntityToModelConverter(txd.getTransactionTypeFactory(), new TransactionBuilderFactory(txd.getTransactionTypeFactory(), blockchainConfig));
         blockEntityToModelConverter = new BlockEntityToModelConverter();
         blockModelToEntityConverter = new BlockModelToEntityConverter();
     }

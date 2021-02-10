@@ -15,14 +15,14 @@
  */
 
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
+package com.apollocurrency.aplwallet.apl.core.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -37,22 +37,19 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
+import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import lombok.extern.slf4j.Slf4j;
 
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionUtils.calculateFullHash;
+
 @Slf4j
 public class TransactionImpl implements Transaction {
 
@@ -87,8 +84,6 @@ public class TransactionImpl implements Transaction {
     private volatile String stringId;
     private volatile long senderId;
     private volatile byte[] fullHash;
-    private volatile byte[] bytes = null;
-    private volatile long dbId;
     private volatile boolean hasValidSignature = false;
 
     TransactionImpl(BuilderImpl builder) {
@@ -110,7 +105,6 @@ public class TransactionImpl implements Transaction {
         this.fullHash = builder.fullHash;
         this.ecBlockHeight = builder.ecBlockHeight;
         this.ecBlockId = builder.ecBlockId;
-        this.dbId = builder.dbId;
         this.feeATM = builder.feeATM;
         List<AbstractAppendix> list = new ArrayList<>();
         if ((this.attachment = builder.attachment) != null) {
@@ -146,6 +140,18 @@ public class TransactionImpl implements Transaction {
         this.signature = builder.signature;
     }
 
+    final void sign(Signature signature, Result unsignedRawTransaction) {
+        this.signature = signature;
+        this.fullHash = calculateFullHash(unsignedRawTransaction.array(), signature.bytes());
+        this.id = AplIdGenerator.TRANSACTION.getIdByHash(fullHash).longValue();
+        this.stringId = Long.toUnsignedString(id);
+    }
+
+    @Override
+    public Transaction getTransactionImpl() {
+        return this;
+    }
+
     @Override
     public short getDeadline() {
         return deadline;
@@ -176,15 +182,6 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public long getDbId() {
-        return dbId;
-    }
-
-    public void setDbId(long dbId) {
-        this.dbId = dbId;
-    }
-
-    @Override
     public String getReferencedTransactionFullHash() {
         return Convert.toHexString(referencedTransactionFullHash);
     }
@@ -199,14 +196,9 @@ public class TransactionImpl implements Transaction {
         return height;
     }
 
+    @Override
     public void setHeight(int height) {
         this.height = height;
-    }
-
-    @Override
-    public void sign(Signature signature) {
-        this.signature = signature;
-        this.bytes = null;
     }
 
     @Override
@@ -293,17 +285,7 @@ public class TransactionImpl implements Transaction {
     @Override
     public long getId() {
         if (id == 0) {
-            if (signature == null) {
-                throw new IllegalStateException("Transaction is not signed yet");
-            }
-            byte[] data = getUnsignedBytes();
-            byte[] signatureHash = Crypto.sha256().digest(signature.bytes());
-            MessageDigest digest = Crypto.sha256();
-            digest.update(data);
-            fullHash = digest.digest(signatureHash);
-            BigInteger bigInteger = new BigInteger(1, new byte[]{fullHash[7], fullHash[6], fullHash[5], fullHash[4], fullHash[3], fullHash[2], fullHash[1], fullHash[0]});
-            id = bigInteger.longValue();
-            stringId = bigInteger.toString();
+            throwSignaturePreConditionError("ID");
         }
         return id;
     }
@@ -311,12 +293,17 @@ public class TransactionImpl implements Transaction {
     @Override
     public String getStringId() {
         if (stringId == null) {
-            getId();
-            if (stringId == null) {
-                stringId = Long.toUnsignedString(id);
-            }
+            stringId = Long.toUnsignedString(getId());
         }
         return stringId;
+    }
+
+    @Override
+    public byte[] getFullHash() {
+        if (fullHash == null) {
+            throwSignaturePreConditionError("FULL_HASH");
+        }
+        return fullHash;
     }
 
     @Override
@@ -324,13 +311,13 @@ public class TransactionImpl implements Transaction {
         return Convert.toHexString(getFullHash());
     }
 
-    @Override
-    public byte[] getFullHash() {
-        if (fullHash == null) {
-            getId();
+/*    @Override
+    public int getFullSize() {
+        if (fullSize <= 0) {
+            throwSignaturePreConditionError("FULL_SIZE");
         }
-        return fullHash;
-    }
+        return fullSize;
+    }*/
 
     @Override
     public long getSenderId() {
@@ -342,12 +329,14 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public boolean hasValidSignature() {
-        return hasValidSignature;
+        return signature != null && hasValidSignature;
     }
 
-    @Override
-    public void withValidSignature() {
-        hasValidSignature = true;
+    public void withValidSignature(boolean verified) {
+        if (signature == null) {
+            throw new IllegalStateException("Transaction is not signed yet");
+        }
+        hasValidSignature = verified;
     }
 
     @Override
@@ -389,6 +378,7 @@ public class TransactionImpl implements Transaction {
         return prunablePlainMessage;
     }
 
+    @Override
     public boolean hasPrunablePlainMessage() {
         return prunablePlainMessage != null;
     }
@@ -398,65 +388,9 @@ public class TransactionImpl implements Transaction {
         return prunableEncryptedMessage;
     }
 
+    @Override
     public boolean hasPrunableEncryptedMessage() {
         return prunableEncryptedMessage != null;
-    }
-
-    public byte[] bytes() {
-        if (bytes == null) {
-            try {
-                ByteBuffer buffer = ByteBuffer.allocate(getSize());
-                buffer.order(ByteOrder.LITTLE_ENDIAN);
-                buffer.put(type.getSpec().getType());
-                buffer.put((byte) ((version << 4) | type.getSpec().getSubtype()));
-                buffer.putInt(timestamp);
-                buffer.putShort(deadline);
-                buffer.put(getSenderPublicKey());
-                buffer.putLong(type.canHaveRecipient() ? recipientId : GenesisImporter.CREATOR_ID);
-                buffer.putLong(amountATM);
-                buffer.putLong(feeATM);
-                if (referencedTransactionFullHash != null) {
-                    buffer.put(referencedTransactionFullHash);
-                } else {
-                    buffer.put(new byte[32]);
-                }
-                if (version < 2) {
-                    if (signature != null) {
-                        buffer.put(signature.bytes());
-                    } else {
-                        buffer.put(new byte[Signature.ECDSA_SIGNATURE_SIZE]);
-                    }
-                }
-                buffer.putInt(getFlags());
-                buffer.putInt(ecBlockHeight);
-                buffer.putLong(ecBlockId);
-                for (Appendix appendage : appendages) {
-                    appendage.putBytes(buffer);
-                }
-                if (version >= 2) {
-                    if (signature != null) {
-                        buffer.put(signature.bytes());
-                    }
-                }
-                bytes = buffer.array();
-            } catch (RuntimeException e) {
-                if (signature != null && log.isDebugEnabled()) {
-                    log.debug("Failed to get transaction bytes for transaction: {}", getId());
-                }
-                throw e;
-            }
-        }
-        return bytes;
-    }
-
-    @Override
-    public byte[] getUnsignedBytes() {
-        if (version < 2) {
-            return zeroSignature(getCopyTxBytes());
-        } else {
-            byte[] txBytes = bytes();
-            return Arrays.copyOf(txBytes, txV2HeaderSize() + appendagesSize);
-        }
     }
 
     @Override
@@ -495,84 +429,6 @@ public class TransactionImpl implements Transaction {
     @Override
     public int hashCode() {
         return (int) (getId() ^ (getId() >>> 32));
-    }
-
-
-    private int getSize() {
-        int signatureSize = 0;
-        if (version < 2) {
-            signatureSize = Signature.ECDSA_SIGNATURE_SIZE;
-        } else {
-            if (signature != null) {
-                signatureSize = signature.getSize();
-            }
-        }
-        return txV2HeaderSize() + appendagesSize + signatureSize;
-    }
-
-    @Override
-    public int getFullSize() {
-        int fullSize = getSize() - appendagesSize;
-        for (AbstractAppendix appendage : getAppendages()) {
-            fullSize += appendage.getFullSize();
-        }
-        return fullSize;
-    }
-
-    /**
-     * The transaction V2 header size, it doesn't contain the signature size
-     *
-     * @return the transaction V2 header size
-     */
-    private int txV2HeaderSize() {
-        return 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8 + 32 + 4 + 4 + 8;
-    }
-
-    private int signatureV1Offset() {
-        return 1 + 1 + 4 + 2 + 32 + 8 + 8 + 8 + 32;
-    }
-
-    private byte[] zeroSignature(byte[] data) {
-        if (version < 2) {
-            int start = signatureV1Offset();
-            for (int i = start; i < start + Signature.ECDSA_SIGNATURE_SIZE; i++) {
-                data[i] = 0;
-            }
-        }
-        return data;
-    }
-
-    private int getFlags() {
-        int flags = 0;
-        int position = 1;
-        if (message != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (encryptedMessage != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (publicKeyAnnouncement != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (encryptToSelfMessage != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (phasing != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (prunablePlainMessage != null) {
-            flags |= position;
-        }
-        position <<= 1;
-        if (prunableEncryptedMessage != null) {
-            flags |= position;
-        }
-        return flags;
     }
 
     /**
@@ -642,6 +498,14 @@ public class TransactionImpl implements Transaction {
         return type.isUnconfirmedDuplicate(this, duplicates);
     }
 
+    private void throwSignaturePreConditionError(String field) {
+        if (signature == null) {
+            throw new IllegalStateException("Transaction is not signed yet");
+        } else {
+            throw new IllegalStateException("The transaction " + field + " is not set for signed transaction");
+        }
+    }
+
     public static final class BuilderImpl implements Builder {
 
         private short deadline;
@@ -673,7 +537,6 @@ public class TransactionImpl implements Transaction {
         private int ecBlockHeight;
         private long ecBlockId;
         private short index = -1;
-        private long dbId = 0;
 
         public BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
                            AbstractAttachment attachment, int timestamp, TransactionType transactionType) {
@@ -785,15 +648,15 @@ public class TransactionImpl implements Transaction {
         }
 
         @Override
-        public BuilderImpl dbId(long dbId) {
-            this.dbId = dbId;
+        public BuilderImpl ecBlockId(long blockId) {
+            this.ecBlockId = blockId;
+            this.ecBlockSet = true;
             return this;
         }
 
         @Override
-        public BuilderImpl ecBlockId(long blockId) {
-            this.ecBlockId = blockId;
-            this.ecBlockSet = true;
+        public BuilderImpl id(long id) {
+            this.id = id;
             return this;
         }
 
@@ -803,37 +666,37 @@ public class TransactionImpl implements Transaction {
             return this;
         }
 
-        public BuilderImpl id(long id) {
-            this.id = id;
-            return this;
-        }
-
         @Override
         public BuilderImpl blockId(long blockId) {
             this.blockId = blockId;
             return this;
         }
 
+        @Override
         public BuilderImpl height(int height) {
             this.height = height;
             return this;
         }
 
+        @Override
         public BuilderImpl senderId(long senderId) {
             this.senderId = senderId;
             return this;
         }
 
+        @Override
         public BuilderImpl fullHash(byte[] fullHash) {
             this.fullHash = fullHash;
             return this;
         }
 
+        @Override
         public BuilderImpl blockTimestamp(int blockTimestamp) {
             this.blockTimestamp = blockTimestamp;
             return this;
         }
 
+        @Override
         public BuilderImpl index(short index) {
             this.index = index;
             return this;
