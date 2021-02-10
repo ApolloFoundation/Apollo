@@ -16,8 +16,8 @@ import javax.inject.Singleton;
 @Setter
 @Singleton
 public class ShardSchedulingConfig {
-    private static final int DEFAULT_MIN_DELAY = 10; // minutes
-    private static final int DEFAULT_MAX_DELAY = 60; // minutes
+    private static final int DEFAULT_MIN_DELAY = 600; // seconds
+    private static final int DEFAULT_MAX_DELAY = 3600; // seconds
 
     private final int minDelay;
     private final int maxDelay;

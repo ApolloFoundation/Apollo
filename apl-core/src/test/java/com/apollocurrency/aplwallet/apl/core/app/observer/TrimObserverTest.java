@@ -101,7 +101,7 @@ class TrimObserverTest {
 
         blockEvent.select(literal(BlockEventType.BLOCK_SCANNED)).fire(block);
 
-        verify(trimService).doTrimDerivedTablesOnBlockchainHeight(5000, false);
+        verify(trimService).trimDerivedTables(5000);
     }
 
     @Test
@@ -149,7 +149,7 @@ class TrimObserverTest {
             trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
             }).fire(new TrimConfig(false, false));
             return null;
-        }).when(trimService).trimDerivedTables(5000, true);
+        }).when(trimService).trimDerivedTables(5000);
 
         fireBlockPushed(4998);
         fireBlockPushed(4999);
@@ -175,7 +175,7 @@ class TrimObserverTest {
             try {
                 Thread.sleep(10);
                 for (Integer height : heights) {
-                    verify(trimService).trimDerivedTables(height, true);
+                    verify(trimService).trimDerivedTables(height);
                 }
                 Thread.sleep(10);
                 break;

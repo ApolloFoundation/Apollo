@@ -9,8 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TrimDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TrimEntry;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -18,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.mockito.Mockito;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
@@ -49,12 +46,11 @@ class TrimServiceTest {
     DerivedTablesRegistry registry = mock(DerivedTablesRegistry.class);
     DerivedTableInterface derivedTable = mock(DerivedTableInterface.class);
     TimeService timeService = mock(TimeService.class);
-    GlobalSync globalSync = Mockito.spy(new GlobalSyncImpl());
 
 
     @BeforeEach
     void setUp() {
-        trimService = new TrimService(databaseManager, registry, /*globalSync,*/ timeService, /*event, */trimConfigEvent, trimDao, 1000);
+        trimService = new TrimService(databaseManager, registry, timeService, trimConfigEvent, trimDao, 1000);
     }
 
     @Test
@@ -85,15 +81,15 @@ class TrimServiceTest {
         doReturn(List.of(derivedTable)).when(registry).getDerivedTables();
         doReturn(8100).when(timeService).getEpochTime();
 
-        DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnBlockchainHeight(5000, true));
+        DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnBlockchainHeight(5000));
 
-        verify(derivedTable).trim(4000, false);
+        verify(derivedTable).trim(4000);
         verify(firedEvent, never()).fireAsync(new TrimData(4000, 5000, 7200));
     }
 
     @Test
     void testDoTrimDerivedTablesAtHeightLessThanMaxRollback() {
-        trimService.doTrimDerivedTablesOnBlockchainHeight(999, true);
+        trimService.doTrimDerivedTablesOnBlockchainHeight(999);
 
         verifyZeroInteractions(trimDao);
     }
@@ -103,7 +99,7 @@ class TrimServiceTest {
         Event firedEvent = mock(Event.class);
         doReturn(new TrimEntry(1L, 250000, true)).when(trimDao).get();
 
-        DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnBlockchainHeight(250000, true));
+        DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnBlockchainHeight(250000));
 
         verify(trimDao, times(0)).clear();
         verifyZeroInteractions(firedEvent);
@@ -119,10 +115,10 @@ class TrimServiceTest {
         doReturn(List.of(derivedTable)).when(registry).getDerivedTables();
         doReturn(3500).when(timeService).getEpochTime();
 
-        trimService.trimDerivedTables(5000, true);
+        trimService.trimDerivedTables(5000);
 
         assertTrue(databaseManager.getDataSource().isInTransaction());
-        verify(derivedTable).trim(4000, false);
+        verify(derivedTable).trim(4000);
         verify(firedEvent, never()).fireAsync(new TrimData(4000, 5000, 0));
     }
 
@@ -133,7 +129,7 @@ class TrimServiceTest {
         TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
         doReturn(dataSource).when(databaseManager).getDataSource();
 
-        assertThrows(RuntimeException.class, () -> trimService.trimDerivedTables(6000, false));
+        assertThrows(RuntimeException.class, () -> trimService.trimDerivedTables(6000));
 
         assertFalse(dataSource.isInTransaction());
         verify(dataSource).begin();
@@ -161,12 +157,12 @@ class TrimServiceTest {
         TransactionalDataSource dataSource = spy(databaseManager.getDataSource());
         doReturn(dataSource).when(databaseManager).getDataSource();
 
-        DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnHeightLocked(2000, false));
+        DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnHeight(2000));
 
 //        verify(globalSync, times(1)).readLock();
 //        verify(globalSync, times(1)).readUnlock();
         verify(dataSource, times(2)).commit(false);
 
-        verify(derivedTable, times(2)).trim(2000, false);
+        verify(derivedTable, times(2)).trim(2000);
     }
 }

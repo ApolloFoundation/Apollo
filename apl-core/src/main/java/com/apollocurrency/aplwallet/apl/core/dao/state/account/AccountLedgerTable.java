@@ -80,7 +80,7 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
      * @param height Trim height
      */
     @Override
-    public void trim(int height, boolean isSharding) {
+    public void trim(int height) {
         if (trimKeep <= 0)
             return;
         TransactionalDataSource dataSource = getDatabaseManager().getDataSource();

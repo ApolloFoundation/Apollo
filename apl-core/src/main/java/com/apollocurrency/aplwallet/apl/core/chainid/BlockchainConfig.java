@@ -255,7 +255,10 @@ public class BlockchainConfig {
         if (fromHeight >= toHeight) {
             throw new IllegalArgumentException("fromHeight should be lesser than toHeight, given: fromHeight=" + fromHeight + ", toHeight=" + toHeight);
         }
-        HeightConfig configAtHeight = getConfigAtHeight(fromHeight - 1); // active config at the beginning of [fromHeight; toHeight] range
+        HeightConfig configAtHeight = null;
+        if (fromHeight - 1 > 0) {
+            configAtHeight = getConfigAtHeight(fromHeight - 1); // active config at the beginning of [fromHeight; toHeight] range
+        }
 
         ArrayList<HeightConfig> heightConfigs = new ArrayList<>(heightConfigMap
             .entrySet()
@@ -264,7 +267,7 @@ public class BlockchainConfig {
             .map(Map.Entry::getValue)
             .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(HeightConfig::getHeight)))));
         if (configAtHeight != null) {
-            heightConfigs.add(configAtHeight);
+            heightConfigs.add(0, configAtHeight);
         }
         return heightConfigs;
 

@@ -71,7 +71,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
     }
 
     public void testTrim(int height, int blockchainHeight) throws SQLException {
-        DbUtils.inTransaction(extension, (con) -> derivedDbTable.trim(height, true));
+        DbUtils.inTransaction(extension, (con) -> derivedDbTable.trim(height));
 
         List<T> expected = getAll();
         List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();

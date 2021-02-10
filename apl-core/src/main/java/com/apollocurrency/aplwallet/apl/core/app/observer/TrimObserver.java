@@ -120,7 +120,7 @@ public class TrimObserver {
             }
             if (performTrim) {
                 log.debug("Perform trim on blockchain height={}", trimHeight);
-                trimService.trimDerivedTables(trimHeight, true);
+                trimService.trimDerivedTables(trimHeight);
             } else {
                 log.trace("NO performed trim on height={}", trimHeight);
             }
@@ -149,7 +149,7 @@ public class TrimObserver {
             log.info("Scan: processed block " + block.getHeight());
         }
         if (trimDerivedTablesEnabled && block.getHeight() % trimFrequency == 0) {
-            trimService.doTrimDerivedTablesOnBlockchainHeight(block.getHeight(), false);
+            trimService.trimDerivedTables(block.getHeight());
         }
     }
 

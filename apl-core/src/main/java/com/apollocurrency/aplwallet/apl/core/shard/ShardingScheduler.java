@@ -46,7 +46,7 @@ public class ShardingScheduler {
     private final Event<TrimConfig> trimEvent;
     private final ShardService shardService;
     private final BlockchainConfig blockchainConfig;
-    private volatile boolean shardingFailed = true;
+    private volatile boolean shardingFailed = false;
     private final ShardSchedulingConfig config;
     private final TimeService timeService;
 
@@ -97,10 +97,17 @@ public class ShardingScheduler {
                     logErrorAndDisableSharding("Error in shard scheduling process. Sharding may be started earlier or blockchain is scanning; shard height " + shardRecord.shardHeight);
                     return;
                 }
-                shardingProcess.join();
+                MigrateState state = shardingProcess.join();
+                if (state != MigrateState.COMPLETED) {
+                    logErrorAndDisableSharding("Error in sharding process at height {}, state {}. Will not attempt to create another shard", shardRecord.shardHeight, state);
+                }
                 Shard lastShard = shardService.getLastShard();
                 if (lastShard == null) {
                     logErrorAndDisableSharding("After sharding process at height {}, no shards exist in shard table", shardRecord.shardHeight);
+                    return;
+                }
+                if (lastShard.getShardHeight() != shardRecord.shardHeight) {
+                    logErrorAndDisableSharding("After sharding process at height {}, no shard at height {} exist in shard table, last shard at height {}", shardRecord.shardHeight, shardRecord.shardHeight, lastShard.getShardHeight());
                     return;
                 }
                 if (lastShard.getShardState() != ShardState.FULL) {
@@ -110,7 +117,7 @@ public class ShardingScheduler {
 
                 synchronized (this) {
                     if (scheduledShards.isEmpty()) {
-                        updateTrimConfig(true, true);
+                        updateTrimConfig(true, false);
 
                     } else {
                         for (ShardScheduledRecord record : scheduledShards) {
@@ -137,7 +144,7 @@ public class ShardingScheduler {
     }
 
 
-    public void init(int lastBlockHeight, int lastTrimBlockchainHeight) {
+    public void init(int lastBlockHeight, int trimHeight) {
         if (!config.isCreateShards()) {
             return;
         }
@@ -150,11 +157,14 @@ public class ShardingScheduler {
                 return;
             }
         }
-        int trimHeight = Math.max(lastTrimBlockchainHeight, lastShardHeight + 1);
         int maxAllowedShardHeight = lastBlockHeight - config.getMaxRollback();
 
-        List<HeightConfig> allHeightConfigs = blockchainConfig.getAllActiveConfigsBetweenHeights(lastShardHeight, maxAllowedShardHeight + 1);
+        List<HeightConfig> allHeightConfigs = blockchainConfig.getAllActiveConfigsBetweenHeights(lastShardHeight, maxAllowedShardHeight);
+        if (allHeightConfigs.isEmpty()) {
+            throw new IllegalStateException("Blockchain configs between heights [" + lastShardHeight + ".." + maxAllowedShardHeight + "]");
+        }
         int searchHeight = lastShardHeight + 1;
+        shardLoop:
         for (int i = 0; i < allHeightConfigs.size(); i++) {
             HeightConfig currentConfig = allHeightConfigs.get(i);
             int activeToHeight = lastBlockHeight;
@@ -170,8 +180,12 @@ public class ShardingScheduler {
                 if (nextShardHeight == -1) {
                     break;
                 }
+                if (nextShardHeight > maxAllowedShardHeight) {
+                    break shardLoop;
+                }
                 if (nextShardHeight < trimHeight) {
                     logErrorAndDisableSharding("Next shard should be created at height {}, but last trim was at height {}", nextShardHeight, trimHeight);
+                    break shardLoop;
                 }
                 synchronized (this) {
                     log.info("Schedule new sharding at height {}", nextShardHeight);
@@ -186,6 +200,9 @@ public class ShardingScheduler {
     }
 
     private int nextShardHeight(int fromHeight, int toHeight, int frequency) {
+        if (fromHeight % frequency == 0 && fromHeight > 0) {
+            return fromHeight;
+        }
         int targetHeight = fromHeight + (frequency - fromHeight % frequency);
         if (targetHeight > toHeight) {
             return -1;
@@ -204,7 +221,7 @@ public class ShardingScheduler {
             return;
         }
         HeightConfig heightConfig = blockchainConfig.getConfigAtHeight(heightForSharding - 1);
-        boolean isShardingEnabled = heightConfig.isShardingEnabled() && !shardingFailed && config.isCreateShards() ;
+        boolean isShardingEnabled = heightConfig.isShardingEnabled() && createShards() ;
         boolean isTimeForSharding = heightForSharding % heightConfig.getShardingFrequency() == 0;
         if (isShardingEnabled && isTimeForSharding) {
             scheduleSharding(heightForSharding, blockHeight);
@@ -221,18 +238,22 @@ public class ShardingScheduler {
     }
 
     private synchronized void scheduleSharding(int height, int blockchainHeight) {
-        ShardScheduledRecord record = new ShardScheduledRecord(shardingDelayMs(), height, blockchainHeight, System.currentTimeMillis());
+        ShardScheduledRecord record = new ShardScheduledRecord(shardingDelayMs(), height, blockchainHeight, timeService.systemTimeMillis());
         scheduledShards.add(record);
         log.info("Schedule new shard creation at height {}, blockchain height {}, delay {} min", height, blockchainHeight, record.timeDelay / 60 / 1000);
-        updateTrimConfig(false, true);
+        updateTrimConfig(false, false);
     }
 
     private long shardingDelayMs() {
         if (config.shardDelayed()) {
-            return 1000 * 60 * random.nextInt(config.getMaxDelay() - config.getMinDelay() + 1) + config.getMinDelay() ;
+            return 1000 * (random.nextInt(config.getMaxDelay() - config.getMinDelay() + 1) + config.getMinDelay()) ;
         } else {
             return 0;
         }
+    }
+
+    public boolean createShards() {
+        return !shardingFailed && config.isCreateShards();
     }
 
     private void logErrorAndDisableSharding(String error, Object... args) {

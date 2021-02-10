@@ -19,7 +19,6 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.utils.RuntimeUtils;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
-import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -118,10 +117,7 @@ public class ShardService {
 
             blockchainProcessor.suspendBlockchainDownloading();
             try {
-                log.debug("Waiting finish of last trim");
-                while (trimService.isTrimming()) {
-                    ThreadUtils.sleep(100);
-                }
+                trimService.waitTrimming();
                 globalSync.writeLock();
                 try {
 

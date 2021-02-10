@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -241,5 +242,25 @@ public class BlockchainConfigTest {
                 return blockEvent;
             }
         };
+    }
+
+    @Test
+    void testGetHeightConfigsBetweenHeights() {
+        blockchainConfig.updateChain(chain);
+
+        List<HeightConfig> configs = blockchainConfig.getAllActiveConfigsBetweenHeights(0, 400);
+
+        List<Integer> configHeights = configs.stream().map(HeightConfig::getHeight).collect(Collectors.toList());
+        assertEquals(configHeights, List.of(0, 100, 200, 300));
+
+        configs = blockchainConfig.getAllActiveConfigsBetweenHeights(100, 300);
+
+        configHeights = configs.stream().map(HeightConfig::getHeight).collect(Collectors.toList());
+        assertEquals(configHeights, List.of(0, 100, 200));
+
+        configs = blockchainConfig.getAllActiveConfigsBetweenHeights(101, 301);
+
+        configHeights = configs.stream().map(HeightConfig::getHeight).collect(Collectors.toList());
+        assertEquals(configHeights, List.of(100, 200, 300));
     }
 }

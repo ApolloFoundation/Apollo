@@ -70,13 +70,13 @@ public class VoteTable extends EntityDbTable<Vote> {
     }
 
     @Override
-    public void trim(int height, boolean isSharding) {
+    public void trim(int height) {
         log.trace("Vote trim: NO_Sharding, height = {}", height);
-        super.trim(height, isSharding);
+        super.trim(height);
         try (Connection con = databaseManager.getDataSource().getConnection();
              DbIterator<Poll> polls = pollTable.getPollsFinishingBelowHeight(height, 0, Integer.MAX_VALUE);
              PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {
-             commonTrim(height, false, polls, pstmt);
+             commonTrim(height, polls, pstmt);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -98,8 +98,8 @@ public class VoteTable extends EntityDbTable<Vote> {
     }
 
 
-    private void commonTrim(int height, boolean isSharding, DbIterator<Poll> polls, PreparedStatement pstmt) throws SQLException {
-        log.trace("Vote trim common: isSharding={}, height = {}", isSharding, height);
+    private void commonTrim(int height, DbIterator<Poll> polls, PreparedStatement pstmt) throws SQLException {
+        log.trace("Vote trim common: height = {}", height);
         int index = 0; // index for affected Polls
         int totalDeletedVotes = 0; // total number deleted Vote records from all affected Polls
         for (Poll poll : polls) {
@@ -113,8 +113,8 @@ public class VoteTable extends EntityDbTable<Vote> {
             }
             index++;
         }
-        log.trace("Vote trim common: REMOVED totally [{}] votes within [{}] polls at height = {} (isSharding={})",
-            totalDeletedVotes, index, height, isSharding);
+        log.trace("Vote trim common: REMOVED totally [{}] votes within [{}] polls at height = {}",
+            totalDeletedVotes, index, height);
     }
 
 }

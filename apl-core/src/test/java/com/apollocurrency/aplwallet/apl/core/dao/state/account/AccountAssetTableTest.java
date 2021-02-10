@@ -183,7 +183,7 @@ class AccountAssetTableTest {
     @Test
     void testTrimDeletedRecord() {
         int rowCount = table.getRowCount();
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(Integer.MAX_VALUE, true));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(Integer.MAX_VALUE));
         assertEquals(rowCount, table.getRowCount());
 
         td.ACC_ASSET_2.setHeight(td.ACC_ASSET_2.getHeight() + 1);
@@ -192,11 +192,11 @@ class AccountAssetTableTest {
         assertEquals(rowCount + 1, table.getRowCount());
         assertNull(table.get(td.ACC_ASSET_2.getDbKey()));
 
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_2.getHeight(), true));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_2.getHeight()));
 
         assertEquals(rowCount + 1, table.getRowCount());
 
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_2.getHeight() + 1, true));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_2.getHeight() + 1));
         assertEquals(rowCount - 1, table.getRowCount());
         assertNull(table.get(td.ACC_ASSET_2.getDbKey()));
     }
@@ -279,7 +279,7 @@ class AccountAssetTableTest {
 
         AccountAsset deleted = table.get(td.ACC_ASSET_14.getDbKey());
         assertNull(deleted);
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_14.getHeight(), true)); // try trim inside a gap of deleted records
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_ASSET_14.getHeight())); // try trim inside a gap of deleted records
 
 
         List<AccountAsset> existing = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
