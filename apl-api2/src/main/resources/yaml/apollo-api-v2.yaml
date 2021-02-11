@@ -16,19 +16,18 @@ servers:
   - url: http://localhost:7876/rest
 
 tags:
+  - name: blockchain
+    description: Operations with blockchain state.
+  - name: node public info
+    description: Public information about node.
+
   - name: account
     description: Operations about account
   - name: state
     description: Everything about blockchain state
-  - name: tx
-    description: Access to transactions management
   - name: operations
     description: List operations by account (the bank reconcilation)
-  - name: info
-    description: An information
 
-  - name: blockchain
-    description: Operations with blockchain state.
 
 paths:
 
@@ -98,6 +97,7 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
         - bearerAuth: []
+
   /@@account/money:
     post:
       tags:
@@ -343,6 +343,72 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+
+  /@@node/x509:
+    get:
+      tags:
+        - node public info
+      summary: Get node certificate.
+      description: Return node certificate in x509 format.
+      operationId: getX509
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/X509Response'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@node/health:
+    get:
+      tags:
+        - node public info
+      summary: Gets node health
+      operationId: getHealthInfo
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@node/network:
+    get:
+      tags:
+        - node public info
+      summary: Gets node network info
+      operationId: getNetworkInfo
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@node/blockchain:
+    get:
+      tags:
+        - node public info
+      summary: Get blockchain object
+      description: Return details information about the blockchain
+      operationId: getBlockchainInfo
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockchainInfo'
+        500:
+          $ref: '#/components/responses/ServerError'
 
   /@@state/blockchain:
     get:
@@ -595,38 +661,7 @@ paths:
       security:
         - bearerAuth: []
 
-  /@@info/health:
-    get:
-      tags:
-        - info
-      summary: Gets node health
-      operationId: getHealthInfo
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
-        500:
-          $ref: '#/components/responses/ServerError'
 
-  /@@info/blockchain:
-    get:
-      tags:
-        - info
-      summary: Get blockchain object
-      description: Return details information about the blockchain
-      operationId: getBlockchainInfo
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BlockchainInfo'
-        500:
-          $ref: '#/components/responses/ServerError'
 
 components:
   schemas:
@@ -1326,6 +1361,21 @@ components:
               description: the amount of block transaction
               example: 1758
 
+
+    X509Response:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: hex_bytearray
+              example: 'MIIIgjCCB2qgAwIBAgIITFQTbb/xK/QwDQYJKoZIhvcNAQELBQAwVDELMAkGA1UE
+                        ..........
+                        BhMCVVMxHjAcBgNVBAoTFUdvb2dsZSBUcnVzdCBTZXJ2aWNlczElMCMGA1UEAxMc'
+
+
+
     CountResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
@@ -1369,6 +1419,51 @@ components:
             isTrimActive:
               type: boolean
               description: "Returns true if the trimming process is active"
+
+
+    NetworkResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/PeerInfo'
+        - type: object
+          properties:
+            inboundPeers:
+              type: integer
+              format: int8
+              description: "Inbound peers"
+            outboundPeers:
+              type: integer
+              format: int8
+              description: "Outbound Peers"
+
+    PeerInfo:
+      type: object
+      properties:
+          sharedAddress:
+            type: boolean
+            description: "Is node shared address"
+          version:
+            type: string
+            description: "App version"
+            example: "1.47.10"
+          platform:
+            type: string
+            description: "Platform where app has been running."
+            example: "Linux amd64"
+          apiPort:
+            type: integer
+            format: int8
+            description: "App port"
+          inboundWebSocket:
+            type: boolean
+            description: "Is inbound web socket works."
+          outboundWebSocket:
+            type: boolean
+            description: "Is outbound web socket works."
+          chainId:
+            type: string
+            description: "Node chain id."
+            example: 'a2e9b946-290b-48b6-9985-dc2e5a5860a1'
 
     BaseResponse:
       type: object
