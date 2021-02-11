@@ -69,6 +69,11 @@ public class MariaDbProcess {
         if (!dbControl.isOK()) {
             res = dbControl.spawnServer();
         }
+        //May be we have to wait a bit here...
+        if(res){
+            String script = "SELECT 1;";
+            res = dbControl.runQuery(script, "mysql", null);
+        }
         return res;
     }
 
