@@ -60,7 +60,7 @@ rem	WScript.Echo "remove_jre.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(3
 		Shell.Run chr(34) & WScript.Arguments(0) & ServiceScriptPath & chr(34)
     	End If
 		WScript.Echo "Exit"
-	Shell.Run "clean.bat" & " " & chr(34) & Wscript.Arguments(0) & chr(34)
+
 Else
 	WScript.Echo "Invalid input parameters:" & WScript.Arguments(0) & " " & WScript.Arguments(1) & " " & WScript.Arguments(2)
 End If

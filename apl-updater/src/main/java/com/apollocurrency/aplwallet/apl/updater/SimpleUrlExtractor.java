@@ -49,6 +49,8 @@ public class SimpleUrlExtractor implements UrlExtractor {
                         pair.getSecondCertificate().getPublicKey()
                     );
                     String decryptedUrl = new String(urlBytes, StandardCharsets.UTF_8);
+                    LOG.debug("Derytpted URL:", decryptedUrl);
+                    LOG.debug("URL Pattern:", urlPattern.toString());
                     if (urlPattern.matcher(decryptedUrl).matches()) {
                         LOG.info("Decrypted url '{}' using: {} ", decryptedUrl, pair);
                         return decryptedUrl;
