@@ -180,7 +180,7 @@ public class TransactionValidator {
         }
         int blockchainHeight = blockchain.getHeight();
         if (!validatingAtFinish) {
-            validateFee(sender, transaction, blockchainHeight);
+            validateFeeSufficiency(transaction, blockchainHeight);
             long ecBlockId = transaction.getECBlockId();
             int ecBlockHeight = transaction.getECBlockHeight();
             if (ecBlockId != 0) {
@@ -245,18 +245,23 @@ public class TransactionValidator {
     }
 
     void validateFee(Account account, Transaction transaction, int blockchainHeight) throws AplException.NotCurrentlyValidException {
+        validateFeeSufficiency(transaction, blockchainHeight);
+        long feeATM = transaction.getFeeATM();
+        if (transaction.referencedTransactionFullHash() != null) {
+            feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
+        }
+        if (account.getUnconfirmedBalanceATM() < feeATM) {
+            throw new AplException.NotCurrentlyValidException("Account balance " + account.getUnconfirmedBalanceATM() + " is not enough to pay tx fee " + feeATM);
+        }
+    }
+
+    void validateFeeSufficiency(Transaction transaction, int blockchainHeight) throws AplException.NotCurrentlyValidException {
         long feeATM = transaction.getFeeATM();
         long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchainHeight);
         if (feeATM < minimumFeeATM) {
             throw new AplException.NotCurrentlyValidException(String.format("Transaction fee %f %s less than minimum fee %f %s at height %d",
                 ((double) feeATM) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol(), ((double) minimumFeeATM) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol(),
                 blockchainHeight));
-        }
-        if (transaction.referencedTransactionFullHash() != null) {
-            feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
-        }
-        if (account.getUnconfirmedBalanceATM() < feeATM) {
-            throw new AplException.NotCurrentlyValidException("Account balance " + account.getUnconfirmedBalanceATM() + " is not enough to pay tx fee " + feeATM);
         }
     }
 

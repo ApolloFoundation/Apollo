@@ -328,7 +328,7 @@ public class AccountControlController {
         tags = {"accounts"})
     @ApiResponse(description = "Transaction in json format", content = @Content(schema = @Schema(implementation = LeaseBalanceResponse.class)))
     @PermitAll
-    @Secured2FA
+    @Secured2FA("sender")
     public Response leaseBalance(
         @Parameter(required = true) @Schema(description = "Leasing period, min/default = 1440, max = 65535 blocks", implementation = Integer.class)
             @FormParam("period") @NotNull @Min(1440)  @Max(65535) Integer period,
