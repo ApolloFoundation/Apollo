@@ -9,10 +9,10 @@ goto cont1
 for %%i in ("%~dp0..") do set "APL_TOP=%%~fi"
 :cont1
 
-if exist "%APL_TOP%\jre" ( 
-	set JAVA_HOME="%APL_TOP%\jre"
-	set JAVA_CMD="%APL_TOP%\jre\bin\java"
-	set JAR_CMD="%APL_TOP%\jre\bin\jar"
+if exist "%APL_TOP%\..\jre" ( 
+	set JAVA_HOME="%APL_TOP%\..\jre"
+	set JAVA_CMD="%APL_TOP%\..\jre\bin\java"
+	set JAR_CMD="%APL_TOP%\..\jre\bin\jar"
 ) else (
 	set JAVA_CMD=java	
 	set JAR_CMD=jar	
