@@ -22,7 +22,7 @@ public class PeerConverter implements Converter<Peer, PeerDTO> {
         dto.setAnnouncedAddress(peer.getAnnouncedAddress());
         dto.setSharedAddress(peer.shareAddress());
         if (peer.getHallmark() != null) {
-            dto.setHalmark(peer.getHallmark().getHallmarkString());
+            dto.setHallmark(peer.getHallmark().getHallmarkString());
         }
         dto.setWeight(peer.getWeight());
         dto.setDownloadedVolume(peer.getDownloadedVolume());

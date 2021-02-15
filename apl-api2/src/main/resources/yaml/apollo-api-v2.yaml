@@ -379,7 +379,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /@@node/network:
+  /@@node/info/network:
     get:
       tags:
         - node public
@@ -409,6 +409,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BlockchainInfo'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@node/tasks:
+    get:
+      tags:
+        - node public
+      summary: Get in progress tasks information.
+      description: Return details about all inprogress tasks.
+      operationId: getTasksInfo
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TasksInfoResponse'
         500:
           $ref: '#/components/responses/ServerError'
 
@@ -444,6 +461,85 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrivateHealthResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@node/cache:
+    get:
+      tags:
+        - node private
+      summary: Get cache info.
+      description: Return full statistics about the performance of a Cache.
+      operationId: getCacheInfo
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheInfoResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@node/threads:
+    get:
+      tags:
+        - node private
+      summary: Get threads info.
+      description: Returns backend threads status
+      operationId: getThreadsInfo
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadsInfoResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@node/logs:
+    get:
+      tags:
+        - node private
+      summary: Get list of logs files.
+      description: Returns all names of logs files from this node.
+      operationId: getLogs
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListLogs'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@node/logs/{logName}:
+    get:
+      tags:
+        - node private
+      summary: Get log file from the node.
+      description: Return the log file from the node by file name.
+      operationId: getLogFile
+      parameters:
+        - name: logName
+          in: path
+          description: Log file name
+          required: true
+          schema:
+            type: string
+            example: 'apl-2021-02-05_0.gz'
+      responses:
+        200:
+          description: successful operation. File with logs in binary format
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        400:
+          $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
 
@@ -1645,6 +1741,164 @@ components:
           description: "Node services."
           items:
             type: string
+
+    CacheInfoResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: array
+          items:
+              $ref: '#/components/schemas/CacheInfo'
+
+    CacheInfo:
+      type: object
+      properties:
+        cacheName:
+          type: string
+          description: "Cache name"
+          example: "PUBLIC_KEY_CACHE"
+        hitCount:
+          type: integer
+          format: int64
+          example: 3
+          description: "The number of times Cache lookup methods have returned a cached value."
+        hitRate:
+          type: number
+          format: double
+          example: 1.1
+          description: "The ratio of cache requests which were hits. This is defined as hitCount / requestCount, or 1.0 when requestCount == 0. Note that hitRate + missRate =~ 1.0."
+        missCount:
+          type: integer
+          format: int64
+          example: 4133
+          description: "The number of times Cache lookup methods have returned an uncached (newly loaded) value, or null."
+        missRate:
+          type: number
+          format: double
+        loadSuccessCount:
+          type: integer
+          format: int64
+          description: "The number of times Cache lookup methods have successfully loaded a new value."
+        loadExceptionCount:
+          type: integer
+          format: int64
+          description: "The number of times Cache lookup methods threw an exception while loading a new value."
+        totalLoadTime:
+          type: integer
+          format: int64
+          description: "The total number of nanoseconds the cache has spent loading new values. This can be used to calculate the miss penalty. This value is increased every time loadSuccessCount or loadExceptionCount is incremented."
+        evictionCount:
+          type: integer
+          format: int64
+          description: "The number of times an entry has been evicted."
+
+    ThreadsInfoResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: array
+          items:
+            $ref: '#/components/schemas/ThreadsInfo'
+
+
+    ThreadsInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "Name of thread"
+          example: "Reference Handler"
+        state:
+          type: string
+          description: "State of thread"
+          example: "RUNNABLE"
+        priority:
+          type: integer
+          format: int8
+          example: 10
+          description: "Priority of thread"
+        isDaemon:
+          type: boolean
+          description: "Is thread started as daemon thread"
+          example: true
+        cpuTime:
+          type: integer
+          format: int64
+          example: 250346188
+          description: "CPU time used by thread"
+
+
+    TasksInfoResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: array
+          items:
+            $ref: '#/components/schemas/TasksInfo'
+
+    TasksInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Identification of task"
+          example: "390de590-6f7d-11eb-9439-0242ac130002"
+        name:
+          type: string
+          description: "Short but descriptive name of task"
+          example: "Shard data import"
+        decription:
+          type: string
+          description: "Description of task in one line"
+          example: "Data import"
+        isCrititcal:
+          type: boolean
+          description: "Taks is critical and should be displayed on top of UI window"
+          example: true
+        stateOfTask:
+          type: string
+          description: "Task state in one line in human readable form"
+          example: "Started"
+          enum: [
+            "Started",
+            "In progress",
+            "Finished",
+            "Cancelled",
+            "Paused"
+          ]
+        started:
+          type: string
+          format: date
+          description: "Task start date and time"
+          example: "2020-04-12T23:20:50.52Z"
+        finished:
+          type: string
+          format: date
+          description: "Task finish date and time"
+          example: "2020-04-12T23:40:50.52Z"
+        durationMS:
+          type: integer
+          format: int64
+          example: 250346188
+          description: "Task run duration, milliseconds"
+        missRate:
+          type: number
+          format: double
+          description: "Task completion percent"
+          example: 100.0
+        messages:
+          type: array
+          description: "Task messages list"
+          items:
+            type: string
+
+
+    ListLogs:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: array
+          description: "List of logs files"
+          items:
+            type: string
+            example: "apl-2021-02-05_0.gz"
+
 
     BaseResponse:
       type: object
