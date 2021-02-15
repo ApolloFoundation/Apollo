@@ -25,116 +25,12 @@ tags:
   - name: subscribe
     description: Subscribe on some event.
 
-  - name: account
-    description: Operations about account
-  - name: state
-    description: Everything about blockchain state
+
   - name: operations
     description: List operations by account (the bank reconcilation)
 
 
 paths:
-
-  /@@account/child:
-    post:
-      tags:
-        - account
-      summary: Returns unsigned CreateChildAccount transaction for creating child accounts
-      description: |
-        Returns unsigned CreateChildAccount transaction as a byte array.
-        The list of child public keys is attached in the transaction appendix.
-      operationId: createChildAccountTx
-      requestBody:
-        description: the parent account and the list of public keys
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AccountReq'
-        required: true
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateChildAccountResp'
-        401:
-          description: Unauthorized Error
-        403:
-          description: Access Forbidden
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-      security:
-        - bearerAuth: []
-  /@@account/test:
-    post:
-      tags:
-        - account
-      summary: Returns signed CreateChildAccount transaction for creating child accounts
-      description: |
-        Returns signed CreateChildAccount transaction as a byte array.
-        The list of child public keys is attached in the transaction appendix.
-      operationId: createChildAccountTxTest
-      requestBody:
-        description: the parent account and the list of public keys
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AccountReqTest'
-        required: true
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateChildAccountResp'
-        401:
-          description: Unauthorized Error
-        403:
-          description: Access Forbidden
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-      security:
-        - bearerAuth: []
-
-  /@@account/money:
-    post:
-      tags:
-        - account
-      summary: Returns signed SendMoney transaction from child account
-      description: |
-        Returns signed SendMoney transaction as a byte array.
-        This transaction is a multi-signature signed tx.
-      operationId: createChildAccountTxSendMony
-      requestBody:
-        description: the parent account, child account and other
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AccountReqSendMoney'
-        required: true
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateChildAccountResp'
-        401:
-          description: Unauthorized Error
-        403:
-          description: Access Forbidden
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-      security:
-        - bearerAuth: []
 
   /@@account/{account}:
     get:
@@ -596,26 +492,10 @@ paths:
 
 
 
-  /@@state/blockchain:
+  /@@block:
     get:
       tags:
-        - state
-      summary: Get blockchain state object
-      description: Return details information about the blockchain state
-      operationId: getBlockchainState
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BlockchainState'
-        500:
-          $ref: '#/components/responses/ServerError'
-  /@@state/block:
-    get:
-      tags:
-        - state
+        - blockchain
       summary: Get block object
       description: Return details information about the block given block height. If no height is provided, it will fetch the latest block.
       operationId: getBlockByHeight
@@ -629,29 +509,10 @@ paths:
             format: int64
             example: '4315161'
             default: '-1'
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BlockInfo'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-  /@@state/block/{block}:
-    get:
-      tags:
-        - state
-      summary: Get block object given block id
-      description: Return the detail information about block given id
-      operationId: getBlockById
-      parameters:
-        - name: block
-          in: path
+        - name: blockId
+          in: query
           description: Block id
-          required: true
+          required: false
           schema:
             type: string
             format: hex_bytearray
@@ -667,10 +528,11 @@ paths:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-  /@@state/tx/{transaction}:
+
+  /@@tx/{transaction}:
     get:
       tags:
-        - state
+        - blockchain
       summary: Get transaction receipt given transaction id.
       description: Return the brief information about transaction given id.
       operationId: getTxReceiptById
@@ -694,11 +556,11 @@ paths:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-  /@@state/tx:
+  /@@txs:
     post:
       tags:
-        - state
-      summary: Get transaction receipt list given list of the transaction id.
+        - blockchain
+      summary: Get transaction receipt list given list of the transaction ids.
       description: Return the list of the brief information about transactions.
       operationId: getTxReceiptList
       requestBody:
@@ -725,10 +587,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
-  /@@state/unconfirmed/count:
+  /@@transactions/unconfirmed/count:
     get:
       tags:
-        - state
+        - node private
       summary: Get count of unconfirmed transaction receipts.
       description: Return the count of unconfirmed transactions.
       operationId: getUnconfirmedTxCount
@@ -741,10 +603,10 @@ paths:
                 $ref: '#/components/schemas/CountResponse'
         500:
           $ref: '#/components/responses/ServerError'
-  /@@state/unconfirmed:
+  /@@transactions/unconfirmed:
     get:
       tags:
-        - state
+        - node private
       summary: Get list of unconfirmed transaction receipts.
       description: Return the list of the detail information about unconfirmed transactions.
       operationId: getUnconfirmedTx
@@ -1081,6 +943,10 @@ components:
               type: string
               format: hex_bytearray
               example: 'a2e9b946290b48b69985dc2e5a5860a1'
+            height:
+              type: integer
+              format: int64
+              example: 4789567
             ticker:
               type: string
               example: 'USDS'
@@ -1108,54 +974,17 @@ components:
               type: string
               format: hex_bytearray
               example: '90001259ec21d31a30898d7'
-
-    BlockchainState:
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-        - type: object
-          properties:
-            chainid:
-              type: string
-              format: hex_bytearray
-              example: 'a2e9b946290b48b69985dc2e5a5860a1'
-            height:
-              type: integer
-              format: int64
-              example: 4789567
-            genesisAccount:
-              type: string
-              format: hex_bytearray
-              example: '90001259ec21d31a30898d7'
             genesisBlockId:
               type: string
               format: hex_bytearray
               description: Genesis block ID
               example: '15856251679437054149169000'
-            genesisBlockTimestamp:
-              type: integer
-              format: int64
-              description: Genesis block timestamp (epoch beginning), Unix timestamp in milliseconds
-              example: 1491696372000
-            ecBlockId:
-              type: string
-              format: hex_bytearray
-              description: The economic clustering block ID
-              example: '40faaeb15856251679437054'
-            ecBlockHeight:
-              type: integer
-              format: int64
-              description: The economic clustering block height
-              example: 3301233
-            txTimestamp:
-              type: integer
-              format: int64
-              description: Request timestamp in seconds since the genesis block
-              example: 1591696371
             timestamp:
               type: integer
               format: int64
               description: Request timestamp, Unix timestamp in milliseconds
               example: 1591696372300
+
     TxRequest:
       required:
         - tx
@@ -1186,95 +1015,6 @@ components:
           example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
           description: Account id
           nullable: false
-
-
-    AccountReq:
-      required:
-        - parent
-        - publicKey
-      type: object
-      properties:
-        parent:
-          type: string
-          description: parent account id
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        child_publicKey_list:
-          type: array
-          description: list of child account public keys
-          maxItems: 128
-          items:
-            type: string
-            format: hex_bytearray
-            example: '39dc2e813bb45ff063a376e316b10cd0adeb7306111ca0eb2890194d37960152'
-    AccountReqTest:
-      required:
-        - parent
-        - publicKey
-      type: object
-      properties:
-        parent:
-          type: string
-          description: parent account id
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        secret:
-          type: string
-          description: parent account secret phrase
-          example: 'topSecretPhrase'
-        child_secret_list:
-          type: array
-          description: list of child secret phrases
-          maxItems: 128
-          items:
-            type: string
-            example: 'secret1'
-    AccountReqSendMoney:
-      required:
-        - parent
-        - publicKey
-      type: object
-      properties:
-        parent:
-          type: string
-          description: parent account id
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        psecret:
-          type: string
-          description: parent account secret phrase
-          example: 'ParenttopSecretPhrase'
-        sender:
-          type: string
-          description: child account id
-          example: 'APL-632K-TWX3-2ALQ-973CU'
-        csecret:
-          type: string
-          description: child account secret phrase
-          example: 'ChildtopSecretPhrase'
-        recipient:
-          type: string
-          description: recipient account id
-          example: 'APL-VWMY-APVK-UFHN-3MC7N'
-        amount:
-          type: integer
-          format: int64
-          description: the amount
-    CreateChildAccountResp:
-      required:
-        - parent
-        - tx
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-        - type: object
-          properties:
-            parent:
-              type: string
-              description: parent account id
-              example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-            tx:
-              description: Unsigned transaction data
-              type: string
-              format: hex_bytearray
-              example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
-
 
     AccountInfoResp:
       allOf:
