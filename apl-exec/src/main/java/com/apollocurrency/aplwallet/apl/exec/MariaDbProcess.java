@@ -6,12 +6,15 @@ package com.apollocurrency.aplwallet.apl.exec;
 import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import io.firstbridge.process.db.DbControl;
 import io.firstbridge.process.db.DbRunParams;
-import io.firstbridge.process.impl.MariaDbRunParamsBuilder;
 import io.firstbridge.process.impl.MariaDbControl;
+import io.firstbridge.process.impl.MariaDbRunParams;
 
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * MariaDB/rocksDB is Apollo database. It shouдd be installed from
@@ -20,42 +23,58 @@ import java.time.Duration;
  *
  * @author Oleksiy Lukin alukin@gmail.com
  */
+@Slf4j
 public class MariaDbProcess {
-
+    public static final String DB_CONF_FILE="my-apl.cnf";
+    public static final String DB_CONF_FILE_TEMPLATE="my-apl.cnf.template";
+    
     private DbControl dbControl;
-    private static Path confFile;
-
-    public MariaDbProcess(DbConfig conf, Path dbInstallDir, Path dbDataDir) {
-
-        confFile = Path.of("my-apl-user.conf");
+    private  Path confFile;
+    private  Path confFileTemplate;
+    private MariaDbRunParams dbParams;
+    
+    private MariaDbRunParams setDbParams(DbConfig conf, Path dbInstallDir, Path dbDataDir){
+        dbParams = new MariaDbRunParams();
+        confFile = dbDataDir.resolve(DB_CONF_FILE);
+        confFileTemplate = dbInstallDir.resolve("conf").resolve(DB_CONF_FILE_TEMPLATE);
+        String dbUser = conf.getDbConfig().getDbUsername();
+        String dbPassword = conf.getDbConfig().getDbPassword();
         
-        DbRunParams dbParams = new MariaDbRunParamsBuilder()
-                .dbConfigFile(confFile)
-                .dbDataDir(dbDataDir)
-                .dbInstallDir(dbInstallDir)
-                .redirectOut(Path.of("maria_out.log"))
-                .dbUser("apl")
-                .dbPassword("apl")
-                .build();
-        dbControl = new MariaDbControl(dbParams);
+        Map<String,String> vars = new HashMap<>();
+        vars.put("apl_db_dir", dbDataDir.toAbsolutePath().toString());
+        vars.put("apl_mariadb_pkg_dir", dbInstallDir.toAbsolutePath().toString());
+        
+                dbParams.setDbConfigFileTemplate(confFileTemplate);
+                dbParams.setVarSubstMap(vars);
+                dbParams.setDbConfigFile(confFile);
+                dbParams.setDbDataDir(dbDataDir);
+                dbParams.setDbInstallDir(dbInstallDir);
+                dbParams.setOut(Path.of("maria_out.log"));
+                dbParams.setDbUser(dbUser);
+                dbParams.setDbPassword(dbPassword);    
+        
+                if(dbParams.verify()){
+                    dbParams.processConfigTemplates();
+                }else{
+                   log.error("Please verify database parameters!");
+                }
+                
+                
+        return dbParams;
+    }
+    
+    public MariaDbProcess(DbConfig conf, Path dbInstallDir, Path dbDataDir) {
+                
+        dbControl = new MariaDbControl(setDbParams(conf, dbInstallDir, dbDataDir));        
     }
 
     public static MariaDbProcess findRunning(DbConfig conf, Path dbDataDir, Path dbInstallDir){
-        MariaDbProcess process = null;
-        DbRunParams params = new MariaDbRunParamsBuilder()
-                .dbConfigFile(confFile)
-                .dbDataDir(dbDataDir)
-                .dbInstallDir(dbInstallDir)
-                .redirectOut(Path.of("maria_out.log"))
-                .dbUser("apl")
-                .dbPassword("apl")
-                .build();
-        MariaDbControl control = new MariaDbControl(params);
-        if( control.findRunning()){
-            process = new MariaDbProcess(conf,dbDataDir,dbInstallDir);
-            process.dbControl = control;
+        MariaDbProcess process = new MariaDbProcess(conf, dbInstallDir, dbDataDir);
+        process.dbControl = new MariaDbControl(process.dbParams);
+        if( process.dbControl.findRunning()){
+            return process;
         }
-        return process;
+        return null;
     }
 
     public boolean isOK() {
