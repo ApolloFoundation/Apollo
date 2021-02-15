@@ -547,6 +547,30 @@ paths:
 
 
   /@@subscribe/account:
+    get:
+      tags:
+        - subscribe
+      summary: Get subscription status.
+      operationId: getSubscriptionStatus
+      description: Return subscription status by subscription id.
+      parameters:
+        - name: subscriptionId
+          description: Subscription id
+          in: query
+          required: true
+          schema:
+            type: string
+            example: 'fba2fb94-6f88-11eb-9439-0242ac130002'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSubscriptionAccountResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
     post:
       tags:
         - subscribe
@@ -1575,6 +1599,19 @@ components:
             subscribeId:
               type: string
               example: 'fba2fb94-6f88-11eb-9439-0242ac130002'
+
+    GetSubscriptionAccountResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            txs:
+              description: Transactions which changed the account state. (10 transactions is limit.)
+              type: array
+              items:
+                type: string
+                format: hex_bytearray
+                example: '8330faaeb404178613417'
 
     ForgersInfoResponse:
       allOf:
