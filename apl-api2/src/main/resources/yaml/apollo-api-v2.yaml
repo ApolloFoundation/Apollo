@@ -18,8 +18,10 @@ servers:
 tags:
   - name: blockchain
     description: Operations with blockchain state.
-  - name: node public info
-    description: Public information about node.
+  - name: node public
+    description: Public access to node.
+  - name: node private
+    description: Private access to node.
 
   - name: account
     description: Operations about account
@@ -347,7 +349,7 @@ paths:
   /@@node/x509:
     get:
       tags:
-        - node public info
+        - node public
       summary: Get node certificate.
       description: Return node certificate in x509 format.
       operationId: getX509
@@ -364,7 +366,7 @@ paths:
   /@@node/health:
     get:
       tags:
-        - node public info
+        - node public
       summary: Gets node health
       operationId: getHealthInfo
       responses:
@@ -373,14 +375,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
+                $ref: '#/components/schemas/PublicHealthResponse'
         500:
           $ref: '#/components/responses/ServerError'
 
   /@@node/network:
     get:
       tags:
-        - node public info
+        - node public
       summary: Gets node network info
       operationId: getNetworkInfo
       responses:
@@ -396,7 +398,7 @@ paths:
   /@node/blockchain:
     get:
       tags:
-        - node public info
+        - node public
       summary: Get blockchain object
       description: Return details information about the blockchain
       operationId: getBlockchainInfo
@@ -409,6 +411,42 @@ paths:
                 $ref: '#/components/schemas/BlockchainInfo'
         500:
           $ref: '#/components/responses/ServerError'
+
+
+  /@node/forgers:
+    get:
+      tags:
+        - node private
+      summary: Get forgers from the node.
+      description: Return all forgers from the node.
+      operationId: getForgers
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForgersInfoResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@node/health-full:
+    get:
+      tags:
+        - node private
+      summary: Get full health info.
+      description: Return full health information.
+      operationId: getHealthFull
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateHealthResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
 
   /@@state/blockchain:
     get:
@@ -1374,8 +1412,6 @@ components:
                         ..........
                         BhMCVVMxHjAcBgNVBAoTFUdvb2dsZSBUcnVzdCBTZXJ2aWNlczElMCMGA1UEAxMc'
 
-
-
     CountResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
@@ -1386,45 +1422,144 @@ components:
               format: int64
               example: 345
 
-    HealthResponse:
+    ForgersInfoResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object
           properties:
-            blockchainHeight:
-              type: integer
-              format: int16
-              example: 9900345
-              description: "Current height of blockchain"
-            dbConnectionTotal:
-              type: integer
-              format: int16
-              description: "Total connections in the pool"
-            dbConnectionActive:
-              type: integer
-              format: int16
-              description: "Active connections in the pool"
-            dbConnectionIdle:
-              type: integer
-              format: int16
-              description: "Idle connections in the pool"
-            unconfirmedTxCacheSize:
-              type: integer
-              format: int16
-              description: "The waiting transactions cache size"
-            maxUnconfirmedTxCount:
-              type: integer
-              format: int16
-              description: "The max count of the unconfirmed transactions"
-            isTrimActive:
-              type: boolean
-              description: "Returns true if the trimming process is active"
+            forgers:
+              description: The array of forgers
+              type: array
+              items:
+                  $ref: '#/components/schemas/ForgerInfo'
 
+    ForgerInfo:
+      type: object
+      properties:
+          account:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+          effectiveBalanceAPL:
+            type: integer
+            format: int64
+            description: Effective balance.
+            example: 98400000
+          deadline:
+            type: integer
+            format: int64
+            description: Dead line.
+          hitTime:
+            type: integer
+            format: int64
+            description: Hit time.
+
+    PublicHealthResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/HealthPublicInfo'
+
+    PrivateHealthResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            healthInfo:
+              $ref: '#/components/schemas/FullHealthInfo'
+            nodeStatus:
+              $ref: '#/components/schemas/NodeStatusInfo'
+            peerInfo:
+              $ref: '#/components/schemas/FullPeerInfo'
+
+
+    FullHealthInfo:
+      allOf:
+        - $ref: '#/components/schemas/HealthPublicInfo'
+        - $ref: '#/components/schemas/HealthPrivateInfo'
+
+    HealthPublicInfo:
+      type: object
+      properties:
+        blockchainHeight:
+          type: integer
+          format: int16
+          example: 9900345
+          description: "Current height of blockchain"
+        isDbOk:
+          type: boolean
+          description: "Database is able to find blocks"
+        isTrimActive:
+          type: boolean
+          description: "Returns true if the trimming process is active"
+
+    HealthPrivateInfo:
+      type: object
+      properties:
+        dbConnectionTotal:
+          type: integer
+          format: int16
+          description: "Total connections in the pool"
+        maxUnconfirmedTxCount:
+          type: integer
+          format: int16
+          description: "The max count of the unconfirmed transactions"
+        dbConnectionActive:
+          type: integer
+          format: int16
+          description: "Active connections in the pool"
+        dbConnectionIdle:
+          type: integer
+          format: int16
+          description: "Idle connections in the pool"
+        unconfirmedTxCacheSize:
+          type: integer
+          format: int16
+          description: "The waiting transactions cache size"
+        needReboot:
+          type: boolean
+          description: "Current total number of DB connections"
+
+    NodeStatusInfo:
+      type: object
+      properties:
+        cpuCount:
+          type: integer
+          format: int16
+          description: "Number of active CPUs"
+        cpuLoad:
+          type: number
+          format: double
+          description: "Current average CPU load for all cores"
+        threadsRunning:
+          type: integer
+          format: int16
+          description: "Threads currently running in application"
+        memoryFree:
+          type: integer
+          format: int32
+          description: "Free memory available for this application"
+        dbConnections:
+          type: integer
+          format: int16
+          description: "DB connections currently running in application"
+        memoryTotal:
+          type: integer
+          format: int32
+          description: "Total memory in bytes"
+        diskFree:
+          type: integer
+          format: int32
+          description: "Free disk space available to application"
+        operatingSystem:
+          type: string
+          description: "Operating system of node"
 
     NetworkResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
-        - $ref: '#/components/schemas/PeerInfo'
+        - type: object
+          properties:
+            peerInfo:
+              $ref: '#/components/schemas/PeerPublicInfo'
         - type: object
           properties:
             inboundPeers:
@@ -1436,34 +1571,80 @@ components:
               format: int8
               description: "Outbound Peers"
 
-    PeerInfo:
+    FullPeerInfo:
+      allOf:
+        - $ref: '#/components/schemas/PeerPublicInfo'
+        - $ref: '#/components/schemas/PeerPrivateInfo'
+
+    PeerPublicInfo:
       type: object
       properties:
-          sharedAddress:
-            type: boolean
-            description: "Is node shared address"
-          version:
+        announcedAddress:
+          type: string
+          description: "Announced address"
+        sharedAddress:
+          type: boolean
+          description: "Is node shared address"
+        halmark:
+          type: string
+          description: "Node hallmark"
+        version:
+          type: string
+          description: "App version"
+          example: "1.47.10"
+        platform:
+          type: string
+          description: "Platform where app has been running."
+          example: "Linux amd64"
+        apiPort:
+          type: integer
+          format: int8
+          description: "App port"
+        apiSSLPort:
+          type: integer
+          format: int8
+          description: "App ssl port"
+        lastUpdated:
+          type: integer
+          format: int32
+          description: "Last update"
+        lastConnectAttempt:
+          type: integer
+          format: int32
+          description: "Last connect attempt"
+        inboundWebSocket:
+          type: boolean
+          description: "Is inbound web socket works."
+        outboundWebSocket:
+          type: boolean
+          description: "Is outbound web socket works."
+        blacklistingCause:
+          type: string
+          description: "Node has been Blacklisted cause."
+        blockchainState:
+          type: string
+          description: "Blockchain state"
+        chainId:
+          type: string
+          description: "Node chain id."
+          example: 'a2e9b946-290b-48b6-9985-dc2e5a5860a1'
+
+    PeerPrivateInfo:
+      type: object
+      properties:
+        state:
+          type: integer
+          format: int32
+          description: "Node state"
+        weight:
+          type: integer
+          format: int32
+          description: "Node weight"
+        services:
+          type: array
+          description: "Node services."
+          items:
             type: string
-            description: "App version"
-            example: "1.47.10"
-          platform:
-            type: string
-            description: "Platform where app has been running."
-            example: "Linux amd64"
-          apiPort:
-            type: integer
-            format: int8
-            description: "App port"
-          inboundWebSocket:
-            type: boolean
-            description: "Is inbound web socket works."
-          outboundWebSocket:
-            type: boolean
-            description: "Is outbound web socket works."
-          chainId:
-            type: string
-            description: "Node chain id."
-            example: 'a2e9b946-290b-48b6-9985-dc2e5a5860a1'
 
     BaseResponse:
       type: object
