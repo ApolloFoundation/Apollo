@@ -22,6 +22,8 @@ tags:
     description: Public access to node.
   - name: node private
     description: Private access to node.
+  - name: subscribe
+    description: Subscribe on some event.
 
   - name: account
     description: Operations about account
@@ -542,6 +544,32 @@ paths:
           $ref: '#/components/responses/BadRequest'
         500:
           $ref: '#/components/responses/ServerError'
+
+
+  /@@subscribe/account:
+    post:
+      tags:
+        - subscribe
+      summary: Subscribe on change account.
+      operationId: subscribeOnAccount
+      description: Subscribe on change something in particular account.
+      requestBody:
+        description: the parent account, child account and other
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscribeAccountRequest'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscribeAccountResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
 
 
   /@@state/blockchain:
@@ -1115,6 +1143,27 @@ components:
           format: hex_bytearray
           example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
           nullable: false
+
+    SubscribeAccountRequest:
+      required:
+        - type
+        - accountId
+      type: object
+      properties:
+        type:
+          description: Type of the event.
+          type: string
+          enum:
+            - balanse
+          example: balanse
+          nullable: false
+        accountId:
+          type: string
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+          description: Account id
+          nullable: false
+
+
     AccountReq:
       required:
         - parent
@@ -1517,6 +1566,15 @@ components:
               type: integer
               format: int64
               example: 345
+
+    SubscribeAccountResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            subscribeId:
+              type: string
+              example: 'fba2fb94-6f88-11eb-9439-0242ac130002'
 
     ForgersInfoResponse:
       allOf:
