@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.converter.db.ExchangeContractMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -12,11 +11,12 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
@@ -68,9 +68,16 @@ public class DexContractTable extends EntityDbTable<ExchangeContract> {
 
     @Override
     public void save(Connection con, ExchangeContract entity) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO dex_contract (id, offer_id, counter_offer_id, " +
-            "sender, recipient, secret_hash, encrypted_secret, transfer_tx_id, counter_transfer_tx_id, deadline_to_reply, status, height, latest) " +
-            "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")) {
+        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_contract (id, offer_id, counter_offer_id, " +
+            "sender, recipient, secret_hash, encrypted_secret, transfer_tx_id, counter_transfer_tx_id, deadline_to_reply, status, height, latest) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) "
+            + "ON DUPLICATE KEY UPDATE "
+            + "id = VALUES(id), offer_id = VALUES(offer_id), counter_offer_id = VALUES(counter_offer_id), "
+            + "sender = VALUES(sender), recipient = VALUES(recipient), secret_hash = VALUES(secret_hash), "
+            + "encrypted_secret = VALUES(encrypted_secret), transfer_tx_id = VALUES(transfer_tx_id), "
+            + "counter_transfer_tx_id = VALUES(counter_transfer_tx_id), deadline_to_reply = VALUES(deadline_to_reply), "
+            + "status = VALUES(status), height = VALUES(height), latest = TRUE")
+        ) {
             int i = 0;
             pstmt.setLong(++i, entity.getId());
             pstmt.setLong(++i, entity.getOrderId());

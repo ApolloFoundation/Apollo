@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.asset;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.asset.AssetTransferTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetTransfer;
 import lombok.Getter;

@@ -4,16 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -52,7 +52,7 @@ public class PhasingAppendixValidator implements AppendixValidator<PhasingAppend
                 if (Convert.emptyToNull(hash) == null || hash.length != 32) {
                     throw new AplException.NotValidException("Invalid linkedFullHash " + Convert.toHexString(hash));
                 }
-                if (!linkedTransactionIds.add(Convert.fullHashToId(hash))) {
+                if (!linkedTransactionIds.add(Convert.transactionFullHashToId(hash))) {
                     throw new AplException.NotValidException("Duplicate linked transaction ids");
                 }
             }
@@ -122,7 +122,7 @@ public class PhasingAppendixValidator implements AppendixValidator<PhasingAppend
             if (transactionHeight - txHeight > blockchainConfig.getCurrentConfig().getReferencedTransactionHeightSpan()) {
                 throw new AplException.NotValidException("Linked transaction cannot be more than 60 days older than the phased transaction");
             }
-            if (phasingPollService.isTransactionPhased(Convert.fullHashToId(hash))) {
+            if (phasingPollService.isTransactionPhased(Convert.transactionFullHashToId(hash))) {
                 throw new AplException.NotCurrentlyValidException("Cannot link to an already existing phased transaction");
             }
         }
@@ -137,6 +137,11 @@ public class PhasingAppendixValidator implements AppendixValidator<PhasingAppend
     public void validateStateIndependent(Transaction transaction, PhasingAppendix appendix, int validationHeight) throws AplException.ValidationException {
         generalValidationStateIndependent(appendix);
         validateFinishHeight(appendix.getFinishHeight(), appendix);
+    }
+
+    @Override
+    public Class<PhasingAppendix> forClass() {
+        return PhasingAppendix.class;
     }
 
 }

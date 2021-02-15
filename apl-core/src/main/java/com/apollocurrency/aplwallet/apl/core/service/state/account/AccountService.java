@@ -6,11 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.service.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.DoubleSpendingException;
-import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -24,7 +23,7 @@ public interface AccountService {
 
     static long getId(byte[] publicKey) {
         byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
-        return Convert.fullHashToId(publicKeyHash);
+        return Convert.transactionFullHashToId(publicKeyHash);
     }
 
     static void checkBalance(long accountId, long confirmed, long unconfirmed) {
@@ -120,8 +119,6 @@ public interface AccountService {
     Balances getAccountBalances(Account account, boolean includeEffectiveBalance);
 
     Balances getAccountBalances(Account account, boolean includeEffectiveBalance, int height);
-
-    ApolloFbWallet generateUserAccounts(byte[] secretApl);
 
     //Delegated from  AccountPublicKeyService
     byte[] getPublicKeyByteArray(long id);

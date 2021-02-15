@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.asset;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDelete;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -21,11 +22,13 @@ import com.apollocurrency.aplwallet.apl.data.AssetDeleteTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -45,12 +48,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+
 @Tag("slow")
 @EnableWeld
-class AssetDeleteTableTest {
+class AssetDeleteTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension();
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
 
     @Inject
     AssetDeleteTable table;
@@ -82,6 +87,11 @@ class AssetDeleteTableTest {
     @BeforeEach
     void setUp() {
         td = new AssetDeleteTestData();
+    }
+
+    @AfterEach
+    void tearDown() {
+        dbExtension.cleanAndPopulateDb();
     }
 
     @Test

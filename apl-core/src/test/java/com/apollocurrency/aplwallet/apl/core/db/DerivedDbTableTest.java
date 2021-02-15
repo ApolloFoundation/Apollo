@@ -4,7 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableData;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
@@ -12,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeriv
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -23,21 +26,23 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-public abstract class DerivedDbTableTest<T extends DerivedEntity> {
+
+@Slf4j
+public abstract class DerivedDbTableTest<T extends DerivedEntity> extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    static DbExtension extension = new DbExtension(mariaDBContainer);
 
     DerivedDbTable<T> derivedDbTable;
     Class<T> clazz;
 
     public DerivedDbTableTest(Class<T> clazz) {
         this.clazz = clazz;
-
     }
 
     @BeforeEach
@@ -54,10 +59,11 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
     @Test
     public void testGetAll() throws SQLException {
-        List<T> all = derivedDbTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
+        DerivedTableData<T> allByDbId = derivedDbTable.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE);
+        List<T> all = allByDbId.getValues();
 
         List<T> expected = sortByHeightAsc(getAll());
-        assertEquals(expected, all);
+        assertIterableEquals(expected, all);
     }
 
     @Test
@@ -75,7 +81,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
 
         List<T> expected = getAll();
         List<T> all = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertEquals(expected, all);
+        assertIterableEquals(expected, all);
     }
 
     @Test
@@ -119,7 +125,7 @@ public abstract class DerivedDbTableTest<T extends DerivedEntity> {
         List<T> expected = sublistByHeight(getAll(), height);
         DbUtils.inTransaction(extension, (con) -> derivedDbTable.rollback(height));
         List<T> actual = derivedDbTable.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-        assertEquals(expected, actual);
+        assertIterableEquals(expected, actual);
     }
 
 

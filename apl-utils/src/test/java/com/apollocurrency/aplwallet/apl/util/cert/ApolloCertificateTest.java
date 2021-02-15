@@ -1,9 +1,9 @@
 package com.apollocurrency.aplwallet.apl.util.cert;
 
 import com.apollocurrency.aplwallet.apl.crypto.cert.ApolloCertificate;
+import com.apollocurrency.aplwallet.apl.crypto.cert.ApolloCertificateException;
 import com.apollocurrency.aplwallet.apl.crypto.cert.AuthorityID;
 import com.apollocurrency.aplwallet.apl.crypto.cert.CertAttributes;
-import com.apollocurrency.aplwallet.apl.crypto.cert.ApolloCertificateException;
 import io.firstbridge.cryptolib.CryptoConfig;
 import io.firstbridge.cryptolib.CryptoParams;
 import org.junit.jupiter.api.BeforeAll;

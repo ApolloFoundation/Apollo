@@ -22,11 +22,9 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 
 import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
-import com.apollocurrency.aplwallet.apl.core.migrator.ApplicationDataMigrationManager;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
@@ -39,10 +37,8 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessingTaskScheduler;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.TableRegistryInitializer;
-import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMigrator;
 import com.apollocurrency.aplwallet.apl.core.shard.PrunableArchiveMonitor;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TxInitializer;
@@ -56,6 +52,7 @@ import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -89,7 +86,7 @@ public final class AplCore {
     private Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
-    private FullTextSearchService fullTextSearchService;
+    //private FullTextSearchService fullTextSearchService;
     private API apiServer;
     private IDexMatcherInterface tcs;
     @Inject
@@ -155,8 +152,8 @@ public final class AplCore {
             blockchainProcessor.shutdown();
             log.info("blockchainProcessor Shutdown...");
         }
-        if (fullTextSearchService != null) fullTextSearchService.shutdown();
-        log.info("full text service shutdown...");
+//        if (fullTextSearchService != null) fullTextSearchService.shutdown();
+//        log.info("full text service shutdown...");
 
         if (databaseManager != null) {
             databaseManager.shutdown();
@@ -216,13 +213,11 @@ public final class AplCore {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
             databaseManager.getDataSource();
             CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
-            fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
-            fullTextSearchService.init(); // first time BEFORE migration
+//            fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
+//            fullTextSearchService.init(); // first time BEFORE migration
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 30.0, "Database initialization done");
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 30.1, "Apollo Data migration started");
 
-            ApplicationDataMigrationManager migrationManager = CDI.current().select(ApplicationDataMigrationManager.class).get();
-            migrationManager.executeDataMigration();
             BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
             blockchainConfigUpdater.updateToLatestConfig(); // update config for migrated db
 
@@ -252,15 +247,10 @@ public final class AplCore {
             APIProxy.init();
 //            Generator.init();
             AddOns.init();
-            Helper2FA.init(databaseManager);
-            // do one time '2fa data' migration from db into files. That method is safe for multiple repeatable calls
-            Helper2FA.attemptMoveDataFromDatabase();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 70.1, "Apollo core classes initialization done");
             //signal to API that core is ready to serve requests. Should be removed as soon as all API will be on RestEasy
             ApiSplitFilter.isCoreReady = true;
 
-            PrunableArchiveMigrator migrator = CDI.current().select(PrunableArchiveMigrator.class).get();
-            migrator.migrate();
             // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
             recoverSharding();
 

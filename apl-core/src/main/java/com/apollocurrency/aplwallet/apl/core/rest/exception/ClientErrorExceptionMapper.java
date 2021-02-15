@@ -4,8 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.exception;
 
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.NotFoundException;
@@ -30,7 +31,7 @@ public class ClientErrorExceptionMapper implements ExceptionMapper<ClientErrorEx
                 ApiErrors.INCORRECT_PARAM_VALUE, "number format " + exception.getCause().getMessage());
         } else if (exception.getCause() != null && exception.getCause() instanceof RestParameterException) {
             RestParameterException cause = (RestParameterException) exception.getCause();
-            responseBuilder = ResponseBuilder.apiError(cause.getErrorInfo(), cause.getArgs());
+            responseBuilder = ResponseBuilder.apiError(cause.getApiErrorInfo(), cause.getArgs());
         } else {
             responseBuilder = ResponseBuilder.apiError(
                 ApiErrors.INTERNAL_SERVER_EXCEPTION, exception.getMessage());

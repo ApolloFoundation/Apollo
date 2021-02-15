@@ -21,4 +21,9 @@ public class EncryptedMessageAppendixParser implements AppendixParser<EncryptedM
         }
         return new EncryptedMessageAppendix(jsonData);
     }
+
+    @Override
+    public Class<EncryptedMessageAppendix> forClass() {
+        return EncryptedMessageAppendix.class;
+    }
 }

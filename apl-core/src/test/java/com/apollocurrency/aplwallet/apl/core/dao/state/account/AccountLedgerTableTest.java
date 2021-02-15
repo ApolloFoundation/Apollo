@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -21,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -43,13 +45,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+
 @Tag("slow")
 @EnableWeld
-class AccountLedgerTableTest {
+class AccountLedgerTableTest extends DbContainerBaseTest {
 
     public static final int TRIM_KEEP = 300;
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
     @Inject
     AccountLedgerTable table;
     AccountTestData testData = new AccountTestData();
@@ -122,6 +126,8 @@ class AccountLedgerTableTest {
 
     @Test
     void testTrim_on_height() {
+        dbExtension.cleanAndPopulateDb();
+
         doReturn(Integer.MAX_VALUE).when(propertiesHolder).BATCH_COMMIT_SIZE();
         doReturn(testData.LEDGER_HEIGHT - 1 + TRIM_KEEP).when(blockchain).getHeight();
         DbUtils.inTransaction(dbExtension, (con) -> table.trim(testData.LEDGER_HEIGHT));
@@ -137,6 +143,8 @@ class AccountLedgerTableTest {
 
     @Test
     void getEntry() {
+        dbExtension.cleanAndPopulateDb();
+
         LedgerEntry expected = testData.ACC_LEDGER_0;
 
         LedgerEntry actual = table.getEntry(testData.ACC_LEDGER_0.getDbId(), true);

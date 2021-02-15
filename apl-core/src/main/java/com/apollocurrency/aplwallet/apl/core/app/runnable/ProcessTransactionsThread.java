@@ -6,9 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.api.p2p.request.GetUnconfirmedTransactionsRequest;
 import com.apollocurrency.aplwallet.api.p2p.respons.GetUnconfirmedTransactionsResponse;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
@@ -17,8 +17,8 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionDTOConver
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
@@ -45,12 +45,12 @@ public class ProcessTransactionsThread implements Runnable {
                                      MemPool memPool,
                                      BlockchainConfig blockchainConfig,
                                      PeersService peers,
-                                     TransactionTypeFactory transactionTypeFactory) {
+                                     TransactionBuilderFactory builderFactory) {
         this.transactionProcessor = Objects.requireNonNull(transactionProcessor);
         this.memPool = Objects.requireNonNull(memPool);
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
         this.peers = Objects.requireNonNull(peers);
-        this.dtoConverter = new TransactionDTOConverter(transactionTypeFactory);
+        this.dtoConverter = new TransactionDTOConverter(builderFactory);
         log.info("Created 'ProcessTransactionsThread' instance");
     }
 

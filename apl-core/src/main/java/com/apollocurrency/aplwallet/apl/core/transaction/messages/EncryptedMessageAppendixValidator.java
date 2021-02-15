@@ -15,4 +15,9 @@ public class EncryptedMessageAppendixValidator extends AbstractEncryptedMessageA
     public EncryptedMessageAppendixValidator(BlockchainConfig config) {
         super(config);
     }
+
+    @Override
+    public Class<EncryptedMessageAppendix> forClass() {
+        return EncryptedMessageAppendix.class;
+    }
 }

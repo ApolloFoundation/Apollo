@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
@@ -86,13 +86,8 @@ public class BlockChainInfoServiceImpl implements BlockChainInfoService {
     }
 
     @Override
-    public List<Block> getBlocks(long accountId, int from, int to, int timestamp) {
-        return blockchain.getBlocksByAccount(accountId, from, to, timestamp);
-    }
-
-    @Override
-    public List<Block> getBlocksByAccountStream(long accountId, int from, int to, int timestamp) {
-        return blockchain.getBlocksByAccountFromShards(accountId, from, to, timestamp);
+    public List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp) {
+        return lookupBlockchain().getBlocksByAccountFromShards(accountId, from, to, timestamp);
     }
 
     @Override
@@ -102,7 +97,7 @@ public class BlockChainInfoServiceImpl implements BlockChainInfoService {
 
     @Override
     public boolean isTrimming(){
-        return blockchainProcessor.isTrimming();
+        return lookupBlockchainProcessor().isTrimming();
     }
 
 }

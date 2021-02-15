@@ -39,7 +39,7 @@ public final class FullHashToId extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
-        long longId = Convert.fullHashToId(Convert.parseHexString(req.getParameter("fullHash")));
+        long longId = Convert.transactionFullHashToId(Convert.parseHexString(req.getParameter("fullHash")));
         response.put("longId", String.valueOf(longId));
         response.put("stringId", Long.toUnsignedString(longId));
         return response;

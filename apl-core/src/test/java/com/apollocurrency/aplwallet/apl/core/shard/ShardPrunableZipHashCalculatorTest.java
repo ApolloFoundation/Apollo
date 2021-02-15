@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
@@ -23,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -47,11 +49,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
+
+@Slf4j
 
 @Tag("slow")
 @EnableWeld
-class ShardPrunableZipHashCalculatorTest {
+class ShardPrunableZipHashCalculatorTest extends DbContainerBaseTest {
+
     DerivedTablesRegistry registry = mock(DerivedTablesRegistry.class);
     Zip zip = spy(new ZipImpl());
     ShardDao shardDao = mock(ShardDao.class);
@@ -62,7 +67,7 @@ class ShardPrunableZipHashCalculatorTest {
     @RegisterExtension
     TemporaryFolderExtension tempFolder = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension dbExtension = new DbExtension();
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
     @WeldSetup
     WeldInitiator weld = WeldInitiator.from(PrunableMessageTable.class,
         Event.class,
@@ -90,16 +95,6 @@ class ShardPrunableZipHashCalculatorTest {
     Shard shard3 = new Shard(3L, new byte[32], ShardState.FULL, 28, new byte[32], new long[3], new int[3], new int[3], new byte[32]);
 
 
-    /*@Test
-    void testTriggerAsyncTrimDoneEvent() {
-        doReturn(List.of()).when(shardDao).getAllCompletedShards();
-        mockChain();
-        trimDataEvent.select(new AnnotationLiteral<Async>() {}).fire(new TrimData(200, 300, 250));
-
-        verify(shardDao).getAllCompletedShards();
-        verifyZeroInteractions(zip, dirProvider);
-    }*/
-
     @Test
     void testTryRecalculatePrunableArchiveHashes() throws IOException {
         Path dataExportDir = tempFolder.newFolder().toPath();
@@ -109,9 +104,9 @@ class ShardPrunableZipHashCalculatorTest {
         doReturn(dataExportDir).when(dirProvider).getDataExportDir();
         doReturn(List.of(shard1, shard2, shard3)).when(shardDao).getAllCompletedShards();
         doReturn(List.of(prunableMessageTable, derivedTable)).when(registry).getDerivedTables();
-        Path secondZipPath = dataExportDir.resolve("apl-blockchain-shardprun-2-chain-" + chainId.toString() + ".zip");
-        Path thirdZipPath = dataExportDir.resolve("apl-blockchain-shardprun-3-chain-" + chainId.toString() + ".zip");
-        Files.createFile(secondZipPath);
+        Path secondZipPath = dataExportDir.resolve("apl_blockchain_" + chainId.toString().substring(0, 6) + "_shardprun_2.zip");
+        Path thirdZipPath = dataExportDir.resolve("apl_blockchain_" + chainId.toString().substring(0, 6) + "_shardprun_3.zip");
+        Files.createFile(secondZipPath); //apl_blockchain_3fecf3_shardprun_2.zip
         Files.createFile(thirdZipPath);
 
         prunableZipHashCalculator.tryRecalculatePrunableArchiveHashes(250);
@@ -131,7 +126,7 @@ class ShardPrunableZipHashCalculatorTest {
     void testSkipRecalculationWhenTimeIsNotGreaterThanPrevPruningTime() {
         prunableZipHashCalculator.tryRecalculatePrunableArchiveHashes(0);
 
-        verifyZeroInteractions(shardDao, zip, dirProvider);
+        verifyNoInteractions(shardDao, zip, dirProvider);
     }
 
     private void mockChain() {

@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.entity.state.account;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import lombok.Getter;
 import lombok.Setter;

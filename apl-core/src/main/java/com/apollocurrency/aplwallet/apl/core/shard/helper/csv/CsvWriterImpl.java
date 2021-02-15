@@ -72,27 +72,27 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
 
     private static Map<ArrayColumn, ArrayColumn> getArrayColumnIndex() {
         ArrayColumn arrayColumn1 =
-            new ArrayColumn("ACCOUNT_CONTROL_PHASING", "WHITELIST", 19, 0);
+            new ArrayColumn("account_control_phasing", "whitelist", 19, 0);
         ArrayColumn arrayColumn2 =
-            new ArrayColumn("GOODS", "PARSED_TAGS", 2147483647, 0);
+            new ArrayColumn("goods", "parsed_tags", 2147483647, 0);
         ArrayColumn arrayColumn3 =
-            new ArrayColumn("POLL", "OPTIONS", 2147483647, 0);
+            new ArrayColumn("poll", "options", 2147483647, 0);
         ArrayColumn arrayColumn4 =
-            new ArrayColumn("SHARD", "BLOCK_TIMEOUTS", 10, 0);
+            new ArrayColumn("shard", "block_timeouts", 10, 0);
         ArrayColumn arrayColumn5 =
-            new ArrayColumn("SHARD", "GENERATOR_IDS", 19, 0);
+            new ArrayColumn("shard", "generator_ids", 19, 0);
         ArrayColumn arrayColumn6 =
-            new ArrayColumn("SHARD", "BLOCK_TIMESTAMPS", 10, 0);
+            new ArrayColumn("shard", "block_timestamps", 10, 0);
         ArrayColumn arrayColumn7 =
-            new ArrayColumn("SHUFFLING", "RECIPIENT_PUBLIC_KEYS", 2147483647, 0);
+            new ArrayColumn("shuffling", "recipient_public_keys", 2147483647, 0);
         ArrayColumn arrayColumn8 =
-            new ArrayColumn("SHUFFLING_DATA", "DATA", 2147483647, 0);
+            new ArrayColumn("shuffling_data", "data", 2147483647, 0);
         ArrayColumn arrayColumn9 =
-            new ArrayColumn("SHUFFLING_PARTICIPANT", "BLAME_DATA", 2147483647, 0);
+            new ArrayColumn("shuffling_participant", "blame_data", 2147483647, 0);
         ArrayColumn arrayColumn10 =
-            new ArrayColumn("SHUFFLING_PARTICIPANT", "KEY_SEEDS", 2147483647, 0);
+            new ArrayColumn("shuffling_participant", "key_seeds", 2147483647, 0);
         ArrayColumn arrayColumn11 =
-            new ArrayColumn("TAGGED_DATA", "PARSED_TAGS", 2147483647, 0);
+            new ArrayColumn("tagged_data", "parsed_tags", 2147483647, 0);
 
         return Map.ofEntries(
             Map.entry(arrayColumn1, arrayColumn1),

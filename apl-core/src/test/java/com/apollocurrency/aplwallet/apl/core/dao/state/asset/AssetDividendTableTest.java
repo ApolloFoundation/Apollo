@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.asset;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -20,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.data.AssetDividendTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -42,12 +44,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+
 @Tag("slow")
 @EnableWeld
-class AssetDividendTableTest {
+class AssetDividendTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension();
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
 
     @Inject
     AssetDividendTable table;
@@ -90,6 +94,8 @@ class AssetDividendTableTest {
 
     @Test
     void testLoad_returnNull_ifNotExist() {
+        dbExtension.cleanAndPopulateDb();
+
         AssetDividend assetDividend = table.get(table.getDbKeyFactory().newKey(td.ASSET_DIVIDEND_NEW));
         assertNull(assetDividend);
     }

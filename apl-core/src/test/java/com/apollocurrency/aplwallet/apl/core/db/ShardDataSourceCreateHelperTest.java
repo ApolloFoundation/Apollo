@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ShardRecoveryDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -12,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardDataSourceC
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -24,12 +26,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+
 @Tag("slow")
 @EnableWeld
-class ShardDataSourceCreateHelperTest {
+class ShardDataSourceCreateHelperTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension extension = new DbExtension();
+    static DbExtension extension = new DbExtension(mariaDBContainer);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -53,7 +57,7 @@ class ShardDataSourceCreateHelperTest {
         createHelper = new ShardDataSourceCreateHelper(extension.getDatabaseManager(), 1L);
         createHelper.createUninitializedDataSource();
         String shardName = createHelper.getShardName();
-        assertEquals("apl-blockchain-shard-1-chain-b5d7b697-f359-4ce5-a619-fa34b6fb01a5", shardName);
+        assertEquals("apl_blockchain_b5d7b6_shard_1", shardName);
     }
 
     @Test

@@ -5,10 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.antifraud.AntifraudValidator;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
@@ -20,15 +22,17 @@ import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureCredential;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureVerifier;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentChildSpecific;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentMarker;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -50,6 +54,8 @@ public class TransactionValidator {
     private final AppendixValidatorRegistry validatorRegistry;
     private final AntifraudValidator antifraudValidator;
 
+    private final TxBContext txBContext;
+
     @Inject
     public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService,
                                 Blockchain blockchain, FeeCalculator feeCalculator, AccountService accountService,
@@ -66,6 +72,7 @@ public class TransactionValidator {
         this.keyValidator = new PublicKeyValidator(accountPublicKeyService);
         this.validatorRegistry = validatorRegistry;
         this.antifraudValidator = new AntifraudValidator();
+        this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }
 
 
@@ -165,7 +172,9 @@ public class TransactionValidator {
             AppendixValidator<AbstractAppendix> validator = validatorRegistry.getValidatorFor(appendage);
             doAppendixFullValidation(validatingAtFinish, validator, transaction, appendage);
         }
-        int fullSize = transaction.getFullSize();
+        Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion()).serialize(transaction, byteArrayTx);
+        int fullSize = byteArrayTx.payloadSize();
         if (fullSize > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
             throw new AplException.NotValidException("Transaction size " + fullSize + " exceeds maximum payload size");
         }
@@ -259,6 +268,7 @@ public class TransactionValidator {
     public boolean checkSignature(Transaction transaction) {
         return checkSignature(accountService.getAccount(transaction.getSenderId()), transaction);
     }
+
     public boolean checkSignature(Account sender, Transaction transaction) {
         if (transaction.hasValidSignature()) {
             return true;
@@ -297,29 +307,33 @@ public class TransactionValidator {
             log.trace("#MULTI_SIG# verify credential={}", signatureCredential);
         }
         if (!signatureCredential.validateCredential(keyValidator)) {
+            log.trace("#MULTI_SIG# Credential verification failed, credential={}", signatureCredential);
             return false;
         }
 
         if (transaction.getSignature() != null && transaction.getSignature().isVerified()) {
             return true;
         } else {
+            Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
+            txBContext.createSerializer(transaction.getVersion())
+                .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), byteArrayTx);
+
             if (log.isTraceEnabled()) {
                 log.trace("#MULTI_SIG# verify signature={} publicKey={} document={}",
                     Convert.toHexString(transaction.getSignature().bytes()),
                     signatureCredential,
-                    Convert.toHexString(transaction.getUnsignedBytes()));
+                    Convert.toHexString(byteArrayTx.array()));
             }
 
             boolean verifiedOk = signatureVerifier.verify(
-                transaction.getUnsignedBytes(), transaction.getSignature(), signatureCredential
+                byteArrayTx.array(), transaction.getSignature(), signatureCredential
             );
             if (verifiedOk) {
-                transaction.withValidSignature();
+                ((TransactionImpl) transaction.getTransactionImpl()).withValidSignature(verifiedOk);
             }
             return verifiedOk;
         }
     }
-
 
     public boolean verifySignature(Transaction transaction) {
         return checkSignature(transaction) && accountPublicKeyService.setOrVerifyPublicKey(transaction.getSenderId(), transaction.getSenderPublicKey());

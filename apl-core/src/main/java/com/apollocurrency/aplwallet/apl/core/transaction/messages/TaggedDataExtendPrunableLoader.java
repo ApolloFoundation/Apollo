@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.TaggedDataService;
 
 import javax.inject.Inject;
@@ -20,5 +20,10 @@ public class TaggedDataExtendPrunableLoader extends TaggedDataPrunableLoader<Tag
     @Override
     public void restorePrunableData(Transaction transaction, TaggedDataExtendAttachment appendix, int blockTimestamp, int height) {
 
+    }
+
+    @Override
+    public Class<TaggedDataExtendAttachment> forClass() {
+        return TaggedDataExtendAttachment.class;
     }
 }

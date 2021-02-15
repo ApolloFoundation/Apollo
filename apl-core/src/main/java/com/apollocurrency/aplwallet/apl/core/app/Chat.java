@@ -7,9 +7,9 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionService;
 
 import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
@@ -20,7 +20,7 @@ import java.util.List;
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.ARBITRARY_MESSAGE;
 
 public class Chat {
-    private static Blockchain blockchain = CDI.current().select(Blockchain.class).get();
+    private static final TransactionService transactionService = CDI.current().select(TransactionService.class).get();
     private static DatabaseManager databaseManager;
 
     private static TransactionalDataSource lookupDataSource() {
@@ -63,29 +63,9 @@ public class Chat {
         }
     }
 
-    public static List<? extends Transaction> getChatHistory(long account1, long account2, int from, int to) {
-
-        try (Connection con = lookupDataSource().getConnection()) {
-            PreparedStatement stmt = con.prepareStatement(
-                "SELECT * from transaction "
-                    + "where type = ? and subtype = ? and ((sender_id =? and recipient_id = ?) or  (sender_id =? and recipient_id = ?)) " +
-                    "order by timestamp desc"
-                    + DbUtils.limitsClause(from, to)
-            );
-            int i = 0;
-            stmt.setByte(++i, ARBITRARY_MESSAGE.getType());
-            stmt.setByte(++i, ARBITRARY_MESSAGE.getSubtype());
-            stmt.setLong(++i, account1);
-            stmt.setLong(++i, account2);
-            stmt.setLong(++i, account2);
-            stmt.setLong(++i, account1);
-            DbUtils.setLimits(++i, stmt, from, to);
-            return blockchain.getTransactions(con, stmt);
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+    public static List<Transaction> getChatHistory(long account1, long account2, int from, int to) {
+        return transactionService.getTransactionsChatHistory(account1, account2, from, to);
     }
-
 
     public static class ChatInfo {
         long account;

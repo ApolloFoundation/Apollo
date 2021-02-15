@@ -22,4 +22,9 @@ public class EncryptToSelfMessageAppendixParser implements AppendixParser<Encryp
         }
         return new EncryptToSelfMessageAppendix(jsonData);
     }
+
+    @Override
+    public Class<EncryptToSelfMessageAppendix> forClass() {
+        return EncryptToSelfMessageAppendix.class;
+    }
 }

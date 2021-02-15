@@ -66,7 +66,6 @@ import com.apollocurrency.aplwallet.apl.core.http.post.GenerateToken;
 import com.apollocurrency.aplwallet.apl.core.http.post.IssueAsset;
 import com.apollocurrency.aplwallet.apl.core.http.post.IssueCurrency;
 import com.apollocurrency.aplwallet.apl.core.http.post.LeaseBalance;
-import com.apollocurrency.aplwallet.apl.core.http.post.LuceneReindex;
 import com.apollocurrency.aplwallet.apl.core.http.post.MarkHost;
 import com.apollocurrency.aplwallet.apl.core.http.post.PlaceAskOrder;
 import com.apollocurrency.aplwallet.apl.core.http.post.PlaceBidOrder;
@@ -342,7 +341,7 @@ public enum APIEnum {
     FULL_RESET("fullReset", new FullReset()),
     POP_OFF("popOff", new PopOff()),
     SCAN("scan", new Scan()),
-    LUCENE_REINDEX("luceneReindex", new LuceneReindex()),
+    //LUCENE_REINDEX("luceneReindex", new LuceneReindex()),
     DUMP_PEERS("dumpPeers", new DumpPeers()),
     GET_LOG("getLog", new GetLog()),
     GET_STACK_TRACES("getStackTraces", new GetStackTraces()),

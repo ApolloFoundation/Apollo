@@ -22,15 +22,15 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
@@ -44,13 +44,13 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.TOO_MANY_
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_TRANSACTION_FULL_HASH;
 
 @Vetoed
-public class ApproveTransaction extends CreateTransaction {
+public class ApproveTransaction extends CreateTransactionHandler {
 
     private static PhasingPollService phasingPollService = CDI.current().select(PhasingPollService.class).get();
 
     public ApproveTransaction() {
         super(new APITag[]{APITag.CREATE_TRANSACTION, APITag.PHASING}, "transactionFullHash", "transactionFullHash", "transactionFullHash",
-            "revealedSecret", "revealedSecretIsText");
+                "revealedSecret", "revealedSecretIsText");
     }
 
     @Override
@@ -68,7 +68,7 @@ public class ApproveTransaction extends CreateTransaction {
         List<byte[]> phasedTransactionFullHashes = new ArrayList<>(phasedTransactionValues.length);
         for (String phasedTransactionValue : phasedTransactionValues) {
             byte[] hash = Convert.parseHexString(phasedTransactionValue);
-            PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.fullHashToId(hash));
+            PhasingPoll phasingPoll = phasingPollService.getPoll(Convert.transactionFullHashToId(hash));
             if (phasingPoll == null) {
                 return UNKNOWN_TRANSACTION_FULL_HASH;
             }

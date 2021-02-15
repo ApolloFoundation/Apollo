@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -20,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -42,11 +44,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
 @Tag("slow")
 @EnableWeld
-class AccountCurrencyTableTest {
+class AccountCurrencyTableTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
     @Inject
     AccountCurrencyTable table;
     AccountTestData testData = new AccountTestData();
@@ -59,8 +63,7 @@ class AccountCurrencyTableTest {
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, AccountCurrencyTable.class
-    )
+        PropertiesHolder.class, AccountCurrencyTable.class)
         .addBeans(MockBean.of(dbExtension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
@@ -79,6 +82,8 @@ class AccountCurrencyTableTest {
 
     @Test
     void testLoad_ifNotExist_thenReturnNull() {
+        dbExtension.cleanAndPopulateDb();
+
         AccountCurrency accountCurrency = table.get(table.getDbKeyFactory().newKey(testData.newCurrency));
         assertNull(accountCurrency);
     }
@@ -115,6 +120,8 @@ class AccountCurrencyTableTest {
 
     @Test
     void testDefaultSort() {
+        dbExtension.cleanAndPopulateDb();
+
         assertNotNull(table.defaultSort());
         List<AccountCurrency> expectedAll = testData.ALL_CURRENCY.stream()
             .sorted(currencyComparator)

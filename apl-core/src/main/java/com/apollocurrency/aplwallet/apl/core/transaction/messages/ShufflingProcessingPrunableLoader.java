@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 
 import javax.inject.Inject;
@@ -31,5 +31,10 @@ public class ShufflingProcessingPrunableLoader implements PrunableLoader<Shuffli
     @Override
     public void restorePrunableData(Transaction transaction, ShufflingProcessingAttachment appendix, int blockTimestamp, int height) {
         shufflingService.restoreData(appendix.getShufflingId(), transaction.getSenderId(), appendix.getData(), transaction.getTimestamp(), height);
+    }
+
+    @Override
+    public Class<ShufflingProcessingAttachment> forClass() {
+        return ShufflingProcessingAttachment.class;
     }
 }

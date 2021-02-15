@@ -10,13 +10,12 @@ import com.apollocurrency.aplwallet.api.p2p.request.GetNextBlockIdsRequest;
 import com.apollocurrency.aplwallet.api.p2p.respons.GetCumulativeDifficultyResponse;
 import com.apollocurrency.aplwallet.api.p2p.respons.GetMilestoneBlockIdsResponse;
 import com.apollocurrency.aplwallet.api.p2p.respons.GetNextBlockIdsResponse;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.GetNextBlocksTask;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockchainProcessorState;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.PeerBlock;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.BlockchainProcessorState;
+import com.apollocurrency.aplwallet.apl.core.blockchain.PeerBlock;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
@@ -34,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableRestorationService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -364,11 +364,11 @@ public class GetMoreBlocksThread implements Runnable {
             }
 
             if (response == null) {
-                log.debug("null response from peer {} while getNeBlockIdst", peer.getHostWithPort());
+                log.debug("null response from peer {} while getNextBlockIds", peer.getHostWithPort());
                 return Collections.emptyList();
             }
             List<String> nextBlockIds = response.getNextBlockIds();
-            if (nextBlockIds == null || nextBlockIds.size() == 0) {
+            if (nextBlockIds == null || nextBlockIds.isEmpty()) {
                 break;
             }
             // prevent overloading with blockIds
@@ -379,8 +379,8 @@ public class GetMoreBlocksThread implements Runnable {
             }
             boolean matching = true;
             int count = 0;
-            for (Object nextBlockId : nextBlockIds) {
-                long blockId = Convert.parseUnsignedLong((String) nextBlockId);
+            for (String nextBlockId : nextBlockIds) {
+                long blockId = Convert.parseUnsignedLong(nextBlockId);
                 if (matching) {
                     if (blockchain.hasBlock(blockId)) {
                         matchId = blockId;

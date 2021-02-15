@@ -1,25 +1,21 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.entity.appdata;
 
-import java.util.Objects;
-
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 
+import java.util.Objects;
+
 public class ReferencedTransaction extends DerivedEntity {
-//    private Long dbId;
     private Long transactionId;
     private Long referencedTransactionId;
-    private Integer height;
 
     public ReferencedTransaction(Long dbId, Long transactionId, Long referencedTransactionId, Integer height) {
         super(dbId, height);
-//        this.dbId = dbId;
         this.transactionId = transactionId;
         this.referencedTransactionId = referencedTransactionId;
-//        this.height = height;
     }
 
     @Override
@@ -28,25 +24,15 @@ public class ReferencedTransaction extends DerivedEntity {
         if (o == null || getClass() != o.getClass()) return false;
         ReferencedTransaction that = (ReferencedTransaction) o;
         return Objects.equals(getDbId(), that.getDbId()) &&
-            Objects.equals(transactionId, that.transactionId) &&
-            Objects.equals(referencedTransactionId, that.referencedTransactionId) &&
-            Objects.equals(height, that.height);
+                Objects.equals(transactionId, that.transactionId) &&
+                Objects.equals(referencedTransactionId, that.referencedTransactionId) &&
+                Objects.equals(getHeight(), that.getHeight());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getDbId(), transactionId, referencedTransactionId, height);
+        return Objects.hash(getDbId(), transactionId, referencedTransactionId, getHeight());
     }
-
-/*
-    public Long getDbId() {
-        return dbId;
-    }
-
-    public void setDbId(Long dbId) {
-        this.dbId = dbId;
-    }
-*/
 
     public Long getTransactionId() {
         return transactionId;
@@ -63,14 +49,4 @@ public class ReferencedTransaction extends DerivedEntity {
     public void setReferencedTransactionId(Long referencedTransactionId) {
         this.referencedTransactionId = referencedTransactionId;
     }
-
-/*
-    public Integer getHeight() {
-        return height;
-    }
-
-    public void setHeight(Integer height) {
-        this.height = height;
-    }
-*/
 }

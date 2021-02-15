@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
 import com.apollocurrency.aplwallet.api.dto.info.TimeDto;
 import com.apollocurrency.aplwallet.api.dto.info.TotalSupplyDto;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.OrderedMap;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -196,13 +195,13 @@ public class ServerInfoController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successful execution",
             content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = OrderedMap.class))),
+                schema = @Schema(implementation = Map.class))),
 
         @ApiResponse(responseCode = "401", description = "Unauthorized Error"),
 
         @ApiResponse(responseCode = "403", description = "Access Forbidden"),
 
-        }
+    }
     )
     @RolesAllowed("admin")
     public Response blockchainProperties(

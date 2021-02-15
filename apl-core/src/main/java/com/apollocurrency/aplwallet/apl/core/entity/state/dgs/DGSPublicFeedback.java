@@ -55,6 +55,8 @@ public class DGSPublicFeedback extends VersionedDerivedEntity {
         return "DGSPublicFeedback{" +
             "feedback='" + feedback + '\'' +
             ", id=" + id +
+            ", dbId=" + getDbId() +
+            ", dbKey=" + getDbKey() +
             '}';
     }
 }

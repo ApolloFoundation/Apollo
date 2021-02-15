@@ -53,7 +53,7 @@ public class Chain {
     ) {
         this(chainId, false, Collections.emptyList(), wellKnownPeers, Collections.emptyList(),
             name, description, symbol, prefix, project, initialSupply, decimals,
-             blockchainProperties, null);
+            blockchainProperties, null);
     }
 
     /**
@@ -244,7 +244,7 @@ public class Chain {
 
     @Override
     public int hashCode() {
-        return Objects.hash(chainId, active, defaultPeers, wellKnownPeers, blacklistedPeers, name, description, symbol, prefix, project,  blockchainProperties, featuresHeightRequirement);
+        return Objects.hash(chainId, active, defaultPeers, wellKnownPeers, blacklistedPeers, name, description, symbol, prefix, project, blockchainProperties, featuresHeightRequirement);
     }
 
     public Chain copy() {
@@ -254,7 +254,7 @@ public class Chain {
         List<BlockchainProperties> blockchainPropertiesCopy = blockchainProperties.values().stream().map(BlockchainProperties::copy).collect(Collectors.toList());
         return new Chain(chainId, active, defaultPeersCopy, wellKnownPeersCopy, blacklistedPeersCopy,
             name, description, symbol, prefix, project, initialSupply, decimals,
-             blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null);
+            blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null);
     }
 
     @Override

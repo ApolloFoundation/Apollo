@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * Add fulltext search support for database data, also simplify work with fulltext search and
@@ -52,6 +53,8 @@ public interface FullTextSearchService {
      * <p>
      */
     void init();
+
+    void initTableLazyIfNotPresent(Connection conn, Statement stmt, String tableName) throws SQLException;
 
     /**
      * Drop all fulltext indexes

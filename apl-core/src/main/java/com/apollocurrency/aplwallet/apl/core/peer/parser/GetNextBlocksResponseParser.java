@@ -4,11 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.parser;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.respons.GetNextBlocksResponse;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockParser;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 

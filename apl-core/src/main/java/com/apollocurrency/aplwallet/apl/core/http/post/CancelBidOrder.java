@@ -21,16 +21,16 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderCancellation;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
@@ -40,7 +40,7 @@ import javax.servlet.http.HttpServletRequest;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_ORDER;
 
 @Vetoed
-public final class CancelBidOrder extends CreateTransaction {
+public final class CancelBidOrder extends CreateTransactionHandler {
     private OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService;
 
     public CancelBidOrder() {
@@ -50,7 +50,7 @@ public final class CancelBidOrder extends CreateTransaction {
     private OrderService<BidOrder, ColoredCoinsBidOrderPlacement> lookupBidOrderService() {
         if (bidOrderService == null) {
             this.bidOrderService = CDI.current().select(
-                BidOrderServiceImpl.class,
+                    BidOrderServiceImpl.class,
                 BidOrderService.Literal.INSTANCE
             ).get();
         }

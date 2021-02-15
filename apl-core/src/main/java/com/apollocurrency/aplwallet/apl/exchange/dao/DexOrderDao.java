@@ -5,16 +5,16 @@ package com.apollocurrency.aplwallet.apl.exchange.dao;
 
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.DexOrderMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBMatchingRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequestForTrading;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
-import com.apollocurrency.aplwallet.apl.exchange.model.HeightDbIdRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderDbIdPaginationDbRequest;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DBSortOrder;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderDBMatchingRequest;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderDBRequestForTrading;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderSortBy;
+import com.apollocurrency.aplwallet.apl.dex.core.model.HeightDbIdRequest;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderDbIdPaginationDbRequest;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -41,7 +41,7 @@ public interface DexOrderDao {
         "AND (:offerCur is NULL OR offer.offer_currency = :offerCur) " +
         "AND (:pairCur is NULL OR offer.pair_currency = :pairCur) " +
         "ORDER BY <sortBy> <sortOrder> " +
-        "OFFSET :offset FETCH FIRST :limit ROWS ONLY"
+        "LIMIT :limit OFFSET :offset"
     )
     @RegisterRowMapper(DexOrderMapper.class)
     List<DexOrder> getOrders(@BindBean DexOrderDBRequest dexOrderDBRequest, @Define("sortBy") DexOrderSortBy sortBy, @Define("sortOrder") DBSortOrder sortOrder);

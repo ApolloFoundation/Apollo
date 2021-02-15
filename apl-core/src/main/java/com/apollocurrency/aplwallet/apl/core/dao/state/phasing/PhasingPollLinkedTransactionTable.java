@@ -73,7 +73,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
              PreparedStatement pstmt = con.prepareStatement("SELECT transaction_id FROM phasing_poll_linked_transaction " +
                  "WHERE linked_transaction_id = ? AND linked_full_hash = ?")) {
             int i = 0;
-            pstmt.setLong(++i, Convert.fullHashToId(linkedTransactionFullHash));
+            pstmt.setLong(++i, Convert.transactionFullHashToId(linkedTransactionFullHash));
             pstmt.setBytes(++i, linkedTransactionFullHash);
             List<Long> transactions = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
