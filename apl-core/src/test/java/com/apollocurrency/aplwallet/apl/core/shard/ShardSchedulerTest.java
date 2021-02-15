@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.config.TrimConfig;
+import com.apollocurrency.aplwallet.apl.core.config.TrimEventCommand;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
@@ -29,6 +29,7 @@ import javax.enterprise.util.AnnotationLiteral;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -41,6 +42,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -87,7 +89,7 @@ public class ShardSchedulerTest {
         shardScheduler.init(2000, 0);
 
         verifyNoInteractions(timeService, blockchainConfig);
-        verify(trimEvent, times(1)).fire(new TrimConfig(true, false));
+        verify(trimEvent, times(1)).fire(new TrimEventCommand(true, false));
         assertTrue(shardScheduler.scheduledShardings().isEmpty(), "Expected no scheduled shards when last shard was failed");
         assertFalse(shardScheduler.createShards());
     }
@@ -113,7 +115,7 @@ public class ShardSchedulerTest {
 
         shardScheduler.init(2000, 0);
 
-        verify(trimEvent, times(2)).fire(new TrimConfig(false, false));
+        verify(trimEvent, times(2)).fire(new TrimEventCommand(false, false));
 
         List<ShardingScheduler.ShardScheduledRecord> scheduledRecords = List.of(
             new ShardingScheduler.ShardScheduledRecord(0, 10, 2000, 20),
@@ -134,7 +136,7 @@ public class ShardSchedulerTest {
 
         shardScheduler.init(2000, 1000);
 
-        verify(trimEvent, times(1)).fire(new TrimConfig(true, false));
+        verify(trimEvent, times(1)).fire(new TrimEventCommand(true, false));
         assertEquals(shardScheduler.scheduledShardings(), List.of());
         assertFalse(shardScheduler.createShards());
     }
@@ -165,7 +167,7 @@ public class ShardSchedulerTest {
 
         shardScheduler.init(820, 51);
 
-        verify(trimEvent, times(7)).fire(new TrimConfig(false, false)); // 6 shards
+        verify(trimEvent, times(7)).fire(new TrimEventCommand(false, false)); // 6 shards
 
         List<ShardingScheduler.ShardScheduledRecord> scheduledRecords = List.of(
             new ShardingScheduler.ShardScheduledRecord(0, 51, 820, 20),
@@ -177,6 +179,17 @@ public class ShardSchedulerTest {
             new ShardingScheduler.ShardScheduledRecord(0, 100, 820, 20)
             );
         assertEquals(shardScheduler.scheduledShardings(), scheduledRecords);
+        assertTrue(shardScheduler.createShards());
+    }
+
+    @Test
+    void testInit_maxShardHeightLessThanZero() {
+        ShardSchedulingConfig schedulingConfig = new ShardSchedulingConfig(10, 20, false, 720);
+        shardScheduler = new ShardingScheduler(trimEvent, shardService, blockchainConfig, schedulingConfig, timeService);
+
+        shardScheduler.init(720, 0);
+
+        assertEquals(shardScheduler.scheduledShardings(), List.of());
         assertTrue(shardScheduler.createShards());
     }
 
@@ -196,6 +209,7 @@ public class ShardSchedulerTest {
     void testInit_trySharding() {
         ShardSchedulingConfig schedulingConfig = new ShardSchedulingConfig(10, 20, false, 1000);
         shardScheduler = new ShardingScheduler(trimEvent, shardService, blockchainConfig, schedulingConfig, timeService);
+        shardScheduler.setStandardShardDelay(0);
         doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
         doReturn(new Shard(1L, new byte[32], ShardState.FULL, 100, new byte[0], new long[3], new int[3], new int[3], new byte[32])).when(shardService).getLastShard();
         List<HeightConfig> heightConfigs = List.of(
@@ -203,17 +217,21 @@ public class ShardSchedulerTest {
             mockHeightConfig(200, false, 100)
         );
         doReturn(heightConfigs).when(blockchainConfig).getAllActiveConfigsBetweenHeights(100, 1000);
+        AtomicBoolean tryShardingFlag = new AtomicBoolean(false); // flag for triggering sharding
         doAnswer(new Answer() {
-            long i;
+            volatile long i;
             @Override
             public Object answer(InvocationOnMock invocationOnMock) {
-                return ++i > 2 ? 19L : 20L;
+                if (++i > 2 && !tryShardingFlag.get()) {
+                    return 19L;
+                }
+                return 20L;
             }
         }).when(timeService).systemTimeMillis();
 
         shardScheduler.init(2000, 75);
 
-        verify(trimEvent, times(2)).fire(new TrimConfig(false, false)); // 6 shards
+        verify(trimEvent, times(2)).fire(new TrimEventCommand(false, false)); // 6 shards
 
         List<ShardingScheduler.ShardScheduledRecord> scheduledRecords = List.of(
             new ShardingScheduler.ShardScheduledRecord(0, 150, 2000, 20),
@@ -236,12 +254,12 @@ public class ShardSchedulerTest {
             }
         }).when(shardService).getLastShard();
         // Start sharding, scheduled time has come
-        doReturn(20L).when(timeService).systemTimeMillis();
+        tryShardingFlag.set(true);
 
         while (!shardScheduler.scheduledShardings().isEmpty()) {
             ThreadUtils.sleep(50);
         }
-        verify(trimEvent, times(1)).fire(new TrimConfig(true, false));
+        verify(trimEvent, times(1)).fire(new TrimEventCommand(true, false));
     }
 
     @Test
@@ -250,14 +268,21 @@ public class ShardSchedulerTest {
         shardScheduler = new ShardingScheduler(trimEvent, shardService, blockchainConfig, schedulingConfig, timeService);
         doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
         doReturn(new Shard(1L, new byte[32], ShardState.FULL, 100, new byte[0], new long[3], new int[3], new int[3], new byte[32])).when(shardService).getLastShard();
-        doReturn(mockHeightConfig(500, true, 1000)).when(blockchainConfig).getConfigAtHeight(2999);
+        HeightConfig shardingConfig = mockHeightConfig(2500, true, 1000);
+        doReturn(shardingConfig).when(blockchainConfig).getConfigAtHeight(2998);
+        doReturn(shardingConfig).when(blockchainConfig).getConfigAtHeight(2999);
+        doReturn(mockHeightConfig(800, false, 1000)).when(blockchainConfig).getConfigAtHeight(1999);
         shardScheduler.setRandom(random);
         doReturn(30L).when(timeService).systemTimeMillis();
         doReturn(-10).when(random).nextInt(11); // cheat on delay (make it zero for a better test speed)
 
-        fireBlockPushed(5000);
+        fireBlockPushed(2000); // skip, shard height is a zero
+        fireBlockPushed(2100); // skip, last shard on the height 100
+        fireBlockPushed(4000); // skip, sharding disabled
+        fireBlockPushed(4999); // skip, height is not multiple of frequency
+        fireBlockPushed(5000); // do sharding
 
-        verify(trimEvent, times(1)).fire(new TrimConfig(false, false));
+        verify(trimEvent, times(1)).fire(new TrimEventCommand(false, false));
         assertEquals(shardScheduler.scheduledShardings(), List.of(new ShardingScheduler.ShardScheduledRecord(0, 3000, 5000, 30)));
 
         CompletableFuture shardingProcess = mock(CompletableFuture.class);
@@ -271,9 +296,97 @@ public class ShardSchedulerTest {
         while (!shardScheduler.scheduledShardings().isEmpty()) {
             ThreadUtils.sleep(50);
         }
-        verify(trimEvent, times(1)).fire(new TrimConfig(true, false));
+        verify(trimEvent, times(1)).fire(new TrimEventCommand(true, false));
     }
 
+    @Test
+    void testOnBlockPushed_tryShardingFailed_noShardingProcess() {
+        prepareFailedSharding();
+
+        shardScheduler.scheduleBackgroundShardingTask(0);
+
+        waitVerifyNoMoreSharding();
+    }
+
+    @Test
+    void testOnBlockPushed_tryShardingFailed_failedShardProcess() {
+        prepareFailedSharding();
+        CompletableFuture shardingProcess = mock(CompletableFuture.class);
+        doReturn(MigrateState.FAILED).when(shardingProcess).join();
+        doReturn(shardingProcess).when(shardService).tryCreateShardAsync(3000, 5000);
+
+        shardScheduler.scheduleBackgroundShardingTask(0);
+
+        waitVerifyNoMoreSharding();
+    }
+
+    @Test
+    void testOnBlockPushed_tryShardingFailed_noShardInDb() {
+        prepareFailedSharding();
+
+        CompletableFuture shardingProcess = mock(CompletableFuture.class);
+        doReturn(MigrateState.COMPLETED).when(shardingProcess).join();
+        doReturn(shardingProcess).when(shardService).tryCreateShardAsync(3000, 5000);
+
+        shardScheduler.scheduleBackgroundShardingTask(0);
+
+        waitVerifyNoMoreSharding();
+    }
+
+    @Test
+    void testOnBlockPushed_tryShardingFailed_lastShardWrongHeight() {
+        prepareFailedSharding();
+        CompletableFuture shardingProcess = mock(CompletableFuture.class);
+        doReturn(MigrateState.COMPLETED).when(shardingProcess).join();
+        doReturn(shardingProcess).when(shardService).tryCreateShardAsync(3000, 5000);
+        doReturn(new Shard(1L, new byte[32], ShardState.FULL, 2999, new byte[0], new long[3], new int[3], new int[3], new byte[32])).when(shardService).getLastShard();
+
+
+        shardScheduler.scheduleBackgroundShardingTask(0);
+
+        waitVerifyNoMoreSharding();
+    }
+    @Test
+    void testOnBlockPushed_tryShardingFailed_lastShardWrongState() {
+        prepareFailedSharding();
+        CompletableFuture shardingProcess = mock(CompletableFuture.class);
+        doReturn(MigrateState.COMPLETED).when(shardingProcess).join();
+        doReturn(shardingProcess).when(shardService).tryCreateShardAsync(3000, 5000);
+        doReturn(new Shard(1L, new byte[32], ShardState.IN_PROGRESS, 3000, new byte[0], new long[3], new int[3], new int[3], new byte[32])).when(shardService).getLastShard();
+
+        shardScheduler.scheduleBackgroundShardingTask(0);
+
+        waitVerifyNoMoreSharding();
+    }
+
+
+    void waitVerifyNoMoreSharding() {
+
+        while (!shardScheduler.scheduledShardings().isEmpty()) {
+            ThreadUtils.sleep(50);
+        }
+
+        verify(trimEvent).fire(new TrimEventCommand(true, false));
+        assertFalse(shardScheduler.createShards()); // sharding was failed
+
+        fireBlockPushed(5000); // do sharding
+        assertEquals(shardScheduler.scheduledShardings(), List.of());
+        verifyNoMoreInteractions(trimEvent);
+    }
+
+    void prepareFailedSharding() {
+        ShardSchedulingConfig schedulingConfig = new ShardSchedulingConfig(-1, 20, false, 2000);
+        shardScheduler = new ShardingScheduler(trimEvent, shardService, blockchainConfig, schedulingConfig, timeService);
+        doReturn(trimEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {});
+        HeightConfig shardingConfig = mockHeightConfig(2500, true, 1000);
+        doReturn(shardingConfig).when(blockchainConfig).getConfigAtHeight(2999);
+
+        fireBlockPushed(5000); // do sharding
+
+        verify(trimEvent, times(1)).fire(new TrimEventCommand(false, false));
+        assertEquals(shardScheduler.scheduledShardings(), List.of(new ShardingScheduler.ShardScheduledRecord(0, 3000, 5000, 0)));
+
+    }
 
 
     private HeightConfig mockHeightConfig(int height, boolean shardingEnabled, int shardingFrequency) {

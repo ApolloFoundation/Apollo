@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.config.TrimConfig;
+import com.apollocurrency.aplwallet.apl.core.config.TrimEventCommand;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
@@ -26,6 +26,7 @@ import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -38,21 +39,23 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
+@Singleton
 public class ShardingScheduler {
-    private static final int DEFAULT_SHARD_DELAY_MS = 1000;
+    private static final int DEFAULT_SHARD_DELAY_MS = 10000;
     private volatile Random random = new Random();
     private final Queue<ShardScheduledRecord> scheduledShards = new PriorityQueue<>(Comparator.comparing(ShardScheduledRecord::getShardHeight)); // will sort heights from lowest to highest automatically
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("apl-shard-scheduler"));
-    private final Event<TrimConfig> trimEvent;
+    private final Event<TrimEventCommand> trimEvent;
     private final ShardService shardService;
     private final BlockchainConfig blockchainConfig;
-    private volatile boolean shardingFailed = false;
-    private final ShardSchedulingConfig config;
     private final TimeService timeService;
+    private volatile boolean shardingFailed = false;
+    private volatile int standardShardDelay;
+    private final ShardSchedulingConfig config;
 
 
     @Inject
-    public ShardingScheduler(Event<TrimConfig> trimEvent,
+    public ShardingScheduler(Event<TrimEventCommand> trimEvent,
                              ShardService shardService,
                              BlockchainConfig blockchainConfig,
                              ShardSchedulingConfig config,
@@ -63,6 +66,11 @@ public class ShardingScheduler {
         this.config = config;
         this.trimEvent = trimEvent;
         this.shardService = shardService;
+        this.standardShardDelay = DEFAULT_SHARD_DELAY_MS;
+    }
+
+    void setStandardShardDelay(int standardShardDelay) {
+        this.standardShardDelay = standardShardDelay;
     }
 
     void setRandom(Random random) {
@@ -76,7 +84,7 @@ public class ShardingScheduler {
 
     private void trySharding() {
         ShardScheduledRecord shardRecord = null;
-        long nextShardDelay = DEFAULT_SHARD_DELAY_MS;
+        long nextShardDelay = standardShardDelay;
         try {
             synchronized (this) {
                 if (!scheduledShards.isEmpty()) {
@@ -100,6 +108,7 @@ public class ShardingScheduler {
                 MigrateState state = shardingProcess.join();
                 if (state != MigrateState.COMPLETED) {
                     logErrorAndDisableSharding("Error in sharding process at height {}, state {}. Will not attempt to create another shard", shardRecord.shardHeight, state);
+                    return;
                 }
                 Shard lastShard = shardService.getLastShard();
                 if (lastShard == null) {
@@ -135,12 +144,12 @@ public class ShardingScheduler {
         executorService.schedule(this::trySharding, delay, TimeUnit.MILLISECONDS);
     }
 
-    public List<ShardScheduledRecord> scheduledShardings() {
+    public synchronized List<ShardScheduledRecord> scheduledShardings() {
         return new ArrayList<>(scheduledShards);
     }
 
     private void updateTrimConfig(boolean enableTrim, boolean clearQueue) {
-        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(new TrimConfig(enableTrim, clearQueue));
+        trimEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {}).fire(new TrimEventCommand(enableTrim, clearQueue));
     }
 
 
@@ -158,43 +167,44 @@ public class ShardingScheduler {
             }
         }
         int maxAllowedShardHeight = lastBlockHeight - config.getMaxRollback();
-
-        List<HeightConfig> allHeightConfigs = blockchainConfig.getAllActiveConfigsBetweenHeights(lastShardHeight, maxAllowedShardHeight);
-        if (allHeightConfigs.isEmpty()) {
-            throw new IllegalStateException("Blockchain configs between heights [" + lastShardHeight + ".." + maxAllowedShardHeight + "]");
-        }
-        int searchHeight = lastShardHeight + 1;
-        shardLoop:
-        for (int i = 0; i < allHeightConfigs.size(); i++) {
-            HeightConfig currentConfig = allHeightConfigs.get(i);
-            int activeToHeight = lastBlockHeight;
-            if (i + 1 < allHeightConfigs.size()) { // next config
-                activeToHeight = allHeightConfigs.get(i + 1).getHeight();
+        if (maxAllowedShardHeight > 0) {
+            List<HeightConfig> allHeightConfigs = blockchainConfig.getAllActiveConfigsBetweenHeights(lastShardHeight, maxAllowedShardHeight);
+            if (allHeightConfigs.isEmpty()) {
+                throw new IllegalStateException("Blockchain configs between heights [" + lastShardHeight + ".." + maxAllowedShardHeight + "]");
             }
-            if (!currentConfig.isShardingEnabled()) {
+            int searchHeight = lastShardHeight + 1;
+            shardLoop:
+            for (int i = 0; i < allHeightConfigs.size(); i++) {
+                HeightConfig currentConfig = allHeightConfigs.get(i);
+                int activeToHeight = lastBlockHeight;
+                if (i + 1 < allHeightConfigs.size()) { // next config
+                    activeToHeight = allHeightConfigs.get(i + 1).getHeight();
+                }
+                if (!currentConfig.isShardingEnabled()) {
+                    searchHeight = activeToHeight + 1;
+                    continue;
+                }
+                while (true) {
+                    int nextShardHeight = nextShardHeight(searchHeight, activeToHeight, currentConfig.getShardingFrequency());
+                    if (nextShardHeight == -1) {
+                        break;
+                    }
+                    if (nextShardHeight > maxAllowedShardHeight) {
+                        break shardLoop;
+                    }
+                    if (nextShardHeight < trimHeight) {
+                        logErrorAndDisableSharding("Next shard should be created at height {}, but last trim was at height {}", nextShardHeight, trimHeight);
+                        break shardLoop;
+                    }
+                    synchronized (this) {
+                        log.info("Schedule new sharding at height {}", nextShardHeight);
+                        scheduledShards.add(new ShardScheduledRecord(0, nextShardHeight, lastBlockHeight, timeService.systemTimeMillis()));
+                        updateTrimConfig(false, false);
+                    }
+                    searchHeight = nextShardHeight + 1;
+                }
                 searchHeight = activeToHeight + 1;
-                continue;
             }
-            while (true) {
-                int nextShardHeight = nextShardHeight(searchHeight, activeToHeight, currentConfig.getShardingFrequency());
-                if (nextShardHeight == -1) {
-                    break;
-                }
-                if (nextShardHeight > maxAllowedShardHeight) {
-                    break shardLoop;
-                }
-                if (nextShardHeight < trimHeight) {
-                    logErrorAndDisableSharding("Next shard should be created at height {}, but last trim was at height {}", nextShardHeight, trimHeight);
-                    break shardLoop;
-                }
-                synchronized (this) {
-                    log.info("Schedule new sharding at height {}", nextShardHeight);
-                    scheduledShards.add(new ShardScheduledRecord(0, nextShardHeight, lastBlockHeight, timeService.systemTimeMillis()));
-                    updateTrimConfig(false, false);
-                }
-                searchHeight = nextShardHeight + 1;
-            }
-            searchHeight = activeToHeight + 1;
         }
         scheduleBackgroundShardingTask(0);
     }
@@ -268,7 +278,7 @@ public class ShardingScheduler {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    static class ShardScheduledRecord {
+    public static class ShardScheduledRecord {
         private long timeDelay;
         private int shardHeight;
         private int blockchainHeight;

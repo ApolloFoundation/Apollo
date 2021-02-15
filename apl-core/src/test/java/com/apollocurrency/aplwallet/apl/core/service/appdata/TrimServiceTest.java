@@ -10,9 +10,9 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.TrimDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TrimEntry;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -20,15 +20,18 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -63,19 +66,13 @@ class TrimServiceTest {
     void testGetLastTrimHeightWhenTrimEntryIsNotNull() {
         doReturn(new TrimEntry(1L, 3000, true)).when(trimDao).get();
         int lastTrimHeight = trimService.getLastTrimHeight();
-        assertEquals(2000, lastTrimHeight);
-    }
-
-    @Test
-    void testInitWithNullTrimEntry() {
-//        trimService.init(2000, 0);
-        verify(trimDao).save(new TrimEntry(null, 2000, true));
+        assertEquals(3000, lastTrimHeight);
     }
 
     @Test
     void testDoTrimDerivedTablesAndTriggerAsyncEvent() {
         Event firedEvent = mock(Event.class);
-        doReturn(new TrimEntry(1L, 5000, false)).when(trimDao).save(new TrimEntry(null, 5000, false));
+        doReturn(new TrimEntry(1L, 4000, false)).when(trimDao).save(new TrimEntry(null, 4000, false));
         doReturn(firedEvent).when(event).select(new AnnotationLiteral<TrimEvent>() {
         });
         doReturn(List.of(derivedTable)).when(registry).getDerivedTables();
@@ -84,7 +81,6 @@ class TrimServiceTest {
         DbUtils.inTransaction(extension, con -> trimService.doTrimDerivedTablesOnBlockchainHeight(5000));
 
         verify(derivedTable).trim(4000);
-        verify(firedEvent, never()).fireAsync(new TrimData(4000, 5000, 7200));
     }
 
     @Test
@@ -108,7 +104,7 @@ class TrimServiceTest {
     @Test
     void testTrimDerivedTablesInOuterTransaction() {
         databaseManager.getDataSource().begin();
-        doReturn(new TrimEntry(1L, 5000, false)).when(trimDao).save(new TrimEntry(null, 5000, false));
+        doReturn(new TrimEntry(1L, 5000, false)).when(trimDao).save(new TrimEntry(null, 4000, false));
         Event firedEvent = mock(Event.class);
         doReturn(firedEvent).when(event).select(new AnnotationLiteral<TrimEvent>() {
         });
@@ -119,7 +115,6 @@ class TrimServiceTest {
 
         assertTrue(databaseManager.getDataSource().isInTransaction());
         verify(derivedTable).trim(4000);
-        verify(firedEvent, never()).fireAsync(new TrimData(4000, 5000, 0));
     }
 
 
@@ -164,5 +159,37 @@ class TrimServiceTest {
         verify(dataSource, times(2)).commit(false);
 
         verify(derivedTable, times(2)).trim(2000);
+    }
+
+    @Test
+    void testWaitTrimming() {
+        AtomicBoolean trimIsDone = new AtomicBoolean(false);
+        AtomicBoolean trimBegan = new AtomicBoolean(false);
+        doAnswer(invocationOnMock -> {
+            trimBegan.set(true);
+            while (!trimIsDone.get()) {
+                ThreadUtils.sleep(10L);
+            }
+            return new TrimEntry(1L, 3000, true);
+        }).when(trimDao).get();
+
+        CompletableFuture<Void> trimmingTask = CompletableFuture.runAsync(() -> DbUtils.inTransaction(extension, con -> trimService.doAccountableTrimDerivedTables(2000))).handle((r, e)-> {
+            if (e != null) {
+                fail(e);
+            }
+            return r;
+        });
+        while (!trimBegan.get()) {
+            ThreadUtils.sleep(10L);
+        }
+        CompletableFuture<Void> trimWaitingTask = CompletableFuture.runAsync(() -> {
+            trimService.waitTrimming();
+        });
+        ThreadUtils.sleep(50);
+        assertFalse(trimWaitingTask.isDone(), "TrimWaiting method cannot be finished during another trim operation");
+
+        trimIsDone.set(true);
+        trimmingTask.join();
+        trimWaitingTask.join();
     }
 }

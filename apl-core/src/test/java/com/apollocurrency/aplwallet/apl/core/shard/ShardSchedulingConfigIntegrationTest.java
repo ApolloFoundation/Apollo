@@ -52,27 +52,27 @@ class ShardSchedulingConfigIntegrationTest {
         ShardSchedulingConfig config = weldInitiator.container().select(ShardSchedulingConfig.class).get();
 
         assertTrue(config.shardDelayed());
-        assertEquals(10, config.getMinDelay());
-        assertEquals(60, config.getMaxDelay());
+        assertEquals(600, config.getMinDelay());
+        assertEquals(3600, config.getMaxDelay());
         assertEquals(720, config.getMaxRollback());
         assertTrue(config.isCreateShards());
     }
 
     @Test
     void testInitConfigFromCustomValues() {
-        holder.init(properties(20, 30, 30, true));
+        holder.init(properties(1200, 1800, 30, true));
         ShardSchedulingConfig config = weldInitiator.container().select(ShardSchedulingConfig.class).get();
 
         assertTrue(config.shardDelayed());
-        assertEquals(20, config.getMinDelay());
-        assertEquals(30, config.getMaxDelay());
+        assertEquals(1200, config.getMinDelay());
+        assertEquals(1800, config.getMaxDelay());
         assertEquals(720, config.getMaxRollback());
         assertFalse(config.isCreateShards());
     }
 
     @Test
     void testInitConfigWithIncorrectDelay() {
-        holder.init(properties(30, 30, 1000, true));
+        holder.init(properties(3000, 3000, 1000, true));
         assertThrows(IllegalArgumentException.class, () -> weldInitiator.container().select(ShardSchedulingConfig.class).get());
 
     }

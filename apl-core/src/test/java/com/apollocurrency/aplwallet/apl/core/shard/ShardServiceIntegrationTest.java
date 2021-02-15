@@ -5,10 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.config.TrimConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
@@ -42,7 +40,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -84,8 +81,6 @@ public class ShardServiceIntegrationTest {
     AplAppStatus aplAppStatus;
     @Mock
     PropertiesHolder propertiesHolder;
-    @Mock
-    Event<TrimConfig> trimEvent;
     @Mock
     Event<DbHotSwapConfig> dbEvent;
     @Mock
@@ -129,9 +124,6 @@ public class ShardServiceIntegrationTest {
         Chain mockChain = mock(Chain.class);
         doReturn(mockChain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5")).when(mockChain).getChainId();
-        Event firedEvent = mock(Event.class);
-        doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
-        });
         shardService = new ShardService(createShardDao(databaseManager.getJdbiHandleFactory()), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, globalSync, trimService, dbEvent);
         Files.createFile(dbDir.resolve("apl-blockchain-shard-2-chain." + DbProperties.DB_EXTENSION)); // to be deleted
         Files.createFile(dbDir.resolve("apl-blockchain-shard-1-chain." + DbProperties.DB_EXTENSION)); // to be replaced
@@ -167,8 +159,6 @@ public class ShardServiceIntegrationTest {
         verify(globalSync).writeLock();
         verify(globalSync).writeUnlock();
         verify(dbEvent).fire(new DbHotSwapConfig(1));
-        verify(firedEvent).fire(new TrimConfig(false, true));
-        verify(firedEvent).fire(new TrimConfig(true, false));
         verify(blockchainProcessor).suspendBlockchainDownloading();
         verify(blockchainProcessor).resumeBlockchainDownloading();
     }

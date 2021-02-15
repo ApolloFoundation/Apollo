@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.core.config.TrimConfig;
+import com.apollocurrency.aplwallet.apl.core.config.TrimEventCommand;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TrimDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
@@ -39,14 +39,14 @@ public class TrimService {
     private final TimeService timeService;
     private final ReentrantLock lock = new ReentrantLock();
 
-    private final Event<TrimConfig> trimConfigEvent;
+    private final Event<TrimEventCommand> trimConfigEvent;
 
 
     @Inject
     public TrimService(DatabaseManager databaseManager,
                        DerivedTablesRegistry derivedDbTablesRegistry,
                        TimeService timeService,
-                       Event<TrimConfig> trimConfigEvent,
+                       Event<TrimEventCommand> trimConfigEvent,
                        TrimDao trimDao,
                        @Property(value = "apl.maxRollback", defaultValue = "" + Constants.MAX_AUTO_ROLLBACK) int maxRollback
     ) {
@@ -192,7 +192,7 @@ public class TrimService {
     public void updateTrimConfig(boolean enableTrim, boolean clearQueue) {
         log.debug("Send event to {} trim thread", enableTrim ? "enable" : "disable");
         trimConfigEvent.select(new AnnotationLiteral<TrimConfigUpdated>() {
-        }).fire(new TrimConfig(enableTrim, clearQueue));
+        }).fire(new TrimEventCommand(enableTrim, clearQueue));
     }
 
     public boolean isTrimming() {

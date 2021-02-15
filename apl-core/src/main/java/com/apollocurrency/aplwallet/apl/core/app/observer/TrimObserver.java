@@ -7,8 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.app.observer;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimConfigUpdated;
-import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.core.config.TrimConfig;
+import com.apollocurrency.aplwallet.apl.core.config.TrimEventCommand;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -36,16 +35,15 @@ import java.util.concurrent.TimeUnit;
 public class TrimObserver {
     private static final Logger log = LoggerFactory.getLogger(TrimObserver.class);
     private static final int QUEUE_NO_SPEEDUP_SIZE_THRESHOLD = 3;
-    public static final int MIN_ALLOWED_TRIM_DELAY = 50;
+    public static final int MIN_ALLOWED_TRIM_DELAY = 5;
     private final TrimService trimService;
     private final Object lock = new Object();
     private final Queue<Integer> trimHeights = new PriorityQueue<>(); // will sort heights from lowest to highest automatically
     private volatile boolean trimDerivedTablesEnabled = true;
-    private final int trimFrequency;
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("apl-task-random-trim"));
     private final Blockchain blockchain;
-    private final int trimDelay;
     private final Random random;
+    private volatile TrimConfig trimConfig;
     /**
      * Callable task for method to run. Next run is scheduled as soon as previous has finished
      */
@@ -63,14 +61,12 @@ public class TrimObserver {
 
     @Inject
     public TrimObserver (TrimService trimService,
-                         @Property(value = "apl.trimProcessingDelay", defaultValue = "500") int trimDelay,
-                         @Property(value = "apl.trimFrequency", defaultValue = "1000") int trimFrequency,
+                         TrimConfig trimConfig,
                          Random random,
                          Blockchain blockchain) {
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
-        this.trimFrequency = trimFrequency;
-        this.trimDelay = trimDelay;
+        this.trimConfig = trimConfig;
         this.random = random == null ? new Random() : random;
     }
 
@@ -82,15 +78,19 @@ public class TrimObserver {
 
     private void scheduleTrimTask() {
         long delay = calculateDelay();
+        log.debug("Next trim operation delay '{}' ms", delay);
         executorService.schedule(taskToCall, delay, TimeUnit.MILLISECONDS);
     }
 
     private long calculateDelay() {
         long delay = 0;
-        if (trimHeights.size() <= QUEUE_NO_SPEEDUP_SIZE_THRESHOLD && trimDelay >= 0) {
-            int correctedTrimDelay  = Math.max(trimDelay, MIN_ALLOWED_TRIM_DELAY);
-            int minTrimDelay = trimDelay / 4;
-            delay = 1000L * random.nextInt(correctedTrimDelay - minTrimDelay) + minTrimDelay;
+        synchronized (trimHeights) {
+            int trimDelay = trimConfig.getTrimDelay();
+            if (trimHeights.size() <= QUEUE_NO_SPEEDUP_SIZE_THRESHOLD && trimDelay >= 0) {
+                int correctedTrimDelay  = Math.max(trimDelay, MIN_ALLOWED_TRIM_DELAY);
+                int minTrimDelay = trimDelay / 4;
+                delay = 1000L * (random.nextInt(correctedTrimDelay - minTrimDelay + 1) + minTrimDelay);
+            }
         }
         return delay;
     }
@@ -100,7 +100,7 @@ public class TrimObserver {
         executorService.shutdownNow();
     }
 
-    boolean isTrimDerivedTablesEnabled() {
+    public boolean trimEnabled() {
         return trimDerivedTablesEnabled;
     }
 
@@ -127,16 +127,16 @@ public class TrimObserver {
         }
     }
 
-    List<Integer> getTrimHeights() {
+    public List<Integer> getTrimQueue() {
         synchronized (lock) {
             return new ArrayList<>(trimHeights);
         }
     }
 
-    public void onTrimConfigUpdated(@Observes @TrimConfigUpdated TrimConfig trimConfig) {
-        log.info("Set trim to {} ", trimConfig.isEnableTrim());
-        this.trimDerivedTablesEnabled = trimConfig.isEnableTrim();
-        if (trimConfig.isClearTrimQueue()) {
+    public void onTrimConfigUpdated(@Observes @TrimConfigUpdated TrimEventCommand trimEventCommand) {
+        log.info("Set trim to {} ", trimEventCommand.isEnableTrim());
+        this.trimDerivedTablesEnabled = trimEventCommand.isEnableTrim();
+        if (trimEventCommand.isClearTrimQueue()) {
             synchronized (lock) {
                 trimHeights.clear();
             }
@@ -148,22 +148,26 @@ public class TrimObserver {
         if (block.getHeight() % 5000 == 0) {
             log.info("Scan: processed block " + block.getHeight());
         }
-        if (trimDerivedTablesEnabled && block.getHeight() % trimFrequency == 0) {
+        if (trimDerivedTablesEnabled && block.getHeight() % trimConfig.getTrimFrequency() == 0) {
             trimService.trimDerivedTables(block.getHeight());
         }
     }
 
     public int onBlockPushed(@Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         int scheduleTrimHeight = -1;
-        if (block.getHeight() % trimFrequency == 0) {
+        if (block.getHeight() % trimConfig.getTrimFrequency() == 0) {
             synchronized (lock) {
                 scheduleTrimHeight = block.getHeight();
                 log.debug("Schedule next trim for height={} at {}", scheduleTrimHeight, block.getHeight());
                 trimHeights.add(scheduleTrimHeight);
             }
         } else {
-            log.trace("Skip Trim schedule on block height='{}' NOT div % by trimFreq={}", block.getHeight(), trimFrequency);
+            log.trace("Skip Trim schedule on block height='{}' NOT div % by trimFreq={}", block.getHeight(), trimConfig.getTrimFrequency());
         }
         return scheduleTrimHeight;
+    }
+
+    public void setTrimConfig(TrimConfig trimConfig) {
+        this.trimConfig = trimConfig;
     }
 }
