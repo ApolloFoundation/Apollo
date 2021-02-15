@@ -18,6 +18,7 @@ import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.Callable;
@@ -101,7 +102,7 @@ public class DeleteTrimObserver {
                     if (performDeleteTrimData) {
                         performOneTableDelete(deleteOnTrimData);
                         deleteOnTrimDataQueue.remove();
-                        log.debug("Performed trim on = {}", deleteOnTrimData);
+                        log.debug("Performed trim on = {} / size={}", deleteOnTrimData, deleteOnTrimDataQueue.size());
                     } else {
                         log.trace("NO trim data to delete...");
                     }
@@ -113,7 +114,7 @@ public class DeleteTrimObserver {
     }
 
     public long performOneTableDelete(DeleteOnTrimData deleteOnTrimData) {
-        log.trace("start performOneTableDelete(): {}", deleteOnTrimData);
+        log.debug("start performOneTableDelete(): {}", deleteOnTrimData);
         long startDeleteTime = System.currentTimeMillis();
         long deleted = 0L;
         if (deleteOnTrimData != null
@@ -127,27 +128,27 @@ public class DeleteTrimObserver {
             }
             try (Connection con = dataSource.getConnection();
                  PreparedStatement pstmtDeleteById =
-                     con.prepareStatement("DELETE FROM " + deleteOnTrimData.getTableName() + " WHERE db_id = ?");
+                     con.prepareStatement("DELETE LOW_PRIORITY QUICK IGNORE FROM " + deleteOnTrimData.getTableName() + " WHERE db_id = ?");
             ) {
                 long index = 0;
                 for (Long id : deleteOnTrimData.getDbIdSet()) {
-                    deleted += deleteByDbId(pstmtDeleteById, id);
-//                    addDeleteToBatch(pstmtDeleteById, id);
+//                    deleted += deleteByDbId(pstmtDeleteById, id);
+                    addDeleteToBatch(pstmtDeleteById, id);
                     index++;
                     if (index % COMMIT_BATCH_SIZE == 0) {
-//                        int[] result = pstmtDeleteById.executeBatch();
+                        int[] result = pstmtDeleteById.executeBatch();
                         dataSource.commit(false);
-//                        deleted += Arrays.stream(result).asLongStream().sum();
+                        deleted += Arrays.stream(result).asLongStream().sum();
                     }
                 }
-//                int[] result = pstmtDeleteById.executeBatch();
+                int[] result = pstmtDeleteById.executeBatch();
                 dataSource.commit(!inTransaction);
-//                deleted += Arrays.stream(result).asLongStream().sum();
+                deleted += Arrays.stream(result).asLongStream().sum();
             } catch (Exception e) {
                 log.error("Batch delete error on table {}", deleteOnTrimData.getTableName(), e);
             }
-            log.debug("performOneTableDelete(): Delete table '{}' in {} ms: deleted=[{}]",
-                deleteOnTrimData.getTableName(), System.currentTimeMillis() - startDeleteTime, deleted);
+            log.debug("performOneTableDelete(): Delete table '{}' in {} ms: deleted=[{}]\n{}",
+                deleteOnTrimData.getTableName(), System.currentTimeMillis() - startDeleteTime, deleted, deleteOnTrimData.getDbIdSet());
         }
         return deleted;
     }

@@ -58,7 +58,7 @@ class DeleteTrimObserverTest {
     @Test
     void sendResetEvent() {
         trimEvent.select(new AnnotationLiteral<TrimEvent>() {})
-            .fireAsync(new DeleteOnTrimData(true, Collections.emptySet(), "null"));
+            .fireAsync(new DeleteOnTrimData(true, Collections.emptySet(), "null", 10));
         assertEquals(0, observer.getDeleteOnTrimDataQueue().size());
     }
 
@@ -66,7 +66,7 @@ class DeleteTrimObserverTest {
     void sendDeleteEvent() {
         assertNotNull(observer);
         trimEvent.select(new AnnotationLiteral<TrimEvent>() {})
-            .fireAsync(new DeleteOnTrimData(false, Collections.emptySet(), "some_table"));
+            .fireAsync(new DeleteOnTrimData(false, Collections.emptySet(), "some_table", 10));
         try {
             Thread.sleep(200);
         } catch (InterruptedException e) {
@@ -82,11 +82,11 @@ class DeleteTrimObserverTest {
         long result = observer.performOneTableDelete(null);
         assertEquals(0, result);
 
-        DeleteOnTrimData set1 = new DeleteOnTrimData(true, null, "null");
+        DeleteOnTrimData set1 = new DeleteOnTrimData(true, null, "null", 10);
         result = observer.performOneTableDelete(set1);
         assertEquals(0, result);
 
-        DeleteOnTrimData set2 = new DeleteOnTrimData(true, Collections.emptySet(), "null");
+        DeleteOnTrimData set2 = new DeleteOnTrimData(true, Collections.emptySet(), "null", 10);
         result = observer.performOneTableDelete(set2);
         assertEquals(0, result);
     }
@@ -102,13 +102,19 @@ class DeleteTrimObserverTest {
         doReturn(con).when(dataSource).getConnection();
         PreparedStatement preparedStatement = mock(PreparedStatement.class);
         doReturn(preparedStatement).when(con).prepareStatement(anyString());
+//        doNothing().doNothing().when(preparedStatement).setLong(anyInt(), anyLong()); //
         doNothing().doNothing().when(preparedStatement).setLong(anyInt(), anyLong());
+        doNothing().when(preparedStatement).addBatch();
+        int[] result = {0, 2, 3};
+        doReturn(result).when(preparedStatement).executeBatch();
         observer = new DeleteTrimObserver(databaseManager, propertiesHolder);
 
-        DeleteOnTrimData delete = new DeleteOnTrimData(true, Set.of(1739068987193023818L, 9211698109297098287L), "account");
+        DeleteOnTrimData delete = new DeleteOnTrimData(true, Set.of(1739068987193023818L, 9211698109297098287L), "account", 10);
         observer.performOneTableDelete(delete);
 
         verify(dataSource).commit(false);
-        verify(preparedStatement, times(2)).executeUpdate();
+//        verify(preparedStatement, times(2)).executeUpdate();
+        verify(preparedStatement, times(1)).setLong(1, 1739068987193023818L);
+        verify(preparedStatement, times(1)).setLong(1, 9211698109297098287L);
     }
 }

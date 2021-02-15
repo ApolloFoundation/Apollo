@@ -9,11 +9,14 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventTyp
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
@@ -30,12 +33,16 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
@@ -65,6 +72,7 @@ public class AccountServiceImpl implements AccountService {
     private final Event<Account> accountEvent;
     private final Event<LedgerEntry> logLedgerEvent;
     private final BlockChainInfoService blockChainInfoService;
+    private final Object lock = new Object();
 
     @Inject
     public AccountServiceImpl(AccountTable accountTable, BlockchainConfig blockchainConfig,
@@ -185,18 +193,58 @@ public class AccountServiceImpl implements AccountService {
         return account;
     }
 
+    @Transactional
     @Override
     public void update(Account account, boolean deleteIfHasZeroBalance) {
         account.setHeight(blockChainInfoService.getHeight());
-        accountTable.insert(account);
-
         if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
             try {
-                log.trace("Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).limit(3).collect(Collectors.joining("-----")));
-                log.trace("Account id {} - {}", account.getId(), ThreadUtils.last5Stacktrace());
+                log.trace("--- >>> Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).limit(3).collect(Collectors.joining("-----")));
+                log.trace("--- >>> Account id {} (h={}, dbId={}) - {}", account.getId(), account.getHeight(), account.getDbId(), ThreadUtils.last5Stacktrace());
             } catch (SQLException ignored) {
             }
         }
+        try {
+            accountTable.insert(account);
+        } catch (RuntimeException e) {
+            log.error("--- >>> Account = {}", account, e);
+            log.trace("--- >>> Account id {} (h={}, dbId={}) - {}", account.getId(), account.getHeight(), account.getDbId(), ThreadUtils.last5Stacktrace());
+/*
+            try (Connection con = accountTable.getDatabaseManager().getDataSource().getConnection();
+                 PreparedStatement pstmt = con.prepareStatement("show engine innodb status");
+                 ResultSet rs = pstmt.executeQuery()
+            ) {
+                int index = 0;
+                if (rs.next()) {
+                    while (rs.next()) {
+//                            log.debug("{} : {} - {} - {} - {} - {} - {} - {} - {} - {}",
+                        log.debug("{} : {}",
+                            index,
+                            rs.getString("Status")
+//                                rs.getLong("Status"),
+//                                rs.getLong("TIMESTAMP"),
+//                                rs.getLong("TRANSACTION_ID"),
+//                                rs.getString("CF_NAME"),
+//                                rs.getString("WAITING_KEY"),
+//                                rs.getString("LOCK_TYPE"),
+//                                rs.getString("INDEX_NAME"),
+//                                rs.getString("TABLE_NAME"),
+//                                rs.getLong("ROLLED_BACK")
+                        );
+                        index++;
+                    }
+                } else {
+                    log.debug("No Deadlock INFO in database...");
+                }
+            } catch (Exception ex) {
+                log.error("Deadlock INFO retrieve error",  ex);
+            }
+*/
+            throw e;
+        }
+//        synchronized (lock) {
+//            DbTransactionHelper.executeInTransaction(accountTable.getDatabaseManager().getDataSource(), () -> accountTable.insert(account));
+//        }
     }
 
     public String stringAcount(Account acc) {
@@ -225,13 +273,13 @@ public class AccountServiceImpl implements AccountService {
             account.setPublicKey(accountPublicKeyService.getPublicKey(account.getId()));
         }
         if ((account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null || height - account.getPublicKey().getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) && !BLOCK_HEIGHTS.contains(height)) {
-            if (log.isTraceEnabled()) {
-                log.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
-                    height,
-                    account.getPublicKey() != null ? account.getPublicKey().getHeight() : null,
-                    height - (account.getPublicKey() != null ? account.getPublicKey().getHeight() : 0),
-                    EFFECTIVE_BALANCE_CONFIRMATIONS);
-            }
+//            if (log.isTraceEnabled()) {
+//                log.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
+//                    height,
+//                    account.getPublicKey() != null ? account.getPublicKey().getHeight() : null,
+//                    height - (account.getPublicKey() != null ? account.getPublicKey().getHeight() : 0),
+//                    EFFECTIVE_BALANCE_CONFIRMATIONS);
+//            }
             return 0; // cfb: Accounts with the public key revealed less than 1440 blocks ago are not allowed to generate blocks
         }
         if (lock) {
@@ -368,6 +416,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public void addToForgedBalanceATM(Account account, long amountATM) {
         if (account.addToForgedBalanceATM(amountATM)) {
             update(account);
@@ -375,6 +424,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
@@ -390,12 +440,14 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public void addToBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
         addToBalanceATM(account, event, eventId, amountATM, 0);
     }
 
     @TransactionFee({FeeMarker.BALANCE, FeeMarker.UNCONFIRMED_BALANCE})
     @Override
+    @Transactional
     public void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
@@ -418,12 +470,14 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
         addToBalanceAndUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
     }
 
     @TransactionFee(FeeMarker.UNCONFIRMED_BALANCE)
     @Override
+    @Transactional
     public void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
         if (amountATM == 0 && feeATM == 0) {
             return;
@@ -442,6 +496,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public void addToUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM) {
         addToUnconfirmedBalanceATM(account, event, eventId, amountATM, 0);
     }

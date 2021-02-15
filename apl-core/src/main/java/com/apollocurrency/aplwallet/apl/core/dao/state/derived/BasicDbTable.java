@@ -93,8 +93,8 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                 }
             }
 
-            if (dbKeys.size() > 0) {
-                log.trace("Rollback table {} found {} records to update to latest", table, dbKeys.size());
+            if (dbKeys.size() > 0 /*&& table.equalsIgnoreCase("account")*/) {
+                log.trace("Rollback table {} found {} records to update to latest", table, dbKeys.size()/*, dbKeys*/);
             }
 
             pstmtDelete.setInt(1, height);
@@ -223,7 +223,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                     log.trace("Before delete, SEND reset. isSharding = {}, table: {}, size=[{}]", isSharding, table, keysToDelete.size());
                     // sent 'Reset' event when trim for sharding
                     deleteOnTrimDataEvent.select(new AnnotationLiteral<TrimEvent>() {
-                    }).fireAsync(new DeleteOnTrimData(true, Collections.emptySet(), table));
+                    }).fireAsync(new DeleteOnTrimData(true, Collections.emptySet(), table, height));
                     if (keysToDelete.size() > 0) {
                         for (Long id : keysToDelete) {
                             deleted += deleteByDbId(pstmtDeleteById, id);
@@ -243,7 +243,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                     if (keysToDelete.size() > ShardConstants.DEFAULT_COMMIT_BATCH_SIZE) { // low limit
                         log.trace("Before SEND delete. isSharding = {}, table: {} , size = [{}]", isSharding, table, keysToDelete.size());
                         deleteOnTrimDataEvent.select(new AnnotationLiteral<TrimEvent>() {
-                        }).fireAsync(new DeleteOnTrimData(false, keysToDelete, table));
+                        }).fireAsync(new DeleteOnTrimData(false, keysToDelete, table, height));
                     }
                 }
             }

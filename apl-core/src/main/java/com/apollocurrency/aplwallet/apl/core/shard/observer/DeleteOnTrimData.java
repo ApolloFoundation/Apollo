@@ -22,6 +22,7 @@ public class DeleteOnTrimData {
     private boolean isResetEvent; // signal to clean up queue
     private Set<Long> dbIdSet = new HashSet<>(0); // set fo ids to delete
     private String tableName; // table to be deleted
+    private int targetHeight; // target height
 
     @Override
     public String toString() {
@@ -29,6 +30,7 @@ public class DeleteOnTrimData {
         sb.append("isResetEvent=").append(isResetEvent);
         sb.append(", tableName='").append(tableName).append('\'');
         sb.append(", dbIdSet=[").append(dbIdSet.size()).append("]");
+        sb.append(", height=").append(targetHeight);
         sb.append('}');
         return sb.toString();
     }
