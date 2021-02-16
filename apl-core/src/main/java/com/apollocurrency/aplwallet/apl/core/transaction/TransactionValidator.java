@@ -114,7 +114,6 @@ public class TransactionValidator {
 
     public void validateLightly(Transaction transaction) throws AplException.ValidationException {
         validateLightlyWithoutAppendices(transaction);
-        validateFeeSufficiency(transaction, blockchain.getHeight());
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             AppendixValidator<AbstractAppendix> validatorFor = validatorRegistry.getValidatorFor(appendage);
             doAppendixLightValidation(validatorFor, transaction, appendage);
