@@ -12,12 +12,12 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -74,20 +74,18 @@ class BackgroundTaskDispatcherTest {
         verify(runnable, atLeast(9)).run();
     }
 
+    // TODO Update synchronization mechanism to guarantee suspension after taskDispatcher.suspend() in constant time
     @Test
     void scheduleAtFixedRate_withSuspending() throws InterruptedException {
 
         taskDispatcher = TaskDispatcherFactory.newScheduledDispatcher("TestThreadInfoSuspending");
         //task.setTask(runnable);
         final AtomicInteger count = new AtomicInteger();
-        AtomicBoolean finished = new AtomicBoolean(); // operation ending detection
         task = Task.builder()
             .name("task-1")
             .task(() -> {
-                finished.set(false);
                 count.incrementAndGet();
                 log.debug("task-body: task running");
-                finished.set(true);
             })
             .initialDelay(0)
             .delay(10)
@@ -99,9 +97,7 @@ class BackgroundTaskDispatcherTest {
         Thread.sleep(SLEEP_DELAY);
         log.debug("Suspend dispatcher");
         taskDispatcher.suspend();
-        while (!finished.get()) { // wait until the last scheduled operation ending
-            ThreadUtils.sleep(10);
-        }
+        waitEndOfTasksScheduling(count);
         int val1 = count.get();
         Thread.sleep(SLEEP_DELAY);
         log.debug("Resume dispatcher");
@@ -114,6 +110,22 @@ class BackgroundTaskDispatcherTest {
         assertTrue(val1 > 0);
         assertEquals(val1, val2);
         assertTrue(val3 > val2);
+    }
+
+    private void waitEndOfTasksScheduling(AtomicInteger count) {
+        int waitAttempts = 3;
+        int currentOps = count.get();
+        while (true) { // wait until the last scheduled operation ending
+            ThreadUtils.sleep(30);
+            if (currentOps == count.get()) {
+                break;
+            } else {
+                waitAttempts--;
+            }
+            if (waitAttempts < 0) {
+                fail("taskDispatcher.suspend is not working, task continue to run");
+            }
+        }
     }
 
     @Test

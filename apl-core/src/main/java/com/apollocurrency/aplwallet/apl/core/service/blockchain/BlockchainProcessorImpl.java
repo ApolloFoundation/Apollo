@@ -232,7 +232,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    BlockSerializer blockSerializer,
                                    ConsensusManager consensusManager,
                                    MemPool memPool,
-                                   @Named(value = "fullTextTables") Map<String, String> fullTextSearchIndexedTables) {
+                                   @Named(value = "fullTextTables") Map<String, String> fullTextSearchIndexedTables,
                                    ShardingScheduler shardingScheduler) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = blockchainConfig;
