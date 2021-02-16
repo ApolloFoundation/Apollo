@@ -114,6 +114,7 @@ public class TransactionValidator {
 
     public void validateLightly(Transaction transaction) throws AplException.ValidationException {
         validateLightlyWithoutAppendices(transaction);
+        validateFeeSufficiency(transaction, blockchain.getHeight());
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             AppendixValidator<AbstractAppendix> validatorFor = validatorRegistry.getValidatorFor(appendage);
             doAppendixLightValidation(validatorFor, transaction, appendage);
@@ -230,7 +231,16 @@ public class TransactionValidator {
         Account sender = accountService.getAccount(transaction.getSenderId());
         int height = blockchain.getHeight();
         validateFee(sender, transaction, height);
-        if (!checkSignature(sender, transaction)) {
+        checkSignatureThrowingEx(transaction, sender);
+    }
+    public void validateSignatureWithTxFeeLessStrict(Transaction transaction) throws AplException.NotCurrentlyValidException, AplException.NotValidException {
+        int height = blockchain.getHeight();
+        validateFeeSufficiency(transaction, height);
+        checkSignatureThrowingEx(transaction, null);
+    }
+
+    private void checkSignatureThrowingEx(Transaction transaction, Account account) throws AplException.NotValidException {
+        if (!checkSignature(account, transaction)) {
             throw new AplException.NotValidException("Invalid signature for transaction " + transaction.getId());
         }
     }
