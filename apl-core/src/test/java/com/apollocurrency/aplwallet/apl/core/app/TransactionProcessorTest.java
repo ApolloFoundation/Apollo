@@ -179,7 +179,7 @@ class TransactionProcessorTest {
 
         //THEN
         verify(transactionValidator).validateLightly(transaction);
-        verify(transactionValidator).validateSignatureWithTxFee(transaction);
+        verify(transactionValidator).validateSignatureWithTxFeeLessStrict(transaction);
         verify(processingService).addNewUnconfirmedTransaction(any(UnconfirmedTransaction.class));
     }
 
