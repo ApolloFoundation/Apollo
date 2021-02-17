@@ -56,7 +56,6 @@ class TrimObserverTest {
     WeldInitiator weld = WeldInitiator.from(TrimObserver.class, PropertyProducer.class, TrimConfig.class)
         .addBeans(MockBean.of(trimService, TrimService.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
-        .addBeans(MockBean.of(random, Random.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class))
         .build();
     @Inject
@@ -75,6 +74,7 @@ class TrimObserverTest {
 
     @BeforeEach
     void setUp() {
+        observer.setRandom(random);
     }
 
     @Test

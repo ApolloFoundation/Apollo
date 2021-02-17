@@ -42,7 +42,7 @@ public class TrimObserver {
     private volatile boolean trimDerivedTablesEnabled = true;
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("apl-task-random-trim"));
     private final Blockchain blockchain;
-    private final Random random;
+    private volatile Random random;
     private volatile TrimConfig trimConfig;
     /**
      * Callable task for method to run. Next run is scheduled as soon as previous has finished
@@ -62,14 +62,16 @@ public class TrimObserver {
     @Inject
     public TrimObserver (TrimService trimService,
                          TrimConfig trimConfig,
-                         Random random,
                          Blockchain blockchain) {
         this.trimService = Objects.requireNonNull(trimService, "trimService is NULL");
         this.blockchain = Objects.requireNonNull(blockchain, "blockchain is NULL");
         this.trimConfig = trimConfig;
-        this.random = random == null ? new Random() : random;
+        this.random = new Random();
     }
 
+    public void setRandom(Random random) {
+        this.random = random;
+    }
 
     @PostConstruct
     void init() {

@@ -155,8 +155,10 @@ public class ShardingScheduler {
 
     public void init(int lastBlockHeight, int trimHeight) {
         if (!config.isCreateShards()) {
+            log.warn("Sharding is disabled by config");
             return;
         }
+        log.info("Initialize sharding scheduler: trimHeight {}, lastBlockHeight {}", trimHeight, lastBlockHeight);
         Integer lastShardHeight = 0;
         Shard shard = shardService.getLastShard();
         if (shard != null) {
