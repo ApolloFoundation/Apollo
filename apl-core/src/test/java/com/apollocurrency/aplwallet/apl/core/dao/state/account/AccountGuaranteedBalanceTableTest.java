@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountGuarant
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -48,7 +47,6 @@ class AccountGuaranteedBalanceTableTest extends DbContainerBaseTest {
     AccountTestData testData = new AccountTestData();
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    private DerivedTablesRegistry derivedTablesRegistry = mock(DerivedTablesRegistry.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -59,13 +57,12 @@ class AccountGuaranteedBalanceTableTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
-        .addBeans(MockBean.of(derivedTablesRegistry, DerivedTablesRegistry.class))
         .build();
 
     @Test
     void trim() throws SQLException {
         doReturn(10).when(propertiesHolder).BATCH_COMMIT_SIZE();
-        table = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder, derivedTablesRegistry, dbExtension.getDatabaseManager());
+        table = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder, dbExtension.getDatabaseManager());
 
         long sizeAll = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues().size();
         assertEquals(testData.ALL_BALANCES.size(), sizeAll);

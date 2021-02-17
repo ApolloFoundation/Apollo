@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -35,11 +34,10 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
     private static final LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory();
 
     @Inject
-    public AccountAssetTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                             DatabaseManager databaseManager,
+    public AccountAssetTable(DatabaseManager databaseManager,
                              Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("account_asset", accountAssetDbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     public static DbKey newKey(long idA, long idB) {

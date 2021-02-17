@@ -12,8 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -44,12 +42,10 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> imp
     };
 
     @Inject
-    public CurrencyTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                         DatabaseManager databaseManager,
-                         FullTextConfig fullTextConfig,
+    public CurrencyTable(DatabaseManager databaseManager,
                          Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("currency", currencyDbKeyFactory, "code,name,description",
-            derivedDbTablesRegistry, databaseManager, fullTextConfig, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override

@@ -13,8 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -47,14 +45,11 @@ public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
     private static final PrunableMessageMapper MAPPER = new PrunableMessageMapper(KEY_FACTORY);
 
     @Inject
-    public PrunableMessageTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                DatabaseManager databaseManager,
-                                FullTextConfig fullTextConfig,
+    public PrunableMessageTable(DatabaseManager databaseManager,
                                 BlockchainConfig blockchainConfig,
                                 PropertiesHolder propertiesHolder,
                                 Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, KEY_FACTORY, false, null,
-            derivedDbTablesRegistry, databaseManager, fullTextConfig, blockchainConfig, propertiesHolder, deleteOnTrimDataEvent);
+        super(TABLE_NAME, KEY_FACTORY, false, null, databaseManager, blockchainConfig, propertiesHolder, deleteOnTrimDataEvent);
     }
 
     @Override
