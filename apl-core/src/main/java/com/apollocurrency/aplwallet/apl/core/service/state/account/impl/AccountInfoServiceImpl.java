@@ -128,8 +128,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
         Objects.requireNonNull(luceneQuery, "luceneQuery is empty");
         StringBuffer inRange = new StringBuffer("(");
         int index = 0;
-        try {
-            ResultSet rs = fullTextSearchService.search("public", accountInfoTable.getTableName(), luceneQuery, Integer.MAX_VALUE, 0);
+        try (ResultSet rs = fullTextSearchService.search("public", accountInfoTable.getTableName(), luceneQuery, Integer.MAX_VALUE, 0)) {
             while (rs.next()) {
                 Long DB_ID = rs.getLong(4);
                 if (index == 0) {

@@ -336,10 +336,11 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             // will be initialized when it is created.
             //
             boolean isTableDataExist = false;
-            try (Statement stmt = con.createStatement()) {
+            try (Statement stmt = con.createStatement();
                 ResultSet rs = stmt.executeQuery(String.format("SELECT count(*) as count FROM " + FTL_INDEXES_TABLE
                         + " WHERE `schema` = '%s' AND `table` = '%s'",
                     upperSchema.toLowerCase(), table1.toLowerCase()));
+            ) {
                 if (rs.next()) {
                     isTableDataExist = rs.getLong("count") > 0;
                 }
