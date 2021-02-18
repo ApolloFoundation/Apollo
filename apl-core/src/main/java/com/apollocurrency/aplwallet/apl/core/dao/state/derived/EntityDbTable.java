@@ -350,12 +350,13 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
         if (dbKey == null) {
             throw new RuntimeException("DbKey not set");
         }
+        String sql = "UPDATE " + table
+            + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1";
         try (Connection con = dataSource.getConnection()) {
             if (multiversion) {
                 try (
                     @DatabaseSpecificDml(DmlMarker.UPDATE_WITH_LIMIT)
-                    PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                        + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")
+                    PreparedStatement pstmt = con.prepareStatement(sql)
                 ) {
                     dbKey.setPK(pstmt);
                     pstmt.executeUpdate();
@@ -364,7 +365,38 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
             restoreDeletedColumnIfSupported(con, dbKey, t);
             save(con, t);
         } catch (SQLException e) {
+            log.error("SQL: {}", sql);
+//            printDeadlockInfo(dataSource);
             throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    private void printDeadlockInfo(TransactionalDataSource dataSource) {
+        try (Connection con = databaseManager.getDataSource().getConnection();
+             PreparedStatement pstmt = con.prepareStatement("select * from information_schema.rocksdb_deadlock");
+             ResultSet rsDl = pstmt.executeQuery();
+             PreparedStatement pstmtEng = con.prepareStatement("show engine rocksdb status");
+             ResultSet rsEng = pstmtEng.executeQuery()
+        ) {
+            while (rsDl.next()) {
+//                rsDl.getLong("db_id"), rsDl.getInt("height"), rsDl.getBoolean("done");
+                log.debug("DL: {}", rsEng.getString("Status"));
+            }
+            while  (rsEng.next()) {
+                log.debug("ST: {} - {} - {} - {} - {} - {} - {} - {} - {}",
+                    rsEng.getLong("DEADLOCK_ID"),
+                    rsEng.getLong("TIMESTAMP"),
+                    rsEng.getLong("TRANSACTION_ID"),
+                    rsEng.getString("CF_NAME"),
+                    rsEng.getString("WAITING_KEY"),
+                    rsEng.getString("LOCK_TYPE"),
+                    rsEng.getString("INDEX_NAME"),
+                    rsEng.getString("TABLE_NAME"),
+                    rsEng.getLong("ROLLED_BACK")
+                );
+            }
+        } catch (SQLException e) {
+            log.error("RockDb fetch Info", e);
         }
     }
 
