@@ -365,24 +365,23 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
             restoreDeletedColumnIfSupported(con, dbKey, t);
             save(con, t);
         } catch (SQLException e) {
-            log.error("SQL: {}", sql);
-//            printDeadlockInfo(dataSource);
+            log.error("SQL: {}\nentity={}", sql, t.toString());
+            printDeadlockInfo(dataSource);
             throw new RuntimeException(e.toString(), e);
         }
     }
 
     private void printDeadlockInfo(TransactionalDataSource dataSource) {
-        try (Connection con = databaseManager.getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("select * from information_schema.rocksdb_deadlock");
-             ResultSet rsDl = pstmt.executeQuery();
+        try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtEng = con.prepareStatement("show engine rocksdb status");
-             ResultSet rsEng = pstmtEng.executeQuery()
+             ResultSet rsEng = pstmtEng.executeQuery();
+             PreparedStatement pstmt = con.prepareStatement("select * from information_schema.rocksdb_deadlock");
+             ResultSet rsDl = pstmt.executeQuery()
         ) {
-            while (rsDl.next()) {
-//                rsDl.getLong("db_id"), rsDl.getInt("height"), rsDl.getBoolean("done");
+            while (rsEng.next()) {
                 log.debug("DL: {}", rsEng.getString("Status"));
             }
-            while  (rsEng.next()) {
+            while  (rsDl.next()) {
                 log.debug("ST: {} - {} - {} - {} - {} - {} - {} - {} - {}",
                     rsEng.getLong("DEADLOCK_ID"),
                     rsEng.getLong("TIMESTAMP"),

@@ -68,7 +68,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
     }
 
     private int doMultiversionRollback(int height) {
-        log.trace("doMultiversionRollback(), height={}", height);
+        log.trace("doMultiversionRollback(), height={} for '{}'", height, table);
         int deletedRecordsCount;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -94,14 +94,14 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
             }
 
             if (dbKeys.size() > 0 /*&& table.equalsIgnoreCase("account")*/) {
-                log.trace("Rollback table {} found {} records to update to latest", table, dbKeys.size()/*, dbKeys*/);
+                log.trace("Rollback for '{}' found {} records to update to latest", table, dbKeys.size()/*, dbKeys*/);
             }
 
             pstmtDelete.setInt(1, height);
             deletedRecordsCount = pstmtDelete.executeUpdate();
 
             if (deletedRecordsCount > 0) {
-                log.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
+                log.trace("Rollback table '{}' deleting {} records", table, deletedRecordsCount);
             }
             if (supportDelete()) { // do not 'setLatest' for deleted entities ( if last entity below given height was deleted 'deleted=true')
                 try (PreparedStatement pstmtSelectDeletedCount = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height <= ? AND deleted = true GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT HEIGHT) % 2 = 0");
@@ -133,7 +133,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
             log.error("Error", e);
             throw new RuntimeException(e.toString(), e);
         }
-        log.trace("Rollback for table {} took {} ms", table, System.currentTimeMillis() - startTime);
+        log.trace("Rollback for table '{}' took {} ms", table, System.currentTimeMillis() - startTime);
         return deletedRecordsCount;
     }
 
@@ -193,7 +193,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
      *    - or used for 'sharding trim' to delete at once ('Reset' event is sent to DeleteTrimObserver)
      */
     private void doMultiversionTrim(final int height, boolean isSharding) {
-        log.trace("doMultiversionTrim(), height={}", height);
+        log.trace("doMultiversionTrim(), height={} for '{}'", height, table);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -210,13 +210,13 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                      con.prepareStatement("DELETE FROM " + table + " WHERE db_id = ?");
                  PreparedStatement selectDbIdStatement =
                      con.prepareStatement("SELECT db_id, height " + getDeletedColumnIfSupported() + " FROM " + table + " " + keyFactory.getPKClause())) {
-                log.trace("Select 1. {} time: {} ms", table, System.currentTimeMillis() - startSelectTime);
+                log.trace("Select 1. '{}' time: {} ms", table, System.currentTimeMillis() - startSelectTime);
 
                 Set<Long> keysToDelete = new HashSet<>();
                 while (rs.next()) {
                     keysToDelete.addAll( selectDbIds(selectDbIdStatement, rs) );
                 }
-                log.trace("Select 2. {} time: {} ms", table, System.currentTimeMillis() - startSelectTime);
+                log.trace("Select 2. '{}' time: {} ms", table, System.currentTimeMillis() - startSelectTime);
 
                 startDeleteTime = System.currentTimeMillis();
                 if (isSharding) { // trim on sharding
@@ -231,17 +231,18 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                                 dataSource.commit(false);
                             }
                         }
-                        log.debug("Delete for table {} took {} ms", table, System.currentTimeMillis() - startDeleteTime);
+                        log.debug("Delete for table '{}' took {} ms", table, System.currentTimeMillis() - startDeleteTime);
                     }
                     dataSource.commit(false);
                     log.trace("Delete table '{}' in {} ms: deleted=[{}]",
                         table, System.currentTimeMillis() - startDeleteTime, deleted);
                 } else {
-                    // simple trimming
-                    log.trace("Should SEND to delete? isSharding = {}, table: {} , size = [{}]", isSharding, table, keysToDelete.size());
                     // send 'Delete DB_IDs' event only if we have bigger then 100 records for deleting
-                    if (keysToDelete.size() > ShardConstants.DEFAULT_COMMIT_BATCH_SIZE) { // low limit
-                        log.trace("Before SEND delete. isSharding = {}, table: {} , size = [{}]", isSharding, table, keysToDelete.size());
+                    boolean isEnoughToDelete = keysToDelete.size() >= ShardConstants.DEFAULT_COMMIT_BATCH_SIZE;
+                    log.trace("Should SEND to delete? = {}, isSharding = {}, table: {} , size = [{}]",
+                        isEnoughToDelete, isSharding, table, keysToDelete.size());
+                    if (isEnoughToDelete) { // low limit
+                        log.trace("SENDING delete event. isSharding = {}, table: {} , size = [{}]", isSharding, table, keysToDelete.size());
                         deleteOnTrimDataEvent.select(new AnnotationLiteral<TrimEvent>() {
                         }).fireAsync(new DeleteOnTrimData(false, keysToDelete, table, height));
                     }
@@ -249,7 +250,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
             }
             long trimTime = System.currentTimeMillis() - startTime;
             if (trimTime > 10) {
-                log.debug("Trim for table {} time {} ms", table, trimTime);
+                log.debug("doMultiversionTrim for table '{}' time {} ms", table, trimTime);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

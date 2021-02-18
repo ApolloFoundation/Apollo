@@ -130,23 +130,24 @@ public class DeleteTrimObserver {
                 dataSource.begin();
             }
 //            if (deleteOnTrimData.getTableName().equalsIgnoreCase("account")) {
-//                try (Connection con = dataSource.getConnection();
-//                     PreparedStatement pstmtDeleteById =
-//                         con.prepareStatement("DELETE LOW_PRIORITY QUICK IGNORE FROM " + deleteOnTrimData.getTableName()
-//                             + " WHERE db_id in (?) ORDER BY DB_ID, latest");
-//                     PreparedStatement selectDeleted = con.prepareStatement("SELECT ROW_COUNT()");
-//                ) {
-//                    deleteByDbIdSet(pstmtDeleteById, deleteOnTrimData.getDbIdSet());
-//                    try (ResultSet rs = selectDeleted.executeQuery()) {
-//                        if (rs.next()) {
-//                            deleted += rs.getInt(1);
-//                        }
-//                    }
-//                    dataSource.commit(!inTransaction);
-//                } catch (Exception e) {
-//                    log.error("In Batch delete error on table {}", deleteOnTrimData.getTableName(), e);
-//                }
+                try (Connection con = dataSource.getConnection();
+                     PreparedStatement pstmtDeleteById =
+                         con.prepareStatement("DELETE LOW_PRIORITY QUICK IGNORE FROM " + deleteOnTrimData.getTableName()
+                             + " WHERE db_id in (?) ORDER BY DB_ID, latest");
+                     PreparedStatement selectDeleted = con.prepareStatement("SELECT ROW_COUNT()");
+                ) {
+                    deleteByDbIdSet(pstmtDeleteById, deleteOnTrimData.getDbIdSet());
+                    try (ResultSet rs = selectDeleted.executeQuery()) {
+                        if (rs.next()) {
+                            deleted += rs.getInt(1);
+                        }
+                    }
+                    dataSource.commit(!inTransaction);
+                } catch (Exception e) {
+                    log.error("In Batch delete error on table {}", deleteOnTrimData.getTableName(), e);
+                }
 //            } else {
+/*
                 try (Connection con = dataSource.getConnection();
                      PreparedStatement pstmtDeleteById =
 //                         con.prepareStatement("DELETE FROM " + deleteOnTrimData.getTableName() + " WHERE db_id = ?");
@@ -169,6 +170,7 @@ public class DeleteTrimObserver {
                 } catch (Exception e) {
                     log.error("Batch delete error on table {}", deleteOnTrimData.getTableName(), e);
                 }
+*/
             }
             log.debug("performOneTableDelete(): Delete table '{}' in {} ms: deleted=[{}]\n{}",
                 deleteOnTrimData.getTableName(), System.currentTimeMillis() - startDeleteTime, deleted,
