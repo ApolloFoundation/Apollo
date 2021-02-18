@@ -377,6 +377,7 @@ public class GenesisImporter {
         ) {
             boolean isBalancesProcessingStarted = false;
             while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+                long startParsed = System.currentTimeMillis();
                 final JsonToken currentToken = jsonParser.getCurrentToken();
                 final String currentName = jsonParser.getCurrentName();
                 if ((currentToken == JsonToken.FIELD_NAME) && (BALANCES_JSON_FIELD_NAME.equals(currentName))) {
@@ -385,15 +386,17 @@ public class GenesisImporter {
                 } else if (isBalancesProcessingStarted) {
                     jsonParser.nextToken();
                     final long balanceValue = jsonParser.getLongValue();
-                    log.trace("Parsed json balance: {} - {}", currentName, balanceValue);
                     final Account account = accountService.createAccount(Long.parseUnsignedLong(currentName));
+                    log.trace("Parsed json balance + created Acc: {} - {} in {} ms",
+                        currentName, balanceValue, (System.currentTimeMillis() - startParsed));
                     accountService.addToBalanceAndUnconfirmedBalanceATM(account, null, 0, balanceValue);
                     totalAmount += balanceValue;
-
+                    log.trace("Added unconfirmed/balance to Acc: {} - {} in {} ms",
+                        account.getId(), balanceValue, (System.currentTimeMillis() - startParsed));
                     if (++count % 10000 == 0) {
                         final String message = String.format(LOADING_STRING_GENESIS_BALANCE, count, balanceNumberTotal);
                         log.debug(message);
-                        aplAppStatus.durableTaskUpdate(genesisTaskId, 50 + (count * 1.0 / balanceNumberTotal * 1.0) * 50, message);
+                        aplAppStatus.durableTaskUpdate(genesisTaskId, 50 + (count * 1.0 / balanceNumberTotal) * 50, message);
                     }
                 }
             }
