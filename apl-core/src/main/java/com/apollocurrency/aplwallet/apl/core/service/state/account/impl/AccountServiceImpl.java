@@ -9,14 +9,11 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventTyp
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
@@ -40,9 +37,6 @@ import lombok.extern.slf4j.Slf4j;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
@@ -196,50 +190,21 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     @Override
     public void update(Account account, boolean deleteIfHasZeroBalance) {
+        long start = System.currentTimeMillis();
         account.setHeight(blockChainInfoService.getHeight());
-        if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
-            try {
-                log.trace("--- >>> Account entities {}", accountTable.selectAllForKey(account.getId()).stream().map(this::stringAcount).limit(3).collect(Collectors.joining("-----")));
-                log.trace("--- >>> Account id {} (h={}, dbId={}) - {}", account.getId(), account.getHeight(), account.getDbId(), ThreadUtils.last5Stacktrace());
-            } catch (SQLException ignored) {
-            }
-        }
         try {
             accountTable.insert(account);
+            log.trace("Updated acc {} in {} ms", stringAccount(account), (System.currentTimeMillis() - start));
         } catch (RuntimeException e) {
-            log.error("--- >>> Account = {}", account, e);
-            log.trace("--- >>> Account id {} (h={}, dbId={}) - {}", account.getId(), account.getHeight(), account.getDbId(), ThreadUtils.last5Stacktrace());
-/*
-            try (Connection con = accountTable.getDatabaseManager().getDataSource().getConnection();
-                 PreparedStatement pstmt = con.prepareStatement("show engine innodb status");
-                 ResultSet rs = pstmt.executeQuery()
-            ) {
-                int index = 0;
-                if (rs.next()) {
-                    while (rs.next()) {
-//                            log.debug("{} : {} - {} - {} - {} - {} - {} - {} - {} - {}",
-                        log.debug("{} : {}",
-                            index,
-                            rs.getString("Status")
-//                                rs.getLong("Status"),
-//                                rs.getLong("TIMESTAMP"),
-//                                rs.getLong("TRANSACTION_ID"),
-//                                rs.getString("CF_NAME"),
-//                                rs.getString("WAITING_KEY"),
-//                                rs.getString("LOCK_TYPE"),
-//                                rs.getString("INDEX_NAME"),
-//                                rs.getString("TABLE_NAME"),
-//                                rs.getLong("ROLLED_BACK")
-                        );
-                        index++;
-                    }
-                } else {
-                    log.debug("No Deadlock INFO in database...");
+            if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
+                log.error("--- >>> 1. Account = {}", account, e);
+                log.trace("--- >>> 1. Account id {} (h={}, dbId={}) - {}", account.getId(), account.getHeight(), account.getDbId(), ThreadUtils.last5Stacktrace());
+                try {
+                    log.trace("--- >>> 2. Account entities {} in {} ms",
+                        accountTable.selectAllForKey(account.getId()).stream().map(this::stringAccount).limit(3).collect(Collectors.joining("-----")), (System.currentTimeMillis() - start));
+                } catch (SQLException ignored) {
                 }
-            } catch (Exception ex) {
-                log.error("Deadlock INFO retrieve error",  ex);
             }
-*/
             throw e;
         }
 //        synchronized (lock) {
@@ -247,7 +212,7 @@ public class AccountServiceImpl implements AccountService {
 //        }
     }
 
-    public String stringAcount(Account acc) {
+    public String stringAccount(Account acc) {
         return "{id=" + acc.getId() + ",balance=" + acc.getBalanceATM() + ",fb=" + acc.getForgedBalanceATM() + ",uncbalance=" + acc.getUnconfirmedBalanceATM() + ",height=" + acc.getHeight() + ",dbId=" + acc.getDbId() + ",latest=" + acc.isLatest() + ",deleted=" + acc.isDeleted() + "}";
     }
 
@@ -449,6 +414,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public void addToBalanceAndUnconfirmedBalanceATM(Account account, LedgerEvent event, long eventId, long amountATM, long feeATM) {
+        long start = System.currentTimeMillis();
         if (amountATM == 0 && feeATM == 0) {
             return;
         }
@@ -456,8 +422,10 @@ public class AccountServiceImpl implements AccountService {
         account.setBalanceATM(Math.addExact(account.getBalanceATM(), totalAmountATM));
         account.setUnconfirmedBalanceATM(Math.addExact(account.getUnconfirmedBalanceATM(), totalAmountATM));
         accountGuaranteedBalanceTable.addToGuaranteedBalanceATM(account.getId(), totalAmountATM, blockChainInfoService.getHeight());
+        log.trace("Added guaranteed balance in {} ms", (System.currentTimeMillis() - start));
         AccountService.checkBalance(account.getId(), account.getBalanceATM(), account.getUnconfirmedBalanceATM());
-        update(account);
+        update(account, true);
+        log.trace("Updated account in {} ms", (System.currentTimeMillis() - start));
 
         accountEvent.select(literal(AccountEventType.BALANCE)).fire(account);
         accountEvent.select(literal(AccountEventType.UNCONFIRMED_BALANCE)).fire(account);
@@ -467,6 +435,7 @@ public class AccountServiceImpl implements AccountService {
         }
         logEntryUnconfirmed(account, event, eventId, amountATM, feeATM);
         logEntryConfirmed(account, event, eventId, amountATM, feeATM);
+        log.trace("Added guaranteed balance, completed in {} ms", (System.currentTimeMillis() - start));
     }
 
     @Override
