@@ -17,16 +17,18 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.LONG_TIME_FIVE_SECONDS;
 
@@ -70,8 +72,9 @@ public class DeleteTrimObserver {
                 deleteOnTrimData.isResetEvent(), deleteOnTrimDataQueue.size());
             this.deleteOnTrimDataQueue.clear();
         } else {
-            log.trace("onDeleteTrimDataAsync : queue size = [{}]", deleteOnTrimDataQueue.size());
-            this.deleteOnTrimDataQueue.add(deleteOnTrimData);
+            log.trace("onDeleteTrimDataAsync : 1. queue size = [{}]", deleteOnTrimDataQueue.size());
+            boolean addResult = this.deleteOnTrimDataQueue.add(deleteOnTrimData);
+            log.trace("onDeleteTrimDataAsync : 2. queue size = [{}], added = {}", deleteOnTrimDataQueue.size(), addResult);
         }
     }
 
@@ -91,18 +94,18 @@ public class DeleteTrimObserver {
     };
 
     private void processScheduledDeleteTrimEvent() {
-        log.trace("processScheduledDeleteTrimEvent() scheduled on previous run...");
+        log.trace("processScheduledDeleteTrimEvent() scheduled on previous run... [{}]", this.deleteOnTrimDataQueue.size());
         if (trimDerivedTablesEnabled) {
             boolean performDeleteTrimData;
             DeleteOnTrimData deleteOnTrimData;
             synchronized (lock) {
                 if (trimDerivedTablesEnabled) {
-                    deleteOnTrimData = deleteOnTrimDataQueue.peek();
+                    deleteOnTrimData = this.deleteOnTrimDataQueue.peek();
                     performDeleteTrimData = deleteOnTrimData != null;
                     if (performDeleteTrimData) {
                         performOneTableDelete(deleteOnTrimData);
-                        deleteOnTrimDataQueue.remove();
-                        log.debug("Performed trim on = {} / size={}", deleteOnTrimData, deleteOnTrimDataQueue.size());
+                        this.deleteOnTrimDataQueue.remove();
+                        log.debug("Performed trim on = {} / size={}", deleteOnTrimData, this.deleteOnTrimDataQueue.size());
                     } else {
                         log.trace("NO trim data to delete...");
                     }
@@ -126,30 +129,52 @@ public class DeleteTrimObserver {
             if (!inTransaction) {
                 dataSource.begin();
             }
-            try (Connection con = dataSource.getConnection();
-                 PreparedStatement pstmtDeleteById =
-                     con.prepareStatement("DELETE LOW_PRIORITY QUICK IGNORE FROM " + deleteOnTrimData.getTableName() + " WHERE db_id = ?");
-            ) {
-                long index = 0;
-                for (Long id : deleteOnTrimData.getDbIdSet()) {
-//                    deleted += deleteByDbId(pstmtDeleteById, id);
-                    addDeleteToBatch(pstmtDeleteById, id);
-                    index++;
-                    if (index % COMMIT_BATCH_SIZE == 0) {
-                        int[] result = pstmtDeleteById.executeBatch();
-                        dataSource.commit(false);
-                        deleted += Arrays.stream(result).asLongStream().sum();
+//            if (deleteOnTrimData.getTableName().equalsIgnoreCase("account")) {
+//                try (Connection con = dataSource.getConnection();
+//                     PreparedStatement pstmtDeleteById =
+//                         con.prepareStatement("DELETE LOW_PRIORITY QUICK IGNORE FROM " + deleteOnTrimData.getTableName()
+//                             + " WHERE db_id in (?) ORDER BY DB_ID, latest");
+//                     PreparedStatement selectDeleted = con.prepareStatement("SELECT ROW_COUNT()");
+//                ) {
+//                    deleteByDbIdSet(pstmtDeleteById, deleteOnTrimData.getDbIdSet());
+//                    try (ResultSet rs = selectDeleted.executeQuery()) {
+//                        if (rs.next()) {
+//                            deleted += rs.getInt(1);
+//                        }
+//                    }
+//                    dataSource.commit(!inTransaction);
+//                } catch (Exception e) {
+//                    log.error("In Batch delete error on table {}", deleteOnTrimData.getTableName(), e);
+//                }
+//            } else {
+                try (Connection con = dataSource.getConnection();
+                     PreparedStatement pstmtDeleteById =
+//                         con.prepareStatement("DELETE FROM " + deleteOnTrimData.getTableName() + " WHERE db_id = ?");
+                         con.prepareStatement("DELETE LOW_PRIORITY QUICK IGNORE FROM " + deleteOnTrimData.getTableName() + " WHERE db_id = ?");
+                ) {
+                    long index = 0;
+                    for (Long id : deleteOnTrimData.getDbIdSet()) {
+                        deleted += deleteByDbId(pstmtDeleteById, id);
+    //                    addDeleteToBatch(pstmtDeleteById, id);
+                        index++;
+                        if (index % COMMIT_BATCH_SIZE == 0) {
+    //                        int[] result = pstmtDeleteById.executeBatch();
+                            dataSource.commit(false);
+    //                        deleted += Arrays.stream(result).asLongStream().sum();
+                        }
                     }
+    //                int[] result = pstmtDeleteById.executeBatch();
+                    dataSource.commit(!inTransaction);
+    //                deleted += Arrays.stream(result).asLongStream().sum();
+                } catch (Exception e) {
+                    log.error("Batch delete error on table {}", deleteOnTrimData.getTableName(), e);
                 }
-                int[] result = pstmtDeleteById.executeBatch();
-                dataSource.commit(!inTransaction);
-                deleted += Arrays.stream(result).asLongStream().sum();
-            } catch (Exception e) {
-                log.error("Batch delete error on table {}", deleteOnTrimData.getTableName(), e);
             }
             log.debug("performOneTableDelete(): Delete table '{}' in {} ms: deleted=[{}]\n{}",
-                deleteOnTrimData.getTableName(), System.currentTimeMillis() - startDeleteTime, deleted, deleteOnTrimData.getDbIdSet());
-        }
+                deleteOnTrimData.getTableName(), System.currentTimeMillis() - startDeleteTime, deleted,
+                deleteOnTrimData.getTableName().equals("account") ?
+                    deleteOnTrimData.getDbIdSet().stream().map(Object::toString).collect(Collectors.joining(",")) : "");
+//        }
         return deleted;
     }
 
@@ -160,6 +185,11 @@ public class DeleteTrimObserver {
 
     private int deleteByDbId(PreparedStatement pstmtDeleteByDbId, long dbId) throws SQLException {
         pstmtDeleteByDbId.setLong(1, dbId);
+        return pstmtDeleteByDbId.executeUpdate();
+    }
+
+    private int deleteByDbIdSet(PreparedStatement pstmtDeleteByDbId, Set<Long> dbId) throws SQLException {
+        pstmtDeleteByDbId.setString(1, dbId.stream().map(Object::toString).collect(Collectors.joining(",")));
         return pstmtDeleteByDbId.executeUpdate();
     }
 
