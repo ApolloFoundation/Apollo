@@ -5,7 +5,6 @@ package com.apollocurrency.aplwallet.apl.exec;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import io.firstbridge.process.db.DbControl;
-import io.firstbridge.process.db.DbRunParams;
 import io.firstbridge.process.impl.MariaDbControl;
 import io.firstbridge.process.impl.MariaDbRunParams;
 
