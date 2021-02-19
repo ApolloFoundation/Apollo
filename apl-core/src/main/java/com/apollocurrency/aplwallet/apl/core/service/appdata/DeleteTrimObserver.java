@@ -131,12 +131,18 @@ public class DeleteTrimObserver {
             }
 //            if (deleteOnTrimData.getTableName().equalsIgnoreCase("account")) {
                 try (Connection con = dataSource.getConnection();
+                     PreparedStatement startTr =
+                         con.prepareStatement("START TRANSACTION");
                      PreparedStatement pstmtDeleteById =
                          con.prepareStatement("DELETE LOW_PRIORITY QUICK IGNORE FROM " + deleteOnTrimData.getTableName()
-                             + " WHERE db_id in (?) ORDER BY DB_ID, latest");
-                     PreparedStatement selectDeleted = con.prepareStatement("SELECT ROW_COUNT()");
+                             + " WHERE db_id in (?) ORDER BY DB_ID LIMIT ?");
+                     PreparedStatement commitTr =
+                         con.prepareStatement("COMMIT");
+                     PreparedStatement selectDeleted = con.prepareStatement("SELECT ROW_COUNT();");
                 ) {
+                    startTr.executeUpdate();
                     deleteByDbIdSet(pstmtDeleteById, deleteOnTrimData.getDbIdSet());
+                    commitTr.executeUpdate();
                     try (ResultSet rs = selectDeleted.executeQuery()) {
                         if (rs.next()) {
                             deleted += rs.getInt(1);
@@ -145,6 +151,13 @@ public class DeleteTrimObserver {
                     dataSource.commit(!inTransaction);
                 } catch (Exception e) {
                     log.error("In Batch delete error on table {}", deleteOnTrimData.getTableName(), e);
+                    try (Connection con = dataSource.getConnection();
+                        PreparedStatement rollbackTr = con.prepareStatement("ROLLBACK")
+                    ) {
+                        rollbackTr.executeUpdate();
+                    } catch (SQLException exception) {
+                        log.error("Rollback error", e);
+                    }
                 }
 //            } else {
 /*
@@ -192,6 +205,7 @@ public class DeleteTrimObserver {
 
     private int deleteByDbIdSet(PreparedStatement pstmtDeleteByDbId, Set<Long> dbId) throws SQLException {
         pstmtDeleteByDbId.setString(1, dbId.stream().map(Object::toString).collect(Collectors.joining(",")));
+        pstmtDeleteByDbId.setInt(2, dbId.size());
         return pstmtDeleteByDbId.executeUpdate();
     }
 

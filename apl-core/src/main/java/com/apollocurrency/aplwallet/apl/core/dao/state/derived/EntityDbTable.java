@@ -350,8 +350,8 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
         if (dbKey == null) {
             throw new RuntimeException("DbKey not set");
         }
-        String sql = "UPDATE " + table
-            + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1";
+        String sql = "UPDATE LOW_PRIORITY IGNORE " + table
+            + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE ORDER BY DB_ID LIMIT 1";
         try (Connection con = dataSource.getConnection()) {
             if (multiversion) {
                 try (
@@ -379,10 +379,10 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
              ResultSet rsDl = pstmt.executeQuery()
         ) {
             while (rsEng.next()) {
-                log.debug("DL: {}", rsEng.getString("Status"));
+                log.debug("ST: {}", rsEng.getString("Status"));
             }
             while  (rsDl.next()) {
-                log.debug("ST: {} - {} - {} - {} - {} - {} - {} - {} - {}",
+                log.debug("DL: {} - {} - {} - {} - {} - {} - {} - {} - {}",
                     rsEng.getLong("DEADLOCK_ID"),
                     rsEng.getLong("TIMESTAMP"),
                     rsEng.getLong("TRANSACTION_ID"),
