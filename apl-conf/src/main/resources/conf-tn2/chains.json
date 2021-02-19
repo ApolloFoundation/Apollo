@@ -45,14 +45,10 @@
             "enabled": "true",
             "adaptiveBlockTime": 10
           }
-        },
-        "shardingSettings": {
-          "enabled": true,
-          "frequency": 400000
         }
       },
       {
-        "height": 900000,
+        "height": 30000,
         "maxNumberOfTransactions": 255,
         "maxArbitraryMessageLength": 160,
         "maxNumberOfChildAccounts": 10,
@@ -68,7 +64,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 10000
+          "frequency": 2000
         }
       }
     ]
