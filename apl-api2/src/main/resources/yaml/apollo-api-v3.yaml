@@ -1,0 +1,1752 @@
+openapi: 3.0.1
+info:
+  title: Apollo API V3
+  description: |
+    Apollo API V3 work in progress
+      Notice:
+      The symbols '@@' in the path definition are used as a marker for the code generation routine.
+      If you want to use this YAML specification in the Swagger editor manually, you should replace that marker with spaces.
+  contact:
+    email: apiteam@firstbridge.io
+  version: 3.0.0
+externalDocs:
+  description: The project VCS repository
+  url: https://github.com/ApolloFoundation/Apollo
+servers:
+  - url: http://localhost:7876/rest
+
+tags:
+  - name: blockchain
+    description: Operations with blockchain state.
+  - name: node public
+    description: Public access to node.
+  - name: node private
+    description: Private access to node.
+  - name: subscribe
+    description: Subscribe on some event.
+
+paths:
+
+  /@@account/{accountId}:
+    get:
+      tags:
+        - blockchain
+      summary: Returns the details account information
+      operationId: getAccountInfo
+      parameters:
+        - name: accountId
+          in: path
+          description: The account id
+          required: true
+          schema:
+            type: string
+            format: hex_bytearray
+            example: '1aa130eb6043151ad6040f16701 or APL-X5JH-TJKJ-DVGC-5T2V8 or 12345225623123111'
+        - name: includeAssets
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: include asserts to the response
+        - name: includeCurrencies
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: include currencies to the response
+        - name: includeLessors
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: include lessors to the response
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountInfoResp'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+
+  /@@transaction/{transactionId}:
+    get:
+      tags:
+        - blockchain
+      summary: Get transaction object given transaction id.
+      description: Return the detail information about transaction by id.
+      operationId: getTxById
+      parameters:
+        - name: transactionId
+          in: path
+          description: Transaction id
+          required: true
+          schema:
+            type: string
+            format: hex_bytearray
+            example: '1aa130eb6043151ad6040f16701'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionInfoResp'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+
+  /@@transactions:
+    get:
+      tags:
+        - blockchain
+      summary: Get transactions following given filter.
+      operationId: getTxsByFilter
+      description: Return the detail information about transactions by filter.
+      parameters:
+        - in: query
+          name: account
+          description: The account id
+          schema:
+            type: string
+            format: hex_bytearray
+            example: '1aa130eb6043151ad6040f16701 or APL-X5JH-TJKJ-DVGC-5T2V8 or 12345225623123111'
+
+        - in: query
+          name: txIds
+          description: The transaction ids
+          schema:
+            type: array
+            items:
+              type: string
+              format: hex_bytearray
+              example: '1aa130eb6043151ad6040f16701 or APL-X5JH-TJKJ-DVGC-5T2V8 or 12345225623123111'
+
+        - in: query
+          name: type
+          description: |
+            The transaction type, it's an optional parameter and can be missed or specified negative value to avoid
+            filtering by that criteria.
+              There are eleven types
+                PAYMENT = 0;
+                MESSAGING = 1;
+                COLORED_COINS = 2;
+                DIGITAL_GOODS = 3;
+                ACCOUNT_CONTROL = 4;
+                MONETARY_SYSTEM = 5;
+                DATA = 6;
+                SHUFFLING = 7;
+                UPDATE = 8;
+                DEX = 9;
+                CHILD_ACCOUNT = 10;
+          schema:
+            type: string
+            format: int8
+            example: '2'
+
+        - in: query
+          name: subtype
+          description: Transaction subtype
+          schema:
+            type: string
+            format: int8
+            example: '2'
+
+        - in: query
+          name: timestamp
+          description: Show transactions with tx_timestamp >= timestamp
+          schema:
+            type: integer
+            format: int64
+            example: 1591696372000
+
+        - in: query
+          name: numberOfConfirmations
+          description: the number of transaction confirmations
+          schema:
+            type: integer
+            format: int32
+
+        - in: query
+          name: withMessage
+          description: show transaction with message
+          schema:
+            type: boolean
+            default: false
+
+        - in: query
+          name: phasedOnly
+          description: show only phased transactions
+          schema:
+            type: boolean
+            default: false
+
+        - in: query
+          name: nonPhasedOnly
+          description: show only non phased transactions
+          schema:
+            type: boolean
+            default: false
+
+        - in: query
+          name: includeExpiredPrunable
+          description: include transactions with expired prunables
+          schema:
+            type: boolean
+            default: false
+
+        - in: query
+          name: includePhasingResult
+          description: include transactions with phasing results
+          schema:
+            type: boolean
+            default: false
+
+        - in: query
+          name: executedOnly
+          description: show only executed transactions
+          schema:
+            type: boolean
+            default: false
+
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/orderBy'
+
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionInfoResp'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+    post:
+      tags:
+        - blockchain
+      summary: Broadcast a batch of transactions and return the transaction receipt list.
+      description: Asynchronously broadcast the batch of the signed transaction to the network. The transactions are immediately put into an unconfirmed transaction pool in the same order as in the batch and later are sending to the network.
+      operationId: broadcastTxs
+      requestBody:
+        description: an array of signed transactions, each item is a byte array in hex format
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/TxRequest'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+        401:
+          description: Not authenticated
+        403:
+          description: Access token does not have the required scope
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@transactions/count:
+    get:
+      tags:
+        - blockchain
+      summary: Count transactions following given filter.
+      operationId: countTxsByFilter
+      description: Count transactions by filter.
+      parameters:
+        - in: query
+          name: account
+          description: The account id
+          schema:
+            type: array
+            items:
+              type: string
+              format: hex_bytearray
+              example: '1aa130eb6043151ad6040f16701 or APL-X5JH-TJKJ-DVGC-5T2V8 or 12345225623123111'
+
+        - in: query
+          name: type
+          description: |
+            The transaction type, it's an optional parameter and can be missed or specified negative value to avoid
+            filtering by that criteria.
+              There are eleven types
+                PAYMENT = 0;
+                MESSAGING = 1;
+                COLORED_COINS = 2;
+                DIGITAL_GOODS = 3;
+                ACCOUNT_CONTROL = 4;
+                MONETARY_SYSTEM = 5;
+                DATA = 6;
+                SHUFFLING = 7;
+                UPDATE = 8;
+                DEX = 9;
+                CHILD_ACCOUNT = 10;
+          schema:
+            type: string
+            format: int8
+            example: '2'
+
+        - in: query
+          name: subtype
+          description: Transaction subtype
+          schema:
+            type: string
+            format: int8
+            example: '2'
+
+        - in: query
+          name: timestamp
+          description: Show transactions with tx_timestamp >= timestamp
+          schema:
+            type: integer
+            format: int64
+            example: 1591696372000
+
+        - in: query
+          name: numberOfConfirmations
+          description: the number of transaction confirmations
+          schema:
+            type: integer
+            format: int32
+
+        - in: query
+          name: withMessage
+          description: show transaction with message
+          schema:
+            type: boolean
+            default: false
+
+        - in: query
+          name: phasedOnly
+          description: show only phased transactions
+          schema:
+            type: boolean
+            default: false
+
+        - in: query
+          name: nonPhasedOnly
+          description: show only non phased transactions
+          schema:
+            type: boolean
+            default: false
+
+        - in: query
+          name: includeExpiredPrunable
+          description: include transactions with expired prunables
+          schema:
+            type: boolean
+            default: false
+
+        - in: query
+          name: includePhasingResult
+          description: include transactions with phasing results
+          schema:
+            type: boolean
+            default: false
+
+        - in: query
+          name: executedOnly
+          description: show only executed transactions
+          schema:
+            type: boolean
+            default: false
+
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/orderBy'
+
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionCountResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@node/x509:
+    get:
+      tags:
+        - node public
+      summary: Get node certificate.
+      description: Return node certificate in x509 format.
+      operationId: getX509
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/X509Response'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@node/health:
+    get:
+      tags:
+        - node public
+      summary: Gets node health
+      operationId: getHealthInfo
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicHealthResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@node/network:
+    get:
+      tags:
+        - node public
+      summary: Gets node network info
+      operationId: getNetworkInfo
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@node/blockchain:
+    get:
+      tags:
+        - node public
+      summary: Get blockchain object
+      description: Return details information about the blockchain
+      operationId: getBlockchainInfo
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockchainInfo'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@node/tasks:
+    get:
+      tags:
+        - node public
+      summary: Get in progress tasks information.
+      description: Return details about all inprogress tasks.
+      operationId: getTasksInfo
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TasksInfoResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+
+  /@@node/forgers:
+    get:
+      tags:
+        - node private
+      summary: Get forgers from the node.
+      description: Return all forgers from the node.
+      operationId: getForgers
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForgersInfoResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: []
+
+  /@@node/health-full:
+    get:
+      tags:
+        - node private
+      summary: Get full health info.
+      description: Return full health information.
+      operationId: getHealthFull
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateHealthResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: []
+
+  /@@node/cache:
+    get:
+      tags:
+        - node private
+      summary: Get cache info.
+      description: Return full statistics about the performance of a Cache.
+      operationId: getCacheInfo
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheInfoResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: []
+
+  /@@node/threads:
+    get:
+      tags:
+        - node private
+      summary: Get threads info.
+      description: Returns backend threads status
+      operationId: getThreadsInfo
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadsInfoResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: []
+
+  /@@node/logs:
+    get:
+      tags:
+        - node private
+      summary: Get list of logs files.
+      description: Returns all names of logs files from this node.
+      operationId: getLogs
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListLogs'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: []
+
+  /@@node/logs/{logName}:
+    get:
+      tags:
+        - node private
+      summary: Get log file from the node.
+      description: Return the log file from the node by file name.
+      operationId: getLogFile
+      parameters:
+        - name: logName
+          in: path
+          description: Log file name
+          required: true
+          schema:
+            type: string
+            example: 'apl-2021-02-05_0.gz'
+      responses:
+        200:
+          description: successful operation. File with logs in binary format
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: []
+
+
+  /@@subscribe/account:
+    get:
+      tags:
+        - subscribe
+      summary: Get subscription status.
+      operationId: getSubscriptionStatus
+      description: Return subscription status by subscription id.
+      parameters:
+        - name: subscriptionId
+          description: Subscription id
+          in: query
+          required: true
+          schema:
+            type: string
+            example: 'fba2fb94-6f88-11eb-9439-0242ac130002'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSubscriptionAccountResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: []
+
+    post:
+      tags:
+        - subscribe
+      summary: Subscribe on change account.
+      operationId: subscribeOnAccount
+      description: Subscribe on change something in particular account.
+      requestBody:
+        description: the parent account, child account and other
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscribeAccountRequest'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscribeAccountResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: []
+
+
+
+  /@@block:
+    get:
+      tags:
+        - blockchain
+      summary: Get block object
+      description: Return details information about the block given block height. If no height is provided, it will fetch the latest block.
+      operationId: getBlockByHeight
+      parameters:
+        - name: height
+          in: query
+          description: a blockchain height
+          required: false
+          schema:
+            type: string
+            format: int64
+            example: '4315161'
+            default: '-1'
+        - name: blockId
+          in: query
+          description: Block id
+          required: false
+          schema:
+            type: string
+            format: hex_bytearray
+            example: '1a0feb1043151604016701'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockInfo'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@transactions/unconfirmed/count:
+    get:
+      tags:
+        - node private
+      summary: Get count of unconfirmed transaction receipts.
+      description: Return the count of unconfirmed transactions.
+      operationId: getUnconfirmedTxCount
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: []
+
+  /@@transactions/unconfirmed:
+    get:
+      tags:
+        - node private
+      summary: Get list of unconfirmed transaction receipts.
+      description: Return the list of the detail information about unconfirmed transactions.
+      operationId: getUnconfirmedTx
+      parameters:
+        - name: page
+          in: query
+          description: page number (1-based)
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 1
+            example: 1
+        - name: perPage
+          in: query
+          description: Number of entries per page (max=100)
+          required: false
+          schema:
+            type: integer
+            format: int32
+            maximum: 100
+            default: 50
+            example: 50
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionInfoArrayResp'
+        401:
+          description: Not authenticated
+        403:
+          description: Access token does not have the required scope
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: []
+
+components:
+  schemas:
+    TransactionInfoArrayResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            tx:
+              description: The array of transactions
+              type: array
+              items:
+                $ref: '#/components/schemas/TransactionInfo'
+
+    TransactionInfoResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/TransactionInfo'
+
+    TransactionInfo:
+      type: object
+      properties:
+        id:
+          description: The transaction ID
+          type: string
+          format: hex_bytearray
+          example: '1a0feb1306043151604016701'
+        type:
+          description: Transaction type
+          type: string
+          format: int8
+          example: '2'
+        subtype:
+          description: Transaction subtype
+          type: string
+          format: int8
+          example: '1'
+        status:
+          type: string
+          description: |
+            The transaction status. A transaction is considered as unconfirmed until it is included in a valid block.
+            A transaction is considered as confirmed after at least one confirmations, so a transaction is considered
+            as irreversible after 721 confirmations and finally a transaction is permanent if it's confirmed 1440 times.
+          enum: [unconfirmed, confirmed, irreversible, permanent]
+          example: unconfirmed
+        phased:
+          description: is true if the transaction is phased
+          type: boolean
+          example: false
+        timestamp:
+          type: integer
+          format: int64
+          description: Transaction timestamp, Unix timestamp in milliseconds
+          example: 1591696372000
+        deadline:
+          description: the deadline for the transaction to be confirmed in minutes,ex.1440=24h
+          type: integer
+          format: int32
+          example: 1440
+        senderPublicKey:
+          type: string
+          format: hex_bytearray
+          description: The public key of the sending account for the transaction
+        recipient:
+          type: string
+          description: The account Id of the recipient
+          example: 'APL-FXHG-6KHM-23LE-42ACU'
+        amount:
+          type: string
+          format: integer
+          description: The amount of the transaction
+          example: 34500000000
+        fee:
+          type: string
+          format: integer
+          example: 200000000
+          description: The fee of the transaction
+        referencedTransactionFullHash:
+          type: string
+          format: hex_bytearray
+          description: The full hash of a transaction referenced by this one
+          example: '5424ca4dd976a873839c7d5c9952fa15ae619f678365e8ebbc73f967142eb40d'
+        signature:
+          type: string
+          format: hex_bytearray
+          example: '920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d56'
+          description: The digital signature of the transaction
+        signatureHash:
+          type: string
+          format: hex_bytearray
+          description: SHA-256 hash of the transaction signature
+          example: '2fc1883e9b76fdc67fabee0a3def5f4b7fc2de9cd65bc8bb6d39eaf5e99498d8'
+        fullHash:
+          type: string
+          format: hex_bytearray
+          description: The full hash of the transaction
+          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+        attachment:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: object
+          description: An object containong any additional data needed for the transaction
+        sender:
+          type: string
+          description: The sender account
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        height:
+          type: integer
+          format: int64
+          example: 4365987
+          description: The height of the block in the blockchain
+        version:
+          type: string
+          format: int8
+          example: '1'
+          description: The transaction version number
+        ecBlockId:
+          type: string
+          format: hex_bytearray
+          description: The economic clustering block ID
+          example: '40faaeb15856251679437054'
+        ecBlockHeight:
+          type: integer
+          format: int64
+          description: The economic clustering block height
+          example: 3301233
+        block:
+          type: string
+          format: hex_bytearray
+          description: The block id
+          example: '230aeb0f4585625167943'
+        confirmations:
+          type: integer
+          format: int32
+          description: the number of transaction confirmations
+          example: 387
+        blockTimestamp:
+          type: integer
+          format: int64
+          description: Block timestamp, Unix timestamp in milliseconds
+          example: 1591696372000
+        index:
+          type: integer
+          format: int32
+          description: the order of the transaction in the block
+          example: 1
+
+    TransactionCountResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/TransactionCount'
+
+    TransactionCount:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: int64
+          example: 345
+
+    BlockInfo:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: hex_bytearray
+              example: '1130faaeb604315160401'
+            blockSignature:
+              type: string
+              format: hex_bytearray
+              example: 'ff080e64436603df0c3b9a5b792b03a26725a83bbe6aa46eb7eed9ee83707f071b6d529d09be1f2594c6f8545c2772a091896bc808553c1774e39a41248b1e1c'
+            height:
+              type: integer
+              format: int64
+              example: 1319854
+            generator:
+              type: string
+              example: 'APL-FXHG-6KHM-23LE-42ACU'
+            generationSignature:
+              type: string
+              format: hex_bytearray
+              example: '60e598f6276371119720786b05e507cd628665473b24c8f76de436d99cf113f7'
+            generatorPublicKey:
+              type: string
+              format: hex_bytearray
+              example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+            timestamp:
+              type: integer
+              format: int64
+              description: Block timestamp, Unix timestamp in milliseconds
+              example: 1591696372000
+            timeout:
+              type: integer
+              format: int32
+              example: 1
+            version:
+              description: The block version
+              type: integer
+              format: int32
+              example: 6
+            baseTarget:
+              type: string
+              example: '7686143350'
+            cumulativeDifficulty:
+              type: string
+              format: integer
+              example: '8728234277524822'
+            previousBlock:
+              description: Prev block id
+              type: string
+              format: hex_bytearray
+              example: '80faaeb4787337264514'
+            previousBlockHash:
+              type: string
+              format: hex_bytearray
+              example: '5b8ba14eaebba8cdc682c946947f5352a596d00ac63c4e616785d00cf8b8e016'
+            nextBlock:
+              description: Next block id
+              type: string
+              format: hex_bytearray
+              example: '140faaeb81930093118053'
+            payloadHash:
+              type: string
+              format: hex_bytearray
+              description: Hash of the paylod (all transactions)
+              example: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+            payloadLength:
+              description: The length in bytes of all transactions
+              type: integer
+              format: int32
+              example: 523423
+            numberOfTransactions:
+              type: integer
+              format: int32
+              example: 14
+            totalAmountATM:
+              type: string
+              format: integer
+              example: '569000000000000'
+            totalFeeATM:
+              type: string
+              format: integer
+              example: '2800000000'
+    BlockchainInfo:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            chainid:
+              type: string
+              format: hex_bytearray
+              example: 'a2e9b946290b48b69985dc2e5a5860a1'
+            height:
+              type: integer
+              format: int64
+              example: 4789567
+            ticker:
+              type: string
+              example: 'APL'
+            consensus:
+              type: string
+              example: 'Apollo'
+            mining:
+              type: string
+              example: 'Pre-mining'
+            total_supply:
+              type: integer
+              format: int64
+              example: 10000000000
+              description: The total supply
+            decimals:
+              type: integer
+              format: int16
+              example: 8
+            burning:
+              type: integer
+              format: int64
+              example: 30000
+              description: The total amount of the burned tokens
+            genesisAccount:
+              type: string
+              format: hex_bytearray
+              example: '90001259ec21d31a30898d7'
+            genesisBlockId:
+              type: string
+              format: hex_bytearray
+              description: Genesis block ID
+              example: '15856251679437054149169000'
+            timestamp:
+              type: integer
+              format: int64
+              description: Request timestamp, Unix timestamp in milliseconds
+              example: 1591696372300
+
+    TxRequest:
+      required:
+        - tx
+      type: object
+      properties:
+        tx:
+          description: Signed transaction data
+          type: string
+          format: hex_bytearray
+          example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
+          nullable: false
+
+    SubscribeAccountRequest:
+      required:
+        - type
+        - accountId
+      type: object
+      properties:
+        type:
+          description: Type of the event.
+          type: string
+          enum:
+            - balanse
+          example: balanse
+          nullable: false
+        accountId:
+          type: string
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+          description: Account id
+          nullable: false
+
+    AccountInfoResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/AccountInfo'
+
+    AccountInfo:
+      type: object
+      required:
+        - account
+        - publicKey
+      properties:
+        account:
+          type: string
+          format: hex_bytearray
+          example: '2aa130eb6043151ad6040f16701'
+        publicKey:
+          description: The account public key in a hex string format
+          type: string
+          format: hex_bytearray
+          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+        parent:
+          type: string
+          format: hex_bytearray
+          example: '3aa130eb6043151ad6040f16701'
+          nullable: true
+        balance:
+          type: string
+          format: integer
+          example: '45225600000000'
+        unconfirmedbalance:
+          type: string
+          format: integer
+          example: '45225600000000'
+        forgedBalance:
+          type: string
+          format: integer
+          example: '45225600000000'
+        status:
+          type: string
+          enum:
+            - created
+            - verified
+          example: created
+        assetBalances:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetBalance'
+        unconfirmedAssetBalances:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetBalance'
+        currencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Currency'
+
+    AssetBalance:
+      type: object
+      properties:
+        asset:
+          type: string
+          format: hex_bytearray
+          description: Asset id
+          example: 'a2e9b946290b48b69985dc2e5a5860a1'
+        balance:
+          type: integer
+          format: int64
+          description: Asset balance. (ATU)
+          example: 100
+
+    Currency:
+      type: object
+      properties:
+        id:
+          type: string
+          format: hex_bytearray
+          description: Currency id
+          example: 'a2e9b946290b48b69985dc2e5a5860a1'
+
+        account:
+          type: string
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+
+        balance:
+          type: integer
+          format: int64
+          description: Currency balance. (ATU)
+          example: 98400000
+
+        unconfirmedBalance:
+          type: integer
+          format: int64
+          description: Currency unconfirmed balance.
+          example: 98400000
+        name:
+          type: string
+          example: 'TTT'
+        code:
+          type: string
+          example: 'TTT'
+        type:
+          description: |
+            The currency type.
+            There are six types:
+              EXCHANGEABLE = 0;
+              CONTROLLABLE = 1;
+              MINTABLE = 2;
+              NON_SHUFFLEABLE = 3;
+              RESERVABLE = 4;
+              CLAIMABLE = 5;
+          type: integer
+          format: int8
+          example: 1
+        decimals:
+          type: integer
+          format: int8
+          example: 5
+        issuanceHeight:
+          type: integer
+          format: int8
+          example: 0
+        issuerAccount:
+          type: string
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+
+    X509Response:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: hex_bytearray
+              example: 'MIIIgjCCB2qgAwIBAgIITFQTbb/xK/QwDQYJKoZIhvcNAQELBQAwVDELMAkGA1UE
+                        ..........
+                        BhMCVVMxHjAcBgNVBAoTFUdvb2dsZSBUcnVzdCBTZXJ2aWNlczElMCMGA1UEAxMc'
+
+    CountResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            count:
+              type: integer
+              format: int64
+              example: 345
+
+    SubscribeAccountResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            subscribeId:
+              type: string
+              example: 'fba2fb94-6f88-11eb-9439-0242ac130002'
+
+    GetSubscriptionAccountResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            txs:
+              description: Transactions which changed the account state. (10 transactions is limit.)
+              type: array
+              items:
+                type: string
+                format: hex_bytearray
+                example: '8330faaeb404178613417'
+
+    ForgersInfoResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            forgers:
+              description: The array of forgers
+              type: array
+              items:
+                $ref: '#/components/schemas/ForgerInfo'
+
+    ForgerInfo:
+      type: object
+      properties:
+        account:
+          type: string
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        effectiveBalanceAPL:
+          type: integer
+          format: int64
+          description: Effective balance.
+          example: 98400000
+        deadline:
+          type: integer
+          format: int64
+          description: Dead line.
+        hitTime:
+          type: integer
+          format: int64
+          description: Hit time.
+
+    PublicHealthResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/HealthPublicInfo'
+
+    PrivateHealthResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            healthInfo:
+              $ref: '#/components/schemas/FullHealthInfo'
+            nodeStatus:
+              $ref: '#/components/schemas/NodeStatusInfo'
+            peerInfo:
+              $ref: '#/components/schemas/FullPeerInfo'
+
+
+    FullHealthInfo:
+      allOf:
+        - $ref: '#/components/schemas/HealthPublicInfo'
+        - $ref: '#/components/schemas/HealthPrivateInfo'
+
+    HealthPublicInfo:
+      type: object
+      properties:
+        blockchainHeight:
+          type: integer
+          format: int16
+          example: 9900345
+          description: "Current height of blockchain"
+        isDbOk:
+          type: boolean
+          description: "Database is able to find blocks"
+        isTrimActive:
+          type: boolean
+          description: "Returns true if the trimming process is active"
+
+    HealthPrivateInfo:
+      type: object
+      properties:
+        dbConnectionTotal:
+          type: integer
+          format: int16
+          description: "Total connections in the pool"
+        maxUnconfirmedTxCount:
+          type: integer
+          format: int16
+          description: "The max count of the unconfirmed transactions"
+        dbConnectionActive:
+          type: integer
+          format: int16
+          description: "Active connections in the pool"
+        dbConnectionIdle:
+          type: integer
+          format: int16
+          description: "Idle connections in the pool"
+        unconfirmedTxCacheSize:
+          type: integer
+          format: int16
+          description: "The waiting transactions cache size"
+        needReboot:
+          type: boolean
+          description: "Current total number of DB connections"
+
+    NodeStatusInfo:
+      type: object
+      properties:
+        cpuCount:
+          type: integer
+          format: int16
+          description: "Number of active CPUs"
+        cpuLoad:
+          type: number
+          format: double
+          description: "Current average CPU load for all cores"
+        threadsRunning:
+          type: integer
+          format: int16
+          description: "Threads currently running in application"
+        memoryFree:
+          type: integer
+          format: int32
+          description: "Free memory available for this application"
+        dbConnections:
+          type: integer
+          format: int16
+          description: "DB connections currently running in application"
+        memoryTotal:
+          type: integer
+          format: int32
+          description: "Total memory in bytes"
+        diskFree:
+          type: integer
+          format: int32
+          description: "Free disk space available to application"
+        operatingSystem:
+          type: string
+          description: "Operating system of node"
+
+    NetworkResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            peerInfo:
+              $ref: '#/components/schemas/PeerPublicInfo'
+        - type: object
+          properties:
+            inboundPeers:
+              type: integer
+              format: int8
+              description: "Inbound peers"
+            outboundPeers:
+              type: integer
+              format: int8
+              description: "Outbound Peers"
+
+    FullPeerInfo:
+      allOf:
+        - $ref: '#/components/schemas/PeerPublicInfo'
+        - $ref: '#/components/schemas/PeerPrivateInfo'
+
+    PeerPublicInfo:
+      type: object
+      properties:
+        announcedAddress:
+          type: string
+          description: "Announced address"
+        sharedAddress:
+          type: boolean
+          description: "Is node shared address"
+        halmark:
+          type: string
+          description: "Node hallmark"
+        version:
+          type: string
+          description: "App version"
+          example: "1.47.10"
+        platform:
+          type: string
+          description: "Platform where app has been running."
+          example: "Linux amd64"
+        apiPort:
+          type: integer
+          format: int8
+          description: "App port"
+        apiSSLPort:
+          type: integer
+          format: int8
+          description: "App ssl port"
+        lastUpdated:
+          type: integer
+          format: int32
+          description: "Last update"
+        lastConnectAttempt:
+          type: integer
+          format: int32
+          description: "Last connect attempt"
+        inboundWebSocket:
+          type: boolean
+          description: "Is inbound web socket works."
+        outboundWebSocket:
+          type: boolean
+          description: "Is outbound web socket works."
+        blacklistingCause:
+          type: string
+          description: "Node has been Blacklisted cause."
+        blockchainState:
+          type: string
+          description: "Blockchain state"
+        chainId:
+          type: string
+          description: "Node chain id."
+          example: 'a2e9b946-290b-48b6-9985-dc2e5a5860a1'
+
+    PeerPrivateInfo:
+      type: object
+      properties:
+        state:
+          type: integer
+          format: int32
+          description: "Node state"
+        weight:
+          type: integer
+          format: int32
+          description: "Node weight"
+        services:
+          type: array
+          description: "Node services."
+          items:
+            type: string
+
+    CacheInfoResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            cacheInfo:
+              type: array
+              items:
+                $ref: '#/components/schemas/CacheInfo'
+
+    CacheInfo:
+      type: object
+      properties:
+        cacheName:
+          type: string
+          description: "Cache name"
+          example: "PUBLIC_KEY_CACHE"
+        hitCount:
+          type: integer
+          format: int64
+          example: 3
+          description: "The number of times Cache lookup methods have returned a cached value."
+        hitRate:
+          type: number
+          format: double
+          example: 1.1
+          description: "The ratio of cache requests which were hits. This is defined as hitCount / requestCount, or 1.0 when requestCount == 0. Note that hitRate + missRate =~ 1.0."
+        missCount:
+          type: integer
+          format: int64
+          example: 4133
+          description: "The number of times Cache lookup methods have returned an uncached (newly loaded) value, or null."
+        missRate:
+          type: number
+          format: double
+        loadSuccessCount:
+          type: integer
+          format: int64
+          description: "The number of times Cache lookup methods have successfully loaded a new value."
+        loadExceptionCount:
+          type: integer
+          format: int64
+          description: "The number of times Cache lookup methods threw an exception while loading a new value."
+        totalLoadTime:
+          type: integer
+          format: int64
+          description: "The total number of nanoseconds the cache has spent loading new values. This can be used to calculate the miss penalty. This value is increased every time loadSuccessCount or loadExceptionCount is incremented."
+        evictionCount:
+          type: integer
+          format: int64
+          description: "The number of times an entry has been evicted."
+
+    ThreadsInfoResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            threadsInfo:
+              type: array
+              items:
+                $ref: '#/components/schemas/ThreadsInfo'
+
+    ThreadsInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "Name of thread"
+          example: "Reference Handler"
+        state:
+          type: string
+          description: "State of thread"
+          example: "RUNNABLE"
+        priority:
+          type: integer
+          format: int8
+          example: 10
+          description: "Priority of thread"
+        isDaemon:
+          type: boolean
+          description: "Is thread started as daemon thread"
+          example: true
+        cpuTime:
+          type: integer
+          format: int64
+          example: 250346188
+          description: "CPU time used by thread"
+
+
+    TasksInfoResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            tasksInfo:
+              description: The array of transactions
+              type: array
+              items:
+                $ref: '#/components/schemas/TasksInfo'
+
+    TasksInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Identification of task"
+          example: "390de590-6f7d-11eb-9439-0242ac130002"
+        name:
+          type: string
+          description: "Short but descriptive name of task"
+          example: "Shard data import"
+        decription:
+          type: string
+          description: "Description of task in one line"
+          example: "Data import"
+        isCrititcal:
+          type: boolean
+          description: "Taks is critical and should be displayed on top of UI window"
+          example: true
+        stateOfTask:
+          type: string
+          description: "Task state in one line in human readable form"
+          example: "Started"
+          enum: [
+            "Started",
+            "In progress",
+            "Finished",
+            "Cancelled",
+            "Paused"
+          ]
+        started:
+          type: string
+          format: date
+          description: "Task start date and time"
+          example: "2020-04-12T23:20:50.52Z"
+        finished:
+          type: string
+          format: date
+          description: "Task finish date and time"
+          example: "2020-04-12T23:40:50.52Z"
+        durationMS:
+          type: integer
+          format: int64
+          example: 250346188
+          description: "Task run duration, milliseconds"
+        missRate:
+          type: number
+          format: double
+          description: "Task completion percent"
+          example: 100.0
+        messages:
+          type: array
+          description: "Task messages list"
+          items:
+            type: string
+
+
+    ListLogs:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            logs:
+              description: "List of logs files"
+              type: array
+              items:
+                type: string
+                example: "apl-2021-02-05_0.gz"
+
+    BaseResponse:
+      type: object
+      properties:
+        protocol:
+          description: 'Protocol version'
+          type: string
+          example: '2'
+        requestProcessingTime:
+          description: 'Time in milliseconds that took from incoming request to response'
+          type: integer
+          format: int64
+          example: 12
+          default: 0
+        errorCode:
+          description: Error code on new API. null or 0 means success, no error.
+          type: integer
+          format: int32
+          example: 12
+        errorDescription:
+          description: Textual error description, e.g. exception message, etc that could be displayed to user
+          type: string
+          example: 'The mandatory parameter ''id'' is not specified.'
+
+    ListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: '#/components/schemas/BaseResponse'
+              nullable: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        protocol:
+          description: 'Protocol version'
+          type: string
+          example: '2'
+        errorCode:
+          description: Error code on new API. null or 0 means success, no error.
+          type: integer
+          format: int32
+          example: 12
+        errorDescription:
+          description: Textual error description, e.g. exception message, etc that could be displayed to user
+          type: string
+          example: 'The mandatory parameter ''id'' is not specified.'
+        errorDetails:
+          description: |
+            Detailed error description with debug information, helpful error data or stacktrace, by default
+            should not be displayed to user. Main purpose is create bug reports with meaningful content.
+          type: string
+          example: 'Description of failure'
+
+  parameters:
+    page:
+      in: query
+      name: page
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number.
+
+    limitParam:
+      in: query
+      name: limit
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: The numbers of items on the one page.
+
+    orderBy:
+      in: query
+      name: orderBy
+      required: false
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: asc
+
+  responses:
+    BadRequest:
+      description: Bad request - malformed request or wrong parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ConflictResource:
+      description: |
+        The request could not be completed due to a conflict with the current state of the resource.
+        The resource is busy and the request might be reissued later.
+    ServerError:
+      description: Server error - internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
