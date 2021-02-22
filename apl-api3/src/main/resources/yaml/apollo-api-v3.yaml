@@ -1,4 +1,4 @@
-openapi: 3.0.1
+openapi: 3.0.3
 info:
   title: Apollo API V3
   description: |
@@ -1601,15 +1601,15 @@ components:
             "Paused"
           ]
         started:
-          type: string
-          format: date
-          description: "Task start date and time"
-          example: "2020-04-12T23:20:50.52Z"
+          type: integer
+          format: int64
+          description: "Task start date"
+          example: "1613991261"
         finished:
-          type: string
-          format: date
-          description: "Task finish date and time"
-          example: "2020-04-12T23:40:50.52Z"
+          type: integer
+          format: int64
+          description: "Task finish date"
+          example: "1613991261"
         durationMS:
           type: integer
           format: int64
