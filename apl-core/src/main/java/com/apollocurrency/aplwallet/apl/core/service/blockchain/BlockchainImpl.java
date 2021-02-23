@@ -54,7 +54,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -230,9 +229,13 @@ public class BlockchainImpl implements Blockchain {
         return loadBlockData(blockDao.findFirstBlock());
     }
 
-    private Block loadBlockData(Block block) {
+    @Override
+    public Block loadBlockData(Block block) {
         if (block == null) {
             return null;
+        }
+        if (block.getTransactions() == null) {
+            block.setTransactions(getBlockTransactions(block.getId()));
         }
         PublicKey publicKey = publicKeyDao.searchAll(block.getGeneratorId());
         if (publicKey != null) {
@@ -297,17 +300,6 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public Block findLastBlock() {
         return loadBlockData(blockDao.findLastBlock());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions) {
-        Block block = loadBlockData(blockDao.loadBlock(con, rs));
-        if (loadTransactions) {
-            List<Transaction> blockTransactions = this.getOrLoadTransactions(block);
-            block.setTransactions(blockTransactions);
-        }
-        return block;
     }
 
     @Transactional
@@ -863,6 +855,11 @@ public class BlockchainImpl implements Blockchain {
     public List<Transaction> loadPrunables(List<Transaction> transactions) {
         transactions.forEach(this::loadPrunable);
         return transactions;
+    }
+
+    @Override
+    public List<Block> getBlocksAfter(int height, int limit) {
+        return loadBlockData(blockDao.getBlocksAfter(height, limit));
     }
 
 }

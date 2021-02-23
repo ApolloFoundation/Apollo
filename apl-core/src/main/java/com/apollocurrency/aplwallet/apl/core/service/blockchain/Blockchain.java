@@ -29,7 +29,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.List;
 import java.util.Set;
 
@@ -78,14 +77,14 @@ public interface Blockchain {
 
     Block findFirstBlock();
 
+    Block loadBlockData(Block block);
+
     @Deprecated
     List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp);
 
     List<Block> getBlocksByAccountFromShards(long accountId, int from, int to, int timestamp);
 
     Block findLastBlock();
-
-    Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions);
 
     void saveBlock(Connection con, Block block);
 
@@ -183,4 +182,6 @@ public interface Blockchain {
     boolean isExpired(Transaction tx);
 
     List<Transaction> loadPrunables(List<Transaction> transactions);
+
+    List<Block> getBlocksAfter(int height, int limit);
 }

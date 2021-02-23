@@ -95,4 +95,6 @@ public interface BlockDao {
     Block deleteBlocksFrom(long blockId);
 
     void deleteAll();
+
+    List<Block> getBlocksAfter(int height, int limit);
 }

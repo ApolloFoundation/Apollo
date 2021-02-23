@@ -63,19 +63,19 @@ public final class MessagingPollCreation extends AbstractAttachment {
         super(attachmentData);
         this.pollName = ((String) attachmentData.get("name")).trim();
         this.pollDescription = ((String) attachmentData.get("description")).trim();
-        this.finishHeight = ((Long) attachmentData.get("finishHeight")).intValue();
+        this.finishHeight = ((Number) attachmentData.get("finishHeight")).intValue();
         List<?> options = (List<?>) attachmentData.get("options");
         this.pollOptions = new String[options.size()];
         for (int i = 0; i < pollOptions.length; i++) {
             this.pollOptions[i] = ((String) options.get(i)).trim();
         }
-        byte votingModel = ((Long) attachmentData.get("votingModel")).byteValue();
-        this.minNumberOfOptions = ((Long) attachmentData.get("minNumberOfOptions")).byteValue();
-        this.maxNumberOfOptions = ((Long) attachmentData.get("maxNumberOfOptions")).byteValue();
-        this.minRangeValue = ((Long) attachmentData.get("minRangeValue")).byteValue();
-        this.maxRangeValue = ((Long) attachmentData.get("maxRangeValue")).byteValue();
+        byte votingModel = ((Number) attachmentData.get("votingModel")).byteValue();
+        this.minNumberOfOptions = ((Number) attachmentData.get("minNumberOfOptions")).byteValue();
+        this.maxNumberOfOptions = ((Number) attachmentData.get("maxNumberOfOptions")).byteValue();
+        this.minRangeValue = ((Number) attachmentData.get("minRangeValue")).byteValue();
+        this.maxRangeValue = ((Number) attachmentData.get("maxRangeValue")).byteValue();
         long minBalance = Convert.parseLong(attachmentData.get("minBalance"));
-        byte minBalanceModel = ((Long) attachmentData.get("minBalanceModel")).byteValue();
+        byte minBalanceModel = ((Number) attachmentData.get("minBalanceModel")).byteValue();
         long holdingId = Convert.parseUnsignedLong((String) attachmentData.get("holding"));
         this.voteWeighting = new VoteWeighting(votingModel, holdingId, minBalance, minBalanceModel);
     }

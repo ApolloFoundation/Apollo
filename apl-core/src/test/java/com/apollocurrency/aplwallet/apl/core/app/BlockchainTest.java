@@ -57,9 +57,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -367,34 +365,6 @@ class BlockchainTest {
         Block lastBlock = blockchain.findLastBlock();
 
         assertEquals(btd.LAST_BLOCK, lastBlock);
-    }
-
-    @Test
-    void testLoadBlock() {
-        DbUtils.inTransaction(extension, (con) -> {
-            try (Statement stmt = con.createStatement()) {
-                ResultSet rs = stmt.executeQuery("select * from block where id = " + btd.BLOCK_13.getId());
-                rs.next();
-                Block block = blockchain.loadBlock(con, rs, true);
-                assertEquals(btd.BLOCK_13, block);
-                assertEquals(List.of(txd.TRANSACTION_14), btd.BLOCK_13.getTransactions());
-            } catch (SQLException ignored) {
-            }
-        });
-    }
-
-    @Test
-    void testLoadBlockWithoutTransactions() {
-        DbUtils.inTransaction(extension, (con) -> {
-            try (Statement stmt = con.createStatement()) {
-                ResultSet rs = stmt.executeQuery("select * from block where id = " + btd.BLOCK_10.getId());
-                assertTrue(rs.next());
-                Block block = blockchain.loadBlock(con, rs, false);
-                assertEquals(btd.BLOCK_10, block);
-                assertNull(block.getTransactions());
-            } catch (SQLException ignored) {
-            }
-        });
     }
 
     @Test

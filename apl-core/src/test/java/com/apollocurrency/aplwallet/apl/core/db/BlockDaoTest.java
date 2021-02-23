@@ -323,4 +323,18 @@ class BlockDaoTest {
         assertEquals(0, block.getNextBlockId());
     }
 
+    @Test
+    void testBlocksAfter() {
+        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_8.getHeight(), 3);
+
+        assertEquals(List.of(td.BLOCK_9, td.BLOCK_10, td.BLOCK_11), blocksAfter);
+    }
+
+    @Test
+    void testBlocksAfter_fetchNothing() {
+        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_13.getHeight(), 1000);
+
+        assertEquals(List.of(), blocksAfter);
+    }
+
 }

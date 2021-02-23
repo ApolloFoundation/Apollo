@@ -37,6 +37,7 @@ public class DbConfig {
         DbProperties dbProperties = new DbProperties()
             .maxCacheSize(propertiesHolder.getIntProperty("apl.dbCacheKB"))
             .dbType(propertiesHolder.getStringProperty("apl.dbType"))
+            .dbUrl(propertiesHolder.getStringProperty("apl.dbUrl"))
             .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "./unit-test-db") // for unit tests
             .dbFileName(dbFileName)
             .chainId(chainsConfigHolder.getActiveChain().getChainId())

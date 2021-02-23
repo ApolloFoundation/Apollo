@@ -51,6 +51,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Singleton
 public class BlockDaoImpl implements BlockDao {
     private static final Logger LOG = getLogger(BlockDaoImpl.class);
+    static final String SELECT_ALL_AFTER_HEIGHT_QUERY = "SELECT * FROM block WHERE height > ? ORDER BY height LIMIT ?";
 
 //    @Inject
 //    @CacheProducer
@@ -691,4 +692,22 @@ public class BlockDaoImpl implements BlockDao {
         }
     }
 
+    @Override
+    public List<Block> getBlocksAfter(int height, int limit) {
+        List<Block> resultList = new ArrayList<>();
+        try (Connection con = databaseManager.getDataSource().getConnection();
+            PreparedStatement pstmt = con.prepareStatement(SELECT_ALL_AFTER_HEIGHT_QUERY)) {
+            pstmt.setLong(1, height);
+            pstmt.setInt(2, limit);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Block block = loadBlock(con, rs);
+                    resultList.add(block);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return resultList;
+    }
 }

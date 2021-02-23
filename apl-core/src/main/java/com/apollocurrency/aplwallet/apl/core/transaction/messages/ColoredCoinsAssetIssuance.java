@@ -40,7 +40,7 @@ public final class ColoredCoinsAssetIssuance extends AbstractAttachment {
         this.name = (String) attachmentData.get("name");
         this.description = Convert.nullToEmpty((String) attachmentData.get("description"));
         this.quantityATU = Convert.parseLong(attachmentData.get("quantityATU"));
-        this.decimals = ((Long) attachmentData.get("decimals")).byteValue();
+        this.decimals = ((Number) attachmentData.get("decimals")).byteValue();
     }
 
     public ColoredCoinsAssetIssuance(String name, String description, long quantityATU, byte decimals) {

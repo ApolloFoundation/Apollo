@@ -901,7 +901,13 @@ public class AplDbVersion extends DbVersion {
             case 352:
                 apply("ALTER TABLE transaction ALTER COLUMN signature VARBINARY NULL DEFAULT NULL");
             case 353:
-                return 353;
+                apply("ALTER TABLE scan ADD current_height INT NOT NULL DEFAULT 0");
+            case 354:
+                apply("ALTER TABLE scan ADD preparation_done BOOLEAN NOT NULL DEFAULT FALSE");
+            case 355:
+                apply("ALTER TABLE scan ADD shutdown BOOLEAN NOT NULL DEFAULT FALSE");
+            case 356:
+                return 356;
             default:
                 throw new RuntimeException("Blockchain database inconsistent with code, at update " + nextUpdate
                     + ", probably trying to run older code on newer database");

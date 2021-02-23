@@ -59,17 +59,17 @@ public final class MonetarySystemCurrencyIssuance extends AbstractAttachment {
         this.name = (String) attachmentData.get("name");
         this.code = (String) attachmentData.get("code");
         this.description = (String) attachmentData.get("description");
-        this.type = ((Long) attachmentData.get("type")).byteValue();
+        this.type = ((Number) attachmentData.get("type")).byteValue();
         this.initialSupply = Convert.parseLong(attachmentData.get("initialSupply"));
         this.reserveSupply = Convert.parseLong(attachmentData.get("reserveSupply"));
         this.maxSupply = Convert.parseLong(attachmentData.get("maxSupply"));
-        this.issuanceHeight = ((Long) attachmentData.get("issuanceHeight")).intValue();
+        this.issuanceHeight = ((Number) attachmentData.get("issuanceHeight")).intValue();
         this.minReservePerUnitATM = Convert.parseLong(attachmentData.get("minReservePerUnitATM"));
-        this.minDifficulty = ((Long) attachmentData.get("minDifficulty")).intValue();
-        this.maxDifficulty = ((Long) attachmentData.get("maxDifficulty")).intValue();
-        this.ruleset = ((Long) attachmentData.get("ruleset")).byteValue();
-        this.algorithm = ((Long) attachmentData.get("algorithm")).byteValue();
-        this.decimals = ((Long) attachmentData.get("decimals")).byteValue();
+        this.minDifficulty = ((Number) attachmentData.get("minDifficulty")).intValue();
+        this.maxDifficulty = ((Number) attachmentData.get("maxDifficulty")).intValue();
+        this.ruleset = ((Number) attachmentData.get("ruleset")).byteValue();
+        this.algorithm = ((Number) attachmentData.get("algorithm")).byteValue();
+        this.decimals = ((Number) attachmentData.get("decimals")).byteValue();
     }
 
     public MonetarySystemCurrencyIssuance(String name, String code, String description, byte type, long initialSupply, long reserveSupply, long maxSupply, int issuanceHeight, long minReservePerUnitATM, int minDifficulty, int maxDifficulty, byte ruleset, byte algorithm, byte decimals) {

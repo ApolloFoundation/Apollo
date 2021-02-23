@@ -67,7 +67,7 @@ public class PhasingAppendix extends AbstractAppendix {
         String hashedSecret = Convert.emptyToNull((String) attachmentData.get("phasingHashedSecret"));
         if (hashedSecret != null) {
             this.hashedSecret = Convert.parseHexString(hashedSecret);
-            this.algorithm = ((Long) attachmentData.get("phasingHashedSecretAlgorithm")).byteValue();
+            this.algorithm = ((Number) attachmentData.get("phasingHashedSecretAlgorithm")).byteValue();
         } else {
             this.hashedSecret = Convert.EMPTY_BYTE;
             this.algorithm = 0;
