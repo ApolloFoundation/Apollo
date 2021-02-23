@@ -1384,8 +1384,6 @@ components:
           properties:
             peerInfo:
               $ref: '#/components/schemas/PeerPublicInfo'
-        - type: object
-          properties:
             inboundPeers:
               type: integer
               format: int8
