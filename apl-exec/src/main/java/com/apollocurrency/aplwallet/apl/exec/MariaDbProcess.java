@@ -90,7 +90,7 @@ public class MariaDbProcess {
         //May be we have to wait a bit here...
         if(res){
             String script = "SELECT 1;";
-            res = dbControl.runQuery(script, "mysql", null);
+            res = dbControl.runQuery(script, "mysql", null, dbParams.getDbUser());
         }
         return res;
     }
