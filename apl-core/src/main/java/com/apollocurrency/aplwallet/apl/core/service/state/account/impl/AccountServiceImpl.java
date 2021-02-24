@@ -55,7 +55,7 @@ import static com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil.toList;
 public class AccountServiceImpl implements AccountService {
 
     public static final int EFFECTIVE_BALANCE_CONFIRMATIONS = 1440;
-    public static final Set<Integer> BLOCK_HEIGHTS = Set.of(6851525, 6851444);
+    public static final Set<Integer> BLOCK_HEIGHTS = Set.of(6851525, 6851444, 6997642);
 
     private final AccountTable accountTable;
     private final AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;

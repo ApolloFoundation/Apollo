@@ -38,14 +38,14 @@ import java.util.List;
 @Singleton
 public class PeerDb {
 
-    private static DatabaseManager databaseManager;
+    private final DatabaseManager databaseManager;
 
     @Inject
     public PeerDb(DatabaseManager databaseManagerParam) {
         databaseManager = databaseManagerParam;
     }
 
-    static List<Entry> loadPeers() {
+    public List<Entry> loadPeers() {
         List<Entry> peers = new ArrayList<>();
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -60,7 +60,7 @@ public class PeerDb {
         return peers;
     }
 
-    public static void deletePeer(Entry peer) {
+    public void deletePeer(Entry peer) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection()) {
             PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?");
@@ -71,7 +71,7 @@ public class PeerDb {
         }
     }
 
-    static void deletePeers(Collection<Entry> peers) {
+    public void deletePeers(Collection<Entry> peers) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?")) {
@@ -84,7 +84,7 @@ public class PeerDb {
         }
     }
 
-    static void updatePeers(Collection<Entry> peers) {
+    public void updatePeers(Collection<Entry> peers) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         dataSource.begin();
         try (Connection con = dataSource.getConnection();
@@ -108,7 +108,7 @@ public class PeerDb {
         }
     }
 
-    static void updatePeer(PeerImpl peer) {
+    public void updatePeer(PeerImpl peer) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         dataSource.begin();
         try (Connection con = dataSource.getConnection();

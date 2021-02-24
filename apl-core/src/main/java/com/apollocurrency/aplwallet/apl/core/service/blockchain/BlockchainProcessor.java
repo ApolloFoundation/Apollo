@@ -64,9 +64,9 @@ public interface BlockchainProcessor {
     SortedSet<UnconfirmedTransaction> selectUnconfirmedTransactions(
         Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit);
 
-    void scan(int height, boolean validate);
-
     void fullScanWithShutdown();
+
+    void scan(ScanEntity scanEntity);
 
     void setGetMoreBlocks(boolean getMoreBlocks);
 
@@ -87,8 +87,6 @@ public interface BlockchainProcessor {
     void resumeBlockchainDownloading();
 
     void shutdown();
-
-    void scheduleOneScan();
 
     class BlockNotAcceptedException extends AplException {
 

@@ -243,6 +243,9 @@ public class BlockchainImpl implements Blockchain {
             return null;
         }
         Block block = blockEntityToModelConverter.convert(blockEntity);
+        if (block.getTransactions() == null) {
+            block.setTransactions(getBlockTransactions(block.getId()));
+        }
         PublicKey publicKey = publicKeyDao.searchAll(blockEntity.getGeneratorId());
         if (publicKey != null) {
             block.setGeneratorPublicKey(publicKey.getPublicKey());
@@ -760,6 +763,11 @@ public class BlockchainImpl implements Blockchain {
     public List<Transaction> loadPrunables(List<Transaction> transactions) {
         transactions.forEach(this::loadPrunable);
         return transactions;
+    }
+
+    @Override
+    public List<Block> getBlocksAfter(int height, int limit) {
+        return loadBlockData(blockDao.getBlocksAfter(height, limit));
     }
 
 }
