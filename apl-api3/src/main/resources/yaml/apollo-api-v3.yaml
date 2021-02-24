@@ -22,8 +22,8 @@ tags:
     description: Public access to node.
   - name: node private
     description: Private access to node.
-  - name: subscribe
-    description: Subscribe on some event.
+#  - name: subscribe
+#    description: Subscribe on some event.
 
 paths:
 
@@ -595,57 +595,57 @@ paths:
         - bearerAuth: []
 
 
-  /@@subscribe/account:
-    get:
-      tags:
-        - subscribe
-      summary: Get subscription status.
-      operationId: getSubscriptionStatus
-      description: Return subscription status by subscription id.
-      parameters:
-        - name: subscriptionId
-          description: Subscription id
-          in: query
-          required: true
-          schema:
-            type: string
-            example: 'fba2fb94-6f88-11eb-9439-0242ac130002'
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetSubscriptionAccountResponse'
-        500:
-          $ref: '#/components/responses/ServerError'
-      security:
-        - bearerAuth: []
-
-    post:
-      tags:
-        - subscribe
-      summary: Subscribe on change account.
-      operationId: subscribeOnAccount
-      description: Subscribe on change something in particular account.
-      requestBody:
-        description: the parent account, child account and other
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SubscribeAccountRequest'
-        required: true
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SubscribeAccountResponse'
-        500:
-          $ref: '#/components/responses/ServerError'
-      security:
-        - bearerAuth: []
+#  /@@subscribe/account:
+#    get:
+#      tags:
+#        - subscribe
+#      summary: Get subscription status.
+#      operationId: getSubscriptionStatus
+#      description: Return subscription status by subscription id.
+#      parameters:
+#        - name: subscriptionId
+#          description: Subscription id
+#          in: query
+#          required: true
+#          schema:
+#            type: string
+#            example: 'fba2fb94-6f88-11eb-9439-0242ac130002'
+#      responses:
+#        200:
+#          description: successful operation
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/GetSubscriptionAccountResponse'
+#        500:
+#          $ref: '#/components/responses/ServerError'
+#      security:
+#        - bearerAuth: []
+#
+#    post:
+#      tags:
+#        - subscribe
+#      summary: Subscribe on change account.
+#      operationId: subscribeOnAccount
+#      description: Subscribe on change something in particular account.
+#      requestBody:
+#        description: the parent account, child account and other
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/SubscribeAccountRequest'
+#        required: true
+#      responses:
+#        200:
+#          description: successful operation
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/SubscribeAccountResponse'
+#        500:
+#          $ref: '#/components/responses/ServerError'
+#      security:
+#        - bearerAuth: []
 
 
 
