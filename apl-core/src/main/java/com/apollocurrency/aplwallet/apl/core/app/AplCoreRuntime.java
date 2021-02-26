@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.util.Constants.HEALTH_CHECK_INTERVAL;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MEMPOOL_CHECK_INTERVAL;
 
 /**
  * Runtime environment for AplCores (singleton) TODO: make it injectable
@@ -38,6 +40,7 @@ public class AplCoreRuntime {
     private final DatabaseManager databaseManager;
     private final AplAppStatus aplAppStatus;
     private final PeersService peers;
+    private final MemPool memPool;
     private RuntimeMode runtimeMode;
 
     // WE CAN'T use @Inject here for 'RuntimeMode' instance because it has several candidates (in CDI hierarchy)
@@ -45,6 +48,7 @@ public class AplCoreRuntime {
         this.databaseManager = CDI.current().select(DatabaseManager.class).get();
         this.aplAppStatus = CDI.current().select(AplAppStatus.class).get();
         this.peers = CDI.current().select(PeersService.class).get();
+        this.memPool = CDI.current().select(MemPool.class).get();
     }
 
     public static void logSystemProperties() {
@@ -76,6 +80,7 @@ public class AplCoreRuntime {
                      TaskDispatchManager taskManager) {
         this.runtimeMode = runtimeMode;
         TaskDispatcher taskDispatcher = taskManager.newScheduledDispatcher("AplCoreRuntime-periodics");
+
         taskDispatcher.schedule(Task.builder()
             .name("Core-health")
             .initialDelay(HEALTH_CHECK_INTERVAL * 2)
@@ -84,6 +89,13 @@ public class AplCoreRuntime {
                 LOG.info(getNodeHealth());
                 aplAppStatus.clearFinished(1 * 60L); //10 min
             })
+            .build());
+
+        taskDispatcher.schedule(Task.builder()
+            .name("Core-MemPool")
+            .initialDelay(MEMPOOL_CHECK_INTERVAL * 2)
+            .delay(MEMPOOL_CHECK_INTERVAL)
+            .task(this::printMemPoolStat)
             .build());
     }
 
@@ -108,6 +120,22 @@ public class AplCoreRuntime {
         sb.append("Following Threads are deadlocked:\n");
         for (ThreadInfo info : infos) {
             sb.append(info.toString()).append("\n");
+        }
+    }
+
+    private void printMemPoolStat() {
+        StringBuilder sb = new StringBuilder();
+        int memPoolSize = memPool.getUnconfirmedTxCount();
+        int cacheSize = memPool.getCachedUnconfirmedTxCount();
+
+        if(memPoolSize > 0 ) {
+            sb.append("MemPool Info:\n");
+            sb.append("Txs: ").append(memPoolSize).append(", ");
+            sb.append("Cache size: ").append(cacheSize).append(", ");
+            sb.append("Pending broadcast: ").append(memPool.pendingBroadcastQueueSize()).append(", ");
+            sb.append("Process Later Queue: ").append(memPool.processLaterQueueSize()).append(", ");
+
+            LOG.info(sb.toString());
         }
     }
 

@@ -225,14 +225,11 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         final boolean doCache = cache && dataSource.isInTransaction();
         return new DbIterator<>(con, pstmt, (connection, rs) -> {
-            T t = null;
             DbKey dbKey = null;
             if (doCache) {
                 dbKey = keyFactory.newKey(rs);
             }
-            if (t == null) {
-                t = (T) load(connection, rs, dbKey);
-            }
+            T t = load(connection, rs, dbKey);
             return t;
         });
     }

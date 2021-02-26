@@ -36,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessingTaskScheduler;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.TableRegistryInitializer;
@@ -101,6 +102,9 @@ public final class AplCore {
     @Inject
     @Setter
     private TaskDispatchManager taskDispatchManager;
+
+    @Inject
+    private MemPool memPool;
 
     private String initCoreTaskID;
 
@@ -253,6 +257,8 @@ public final class AplCore {
 
             // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
             recoverSharding();
+
+            memPool.initCache();
 
             //Init classes to add tasks to the TaskDispatchManager
             CDI.current().select(DexOrderProcessor.class).get();
