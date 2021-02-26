@@ -68,5 +68,5 @@ public interface BlockDao {
 
     void deleteAll();
 
-    List<Block> getBlocksAfter(int height, int limit);
+    List<BlockEntity> getBlocksAfter(int height, int limit);
 }

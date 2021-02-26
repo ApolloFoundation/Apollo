@@ -590,15 +590,15 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public List<Block> getBlocksAfter(int height, int limit) {
-        List<Block> resultList = new ArrayList<>();
+    public List<BlockEntity> getBlocksAfter(int height, int limit) {
+        List<BlockEntity> resultList = new ArrayList<>();
         try (Connection con = databaseManager.getDataSource().getConnection();
             PreparedStatement pstmt = con.prepareStatement(SELECT_ALL_AFTER_HEIGHT_QUERY)) {
             pstmt.setLong(1, height);
             pstmt.setInt(2, limit);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    Block block = loadBlock(con, rs);
+                    BlockEntity block = entityRowMapper.map(rs, null);
                     resultList.add(block);
                 }
             }

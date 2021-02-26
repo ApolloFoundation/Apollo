@@ -33,6 +33,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_HEIGHT;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
@@ -350,14 +351,14 @@ class BlockDaoTest extends DbContainerBaseTest {
 
     @Test
     void testBlocksAfter() {
-        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_8.getHeight(), 3);
+        List<BlockEntity> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_8.getHeight(), 3);
 
-        assertEquals(List.of(td.BLOCK_9, td.BLOCK_10, td.BLOCK_11), blocksAfter);
+        assertEquals(List.of(td.BLOCK_9, td.BLOCK_10, td.BLOCK_11).stream().map(new BlockModelToEntityConverter()).collect(Collectors.toList()), blocksAfter);
     }
 
     @Test
     void testBlocksAfter_fetchNothing() {
-        List<Block> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_13.getHeight(), 1000);
+        List<BlockEntity> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_13.getHeight(), 1000);
 
         assertEquals(List.of(), blocksAfter);
     }

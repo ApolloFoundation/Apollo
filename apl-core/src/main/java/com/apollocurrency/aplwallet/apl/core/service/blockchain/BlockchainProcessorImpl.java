@@ -31,6 +31,12 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEvent
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksThread;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.BlockchainProcessorState;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -41,13 +47,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ScanEntity;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
-import com.apollocurrency.aplwallet.apl.core.blockchain.BlockchainProcessorState;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
@@ -55,8 +55,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
-import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
-import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksResponseParser;
@@ -73,7 +71,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountContro
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
@@ -96,6 +93,8 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
@@ -232,7 +231,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    ConsensusManager consensusManager,
                                    MemPool memPool,
                                    @Named(value = "fullTextTables") Map<String, String> fullTextSearchIndexedTables,
-                                   MemPool memPool,
                                     ScanDao scanDao) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = blockchainConfig;
@@ -1471,7 +1469,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 aplAppStatus.durableTaskUpdate(scanTaskId, 95.0, "All blocks scanned");
                 double percentsPerTableIndex = getPercentsPerEvent(4.0, dbTables.getDerivedTables().size());
                 if (height == shardInitialHeight) {
-                    for (DerivedTableInterface table : derivedTables) {
+                    for (DerivedTableInterface table : dbTables.getDerivedTables()) {
                         if (table instanceof SearchableTableInterface) {
                             aplAppStatus.durableTaskUpdate(scanTaskId,
                                 "Create full text search index for table " + table.toString(), percentsPerTableIndex);

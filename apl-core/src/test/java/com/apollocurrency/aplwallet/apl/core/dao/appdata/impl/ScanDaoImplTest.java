@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.appdata.impl;
 
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ScanEntity;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -13,12 +14,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 @Tag("slow")
-class ScanDaoImplTest {
+class ScanDaoImplTest extends DbContainerBaseTest {
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getInMemDbProps(), "db/scan-data.sql", null);
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/scan-data.sql", null);
+
     ScanDaoImpl scanDao;
 
     @BeforeEach
@@ -33,14 +34,6 @@ class ScanDaoImplTest {
         scanDao.saveOrUpdate(toSave); //should replace existing
 
         assertEquals(toSave, scanDao.get());
-    }
-
-    @Test
-    void testDelete() {
-        int removed = scanDao.delete();
-
-        assertEquals(1, removed);
-        assertNull(scanDao.get());
     }
 
     @Test

@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.appdata.impl;
 
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ScanDao;
-import com.apollocurrency.aplwallet.apl.core.db.TransactionHelper;
+import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ScanEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 
@@ -18,9 +18,9 @@ import java.sql.SQLException;
 
 @Singleton
 public class ScanDaoImpl implements ScanDao {
-    public static final String DELETE_QUERY = "DELETE from scan";
     private final DatabaseManager databaseManager;
     private static final String INSERT_QUERY = "INSERT INTO scan(rescan, height, validate, current_height, preparation_done, shutdown ) VALUES (?,?,?,?,?,?)  ";
+    private static final String UPDATE_QUERY = "UPDATE scan SET rescan = ?, height = ?, validate = ?, current_height = ?, preparation_done = ?, shutdown = ? ";
     private static final String SELECT_QUERY = "SELECT * FROM scan";
 
     @Inject
@@ -30,10 +30,13 @@ public class ScanDaoImpl implements ScanDao {
 
     @Override
     public void saveOrUpdate(ScanEntity scanEntity) {
-        TransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
-            delete();
+        DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
+            String query = INSERT_QUERY;
+            if (get() != null) {
+                query = UPDATE_QUERY;
+            }
             try(Connection con = databaseManager.getDataSource().getConnection();
-                PreparedStatement pstm = con.prepareStatement(INSERT_QUERY)
+                PreparedStatement pstm = con.prepareStatement(query)
             ) {
                 pstm.setBoolean(1, scanEntity.isRescan());
                 pstm.setInt(2, scanEntity.getFromHeight());
@@ -47,19 +50,9 @@ public class ScanDaoImpl implements ScanDao {
 
     }
 
-    int delete() {
-        return TransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
-            try(Connection con = databaseManager.getDataSource().getConnection();
-                PreparedStatement pstm = con.prepareStatement(DELETE_QUERY)
-            ) {
-               return pstm.executeUpdate();
-            }
-        });
-    }
-
     @Override
     public ScanEntity get() {
-        return TransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
+        return DbTransactionHelper.executeInConnection(databaseManager.getDataSource(), ()-> {
             try(Connection con = databaseManager.getDataSource().getConnection();
                 PreparedStatement pstm = con.prepareStatement(SELECT_QUERY)
             ) {
