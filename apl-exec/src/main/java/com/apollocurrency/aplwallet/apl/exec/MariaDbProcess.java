@@ -42,7 +42,9 @@ public class MariaDbProcess {
         Map<String,String> vars = new HashMap<>();
         vars.put("apl_db_dir", dbDataDir.toAbsolutePath().toString());
         vars.put("apl_mariadb_pkg_dir", dbInstallDir.toAbsolutePath().toString());
-        
+        vars.put("dbuser", dbUser);
+        vars.put("dbuser_password", dbPassword);
+         
                 dbParams.setDbConfigFileTemplate(confFileTemplate);
                 dbParams.setVarSubstMap(vars);
                 dbParams.setDbConfigFile(confFile);
@@ -53,7 +55,9 @@ public class MariaDbProcess {
                 dbParams.setDbPassword(dbPassword);    
         
                 if(dbParams.verify()){
-                    dbParams.processConfigTemplates();
+                    if(!dbParams.processConfigTemplates()){
+                        log.warn("Error processing DB config templates!");
+                    }
                 }else{
                    log.error("Please verify database parameters!");
                 }
