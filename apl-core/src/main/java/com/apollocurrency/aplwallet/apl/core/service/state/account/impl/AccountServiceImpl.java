@@ -507,5 +507,25 @@ public class AccountServiceImpl implements AccountService {
     public byte[] getPublicKeyByteArray(long id) {
         return accountPublicKeyService.getPublicKeyByteArray(id);
     }
+
+    @Override
+    public Account addAccount(long id, boolean isGenesis) {
+        Preconditions.checkArgument(id != 0, "Invalid accountId 0");
+        DbKey dbKey = AccountTable.newKey(id);
+        Account account = accountTable.get(dbKey);
+        if (account == null) {
+            account = new Account(id, dbKey);
+            PublicKey publicKey = accountPublicKeyService.getPublicKey(id);
+            if (publicKey == null) {
+                if (isGenesis) {
+                    publicKey = accountPublicKeyService.insertGenesisPublicKey(id);
+                } else {
+                    publicKey = accountPublicKeyService.insertNewPublicKey(id);
+                }
+            }
+            account.setPublicKey(publicKey);
+        }
+        return account;
+    }
 }
 

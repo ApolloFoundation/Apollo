@@ -61,7 +61,7 @@
     <zip-format>zip</zip-format>
     <!--Dependency Versions-->
 
-    <antifraud.version>1.0.11</antifraud.version>
+    <antifraud.version>1.1.1</antifraud.version>
 
     <!-- We have to define this property and change it accordingly for correct version of packages -->
     <apl-bom-ext.version>1.0.5</apl-bom-ext.version>
