@@ -1328,12 +1328,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             blockchainProcessorState.setScanning(true);
             try (Connection con = dataSource.getConnection()) {
                 blockchainProcessorState.setInitialScanHeight(blockchain.getHeight());
+                if (scanEntity.getFromHeight() == shardInitialHeight) {
+                    aplAppStatus.durableTaskUpdate(scanTaskId, 0.5, "Dropping all full text search indexes");
+                    fullTextSearchProvider.dropAll(con);
+                    aplAppStatus.durableTaskUpdate(scanTaskId, 3.5, "Full text indexes dropped successfully");
+                }
                 if (!scanInterrupted) {
                     if (height == shardInitialHeight) {
                         trimService.resetTrim(height + trimService.getMaxRollback());
-                        aplAppStatus.durableTaskUpdate(scanTaskId, 0.5, "Dropping all full text search indexes");
-                        fullTextSearchProvider.dropAll(con);
-                        aplAppStatus.durableTaskUpdate(scanTaskId, 3.5, "Full text indexes dropped successfully");
                     }
                     Collection<DerivedTableInterface> derivedTables = dbTables.getDerivedTables();
                     double percentsPerTable = getPercentsPerEvent(16.0, derivedTables.size());
