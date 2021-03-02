@@ -317,9 +317,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     if (scanEntity.isRescan()) {
                         scan(scanEntity);
                     } else {
-                        if (blockchain.getShardInitialBlock() != null) { // prevent NPE on empty node
-                            trimService.init(blockchain.getHeight(), blockchain.getShardInitialBlock().getHeight()); // try to perform all not performed trims
-                        } else {
+                        if (blockchain.getShardInitialBlock() == null) { // prevent NPE on empty node
                             trimService.resetTrim();
                         }
                     }
@@ -466,7 +464,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     blockchain.deleteAll();
                     dbTables.getDerivedTables().forEach(DerivedTableInterface::truncate);
                     ((DatabaseManagerImpl) databaseManager).closeAllShardDataSources();
-                    trimService.trimDerivedTables(0, false);
+                    trimService.resetTrim();
                     DirProvider dirProvider = RuntimeEnvironment.getInstance().getDirProvider();
                     Path dataExportDir = dirProvider.getDataExportDir();
                     FileUtils.clearDirectorySilently(dataExportDir);
@@ -1335,7 +1333,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 }
                 if (!scanInterrupted) {
                     if (height == shardInitialHeight) {
-                        trimService.resetTrim(height + trimService.getMaxRollback());
+                        trimService.resetTrim(height);
                     }
                     Collection<DerivedTableInterface> derivedTables = dbTables.getDerivedTables();
                     double percentsPerTable = getPercentsPerEvent(16.0, derivedTables.size());

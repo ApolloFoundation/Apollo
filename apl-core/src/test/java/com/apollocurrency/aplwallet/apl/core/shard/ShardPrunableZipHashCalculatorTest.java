@@ -15,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.TrimData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.ChunkedFileOps;
@@ -86,8 +85,6 @@ class ShardPrunableZipHashCalculatorTest extends DbContainerBaseTest {
         .build();
     @Inject
     PrunableMessageTable prunableMessageTable;
-    @Inject
-    Event<TrimData> trimDataEvent;
     @Inject
     Event<ChunkedFileOps> fileChangedEvent;
     @Inject

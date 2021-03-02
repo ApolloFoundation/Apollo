@@ -60,9 +60,9 @@ CREATE TABLE IF NOT EXISTS `transaction`
 
 CREATE TABLE IF NOT EXISTS option
 (
-    name    VARCHAR(100) not null,
-    `VALUE` VARCHAR(150)
-) ENGINE = ROCKSDB
+    `name`  VARCHAR(100) COLLATE utf8_bin not null,
+    `VALUE` VARCHAR(150) COLLATE utf8_bin DEFAULT NULL
+    ) ENGINE = ROCKSDB
     DEFAULT CHARSET = utf8mb4
     COLLATE = utf8mb4_unicode_ci;
 
