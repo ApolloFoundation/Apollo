@@ -84,8 +84,7 @@ public class Apollo {
     private static Logger log;
     private static AplContainer container;
     private static AplCoreRuntime aplCoreRuntime;
-    private static MariaDbProcess dbProcess = null;
-    
+
     private static void setLogLevel(int logLevel) {
         // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
         String packageName = "com.apollocurrency.aplwallet.apl";
@@ -202,8 +201,8 @@ public class Apollo {
             // will be initialized
             Path dbDataDir = dirProvider.getDbDir();
             Path dbInstalPath = DirProvider.getBinDir().getParent().resolve(APOLLO_MARIADB_INSTALL_DIR);
-            dbProcess = new MariaDbProcess(conf,dbInstalPath,dbDataDir);
-            res = dbProcess.startAndWaitWhenReady();
+            mariaDbProcess = new MariaDbProcess(conf,dbInstalPath,dbDataDir);
+            res = mariaDbProcess.startAndWaitWhenReady();
         }
         return res;
     }
@@ -350,7 +349,7 @@ public class Apollo {
         // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/
         // run with ./bin/apl-run-jmx.sh
         //
-         aplContainerBuilder.devMode();
+        // aplContainerBuilder.devMode();
         //
         //!!!!!!!!!!!!!!!
 

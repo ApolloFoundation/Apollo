@@ -13,10 +13,11 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * MariaDB/rocksDB is Apollo database. It shouдd be installed from
+ * MariaDB/rocksDB is Apollo database. It should be installed from
  * apollo-mariadb package or just be available by configured URL This class
  * tries to start MariaDB from installed package
  *
@@ -70,18 +71,22 @@ public class MariaDbProcess {
                 
         dbControl = new MariaDbControl(setDbParams(conf, dbInstallDir, dbDataDir));        
     }
-
+    /**
+    * 
+    * @param conf set of configuration properties
+    * @param dbDataDir Data directory for database
+    * @param dbInstallDir directory where MariaDB dirstibution is installed
+    * @return MariaDBProcess instance that should be checked with isOK() method
+    */
     public static MariaDbProcess findRunning(DbConfig conf, Path dbDataDir, Path dbInstallDir){
         MariaDbProcess process = new MariaDbProcess(conf, dbInstallDir, dbDataDir);
         process.dbControl = new MariaDbControl(process.dbParams);
-        if( process.dbControl.findRunning()){
-            return process;
-        }
-        return null;
+        process.dbControl.findRunning();
+        return process;
     }
 
     public boolean isOK() {
-        boolean res = dbControl.isOK();
+        boolean res = (dbControl!=null && dbControl.isOK());
         return res;
     }
 
