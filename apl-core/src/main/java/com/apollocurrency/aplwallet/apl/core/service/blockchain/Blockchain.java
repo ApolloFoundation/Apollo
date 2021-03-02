@@ -76,9 +76,7 @@ public interface Blockchain {
 
     Block findFirstBlock();
 
-    Block loadBlockData(BlockEntity blockEntity);
-
-    List<Block> loadBlockData(List<BlockEntity> blocks);
+    Block loadBlockData(Block block);
 
     @Deprecated
     List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp);
@@ -187,4 +185,6 @@ public interface Blockchain {
     boolean isExpired(Transaction tx);
 
     List<Transaction> loadPrunables(List<Transaction> transactions);
+
+    List<Block> getBlocksAfter(int height, int limit);
 }

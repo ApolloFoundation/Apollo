@@ -23,6 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ScanEntity;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.util.Filter;
@@ -64,9 +65,9 @@ public interface BlockchainProcessor {
     SortedSet<UnconfirmedTransaction> selectUnconfirmedTransactions(
         Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit);
 
-    void scan(int height, boolean validate);
-
     void fullScanWithShutdown();
+
+    void scan(ScanEntity scanEntity);
 
     void setGetMoreBlocks(boolean getMoreBlocks);
 
@@ -87,8 +88,6 @@ public interface BlockchainProcessor {
     void resumeBlockchainDownloading();
 
     void shutdown();
-
-    void scheduleOneScan();
 
     class BlockNotAcceptedException extends AplException {
 

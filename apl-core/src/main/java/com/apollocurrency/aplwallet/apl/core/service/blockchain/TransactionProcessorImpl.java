@@ -356,7 +356,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     UnconfirmedTransaction unconfirmedTransaction = unconfirmedTransactionCreator.from(transaction, arrivalTimestamp);
                     UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
                     if (validationResult.isOk()) {
-                        transactionValidator.validateSignatureWithTxFee(transaction);
+                        transactionValidator.validateSignatureWithTxFeeLessStrict(transaction);
                         transactionValidator.validateLightly(transaction);
                         TxSavingStatus status = saveUnconfirmedTransaction(unconfirmedTransaction);
                         if (status == TxSavingStatus.NOT_SAVED) {

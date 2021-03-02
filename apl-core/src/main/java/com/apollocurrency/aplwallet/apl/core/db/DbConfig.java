@@ -35,6 +35,7 @@ public class DbConfig {
 
         return DbProperties.builder()
             .dbType(propertiesHolder.getStringProperty("apl.dbType"))
+            .dbUrl(propertiesHolder.getStringProperty("apl.dbUrl"))
             .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "./unit-test-db") // for unit tests
             .dbName(dbName.concat("_".concat(chainId.toString().substring(0, 6))))
             .chainId(chainId)

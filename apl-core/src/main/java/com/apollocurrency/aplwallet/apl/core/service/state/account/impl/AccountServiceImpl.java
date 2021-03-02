@@ -55,7 +55,7 @@ import static com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil.toList;
 public class AccountServiceImpl implements AccountService {
 
     public static final int EFFECTIVE_BALANCE_CONFIRMATIONS = 1440;
-    public static final Set<Integer> BLOCK_HEIGHTS = Set.of(6851525, 6851444);
+    public static final Set<Integer> BLOCK_HEIGHTS = Set.of(6851525, 6851444, 6997642);
 
     private final AccountTable accountTable;
     private final AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
@@ -506,6 +506,26 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public byte[] getPublicKeyByteArray(long id) {
         return accountPublicKeyService.getPublicKeyByteArray(id);
+    }
+
+    @Override
+    public Account addAccount(long id, boolean isGenesis) {
+        Preconditions.checkArgument(id != 0, "Invalid accountId 0");
+        DbKey dbKey = AccountTable.newKey(id);
+        Account account = accountTable.get(dbKey);
+        if (account == null) {
+            account = new Account(id, dbKey);
+            PublicKey publicKey = accountPublicKeyService.getPublicKey(id);
+            if (publicKey == null) {
+                if (isGenesis) {
+                    publicKey = accountPublicKeyService.insertGenesisPublicKey(id);
+                } else {
+                    publicKey = accountPublicKeyService.insertNewPublicKey(id);
+                }
+            }
+            account.setPublicKey(publicKey);
+        }
+        return account;
     }
 }
 

@@ -281,15 +281,15 @@ public class TransactionBuilderFactory {
     @Deprecated
     private TransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws AplException.NotValidException {
         try {
-            byte type = ((Long) transactionData.get("type")).byteValue();
-            byte subtype = ((Long) transactionData.get("subtype")).byteValue();
-            int timestamp = ((Long) transactionData.get("timestamp")).intValue();
-            short deadline = ((Long) transactionData.get("deadline")).shortValue();
+            byte type = ((Number) transactionData.get("type")).byteValue();
+            byte subtype = ((Number) transactionData.get("subtype")).byteValue();
+            int timestamp = ((Number) transactionData.get("timestamp")).intValue();
+            short deadline = ((Number) transactionData.get("deadline")).shortValue();
             byte[] senderPublicKey = Convert.parseHexString((String) transactionData.get("senderPublicKey"));
             long amountATM = transactionData.containsKey("amountATM") ? Convert.parseLong(transactionData.get("amountATM")) : Convert.parseLong(transactionData.get("amountNQT"));
             long feeATM = transactionData.containsKey("feeATM") ? Convert.parseLong(transactionData.get("feeATM")) : Convert.parseLong(transactionData.get("feeNQT"));
             String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");
-            Long versionValue = (Long) transactionData.get("version");
+            Number versionValue = (Number) transactionData.get("version");
             byte version = versionValue == null ? 0 : versionValue.byteValue();
 
             SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
@@ -300,7 +300,7 @@ public class TransactionBuilderFactory {
             int ecBlockHeight = 0;
             long ecBlockId = 0;
             if (version > 0) {
-                ecBlockHeight = ((Long) transactionData.get("ecBlockHeight")).intValue();
+                ecBlockHeight = ((Number) transactionData.get("ecBlockHeight")).intValue();
                 ecBlockId = Convert.parseUnsignedLong((String) transactionData.get("ecBlockId"));
             }
 

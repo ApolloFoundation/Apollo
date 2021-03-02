@@ -238,6 +238,7 @@ public final class AplCore {
             bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
             blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
             blockchain = CDI.current().select(BlockchainImpl.class).get();
+            blockchain.update();
             peers.init();
             GenesisAccounts.init();
 

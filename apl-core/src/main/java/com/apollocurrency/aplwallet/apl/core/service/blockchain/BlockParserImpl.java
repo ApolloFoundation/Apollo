@@ -39,12 +39,12 @@ public class BlockParserImpl implements BlockParser {
     @Override
     public BlockImpl parseBlock(JSONObject blockData, long baseTarget) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
         try {
-            int version = ((Long) blockData.get("version")).intValue();
-            int timestamp = ((Long) blockData.get("timestamp")).intValue();
+            int version = ((Number) blockData.get("version")).intValue();
+            int timestamp = ((Number) blockData.get("timestamp")).intValue();
             long previousBlock = Convert.parseUnsignedLong((String) blockData.get("previousBlock"));
             long totalAmountATM = blockData.containsKey("totalAmountATM") ? Convert.parseLong(blockData.get("totalAmountATM")) : Convert.parseLong(blockData.get("totalAmountNQT"));
             long totalFeeATM = blockData.containsKey("totalFeeATM") ? Convert.parseLong(blockData.get("totalFeeATM")) : Convert.parseLong(blockData.get("totalFeeNQT"));
-            int payloadLength = ((Long) blockData.get("payloadLength")).intValue();
+            int payloadLength = ((Number) blockData.get("payloadLength")).intValue();
             byte[] payloadHash = Convert.parseHexString((String) blockData.get("payloadHash"));
             byte[] generatorPublicKey = Convert.parseHexString((String) blockData.get("generatorPublicKey"));
             byte[] generationSignature = Convert.parseHexString((String) blockData.get("generationSignature"));
@@ -57,7 +57,7 @@ public class BlockParserImpl implements BlockParser {
                 long generatorId = Long.parseUnsignedLong((String) blockData.get("generatorId"));
                 generatorPublicKey = accountService.getPublicKeyByteArray(generatorId);
             }
-            int timeout = !requireTimeout(version) ? 0 : ((Long) timeoutJsonValue).intValue();
+            int timeout = !requireTimeout(version) ? 0 : ((Number) timeoutJsonValue).intValue();
             List<Transaction> blockTransactions = new ArrayList<>();
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
                 blockTransactions.add(parseTransaction((JSONObject) transactionData));
