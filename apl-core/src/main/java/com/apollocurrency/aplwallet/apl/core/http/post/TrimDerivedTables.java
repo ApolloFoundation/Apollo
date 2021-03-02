@@ -42,7 +42,7 @@ public final class TrimDerivedTables extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
-        trimService.trimDerivedTables(lookupBlockchain().getHeight(), false);
+        trimService.trimDerivedTables(lookupBlockchain().getHeight());
         response.put("done", true);
         return response;
     }
