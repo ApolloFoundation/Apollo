@@ -182,7 +182,7 @@ CREATE TABLE IF NOT EXISTS `alias`
     `id`               bigint(20) NOT NULL,
     `account_id`       bigint(20) NOT NULL,
     `alias_name`       varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `alias_name_lower` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `alias_name_lower` varchar(255) COLLATE utf8_bin NOT NULL,
     `alias_uri`        varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `TIMESTAMP`        int(11)    NOT NULL,
     `height`           int(11)    NOT NULL,
@@ -410,8 +410,8 @@ CREATE TABLE IF NOT EXISTS `currency`
     `id`                     bigint(20) NOT NULL,
     `account_id`             bigint(20) NOT NULL,
     `name`                   varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `name_lower`             varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `code`                   varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `name_lower`             varchar(255) COLLATE utf8_bin NOT NULL,
+    `code`                   varchar(255) COLLATE utf8_bin NOT NULL,
     `description`            varchar(1000) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `type`                   int(11)    NOT NULL,
     `initial_supply`         bigint(20) NOT NULL DEFAULT 0,
@@ -512,7 +512,7 @@ CREATE TABLE IF NOT EXISTS `currency_transfer`
 CREATE TABLE IF NOT EXISTS `data_tag`
 (
     `db_id`     bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-    `tag`       varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `tag`       varchar(150) COLLATE utf8_bin NOT NULL,
     `tag_count` int(11)    NOT NULL,
     `height`    int(11)    NOT NULL,
     `latest`    tinyint(1) NOT NULL DEFAULT 1,
@@ -678,7 +678,7 @@ CREATE TABLE IF NOT EXISTS `goods`
     `db_id`       bigint(20) unsigned NOT NULL AUTO_INCREMENT,
     `id`          bigint(20) NOT NULL,
     `seller_id`   bigint(20) NOT NULL,
-    `name`        varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `name`        varchar(255) COLLATE utf8_bin NOT NULL,
     `description` varchar(1000) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `parsed_tags` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`parsed_tags`)),
     `has_image`   tinyint(1) NOT NULL,
@@ -711,8 +711,8 @@ CREATE TABLE IF NOT EXISTS `mandatory_transaction`
 
 CREATE TABLE IF NOT EXISTS `option`
 (
-    `name`  varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `VALUE` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `name`  varchar(100) COLLATE utf8_bin NOT NULL,
+    `VALUE` varchar(150) COLLATE utf8_bin DEFAULT NULL,
     UNIQUE KEY `option_name_value_idx` (`name`,`VALUE`)
 ) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -729,7 +729,7 @@ CREATE TABLE IF NOT EXISTS `order_scan`
 
 CREATE TABLE IF NOT EXISTS `peer`
 (
-    `address`      varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `address`      varchar(191) COLLATE utf8_bin NOT NULL,
     `last_updated` int(11)    DEFAULT NULL,
     `services`     bigint(20) DEFAULT NULL,
     PRIMARY KEY (`address`)
@@ -1040,7 +1040,7 @@ CREATE TABLE IF NOT EXISTS `shard`
 CREATE TABLE IF NOT EXISTS `shard_recovery`
 (
     `shard_recovery_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-    `state`             varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `state`             varchar(150) COLLATE utf8_bin NOT NULL,
     `object_name`       varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `column_name`       varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `last_column_value` bigint(20)         DEFAULT NULL,
@@ -1121,7 +1121,7 @@ CREATE TABLE IF NOT EXISTS `shuffling_participant`
 CREATE TABLE IF NOT EXISTS `tag`
 (
     `db_id`          bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-    `tag`            varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `tag`            varchar(150) COLLATE utf8_bin NOT NULL,
     `in_stock_count` int(11)    NOT NULL,
     `total_count`    int(11)    NOT NULL,
     `height`         int(11)    NOT NULL,
@@ -1146,7 +1146,7 @@ CREATE TABLE IF NOT EXISTS `tagged_data`
     `type`                varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `data`                blob       NOT NULL,
     `is_text`             tinyint(1) NOT NULL,
-  `channel` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `channel` varchar(255) COLLATE utf8_bin DEFAULT NULL,
   `filename` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `block_timestamp` int(11) NOT NULL,
   `transaction_timestamp` int(11) NOT NULL,
