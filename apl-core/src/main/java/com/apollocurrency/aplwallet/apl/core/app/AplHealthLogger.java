@@ -3,21 +3,25 @@
  */
 package com.apollocurrency.aplwallet.apl.core.app;
 
+import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import static com.apollocurrency.aplwallet.apl.util.Constants.HEALTH_CHECK_INTERVAL;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeParams;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
-import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.zaxxer.hikari.HikariPoolMXBean;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
+
+import static com.apollocurrency.aplwallet.apl.util.Constants.HEALTH_CHECK_INTERVAL;
+import static com.apollocurrency.aplwallet.apl.util.Constants.MEMPOOL_CHECK_INTERVAL;
 
 /**
  * Simple periodical health checks
@@ -29,12 +33,14 @@ import lombok.extern.slf4j.Slf4j;
 public class AplHealthLogger {
 
     private final DatabaseManager databaseManager;
-    private AplAppStatus aplAppStatus;
+    private final MemPool memPool;
     private  PeersService peers;
-    
+
     @Inject
-    public AplHealthLogger(TaskDispatchManager taskDispatchManager, DatabaseManager databaseManager, AplAppStatus aplAppStatus, PeersService peers) {
+    public AplHealthLogger(TaskDispatchManager taskDispatchManager, DatabaseManager databaseManager, AplAppStatus aplAppStatus, PeersService peers, MemPool memPool) {
         this.databaseManager = databaseManager;
+        this.memPool = memPool;
+        this.peers = peers;
 
         TaskDispatcher taskDispatcher = taskDispatchManager.newScheduledDispatcher("AplCoreRuntime-periodics");
 
@@ -48,6 +54,13 @@ public class AplHealthLogger {
                     aplAppStatus.clearFinished(1 * 60L); //10 min
                 })
                 .build());
+
+        taskDispatcher.schedule(Task.builder()
+            .name("Core-MemPool")
+            .initialDelay(MEMPOOL_CHECK_INTERVAL * 2)
+            .delay(MEMPOOL_CHECK_INTERVAL)
+            .task(this::printMemPoolStat)
+            .build());
     }
 
     public  void logSystemProperties() {
@@ -127,6 +140,22 @@ public class AplHealthLogger {
         sb.append(", Connectable peers count: ").append(peers.getAllConnectablePeers().size());
         findDeadLocks(sb);
         return sb.toString();
+    }
+
+    private void printMemPoolStat() {
+        StringBuilder sb = new StringBuilder();
+        int memPoolSize = memPool.getUnconfirmedTxCount();
+        int cacheSize = memPool.getCachedUnconfirmedTxCount();
+
+        if(memPoolSize > 0 ) {
+            sb.append("MemPool Info:  ");
+            sb.append("Txs: ").append(memPoolSize).append(", ");
+            sb.append("Cache size: ").append(cacheSize).append(", ");
+            sb.append("Pending broadcast: ").append(memPool.pendingBroadcastQueueSize()).append(", ");
+            sb.append("Process Later Queue: ").append(memPool.processLaterQueueSize()).append(", ");
+
+            log.info(sb.toString());
+        }
     }
 
 }

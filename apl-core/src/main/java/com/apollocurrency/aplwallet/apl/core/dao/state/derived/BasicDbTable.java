@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
@@ -17,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

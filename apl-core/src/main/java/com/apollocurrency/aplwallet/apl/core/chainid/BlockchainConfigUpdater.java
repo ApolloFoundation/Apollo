@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.chainid;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;

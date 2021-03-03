@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
@@ -18,7 +19,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;

@@ -16,7 +16,6 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.UUID;
-import java.util.regex.Matcher;
 
 
 @Singleton
@@ -55,8 +54,8 @@ public class DbConfig {
         if (StringUtils.isBlank(dbProperties.getSystemDbUrl())) {
             String systemDbUrl = dbProperties.formatJdbcUrlString( true);
             dbProperties.setSystemDbUrl(systemDbUrl);
-        } 
-       
+        }
+
         return dbProperties;
     }
 }

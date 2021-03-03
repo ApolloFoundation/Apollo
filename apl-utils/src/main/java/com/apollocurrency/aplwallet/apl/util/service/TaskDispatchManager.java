@@ -8,12 +8,12 @@ import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcherFactory;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.enterprise.inject.Vetoed;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 import static com.apollocurrency.aplwallet.apl.util.task.DefaultTaskDispatcher.DEFAULT_THREAD_POOL_SIZE;
-import javax.enterprise.inject.Vetoed;
 
 @Slf4j
 @Vetoed

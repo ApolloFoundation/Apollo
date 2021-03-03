@@ -7,14 +7,12 @@ import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import io.firstbridge.process.db.DbControl;
 import io.firstbridge.process.impl.MariaDbControl;
 import io.firstbridge.process.impl.MariaDbRunParams;
-
+import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * MariaDB/rocksDB is Apollo database. It should be installed from
@@ -27,25 +25,25 @@ import lombok.extern.slf4j.Slf4j;
 public class MariaDbProcess {
     public static final String DB_CONF_FILE="my-apl.cnf";
     public static final String DB_CONF_FILE_TEMPLATE="my-apl.cnf.template";
-    
+
     private DbControl dbControl;
     private  Path confFile;
     private  Path confFileTemplate;
     private MariaDbRunParams dbParams;
-    
+
     private MariaDbRunParams setDbParams(DbConfig conf, Path dbInstallDir, Path dbDataDir){
         dbParams = new MariaDbRunParams();
         confFile = dbDataDir.resolve(DB_CONF_FILE);
         confFileTemplate = dbInstallDir.resolve("conf").resolve(DB_CONF_FILE_TEMPLATE);
         String dbUser = conf.getDbConfig().getDbUsername();
         String dbPassword = conf.getDbConfig().getDbPassword();
-        
+
         Map<String,String> vars = new HashMap<>();
         vars.put("apl_db_dir", dbDataDir.toAbsolutePath().toString());
         vars.put("apl_mariadb_pkg_dir", dbInstallDir.toAbsolutePath().toString());
         vars.put("dbuser", dbUser);
         vars.put("dbuser_password", dbPassword);
-         
+
                 dbParams.setDbConfigFileTemplate(confFileTemplate);
                 dbParams.setVarSubstMap(vars);
                 dbParams.setDbConfigFile(confFile);
@@ -53,8 +51,8 @@ public class MariaDbProcess {
                 dbParams.setDbInstallDir(dbInstallDir);
                 dbParams.setOut(Path.of("maria_out.log"));
                 dbParams.setDbUser(dbUser);
-                dbParams.setDbPassword(dbPassword);    
-        
+                dbParams.setDbPassword(dbPassword);
+
                 if(dbParams.verify()){
                     if(!dbParams.processConfigTemplates()){
                         log.warn("Error processing DB config templates!");
@@ -62,17 +60,17 @@ public class MariaDbProcess {
                 }else{
                    log.error("Please verify database parameters!");
                 }
-                
-                
+
+
         return dbParams;
     }
-    
+
     public MariaDbProcess(DbConfig conf, Path dbInstallDir, Path dbDataDir) {
-                
-        dbControl = new MariaDbControl(setDbParams(conf, dbInstallDir, dbDataDir));        
+
+        dbControl = new MariaDbControl(setDbParams(conf, dbInstallDir, dbDataDir));
     }
     /**
-    * 
+    *
     * @param conf set of configuration properties
     * @param dbDataDir Data directory for database
     * @param dbInstallDir directory where MariaDB dirstibution is installed

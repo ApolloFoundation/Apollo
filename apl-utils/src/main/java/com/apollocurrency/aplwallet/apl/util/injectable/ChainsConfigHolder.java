@@ -8,9 +8,9 @@ package com.apollocurrency.aplwallet.apl.util.injectable;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
 
+import javax.enterprise.inject.Vetoed;
 import java.util.Map;
 import java.util.UUID;
-import javax.enterprise.inject.Vetoed;
 
 /**
  * Holds all available chains
