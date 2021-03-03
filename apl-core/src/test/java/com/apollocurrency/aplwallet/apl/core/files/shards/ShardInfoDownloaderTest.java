@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecisio
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.PeerFileHashSum;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
@@ -117,7 +116,7 @@ public class ShardInfoDownloaderTest {
         doReturn(null).when(peersService).getAllConnectablePeers();
         doReturn(null).when(peersService).findOrCreatePeer(null, "ADR1", true);
         doReturn(null).when(peersService).findOrCreatePeer(null, "ADR2", true);
-        
+
         doReturn(blockchainConfig).when(peersService).getBlockchainConfig();
         downloader = new ShardInfoDownloader(peersService);
 

@@ -35,8 +35,9 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardingInitTaskBackgroundScheduler;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardingInitTaskBackgroundScheduler;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessingTaskScheduler;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.TableRegistryInitializer;
@@ -98,6 +99,9 @@ public final class AplCore {
     private AplAppStatus aplAppStatus;
     @Inject
     private TaskDispatchManager taskDispatchManager;
+
+    @Inject
+    private MemPool memPool;
 
     private String initCoreTaskID;
 
@@ -204,7 +208,7 @@ public final class AplCore {
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 5.5, "Transport control service initialization done");
             AplHealthLogger healthLogger = CDI.current().select(AplHealthLogger.class).get();
             healthLogger.logSystemProperties();
-            
+
             Thread secureRandomInitThread = initSecureRandom();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 6.0, "Database initialization");
 
@@ -252,6 +256,8 @@ public final class AplCore {
 
             // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
             recoverSharding();
+
+            memPool.initCache();
 
             //Init classes to add tasks to the TaskDispatchManager
             CDI.current().select(DexOrderProcessor.class).get();

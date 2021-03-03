@@ -6,26 +6,25 @@ package com.apollocurrency.aplwallet.apl.core.app;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeMode;
-import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.spi.CDI;
+import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
 
 
 /**
@@ -39,17 +38,17 @@ public class AplCoreRuntime {
     private final List<AplCore> cores = new ArrayList<>();
     private RuntimeMode runtimeMode;
     private TaskDispatchManager taskDispatchManager;
-    
+
     private PropertiesHolder propertieHolder;
     private ChainsConfigHolder chainsConfigHolder;
     private DbConfig dbConfig;
     private DirProvider dirProvider;
     private BlockchainConfig blockchainConfig;
-    
 
-    public AplCoreRuntime() {        
+
+    public AplCoreRuntime() {
     }
-    
+
 
     @Produces @ApplicationScoped
     public PropertiesHolder getPropertieHolder() {
@@ -65,11 +64,11 @@ public class AplCoreRuntime {
     public DbConfig getDbConfig() {
         return dbConfig;
     }
-    
+
     @Produces @ApplicationScoped
     public DirProvider getDirProvider() {
         return dirProvider;
-    }    
+    }
     @Produces   @ApplicationScoped
     public ConfigDirProvider configDirProvider() {
         return ConfigDirProviderFactory.getConfigDirProvider();
@@ -87,7 +86,7 @@ public class AplCoreRuntime {
                      DirProvider dirProvider,
                      Properties properties,
                      Map<UUID, Chain> chains
-                     ) 
+                     )
     {
         this.runtimeMode = runtimeMode;
         this.propertieHolder = new PropertiesHolder(properties);
@@ -96,7 +95,7 @@ public class AplCoreRuntime {
         this.chainsConfigHolder = new ChainsConfigHolder(chains);
         Chain chain = chainsConfigHolder.getActiveChain();
         this.dbConfig = new DbConfig(propertieHolder, chainsConfigHolder);
-        this.blockchainConfig = new BlockchainConfig(chain, propertieHolder);       
+        this.blockchainConfig = new BlockchainConfig(chain, propertieHolder);
 
     }
 

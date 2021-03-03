@@ -51,11 +51,6 @@ public class FindTransactionServiceImpl implements FindTransactionService {
     }
 
     @Override
-    public long getAllUnconfirmedTransactionsCount() {
-        return memPool.allProcessedCount();
-    }
-
-    @Override
     public Optional<Transaction> findTransaction(long transactionId, int height) {
         return Optional.ofNullable(transactionService.findTransactionCrossSharding(transactionId, height));
     }
