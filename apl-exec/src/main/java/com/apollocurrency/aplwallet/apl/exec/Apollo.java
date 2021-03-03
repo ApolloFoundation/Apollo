@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
-import com.apollocurrency.aplwallet.apl.core.utils.LegacyDbUtil;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
@@ -137,34 +136,39 @@ public class Apollo {
         return res;
     }
 
-    public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars, CustomDirLocations customDirLocations) {
-        return new PredefinedDirLocations(
-            customDirLocations.getDbDir().isEmpty() ? StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir : customDirLocations.getDbDir().get(),
-            StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
-            customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
-            StringUtils.isBlank(args.pidFile) ? vars.pidFile : args.pidFile,
-            StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
-            StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir,
-            StringUtils.isBlank(args.dexKeystoreDir) ? vars.dexKeystoreDir : args.dexKeystoreDir
-        );
+//    public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars, CustomDirLocations customDirLocations) {
+//        return new PredefinedDirLocations(
+//            customDirLocations.getDbDir().isEmpty() ? StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir : customDirLocations.getDbDir().get(),
+//            StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
+//            customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
+//            StringUtils.isBlank(args.pidFile) ? vars.pidFile : args.pidFile,
+//            StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
+//            StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir,
+//            StringUtils.isBlank(args.dexKeystoreDir) ? vars.dexKeystoreDir : args.dexKeystoreDir
+//        );
+//    }
+//    
+
+/**
+ * Merge command line argumentsm environment variables and properties from config files
+ * into one set of properties. Precedence: command line, environment vars, configs.
+ * It means that command line can overwrite env vars and configs
+ * @param args parsed command line arguments
+ * @param vars parsed environment variables
+ * @param props parsed application config files
+ * @return properties, reqady to use in the application
+ */    
+    public static Properties merge(CmdLineArgs args, EnvironmentVariables vars, Properties props){
+        //TODO: implement
+        return props;
     }
     
+ //TODO: check this piece of art   
     public static void setSystemProperties(CmdLineArgs args){
         System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
         System.setProperty("javax.net.ssl.trustStore", "cacerts");
         System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
         System.setProperty("javax.net.ssl.trustStoreType", "JKS");        
-    }
-
-    private static String getCustomDbPath(UUID chainId, Properties properties) { //maybe better to set dbUrl or add to dirProvider
-        String customDbDir = properties.getProperty(CustomDirLocations.DB_DIR_PROPERTY_NAME);
-        if (customDbDir != null) {
-            Path legacyHomeDir = LegacyDbUtil.getLegacyHomeDir();
-            Path customDbPath = legacyHomeDir.resolve(customDbDir).resolve(chainId.toString().substring(0, 6)).normalize();
-            System.out.println("Using custom db path " + customDbPath.toAbsolutePath().toString());
-            return customDbPath.toAbsolutePath().toString();
-        }
-        return null;
     }
 
     private void initUpdater(String attachmentFilePath, boolean debug, PropertiesHolder propertiesHolder) {
@@ -296,17 +300,13 @@ public class Apollo {
         if (args.noShardCreate != null) {
             applicationProperties.setProperty("apl.noshardcreate", "" + args.noShardCreate);
         }
-//TODO: check this piece of art
-        CustomDirLocations customDirLocations = new CustomDirLocations(
-                getCustomDbPath(chainId, applicationProperties), 
-                applicationProperties.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME)
-        );
-
-        DirProviderFactory.setup(args.serviceMode, 
-                chainId, 
-                Constants.APPLICATION_DIR_NAME, 
-                merge(args, envVars, customDirLocations)
-        );
+       
+        DirProviderFactory.setup( args.serviceMode, 
+                                  chainId, 
+                                  Constants.APPLICATION_DIR_NAME, 
+                                  new PredefinedDirLocations(merge(args,envVars,applicationProperties))
+                                );
+        
         
         dirProvider = DirProviderFactory.getProvider();
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);

@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
+import java.util.Properties;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -13,7 +14,7 @@ class PredefinedDirLocationsTest {
 
     @Test
     void createWithNulls() {
-        PredefinedDirLocations locations = new PredefinedDirLocations();
+        PredefinedDirLocations locations = new PredefinedDirLocations(new Properties());
         assertNull(locations.getDbDir());
         assertNull(locations.getLogsDir());
         assertNull(locations.getPidFilePath());

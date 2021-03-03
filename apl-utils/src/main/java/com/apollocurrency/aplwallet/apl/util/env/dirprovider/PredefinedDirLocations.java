@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Properties;
 
 
 public class PredefinedDirLocations {
@@ -20,9 +21,13 @@ public class PredefinedDirLocations {
     private Path twoFactorAuthDir;
     private Path dataExportDir; // path to keep exported CSV files
 
-    public PredefinedDirLocations() {
-        this(null, null, null, null, null, null, null);
+    public PredefinedDirLocations(Properties properties){
+        
     }
+    
+//    public PredefinedDirLocations() {
+//        this(null, null, null, null, null, null, null);
+//    }
 
     public PredefinedDirLocations(String dbDir, String logsDir, String vaultKeystoreDir, String pidFilePath,
                                   String twoFactorAuthDir, String dataExportDir, String dexStorage) {
