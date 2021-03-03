@@ -9,7 +9,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class TrimConfig {
+public class TrimEventCommand {
     private boolean enableTrim;
     private boolean clearTrimQueue;
 }

@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -33,7 +33,7 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
 
     @Override
     void validatePreviousHash(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
-        blockchain.getOrLoadTransactions(previousBlock);
+        blockchain.loadBlockData(previousBlock);
         if (!Arrays.equals(Crypto.sha256().digest(((BlockImpl) previousBlock).bytes()),
             block.getPreviousBlockHash())) {
             if (log.isTraceEnabled()) {

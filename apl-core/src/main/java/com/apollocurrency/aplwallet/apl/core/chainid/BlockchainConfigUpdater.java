@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.chainid;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -16,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Optional;
 
 /**
  * <p>To provide height-based config changing as described in conf/chains.json it used special listener that, depending
@@ -32,8 +31,8 @@ import java.util.Optional;
 @Singleton
 public class BlockchainConfigUpdater {
 
-    private BlockDao blockDao;
-    private BlockchainConfig blockchainConfig;
+    private final BlockDao blockDao;
+    private final BlockchainConfig blockchainConfig;
     private Chain chain;
 
     @Inject
@@ -77,10 +76,6 @@ public class BlockchainConfigUpdater {
         if (currentConfig != null && latestConfig != null && currentConfig.getHeight() != latestConfig.getHeight()) {
             log.debug("Update to config '{}' at height {}", latestConfig.getHeight(), height);
             blockchainConfig.setCurrentConfig(latestConfig);
-        }
-        if (latestConfig != null) { // update previous config
-            Optional<HeightConfig> previousConfig = blockchainConfig.getPreviousConfigByHeight(latestConfig.getHeight());
-            blockchainConfig.setPreviousConfig(previousConfig);
         }
     }
 

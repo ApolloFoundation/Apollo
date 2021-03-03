@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
@@ -18,7 +19,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -33,6 +33,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_HEIGHT;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_0_ID;
@@ -346,6 +347,20 @@ class BlockDaoTest extends DbContainerBaseTest {
         inTransaction(extension, (con) -> blockDao.commit(td.BLOCK_5.getId()));
         BlockEntity block = blockDao.findBlock(td.BLOCK_5.getId(), extension.getDatabaseManager().getDataSource());
         assertEquals(0, block.getNextBlockId());
+    }
+
+    @Test
+    void testBlocksAfter() {
+        List<BlockEntity> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_8.getHeight(), 3);
+
+        assertEquals(List.of(td.BLOCK_9, td.BLOCK_10, td.BLOCK_11).stream().map(new BlockModelToEntityConverter()).collect(Collectors.toList()), blocksAfter);
+    }
+
+    @Test
+    void testBlocksAfter_fetchNothing() {
+        List<BlockEntity> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_13.getHeight(), 1000);
+
+        assertEquals(List.of(), blocksAfter);
     }
 
 }

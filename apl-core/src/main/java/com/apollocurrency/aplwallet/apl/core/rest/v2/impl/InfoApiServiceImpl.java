@@ -59,10 +59,11 @@ public class InfoApiServiceImpl implements InfoApiService {
         blockchainState.setDecimals(blockchainConfig.getDecimals());
         Account account = accountService.getAccount(GenesisImporter.CREATOR_ID);
         blockchainState.setTotalSupply(blockchainConfig.getInitialSupply());
-        blockchainState.setBurning(
-            blockchainConfig.getInitialSupply() - Math.abs(account.getBalanceATM()) / blockchainConfig.getOneAPL()
-        );
-
+        if(account!=null){ //NPE when genesis  yet is loading
+            blockchainState.setBurning(
+                    blockchainConfig.getInitialSupply() - Math.abs(account.getBalanceATM()) / blockchainConfig.getOneAPL()
+            );
+        }
         return builder.bind(blockchainState).build();
     }
 
