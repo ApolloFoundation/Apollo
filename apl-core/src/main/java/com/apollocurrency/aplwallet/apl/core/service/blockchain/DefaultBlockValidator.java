@@ -33,7 +33,7 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
 
     @Override
     void validatePreviousHash(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
-        blockchain.getOrLoadTransactions(previousBlock);
+        blockchain.loadBlockData(previousBlock);
         if (!Arrays.equals(Crypto.sha256().digest(((BlockImpl) previousBlock).bytes()),
             block.getPreviousBlockHash())) {
             if (log.isTraceEnabled()) {

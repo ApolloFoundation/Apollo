@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
+import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import lombok.extern.slf4j.Slf4j;
@@ -18,13 +19,21 @@ import javax.enterprise.inject.Vetoed;
 @Slf4j
 @Vetoed
 public class PropertiesHolder {
-    private final Properties properties;
+    private Properties properties;
 
 /**
  * This is just for mocking in tests. Please do not use it in the real code
  */    
     public PropertiesHolder(){
         properties = new Properties();
+    }
+/**
+ * It is dangerous method but it is used in tests with CDI so we need to re-write 
+ * properties inside of holder
+ * @param properties to replacxe initial properties
+ */
+    public void init(Properties properties) {
+        this.properties = properties;
     }
     
     public PropertiesHolder(Properties properties) {
@@ -129,7 +138,7 @@ public class PropertiesHolder {
     }
 
     public int MAX_ROLLBACK() {
-        return Math.max(getIntProperty("apl.maxRollback"), 720);
+        return Math.max(getIntProperty("apl.maxRollback"), Constants.MAX_AUTO_ROLLBACK);
     }
 
     public int FORGING_DELAY() {
@@ -179,4 +188,5 @@ public class PropertiesHolder {
     public Properties getProperties() {
         return properties;
     }
+
 }

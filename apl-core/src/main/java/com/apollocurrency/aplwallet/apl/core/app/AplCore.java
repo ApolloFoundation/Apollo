@@ -35,6 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardingInitTaskBackgroundScheduler;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessingTaskScheduler;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
@@ -234,6 +235,7 @@ public final class AplCore {
             bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
             blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
             blockchain = CDI.current().select(BlockchainImpl.class).get();
+            blockchain.update();
             peers.init();
             GenesisAccounts.init();
 
@@ -256,6 +258,7 @@ public final class AplCore {
             CDI.current().select(PrunableArchiveMonitor.class).get();
             CDI.current().select(DexOperationService.class).get();
             CDI.current().select(TransactionProcessingTaskScheduler.class).get();
+            CDI.current().select(ShardingInitTaskBackgroundScheduler.class).get();
 
             //start all background tasks
             taskDispatchManager.dispatch();

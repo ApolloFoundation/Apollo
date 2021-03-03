@@ -163,6 +163,7 @@ public class PeersService {
     private final TransactionConverter transactionConverter;
     private final BlockConverter blockConverter;
 //    private final ExecutorService txSendingDispatcher;
+    private final PeerDb peerDb;
 
     @Inject
     public PeersService(PropertiesHolder propertiesHolder,
@@ -174,7 +175,8 @@ public class PeersService {
                         TimeLimiterService timeLimiterService,
                         AccountService accountService,
                         TransactionConverter transactionConverter,
-                        BlockConverter blockConverter) {
+                        BlockConverter blockConverter,
+                        PeerDb peerDb) {
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
         this.blockchain = blockchain;
@@ -186,11 +188,12 @@ public class PeersService {
         this.transactionConverter = transactionConverter;
         this.blockConverter = new BlockConverter(blockchain, transactionConverter, null, accountService);
         this.blockConverter.setAddTransactions(true);
+        this.peerDb = peerDb;
         int asyncTxSendingPoolSize = propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30);
 //        this.txSendingDispatcher = new ThreadPoolExecutor(5, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(asyncTxSendingPoolSize), new NamedThreadFactory("P2PTxSendingPool", true));
 
         this.sendingService = new TimeTraceDecoratedThreadPoolExecutor(10, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(1000), new NamedThreadFactory("PeersSendingService"));
-    isLightClient = propertiesHolder.isLightClient();
+        isLightClient = propertiesHolder.isLightClient();
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -283,7 +286,7 @@ public class PeersService {
         addListener(peer -> peersExecutorService.submit(() -> {
             if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
                 try {
-                    PeerDb.updatePeer((PeerImpl) peer);
+                    this.peerDb.updatePeer((PeerImpl) peer);
                 } catch (RuntimeException e) {
                     LOG.error("Unable to update peer database", e);
                 }
@@ -701,7 +704,7 @@ public class PeersService {
         Peer p = null;
         if (peer.getAnnouncedAddress() != null) {
             PeerDb.Entry entry = new PeerDb.Entry(peer.getAnnouncedAddress(), 0, 0);
-            PeerDb.deletePeer(entry);
+            this.peerDb.deletePeer(entry);
             if (connectablePeers.containsKey(peer.getAnnouncedAddress())) {
                 p = connectablePeers.remove(peer.getAnnouncedAddress());
             }
@@ -932,8 +935,11 @@ public class PeersService {
     }
 
     public BlockchainState getMyBlockchainState() {
-        checkBlockchainState();
         return currentBlockchainState;
+    }
+
+    public PeerDb getPeerDb() {
+        return peerDb;
     }
 
     public enum Event {

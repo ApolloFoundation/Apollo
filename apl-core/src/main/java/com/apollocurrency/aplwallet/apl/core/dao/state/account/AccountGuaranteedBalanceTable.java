@@ -62,7 +62,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable<AccountGuarant
     }
 
     @Override
-    public void trim(int height, boolean isSharding) {
+    public void trim(int height) {
         TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT)

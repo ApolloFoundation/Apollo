@@ -168,6 +168,7 @@ public class AccountPublicKeyServiceImpl implements AccountPublicKeyService {
 
     @Override
     public PublicKey insertPublicKey(PublicKey publicKey, boolean isGenesis) {
+        publicKey.setHeight(blockChainInfoService.getHeight());
         if (isGenesis) {
             publicKeyDao.insertGenesis(publicKey);
         } else {
