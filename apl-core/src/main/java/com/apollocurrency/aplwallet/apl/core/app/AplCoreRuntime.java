@@ -129,7 +129,7 @@ public class AplCoreRuntime {
         int cacheSize = memPool.getCachedUnconfirmedTxCount();
 
         if(memPoolSize > 0 ) {
-            sb.append("MemPool Info:\n");
+            sb.append("MemPool Info:  ");
             sb.append("Txs: ").append(memPoolSize).append(", ");
             sb.append("Cache size: ").append(cacheSize).append(", ");
             sb.append("Pending broadcast: ").append(memPool.pendingBroadcastQueueSize()).append(", ");
