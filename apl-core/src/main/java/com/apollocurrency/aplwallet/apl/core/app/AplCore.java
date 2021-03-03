@@ -83,7 +83,7 @@ public final class AplCore {
     DerivedTablesRegistry dbRegistry;
     //those vars needed to just pull CDI to crerate it befor we gonna use it in threads
     private AbstractBlockValidator bcValidator;
-    private TimeService time;
+    private final TimeService time;
     private Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
@@ -91,16 +91,12 @@ public final class AplCore {
     private API apiServer;
     private IDexMatcherInterface tcs;
     @Inject
-    @Setter
     private PropertiesHolder propertiesHolder;
     @Inject
-    @Setter
     private DirProvider dirProvider;
     @Inject
-    @Setter
     private AplAppStatus aplAppStatus;
     @Inject
-    @Setter
     private TaskDispatchManager taskDispatchManager;
 
     private String initCoreTaskID;
@@ -206,8 +202,9 @@ public final class AplCore {
             transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
             transportInteractionService.start();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 5.5, "Transport control service initialization done");
-
-            AplCoreRuntime.logSystemProperties();
+            AplHealthLogger healthLogger = CDI.current().select(AplHealthLogger.class).get();
+            healthLogger.logSystemProperties();
+            
             Thread secureRandomInitThread = initSecureRandom();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 6.0, "Database initialization");
 

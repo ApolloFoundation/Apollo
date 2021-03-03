@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -62,16 +63,23 @@ public class BlockchainConfigTest {
         10000L, 2,
             //"data.json",
         BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100));
+  
+    BlockchainConfig blockchainConfig  = new BlockchainConfig(chain, new PropertiesHolder());
+    private BlockDao blockDao = mock(BlockDao.class);   
     @Inject
-    BlockchainConfig blockchainConfig;
-    @Inject
-    BlockchainConfigUpdater blockchainConfigUpdater;
+    BlockchainConfigUpdater blockchainConfigUpdater; 
     @Inject
     Event<Block> blockEvent;
-    private BlockDao blockDao = mock(BlockDao.class);
+    
+
     @WeldSetup
     private WeldInitiator weld =
-        WeldInitiator.from(BlockchainConfig.class, BlockchainConfigUpdater.class).addBeans(MockBean.of(blockDao, BlockDao.class)).build();
+      //WAS:  
+      // WeldInitiator.from(BlockchainConfig.class, BlockchainConfigUpdater.class).addBeans(MockBean.of(blockDao, BlockDao.class)).build();
+      WeldInitiator.from(BlockchainConfigUpdater.class)
+              .addBeans(MockBean.of(blockDao, BlockDao.class))
+              .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
+              .build();
 
     @Test
     public void testInitBlockchainConfig() {
@@ -222,7 +230,9 @@ public class BlockchainConfigTest {
         Block block = mock(Block.class);
         Mockito.doReturn(100).when(block).getHeight();
         blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(block);
-        assertEquals(new HeightConfig(bp1, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
+        HeightConfig result = blockchainConfig.getCurrentConfig();
+        HeightConfig expected = new HeightConfig(bp1, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply());
+        assertEquals(expected, result);
     }
 
     @Test
@@ -231,8 +241,9 @@ public class BlockchainConfigTest {
         Block block = mock(Block.class);
         Mockito.doReturn(201).when(block).getHeight();
         blockEvent.select(literal(BlockEventType.BLOCK_POPPED)).fire(block);
-        assertEquals(new HeightConfig(bp2, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
-
+        HeightConfig result = blockchainConfig.getCurrentConfig();
+        HeightConfig expected = new HeightConfig(bp2, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply());
+        assertEquals(expected, result);
     }
 
     private AnnotationLiteral literal(BlockEventType blockEvent) {

@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
+import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.core.utils.LegacyDbUtil;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -32,8 +33,8 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,9 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +66,7 @@ public class Apollo {
     public static final String PID_FILE = "apl.pid";
     public static final String CMD_FILE = "apl.cmdline";
     public static final String APP_FILE = "apl.app";
-
+    public static final String APOLLO_MARIADB_INSTALL_DIR="apollo-mariadb";
     private static final List<String> SYSTEM_PROPERTY_NAMES = Arrays.asList(
         "socksProxyHost",
         "socksProxyPort",
@@ -74,12 +78,12 @@ public class Apollo {
     public static Path logDirPath = Paths.get("");
     public static RuntimeMode runtimeMode;
     public static DirProvider dirProvider;
+    //initially we do not have control over  MariaDB process, it could be startted externally or system-wide
+    public static MariaDbProcess mariaDbProcess = null;
     //We have dir provider configured in logback.xml so should init log later
     private static Logger log;
     private static AplContainer container;
     private static AplCoreRuntime aplCoreRuntime;
-    private PropertiesHolder propertiesHolder;
-    private TaskDispatchManager taskDispatchManager;
 
     private static void setLogLevel(int logLevel) {
         // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
@@ -144,13 +148,73 @@ public class Apollo {
             StringUtils.isBlank(args.dexKeystoreDir) ? vars.dexKeystoreDir : args.dexKeystoreDir
         );
     }
+    
+    public static void setSystemProperties(CmdLineArgs args){
+        System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
+        System.setProperty("javax.net.ssl.trustStore", "cacerts");
+        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+        System.setProperty("javax.net.ssl.trustStoreType", "JKS");        
+    }
 
+    private static String getCustomDbPath(UUID chainId, Properties properties) { //maybe better to set dbUrl or add to dirProvider
+        String customDbDir = properties.getProperty(CustomDirLocations.DB_DIR_PROPERTY_NAME);
+        if (customDbDir != null) {
+            Path legacyHomeDir = LegacyDbUtil.getLegacyHomeDir();
+            Path customDbPath = legacyHomeDir.resolve(customDbDir).resolve(chainId.toString().substring(0, 6)).normalize();
+            System.out.println("Using custom db path " + customDbPath.toAbsolutePath().toString());
+            return customDbPath.toAbsolutePath().toString();
+        }
+        return null;
+    }
+
+    private void initUpdater(String attachmentFilePath, boolean debug, PropertiesHolder propertiesHolder) {
+        if (!propertiesHolder.getBooleanProperty("apl.allowUpdates", false)) {
+            return;
+        }
+        UpdaterCore updaterCore = CDI.current().select(UpdaterCoreImpl.class).get();
+        updaterCore.init(attachmentFilePath, debug);
+    }
+
+    private static boolean checkDbWithJDBC(DbConfig conf){
+        boolean res = true;
+        DbProperties dbConfig = conf.getDbConfig();        
+        String dbURL = dbConfig.formatJdbcUrlString(true);
+        Connection conn;
+        try {
+            conn = DriverManager.getConnection(dbURL);
+            if(!conn.isValid(1)){
+                res = false;
+            }            
+        } catch (SQLException ex) {
+            res = false;
+        }
+
+        return res;
+    }
+
+    private static boolean checkOrRunDatabaseServer(DbConfig conf) {
+        boolean res = checkDbWithJDBC(conf);
+        //if we have connected to database URL from config, wha have nothing to do
+        if(!res){
+            // if we can not connect to databse, we'll try start it
+            // from Apollo package. If it is first start, data base data dir 
+            // will be initialized
+            Path dbDataDir = dirProvider.getDbDir();
+            Path dbInstalPath = DirProvider.getBinDir().getParent().resolve(APOLLO_MARIADB_INSTALL_DIR);
+            mariaDbProcess = new MariaDbProcess(conf,dbInstalPath,dbDataDir);
+            res = mariaDbProcess.startAndWaitWhenReady();
+        }
+        return res;
+    }
+    
     /**
      * @param argv the command line arguments
      */
     public static void main(String[] argv) {
         System.out.println("Initializing Apollo");
         Apollo app = new Apollo();
+
+//parse command line first
 
         CmdLineArgs args = new CmdLineArgs();
         JCommander jc = JCommander.newBuilder()
@@ -173,90 +237,105 @@ public class Apollo {
             jc.usage();
             System.exit(PosixExitCodes.OK.exitCode());
         }
-
+        
+       
+//set main application class to runtime
         RuntimeEnvironment.getInstance().setMain(Apollo.class);
-
-// We do not need it yet. this call creates unwanted error messages
-//        if(RuntimeEnvironment.getInstance().isAdmin()){
-//            System.out.println("==== RUNNING WITH ADMIN/ROOT PRIVILEGES! ====");
-//        }
-        System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
-
-        System.setProperty("javax.net.ssl.trustStore", "cacerts");
-        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
-        System.setProperty("javax.net.ssl.trustStoreType", "JKS");
-
-//cheat classloader to get access to package resources
+//set some important system properties        
+        setSystemProperties(args);
+//cheat classloader to get access to "conf" package resources
         ConfPlaceholder ph = new ConfPlaceholder();
+
+//--------------- config locading section -------------------------------------               
+
 //load configuration files
         EnvironmentVariables envVars = new EnvironmentVariables(Constants.APPLICATION_DIR_NAME);
+        
         String configDir = StringUtils.isBlank(args.configDir) ? envVars.configDir : args.configDir;
-
         ConfigDirProviderFactory.setup(args.serviceMode, Constants.APPLICATION_DIR_NAME, args.netIdx, args.chainId, configDir);
-
         ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
-
-// Well, we can not resolve chainID for given parameters and therefor can not read configs. We have to exit program
+//save command line params and PID
+        if (!saveStartParams(argv, args.pidFile, configDirProvider)) {
+            System.exit(PosixExitCodes.EX_CANTCREAT.exitCode());
+        } 
+        
+// Well, we can not resolve chainID we have to run with from given parameters 
+// and therefore can not read configs. We have to exit program
         if (configDirProvider.getChainId() == null) {
+            System.err.println("ERROR: Can not resolve chain ID to run with from given command line arguments of configs!");
             System.exit(PosixExitCodes.EX_CONFIG.exitCode());
         }
-
+        
+//load configuration files        
         PropertiesConfigLoader propertiesLoader = new PropertiesConfigLoader(
             configDirProvider,
             args.isResourceIgnored(),
             configDir,
             Constants.APPLICATION_DIR_NAME + ".properties",
             SYSTEM_PROPERTY_NAMES);
+        
+// load everuthing into applicationProperies. This is the place where all configuration
+// is collected from configs, command line and environment variables
+        Properties applicationProperties = propertiesLoader.load();
 
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
             configDirProvider,
             configDir,
             args.isResourceIgnored()
         );
-// init application data dir provider
-
+        
+// init chains configurations by loading chains.json file
         Map<UUID, Chain> chains = chainsConfigLoader.load();
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
-        Properties props = propertiesLoader.load();
+
 //over-write config options from command line if set
+
         if (args.noShardImport != null) {
-            props.setProperty("apl.noshardimport", "" + args.noShardImport);
+            applicationProperties.setProperty("apl.noshardimport", "" + args.noShardImport);
         }
         if (args.noShardCreate != null) {
-            props.setProperty("apl.noshardcreate", "" + args.noShardCreate);
+            applicationProperties.setProperty("apl.noshardcreate", "" + args.noShardCreate);
         }
+//TODO: check this piece of art
+        CustomDirLocations customDirLocations = new CustomDirLocations(
+                getCustomDbPath(chainId, applicationProperties), 
+                applicationProperties.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME)
+        );
 
-        CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
-
-        DirProviderFactory.setup(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
+        DirProviderFactory.setup(args.serviceMode, 
+                chainId, 
+                Constants.APPLICATION_DIR_NAME, 
+                merge(args, envVars, customDirLocations)
+        );
+        
         dirProvider = DirProviderFactory.getProvider();
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
-        //init logging
+        
+//init logging
         logDirPath = dirProvider.getLogsDir().toAbsolutePath();
         log = LoggerFactory.getLogger(Apollo.class);
         if (args.debug != CmdLineArgs.DEFAULT_DEBUG_LEVEL) {
             setLogLevel(args.debug);
         }
 
-//check webUI
-        System.out.println("=== Bin directory is: " + DirProvider.getBinDir().toAbsolutePath());
-        /* at the moment we do it in build time
+        System.out.println("=== INFO: Bin directory of apollo-blockchain is: " + DirProvider.getBinDir().toAbsolutePath()+" ===");
 
-        Future<Boolean> unzipRes;
-        WebUiExtractor we = new WebUiExtractor(dirProvider);
-        ExecutorService execService = Executors.newFixedThreadPool(1);
-        unzipRes = execService.submit(we);
-         */
-
+// runtimeMode could be user or service. It is also different for Unix and Windows
         runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
         runtimeMode.init(); // instance is NOT PROXIED by CDI !!
 
-        //save command line params and PID
-        if (!saveStartParams(argv, args.pidFile, configDirProvider)) {
-            System.exit(PosixExitCodes.EX_CANTCREAT.exitCode());
+// check running or run data base server process. 
+        
+        DbConfig dbConfig = new DbConfig(new PropertiesHolder(applicationProperties), new ChainsConfigHolder(chains));
+        if(!checkOrRunDatabaseServer(dbConfig)){
+            System.err.println(" ERROR! MariaDB process is not running and can not be started from Apollo!");
+            System.err.println(" Please install apollo-mariadb package at the same directory level as apollo-blockchain package.");
+            System.exit(PosixExitCodes.EX_SOFTWARE.exitCode());
         }
+        
+//-------------- now bring CDI container up! -------------------------------------
 
-        //Configure CDI Container builder
+//Configure CDI Container builder and start CDI container. From now all things must go CDI way
         AplContainerBuilder aplContainerBuilder = AplContainer.builder().containerId("MAIN-APL-CDI")
             // do not use recursive scan because it violates the restriction to
             // deploy one bean for all deployment archives
@@ -269,7 +348,9 @@ public class Apollo {
         //TODO:  turn it on periodically in development process to check CDI errors
         // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/
         // run with ./bin/apl-run-jmx.sh
+        //
         // aplContainerBuilder.devMode();
+        //
         //!!!!!!!!!!!!!!!
 
         if (args.disableWeldConcurrentDeployment) {
@@ -282,34 +363,41 @@ public class Apollo {
         container = aplContainerBuilder.build();
 
         log.debug("Weld CDI container build done");
-        // init config holders
-        app.propertiesHolder = CDI.current().select(PropertiesHolder.class).get();
-        app.propertiesHolder.init(props);
-        if (log != null) {
-            log.trace("{}", app.propertiesHolder.dumpAllProperties()); // dumping all properties
-        }
-        app.taskDispatchManager = CDI.current().select(TaskDispatchManager.class).get();
-        ChainsConfigHolder chainsConfigHolder = CDI.current().select(ChainsConfigHolder.class).get();
-        chainsConfigHolder.setChains(chains);
+        
+// ------------------- NOW CDI is up and running, we have feed our configs to beans  
+
+//aplCoreRuntime is the producer for all config holders, initing it with configs
+
+        aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
+        
+        
+        aplCoreRuntime.init(runtimeMode, dirProvider, applicationProperties, chains);
+
+        
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
-        blockchainConfigUpdater.updateChain(chainsConfigHolder.getActiveChain(), app.propertiesHolder);
-        dirProvider = CDI.current().select(DirProvider.class).get();
+        blockchainConfigUpdater.updateChain(aplCoreRuntime.getChainsConfigHolder().getActiveChain(), aplCoreRuntime.getPropertieHolder());
+        
+        
         // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
         SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
-        aplCoreRuntime.init(runtimeMode, app.taskDispatchManager);
-
+       
+        if (log != null) {
+            log.trace("{}",aplCoreRuntime.getPropertieHolder().dumpAllProperties()); // dumping all properties
+        }
+        
         try {
             // updated shutdown hook explicitly created with instances
             Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime));
             aplCoreRuntime.addCoreAndInit();
-            app.initUpdater(args.updateAttachmentFile, args.debugUpdater);
+            app.initUpdater(args.updateAttachmentFile, args.debugUpdater, aplCoreRuntime.getPropertieHolder());
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();
         }
     }
+    
 
     public static void shutdownWeldContainer() {
         try {
@@ -319,23 +407,5 @@ public class Apollo {
         }
     }
 
-    private static String getCustomDbPath(UUID chainId, Properties properties) { //maybe better to set dbUrl or add to dirProvider
-        String customDbDir = properties.getProperty(CustomDirLocations.DB_DIR_PROPERTY_NAME);
-        if (customDbDir != null) {
-            Path legacyHomeDir = LegacyDbUtil.getLegacyHomeDir();
-            Path customDbPath = legacyHomeDir.resolve(customDbDir).resolve(chainId.toString().substring(0, 6)).normalize();
-            System.out.println("Using custom db path " + customDbPath.toAbsolutePath().toString());
-            return customDbPath.toAbsolutePath().toString();
-        }
-        return null;
-    }
-
-    private void initUpdater(String attachmentFilePath, boolean debug) {
-        if (!propertiesHolder.getBooleanProperty("apl.allowUpdates", false)) {
-            return;
-        }
-        UpdaterCore updaterCore = CDI.current().select(UpdaterCoreImpl.class).get();
-        updaterCore.init(attachmentFilePath, debug);
-    }
 
 }

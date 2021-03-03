@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
@@ -15,11 +16,13 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.UUID;
+import java.util.regex.Matcher;
+
 
 @Singleton
 public class DbConfig {
-    private PropertiesHolder propertiesHolder;
-    private ChainsConfigHolder chainsConfigHolder;
+    private final PropertiesHolder propertiesHolder;
+    private final ChainsConfigHolder chainsConfigHolder;
 
     @Inject
     public DbConfig(PropertiesHolder propertiesHolder, ChainsConfigHolder chainsConfigHolder) {
@@ -33,7 +36,7 @@ public class DbConfig {
         DirProvider dp = RuntimeEnvironment.getInstance().getDirProvider();
         UUID chainId = chainsConfigHolder.getActiveChain().getChainId();
 
-        return DbProperties.builder()
+        DbProperties dbProperties =  DbProperties.builder()
             .dbType(propertiesHolder.getStringProperty("apl.dbType"))
             .dbUrl(propertiesHolder.getStringProperty("apl.dbUrl"))
             .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "./unit-test-db") // for unit tests
@@ -49,5 +52,11 @@ public class DbConfig {
             .databaseHost(propertiesHolder.getStringProperty("apl.databaseHost"))
             .databasePort(propertiesHolder.getIntProperty("apl.databasePort"))
             .build();
+        if (StringUtils.isBlank(dbProperties.getSystemDbUrl())) {
+            String systemDbUrl = dbProperties.formatJdbcUrlString( true);
+            dbProperties.setSystemDbUrl(systemDbUrl);
+        } 
+       
+        return dbProperties;
     }
 }

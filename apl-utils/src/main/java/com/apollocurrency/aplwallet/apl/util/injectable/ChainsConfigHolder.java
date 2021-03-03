@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
-import javax.enterprise.inject.Vetoed;
 
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainUtils;
 
 import java.util.Map;
 import java.util.UUID;
+import javax.enterprise.inject.Vetoed;
 
 /**
  * Holds all available chains
