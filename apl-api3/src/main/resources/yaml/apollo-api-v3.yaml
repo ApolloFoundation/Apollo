@@ -41,25 +41,25 @@ paths:
           schema:
             type: string
             format: hex_bytearray
-            example: '1aa130eb6043151ad6040f16701 or APL-X5JH-TJKJ-DVGC-5T2V8 or 12345225623123111'
-        - name: includeAssets
+            example: '0x1aa130eb6043151ad6040f16701 or APL-X5JH-TJKJ-DVGC-5T2V8 or 12345225623123111'
+        - name: includeAssetsCount
           in: query
           schema:
             type: boolean
             default: false
-          description: include asserts to the response
-        - name: includeCurrencies
+          description: include asserts to count the response
+        - name: includeUnconfermedAssetsCount
           in: query
           schema:
             type: boolean
             default: false
-          description: include currencies to the response
-        - name: includeLessors
+          description: include unconfermed asserts count to the response
+        - name: includeCurrenciesCount
           in: query
           schema:
             type: boolean
             default: false
-          description: include lessors to the response
+          description: include currencies count to the response
       responses:
         200:
           description: successful operation
@@ -67,6 +67,87 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AccountInfoResp'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@account/assets/{accountId}:
+    get:
+      tags:
+        - blockchain
+      summary: Returns the account assets
+      operationId: getAccountAssets
+      parameters:
+        - name: accountId
+          in: path
+          description: The account id
+          required: true
+          schema:
+            type: string
+            format: hex_bytearray
+            example: '0x1aa130eb6043151ad6040f16701 or APL-X5JH-TJKJ-DVGC-5T2V8 or 12345225623123111'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountAssetsResp'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@account/unconfermed_assets/{accountId}:
+    get:
+      tags:
+        - blockchain
+      summary: Returns the account unconfermed assets
+      operationId: getAccountUnconfermedAssets
+      parameters:
+        - name: accountId
+          in: path
+          description: The account id
+          required: true
+          schema:
+            type: string
+            format: hex_bytearray
+            example: '0x1aa130eb6043151ad6040f16701 or APL-X5JH-TJKJ-DVGC-5T2V8 or 12345225623123111'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountAssetsResp'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@account/currencies/{accountId}:
+    get:
+      tags:
+        - blockchain
+      summary: Returns the account currencies
+      operationId: getAccountCurrencies
+      parameters:
+        - name: accountId
+          in: path
+          description: The account id
+          required: true
+          schema:
+            type: string
+            format: hex_bytearray
+            example: '0x1aa130eb6043151ad6040f16701 or APL-X5JH-TJKJ-DVGC-5T2V8 or 12345225623123111'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountCurrenciesResp'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -88,7 +169,7 @@ paths:
           schema:
             type: string
             format: hex_bytearray
-            example: '1aa130eb6043151ad6040f16701'
+            example: '0x1aa130eb6043151ad6040f16701 or 123123123123123124'
       responses:
         200:
           description: successful operation
@@ -111,12 +192,12 @@ paths:
       description: Return the detail information about transactions by filter.
       parameters:
         - in: query
-          name: account
+          name: accountId
           description: The account id
           schema:
             type: string
             format: hex_bytearray
-            example: '1aa130eb6043151ad6040f16701 or APL-X5JH-TJKJ-DVGC-5T2V8 or 12345225623123111'
+            example: '0x1aa130eb6043151ad6040f16701 or APL-X5JH-TJKJ-DVGC-5T2V8 or 12345225623123111'
 
         - in: query
           name: txIds
@@ -126,7 +207,7 @@ paths:
             items:
               type: string
               format: hex_bytearray
-              example: '1aa130eb6043151ad6040f16701 or APL-X5JH-TJKJ-DVGC-5T2V8 or 12345225623123111'
+              example: '0x1aa130eb6043151ad6040f16701 or 12345225623123111'
 
         - in: query
           name: type
@@ -190,27 +271,6 @@ paths:
         - in: query
           name: nonPhasedOnly
           description: show only non phased transactions
-          schema:
-            type: boolean
-            default: false
-
-        - in: query
-          name: includeExpiredPrunable
-          description: include transactions with expired prunables
-          schema:
-            type: boolean
-            default: false
-
-        - in: query
-          name: includePhasingResult
-          description: include transactions with phasing results
-          schema:
-            type: boolean
-            default: false
-
-        - in: query
-          name: executedOnly
-          description: show only executed transactions
           schema:
             type: boolean
             default: false
@@ -259,127 +319,6 @@ paths:
           description: Not authenticated
         403:
           description: Access token does not have the required scope
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-
-  /@@transactions/count:
-    get:
-      tags:
-        - blockchain
-      summary: Count transactions following given filter.
-      operationId: countTxsByFilter
-      description: Count transactions by filter.
-      parameters:
-        - in: query
-          name: account
-          description: The account id
-          schema:
-            type: array
-            items:
-              type: string
-              format: hex_bytearray
-              example: '1aa130eb6043151ad6040f16701 or APL-X5JH-TJKJ-DVGC-5T2V8 or 12345225623123111'
-
-        - in: query
-          name: type
-          description: |
-            The transaction type, it's an optional parameter and can be missed or specified negative value to avoid
-            filtering by that criteria.
-              There are eleven types
-                PAYMENT = 0;
-                MESSAGING = 1;
-                COLORED_COINS = 2;
-                DIGITAL_GOODS = 3;
-                ACCOUNT_CONTROL = 4;
-                MONETARY_SYSTEM = 5;
-                DATA = 6;
-                SHUFFLING = 7;
-                UPDATE = 8;
-                DEX = 9;
-                CHILD_ACCOUNT = 10;
-          schema:
-            type: string
-            format: int8
-            example: '2'
-
-        - in: query
-          name: subtype
-          description: Transaction subtype
-          schema:
-            type: string
-            format: int8
-            example: '2'
-
-        - in: query
-          name: timestamp
-          description: Show transactions with tx_timestamp >= timestamp
-          schema:
-            type: integer
-            format: int64
-            example: 1591696372000
-
-        - in: query
-          name: numberOfConfirmations
-          description: the number of transaction confirmations
-          schema:
-            type: integer
-            format: int32
-
-        - in: query
-          name: withMessage
-          description: show transaction with message
-          schema:
-            type: boolean
-            default: false
-
-        - in: query
-          name: phasedOnly
-          description: show only phased transactions
-          schema:
-            type: boolean
-            default: false
-
-        - in: query
-          name: nonPhasedOnly
-          description: show only non phased transactions
-          schema:
-            type: boolean
-            default: false
-
-        - in: query
-          name: includeExpiredPrunable
-          description: include transactions with expired prunables
-          schema:
-            type: boolean
-            default: false
-
-        - in: query
-          name: includePhasingResult
-          description: include transactions with phasing results
-          schema:
-            type: boolean
-            default: false
-
-        - in: query
-          name: executedOnly
-          description: show only executed transactions
-          schema:
-            type: boolean
-            default: false
-
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/limitParam'
-        - $ref: '#/components/parameters/orderBy'
-
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionCountResponse'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -673,14 +612,53 @@ paths:
           schema:
             type: string
             format: hex_bytearray
-            example: '1a0feb1043151604016701'
+            example: '0x1a0feb1043151604016701 OR 1231244876873'
       responses:
         200:
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BlockInfo'
+                $ref: '#/components/schemas/BlockInfoResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@blocks:
+    get:
+      tags:
+        - blockchain
+      summary: Get list of blocks
+      description: Return details information about the list of blocks by given criterias.
+      operationId: getBlocks
+      parameters:
+        - in: query
+          name: blockId
+          description: The block ids
+          schema:
+            type: array
+            items:
+              type: string
+              format: hex_bytearray
+              example: '0x1aa130eb6043151ad6040f16701 or 12345225623123111'
+        - in: query
+          name: height
+          description: The block heights
+          schema:
+            type: array
+            items:
+              type: string
+              format: int64
+              example: '4315161'
+
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockInfoListResponse'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -775,7 +753,7 @@ components:
           description: The transaction ID
           type: string
           format: hex_bytearray
-          example: '1a0feb1306043151604016701'
+          example: '0x1a0feb1306043151604016701 OR 123123137876801'
         type:
           description: Transaction type
           type: string
@@ -815,7 +793,7 @@ components:
         recipient:
           type: string
           description: The account Id of the recipient
-          example: 'APL-FXHG-6KHM-23LE-42ACU'
+          example: '0x1aa130eb6043151ad6040f16701'
         amount:
           type: string
           format: integer
@@ -855,7 +833,7 @@ components:
         sender:
           type: string
           description: The sender account
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+          example: '0x1aa130eb6043151ad6040f16701'
         height:
           type: integer
           format: int64
@@ -870,7 +848,7 @@ components:
           type: string
           format: hex_bytearray
           description: The economic clustering block ID
-          example: '40faaeb15856251679437054'
+          example: '0x40faaeb15856251679437054'
         ecBlockHeight:
           type: integer
           format: int64
@@ -880,7 +858,7 @@ components:
           type: string
           format: hex_bytearray
           description: The block id
-          example: '230aeb0f4585625167943'
+          example: '0x230aeb0f4585625167943'
         confirmations:
           type: integer
           format: int32
@@ -910,91 +888,105 @@ components:
           format: int64
           example: 345
 
-    BlockInfo:
+    BlockInfoResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/BlockInfo'
+
+    BlockInfoListResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object
           properties:
-            id:
-              type: string
-              format: hex_bytearray
-              example: '1130faaeb604315160401'
-            blockSignature:
-              type: string
-              format: hex_bytearray
-              example: 'ff080e64436603df0c3b9a5b792b03a26725a83bbe6aa46eb7eed9ee83707f071b6d529d09be1f2594c6f8545c2772a091896bc808553c1774e39a41248b1e1c'
-            height:
-              type: integer
-              format: int64
-              example: 1319854
-            generator:
-              type: string
-              example: 'APL-FXHG-6KHM-23LE-42ACU'
-            generationSignature:
-              type: string
-              format: hex_bytearray
-              example: '60e598f6276371119720786b05e507cd628665473b24c8f76de436d99cf113f7'
-            generatorPublicKey:
-              type: string
-              format: hex_bytearray
-              example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
-            timestamp:
-              type: integer
-              format: int64
-              description: Block timestamp, Unix timestamp in milliseconds
-              example: 1591696372000
-            timeout:
-              type: integer
-              format: int32
-              example: 1
-            version:
-              description: The block version
-              type: integer
-              format: int32
-              example: 6
-            baseTarget:
-              type: string
-              example: '7686143350'
-            cumulativeDifficulty:
-              type: string
-              format: integer
-              example: '8728234277524822'
-            previousBlock:
-              description: Prev block id
-              type: string
-              format: hex_bytearray
-              example: '80faaeb4787337264514'
-            previousBlockHash:
-              type: string
-              format: hex_bytearray
-              example: '5b8ba14eaebba8cdc682c946947f5352a596d00ac63c4e616785d00cf8b8e016'
-            nextBlock:
-              description: Next block id
-              type: string
-              format: hex_bytearray
-              example: '140faaeb81930093118053'
-            payloadHash:
-              type: string
-              format: hex_bytearray
-              description: Hash of the paylod (all transactions)
-              example: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
-            payloadLength:
-              description: The length in bytes of all transactions
-              type: integer
-              format: int32
-              example: 523423
-            numberOfTransactions:
-              type: integer
-              format: int32
-              example: 14
-            totalAmountATM:
-              type: string
-              format: integer
-              example: '569000000000000'
-            totalFeeATM:
-              type: string
-              format: integer
-              example: '2800000000'
+            blocksInfo:
+              description: "List of blocks"
+              type: array
+              items:
+                $ref: '#/components/schemas/BlockInfo'
+
+    BlockInfo:
+        type: object
+        properties:
+          id:
+            type: string
+            format: hex_bytearray
+            example: '0x1130faaeb604315160401'
+          blockSignature:
+            type: string
+            format: hex_bytearray
+            example: 'ff080e64436603df0c3b9a5b792b03a26725a83bbe6aa46eb7eed9ee83707f071b6d529d09be1f2594c6f8545c2772a091896bc808553c1774e39a41248b1e1c'
+          height:
+            type: integer
+            format: int64
+            example: 1319854
+          generator:
+            type: string
+            example: '0x1aa130eb6043151ad6040f16701'
+          generationSignature:
+            type: string
+            format: hex_bytearray
+            example: '60e598f6276371119720786b05e507cd628665473b24c8f76de436d99cf113f7'
+          generatorPublicKey:
+            type: string
+            format: hex_bytearray
+            example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+          timestamp:
+            type: integer
+            format: int64
+            description: Block timestamp, Unix timestamp in milliseconds
+            example: 1591696372000
+          timeout:
+            type: integer
+            format: int32
+            example: 1
+          version:
+            description: The block version
+            type: integer
+            format: int32
+            example: 6
+          baseTarget:
+            type: string
+            example: '7686143350'
+          cumulativeDifficulty:
+            type: string
+            format: integer
+            example: '8728234277524822'
+          previousBlock:
+            description: Prev block id
+            type: string
+            format: hex_bytearray
+            example: '0x80faaeb4787337264514'
+          previousBlockHash:
+            type: string
+            format: hex_bytearray
+            example: '5b8ba14eaebba8cdc682c946947f5352a596d00ac63c4e616785d00cf8b8e016'
+          nextBlock:
+            description: Next block id
+            type: string
+            format: hex_bytearray
+            example: '0x140faaeb81930093118053'
+          payloadHash:
+            type: string
+            format: hex_bytearray
+            description: Hash of the paylod (all transactions)
+            example: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+          payloadLength:
+            description: The length in bytes of all transactions
+            type: integer
+            format: int32
+            example: 523423
+          numberOfTransactions:
+            type: integer
+            format: int32
+            example: 14
+          totalAmountATM:
+            type: string
+            format: integer
+            example: '569000000000000'
+          totalFeeATM:
+            type: string
+            format: integer
+            example: '2800000000'
     BlockchainInfo:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
@@ -1034,12 +1026,12 @@ components:
             genesisAccount:
               type: string
               format: hex_bytearray
-              example: '90001259ec21d31a30898d7'
+              example: '0x90001259ec21d31a30898d7'
             genesisBlockId:
               type: string
               format: hex_bytearray
               description: Genesis block ID
-              example: '15856251679437054149169000'
+              example: '0x15856251679437054149169000'
             timestamp:
               type: integer
               format: int64
@@ -1073,7 +1065,7 @@ components:
           nullable: false
         accountId:
           type: string
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+          example: '0x1aa130eb6043151ad6040f16701'
           description: Account id
           nullable: false
 
@@ -1085,13 +1077,13 @@ components:
     AccountInfo:
       type: object
       required:
-        - account
+        - accountId
         - publicKey
       properties:
-        account:
+        accountId:
           type: string
           format: hex_bytearray
-          example: '2aa130eb6043151ad6040f16701'
+          example: '0x2aa130eb6043151ad6040f16701'
         publicKey:
           description: The account public key in a hex string format
           type: string
@@ -1100,7 +1092,7 @@ components:
         parent:
           type: string
           format: hex_bytearray
-          example: '3aa130eb6043151ad6040f16701'
+          example: '0x3aa130eb6043151ad6040f16701'
           nullable: true
         balance:
           type: string
@@ -1120,18 +1112,40 @@ components:
             - created
             - verified
           example: created
-        assetBalances:
-          type: array
-          items:
-            $ref: '#/components/schemas/AssetBalance'
-        unconfirmedAssetBalances:
-          type: array
-          items:
-            $ref: '#/components/schemas/AssetBalance'
-        currencies:
-          type: array
-          items:
-            $ref: '#/components/schemas/Currency'
+        assetBalancesCount:
+          type: integer
+          format: int8
+          example: 25
+        unconfirmedAssetBalancesCount:
+          type: integer
+          format: int8
+          example: 25
+        currenciesCount:
+          type: integer
+          format: int8
+          example: 25
+
+    AccountAssetsResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            assets:
+              description: "List of account assets"
+              type: array
+              items:
+                $ref: '#/components/schemas/AssetBalance'
+
+    AccountCurrenciesResp:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            currencies:
+              description: "List of account currencies"
+              type: array
+              items:
+                $ref: '#/components/schemas/Currency'
 
     AssetBalance:
       type: object
@@ -1140,7 +1154,7 @@ components:
           type: string
           format: hex_bytearray
           description: Asset id
-          example: 'a2e9b946290b48b69985dc2e5a5860a1'
+          example: '0xa2e9b946290b48b69985dc2e5a5860a1'
         balance:
           type: integer
           format: int64
@@ -1154,11 +1168,11 @@ components:
           type: string
           format: hex_bytearray
           description: Currency id
-          example: 'a2e9b946290b48b69985dc2e5a5860a1'
+          example: '0xa2e9b946290b48b69985dc2e5a5860a1'
 
-        account:
+        accountId:
           type: string
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+          example: '0x1aa130eb6043151ad6040f16701'
 
         balance:
           type: integer
@@ -1200,7 +1214,7 @@ components:
           example: 0
         issuerAccount:
           type: string
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+          example: '0x1aa130eb6043151ad6040f16701'
 
     X509Response:
       allOf:
@@ -1244,7 +1258,7 @@ components:
               items:
                 type: string
                 format: hex_bytearray
-                example: '8330faaeb404178613417'
+                example: '0x8330faaeb404178613417'
 
     ForgersInfoResponse:
       allOf:
@@ -1260,9 +1274,9 @@ components:
     ForgerInfo:
       type: object
       properties:
-        account:
+        accountId:
           type: string
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+          example: '0x1aa130eb6043151ad6040f16701'
         effectiveBalanceAPL:
           type: integer
           format: int64
