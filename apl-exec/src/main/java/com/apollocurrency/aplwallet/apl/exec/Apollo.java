@@ -157,9 +157,16 @@ public class Apollo {
  * @param vars parsed environment variables
  * @param props parsed application config files
  * @return properties, reqady to use in the application
- */    
+ */     
     public static Properties merge(CmdLineArgs args, EnvironmentVariables vars, Properties props){
-        //TODO: implement
+        
+        String logDir = StringUtils.byPrecednce(args.logDir, vars.logDir, (String)props.get("apl.customLogDir"));
+        props.setProperty("apl.customLogDir",logDir);
+        
+        String dbDir = StringUtils.byPrecednce(args.dbDir, vars.dbDir, (String)props.get("apl.customDbDir"));
+        props.setProperty("apl.customDbDir", dbDir);
+        //TPDO: all command line params
+        
         return props;
     }
     

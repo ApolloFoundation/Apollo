@@ -34,4 +34,21 @@ public class StringUtils {
         }
         return false;
     }
+    
+    /**
+     * Takes first not-empty value and ignores the rest of values
+     * @param values strings or nulls
+     * @return first not-empty value
+     */
+    public static String byPrecednce(String ...values){
+        String res ="";
+        String[] va = values;
+        for (int i = 0; i<va.length; i++){
+            if(!isBlank(va[i])){
+               res=va[i];
+               break;
+            }
+        }
+        return res;
+    }
 }
