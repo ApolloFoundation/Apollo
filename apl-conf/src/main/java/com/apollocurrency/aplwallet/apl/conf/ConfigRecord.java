@@ -12,12 +12,18 @@ import lombok.Builder.Default;
  * @author Oleksiy Lukin alukin@gmail.com
  */
 @Builder
-public class PropertyRecord {
+public class ConfigRecord {
     public String name;
-    public String defaultValue;
+    @Default
+    public String defaultValue="";
     public String description;
-    public Version sinceRelease;
+    @Default
+    public Version sinceRelease = new Version("1.0.0");
     public Version deprecatedSince;
+    @Default
+    public String cmdLineOpt="";
+    @Default
+    public String envVar="";
     @Default
     public boolean isRequired = false;
 }

@@ -5,7 +5,7 @@ package com.apollocurrency.aplwallet.apl.exec;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
-import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
+import com.apollocurrency.aplwallet.apl.conf.ConfigVerifier;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
@@ -83,7 +83,9 @@ public class Apollo {
     private static Logger log;
     private static AplContainer container;
     private static AplCoreRuntime aplCoreRuntime;
-
+    
+    private static final  ConfigVerifier configVerifier = ConfigVerifier.create();
+    
     private static void setLogLevel(int logLevel) {
         // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
         String packageName = "com.apollocurrency.aplwallet.apl";
@@ -136,19 +138,6 @@ public class Apollo {
         return res;
     }
 
-//    public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars, CustomDirLocations customDirLocations) {
-//        return new PredefinedDirLocations(
-//            customDirLocations.getDbDir().isEmpty() ? StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir : customDirLocations.getDbDir().get(),
-//            StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
-//            customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
-//            StringUtils.isBlank(args.pidFile) ? vars.pidFile : args.pidFile,
-//            StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
-//            StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir,
-//            StringUtils.isBlank(args.dexKeystoreDir) ? vars.dexKeystoreDir : args.dexKeystoreDir
-//        );
-//    }
-//    
-
 /**
  * Merge command line argumentsm environment variables and properties from config files
  * into one set of properties. Precedence: command line, environment vars, configs.
@@ -160,13 +149,33 @@ public class Apollo {
  */     
     public static Properties merge(CmdLineArgs args, EnvironmentVariables vars, Properties props){
         
-        String logDir = StringUtils.byPrecednce(args.logDir, vars.logDir, (String)props.get("apl.customLogDir"));
+        //{"--log-dir", "-l"}
+        String logDir = StringUtils.byPrecednce(args.logDir, vars.logDir, props.getProperty("apl.customLogDir"));
         props.setProperty("apl.customLogDir",logDir);
-        
-        String dbDir = StringUtils.byPrecednce(args.dbDir, vars.dbDir, (String)props.get("apl.customDbDir"));
+        //{"--db-dir"}
+        String dbDir = StringUtils.byPrecednce(args.dbDir, vars.dbDir, props.getProperty("apl.customDbDir"));
         props.setProperty("apl.customDbDir", dbDir);
-        //TPDO: all command line params
-        
+        // {"--vault-key-dir"}
+        String vaultKeystoreDir = StringUtils.byPrecednce(args.vaultKeystoreDir, vars.vaultKeystoreDir, props.getProperty("apl.customVaultKeystoreDir"));
+        props.setProperty("apl.customVaultKeystoreDir", vaultKeystoreDir);
+        // {"--dex-key-dir"}
+        String dexKeystoreDir = StringUtils.byPrecednce(args.dexKeystoreDir, vars.dexKeystoreDir, props.getProperty("apl.customDexStorageDir"));
+        props.setProperty("apl.customDexStorageDir", dexKeystoreDir);
+        // {"--no-shard-import"}
+        String noShardImport = StringUtils.byPrecednce(args.noShardImport.toString(), props.getProperty("apl.noshardimport"));
+        props.setProperty("apl.noshardimport",noShardImport);
+        // {"--no-shard-create"}
+        String  noShardCreate = StringUtils.byPrecednce(args.noShardCreate.toString(), props.getProperty("apl.noshardcreate"));
+        props.setProperty("apl.noshardcreate",noShardCreate);
+        // {"--2fa-dir"}
+        String twoFactorAuthDir = StringUtils.byPrecednce(args.twoFactorAuthDir,vars.twoFactorAuthDir, props.getProperty("apl.dir2FA"));
+        props.setProperty("apl.dir2FA",twoFactorAuthDir);
+        // {"--dexp-dir"}
+        String  dataExportDir  = StringUtils.byPrecednce(args.dataExportDir, vars.dataExportDir, props.getProperty("apl.customDataExportDir"));
+        props.setProperty("apl.customDataExportDir",dataExportDir);
+        // {"--pid-file"}
+        String pidFile =  StringUtils.byPrecednce(args.pidFile, vars.pidFile, props.getProperty("apl.customPidFile"));
+        props.getProperty("apl.customPidFile", pidFile);
         return props;
     }
     
@@ -254,8 +263,6 @@ public class Apollo {
         RuntimeEnvironment.getInstance().setMain(Apollo.class);
 //set some important system properties
         setSystemProperties(args);
-//cheat classloader to get access to "conf" package resources
-        ConfPlaceholder ph = new ConfPlaceholder();
 
 //--------------- config locading section -------------------------------------
 
@@ -288,7 +295,10 @@ public class Apollo {
 // load everuthing into applicationProperies. This is the place where all configuration
 // is collected from configs, command line and environment variables
         Properties applicationProperties = propertiesLoader.load();
-
+        
+//verify and complete configuration        
+        applicationProperties = configVerifier.parse(applicationProperties);
+        
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
             configDirProvider,
             configDir,
@@ -298,15 +308,6 @@ public class Apollo {
 // init chains configurations by loading chains.json file
         Map<UUID, Chain> chains = chainsConfigLoader.load();
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
-
-//over-write config options from command line if set
-
-        if (args.noShardImport != null) {
-            applicationProperties.setProperty("apl.noshardimport", "" + args.noShardImport);
-        }
-        if (args.noShardCreate != null) {
-            applicationProperties.setProperty("apl.noshardcreate", "" + args.noShardCreate);
-        }
        
         DirProviderFactory.setup( args.serviceMode, 
                                   chainId, 
