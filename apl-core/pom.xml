@@ -35,8 +35,9 @@
     </dependency>
     <dependency>
       <groupId>com.apollocurrency</groupId>
-        <artifactId>apl-db-updater</artifactId>
-        <version>${project.version}</version>
+      <artifactId>apl-db-updater</artifactId>
+      <version>${project.version}</version>
+      <scope>compile</scope>
     </dependency>
 
       <dependency>

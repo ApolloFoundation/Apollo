@@ -23,11 +23,6 @@
 
         <dependency>
             <groupId>com.apollocurrency</groupId>
-            <artifactId>apl-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.apollocurrency</groupId>
             <artifactId>apl-utils</artifactId>
             <version>${project.version}</version>
         </dependency>

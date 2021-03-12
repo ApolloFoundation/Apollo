@@ -12,6 +12,7 @@ import java.util.Objects;
 
 /**
  * Use FbWallet
+ * @deprecated use FbWallet instead
  */
 @Deprecated
 public class EncryptedSecretBytesDetails {
@@ -25,6 +26,9 @@ public class EncryptedSecretBytesDetails {
     public EncryptedSecretBytesDetails() {
     }
 
+    /**
+     * @deprecated
+     */
     public EncryptedSecretBytesDetails(byte[] encryptedSecretBytes, String accountRS, long account, Integer version, byte[] nonce, long timestamp) {
         this.encryptedSecretBytes = encryptedSecretBytes;
         this.accountRS = accountRS;
