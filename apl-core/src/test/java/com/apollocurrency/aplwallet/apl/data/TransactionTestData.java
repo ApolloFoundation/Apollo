@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
@@ -31,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.messaging.Arbitra
 import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSCurrencyIssuanceTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryPaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PrivatePaymentTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcPublishTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.CriticalUpdateTransactiionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.ImportantUpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -144,6 +146,7 @@ public class TransactionTestData {
     public TransactionTestData() {
         blockchainConfig = mock(BlockchainConfig.class);
         AccountService accountService = mock(AccountService.class);
+        AccountPublicKeyService accountPublicKeyService = mock(AccountPublicKeyService.class);
         CurrencyService currencyService = mock(CurrencyService.class);
         AccountCurrencyService accountCurrencyService = mock(AccountCurrencyService.class);
         AccountAssetService accountAssetService = mock(AccountAssetService.class);
@@ -160,7 +163,8 @@ public class TransactionTestData {
             new ArbitraryMessageTransactionType(blockchainConfig, accountService),
             new CriticalUpdateTransactiionType(blockchainConfig, accountService),
             new ImportantUpdateTransactionType(blockchainConfig, accountService),
-            new ListingTransactionType(blockchainConfig, accountService, dgsService, prunableLoadingService)
+            new ListingTransactionType(blockchainConfig, accountService, dgsService, prunableLoadingService),
+            new SmcPublishTransactionType(blockchainConfig, accountService, accountPublicKeyService)
         ));
         initTransactions();
     }

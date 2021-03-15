@@ -63,7 +63,7 @@ public class TransactionJsonSerializerImpl implements TransactionJsonSerializer 
     }
 
     @Override
-    public JSONObject toJsonOld(Transaction transaction) {
+    public JSONObject toLegacyJsonFormat(Transaction transaction) {
         JSONObject json = new JSONObject();
         json.put("id", Long.toUnsignedString(transaction.getId()));
         TransactionType type = transaction.getType();

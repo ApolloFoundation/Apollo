@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2018-2021. Apollo Foundation.
+ * Copyright (c)  2020-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.common;
@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author andrew.zinchenko@gmail.com
  */
 @ExtendWith(MockitoExtension.class)
-class TxSerializerTest {
+class TxSerializerV1Test {
 
     @Mock
     Chain chain;
@@ -57,18 +57,4 @@ class TxSerializerTest {
         assertEquals(expected, Convert.toHexString(result.array()));
     }
 
-    @Test
-    void serializeV1toJson() {
-        //GIVEN
-        TxSerializer serializer = context.createSerializer(2);
-        Transaction t1 = td.TRANSACTION_14;
-        PayloadResult result = PayloadResult.createJsonResult();
-
-        //WHEN
-        serializer.serialize(t1, result);
-
-        //THEN
-        assertNotNull(result.array());
-
-    }
 }

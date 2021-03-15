@@ -17,6 +17,8 @@ import java.util.List;
 
 /**
  * Simple writer, to encode values in RLP format.
+ * RLP encoding only supports POSITIVE integer values, any negative value encoded as a zero.
+ * So every negative numeric is converted to the unsigned numeric before encoding except BigInteger value, it's encoded as is.
  * Not thread-safe.
  *
  * @author andrew.zinchenko@gmail.com
@@ -62,25 +64,25 @@ public class RlpWriteBuffer implements WriteBuffer {
 
     @Override
     public WriteBuffer write(boolean value) {
-        write((byte) (value ? 1 : 0));
-        return this;
+        return write((byte) (value ? 1 : 0));
     }
 
     @Override
     public WriteBuffer write(short value) {
-        output = Arrays.concatenate(output, RlpEncoder.encode(RlpString.create(value)));
-        return this;
+        return write((long) value);
     }
 
     @Override
     public WriteBuffer write(int value) {
-        output = Arrays.concatenate(output, RlpEncoder.encode(RlpString.create(value)));
-        return this;
+        return write((long) value);
     }
 
     @Override
     public WriteBuffer write(long value) {
-        output = Arrays.concatenate(output, RlpEncoder.encode(RlpString.create(value)));
+        RlpString rlpStr = value >= 0 ?
+            RlpString.create(value) :
+            RlpString.create(new BigInteger(Long.toUnsignedString(value)));
+        output = Arrays.concatenate(output, RlpEncoder.encode(rlpStr));
         return this;
     }
 

@@ -64,9 +64,4 @@ public class SmcCallMethodTransactionType extends SmcTransactionType {
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
 
     }
-
-    @Override
-    public boolean canHaveRecipient() {
-        return true;
-    }
 }

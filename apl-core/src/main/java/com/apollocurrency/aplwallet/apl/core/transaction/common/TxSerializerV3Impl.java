@@ -24,7 +24,17 @@ public class TxSerializerV3Impl extends AbstractTxSerializer {
 
     @Override
     public int write(Transaction transaction, WriteBuffer buffer) {
-        return rlpUnsignedTx(transaction, (RlpWriteBuffer) buffer);
+        int payloadSize;
+        RlpWriteBuffer rlpWriteBuffer;
+        if (buffer instanceof RlpWriteBuffer) {
+            rlpWriteBuffer = (RlpWriteBuffer) buffer;
+            payloadSize = rlpUnsignedTx(transaction, rlpWriteBuffer);
+        } else {
+            rlpWriteBuffer = new RlpWriteBuffer();
+            payloadSize = rlpUnsignedTx(transaction, rlpWriteBuffer);
+            buffer.concat(rlpWriteBuffer.toByteArray());
+        }
+        return payloadSize;
     }
 
     /**

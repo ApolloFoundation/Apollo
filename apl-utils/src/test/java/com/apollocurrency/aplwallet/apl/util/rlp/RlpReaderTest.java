@@ -25,15 +25,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class RlpReaderTest {
 
     @Test
-    void decodeWithArithmeticException() {
+    void decodeWithNumberFormatException() {
         //GIVEN
         long value1 = 0L;
         BigInteger value2 = new BigInteger("123");
         BigInteger value3 = new BigInteger("123456789012345678901234567890");
 
         String hexInput = Numeric.toHexString(RlpEncoder.encode(RlpString.create(value1))) +
-                          Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value2))) +
-                          Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value3)));
+            Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value2))) +
+            Numeric.toHexStringNoPrefix(RlpEncoder.encode(RlpString.create(value3)));
         //WHEN
         RlpReader reader = new RlpReader(hexInput);
 
@@ -42,7 +42,7 @@ class RlpReaderTest {
 
         assertEquals(value1, reader.readLong());
         assertEquals(value2.longValue(), reader.readLong());
-        assertThrows(ArithmeticException.class, reader::readLong);
+        assertThrows(NumberFormatException.class, reader::readLong);
     }
 
     @Test

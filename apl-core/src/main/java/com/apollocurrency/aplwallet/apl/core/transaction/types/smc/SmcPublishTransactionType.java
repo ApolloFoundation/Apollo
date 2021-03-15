@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -29,13 +28,11 @@ import javax.inject.Singleton;
 @Singleton
 public class SmcPublishTransactionType extends SmcTransactionType {
     private final AccountPublicKeyService accountPublicKeyService;
-    private final Blockchain blockchain;
 
     @Inject
-    public SmcPublishTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AccountPublicKeyService accountPublicKeyService, Blockchain blockchain) {
+    public SmcPublishTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AccountPublicKeyService accountPublicKeyService) {
         super(blockchainConfig, accountService);
         this.accountPublicKeyService = accountPublicKeyService;
-        this.blockchain = blockchain;
     }
 
     @Override
@@ -77,8 +74,7 @@ public class SmcPublishTransactionType extends SmcTransactionType {
     }
 
     @Override
-    public boolean canHaveRecipient() {
+    public boolean mustHaveRecipient() {
         return false;
     }
-
 }

@@ -56,4 +56,9 @@ public abstract class SmcTransactionType extends TransactionType {
     public boolean isPhasable() {
         return false;
     }
+
+    @Override
+    public boolean canHaveRecipient() {
+        return true;
+    }
 }

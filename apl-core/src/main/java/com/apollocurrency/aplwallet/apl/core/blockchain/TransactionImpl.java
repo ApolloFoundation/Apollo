@@ -90,11 +90,12 @@ public class TransactionImpl implements Transaction {
     /**
      * Transaction V3 properties
      */
-    private String chainId;
-    private BigInteger nonce;
-    private BigInteger amount;
-    private BigInteger fuelLimit;
-    private BigInteger fuelPrice;
+    private final String chainId;
+    private final BigInteger nonce;
+    private final BigInteger amount;
+    private final BigInteger fuelLimit;
+    private final BigInteger fuelPrice;
+    private final long longTimestamp;
 
     TransactionImpl(BuilderImpl builder) {
 
@@ -122,6 +123,7 @@ public class TransactionImpl implements Transaction {
         this.amount = builder.amount;
         this.fuelLimit = builder.fuelLimit;
         this.fuelPrice = builder.fuelPrice;
+        this.longTimestamp = builder.timestamp;
         /*         ***              */
 
         List<AbstractAppendix> list = new ArrayList<>();
@@ -440,7 +442,7 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public long getLongTimestamp() {
-        return timestamp;
+        return longTimestamp;
     }
 
     @Override

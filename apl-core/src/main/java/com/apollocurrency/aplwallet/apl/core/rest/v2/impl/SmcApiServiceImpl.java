@@ -75,19 +75,21 @@ public class SmcApiServiceImpl implements SmcApiService {
             .constructorParams(body.getParams())
             .build();
 
-        String publicKey = generatePublicKey(account, attachment.getContractSource());
+        byte[] publicKey = generatePublicKey(account, attachment.getContractSource());
+        long recipientId = AccountService.getId(publicKey);
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
-            .chainId(blockchainConfig.getChain().getChainId().toString())
+            .chainId(blockchainConfig.getChain().getChainId().toString())//V3
             .version(3)
             .senderAccount(account)
-            .recipientPublicKey(publicKey)
+            .recipientPublicKey(Convert.toHexString(publicKey))
+            .recipientId(recipientId)
             .secretPhrase(body.getSecret())
-            .deadlineValue(String.valueOf(1440*60))
-            .nonce(BigInteger.ONE)
-            .amount(BigInteger.ZERO)
-            .fuelLimit(fuelLimit)
-            .fuelPrice(fuelPrice)
+            .deadlineValue(String.valueOf(1440))
+            .nonce(BigInteger.ONE)//V3
+            .amount(BigInteger.ZERO)//V3
+            .fuelLimit(fuelLimit)//V3
+            .fuelPrice(fuelPrice)//V3
             .attachment(attachment)
             .credential(new MultiSigCredential(1, Crypto.getKeySeed(body.getSecret())))
             .broadcast(false)
@@ -108,14 +110,12 @@ public class SmcApiServiceImpl implements SmcApiService {
         return null;
     }
 
-    private static String generatePublicKey(Account account, String src){
-        return Convert.toHexString(
-            Crypto.getPublicKey(
-                Crypto.getKeySeed(
-                    Convert2.rsAccount(account.getId())
-                    , Crypto.sha256().digest(src.getBytes(StandardCharsets.UTF_8))
-                    , Crypto.getSecureRandom().generateSeed(32)
-                )
+    private static byte[] generatePublicKey(Account account, String src) {
+        return Crypto.getPublicKey(
+            Crypto.getKeySeed(
+                Convert2.rsAccount(account.getId())
+                , Crypto.sha256().digest(src.getBytes(StandardCharsets.UTF_8))
+                , Crypto.getSecureRandom().generateSeed(32)
             )
         );
     }

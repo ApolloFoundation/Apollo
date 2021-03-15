@@ -163,8 +163,10 @@ public interface Transaction {
     long getLongTimestamp();//int getTimestamp
 
     /**
-     *
-     */
+     * end V3 properties
+     **/
+
+
     boolean ofType(TransactionTypes.TransactionTypeSpec spec);
 
     default boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec){

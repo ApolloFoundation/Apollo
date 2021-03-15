@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
@@ -127,15 +128,14 @@ public class TransactionCreator {
             if(version < 3) {
                 builder = transactionBuilderFactory.newUnsignedTransactionBuilder(version, txRequest.getPublicKey(),
                     txRequest.getAmountATM(), txRequest.getFeeATM(),
-                    deadline, txRequest.getAttachment(), timestamp)
-                    .referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
-            }else{
-                //TODO: fix it
-                builder = transactionBuilderFactory.newUnsignedTransactionBuilder(version, txRequest.getPublicKey(),
-                    txRequest.getAmountATM(), txRequest.getFeeATM(),
-                    deadline, txRequest.getAttachment(), timestamp)
-                    .referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
+                    deadline, txRequest.getAttachment(), timestamp);
+            }else {
+                builder = transactionBuilderFactory.newUnsignedTransactionBuilder(txRequest.getChainId(), transactionType,
+                    (byte) version, txRequest.getPublicKey(),
+                    txRequest.getNonce(), txRequest.getAmount(), txRequest.getFuelLimit(), txRequest.getFuelPrice(),
+                    deadline, timestamp, (AbstractAttachment) txRequest.getAttachment());
             }
+            builder.referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
             if (transactionType.canHaveRecipient()) {
                 builder.recipientId(txRequest.getRecipientId());
             }
@@ -153,8 +153,10 @@ public class TransactionCreator {
                 EcBlockData ecBlock = blockchain.getECBlock(timestamp);
                 builder.ecBlockData(ecBlock);
             }
-            //build transaction, this transaction is UNSIGNED
+
+            //build unsigned transaction
             transaction = builder.build();
+
             if (txRequest.getFeeATM() <= 0 || (propertiesHolder.correctInvalidFees() && txRequest.getKeySeed() == null)) {
                 int effectiveHeight = blockchain.getHeight();
                 @TransactionFee(FeeMarker.CALCULATOR)

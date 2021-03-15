@@ -66,6 +66,17 @@ public class TransactionBuilderFactory {
         return new TransactionImpl.BuilderImpl((byte) version, senderPublicKey, amountATM, feeATM, deadline, (AbstractAttachment) attachment, timestamp, transactionType);
     }
 
+    public Transaction.Builder newUnsignedTransactionBuilder(String chainId,
+                                                             TransactionType transactionType, byte version,
+                                                             byte[] senderPublicKey, BigInteger nonce,
+                                                             BigInteger amount, BigInteger fuelLimit, BigInteger fuelPrice,
+                                                             int deadline, long timestamp,
+                                                             AbstractAttachment attachment) {
+        attachment.bindTransactionType(transactionType);
+
+        return new TransactionImpl.BuilderImpl(chainId, transactionType, version, senderPublicKey, nonce, amount, fuelLimit, fuelPrice, deadline, timestamp, attachment);
+    }
+
     public Transaction newTransaction(byte[] bytes) throws AplException.NotValidException {
         TransactionImpl transaction = newTransactionBuilder(bytes).build();
         reSignTransaction(transaction);
@@ -242,25 +253,25 @@ public class TransactionBuilderFactory {
             byte version = TransactionUtils.getVersion(subtype);
             subtype = TransactionUtils.getSubtype(subtype);
 
-            String chainId = reader.readString();
+            String chainId = reader.readString();//V3
             int deadline = reader.readInt();
             long timestamp = reader.readLong();
             int ecBlockHeight = reader.readInt();
             long ecBlockId = reader.readLong();
-            BigInteger nonce = reader.readBigInteger();
+            BigInteger nonce = reader.readBigInteger();//V3
             byte[] senderPublicKey = reader.read();
             long recipientId = reader.readLong();
-            BigInteger amount = reader.readBigInteger();
-            BigInteger fuelPrice = reader.readBigInteger();
-            BigInteger fuelLimit = reader.readBigInteger();
+            BigInteger amount = reader.readBigInteger();//V3
+            BigInteger fuelPrice = reader.readBigInteger();//V3
+            BigInteger fuelLimit = reader.readBigInteger();//V3
 
             //data part
             byte[] referencedTransactionFullHash = reader.read();
             referencedTransactionFullHash = Convert.emptyToNull(referencedTransactionFullHash);
 
             TransactionType transactionType = factory.findTransactionType(type, subtype);
-            if(transactionType == null){
-                throw new AplException.NotValidException("Wrong transaction spec: type="+type+", subtype="+subtype+", version="+version);
+            if (transactionType == null) {
+                throw new AplException.NotValidException("Wrong transaction spec: type=" + type + ", subtype=" + subtype + ", version=" + version);
             }
 
             //attachments

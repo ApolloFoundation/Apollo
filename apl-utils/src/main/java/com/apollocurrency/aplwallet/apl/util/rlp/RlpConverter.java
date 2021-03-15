@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020. Apollo Foundation.
+ * Copyright (c) 2020-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.util.rlp;
@@ -29,7 +29,8 @@ public class RlpConverter {
     }
 
     public static long toLong(RlpType value) {
-        return ((RlpString) value).asPositiveBigInteger().longValueExact();
+        String unsignedLong = ((RlpString) value).asPositiveBigInteger().toString();
+        return Long.parseUnsignedLong(unsignedLong);
     }
 
     public static int toInt(RlpType value) {
