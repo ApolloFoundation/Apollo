@@ -115,11 +115,10 @@ and deleted after work is done.
 
     1) Open repository https://github.com/ApolloFoundation/dbpackages
     
-    2) Change directory to mariadb-pkg/ and Run script depends on OS.
-        cd mariadb-pkg/
-        ./maria_db_linux_pkg.sh
-        ./maria_db_osx_pkg.sh
-        ./maria_db_windows_pkg.sh
+    2) Run script depending on OS.
+        ./mariadb-pkg/maria_db_linux_pkg.sh
+        ./mariadb-pkg/maria_db_osx_pkg.sh
+        ./mariadb-pkg/maria_db_windows_pkg.sh
 
         2.1) install Linux 'patchelf' in case error like: patchelf: command not found 
             > sudo apt install patchelf
