@@ -50,12 +50,15 @@ public class CmdLineArgs {
     public int netIdx = -1;
     @Parameter(names = {"--chain", "-C"}, help = true, description = "Connect to net with given chainID. UUID of chain id may be specified partially, 6 symbos min. Configs must be present.")
     public String chainId = "";
-    @Parameter(names = {"--testnet"}, help = true, description = "Connect to testent 1. Has higher priority then --net")
+    @Parameter(names = {"--testnet"}, help = true, description = "Connect to testnet 1. Has higher priority then --net")
     public boolean isTestnet = false;
     //---
     @Parameter(names = {"--disable-weld-concurrent-deployment"},
         description = "If use it, Weld doesn't use ConcurrentDeployer and ConcurrentValidator to build the container. Default value is true.")
     public boolean disableWeldConcurrentDeployment = false;
+
+    @Parameter(names = {"--kms", "-K"}, help = true, description = "IP[4/6] or URL to standalone KMS server in your network")
+    public String kms = "";
 
     public boolean isResourceIgnored() {
         return ingnoreResources;

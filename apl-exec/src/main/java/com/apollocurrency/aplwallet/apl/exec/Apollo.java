@@ -43,6 +43,9 @@ import javax.enterprise.inject.spi.CDI;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -51,6 +54,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -196,7 +200,7 @@ public class Apollo {
         boolean res = checkDbWithJDBC(conf);
         //if we have connected to database URL from config, wha have nothing to do
         if(!res){
-            // if we can not connect to databse, we'll try start it
+            // if we can not connect to database, we'll try start it
             // from Apollo package. If it is first start, data base data dir
             // will be initialized
             Path dbDataDir = dirProvider.getDbDir();
@@ -205,6 +209,37 @@ public class Apollo {
             res = mariaDbProcess.startAndWaitWhenReady();
         }
         return res;
+    }
+
+    /**
+     * KMS server validation works with IPv4 (1.1.1.1:123), IPv6 ([::0]:123) and host names (my.host.com:123)
+     * @param args args with non empty 'kms' field to validate
+     * @return Optional InetSocketAddress value or EMPTY
+     */
+    private static Optional<InetSocketAddress> validateKmsUrl(CmdLineArgs args) {
+        String ipUrlAsString = args.kms; // KMS standalone server has to be validated
+        if (ipUrlAsString.strip().isBlank()) return Optional.empty();
+        try {
+            // WORKAROUND: add any scheme to make the resulting URI valid.
+            URI uri = new URI("my://" + ipUrlAsString); // may throw URISyntaxException
+            String host = uri.getHost();
+            int port = uri.getPort();
+
+            if (uri.getHost() == null || uri.getPort() == -1) {
+                System.err.println("Can not assign KMS, URI must have host and port parts: " + args.kms);
+                return Optional.empty();
+            }
+            // here, additional checks can be performed,
+            // such as presence of path, query, fragment, ...
+
+            // validation succeeded
+            return Optional.of(new InetSocketAddress (host, port));
+
+        } catch (URISyntaxException ex) {
+            // validation failed
+            System.err.println("KMS ip/URI is not valid: " + args.kms);
+        }
+        return Optional.empty();
     }
 
     /**
@@ -274,7 +309,7 @@ public class Apollo {
             Constants.APPLICATION_DIR_NAME + ".properties",
             SYSTEM_PROPERTY_NAMES);
 
-// load everuthing into applicationProperies. This is the place where all configuration
+// load everything into applicationProperties. This is the place where all configuration
 // is collected from configs, command line and environment variables
         Properties applicationProperties = propertiesLoader.load();
 
@@ -327,11 +362,13 @@ public class Apollo {
 // check running or run data base server process.
 
         DbConfig dbConfig = new DbConfig(new PropertiesHolder(applicationProperties), new ChainsConfigHolder(chains));
-        if(!checkOrRunDatabaseServer(dbConfig)){
+        if (!checkOrRunDatabaseServer(dbConfig)) {
             System.err.println(" ERROR! MariaDB process is not running and can not be started from Apollo!");
             System.err.println(" Please install apollo-mariadb package at the same directory level as apollo-blockchain package.");
             System.exit(PosixExitCodes.EX_SOFTWARE.exitCode());
         }
+
+        validateKmsUrl(args);// TODO: YL here we can add checking KMS server to be online (e.g. using  end point like: /check/health )
 
 //-------------- now bring CDI container up! -------------------------------------
 
