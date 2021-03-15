@@ -113,7 +113,7 @@ and deleted after work is done.
 
 ### Initiate
 
-    1) Open repository https://github.com/ApolloFoundation/dbpackages
+    1) Clone and open repository - https://github.com/ApolloFoundation/dbpackages
     
     2) Run script depending on OS.
         ./mariadb-pkg/maria_db_linux_pkg.sh
