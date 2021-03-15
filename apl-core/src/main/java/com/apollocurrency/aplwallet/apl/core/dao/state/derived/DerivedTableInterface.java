@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 
 /**
  * Common derived interface functions. It supports rollback, truncate, trim.
@@ -36,14 +36,6 @@ public interface DerivedTableInterface<T extends DerivedEntity> {
     void truncate();
 
     void trim(int height);
-
-    /**
-     * Trim process can be different when it runs on usual way or in case sharding process
-     *
-     * @param height     trim height
-     * @param isSharding true when called in sharding process, false otherwise (do the same as usual trim)
-     */
-    void trim(int height, boolean isSharding);
 
     void prune(int time);
 

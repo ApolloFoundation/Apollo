@@ -1,9 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.spi.CDI;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -12,9 +10,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class DbStatementWrapper extends FilteredStatement {
     private static final Logger log = getLogger(DbStatementWrapper.class);
-    private static Blockchain blockchain;
 
-    private long stmtThreshold;
+    private final long stmtThreshold;
 
     public DbStatementWrapper(Statement stmt, long stmtThreshold) {
         super(stmt);
@@ -39,21 +36,14 @@ public class DbStatementWrapper extends FilteredStatement {
         log.debug(sb.toString());
     }
 
-    private Blockchain lookupBlockchain() {
-        if (blockchain == null) {
-            blockchain = CDI.current().select(Blockchain.class).get();
-        }
-        return blockchain;
-    }
-
     @Override
     public boolean execute(String sql) throws SQLException {
         long start = System.currentTimeMillis();
         boolean b = super.execute(sql);
         long elapsed = System.currentTimeMillis() - start;
         if (elapsed > stmtThreshold)
-            logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                (double) elapsed / 1000.0, lookupBlockchain().getHeight(), sql));
+            logThreshold(String.format("SQL statement required %.3f seconds:\n%s",
+                (double) elapsed / 1000.0, sql));
         return b;
     }
 
@@ -63,8 +53,8 @@ public class DbStatementWrapper extends FilteredStatement {
         ResultSet r = super.executeQuery(sql);
         long elapsed = System.currentTimeMillis() - start;
         if (elapsed > stmtThreshold)
-            logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                (double) elapsed / 1000.0, lookupBlockchain().getHeight(), sql));
+            logThreshold(String.format("SQL statement required %.3f seconds:\n%s",
+                (double) elapsed / 1000.0, sql));
         return r;
     }
 
@@ -74,8 +64,8 @@ public class DbStatementWrapper extends FilteredStatement {
         int c = super.executeUpdate(sql);
         long elapsed = System.currentTimeMillis() - start;
         if (elapsed > stmtThreshold)
-            logThreshold(String.format("SQL statement required %.3f seconds at height %d:\n%s",
-                (double) elapsed / 1000.0, lookupBlockchain().getHeight(), sql));
+            logThreshold(String.format("SQL statement required %.3f seconds:\n%s",
+                (double) elapsed / 1000.0, sql));
         return c;
     }
 }

@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.util.task;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -13,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * as a parameter in constructor and <em>N</em> is the sequence number of the thread
  * created by this factory.
  */
+@Slf4j
 public class NamedThreadFactory implements ThreadFactory {
     private final ThreadGroup group;
     private final AtomicInteger threadNumber = new AtomicInteger(1);
@@ -65,6 +68,7 @@ public class NamedThreadFactory implements ThreadFactory {
 
             if (t.getPriority() != Thread.NORM_PRIORITY)
                 t.setPriority(Thread.NORM_PRIORITY);
+            t.setUncaughtExceptionHandler((thread, e) -> log.error("Thread " + thread.getName() + " thrown an exception",e));
 
         } catch (Exception ignored) {
         }

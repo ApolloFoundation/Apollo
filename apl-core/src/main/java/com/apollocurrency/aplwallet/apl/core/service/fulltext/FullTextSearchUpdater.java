@@ -95,6 +95,9 @@ public class FullTextSearchUpdater implements TransactionCallback {
         //
         // Commit the change immediately if we are not in a transaction
         //
+        if (!fullTextSearchService.enabled()) {
+            return;
+        }
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         log.debug("operationData = {}, (isInTransaction = {})", operationData, dataSource.isInTransaction());
         if (!dataSource.isInTransaction()) {

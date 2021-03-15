@@ -72,6 +72,7 @@ public class TransactionProcessingTaskScheduler {
     private void configureBackgroundTasks() {
         if (!propertiesHolder.isLightClient()) {
             TaskDispatcher dispatcher = taskDispatchManager.newBackgroundDispatcher("TransactionProcessorService");
+
             if (!propertiesHolder.isOffline()) {
                 dispatcher.schedule(Task.builder()
                     .name("ProcessTransactions")
@@ -80,16 +81,13 @@ public class TransactionProcessingTaskScheduler {
                         transactionProcessor, memPool, blockchainConfig, peersService,
                         builderFactory))
                     .build());
-                dispatcher.schedule(Task.builder()
-                    .name("MemPoolChecker")
-                    .delay(1000)
-                    .task(transactionProcessor::printMemPoolStat)
-                    .build());
+
                 dispatcher.schedule(Task.builder()
                     .name("PendingBroadcaster")
                     .delay(125)
                     .task(new PendingBroadcastTask( transactionProcessor,  memPool, batchSizeCalculator, transactionValidator, processingService))
                     .build());
+
                 dispatcher.invokeAfter(Task.builder()
                     .name("InitialUnconfirmedTxsRebroadcasting")
                     .task(transactionProcessor::rebroadcastAllUnconfirmedTransactions)
@@ -102,17 +100,20 @@ public class TransactionProcessingTaskScheduler {
                         this.timeService, memPool, peersService, this.blockchain, unconfirmedTransactionCreator))
                     .build());
             }
+
             dispatcher.schedule(Task.builder()
                 .name("RemoveUnconfirmedTransactions")
                 .delay(5000)
                 .task(new RemoveUnconfirmedTransactionsThread(
                     this.databaseManager, transactionProcessor, this.timeService, memPool))
                 .build());
+
             dispatcher.schedule(Task.builder()
                 .name("ProcessLaterTransactions")
                 .delay(3000)
                 .task(new ProcessLaterTransactionsThread(transactionProcessor))
                 .build());
+
             dispatcher.schedule(Task.builder()
                 .name("ProcessTransactionsToBroadcastWhenConfirmed")
                 .delay(15000)

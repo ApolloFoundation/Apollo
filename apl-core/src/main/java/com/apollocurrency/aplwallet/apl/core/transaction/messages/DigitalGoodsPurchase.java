@@ -30,9 +30,9 @@ public final class DigitalGoodsPurchase extends AbstractAttachment {
     public DigitalGoodsPurchase(JSONObject attachmentData) {
         super(attachmentData);
         this.goodsId = Convert.parseUnsignedLong((String) attachmentData.get("goods"));
-        this.quantity = ((Long) attachmentData.get("quantity")).intValue();
+        this.quantity = ((Number) attachmentData.get("quantity")).intValue();
         this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
-        this.deliveryDeadlineTimestamp = ((Long) attachmentData.get("deliveryDeadlineTimestamp")).intValue();
+        this.deliveryDeadlineTimestamp = ((Number) attachmentData.get("deliveryDeadlineTimestamp")).intValue();
     }
 
     public DigitalGoodsPurchase(long goodsId, int quantity, long priceATM, int deliveryDeadlineTimestamp) {

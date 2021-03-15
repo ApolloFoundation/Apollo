@@ -34,6 +34,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
     private final Map<String, String> fullTextSearchIndexedTables;
     private final String schemaName;
     private final DatabaseManager databaseManager;
+    private volatile boolean indexDeleted;
 
     @Inject
     public FullTextSearchServiceImpl(DatabaseManager databaseManager, FullTextSearchEngine fullTextSearchEngine,
@@ -198,6 +199,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
      * @throws SQLException Unable to drop fulltext indexes
      */
     public void dropAll(Connection conn) throws SQLException {
+        indexDeleted = true;
         //
         // Drop records about stored 'searchable' and indexed tables
         //
@@ -301,6 +303,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                 reindex(conn, tableName, schema);
                 log.debug("Reindexing '{}' DONE in '{}' ms", tableName, System.currentTimeMillis() - startTable);
             }
+            indexDeleted = false;
         } catch (SQLException exc) {
             throw new SQLException("Unable to rebuild the Lucene index", exc);
         }
@@ -359,5 +362,10 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                 }
             }
         }
+    }
+
+    @Override
+    public boolean enabled() {
+        return !indexDeleted;
     }
 }

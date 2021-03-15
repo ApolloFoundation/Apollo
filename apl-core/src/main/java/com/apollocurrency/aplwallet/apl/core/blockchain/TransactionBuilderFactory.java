@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.blockchain;
 
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
@@ -33,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.TaggedDataUplo
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -417,15 +417,15 @@ public class TransactionBuilderFactory {
     @Deprecated
     private TransactionImpl.BuilderImpl newTransactionBuilder(JSONObject transactionData) throws AplException.NotValidException {
         try {
-            byte type = ((Long) transactionData.get("type")).byteValue();
-            byte subtype = ((Long) transactionData.get("subtype")).byteValue();
-            int timestamp = ((Long) transactionData.get("timestamp")).intValue();
-            short deadline = ((Long) transactionData.get("deadline")).shortValue();
+            byte type = ((Number) transactionData.get("type")).byteValue();
+            byte subtype = ((Number) transactionData.get("subtype")).byteValue();
+            int timestamp = ((Number) transactionData.get("timestamp")).intValue();
+            short deadline = ((Number) transactionData.get("deadline")).shortValue();
             byte[] senderPublicKey = Convert.parseHexString((String) transactionData.get("senderPublicKey"));
             long amountATM = transactionData.containsKey("amountATM") ? Convert.parseLong(transactionData.get("amountATM")) : Convert.parseLong(transactionData.get("amountNQT"));
             long feeATM = transactionData.containsKey("feeATM") ? Convert.parseLong(transactionData.get("feeATM")) : Convert.parseLong(transactionData.get("feeNQT"));
             String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");
-            Long versionValue = (Long) transactionData.get("version");
+            Number versionValue = (Number) transactionData.get("version");
             byte version = versionValue == null ? 0 : versionValue.byteValue();
 
             SignatureParser signatureParser = SignatureToolFactory.selectParser(version).orElseThrow(UnsupportedTransactionVersion::new);
@@ -436,7 +436,7 @@ public class TransactionBuilderFactory {
             int ecBlockHeight = 0;
             long ecBlockId = 0;
             if (version > 0) {
-                ecBlockHeight = ((Long) transactionData.get("ecBlockHeight")).intValue();
+                ecBlockHeight = ((Number) transactionData.get("ecBlockHeight")).intValue();
                 ecBlockId = Convert.parseUnsignedLong((String) transactionData.get("ecBlockId"));
             }
 

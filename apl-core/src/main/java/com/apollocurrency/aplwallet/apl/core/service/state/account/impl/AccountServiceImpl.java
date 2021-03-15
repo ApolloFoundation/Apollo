@@ -8,13 +8,13 @@ import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
@@ -40,6 +40,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventBinding.literal;
@@ -54,6 +55,7 @@ import static com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil.toList;
 public class AccountServiceImpl implements AccountService {
 
     public static final int EFFECTIVE_BALANCE_CONFIRMATIONS = 1440;
+    public static final Set<Integer> BLOCK_HEIGHTS = Set.of(6851525, 6851444, 6997642);
 
     private final AccountTable accountTable;
     private final AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
@@ -222,8 +224,8 @@ public class AccountServiceImpl implements AccountService {
         if (account.getPublicKey() == null) {
             account.setPublicKey(accountPublicKeyService.getPublicKey(account.getId()));
         }
-        if (account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null || height - account.getPublicKey().getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) {
-            if (log.isTraceEnabled() /*&& (account.getId() == 2650055114867906720L || account.getId() == 5122426243196961555L)*/) {
+        if ((account.getPublicKey() == null || account.getPublicKey().getPublicKey() == null || height - account.getPublicKey().getHeight() <= EFFECTIVE_BALANCE_CONFIRMATIONS) && !BLOCK_HEIGHTS.contains(height)) {
+            if (log.isTraceEnabled()) {
                 log.trace(" height '{}' - this.publicKey.getHeight() '{}' ('{}') <= EFFECTIVE_BALANCE_CONFIRMATIONS '{}'",
                     height,
                     account.getPublicKey() != null ? account.getPublicKey().getHeight() : null,
@@ -504,6 +506,26 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public byte[] getPublicKeyByteArray(long id) {
         return accountPublicKeyService.getPublicKeyByteArray(id);
+    }
+
+    @Override
+    public Account addAccount(long id, boolean isGenesis) {
+        Preconditions.checkArgument(id != 0, "Invalid accountId 0");
+        DbKey dbKey = AccountTable.newKey(id);
+        Account account = accountTable.get(dbKey);
+        if (account == null) {
+            account = new Account(id, dbKey);
+            PublicKey publicKey = accountPublicKeyService.getPublicKey(id);
+            if (publicKey == null) {
+                if (isGenesis) {
+                    publicKey = accountPublicKeyService.insertGenesisPublicKey(id);
+                } else {
+                    publicKey = accountPublicKeyService.insertNewPublicKey(id);
+                }
+            }
+            account.setPublicKey(publicKey);
+        }
+        return account;
     }
 }
 

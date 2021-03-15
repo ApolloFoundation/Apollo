@@ -23,13 +23,13 @@ public class DirProviderTest {
 
     public static final UUID CHAIN_ID = UUID.fromString("0c60b6ac-1b11-11e9-8d99-7773284f33f3");
     public static final String SHORTENED_CHAIN_ID = CHAIN_ID.toString().substring(0, 6);
-    public static final Path USER_MODE_DB_DIR = APPLICATION_HOME.resolve(APPLICATION_NAME + "-db").resolve(SHORTENED_CHAIN_ID);
+    public static final Path USER_MODE_DB_DIR = APPLICATION_HOME.resolve(APPLICATION_NAME + "-db");//.resolve(SHORTENED_CHAIN_ID);
     public static final Path USER_MODE_KEYSTORE_DIR = APPLICATION_HOME.resolve(APPLICATION_NAME + "-vault-keystore").resolve(SHORTENED_CHAIN_ID);
     public static final Path USER_MODE_2FA_DIR = USER_MODE_KEYSTORE_DIR.resolve(APPLICATION_NAME + "-2fa");
     public static final Path USER_MODE_LOGS_DIR = APPLICATION_HOME.resolve(APPLICATION_NAME + "-logs");
     public static final Path USER_MODE_PID_FILE = APPLICATION_HOME.resolve(APPLICATION_NAME + "-" + SHORTENED_CHAIN_ID + ".pid");
 
-    public static final Path SERVICE_MODE_DB_DIR = APPLICATION_INSTALLATION_DIR_SERVICE_MODE.resolve(APPLICATION_NAME + "-db").resolve(SHORTENED_CHAIN_ID);
+    public static final Path SERVICE_MODE_DB_DIR = APPLICATION_INSTALLATION_DIR_SERVICE_MODE.resolve(APPLICATION_NAME + "-db");//.resolve(SHORTENED_CHAIN_ID);
     public static final Path SERVICE_MODE_KEYSTORE_DIR = APPLICATION_INSTALLATION_DIR_SERVICE_MODE.resolve(APPLICATION_NAME + "-vault-keystore").resolve(SHORTENED_CHAIN_ID);
     public static final Path SERVICE_MODE_2FA_DIR = SERVICE_MODE_KEYSTORE_DIR.resolve(APPLICATION_NAME + "-2fa");
     public static final Path SERVICE_MODE_LOGS_DIR = APPLICATION_INSTALLATION_DIR_SERVICE_MODE.resolve(APPLICATION_NAME + "-logs");

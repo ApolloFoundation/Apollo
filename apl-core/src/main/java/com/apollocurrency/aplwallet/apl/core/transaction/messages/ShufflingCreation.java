@@ -33,10 +33,10 @@ public final class ShufflingCreation extends AbstractAttachment {
     public ShufflingCreation(JSONObject attachmentData) {
         super(attachmentData);
         this.holdingId = Convert.parseUnsignedLong((String) attachmentData.get("holding"));
-        this.holdingType = HoldingType.get(((Long) attachmentData.get("holdingType")).byteValue());
+        this.holdingType = HoldingType.get(((Number) attachmentData.get("holdingType")).byteValue());
         this.amount = Convert.parseLong(attachmentData.get("amount"));
-        this.participantCount = ((Long) attachmentData.get("participantCount")).byteValue();
-        this.registrationPeriod = ((Long) attachmentData.get("registrationPeriod")).shortValue();
+        this.participantCount = ((Number) attachmentData.get("participantCount")).byteValue();
+        this.registrationPeriod = ((Number) attachmentData.get("registrationPeriod")).shortValue();
     }
 
     public ShufflingCreation(long holdingId, HoldingType holdingType, long amount, byte participantCount, short registrationPeriod) {
