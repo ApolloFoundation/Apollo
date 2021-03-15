@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -28,7 +28,7 @@ public class InfoApiServiceImpl implements InfoApiService {
     private final PropertiesHolder propertiesHolder;
     private final BlockchainConfig blockchainConfig;
     private final BlockChainInfoService blockChainInfoService;
-    private final TransactionProcessor transactionProcessor;
+    private final MemPool memPool;
     private final AccountService accountService;
 
     @Inject
@@ -36,13 +36,13 @@ public class InfoApiServiceImpl implements InfoApiService {
                               @NonNull DatabaseManager databaseManager,
                               @NonNull BlockchainConfig blockchainConfig,
                               @NonNull BlockChainInfoService blockChainInfoService,
-                              @NonNull TransactionProcessor transactionProcessor,
+                              @NonNull MemPool memPool,
                               @NonNull AccountService accountService) {
         this.propertiesHolder = propertiesHolder;
         this.databaseManager = databaseManager;
         this.blockchainConfig = blockchainConfig;
         this.blockChainInfoService = blockChainInfoService;
-        this.transactionProcessor = transactionProcessor;
+        this.memPool = memPool;
         this.accountService = accountService;
     }
 
@@ -59,10 +59,11 @@ public class InfoApiServiceImpl implements InfoApiService {
         blockchainState.setDecimals(blockchainConfig.getDecimals());
         Account account = accountService.getAccount(GenesisImporter.CREATOR_ID);
         blockchainState.setTotalSupply(blockchainConfig.getInitialSupply());
-        blockchainState.setBurning(
-            blockchainConfig.getInitialSupply() - Math.abs(account.getBalanceATM()) / blockchainConfig.getOneAPL()
-        );
-
+        if(account!=null){ //NPE when genesis  yet is loading
+            blockchainState.setBurning(
+                    blockchainConfig.getInitialSupply() - Math.abs(account.getBalanceATM()) / blockchainConfig.getOneAPL()
+            );
+        }
         return builder.bind(blockchainState).build();
     }
 
@@ -71,7 +72,7 @@ public class InfoApiServiceImpl implements InfoApiService {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         HealthResponse response = new HealthResponse();
         response.setMaxUnconfirmedTxCount(propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions"));
-        response.setUnconfirmedTxCacheSize(transactionProcessor.getUnconfirmedTxCount());
+        response.setUnconfirmedTxCacheSize(memPool.getUnconfirmedTxCount());
         response.setBlockchainHeight(blockChainInfoService.getHeight());
 
         int totalConnections = -1;

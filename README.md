@@ -74,10 +74,10 @@ OS name: "linux", version: "5.9.12-200.fc33.x86_64", arch: "amd64", family: "uni
    7. If output looks similar to example, you can perform build step.
 
 ### Linux/MacOS
-   * run `./mvnw` (or `./mvnc -DskipTests` for skipping tests)
+   * run `./mvnw clean install` (or `./mvnc -DskipTests clean install` for skipping tests)
 
 ### Windows
-   * run ``mvnw.bat` (or `mvnw.bat -DskipTests` for skipping tests)  
+   * run `mvnw.bat clean install` (or `mvnw.bat -DskipTests` for skipping tests)  
 
 ###Other modules required to build Apollo components
 
@@ -85,7 +85,7 @@ OS name: "linux", version: "5.9.12-200.fc33.x86_64", arch: "amd64", family: "uni
     
 ### Installation artefacts
 
-Final artefact that is ready to install and run is loacated in the ___apl-exec/target___ directory and has name like  ___apollo-blockchain-1.47.5-NoOS-NoArch.zip___.
+Final artefact that is ready to install and run is loacated in the ___apl-exec/target___ directory and has name like  ___apollo-blockchain-1.47.6-NoOS-NoArch.zip___.
 Unzip it to some location and run by scripts in ___ApolloWallet/apollo-blockchain/bin___ directory.
 
 You'll probably need __Apollo-web-ui__ and __Apollo-desktop__ components to use Apollo wallet.

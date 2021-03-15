@@ -36,6 +36,8 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.DefaultBlockValidator;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardingInitTaskBackgroundScheduler;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessingTaskScheduler;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.TableRegistryInitializer;
@@ -82,7 +84,7 @@ public final class AplCore {
     DerivedTablesRegistry dbRegistry;
     //those vars needed to just pull CDI to crerate it befor we gonna use it in threads
     private AbstractBlockValidator bcValidator;
-    private TimeService time;
+    private final TimeService time;
     private Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
@@ -90,17 +92,16 @@ public final class AplCore {
     private API apiServer;
     private IDexMatcherInterface tcs;
     @Inject
-    @Setter
     private PropertiesHolder propertiesHolder;
     @Inject
-    @Setter
     private DirProvider dirProvider;
     @Inject
-    @Setter
     private AplAppStatus aplAppStatus;
     @Inject
-    @Setter
     private TaskDispatchManager taskDispatchManager;
+
+    @Inject
+    private MemPool memPool;
 
     private String initCoreTaskID;
 
@@ -205,8 +206,9 @@ public final class AplCore {
             transportInteractionService = CDI.current().select(TransportInteractionService.class).get();
             transportInteractionService.start();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 5.5, "Transport control service initialization done");
+            AplHealthLogger healthLogger = CDI.current().select(AplHealthLogger.class).get();
+            healthLogger.logSystemProperties();
 
-            AplCoreRuntime.logSystemProperties();
             Thread secureRandomInitThread = initSecureRandom();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 6.0, "Database initialization");
 
@@ -237,6 +239,7 @@ public final class AplCore {
             bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
             blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
             blockchain = CDI.current().select(BlockchainImpl.class).get();
+            blockchain.update();
             peers.init();
             GenesisAccounts.init();
 
@@ -254,11 +257,14 @@ public final class AplCore {
             // start shard process recovery after initialization of all derived tables but before launching threads (blockchain downloading, transaction processing)
             recoverSharding();
 
+            memPool.initCache();
+
             //Init classes to add tasks to the TaskDispatchManager
             CDI.current().select(DexOrderProcessor.class).get();
             CDI.current().select(PrunableArchiveMonitor.class).get();
             CDI.current().select(DexOperationService.class).get();
             CDI.current().select(TransactionProcessingTaskScheduler.class).get();
+            CDI.current().select(ShardingInitTaskBackgroundScheduler.class).get();
 
             //start all background tasks
             taskDispatchManager.dispatch();

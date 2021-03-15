@@ -41,8 +41,8 @@ public final class SetPhasingOnly extends AbstractAttachment {
         Map<?,?> phasingControlParams = (Map<?,?>) attachmentData.get("phasingControlParams");
         phasingParams = new PhasingParams(phasingControlParams);
         maxFees = Convert.parseLong(attachmentData.get("controlMaxFees"));
-        minDuration = ((Long) attachmentData.get("controlMinDuration")).shortValue();
-        maxDuration = ((Long) attachmentData.get("controlMaxDuration")).shortValue();
+        minDuration = ((Number) attachmentData.get("controlMinDuration")).shortValue();
+        maxDuration = ((Number) attachmentData.get("controlMaxDuration")).shortValue();
     }
 
     @Override

@@ -69,7 +69,7 @@ class AccountGuaranteedBalanceTableTest extends DbContainerBaseTest {
 
         long sizeAll = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues().size();
         assertEquals(testData.ALL_BALANCES.size(), sizeAll);
-        DbUtils.inTransaction(dbExtension, con -> table.trim(testData.ACC_GUARANTEE_BALANCE_HEIGHT_MAX, true));
+        DbUtils.inTransaction(dbExtension, con -> table.trim(testData.ACC_GUARANTEE_BALANCE_HEIGHT_MAX));
         long sizeTrim = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues().size();
         assertEquals(1, sizeTrim);
     }

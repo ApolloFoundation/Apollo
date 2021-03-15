@@ -20,11 +20,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 
@@ -76,9 +75,7 @@ public interface Blockchain {
 
     Block findFirstBlock();
 
-    Block loadBlockData(BlockEntity blockEntity);
-
-    List<Block> loadBlockData(List<BlockEntity> blocks);
+    Block loadBlockData(Block block);
 
     @Deprecated
     List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp);
@@ -187,4 +184,6 @@ public interface Blockchain {
     boolean isExpired(Transaction tx);
 
     List<Transaction> loadPrunables(List<Transaction> transactions);
+
+    List<Block> getBlocksAfter(int height, int limit);
 }
