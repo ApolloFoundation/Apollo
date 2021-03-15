@@ -121,7 +121,7 @@ and deleted after work is done.
         ./maria_db_osx_pkg.sh
         ./maria_db_windows_pkg.sh
 
-        2.1) install 'patchelf' in case error like: patchelf: command not found 
+        2.1) install Linux 'patchelf' in case error like: patchelf: command not found 
             > sudo apt install patchelf
         
     3) Unzip target packege and start db installation process. (<BASE_DIR>/ApolloWallet/apollo-mariadb is a basedir path)
