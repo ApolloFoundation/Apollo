@@ -143,18 +143,11 @@ then
     notify "Removing old version..."
     
     notify "Moving extra files..."
-#    cp -Rfv $1/* $1/..
     cd $1/..
-#    rm -rfv $1
     cp -Rfv $2/* .
 
-#    cd $1/
-#    cp -vRa conf* apollo-blockchain
-#    cp -vRa conf/* apollo-blockchain/conf
 #    ./replace_dbdir.sh
     
-#    notify "Creating symlinks..."
-#    ln -s apollo-blockchain/bin bin
  
 
     chmod 755 apollo-blockchain/bin/*.sh
@@ -181,26 +174,13 @@ then
 	chmod 755 secureTransport/runClient.sh
     fi
 
-#    rm -rf apollo-wallet-deps-${VERSION}.tar.gz
-#    rm -rf apollo-wallet-deps-*
     echo Version = ${VERSION}
-#    notify "Downloading deps...."
-# Commented downloading deps
-#    wget https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz || curl --retry 100  https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz -o apollo-wallet-deps-${VERSION}.tar.gz
-#    tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
-#    cp apollo-wallet-deps-${VERSION}/* $1/lib
-    
-#    rm -rf apollo-wallet-deps-${VERSION}*
 
 # Install JRE
 #    notify "Installing Java Runtime..."
 #    bash ./update2.sh $1
 
 #determine, if shrding was performed or not
-
-    
-    
-    
 
 # Download db with shards
     getNetwork
