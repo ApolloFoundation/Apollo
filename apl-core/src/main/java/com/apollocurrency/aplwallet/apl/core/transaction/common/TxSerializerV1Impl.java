@@ -27,15 +27,14 @@ public class TxSerializerV1Impl extends AbstractTxSerializer {
     @Override
     public int write(Transaction transaction, WriteBuffer buffer) {
         int payloadSize = 0;
-        buffer
-            .write(transaction.getType().getSpec().getType())
-            .write(getVersionSubtypeByte(transaction))
-            .write(transaction.getTimestamp())
-            .write(transaction.getDeadline())
-            .write(transaction.getSenderPublicKey())
-            .write(transaction.getType().canHaveRecipient() ? transaction.getRecipientId() : GenesisImporter.CREATOR_ID)
-            .write(transaction.getAmountATM())
-            .write(transaction.getFeeATM());
+        buffer.writeByte(transaction.getType().getSpec().getType());
+        buffer.writeByte(getVersionSubtypeByte(transaction));
+        buffer.writeInt(transaction.getTimestamp());
+        buffer.writeShort(transaction.getDeadline());
+        buffer.write(transaction.getSenderPublicKey());
+        buffer.writeLong(transaction.getType().canHaveRecipient() ? transaction.getRecipientId() : GenesisImporter.CREATOR_ID);
+        buffer.writeLong(transaction.getAmountATM());
+        buffer.writeLong(transaction.getFeeATM());
 
         if (transaction.referencedTransactionFullHash() != null) {
             buffer.write(transaction.referencedTransactionFullHash());
@@ -50,10 +49,9 @@ public class TxSerializerV1Impl extends AbstractTxSerializer {
             }
         }
 
-        buffer
-            .write(getTransactionFlags(transaction))
-            .write(transaction.getECBlockHeight())
-            .write(transaction.getECBlockId());
+        buffer.writeInt(getTransactionFlags(transaction));
+        buffer.writeInt(transaction.getECBlockHeight());
+        buffer.writeLong(transaction.getECBlockId());
 
         payloadSize += buffer.size();
 

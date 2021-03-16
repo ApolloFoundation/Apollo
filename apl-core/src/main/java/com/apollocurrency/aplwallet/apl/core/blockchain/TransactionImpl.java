@@ -161,6 +161,13 @@ public class TransactionImpl implements Transaction {
     }
 
     final void sign(Signature signature, Result unsignedRawTransaction) {
+        /* Old implementation
+            byte[] data = zeroSignature(getCopyTxBytes());
+            byte[] signatureHash = Crypto.sha256().digest(signature.bytes());
+            MessageDigest digest = Crypto.sha256();
+            digest.update(data);
+            fullHash = digest.digest(signatureHash);
+        */
         this.signature = signature;
         this.fullHash = calculateFullHash(unsignedRawTransaction.array(), signature.bytes());
         this.id = AplIdGenerator.TRANSACTION.getIdByHash(fullHash).longValue();

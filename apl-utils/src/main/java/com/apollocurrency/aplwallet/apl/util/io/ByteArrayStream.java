@@ -28,9 +28,8 @@ public class ByteArrayStream extends AbstractWriteBuffer {
     }
 
     @Override
-    public WriteBuffer write(byte value) {
+    public void writeByte(byte value) {
         out.write(value);
-        return this;
     }
 
     @SneakyThrows

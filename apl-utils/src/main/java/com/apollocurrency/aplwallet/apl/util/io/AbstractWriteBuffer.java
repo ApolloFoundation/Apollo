@@ -35,22 +35,6 @@ public abstract class AbstractWriteBuffer implements WriteBuffer {
         return order;
     }
 
-    public abstract WriteBuffer write(byte data);
-
-    @Override
-    public WriteBuffer write(byte[] value) {
-        for (byte b : value) {
-            write(b);
-        }
-        return this;
-    }
-
-    @Override
-    public WriteBuffer write(boolean value) {
-        write((byte) (value ? 1 : 0));
-        return this;
-    }
-
     @Override
     public WriteBuffer write(short value) {
         writeShort(value);
@@ -81,29 +65,32 @@ public abstract class AbstractWriteBuffer implements WriteBuffer {
         return this;
     }
 
-    protected void writeShort(short v) {
+    @Override
+    public void writeShort(short v) {
         putShortParts((byte) (0xFF & v)
-                , (byte) (0xFF & (v >> 8)));
+            , (byte) (0xFF & (v >> 8)));
 
     }
 
-    protected void writeInt(int v) {
+    @Override
+    public void writeInt(int v) {
         putIntParts((byte) (0xFF & v)
-                , (byte) (0xFF & (v >> 8))
-                , (byte) (0xFF & (v >> 16))
-                , (byte) (0xFF & (v >> 24)));
+            , (byte) (0xFF & (v >> 8))
+            , (byte) (0xFF & (v >> 16))
+            , (byte) (0xFF & (v >> 24)));
 
     }
 
-    protected void writeLong(long v) {
+    @Override
+    public void writeLong(long v) {
         putLongParts((byte) (0xFF & v)
-                , (byte) (0xFF & (v >> 8))
-                , (byte) (0xFF & (v >> 16))
-                , (byte) (0xFF & (v >> 24))
-                , (byte) (0xFF & (v >> 32))
-                , (byte) (0xFF & (v >> 40))
-                , (byte) (0xFF & (v >> 48))
-                , (byte) (0xFF & (v >> 56)));
+            , (byte) (0xFF & (v >> 8))
+            , (byte) (0xFF & (v >> 16))
+            , (byte) (0xFF & (v >> 24))
+            , (byte) (0xFF & (v >> 32))
+            , (byte) (0xFF & (v >> 40))
+            , (byte) (0xFF & (v >> 48))
+            , (byte) (0xFF & (v >> 56)));
 
     }
 
