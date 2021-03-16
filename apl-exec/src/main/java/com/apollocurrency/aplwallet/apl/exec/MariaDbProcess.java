@@ -66,7 +66,7 @@ public class MariaDbProcess {
     }
 
     public MariaDbProcess(DbConfig conf, Path dbInstallDir, Path dbDataDir) {
-
+        log.debug("Attempt to start MariaDb by params: {}\ndbInstallDir = {}\ndbDataDir = {}", conf, dbInstallDir, dbDataDir);
         dbControl = new MariaDbControl(setDbParams(conf, dbInstallDir, dbDataDir));
     }
     /**

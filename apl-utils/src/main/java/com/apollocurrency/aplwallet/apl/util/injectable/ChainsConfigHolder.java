@@ -37,4 +37,12 @@ public class ChainsConfigHolder {
     public Chain getActiveChain() {
         return ChainUtils.getActiveChain(chains);
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("ChainsConfigHolder{");
+        sb.append("chains=").append(chains);
+        sb.append('}');
+        return sb.toString();
+    }
 }

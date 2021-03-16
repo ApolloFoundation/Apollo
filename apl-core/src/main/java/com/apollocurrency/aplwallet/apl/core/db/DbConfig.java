@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.ToString;
 
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 
 @Singleton
+@ToString
 public class DbConfig {
     private final PropertiesHolder propertiesHolder;
     private final ChainsConfigHolder chainsConfigHolder;
