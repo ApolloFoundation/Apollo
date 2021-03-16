@@ -25,15 +25,18 @@ import java.util.Map;
 public class MariaDbProcess {
     public static final String DB_CONF_FILE="my-apl.cnf";
     public static final String DB_CONF_FILE_TEMPLATE="my-apl.cnf.template";
+    public static final String OUTPUT_FILE_NAME = "maria_out.log";
 
     private DbControl dbControl;
     private  Path confFile;
     private  Path confFileTemplate;
+    private Path outFile;
     private MariaDbRunParams dbParams;
 
     private MariaDbRunParams setDbParams(DbConfig conf, Path dbInstallDir, Path dbDataDir){
         dbParams = new MariaDbRunParams();
         confFile = dbDataDir.resolve(DB_CONF_FILE);
+        outFile = dbDataDir.resolve(OUTPUT_FILE_NAME); // output file in db dir
         confFileTemplate = dbInstallDir.resolve("conf").resolve(DB_CONF_FILE_TEMPLATE);
         String dbUser = conf.getDbConfig().getDbUsername();
         String dbPassword = conf.getDbConfig().getDbPassword();
@@ -49,7 +52,7 @@ public class MariaDbProcess {
                 dbParams.setDbConfigFile(confFile);
                 dbParams.setDbDataDir(dbDataDir);
                 dbParams.setDbInstallDir(dbInstallDir);
-                dbParams.setOut(Path.of("maria_out.log"));
+                dbParams.setOut(outFile);
                 dbParams.setDbUser(dbUser);
                 dbParams.setDbPassword(dbPassword);
 
