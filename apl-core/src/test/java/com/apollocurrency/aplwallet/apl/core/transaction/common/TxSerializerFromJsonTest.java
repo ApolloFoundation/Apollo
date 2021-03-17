@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.common;
 
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -49,13 +50,15 @@ class TxSerializerFromJsonTest {
         context = TxBContext.newInstance(chain);
         doReturn(chain).when(blockchainConfig).getChain();
         jsonSerializer = new TransactionJsonSerializerImpl(prunableLoadingService, blockchainConfig);
+        GenesisImporter.CREATOR_ID = 1739068987193023818L;
     }
 
     @SneakyThrows
-    @ParameterizedTest
+    @ParameterizedTest(name = "[{index}] tx")
     @ValueSource(strings = {
-        //"{ \"id\": \"16350523665856680534\"," +
-        "{  \"type\": 0, \"subtype\": 0, " +
+        //#1
+        "{ \"id\": \"16350523665856680534\"," +
+            "  \"type\": 0, \"subtype\": 0, " +
             "  \"timestamp\": 99438626,  \"deadline\": 1440," +
             "  \"senderPublicKey\": \"39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152\"," +
             "  \"recipient\": \"12429427084439267476\"," +
@@ -67,13 +70,8 @@ class TxSerializerFromJsonTest {
             "  \"attachment\": {\"version.OrdinaryPayment\": 0 }," +
             "  \"height\": 2667,  \"version\": 1,  \"ecBlockId\": \"9029235821353789852\", \"ecBlockHeight\": 4096962," +
             "}",
-        //"{ \"id\":\"16091200120166840182\"," + // td.TRANSACTION_14
-        "{\"senderPublicKey\":\"39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152\"," +
-            "\"signature\":\"7ecae5825a24dedc42dd11e2239ced7ad797c6d6c9aedc3d3275204630b7e20832f9543d1063787ea1f32ab0993ea733aa46a52664755d9e54f211cdc3c5c5fd\"," +
-            "\"type\":3,\"version\":1,\"amountATM\":0,\"ecBlockId\":\"4407210215527895706\"," +
-            "\"attachment\":{\"quantity\":2,\"name\":\"Test product\",\"description\":\"Test product for sale\",\"priceATM\":10000000000,\"version.PrunablePlainMessage\":1,\"messageHash\":\"b9dd15475e2f8da755f1b63933051dede676b223c86e70f54c7182b976d2f86d\",\"version.DigitalGoodsListing\":1,\"tags\":\"tag testdata\"}," +
-            "\"subtype\":0,\"feeATM\":1000000000,\"ecBlockHeight\":552605,\"deadline\":1440,\"timestamp\":41974329}\n",
-        "{\n" +
+        //#2
+        "{ \"id\": \"9175410632340250178\"," + //actual id=16091200120166840182
             "    \"senderPublicKey\": \"39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152\",\n" +
             "    \"signature\": \"7ecae5825a24dedc42dd11e2239ced7ad797c6d6c9aedc3d3275204630b7e20832f9543d1063787ea1f32ab0993ea733aa46a52664755d9e54f211cdc3c5c5fd\",\n" +
             "    \"transactionIndex\": 0,\n" +
@@ -90,7 +88,7 @@ class TxSerializerFromJsonTest {
             "        \"quantity\": 2,\n" +
             "        \"name\": \"Test product\",\n" +
             "        \"description\": \"Test product for sale\",\n" +
-            "        \"priceATM\": \"10000000000\",\n" +
+            "        \"priceATM\": 10000000000,\n" +
             "        \"version.PrunablePlainMessage\": 1,\n" +
             "        \"messageHash\": \"b9dd15475e2f8da755f1b63933051dede676b223c86e70f54c7182b976d2f86d\",\n" +
             "        \"version.DigitalGoodsListing\": 1,\n" +
@@ -114,15 +112,18 @@ class TxSerializerFromJsonTest {
         //long txId= Long.parseUnsignedLong((String) jsonObject.get("id"));
         TransactionBuilderFactory transactionBuilderFactory = new TransactionBuilderFactory(td.getTransactionTypeFactory(), blockchainConfig);
         Transaction txFromJson = transactionBuilderFactory.newTransaction(jsonObject);
-        log.info("txId={}", txFromJson.getId());
+        log.info("                  next tx");
+        log.info("txId={} unsigned={}", txFromJson.getId(), Long.toUnsignedString(txFromJson.getId()));
 
         JSONObject jsonLegacy = jsonSerializer.toLegacyJsonFormat(txFromJson);
 
         assertNotNull(jsonLegacy);
         //assertEquals(txId, txFromJson.getId());
         for (Object key : jsonLegacy.keySet()) {
-            assertEquals(String.valueOf(jsonObject.get(key)), String.valueOf(jsonLegacy.get(key)));
-            log.info("key={} typeExpected={}, typeActual={}", key, jsonObject.get(key).getClass().getSimpleName(), jsonLegacy.get(key).getClass().getSimpleName());
+            String strKey = (String) key;
+            Object value = jsonObject.get(key);
+            log.info("key={} typeExpected={}, typeActual={}", key, value != null ? value.getClass().getSimpleName() : "null", jsonLegacy.get(key).getClass().getSimpleName());
+            assertEquals(String.valueOf(value), String.valueOf(jsonLegacy.get(key)));
         }
     }
 }
