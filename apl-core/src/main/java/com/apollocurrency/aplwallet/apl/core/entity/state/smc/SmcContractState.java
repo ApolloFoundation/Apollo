@@ -39,7 +39,6 @@ public class SmcContractState extends VersionedDerivedEntity {
         this.args = args;
         this.status = status;
         this.serializedObject = serializedObject;
-        //this.hashSum = hashSum;
     }
 
     @Override

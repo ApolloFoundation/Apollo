@@ -48,18 +48,17 @@ class TxSerializerV3Test {
     void serializeV3toByteArray() {
         //GIVEN
         //Rlp encoded Tx V3
-        String expected = "0b30a466666666663662642d303061332d333436622d616164362d3631666566633062643163368205a08405c8ff3d82012188c673b858266226e601a094c4e9ef9d92275e659aa7f26dcf56d54568739813d2c34559266c8150fabd46889c0370240713f694808405f5e1000580f83dd880018d636c617373204465616c207b7dc786737472696e67e30401a015f174a507a4c6256f20af0d01b592b495fbeeaa34220c6c26d87b1e9d0bc031c0f84df84b8894c4e9ef9d92275eb84024695281c4dbe2f63d64a167f659e00753ded5ccfba4cb41c4daa339f97c070c11e5b033bc0b35d6cdcf012985c97ad34895dedf219e8448cd1cb103c5e4af21";
+        String expectedTxBytes = "0b30a466666666663662642d303061332d333436622d616164362d3631666566633062643163368205a08405c8ff3d82012188c673b858266226e601a094c4e9ef9d92275e659aa7f26dcf56d54568739813d2c34559266c8150fabd46889c0370240713f694808405f5e1000580f83dd880018d636c617373204465616c207b7dc786737472696e67e30401a015f174a507a4c6256f20af0d01b592b495fbeeaa34220c6c26d87b1e9d0bc031c0f84df84b8894c4e9ef9d92275eb84024695281c4dbe2f63d64a167f659e00753ded5ccfba4cb41c4daa339f97c070c11e5b033bc0b35d6cdcf012985c97ad34895dedf219e8448cd1cb103c5e4af21";
 
         //WHEN
         TransactionBuilderFactory transactionBuilderFactory = new TransactionBuilderFactory(td.getTransactionTypeFactory(), blockchainConfig);
-        Transaction tx = transactionBuilderFactory.newTransaction(Convert.parseHexString(expected));
+        Transaction tx = transactionBuilderFactory.newTransaction(Convert.parseHexString(expectedTxBytes));
 
         //THEN
         assertEquals(3, tx.getVersion());
         assertEquals(11, tx.getType().getSpec().getType());
         assertEquals(-7204791678822779244L, tx.getRecipientId());
         assertEquals(1440, tx.getDeadline());
-
 
         //WHEN
         TxSerializer serializer = context.createSerializer(tx.getVersion());
@@ -68,7 +67,7 @@ class TxSerializerV3Test {
 
         //THEN
         assertNotNull(result.array());
-        assertEquals(expected, Convert.toHexString(result.array()));
+        assertEquals(expectedTxBytes, Convert.toHexString(result.array()));
     }
 
 }

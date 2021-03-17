@@ -18,7 +18,7 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString(callSuper = true)
-public class SmcContract  extends VersionedDerivedEntity {
+public class SmcContract extends VersionedDerivedEntity {
     private String address; //contract address/id
     private String data;
     private String contractName;
@@ -27,6 +27,8 @@ public class SmcContract  extends VersionedDerivedEntity {
     private BigInteger fuelValue;//initial fuel value
 
     private BigInteger fuelPrice;
+
+    private BigInteger fuelRemaining;
 
     private String transactionId;
 
@@ -39,6 +41,7 @@ public class SmcContract  extends VersionedDerivedEntity {
         this.contractName = contractName;
         this.languageName = languageName;
         this.fuelValue = fuelValue;
+        this.fuelRemaining = fuelValue;
         this.fuelPrice = fuelPrice;
         this.transactionId = transactionId;
     }
@@ -54,12 +57,13 @@ public class SmcContract  extends VersionedDerivedEntity {
             && Objects.equals(contractName, that.contractName)
             && Objects.equals(languageName, that.languageName)
             && Objects.equals(fuelValue, that.fuelValue)
+            && Objects.equals(fuelRemaining, that.fuelRemaining)
             && Objects.equals(fuelPrice, that.fuelPrice)
             && Objects.equals(transactionId, that.transactionId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), address, data, contractName, languageName, fuelValue, fuelPrice, transactionId);
+        return Objects.hash(super.hashCode(), address, data, contractName, languageName, fuelValue, fuelRemaining, fuelPrice, transactionId);
     }
 }
