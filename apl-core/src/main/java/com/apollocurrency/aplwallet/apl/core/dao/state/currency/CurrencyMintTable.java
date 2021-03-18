@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyMint;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -36,11 +35,10 @@ public class CurrencyMintTable extends VersionedDeletableEntityDbTable<CurrencyM
     };
 
     @Inject
-    public CurrencyMintTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                             DatabaseManager databaseManager,
+    public CurrencyMintTable(DatabaseManager databaseManager,
                              Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("currency_mint", currencyMintDbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override

@@ -14,8 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -48,12 +46,10 @@ public class DGSGoodsTable extends EntityDbTable<DGSGoods> implements Searchable
     private static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";
 
     @Inject
-    public DGSGoodsTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                         DatabaseManager databaseManager,
-                         FullTextConfig fullTextConfig,
+    public DGSGoodsTable(DatabaseManager databaseManager,
                          Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super(TABLE_NAME, KEY_FACTORY, true, FULL_TEXT_SEARCH_COLUMNS,
-            derivedDbTablesRegistry, databaseManager, fullTextConfig, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override

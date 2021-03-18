@@ -24,8 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -47,25 +45,16 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
 
     protected final String table;
     protected final DatabaseManager databaseManager;
-    private final DerivedTablesRegistry derivedDbTablesRegistry;
-    private FullTextConfig fullTextConfig;
     @Getter
     private final String fullTextSearchColumns;
 
     protected DerivedDbTable(String table,
-                             DerivedTablesRegistry derivedDbTablesRegistry,
                              DatabaseManager databaseManager,
-                             FullTextConfig fullTextConfig,
                              String fullTextSearchColumns) {
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
-        this.derivedDbTablesRegistry = Objects.requireNonNull(derivedDbTablesRegistry, "derivedDbTablesRegistry is NULL");
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
-        if (fullTextConfig != null) { // CAN BE NULL for some tables
-            this.fullTextConfig = fullTextConfig;
-        }
         this.fullTextSearchColumns = fullTextSearchColumns;
-        init(); // reverted back for usage
     }
 
     public String getTableName() {
@@ -74,22 +63,6 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
 
     @Override
     public void trim(int height) {
-    }
-
-    //    @PostConstruct // can be used, but keep eyes on 'PublicKeyTable' which is not gets into derivedDbTablesRegistry
-    public void init() {
-        derivedDbTablesRegistry.registerDerivedTable(this);
-        log.debug("Register derived class: {}", this.getClass().getName());
-        if (this instanceof SearchableTableInterface) {
-            log.debug("Register SearchableTable derived class: {}", this.getClass().getName());
-            if (fullTextConfig != null) {
-                fullTextConfig.registerTable(table, this.getFullTextSearchColumns());
-            } else {
-                String error = "ERROR registering 'SearchableTable' table without supplied 'fullTextConfig' instance !!!";
-                log.error(error);
-                throw new RuntimeException(error);
-            }
-        }
     }
 
     @Override

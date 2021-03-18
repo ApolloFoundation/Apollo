@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -22,17 +21,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
+ * Uses external weld initialization through {@link PublicKeyTableProducer}
  * @author al
  */
-//@Singleton
 public class GenesisPublicKeyTable extends EntityDbTable<PublicKey> {
 
-    //@Inject
-    public GenesisPublicKeyTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                 DatabaseManager databaseManager,
+    public GenesisPublicKeyTable(DatabaseManager databaseManager,
                                  Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("genesis_public_key", new PublicKeyDbFactory("account_id"), false, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+            databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override
