@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.common;
 
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -20,6 +21,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,6 +49,11 @@ class TxSerializerToJsonTest {
     TransactionJsonSerializer jsonSerializer;
 
     TransactionTestData td = new TransactionTestData();
+
+    @BeforeAll
+    static void beforeAll() {
+        GenesisImporter.CREATOR_ID = 1739068987193023818L;
+    }
 
     @BeforeEach
     void setUp() {
@@ -84,20 +91,21 @@ class TxSerializerToJsonTest {
         TransactionBuilderFactory transactionBuilderFactory = new TransactionBuilderFactory(td.getTransactionTypeFactory(), blockchainConfig);
         Transaction txFromJson = transactionBuilderFactory.newTransaction(jsonObject2);
         assertEquals(t1.getId(), txFromJson.getId());
-        assertEquals(t1.getSignature(), txFromJson.getSignature());
+        assertArrayEquals(t1.getSignature().bytes(), txFromJson.getSignature().bytes());
 
         JSONObject jsonLegacy = jsonSerializer.toLegacyJsonFormat(txFromJson);
 
         assertNotNull(jsonLegacy);
         assertEquals(jsonLegacy, ((JsonBuffer) result.getBuffer()).getJsonObject());
-
     }
 
     @SneakyThrows
     @Test
     void toJsonLegacyFormat() {
         //GIVEN
-        String t14UnsignedHex = "0310397a8002a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d379601520000000000000000000000000000000000ca9a3b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000009d6e08009a520333578e293d010c00546573742070726f647563741500546573742070726f6475637420666f722073616c650c007461672074657374646174610200000000e40b540200000001b9dd15475e2f8da755f1b63933051dede676b223c86e70f54c7182b976d2f86d";
+        //String t14UnsignedHex = "0310397a8002a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d379601520000000000000000000000000000000000ca9a3b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000009d6e08009a520333578e293d010c00546573742070726f647563741500546573742070726f6475637420666f722073616c650c007461672074657374646174610200000000e40b540200000001b9dd15475e2f8da755f1b63933051dede676b223c86e70f54c7182b976d2f86d";
+        String t14UnsignedHex = "0310397a8002a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d379601524add89a5076a2218000000000000000000ca9a3b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000009d6e08009a520333578e293d010c00546573742070726f647563741500546573742070726f6475637420666f722073616c650c007461672074657374646174610200000000e40b540200000001b9dd15475e2f8da755f1b63933051dede676b223c86e70f54c7182b976d2f86d";
+
         String t14FullHash = "76774424416d4fdf2d218a8705a72fd313b7dd52db7ab34229d23e4125e02a00";
         Transaction t1 = td.TRANSACTION_14;
 

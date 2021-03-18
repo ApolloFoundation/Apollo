@@ -51,8 +51,9 @@ public class RlpWriteBuffer implements WriteBuffer {
     }
 
     @Override
-    public void writeByte(byte value) {
+    public WriteBuffer write(byte value) {
         output = Arrays.concatenate(output, RlpEncoder.encode(RlpString.create(value)));
+        return this;
     }
 
     @Override
@@ -62,21 +63,28 @@ public class RlpWriteBuffer implements WriteBuffer {
     }
 
     @Override
-    public void writeShort(short value) {
-        writeLong(value);
+    public WriteBuffer write(boolean value) {
+        write((byte) (value ? 1 : 0));
+        return this;
     }
 
     @Override
-    public void writeInt(int value) {
-        writeLong(value);
+    public WriteBuffer write(short value) {
+        return write((long) value);
     }
 
     @Override
-    public void writeLong(long value) {
+    public WriteBuffer write(int value) {
+        return write((long) value);
+    }
+
+    @Override
+    public WriteBuffer write(long value) {
         RlpString rlpStr = value >= 0 ?
             RlpString.create(value) :
             RlpString.create(new BigInteger(Long.toUnsignedString(value)));
         output = Arrays.concatenate(output, RlpEncoder.encode(rlpStr));
+        return this;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021. Apollo Foundation.
+ * Copyright (c) 2020-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.util.io;
@@ -28,8 +28,9 @@ public class ByteArrayStream extends AbstractWriteBuffer {
     }
 
     @Override
-    public void writeByte(byte value) {
+    public WriteBuffer write(byte value) {
         out.write(value);
+        return this;
     }
 
     @SneakyThrows

@@ -25,45 +25,17 @@ public interface WriteBuffer {
 
     byte[] toByteArray();
 
-    default WriteBuffer write(byte value) {
-        writeByte(value);
-        return this;
-    }
+    WriteBuffer write(byte value);
 
-    default WriteBuffer write(byte[] value) {
-        for (byte b : value) {
-            writeByte(b);
-        }
-        return this;
-    }
+    WriteBuffer write(byte[] value);
 
-    default WriteBuffer write(boolean value) {
-        writeByte((byte) (value ? 1 : 0));
-        return this;
-    }
+    WriteBuffer write(boolean value);
 
-    void writeByte(byte value);
+    WriteBuffer write(short value);
 
-    default WriteBuffer write(short value) {
-        writeShort(value);
-        return this;
-    }
+    WriteBuffer write(int value);
 
-    void writeShort(short value);
-
-    default WriteBuffer write(int value) {
-        writeInt(value);
-        return this;
-    }
-
-    void writeInt(int value);
-
-    default WriteBuffer write(long value) {
-        writeLong(value);
-        return this;
-    }
-
-    void writeLong(long value);
+    WriteBuffer write(long value);
 
     WriteBuffer write(String hex);
 

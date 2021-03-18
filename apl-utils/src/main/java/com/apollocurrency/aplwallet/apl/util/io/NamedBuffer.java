@@ -28,8 +28,8 @@ public interface NamedBuffer extends WriteBuffer {
     WriteBuffer put(String tag, BigInteger value);
 
     @Override
-    default void writeByte(byte value) {
-        put("", value);
+    default WriteBuffer write(byte value) {
+        return put("", value);
     }
 
     @Override
@@ -43,18 +43,18 @@ public interface NamedBuffer extends WriteBuffer {
     }
 
     @Override
-    default void writeShort(short value) {
-        put("", value);
+    default WriteBuffer write(short value) {
+        return put("", value);
     }
 
     @Override
-    default void writeInt(int value) {
-        put("", value);
+    default WriteBuffer write(int value) {
+        return put("", value);
     }
 
     @Override
-    default void writeLong(long value) {
-        put("", value);
+    default WriteBuffer write(long value) {
+        return put("", value);
     }
 
     @Override

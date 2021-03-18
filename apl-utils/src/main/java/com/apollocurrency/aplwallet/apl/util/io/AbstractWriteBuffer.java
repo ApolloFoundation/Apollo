@@ -36,6 +36,20 @@ public abstract class AbstractWriteBuffer implements WriteBuffer {
     }
 
     @Override
+    public WriteBuffer write(byte[] value) {
+        for (byte b : value) {
+            write(b);
+        }
+        return this;
+    }
+
+    @Override
+    public WriteBuffer write(boolean value) {
+        write((byte) (value ? 1 : 0));
+        return this;
+    }
+
+    @Override
     public WriteBuffer write(short value) {
         writeShort(value);
         return this;
@@ -65,15 +79,13 @@ public abstract class AbstractWriteBuffer implements WriteBuffer {
         return this;
     }
 
-    @Override
-    public void writeShort(short v) {
+    protected void writeShort(short v) {
         putShortParts((byte) (0xFF & v)
             , (byte) (0xFF & (v >> 8)));
 
     }
 
-    @Override
-    public void writeInt(int v) {
+    protected void writeInt(int v) {
         putIntParts((byte) (0xFF & v)
             , (byte) (0xFF & (v >> 8))
             , (byte) (0xFF & (v >> 16))
@@ -81,8 +93,7 @@ public abstract class AbstractWriteBuffer implements WriteBuffer {
 
     }
 
-    @Override
-    public void writeLong(long v) {
+    protected void writeLong(long v) {
         putLongParts((byte) (0xFF & v)
             , (byte) (0xFF & (v >> 8))
             , (byte) (0xFF & (v >> 16))

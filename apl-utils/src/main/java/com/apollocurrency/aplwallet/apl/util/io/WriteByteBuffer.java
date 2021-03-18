@@ -25,8 +25,9 @@ public class WriteByteBuffer extends AbstractWriteBuffer {
     }
 
     @Override
-    public void writeByte(byte value) {
+    public WriteBuffer write(byte value) {
         buffer.put(value);
+        return this;
     }
 
     @Override

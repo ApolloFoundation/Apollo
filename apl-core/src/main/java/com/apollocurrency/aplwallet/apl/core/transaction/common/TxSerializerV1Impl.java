@@ -6,9 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.transaction.common;
 
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionUtils.getTransactionFlags;
@@ -27,14 +27,14 @@ public class TxSerializerV1Impl extends AbstractTxSerializer {
     @Override
     public int write(Transaction transaction, WriteBuffer buffer) {
         int payloadSize = 0;
-        buffer.writeByte(transaction.getType().getSpec().getType());
-        buffer.writeByte(getVersionSubtypeByte(transaction));
-        buffer.writeInt(transaction.getTimestamp());
-        buffer.writeShort(transaction.getDeadline());
+        buffer.write(transaction.getType().getSpec().getType());
+        buffer.write(getVersionSubtypeByte(transaction));
+        buffer.write(transaction.getTimestamp());
+        buffer.write(transaction.getDeadline());
         buffer.write(transaction.getSenderPublicKey());
-        buffer.writeLong(transaction.getType().canHaveRecipient() ? transaction.getRecipientId() : GenesisImporter.CREATOR_ID);
-        buffer.writeLong(transaction.getAmountATM());
-        buffer.writeLong(transaction.getFeeATM());
+        buffer.write(transaction.getType().canHaveRecipient() ? transaction.getRecipientId() : GenesisImporter.CREATOR_ID);
+        buffer.write(transaction.getAmountATM());
+        buffer.write(transaction.getFeeATM());
 
         if (transaction.referencedTransactionFullHash() != null) {
             buffer.write(transaction.referencedTransactionFullHash());
@@ -49,9 +49,9 @@ public class TxSerializerV1Impl extends AbstractTxSerializer {
             }
         }
 
-        buffer.writeInt(getTransactionFlags(transaction));
-        buffer.writeInt(transaction.getECBlockHeight());
-        buffer.writeLong(transaction.getECBlockId());
+        buffer.write(getTransactionFlags(transaction));
+        buffer.write(transaction.getECBlockHeight());
+        buffer.write(transaction.getECBlockId());
 
         payloadSize += buffer.size();
 
