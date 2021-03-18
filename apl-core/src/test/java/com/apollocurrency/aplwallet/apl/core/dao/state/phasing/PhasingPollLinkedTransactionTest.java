@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.phasing;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
@@ -37,7 +38,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.PhasingTestData;
@@ -75,8 +75,7 @@ public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingP
     TransactionTestData td = new TransactionTestData();
 
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+    public WeldInitiator weld = WeldInitiator.from(BlockchainImpl.class, DaoConfig.class,
         GlobalSyncImpl.class,
         PhasingPollLinkedTransactionTable.class,
         FullTextConfigImpl.class,
@@ -101,6 +100,7 @@ public class PhasingPollLinkedTransactionTest extends ValuesDbTableTest<PhasingP
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
+        .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
         .build();
     @Inject
     PhasingPollLinkedTransactionTable table;
