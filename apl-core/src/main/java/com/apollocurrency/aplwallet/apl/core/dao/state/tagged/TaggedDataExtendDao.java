@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataExtend;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;
@@ -39,10 +38,9 @@ public class TaggedDataExtendDao extends ValuesDbTable<TaggedDataExtend> {
     };
 
     @Inject
-    public TaggedDataExtendDao(DerivedTablesRegistry derivedDbTablesRegistry,
-                               DatabaseManager databaseManager,
+    public TaggedDataExtendDao(DatabaseManager databaseManager,
                                Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(DB_TABLE, taggedDataKeyFactory, true, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+        super(DB_TABLE, taggedDataKeyFactory, true, databaseManager, deleteOnTrimDataEvent);
     }
 
     public List<TaggedDataExtend> getExtendTransactionIds(long taggedDataId) {

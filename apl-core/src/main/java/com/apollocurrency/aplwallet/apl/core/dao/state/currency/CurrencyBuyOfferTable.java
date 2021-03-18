@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -36,11 +35,10 @@ public class CurrencyBuyOfferTable extends VersionedDeletableEntityDbTable<Curre
     };
 
     @Inject
-    public CurrencyBuyOfferTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                 DatabaseManager databaseManager,
+    public CurrencyBuyOfferTable(DatabaseManager databaseManager,
                                  Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("buy_offer", buyOfferDbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override

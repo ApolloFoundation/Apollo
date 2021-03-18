@@ -13,7 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -47,10 +46,9 @@ public class DexContractTable extends EntityDbTable<ExchangeContract> {
     private ExchangeContractMapper mapper = new ExchangeContractMapper();
 
     @Inject
-    public DexContractTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                            DatabaseManager databaseManager,
+    public DexContractTable(DatabaseManager databaseManager,
                             Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, KEY_FACTORY, true, null, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+        super(TABLE_NAME, KEY_FACTORY, true, null, databaseManager, deleteOnTrimDataEvent);
     }
 
     private static ExchangeContract getFirstOrNull(List<ExchangeContract> contracts) {
