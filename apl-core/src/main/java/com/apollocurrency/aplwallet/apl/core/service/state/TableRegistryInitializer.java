@@ -34,9 +34,9 @@ public class TableRegistryInitializer {
 
     private void init(DerivedTableInterface table) {
         registry.registerDerivedTable(table);
-        log.debug("Register derived class: {}", this.getClass().getName());
-        if (this instanceof SearchableTableInterface) {
-            log.debug("Register SearchableTable derived class: {}", this.getClass().getName());
+        log.debug("Register derived class: {}", table.getClass().getName());
+        if (table instanceof SearchableTableInterface) {
+            log.debug("Register SearchableTable derived class: {}", table.getClass().getName());
             fullTextConfig.registerTable(table.getName(), table.getFullTextSearchColumns());
         }
     }
