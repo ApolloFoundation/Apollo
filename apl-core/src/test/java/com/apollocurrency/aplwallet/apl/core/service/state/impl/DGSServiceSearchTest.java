@@ -72,7 +72,6 @@ public class DGSServiceSearchTest extends DbContainerBaseTest {
         DGSPurchaseTable.class,
         DGSServiceImpl.class,
         DerivedDbTablesRegistryImpl.class,
-        BlockchainConfig.class,
         PropertiesHolder.class,
         BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class
     )
@@ -87,6 +86,7 @@ public class DGSServiceSearchTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
         .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
         .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class))
+        .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
         .build();
     @Inject
     DGSService service;

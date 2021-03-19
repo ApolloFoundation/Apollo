@@ -14,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -47,10 +46,9 @@ public class DataTagDao extends EntityDbTable<DataTag> {
     private static final DataTagMapper MAPPER = new DataTagMapper(tagDbKeyFactory);
 
     @Inject
-    public DataTagDao(DerivedTablesRegistry derivedDbTablesRegistry,
-                      DatabaseManager databaseManager,
+    public DataTagDao(DatabaseManager databaseManager,
                       Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(DB_TABLE, tagDbKeyFactory, true, null, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+        super(DB_TABLE, tagDbKeyFactory, true, null, databaseManager, deleteOnTrimDataEvent);
     }
 
     public DbKey newDbKey(DataTag dataTag) {
