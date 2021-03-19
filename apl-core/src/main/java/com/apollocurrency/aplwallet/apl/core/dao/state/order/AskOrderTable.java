@@ -56,7 +56,7 @@ public class AskOrderTable extends OrderTable<AskOrder> {
     public AskOrderTable(DerivedTablesRegistry derivedDbTablesRegistry,
                          DatabaseManager databaseManager,
                          Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super("ask_order", askOrderDbKeyFactory, derivedDbTablesRegistry, databaseManager, deleteOnTrimDataEvent);
+        super("ask_order", askOrderDbKeyFactory, databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override

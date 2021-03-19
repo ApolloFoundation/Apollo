@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.exchange.dao;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.cache.NullCacheProducerForTests;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
@@ -32,7 +33,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegist
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
@@ -75,7 +75,7 @@ public class DexContractTableTest extends DbContainerBaseTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        BlockchainImpl.class, DaoConfig.class,
         JdbiHandleFactory.class,
         FullTextConfigImpl.class,
         DexContractTable.class,
@@ -96,6 +96,7 @@ public class DexContractTableTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
+        .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
         .build();
     @Inject
     DexContractTable table;

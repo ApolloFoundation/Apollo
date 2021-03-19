@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -39,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
@@ -547,6 +547,39 @@ public class TransactionImpl implements Transaction {
     }
 
     public static final class BuilderImpl implements Builder {
+        @Override
+        public String toString() {
+            return "BuilderImpl{" +
+                "deadline=" + deadline +
+                ", senderPublicKey=" + Convert.toHexString(senderPublicKey) +
+                ", amountATM=" + amountATM +
+                ", feeATM=" + feeATM +
+                ", type=" + type +
+                ", version=" + version +
+                ", attachment=" + attachment +
+                ", recipientId=" + recipientId +
+                ", referencedTransactionFullHash=" + Convert.toHexString(referencedTransactionFullHash) +
+                ", signature=" + signature +
+                ", message=" + message +
+                ", encryptedMessage=" + encryptedMessage +
+                ", encryptToSelfMessage=" + encryptToSelfMessage +
+                ", publicKeyAnnouncement=" + publicKeyAnnouncement +
+                ", phasing=" + phasing +
+                ", prunablePlainMessage=" + prunablePlainMessage +
+                ", prunableEncryptedMessage=" + prunableEncryptedMessage +
+                ", blockId=" + blockId +
+                ", height=" + height +
+                ", id=" + id +
+                ", senderId=" + senderId +
+                ", timestamp=" + timestamp +
+                ", blockTimestamp=" + blockTimestamp +
+                ", fullHash=" + Convert.toHexString(fullHash) +
+                ", ecBlockSet=" + ecBlockSet +
+                ", ecBlockHeight=" + ecBlockHeight +
+                ", ecBlockId=" + ecBlockId +
+                ", index=" + index +
+                '}';
+        }
 
         private short deadline;
         private byte[] senderPublicKey;

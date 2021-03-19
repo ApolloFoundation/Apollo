@@ -94,7 +94,7 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
     }
 
     public DbExtension(GenericContainer jdbcDatabaseContainer) {
-        this(jdbcDatabaseContainer, DbTestData.getInMemDbProps(), null, null, null);
+        this(jdbcDatabaseContainer, DbTestData.getDbFileProperties(jdbcDatabaseContainer), null, null, null);
     }
 
     public FullTextSearchService getFullTextSearchService() {

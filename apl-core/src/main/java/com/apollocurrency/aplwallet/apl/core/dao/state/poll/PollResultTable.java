@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,11 +36,10 @@ public final class PollResultTable extends ValuesDbTable<PollOptionResult> {
     };
 
     @Inject
-    public PollResultTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                           DatabaseManager databaseManager,
+    public PollResultTable(DatabaseManager databaseManager,
                            Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("poll_result", POLL_RESULTS_DB_KEY_FACTORY,
-            false, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+            false, databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override

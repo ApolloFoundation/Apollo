@@ -100,7 +100,7 @@ class ReferencedTransactionDaoTest extends DbContainerBaseTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        TransactionImpl.class, BlockchainConfig.class, BlockchainImpl.class, DaoConfig.class,
+        TransactionImpl.class, BlockchainImpl.class, DaoConfig.class,
         ReferencedTransactionDaoImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
         TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
@@ -133,6 +133,7 @@ class ReferencedTransactionDaoTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(CurrencyService.class), CurrencyService.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
+        .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
         .build();
 
     @Inject

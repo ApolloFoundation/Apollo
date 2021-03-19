@@ -118,8 +118,20 @@ public class TransactionBuilderFactory {
      */
     @Deprecated
     public Transaction newTransaction(JSONObject transactionData) throws AplException.NotValidException {
-        TransactionImpl transaction = newTransactionBuilder(transactionData).build();
+        TransactionImpl.BuilderImpl builder = newTransactionBuilder(transactionData);
+        TransactionImpl transaction = builder.build();
         reSignTransaction(transaction);
+        long id = Long.parseUnsignedLong((String) transactionData.get("id"));
+        if (id != transaction.getId()) {
+            PayloadResult unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+            txBContext.createSerializer(transaction.getVersion())
+                .serialize(
+                    TransactionWrapperHelper.createUnsignedTransaction(transaction)
+                    , unsignedTxBytes
+                );
+            // incorrect deserialization case
+            throw new AplException.NotValidException("Transaction " + builder.toString() + ", unsigned bytes - " + Convert.toHexString(unsignedTxBytes.getBuffer().toByteArray()) +" has different id " + transaction.getId() + ", id from peer " + id + ", peer data " + transactionData.toJSONString());
+        }
         return transaction;
     }
 

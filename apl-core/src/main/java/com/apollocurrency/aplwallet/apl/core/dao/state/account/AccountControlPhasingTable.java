@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlPhasing;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -39,11 +38,10 @@ public class AccountControlPhasingTable extends VersionedDeletableEntityDbTable<
         };
 
     @Inject
-    public AccountControlPhasingTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                      DatabaseManager databaseManager,
+    public AccountControlPhasingTable(DatabaseManager databaseManager,
                                       Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("account_control_phasing", accountControlPhasingDbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override
