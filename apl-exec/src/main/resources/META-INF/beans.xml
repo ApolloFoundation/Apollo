@@ -7,6 +7,7 @@
   <weld:scan>
     <weld:include name="org.jboss.resteasy.cdi.**" />
     <weld:include name="com.apollocurrency.**" />
+    <weld:include name="io.firstbridge.kms.**" />
 
     <weld:exclude name="org.jboss.resteasy.plugins.providers.jaxb.**" />
     <weld:exclude name="org.jboss.resteasy.plugins.providers.jackson.**" />
@@ -27,4 +28,7 @@
     <weld:exclude name="com.fasterxml.**" />
     <weld:exclude name="javax.mail.**" />
   </weld:scan>
+  <interceptors>
+    <class>com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalInterceptor</class>
+  </interceptors>
 </beans>
