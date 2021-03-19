@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.prunable;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
@@ -114,7 +114,7 @@ public class PrunableMessage extends DerivedEntity {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PrunableMessage)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         PrunableMessage that = (PrunableMessage) o;
         return id == that.id &&
@@ -131,7 +131,9 @@ public class PrunableMessage extends DerivedEntity {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(super.hashCode(), id, senderId, recipientId, encryptedData, messageIsText, encryptedMessageIsText, isCompressed, transactionTimestamp, blockTimestamp);
+        int result = Objects.hash(
+            super.hashCode(), id, senderId, recipientId, encryptedData, messageIsText, encryptedMessageIsText,
+            isCompressed, transactionTimestamp, blockTimestamp);
         result = 31 * result + Arrays.hashCode(message);
         return result;
     }
@@ -165,6 +167,8 @@ public class PrunableMessage extends DerivedEntity {
             ", isCompressed=" + isCompressed +
             ", transactionTimestamp=" + transactionTimestamp +
             ", blockTimestamp=" + blockTimestamp +
+            ", dbId=" + getDbId() +
+            ", dbKey=" + getDbKey() +
             '}';
     }
 }

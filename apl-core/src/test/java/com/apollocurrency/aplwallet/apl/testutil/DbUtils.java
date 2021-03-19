@@ -33,6 +33,34 @@ public class DbUtils {
         }
     }
 
+    public static void checkAndRunInTransaction(DbExtension extension, Consumer<Connection> consumer) {
+        checkAndRunInTransaction(extension.getDatabaseManager(), consumer);
+    }
+
+    public static void checkAndRunInTransaction(DatabaseManager manager, Consumer<Connection> consumer) {
+        checkAndRunInTransaction(manager.getDataSource(), consumer);
+    }
+
+    public static void checkAndRunInTransaction(TransactionalDataSource dataSource, Consumer<Connection> consumer) {
+        if (!dataSource.isInTransaction()) {
+            try (Connection con = dataSource.begin()) { // start new transaction
+                consumer.accept(con);
+                dataSource.commit();
+            } catch (SQLException e) {
+                dataSource.rollback();
+                throw new RuntimeException(e);
+            }
+        } else {
+            try (Connection con = dataSource.getConnection()) { // take old transaction
+                consumer.accept(con);
+                dataSource.commit();
+            } catch (SQLException e) {
+                dataSource.rollback();
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     public static <T> T getInTransaction(DbExtension extension, Function<Connection, T> function) {
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
         try (Connection con = dataSource.begin()) { // start new transaction

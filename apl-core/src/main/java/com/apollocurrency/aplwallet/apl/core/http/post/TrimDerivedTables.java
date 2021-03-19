@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -42,7 +42,7 @@ public final class TrimDerivedTables extends AbstractAPIRequestHandler {
     @Override
     public JSONStreamAware processRequest(HttpServletRequest req) {
         JSONObject response = new JSONObject();
-        trimService.trimDerivedTables(lookupBlockchain().getHeight(), false);
+        trimService.trimDerivedTables(lookupBlockchain().getHeight());
         response.put("done", true);
         return response;
     }

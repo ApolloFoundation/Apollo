@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbVersion;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
+import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
 
 /**
  * Interface for different operation executed during sharding process.
@@ -35,14 +35,15 @@ public interface ShardEngine {
      * Prepare shard engine before sharding process beginning
      */
     void prepare();
+
     /**
      * Create either 'initial' shard db with tables only or full schema with all indexes/constrains/PK/FK
      *
-     * @param dbVersion supplied schema name class
+     * @param dbUpdater supplied schema name class
      * @param paramInfo require for FULL schema. It's a shard data HASH, also supply shard id
      * @return state enum - MigrateState.SHARD_SCHEMA_CREATED or MigrateState.SHARD_SCHEMA_FULL if success, MigrateState.FAILED otherwise
      */
-    MigrateState addOrCreateShard(DbVersion dbVersion, CommandParamInfo paramInfo);
+    MigrateState addOrCreateShard(DBUpdater dbUpdater, CommandParamInfo paramInfo);
 
     /**
      * Copy block + transaction data excluding phased transaction into shard db

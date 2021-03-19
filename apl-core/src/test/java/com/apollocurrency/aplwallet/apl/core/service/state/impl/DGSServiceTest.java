@@ -5,7 +5,10 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSFeedbackTable;
@@ -13,8 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSTagTable;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSFeedback;
@@ -31,6 +32,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchEngine;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
@@ -55,17 +57,20 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,22 +84,24 @@ import static com.apollocurrency.aplwallet.apl.data.DGSTestData.GOODS_3_ID;
 import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_0_ID;
 import static com.apollocurrency.aplwallet.apl.data.DGSTestData.SELLER_1_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
 @Tag("slow")
 @EnableWeld
-public class DGSServiceTest {
+public class DGSServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     Blockchain blockchain = mock(Blockchain.class);
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, BlockchainConfig.class,
+        PropertiesHolder.class,
         TimeServiceImpl.class,
         GlobalSyncImpl.class,
         FullTextConfigImpl.class,
@@ -105,7 +112,6 @@ public class DGSServiceTest {
         DGSPurchaseTable.class,
         DGSServiceImpl.class,
         DerivedDbTablesRegistryImpl.class,
-        BlockchainConfig.class,
         BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -120,6 +126,8 @@ public class DGSServiceTest {
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
         .addBeans(MockBean.of(mock(AccountLedgerService.class), AccountLedgerService.class, AccountLedgerServiceImpl.class))
+        .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class))
+        .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
         .build();
     Block lastBlock = mock(Block.class);
     Block prevBlock = mock(Block.class);
@@ -139,6 +147,11 @@ public class DGSServiceTest {
     @BeforeEach
     public void setUp() {
         dtd = new DGSTestData();
+    }
+
+    @AfterEach
+    void tearDown() throws IOException {
+        extension.cleanAndPopulateDb();
     }
 
     @Test
@@ -813,7 +826,7 @@ public class DGSServiceTest {
 
         expected.setDbId(dtd.PUBLIC_FEEDBACK_13.getDbId() + 1);
         List<DGSPublicFeedback> feedbacks = service.getPublicFeedbacks(purchase);
-        assertEquals(List.of(expected), feedbacks);
+        assertIterableEquals(List.of(expected), feedbacks);
     }
 
     @Test
@@ -1329,25 +1342,26 @@ public class DGSServiceTest {
     @Test
     void testGetSellerGoods() {
         List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, false, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_5, dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_10, dtd.GOODS_8), goods);
+        assertIterableEquals(List.of(dtd.GOODS_5, dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_10, dtd.GOODS_8), goods);
         goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, false, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_2), goods);
+        assertIterableEquals(List.of(dtd.GOODS_2), goods);
     }
 
     @Test
     void testGetSellerGoodsInStock() {
         List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, true, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_11, dtd.GOODS_10), goods);
+        assertIterableEquals(List.of(dtd.GOODS_12, dtd.GOODS_11, dtd.GOODS_10), goods);
         goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, true, 0, Integer.MAX_VALUE));
-        assertEquals(List.of(), goods);
+        assertIterableEquals(List.of(), goods);
     }
 
     @Test
     void testGetSellerGoodsWithPagination() {
         List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, false, 2, 4));
-        assertEquals(List.of(dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11), goods);
+        List<DGSGoods> expected = List.of(dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11);
+        assertIterableEquals(expected, goods);
         goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, false, 0, 0));
-        assertEquals(List.of(dtd.GOODS_2), goods);
+        assertIterableEquals(List.of(dtd.GOODS_2), goods);
     }
 
     @Test

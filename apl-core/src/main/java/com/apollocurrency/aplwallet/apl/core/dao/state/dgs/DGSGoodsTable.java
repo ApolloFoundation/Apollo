@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.dgs;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.dgs.DGSGoodsMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -15,8 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -28,6 +25,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
 @Singleton
@@ -48,12 +46,10 @@ public class DGSGoodsTable extends EntityDbTable<DGSGoods> implements Searchable
     private static final String FULL_TEXT_SEARCH_COLUMNS = "name,description,tags";
 
     @Inject
-    public DGSGoodsTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                         DatabaseManager databaseManager,
-                         FullTextConfig fullTextConfig,
+    public DGSGoodsTable(DatabaseManager databaseManager,
                          Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super(TABLE_NAME, KEY_FACTORY, true, FULL_TEXT_SEARCH_COLUMNS,
-            derivedDbTablesRegistry, databaseManager, fullTextConfig, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override
@@ -68,9 +64,14 @@ public class DGSGoodsTable extends EntityDbTable<DGSGoods> implements Searchable
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO goods (id, seller_id, name, "
-                + "description, tags, parsed_tags, timestamp, quantity, price, delisted, has_image, height, latest) KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO goods (id, seller_id, `name`, "
+                    + "description, tags, parsed_tags, `timestamp`, quantity, price, delisted, has_image, height, latest) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE) "
+                    + "ON DUPLICATE KEY UPDATE id = VALUES(id), seller_id = VALUES(seller_id), `name` = VALUES(`name`), "
+                    + "description = VALUES(description), tags = VALUES(tags), parsed_tags = VALUES(parsed_tags), "
+                    + "`timestamp` = VALUES(`timestamp`), quantity = VALUES(quantity), price = VALUES(price), "
+                    + "delisted = VALUES(delisted), has_image = VALUES(has_image), height = VALUES(height), latest = TRUE",
+                Statement.RETURN_GENERATED_KEYS)
         ) {
             int i = 0;
             pstmt.setLong(++i, goods.getId());
@@ -86,6 +87,11 @@ public class DGSGoodsTable extends EntityDbTable<DGSGoods> implements Searchable
             pstmt.setBoolean(++i, goods.hasImage());
             pstmt.setInt(++i, goods.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    goods.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 
@@ -100,31 +106,12 @@ public class DGSGoodsTable extends EntityDbTable<DGSGoods> implements Searchable
 
     @Override
     public final DbIterator<DGSGoods> search(String query, DbClause dbClause, int from, int to) {
-        return search(query, dbClause, from, to, " ORDER BY ft.score DESC ");
+        throw new UnsupportedOperationException("Call service, should be implemented by service");
     }
 
     @Override
     public final DbIterator<DGSGoods> search(String query, DbClause dbClause, int from, int to, String sort) {
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            @DatabaseSpecificDml(DmlMarker.FULL_TEXT_SEARCH)
-            PreparedStatement pstmt = con.prepareStatement("SELECT " + table + ".*, ft.score FROM " + table +
-                ", ftl_search('PUBLIC', '" + table + "', ?, 2147483647, 0) ft "
-                + " WHERE " + table + ".db_id = ft.keys[1] "
-                + (multiversion ? " AND " + table + ".latest = TRUE " : " ")
-                + " AND " + dbClause.getClause() + sort
-                + DbUtils.limitsClause(from, to));
-            int i = 0;
-            pstmt.setString(++i, query);
-            i = dbClause.set(pstmt, ++i);
-            i = DbUtils.setLimits(i, pstmt, from, to);
-            return getManyBy(con, pstmt, true);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
+        throw new UnsupportedOperationException("Call service, should be implemented by service");
     }
 
 

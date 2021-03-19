@@ -1,6 +1,6 @@
-delete from account;
-delete from prunable_message;
-delete from public_key;
+TRUNCATE account;
+TRUNCATE prunable_message;
+TRUNCATE public_key;
 
 insert into account
 (DB_ID  	,ID  	                        ,BALANCE  	        ,UNCONFIRMED_BALANCE  	,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	,LATEST) values

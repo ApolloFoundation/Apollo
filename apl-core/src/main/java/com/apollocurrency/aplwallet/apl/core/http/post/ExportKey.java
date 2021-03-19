@@ -4,17 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
+import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -31,11 +32,11 @@ public class ExportKey extends AbstractAPIRequestHandler {
 
     @Override
     public JSONStreamAware processRequest(HttpServletRequest request) throws AplException {
-
+        KMSService KMSService = CDI.current().select(KMSService.class).get();
         String passphrase = HttpParameterParserUtil.getPassphrase(request, true);
         long accountId = HttpParameterParserUtil.getAccountId(request, true);
 
-        byte[] secretBytes = Helper2FA.findAplSecretBytes(accountId, passphrase);
+        byte[] secretBytes = KMSService.getAplSecretBytes(accountId, passphrase);
 
         JSONObject response = new JSONObject();
         JSONData.putAccount(response, "account", accountId);

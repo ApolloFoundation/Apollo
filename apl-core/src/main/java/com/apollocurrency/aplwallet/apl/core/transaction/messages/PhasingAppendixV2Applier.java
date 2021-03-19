@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 
@@ -23,5 +23,10 @@ public class PhasingAppendixV2Applier implements AppendixApplier<PhasingAppendix
     @Override
     public void apply(Transaction transaction, PhasingAppendixV2 appendix, Account senderAccount, Account recipientAccount) {
         phasingPollService.addPoll(transaction, appendix);
+    }
+
+    @Override
+    public Class<PhasingAppendixV2> forClass() {
+        return PhasingAppendixV2.class;
     }
 }

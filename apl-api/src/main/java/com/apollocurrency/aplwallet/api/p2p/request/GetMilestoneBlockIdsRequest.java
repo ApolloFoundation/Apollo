@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.StringJoiner;
 import java.util.UUID;
 
 @Getter
@@ -15,13 +16,21 @@ import java.util.UUID;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GetMilestoneBlockIdsRequest extends BaseP2PRequest {
 
-    private static final String requestType = "getMilestoneBlockIds";
+    private static final String REQUEST_TYPE = "getMilestoneBlockIds";
 
     private String lastBlockId;
     private String lastMilestoneBlockId;
 
     public GetMilestoneBlockIdsRequest(UUID chainId) {
-        super(requestType, chainId);
+        super(REQUEST_TYPE, chainId);
     }
 
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", GetMilestoneBlockIdsRequest.class.getSimpleName() + "[", "]")
+            .add("lastBlockId='" + lastBlockId + "'")
+            .add("lastMilestoneBlockId='" + lastMilestoneBlockId + "'")
+            .add("super=" + super.toString())
+            .toString();
+    }
 }

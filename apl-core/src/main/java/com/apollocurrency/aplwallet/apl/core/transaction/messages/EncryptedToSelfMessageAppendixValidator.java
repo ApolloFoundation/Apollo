@@ -15,4 +15,9 @@ public class EncryptedToSelfMessageAppendixValidator extends AbstractEncryptedMe
     public EncryptedToSelfMessageAppendixValidator(BlockchainConfig config) {
         super(config);
     }
+
+    @Override
+    public Class<EncryptToSelfMessageAppendix> forClass() {
+        return EncryptToSelfMessageAppendix.class;
+    }
 }

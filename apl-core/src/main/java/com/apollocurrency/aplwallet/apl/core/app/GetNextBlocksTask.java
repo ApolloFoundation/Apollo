@@ -5,13 +5,12 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.p2p.request.GetNextBlocksRequest;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksResponseParser;
 import com.apollocurrency.aplwallet.apl.core.peer.respons.GetNextBlocksResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,8 +20,8 @@ import java.util.concurrent.Future;
 /**
  * Callable method to get the next block segment from the selected peer
  */
+@Slf4j
 public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
-    private static final Logger log = LoggerFactory.getLogger(GetNextBlocksTask.class);
     /**
      * Block identifier list
      */
@@ -103,7 +102,6 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
         GetNextBlocksResponse response;
         long startTime = System.currentTimeMillis();
         try {
-            log.trace("Try to send GetNextBlock request: blockId={} to peer={}", request.getBlockId(), peer.getAnnouncedAddress());
             response = peer.send(request, getNextBlocksResponseParser);
         } catch (PeerNotConnectedException ex) {
             return null;
@@ -117,7 +115,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
         }
 
         if (response.getErrorCode() != 0) {
-            log.debug("Failed to parse block(s): " + response.getCause());
+            log.debug("Failed to parse block(s) from {} cause: {}", peer.getAnnouncedAddress(), response.getCause());
             peer.blacklist(response.getCause());
             stop = start + response.getNextBlocks().size();
         }

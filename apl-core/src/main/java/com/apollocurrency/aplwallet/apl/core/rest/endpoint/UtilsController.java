@@ -18,14 +18,14 @@ import com.apollocurrency.aplwallet.api.dto.utils.SetLogLevelDTO;
 import com.apollocurrency.aplwallet.api.request.DecodeQRCodeRequestForm;
 import com.apollocurrency.aplwallet.api.request.DetectMimeTypeUploadForm;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.RestParametersParser;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.Search;
+import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.DecodeHintType;
@@ -354,7 +354,7 @@ public class UtilsController {
         long longId = 0;
         FullHashToIdDto dto = new FullHashToIdDto();
         try {
-            longId = Convert.fullHashToId(Convert.parseHexString(fullHash));
+            longId = Convert.transactionFullHashToId(Convert.parseHexString(fullHash));
             dto.longId = String.valueOf(longId);
             dto.stringId = Long.toUnsignedString(longId);
         } catch (NumberFormatException e) {

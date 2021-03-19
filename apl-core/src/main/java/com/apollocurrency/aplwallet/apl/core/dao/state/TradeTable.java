@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.Trade;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;
@@ -54,16 +53,15 @@ public class TradeTable extends EntityDbTable<Trade> {
     };
 
     @Inject
-    public TradeTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                      DatabaseManager databaseManager,
+    public TradeTable(DatabaseManager databaseManager,
                       Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("trade", TRADE_DB_KEY_FACTORY, false, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     public void save(final Connection con, final Trade trade) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO trade (asset_id, block_id, "
-            + "ask_order_id, bid_order_id, ask_order_height, bid_order_height, seller_id, buyer_id, quantity, price, is_buy, timestamp, height) "
+            + "ask_order_id, bid_order_id, ask_order_height, bid_order_height, seller_id, buyer_id, quantity, price, is_buy, `timestamp`, height) "
             + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, trade.getAssetId());

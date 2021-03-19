@@ -4,10 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.messaging;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
@@ -20,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasingVoteCasting;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
@@ -89,7 +89,7 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
         List<byte[]> hashes = attachment.getTransactionFullHashes();
         long voterId = transaction.getSenderId();
         for (byte[] hash : hashes) {
-            long phasedTransactionId = Convert.fullHashToId(hash);
+            long phasedTransactionId = Convert.transactionFullHashToId(hash);
             PhasingPollResult result = phasingPollService.getResult(phasedTransactionId);
             if (result != null) {
                 throw new AplException.NotCurrentlyValidException("Phasing poll " + phasedTransactionId + " is already finished");
@@ -150,7 +150,7 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
             throw new AplException.NotValidException("No more than " + Constants.MAX_PHASING_VOTE_TRANSACTIONS + " votes allowed for two-phased multi-voting");
         }
         for (byte[] hash : hashes) {
-            long phasedTransactionId = Convert.fullHashToId(hash);
+            long phasedTransactionId = Convert.transactionFullHashToId(hash);
             if (phasedTransactionId == 0) {
                 throw new AplException.NotValidException("Invalid phased transactionFullHash " + Convert.toHexString(hash));
             }
@@ -162,7 +162,7 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
         MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
         List<byte[]> hashes = attachment.getTransactionFullHashes();
         for (byte[] hash : hashes) {
-            phasingPollService.addVote(transaction, senderAccount, Convert.fullHashToId(hash));
+            phasingPollService.addVote(transaction, senderAccount, Convert.transactionFullHashToId(hash));
         }
     }
 

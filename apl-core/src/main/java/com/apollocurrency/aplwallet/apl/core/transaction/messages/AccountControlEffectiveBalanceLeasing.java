@@ -22,7 +22,7 @@ public final class AccountControlEffectiveBalanceLeasing extends AbstractAttachm
 
     public AccountControlEffectiveBalanceLeasing(JSONObject attachmentData) {
         super(attachmentData);
-        this.period = ((Long) attachmentData.get("period")).intValue();
+        this.period = ((Number) attachmentData.get("period")).intValue();
     }
 
     public AccountControlEffectiveBalanceLeasing(int period) {

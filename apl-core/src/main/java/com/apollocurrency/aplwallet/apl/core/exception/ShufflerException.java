@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.exception;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
 public class ShufflerException extends AplException {
 

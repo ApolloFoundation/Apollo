@@ -9,13 +9,12 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
-import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
@@ -42,10 +41,9 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
     private DexOrderMapper dexOrderMapper = new DexOrderMapper();
 
     @Inject
-    public DexOrderTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                         DatabaseManager databaseManager,
+    public DexOrderTable(DatabaseManager databaseManager,
                          Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, keyFactory, true, null, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+        super(TABLE_NAME, keyFactory, true, null, databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override
@@ -88,9 +86,14 @@ public class DexOrderTable extends EntityDbTable<DexOrder> {
             order.getId(), order.getAccountId(), order.getType(), order.getOrderCurrency(), order.getOrderAmount(), order.getPairCurrency(),
             order.getFinishTime(), order.getStatus(), order.getHeight(), order.getFromAddress(), order.getToAddress());
 
-        try (PreparedStatement pstmt = con.prepareStatement("MERGE INTO dex_offer (id, account_id, type, " +
-            "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest, from_address, to_address) " +
-            "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)")) {
+        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO dex_offer (id, account_id, `type`, " +
+            "offer_currency, offer_amount, pair_currency, pair_rate, finish_time, status, height, latest, from_address, to_address) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?) "
+            + "ON DUPLICATE KEY UPDATE id = VALUES(id), account_id = VALUES(account_id), `type` = VALUES(`type`), "
+            + "offer_currency = VALUES(offer_currency), offer_amount = VALUES(offer_amount), pair_currency = VALUES(pair_currency), "
+            + "pair_rate = VALUES(pair_rate), finish_time = VALUES(finish_time), status = VALUES(status), "
+            + "height = VALUES(height), latest = TRUE , from_address = VALUES(from_address), to_address = VALUES(to_address)")
+        ) {
 
             int i = 0;
             pstmt.setLong(++i, order.getId());

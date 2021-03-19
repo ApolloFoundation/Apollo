@@ -42,7 +42,7 @@ public class ConfigDirProviderFactory {
         }
         return res;
     }
-    
+
     public static ConfigDirProvider getConfigDirProvider() {
         ConfigDirProvider cdp = createConfigDirProvider();
         if (cdp.getChainId() == null) {

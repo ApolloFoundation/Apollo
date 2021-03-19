@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollLinkedTransaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
@@ -40,10 +39,9 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
     private static final PhasingPollLinkedTransactionMapper MAPPER = new PhasingPollLinkedTransactionMapper(KEY_FACTORY);
 
     @Inject
-    public PhasingPollLinkedTransactionTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                             DatabaseManager databaseManager,
+    public PhasingPollLinkedTransactionTable(DatabaseManager databaseManager,
                                              Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, KEY_FACTORY, false, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+        super(TABLE_NAME, KEY_FACTORY, false, databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override
@@ -73,7 +71,7 @@ public class PhasingPollLinkedTransactionTable extends ValuesDbTable<PhasingPoll
              PreparedStatement pstmt = con.prepareStatement("SELECT transaction_id FROM phasing_poll_linked_transaction " +
                  "WHERE linked_transaction_id = ? AND linked_full_hash = ?")) {
             int i = 0;
-            pstmt.setLong(++i, Convert.fullHashToId(linkedTransactionFullHash));
+            pstmt.setLong(++i, Convert.transactionFullHashToId(linkedTransactionFullHash));
             pstmt.setBytes(++i, linkedTransactionFullHash);
             List<Long> transactions = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {

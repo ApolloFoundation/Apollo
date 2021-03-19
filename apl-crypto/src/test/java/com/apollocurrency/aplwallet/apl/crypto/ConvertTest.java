@@ -117,7 +117,7 @@ public class ConvertTest {
 
     @Test
     void testFullHashToId() {
-        long id = Convert.fullHashToId(HASH);
+        long id = Convert.transactionFullHashToId(HASH);
 
         assertEquals(ID, id);
     }

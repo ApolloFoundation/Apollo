@@ -55,11 +55,11 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
         }
         this.applicationName = applicationName.trim();
         this.isService = isService;
-        
-        if(netIdx<0 && uuidOrPart.isEmpty()){
+
+        if (netIdx < 0 && uuidOrPart.isEmpty()) {
             uuidOrPart = CHAIN_IDS[0]; //default to main net if no params
         }
-        
+
         if (!uuidOrPart.isEmpty()) {
             try {
                 chainUuid = UUID.fromString(uuidOrPart);

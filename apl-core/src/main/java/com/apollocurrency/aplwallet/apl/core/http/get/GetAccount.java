@@ -20,8 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.Helper2FA;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
@@ -37,8 +35,10 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetS
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountLeaseService;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -56,6 +56,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
     private AccountLeaseService accountLeaseService = CDI.current().select(AccountLeaseService.class).get();
     private AccountAssetService accountAssetService = CDI.current().select(AccountAssetService.class).get();
     private AccountCurrencyService accountCurrencyService = CDI.current().select(AccountCurrencyService.class).get();
+    private Account2FAService account2FAService = CDI.current().select(Account2FAService.class).get();
 
     public GetAccount() {
         super(new APITag[]{APITag.ACCOUNTS}, "account", "includeLessors", "includeAssets", "includeCurrencies", "includeEffectiveBalance");
@@ -74,7 +75,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
 
         JSONObject response = balances.balanceToJson();
         JSONData.putAccount(response, "account", account.getId());
-        response.put("is2FA", Helper2FA.isEnabled2FA(account.getId()));
+        response.put("is2FA", account2FAService.isEnabled2FA(account.getId()));
         byte[] publicKey = lookupAccountService().getPublicKeyByteArray(account.getId());
         if (publicKey != null) {
             response.put("publicKey", Convert.toHexString(publicKey));

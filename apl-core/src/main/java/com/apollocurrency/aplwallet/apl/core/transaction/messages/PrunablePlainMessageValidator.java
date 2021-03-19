@@ -4,11 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -40,5 +40,10 @@ public class PrunablePlainMessageValidator extends AbstractAppendixValidator<Pru
         if (msg == null && timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMinPrunableLifetime()) {
             throw new AplException.NotCurrentlyValidException("Message has been pruned prematurely");
         }
+    }
+
+    @Override
+    public Class<PrunablePlainMessageAppendix> forClass() {
+        return PrunablePlainMessageAppendix.class;
     }
 }

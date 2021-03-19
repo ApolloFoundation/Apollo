@@ -2,17 +2,18 @@
 package com.apollocurrency.aplwallet.apl.util;
 
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  *
  * @author al
  */
 public class ModWatcherTest {
-    
+
     public ModWatcherTest() {
     }
-    
+
 
     /**
      * Test of howLate method, of class ModWatcher.
@@ -52,15 +53,15 @@ public class ModWatcherTest {
         boolean result = instance.isTooLate(5);
         assertEquals(false, result);
         result = instance.isTooLate(15);
-        assertEquals(false, result);        
+        assertEquals(false, result);
         result = instance.isTooLate(115);
-        assertEquals(false, result);        
+        assertEquals(false, result);
         result = instance.isTooLate(100);
-        assertEquals(false, result);        
+        assertEquals(false, result);
         result = instance.isTooLate(2200);
-        assertEquals(false, result);        
+        assertEquals(false, result);
         result = instance.isTooLate(116);
-        assertEquals(true, result);        
+        assertEquals(true, result);
     }
-    
+
 }

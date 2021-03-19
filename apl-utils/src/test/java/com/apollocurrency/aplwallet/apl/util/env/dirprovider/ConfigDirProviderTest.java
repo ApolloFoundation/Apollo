@@ -87,7 +87,7 @@ public class ConfigDirProviderTest {
         assertEquals("conf", r);
         defaultConfigDirProvider = new DefaultConfigDirProvider(APPLICATION_NAME, false, -1, "7654b697-f359-4ce5-a619-fa34b6fb01a5");
         r = defaultConfigDirProvider.getConfigName();
-        assertEquals("configs"+File.separator+"7654b697-f359-4ce5-a619-fa34b6fb01a5", r);
+        assertEquals("configs" + File.separator + "7654b697-f359-4ce5-a619-fa34b6fb01a5", r);
     }
 
 }

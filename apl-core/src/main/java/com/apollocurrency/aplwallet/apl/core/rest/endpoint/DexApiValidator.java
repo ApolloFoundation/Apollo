@@ -1,17 +1,15 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
-import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -20,13 +18,13 @@ import java.math.BigInteger;
 @Singleton
 public class DexApiValidator {
     private final EthereumWalletService walletService;
-    private final KeyStoreService keyStoreService;
+    private final KMSService KMSService;
     private final AccountService accountService;
 
     @Inject
-    public DexApiValidator(EthereumWalletService walletService, KeyStoreService keyStoreService, AccountService accountService) {
+    public DexApiValidator(EthereumWalletService walletService, KMSService KMSService, AccountService accountService) {
         this.walletService = walletService;
-        this.keyStoreService = keyStoreService;
+        this.KMSService = KMSService;
         this.accountService = accountService;
     }
 
@@ -48,7 +46,6 @@ public class DexApiValidator {
     }
 
     public void validateEthAccountForDeposit(long account, String passphrase, String walletAddress, BigInteger amountWei, DexCurrency currency) throws ParameterException {
-        validateVaultAccount(account, passphrase);
         validateEthAccount(account, passphrase, walletAddress);
         validateEthPaxAccountBalance(amountWei, walletAddress, currency);
     }
@@ -61,24 +58,22 @@ public class DexApiValidator {
         }
     }
 
-    public void validateVaultAccount(long sender, String passphrase) throws ParameterException {
-        WalletKeysInfo walletKeysInfo = keyStoreService.getWalletKeysInfo(passphrase, sender);
-        if (walletKeysInfo == null) {
+    public void validateVaultAccount(long sender) throws ParameterException {
+        if (!KMSService.isWalletExist(sender)) {
             throw new ParameterException(JSONResponses.incorrect("account or passphrase", "Bad credentials"));
         }
     }
 
     public void validateEthAccount(long sender, String passphrase, String ethWalletAddress) throws ParameterException {
-        WalletKeysInfo walletKeysInfo = keyStoreService.getWalletKeysInfo(passphrase, sender);
-        EthWalletKey ethWallet = walletKeysInfo.getEthWalletForAddress(ethWalletAddress);
-        if (ethWallet == null) {
+        validateVaultAccount(sender);
+        if (KMSService.isEthKeyExist(sender, passphrase, ethWalletAddress)) {
             throw new ParameterException(JSONResponses.incorrect(DexApiConstants.WALLET_ADDRESS, "Account  does not own the specified eth address"));
         }
     }
 
     public void validateParametersForOrderTransaction(long sender, String passphrase, OrderType orderType, long orderAmountGwei, long pairRateGwei, String walletAddress, DexCurrency currency) throws ParameterException {
         validatePairedCurrency(currency);
-        validateVaultAccount(sender, passphrase);
+        validateVaultAccount(sender);
 
         validateOrderAccountBalance(sender, passphrase, orderType, orderAmountGwei, pairRateGwei, walletAddress, currency);
 

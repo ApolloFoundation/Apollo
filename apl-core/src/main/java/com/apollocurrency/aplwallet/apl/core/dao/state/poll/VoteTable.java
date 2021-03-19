@@ -4,16 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.poll;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.Vote;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
@@ -41,11 +40,10 @@ public class VoteTable extends EntityDbTable<Vote> {
 
     @Inject
     public VoteTable(PollTable pollTable,
-                     DerivedTablesRegistry derivedDbTablesRegistry,
                      DatabaseManager databaseManager,
                      Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("vote", voteDbKeyFactory, false, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
         this.pollTable = pollTable;
     }
 
@@ -70,13 +68,13 @@ public class VoteTable extends EntityDbTable<Vote> {
     }
 
     @Override
-    public void trim(int height, boolean isSharding) {
+    public void trim(int height) {
         log.trace("Vote trim: NO_Sharding, height = {}", height);
-        super.trim(height, isSharding);
+        super.trim(height);
         try (Connection con = databaseManager.getDataSource().getConnection();
              DbIterator<Poll> polls = pollTable.getPollsFinishingBelowHeight(height, 0, Integer.MAX_VALUE);
              PreparedStatement pstmt = con.prepareStatement("DELETE FROM vote WHERE poll_id = ?")) {
-             commonTrim(height, false, polls, pstmt);
+             commonTrim(height, polls, pstmt);
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -98,8 +96,8 @@ public class VoteTable extends EntityDbTable<Vote> {
     }
 
 
-    private void commonTrim(int height, boolean isSharding, DbIterator<Poll> polls, PreparedStatement pstmt) throws SQLException {
-        log.trace("Vote trim common: isSharding={}, height = {}", isSharding, height);
+    private void commonTrim(int height, DbIterator<Poll> polls, PreparedStatement pstmt) throws SQLException {
+        log.trace("Vote trim common: height = {}", height);
         int index = 0; // index for affected Polls
         int totalDeletedVotes = 0; // total number deleted Vote records from all affected Polls
         for (Poll poll : polls) {
@@ -113,8 +111,8 @@ public class VoteTable extends EntityDbTable<Vote> {
             }
             index++;
         }
-        log.trace("Vote trim common: REMOVED totally [{}] votes within [{}] polls at height = {} (isSharding={})",
-            totalDeletedVotes, index, height, isSharding);
+        log.trace("Vote trim common: REMOVED totally [{}] votes within [{}] polls at height = {}",
+            totalDeletedVotes, index, height);
     }
 
 }

@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
@@ -23,11 +24,13 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -48,11 +51,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+
 @Tag("slow")
 @EnableWeld
-class AccountTableTest {
+class AccountTableTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
     @Inject
     AccountTable table;
     AccountTestData td;
@@ -75,6 +81,11 @@ class AccountTableTest {
     @BeforeEach
     void setUp() {
         td = new AccountTestData();
+    }
+
+    @AfterEach
+    void tearDown() {
+        dbExtension.cleanAndPopulateDb();
     }
 
     @Test
@@ -103,7 +114,7 @@ class AccountTableTest {
     @Test
     void testTrim_on_0_height() throws SQLException {
         doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(0, true));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(0));
 
         List<Account> expected = td.ALL_ACCOUNTS;
         List<Account> all = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
@@ -114,7 +125,7 @@ class AccountTableTest {
     @Test
     void testTrim_on_MAX_height() throws SQLException {
         doReturn(1440).when(blockchainConfig).getGuaranteedBalanceConfirmations();
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(Integer.MAX_VALUE, true));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(Integer.MAX_VALUE));
 
         List<Account> expected = td.ALL_ACCOUNTS.stream().filter(VersionedDerivedEntity::isLatest).collect(Collectors.toList());
         List<Account> all = table.getAllByDbId(Long.MIN_VALUE, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
@@ -150,14 +161,14 @@ class AccountTableTest {
         assertFalse(deletedPreviousAcc.isLatest());
 
         // Trim latest=false none of deleted record
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_10.getHeight(), true));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(td.ACC_10.getHeight()));
 
         int afterTrimSize = table.getRowCount();
         assertEquals(14, afterTrimSize); // 1 updated id=700, 2 updated for id=500
 
         // Trim another deleted record for ACC_10
         DbUtils.inTransaction(dbExtension, (con) -> {
-            table.trim(td.ACC_10.getHeight() + 1, true); // delete 'deleted' record
+            table.trim(td.ACC_10.getHeight() + 1); // delete 'deleted' record
         });
 
         int afterDeleteTrimSize = table.getRowCount();

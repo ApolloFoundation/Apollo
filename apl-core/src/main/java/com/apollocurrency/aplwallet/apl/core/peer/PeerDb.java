@@ -89,8 +89,12 @@ public class PeerDb {
         dataSource.begin();
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.MERGE)
-             PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
-                 + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
+             PreparedStatement pstmt = con.prepareStatement("INSERT INTO peer "
+                 + "(address, services, last_updated) "
+                 + "VALUES(?, ?, ?) "
+                 + "ON DUPLICATE KEY UPDATE "
+                 + "address = VALUES(address), services = VALUES(services), last_updated = VALUES(last_updated)")
+        ) {
             for (Entry peer : peers) {
                 pstmt.setString(1, peer.getAddress());
                 pstmt.setLong(2, peer.getServices());
@@ -109,8 +113,10 @@ public class PeerDb {
         dataSource.begin();
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.MERGE)
-             PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
-                 + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
+             PreparedStatement pstmt = con.prepareStatement("INSERT INTO peer "
+                 + "(address, services, last_updated) VALUES(?, ?, ?) "
+                 + "ON DUPLICATE KEY UPDATE "
+                 + "address = VALUES(address), services = VALUES(services), last_updated = VALUES(last_updated)")) {
             pstmt.setString(1, peer.getAnnouncedAddress());
             pstmt.setLong(2, peer.getServices());
             pstmt.setInt(3, peer.getLastUpdated());

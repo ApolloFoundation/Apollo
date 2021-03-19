@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.util.BatchSizeCalculator;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class BatchSizeCalculatorTest {
     BatchSizeCalculator calculator;

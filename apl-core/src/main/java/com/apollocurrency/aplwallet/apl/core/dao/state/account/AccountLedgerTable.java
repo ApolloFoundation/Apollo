@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerHolding;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -44,9 +43,8 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
      */
     @Inject
     public AccountLedgerTable(PropertiesHolder propertiesHolder,
-                              DerivedTablesRegistry derivedDbTablesRegistry,
                               DatabaseManager databaseManager) {
-        super("account_ledger", derivedDbTablesRegistry, databaseManager, null);
+        super("account_ledger", databaseManager, null);
         this.propertiesHolder = propertiesHolder;
         trimKeep = propertiesHolder.getIntProperty("apl.ledgerTrimKeep", 30000);
     }
@@ -80,7 +78,7 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
      * @param height Trim height
      */
     @Override
-    public void trim(int height, boolean isSharding) {
+    public void trim(int height) {
         if (trimKeep <= 0)
             return;
         TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
@@ -106,7 +104,7 @@ public class AccountLedgerTable extends DerivedDbTable<LedgerEntry> {
      */
     private void save(Connection con, LedgerEntry ledgerEntry) throws SQLException {
         try (final PreparedStatement stmt = con.prepareStatement("INSERT INTO account_ledger " +
-            "(account_id, event_type, event_id, holding_type, holding_id, change, balance, block_id, height, timestamp) " +
+            "(account_id, event_type, event_id, holding_type, holding_id, `change`, balance, block_id, height, `timestamp`) " +
             "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             stmt.setLong(++i, ledgerEntry.getAccountId());

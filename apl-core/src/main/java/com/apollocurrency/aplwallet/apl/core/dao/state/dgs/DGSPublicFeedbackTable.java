@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPublicFeedback;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;
@@ -20,6 +19,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
 @Singleton
@@ -39,10 +39,9 @@ public class DGSPublicFeedbackTable extends ValuesDbTable<DGSPublicFeedback> {
     private static final DGSPublicFeedbackMapper MAPPER = new DGSPublicFeedbackMapper(KEY_FACTORY);
 
     @Inject
-    protected DGSPublicFeedbackTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                     DatabaseManager databaseManager,
+    protected DGSPublicFeedbackTable(DatabaseManager databaseManager,
                                      Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, KEY_FACTORY, true, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+        super(TABLE_NAME, KEY_FACTORY, true, databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override
@@ -53,12 +52,17 @@ public class DGSPublicFeedbackTable extends ValuesDbTable<DGSPublicFeedback> {
     @Override
     public void save(Connection con, DGSPublicFeedback feedback) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO purchase_public_feedback (id, public_feedback, "
-            + "height, latest) VALUES (?, ?, ?, TRUE)")) {
+            + "height, latest) VALUES (?, ?, ?, TRUE)", Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             pstmt.setLong(++i, feedback.getId());
             pstmt.setString(++i, feedback.getFeedback());
             pstmt.setInt(++i, feedback.getHeight());
             pstmt.executeUpdate();
+            try (final ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    feedback.setDbId(rs.getLong(1));
+                }
+            }
         }
     }
 

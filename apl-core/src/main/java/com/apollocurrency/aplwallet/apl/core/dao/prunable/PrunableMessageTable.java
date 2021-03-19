@@ -13,8 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -47,14 +45,11 @@ public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
     private static final PrunableMessageMapper MAPPER = new PrunableMessageMapper(KEY_FACTORY);
 
     @Inject
-    public PrunableMessageTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                DatabaseManager databaseManager,
-                                FullTextConfig fullTextConfig,
+    public PrunableMessageTable(DatabaseManager databaseManager,
                                 BlockchainConfig blockchainConfig,
                                 PropertiesHolder propertiesHolder,
                                 Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, KEY_FACTORY, false, null,
-            derivedDbTablesRegistry, databaseManager, fullTextConfig, blockchainConfig, propertiesHolder, deleteOnTrimDataEvent);
+        super(TABLE_NAME, KEY_FACTORY, false, null, databaseManager, blockchainConfig, propertiesHolder, deleteOnTrimDataEvent);
     }
 
     @Override
@@ -74,10 +69,13 @@ public class PrunableMessageTable extends PrunableDbTable<PrunableMessage> {
         }
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO prunable_message (id, sender_id, recipient_id, "
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO prunable_message (id, sender_id, recipient_id, "
                 + "message, encrypted_message, message_is_text, encrypted_is_text, is_compressed, block_timestamp, transaction_timestamp, height) "
-                + "KEY (id) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE id = VALUES(id), sender_id = VALUES(sender_id), recipient_id = VALUES(recipient_id), "
+                + "message = VALUES(message), encrypted_message = VALUES(encrypted_message), message_is_text = VALUES(message_is_text), "
+                + "encrypted_is_text = VALUES(encrypted_is_text), is_compressed = VALUES(is_compressed), "
+                + "block_timestamp = VALUES(block_timestamp), transaction_timestamp = VALUES(transaction_timestamp), height = VALUES(height)")
         ) {
             int i = 0;
             pstmt.setLong(++i, prunableMessage.getId());

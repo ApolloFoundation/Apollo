@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetTransfer;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;
@@ -38,11 +37,10 @@ public final class AssetTransferTable extends EntityDbTable<AssetTransfer> {
     };
 
     @Inject
-    public AssetTransferTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                              DatabaseManager databaseManager,
+    public AssetTransferTable(DatabaseManager databaseManager,
                               Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("asset_transfer", assetTransferDbKeyFactory, false, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override
@@ -53,7 +51,7 @@ public final class AssetTransferTable extends EntityDbTable<AssetTransfer> {
     @Override
     public void save(Connection con, AssetTransfer assetTransfer) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_transfer (id, asset_id, "
-            + "sender_id, recipient_id, quantity, timestamp, height) "
+            + "sender_id, recipient_id, quantity, `timestamp`, height) "
             + "VALUES (?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, assetTransfer.getId());

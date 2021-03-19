@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.hash;
 
-import org.apache.commons.collections4.list.TreeList;
-
 import java.security.InvalidParameterException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -125,7 +123,7 @@ public class MerkleTree {
             return indexes;
         }
         int[] res = new int[indexes.length];
-        List<Integer> list = new TreeList<>();
+        List<Integer> list = new ArrayList<>();
         list.add(indexes[0]);
         list.add(indexes[1]);
         int position = 1;

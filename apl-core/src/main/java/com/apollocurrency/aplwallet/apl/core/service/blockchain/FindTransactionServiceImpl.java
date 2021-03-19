@@ -5,12 +5,10 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
-import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.model.AplQueryObject;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,19 +30,16 @@ import java.util.stream.Stream;
 @Singleton
 public class FindTransactionServiceImpl implements FindTransactionService {
     private final BlockChainInfoService blockChainInfoService;
-    private final TransactionDao transactionDao;
+    private final TransactionService transactionService;
     private final MemPool memPool;
-    private final DatabaseManager databaseManager;
     private final TxReceiptMapper txReceiptMapper;
 
     @Inject
-    public FindTransactionServiceImpl(DatabaseManager databaseManager,
-                                      TransactionDao transactionDao,
+    public FindTransactionServiceImpl(TransactionService transactionService,
                                       MemPool memPool,
                                       BlockChainInfoService blockChainInfoService,
                                       TxReceiptMapper txReceiptMapper) {
-        this.databaseManager = Objects.requireNonNull(databaseManager);
-        this.transactionDao = Objects.requireNonNull(transactionDao);
+        this.transactionService = Objects.requireNonNull(transactionService);
         this.blockChainInfoService = Objects.requireNonNull(blockChainInfoService);
         this.txReceiptMapper = Objects.requireNonNull(txReceiptMapper);
         this.memPool = memPool;
@@ -56,13 +51,8 @@ public class FindTransactionServiceImpl implements FindTransactionService {
     }
 
     @Override
-    public long getAllUnconfirmedTransactionsCount() {
-        return memPool.allProcessedCount();
-    }
-
-    @Override
     public Optional<Transaction> findTransaction(long transactionId, int height) {
-        return Optional.ofNullable(transactionDao.findTransaction(transactionId, height, databaseManager.getDataSource()));
+        return Optional.ofNullable(transactionService.findTransactionCrossSharding(transactionId, height));
     }
 
     @Override
@@ -89,7 +79,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
 
         int height = blockChainInfoService.getHeight();
 
-        Stream<TxReceipt> transactionStream = transactionDao.getTransactions(query.getAccounts(), query.getType(), (byte) -1,
+        Stream<TxReceipt> transactionStream = transactionService.getTransactions(query.getAccounts(), query.getType(), (byte) -1,
             query.getStartTime(), query.getEndTime(),
             query.getFirstHeight(), query.getLastHeight(),
             query.getOrder().name(),
@@ -123,7 +113,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
                 .count();
         }
 
-        long txCount = transactionDao.getTransactionsCount(query.getAccounts(), query.getType(), (byte) -1,
+        long txCount = transactionService.getTransactionsCount(query.getAccounts(), query.getType(), (byte) -1,
             query.getStartTime(), query.getEndTime(),
             query.getFirstHeight(), query.getLastHeight(),
             query.getOrder().name(),
@@ -131,5 +121,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
 
         return unconfirmedTxCount + txCount;
     }
+
+
 
 }

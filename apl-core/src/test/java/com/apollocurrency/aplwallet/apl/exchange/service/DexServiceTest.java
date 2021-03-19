@@ -6,33 +6,35 @@ package com.apollocurrency.aplwallet.apl.exchange.service;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedResultTable;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrderWithFreezing;
+import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.PhasingPollServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerImpl;
+import com.apollocurrency.aplwallet.apl.core.transaction.MandatoryTransactionService;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializerImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
-import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.exchange.DexConfig;
+import com.apollocurrency.aplwallet.apl.dex.config.DexConfig;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DBSortOrder;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderDBRequest;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexOrderSortBy;
+import com.apollocurrency.aplwallet.apl.dex.core.model.ExchangeContractStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderFreezing;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderStatus;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexContractTable;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderDao;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
-import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
-import com.apollocurrency.aplwallet.apl.exchange.model.DBSortOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderDBRequest;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderSortBy;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrderWithFreezing;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContractStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderFreezing;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 import com.google.common.cache.LoadingCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,15 +85,23 @@ class DexServiceTest {
     @Mock
     PhasingApprovedResultTable approvedResultTable;
     @Mock
-    MandatoryTransactionDao mandatoryTransactionDao;
-    @Mock
-    BlockchainConfig blockchainConfig;
+    MandatoryTransactionService mandatoryTransactionService;
+
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
+
+    {
+        doReturn(chain).when(blockchainConfig).getChain();
+    }
+
     @Mock
     LoadingCache<Long, OrderFreezing> cache;
     @Mock
     DexConfig dexConfig;
     @Mock
     AccountService accountService;
+    @Mock
+    KMSService KMSService;
 
     DexOrder order = new DexOrder(2L, 100L, "from-address", "to-address", OrderType.BUY, OrderStatus.OPEN, DexCurrency.APL, 127_000_000L, DexCurrency.ETH, BigDecimal.valueOf(0.0001), 500);
     DexOrder order1 = new DexOrder(1L, 2L, OrderType.BUY, 100L, DexCurrency.APL, 10000L, DexCurrency.PAX, BigDecimal.ONE, 90, OrderStatus.OPEN, 259, "", "");
@@ -108,10 +118,10 @@ class DexServiceTest {
 
     @BeforeEach
     void setUp() {
-        TransactionSerializer serializer = new TransactionSerializerImpl(mock(PrunableLoadingService.class));
+        TransactionJsonSerializer serializer = new TransactionJsonSerializerImpl(mock(PrunableLoadingService.class), blockchainConfig);
         dexService = new DexService(ethWalletService, dexOrderDao, dexOrderTable, transactionProcessor, dexSmartContractService, secureStorageService,
             dexContractTable, dexOrderTransactionCreator, timeService, dexContractDao, blockchain, phasingPollService, dexMatcherService,
-            approvedResultTable, mandatoryTransactionDao, serializer, accountService, blockchainConfig, cache, dexConfig);
+            approvedResultTable, mandatoryTransactionService, serializer, accountService, blockchainConfig, cache, dexConfig, KMSService);
     }
 
     @Test

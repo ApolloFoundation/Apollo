@@ -20,16 +20,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.List;
 import java.util.Set;
 
@@ -78,6 +75,8 @@ public interface Blockchain {
 
     Block findFirstBlock();
 
+    Block loadBlockData(Block block);
+
     @Deprecated
     List<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp);
 
@@ -85,9 +84,7 @@ public interface Blockchain {
 
     Block findLastBlock();
 
-    Block loadBlock(Connection con, ResultSet rs, boolean loadTransactions);
-
-    void saveBlock(Connection con, Block block);
+    void saveBlock(Block block);
 
     List<Transaction> getOrLoadTransactions(Block parentBlock);
 
@@ -96,7 +93,6 @@ public interface Blockchain {
     Long getBlockCount(TransactionalDataSource dataSource, int from, int to);
 
     int getBlockCount(long accountId);
-
 
     Block getShardInitialBlock();
 
@@ -152,7 +148,14 @@ public interface Blockchain {
 
     int getTransactionCount();
 
-    Long getTransactionCount(TransactionalDataSource dataSource, int from, int to);
+    /**
+     * Returns the transaction count from main database between <code>from</code> and <code>to</code> heights
+     *
+     * @param from the start height
+     * @param to   the end height
+     * @return the transaction count from main data base
+     */
+    Long getTransactionCount(int from, int to);
 
     List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
@@ -168,11 +171,9 @@ public interface Blockchain {
 
     int getTransactionCount(long accountId, byte type, byte subtype);
 
-    List<Transaction> getTransactions(Connection con, PreparedStatement pstmt);
-
-    List<PrunableTransaction> findPrunableTransactions(Connection con, int minTimestamp, int maxTimestamp);
-
     List<Transaction> getTransactions(byte type, byte subtype, int from, int to);
+
+    List<PrunableTransaction> findPrunableTransactions(int minTimestamp, int maxTimestamp);
 
     Set<Long> getBlockGenerators(int limit);
 
@@ -183,4 +184,6 @@ public interface Blockchain {
     boolean isExpired(Transaction tx);
 
     List<Transaction> loadPrunables(List<Transaction> transactions);
+
+    List<Block> getBlocksAfter(int height, int limit);
 }

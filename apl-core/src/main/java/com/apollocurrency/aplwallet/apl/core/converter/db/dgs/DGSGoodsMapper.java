@@ -26,7 +26,7 @@ public class DGSGoodsMapper extends VersionedDerivedEntityMapper<DGSGoods> {
         String name = rs.getString("name");
         String description = rs.getString("description");
         String tags = rs.getString("tags");
-        String[] parsedTags = DbUtils.getArray(rs, "parsed_tags", String[].class);
+        String[] parsedTags = DbUtils.getArray(rs, "parsed_tags", String[].class, new String[]{});
         int quantity = rs.getInt("quantity");
         long priceATM = rs.getLong("price");
         boolean delisted = rs.getBoolean("delisted");

@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -35,11 +34,10 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
     private static final LinkKeyFactory<AccountAsset> accountAssetDbKeyFactory = new AccountAssetDbKeyFactory();
 
     @Inject
-    public AccountAssetTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                             DatabaseManager databaseManager,
+    public AccountAssetTable(DatabaseManager databaseManager,
                              Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("account_asset", accountAssetDbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     public static DbKey newKey(long idA, long idB) {
@@ -54,9 +52,12 @@ public class AccountAssetTable extends VersionedDeletableEntityDbTable<AccountAs
     @Override
     public void save(Connection con, AccountAsset accountAsset) throws SQLException {
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account_asset "
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("INSERT INTO account_asset "
                 + "(account_id, asset_id, quantity, unconfirmed_quantity, height, latest, deleted) "
-                + "KEY (account_id, asset_id, height) VALUES (?, ?, ?, ?, ?, TRUE, FALSE)")
+                + "VALUES (?, ?, ?, ?, ?, TRUE, FALSE) "
+                + "ON DUPLICATE KEY UPDATE account_id = VALUES(account_id), asset_id = VALUES(asset_id), quantity = VALUES(quantity), "
+                + "unconfirmed_quantity = VALUES(unconfirmed_quantity), height = VALUES(height), latest = TRUE, deleted = FALSE")
+
         ) {
             int i = 0;
             pstmt.setLong(++i, accountAsset.getAccountId());

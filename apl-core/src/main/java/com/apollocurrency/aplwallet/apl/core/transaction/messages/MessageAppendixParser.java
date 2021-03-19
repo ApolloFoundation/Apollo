@@ -17,4 +17,9 @@ public class MessageAppendixParser implements AppendixParser<MessageAppendix>{
         }
         return new MessageAppendix(jsonData);
     }
+
+    @Override
+    public Class<MessageAppendix> forClass() {
+        return MessageAppendix.class;
+    }
 }

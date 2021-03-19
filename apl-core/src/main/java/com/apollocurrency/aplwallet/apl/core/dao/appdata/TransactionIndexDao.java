@@ -5,10 +5,10 @@
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionIndexRowMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TransactionIndex;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
@@ -30,7 +30,7 @@ public interface TransactionIndexDao {
      * @return found records list
      */
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT * FROM transaction_shard_index WHERE height =:height ORDER BY transaction_index FETCH FIRST :limit ROWS ONLY")
+    @SqlQuery("SELECT * FROM transaction_shard_index WHERE height =:height ORDER BY transaction_index LIMIT :limit")
     @RegisterRowMapper(TransactionIndexRowMapper.class)
     List<TransactionIndex> getByBlockHeight(@Bind("height") int height, @Bind("limit") long limit);
 
@@ -57,7 +57,7 @@ public interface TransactionIndexDao {
     long countTransactionIndexByBlockHeight(@Bind("height") int height);
 
     @Transactional(readOnly = true)
-    @SqlQuery("SELECT count(*) FROM transaction_shard_index where height < IFNULL((select shard_height from shard where shard_id =:shardId),0) AND height >= IFNULL((select shard_height from shard where shard_height < (select shard_height from shard where shard_id =:shardId) ORDER BY height desc LIMIT 1),0)")
+    @SqlQuery("SELECT count(*) FROM transaction_shard_index where height < IFNULL((select shard_height from shard where shard_id =:shardId),0) AND height >= IFNULL((select shard_height from shard where shard_height < (select shard_height from shard where shard_id =:shardId) ORDER BY shard_height desc LIMIT 1),0)")
     @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
     long countTransactionIndexByShardId(@Bind("shardId") long shardId);
 

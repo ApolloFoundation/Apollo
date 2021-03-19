@@ -5,15 +5,15 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.model.AplQueryObject;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +48,7 @@ class FindTransactionServiceImplTest {
     @Mock
     MemPool memPool;
     @Mock
-    TransactionDao transactionDao;
+    TransactionService transactionService;
     @Mock
     BlockChainInfoService blockChainInfoService;
     @Mock
@@ -56,14 +56,23 @@ class FindTransactionServiceImplTest {
 
     FindTransactionService findTransactionService;
 
-    static int startTime = Convert2.toEpochTime(1596090615500L);
-    static int endTime = Convert2.toEpochTime(1596182761726L);
+    static int startTime;
+    static int endTime;
+
+    static {
+        Convert2.init("APL", 0);
+        startTime = Convert2.toEpochTime(1596090615500L);
+        endTime = Convert2.toEpochTime(1596182761726L);
+    }
+
+    @BeforeAll
+    static void beforeAll() {
+        Convert2.init("APL", 0);
+    }
 
     @BeforeEach
     void setUp() {
-
-        findTransactionService = new FindTransactionServiceImpl(databaseManager, transactionDao, memPool, blockChainInfoService, txReceiptMapper);
-
+        findTransactionService = new FindTransactionServiceImpl(transactionService, memPool, blockChainInfoService, txReceiptMapper);
     }
 
     @Test
@@ -82,18 +91,6 @@ class FindTransactionServiceImplTest {
     }
 
     @Test
-    void getAllUnconfirmedTransactionsCount() {
-        //GIVEN
-        doReturn(11).when(memPool).allProcessedCount();
-
-        //WHEN
-        long result = findTransactionService.getAllUnconfirmedTransactionsCount();
-
-        //THEN
-        assertEquals(11, result);
-    }
-
-    @Test
     void findTransaction() {
         //GIVEN
         long transactionId = 111L;
@@ -101,7 +98,7 @@ class FindTransactionServiceImplTest {
         TransactionalDataSource ds = mock(TransactionalDataSource.class);
         Transaction tx = mock(Transaction.class);
         doReturn(ds).when(databaseManager).getDataSource();
-        doReturn(tx).when(transactionDao).findTransaction(transactionId, height, ds);
+        doReturn(tx).when(transactionService).findTransactionCrossSharding(transactionId, height);
 
         //WHEN
         Optional<Transaction> result = findTransactionService.findTransaction(transactionId, height);
@@ -145,7 +142,7 @@ class FindTransactionServiceImplTest {
         List<TxReceipt> txList = List.of(tx1, tx2, tx3, tx4);
 
         //getTransactions(List<Long> accounts, type, subtype, startTime, endTime, fromHeight, toHeight, String sortOrder, from, to)
-        doReturn(txList).when(transactionDao).getTransactions(Collections.emptyList(),
+        doReturn(txList).when(transactionService).getTransactions(Collections.emptyList(),
             query.getType(), (byte) -1,
             query.getStartTime(), query.getEndTime(),
             query.getFirstHeight(), query.getLastHeight(),
@@ -174,7 +171,7 @@ class FindTransactionServiceImplTest {
         doReturn(unconfirmedTransactionStream).when(memPool).getAllProcessedStream();
 
         //getTransactions(List<Long> accounts, type, subtype, startTime, endTime, fromHeight, toHeight, String sortOrder, from, to)
-        doReturn(4).when(transactionDao).getTransactionsCount(Collections.emptyList(),
+        doReturn(4).when(transactionService).getTransactionsCount(Collections.emptyList(),
             query.getType(), (byte) -1,
             query.getStartTime(), query.getEndTime(),
             query.getFirstHeight(), query.getLastHeight(),
@@ -192,7 +189,7 @@ class FindTransactionServiceImplTest {
     void getConfirmedTransactionsCountByQuery(AplQueryObject query, int targetSize) {
         //GIVEN
         //getTransactions(List<Long> accounts, type, subtype, startTime, endTime, fromHeight, toHeight, String sortOrder, from, to)
-        doReturn(4).when(transactionDao).getTransactionsCount(Collections.emptyList(),
+        doReturn(4).when(transactionService).getTransactionsCount(Collections.emptyList(),
             query.getType(), (byte) -1,
             query.getStartTime(), query.getEndTime(),
             query.getFirstHeight(), query.getLastHeight(),

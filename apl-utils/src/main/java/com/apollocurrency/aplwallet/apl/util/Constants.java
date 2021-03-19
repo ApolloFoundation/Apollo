@@ -24,10 +24,12 @@ import java.math.BigInteger;
 
 public final class Constants {
 
-    public static final Version VERSION = new Version("1.47.16");
+
+    public static final Version VERSION = new Version("1.48.3");
 
     public static final String APPLICATION = "Apollo";
     public static final String APPLICATION_DIR_NAME = "apl-blockchain";
+    public static final String APPLICATION_DB_NAME = "apl_blockchain";
     public static final String DESKTOP_APPLICATION_NAME = "apl-desktop";
     public static final int DEFAULT_TRIM_FREQUENCY = 1000;
     public static final long LONG_TIME_TWO_SECONDS = 2000L;
@@ -171,6 +173,7 @@ public final class Constants {
     public static final int DEX_GRAPH_INTERVAL_HOUR = 60 * 60;
     public static final int DEX_GRAPH_INTERVAL_DAY = 60 * 60 * 24;
     public static final int HEALTH_CHECK_INTERVAL = 30 * 1000; //milliseconds
+    public static final int MEMPOOL_CHECK_INTERVAL = 10 * 1000; //milliseconds
     public static String ETH_DEFAULT_ADDRESS = "0x0000000000000000000000000000000000000000";
     //DEX
     public static String ETH_STATION_GAS_INFO_URL = "https://www.ethgasstation.info/json/ethgasAPI.json";

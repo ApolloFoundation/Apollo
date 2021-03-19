@@ -22,7 +22,7 @@ import static com.apollocurrency.aplwallet.apl.util.Constants.MIN_VALUE_FOR_MAX_
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonPropertyOrder({"height", "maxNumberOfTransactions", "maxArbitraryMessageLength", "maxNumberOfChildAccounts", "blockTime", "maxBlockTimeLimit", "minBlockTimeLimit", "maxBalance",
-    "shardingSettings", "consensusSettings", "featuresHeightRequirement"})
+    "shardingSettings", "consensusSettings", "transactionFeeSettings"})
 public class BlockchainProperties {
     @Getter
     private final int height;

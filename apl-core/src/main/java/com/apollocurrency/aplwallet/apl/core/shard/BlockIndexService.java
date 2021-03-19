@@ -21,4 +21,5 @@ public interface BlockIndexService {
     List<Long> getBlockIdsAfter(int height, int limit);
 
     int hardDeleteAllBlockIndex();
+
 }

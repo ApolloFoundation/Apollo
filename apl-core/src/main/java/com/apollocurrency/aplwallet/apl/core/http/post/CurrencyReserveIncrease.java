@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
@@ -30,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrencyFounders;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
@@ -55,7 +55,7 @@ import javax.servlet.http.HttpServletRequest;
  * The list of founders and their ATM investment can be obtained using the {@link GetCurrencyFounders} API.
  */
 @Vetoed
-public final class CurrencyReserveIncrease extends CreateTransaction {
+public final class CurrencyReserveIncrease extends CreateTransactionHandler {
 
     public CurrencyReserveIncrease() {
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "amountPerUnitATM");
@@ -65,7 +65,7 @@ public final class CurrencyReserveIncrease extends CreateTransaction {
     public JSONStreamAware processRequest(HttpServletRequest req) throws AplException {
         Currency currency = HttpParameterParserUtil.getCurrency(req);
         long amountPerUnitATM = HttpParameterParserUtil.getLong(req, "amountPerUnitATM", 1L,
-            CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(), true);
+                CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(), true);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
         Attachment attachment = new MonetarySystemReserveIncrease(currency.getId(), amountPerUnitATM);
         return createTransaction(req, account, attachment);

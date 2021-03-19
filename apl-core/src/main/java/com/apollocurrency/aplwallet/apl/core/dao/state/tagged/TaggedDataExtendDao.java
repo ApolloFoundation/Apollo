@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2020 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.tagged;
@@ -11,11 +11,9 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.tagged.TaggedDataExtend;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.Connection;
@@ -38,13 +36,11 @@ public class TaggedDataExtendDao extends ValuesDbTable<TaggedDataExtend> {
             return taggedData.getDbKey();
         }
     };
-    protected DatabaseManager databaseManager = CDI.current().select(DatabaseManager.class).get();
 
     @Inject
-    public TaggedDataExtendDao(DerivedTablesRegistry derivedDbTablesRegistry,
-                               DatabaseManager databaseManager,
+    public TaggedDataExtendDao(DatabaseManager databaseManager,
                                Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(DB_TABLE, taggedDataKeyFactory, true, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+        super(DB_TABLE, taggedDataKeyFactory, true, databaseManager, deleteOnTrimDataEvent);
     }
 
     public List<TaggedDataExtend> getExtendTransactionIds(long taggedDataId) {

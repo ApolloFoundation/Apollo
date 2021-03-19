@@ -1,6 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.order.impl;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.AskOrder;
 import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.service.state.TradeService;
@@ -18,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -106,8 +106,8 @@ class OrderMatchServiceImplTest {
         orderMatchService.matchOrders(assetId);
 
         //THEN
-        verifyZeroInteractions(tradeService);
-        verifyZeroInteractions(accountService);
-        verifyZeroInteractions(accountAssetService);
+        verifyNoInteractions(tradeService);
+        verifyNoInteractions(accountService);
+        verifyNoInteractions(accountAssetService);
     }
 }

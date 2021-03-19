@@ -24,6 +24,8 @@ public interface FullTextSearchEngine {
      */
     void shutdown();
 
+    boolean isIndexFolderEmpty() throws IOException;
+
     /**
      * Index one row of indexed columns for table
      *
@@ -31,7 +33,7 @@ public interface FullTextSearchEngine {
      * @param tableData general information about indexed table(db_id, indexed columns, column names)
      * @throws SQLException when index error occurred
      */
-    void indexRow(Object[] row, TableData tableData) throws SQLException;
+    void indexRow(FullTextOperationData row, TableData tableData) throws SQLException;
 
     /**
      * Commit current index immediately
@@ -50,12 +52,11 @@ public interface FullTextSearchEngine {
     /**
      * Update index for a committed row
      *
-     * @param oldRow    row with old indexed values
      * @param newRow    row with new values to index
      * @param tableData general information about indexed table
      * @throws SQLException when index error occurred
      */
-    void commitRow(Object[] oldRow, Object[] newRow, TableData tableData) throws SQLException;
+    void commitRow(FullTextOperationData newRow, TableData tableData) throws SQLException;
 
     /**
      * Search the index

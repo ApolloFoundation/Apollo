@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.currency;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySellOfferTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
@@ -23,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.Currenc
 import com.apollocurrency.aplwallet.apl.data.CurrencySellOfferTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -40,11 +42,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+
 @Tag("slow")
 @EnableWeld
-class CurrencySellOfferServiceTest {
+class CurrencySellOfferServiceTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension();
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
 
     @Inject
     CurrencySellOfferTable table;

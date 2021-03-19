@@ -4,15 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -27,25 +26,25 @@ import java.util.List;
 public class BlockParserImpl implements BlockParser {
 
     protected AccountService accountService;
-    private final TransactionBuilder transactionBuilder;
+    private final TransactionBuilderFactory transactionBuilderFactory;
     private final TransactionValidator transactionValidator;
 
     @Inject
-    public BlockParserImpl(AccountService accountService, TransactionBuilder transactionBuilder, TransactionValidator transactionValidator) {
+    public BlockParserImpl(AccountService accountService, TransactionBuilderFactory transactionBuilderFactory, TransactionValidator transactionValidator) {
         this.accountService = accountService;
-        this.transactionBuilder = transactionBuilder;
+        this.transactionBuilderFactory = transactionBuilderFactory;
         this.transactionValidator = transactionValidator;
     }
 
     @Override
     public BlockImpl parseBlock(JSONObject blockData, long baseTarget) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
         try {
-            int version = ((Long) blockData.get("version")).intValue();
-            int timestamp = ((Long) blockData.get("timestamp")).intValue();
+            int version = ((Number) blockData.get("version")).intValue();
+            int timestamp = ((Number) blockData.get("timestamp")).intValue();
             long previousBlock = Convert.parseUnsignedLong((String) blockData.get("previousBlock"));
             long totalAmountATM = blockData.containsKey("totalAmountATM") ? Convert.parseLong(blockData.get("totalAmountATM")) : Convert.parseLong(blockData.get("totalAmountNQT"));
             long totalFeeATM = blockData.containsKey("totalFeeATM") ? Convert.parseLong(blockData.get("totalFeeATM")) : Convert.parseLong(blockData.get("totalFeeNQT"));
-            int payloadLength = ((Long) blockData.get("payloadLength")).intValue();
+            int payloadLength = ((Number) blockData.get("payloadLength")).intValue();
             byte[] payloadHash = Convert.parseHexString((String) blockData.get("payloadHash"));
             byte[] generatorPublicKey = Convert.parseHexString((String) blockData.get("generatorPublicKey"));
             byte[] generationSignature = Convert.parseHexString((String) blockData.get("generationSignature"));
@@ -58,7 +57,7 @@ public class BlockParserImpl implements BlockParser {
                 long generatorId = Long.parseUnsignedLong((String) blockData.get("generatorId"));
                 generatorPublicKey = accountService.getPublicKeyByteArray(generatorId);
             }
-            int timeout = !requireTimeout(version) ? 0 : ((Long) timeoutJsonValue).intValue();
+            int timeout = !requireTimeout(version) ? 0 : ((Number) timeoutJsonValue).intValue();
             List<Transaction> blockTransactions = new ArrayList<>();
             for (Object transactionData : (JSONArray) blockData.get("transactions")) {
                 blockTransactions.add(parseTransaction((JSONObject) transactionData));
@@ -78,7 +77,7 @@ public class BlockParserImpl implements BlockParser {
     }
 
     private Transaction parseTransaction(JSONObject jsonObject) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
-        TransactionImpl tx = transactionBuilder.newTransactionBuilder(jsonObject).build();
+        Transaction tx = transactionBuilderFactory.newTransaction(jsonObject);
         if (!transactionValidator.checkSignature(null, tx)) {
             throw new AplException.NotValidException("Invalid signature of tx: " + tx.getStringId());
         }

@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
@@ -32,5 +32,10 @@ public class PrunableEncryptedMessageAppendixApplier implements AppendixApplier<
         if (timeService.getEpochTime() - transaction.getTimestamp() < blockchainConfig.getMaxPrunableLifetime()) {
             messageService.add(transaction, appendix);
         }
+    }
+
+    @Override
+    public Class<PrunableEncryptedMessageAppendix> forClass() {
+        return PrunableEncryptedMessageAppendix.class;
     }
 }

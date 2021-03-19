@@ -5,17 +5,17 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountGuaranteedBalance;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -34,17 +34,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+
 @Tag("slow")
 @EnableWeld
-class AccountGuaranteedBalanceTableTest {
+class AccountGuaranteedBalanceTableTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
     @Inject
     AccountGuaranteedBalanceTable table;
     AccountTestData testData = new AccountTestData();
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    private DerivedTablesRegistry derivedTablesRegistry = mock(DerivedTablesRegistry.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -55,23 +57,24 @@ class AccountGuaranteedBalanceTableTest {
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
-        .addBeans(MockBean.of(derivedTablesRegistry, DerivedTablesRegistry.class))
         .build();
 
     @Test
     void trim() throws SQLException {
         doReturn(10).when(propertiesHolder).BATCH_COMMIT_SIZE();
-        table = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder, derivedTablesRegistry, dbExtension.getDatabaseManager());
+        table = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder, dbExtension.getDatabaseManager());
 
         long sizeAll = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues().size();
         assertEquals(testData.ALL_BALANCES.size(), sizeAll);
-        DbUtils.inTransaction(dbExtension, con -> table.trim(testData.ACC_GUARANTEE_BALANCE_HEIGHT_MAX, true));
+        DbUtils.inTransaction(dbExtension, con -> table.trim(testData.ACC_GUARANTEE_BALANCE_HEIGHT_MAX));
         long sizeTrim = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues().size();
         assertEquals(1, sizeTrim);
     }
 
     @Test
     void testGetSumOfAdditions() {
+        dbExtension.cleanAndPopulateDb();
+
         long accountId = testData.ACC_BALANCE_1.getAccountId();
         int height1 = testData.ACC_BALANCE_1.getHeight();
         int height2 = height1 + 1000;
@@ -103,6 +106,8 @@ class AccountGuaranteedBalanceTableTest {
 
     @Test
     void addToGuaranteedBalanceATM() {
+        dbExtension.cleanAndPopulateDb();
+
         long amountATM = 10000L;
         long expectedSum = testData.ACC_BALANCE_3.getAdditions() + amountATM;
 

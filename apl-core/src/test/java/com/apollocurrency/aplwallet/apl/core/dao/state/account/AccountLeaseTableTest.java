@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountLease;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -21,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -41,11 +43,14 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+//
 @Tag("slow")
 @EnableWeld
-class AccountLeaseTableTest {
+class AccountLeaseTableTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
     @Inject
     AccountLeaseTable table;
     AccountTestData testData = new AccountTestData();
@@ -99,6 +104,8 @@ class AccountLeaseTableTest {
 
     @Test
     void getAccountLeaseCount() {
+        dbExtension.cleanAndPopulateDb();
+
         int expected = testData.ALL_LEASE.size();
         expected--; //one record doesn't have 'latest' indicator;
         int actual = table.getAccountLeaseCount();
@@ -113,6 +120,8 @@ class AccountLeaseTableTest {
 
     @Test
     void getLeaseChangingAccounts() {
+        dbExtension.cleanAndPopulateDb();
+
         List<AccountLease> accounts = table.getLeaseChangingAccountsAtHeight(testData.ACC_LEAS_0.getHeight());
         List<AccountLease> expected = testData.ALL_LEASE.stream()
             .filter(accountLease -> accountLease.getCurrentLeasingHeightFrom() == testData.ACC_LEAS_0.getHeight()

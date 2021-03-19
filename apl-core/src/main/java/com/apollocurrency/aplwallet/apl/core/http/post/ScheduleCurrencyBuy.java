@@ -20,9 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySellOffer;
@@ -30,18 +29,22 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TransactionSchedulerService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyExchangeOfferFacade;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionWrapperHelper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
@@ -56,13 +59,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 
 @Vetoed
-public final class ScheduleCurrencyBuy extends CreateTransaction {
+public final class ScheduleCurrencyBuy extends CreateTransactionHandler {
     private static final Logger LOG = getLogger(ScheduleCurrencyBuy.class);
     private static TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
     private static GlobalSync globalSync = CDI.current().select(GlobalSync.class).get();
     private final TransactionSchedulerService transactionSchedulerService = CDI.current().select(TransactionSchedulerService.class).get();
-    private final TransactionBuilder transactionBuilder = CDI.current().select(TransactionBuilder.class).get();
+    private final TransactionBuilderFactory transactionBuilderFactory = CDI.current().select(TransactionBuilderFactory.class).get();
     private final CurrencyExchangeOfferFacade exchangeOfferFacade = CDI.current().select(CurrencyExchangeOfferFacade.class).get();
+
     public ScheduleCurrencyBuy() {
 
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "rateATM", "units", "offerIssuer",
@@ -95,17 +99,25 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     response.put("scheduled", false);
                     return response;
                 }
-                transaction = transactionBuilder.newTransactionBuilder((JSONObject) response.get("transactionJSON")).build();
+                transaction = transactionBuilderFactory.newTransaction((JSONObject) response.get("transactionJSON"));
             } else {
                 response = new JSONObject();
-                transaction = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON).build();
+                transaction = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
+
+                Result unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+                txBContext.createSerializer(transaction.getVersion())
+                    .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), unsignedTxBytes);
+
+                Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+                txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
+
                 JSONObject json = JSONData.unconfirmedTransaction(transaction);
                 response.put("transactionJSON", json);
                 try {
-                    response.put("unsignedTransactionBytes", Convert.toHexString(transaction.getUnsignedBytes()));
+                    response.put("unsignedTransactionBytes", Convert.toHexString(unsignedTxBytes.array()));
                 } catch (AplException.NotYetEncryptedException ignore) {
                 }
-                response.put("transactionBytes", Convert.toHexString(transaction.getCopyTxBytes()));
+                response.put("transactionBytes", Convert.toHexString(signedTxBytes.array()));
                 response.put("signatureHash", json.get("signatureHash"));
                 response.put("transaction", transaction.getStringId());
                 response.put("fullHash", transaction.getFullHashString());
