@@ -40,17 +40,22 @@
       <scope>compile</scope>
     </dependency>
 
-      <dependency>
-          <groupId>com.apollocurrency</groupId>
-          <artifactId>apl-dex</artifactId>
-          <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-dex</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-      <dependency>
-          <groupId>com.apollocurrency</groupId>
-          <artifactId>apl-vault-wallet</artifactId>
-          <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-vault-wallet</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.firstbridge</groupId>
+      <artifactId>kms-library</artifactId>
+    </dependency>
 
       <!-- EXT BOM DEPENDENCIES -->
       <dependency>
