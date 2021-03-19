@@ -24,7 +24,6 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.enterprise.event.Event;
@@ -49,7 +48,7 @@ public class ShardingSchedulerIntegrationTest {
     TimeService timeService = mock(TimeService.class);
     Event trimEvent = mock(Event.class);
     TrimService trimService = mock(TrimService.class);
-    TrimConfig trimConfig = mock(TrimConfig.class);
+    static TrimConfig trimConfig = mockTrimConfig();
     Random random = mock(Random.class);
     Blockchain blockchain = mock(Blockchain.class);
 
@@ -72,16 +71,7 @@ public class ShardingSchedulerIntegrationTest {
     @Inject
     TrimObserver trimObserver;
 
-    AtomicLong trimObserverTiming = new AtomicLong();
-
-    @BeforeEach
-    void setUp() {
-        doAnswer(invocationOnMock -> {
-            ThreadUtils.sleep(10);
-            trimObserverTiming.set(System.currentTimeMillis());
-            return 1000;
-        }).when(trimConfig).getTrimFrequency();
-    }
+    static AtomicLong trimObserverTiming = new AtomicLong();
 
 
     @Test
@@ -127,5 +117,15 @@ public class ShardingSchedulerIntegrationTest {
                 return blockEventType;
             }
         };
+    }
+
+    static TrimConfig mockTrimConfig() {
+        TrimConfig mock = mock(TrimConfig.class);
+        doAnswer(invocationOnMock -> {
+            ThreadUtils.sleep(10);
+            trimObserverTiming.set(System.currentTimeMillis());
+            return 1000;
+        }).when(mock).getTrimFrequency();
+        return mock;
     }
 }

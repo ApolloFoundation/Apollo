@@ -14,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,11 +46,10 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
 
     @Inject
     public UnconfirmedTransactionTable(UnconfirmedTransactionEntityRowMapper entityRowMapper,
-                                       DerivedTablesRegistry derivedDbTablesRegistry,
                                        DatabaseManager databaseManager,
                                        Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("unconfirmed_transaction", transactionKeyFactory, false, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
         this.entityRowMapper = entityRowMapper;
         this.streamConverter = new IteratorToStreamConverter<>();
     }

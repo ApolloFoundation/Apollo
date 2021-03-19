@@ -57,6 +57,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.TableRegistryInitializer;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
@@ -235,13 +236,15 @@ class ShardEngineTest extends DBContainerRootTest {
     @Inject
     private DerivedTablesRegistry registry;
     @Inject
+    TableRegistryInitializer registryInitializer;
+    @Inject
     private CsvExporter cvsExporter;
     @Inject
     private TransactionEntityToModelConverter toModelConverter;
 
     {
         weld.addInterceptor(JdbiTransactionalInterceptor.class);
-        weld.addBeanClasses(BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class,
+        weld.addBeanClasses(BlockchainImpl.class, DaoConfig.class, ReferencedTransactionDao.class, ShardDao.class, ShardRecoveryDao.class, TableRegistryInitializer.class,
             DerivedDbTablesRegistryImpl.class, JdbiTransactionalInterceptor.class,
             TransactionServiceImpl.class, ShardDbExplorerImpl.class,
             TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
