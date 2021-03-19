@@ -257,7 +257,7 @@ class CsvExporterTest extends DbContainerBaseTest {
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         TransactionDaoImpl.class,
         DexOrderTable.class,
-        CsvEscaperImpl.class, UnconfirmedTransactionTable.class, AccountService.class, TaskDispatchManager.class)
+        CsvEscaperImpl.class, UnconfirmedTransactionTable.class, AccountService.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
@@ -293,6 +293,7 @@ class CsvExporterTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(memPool, MemPool.class))
         .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
         .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class))
+        .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
         .build();
 
     private List<String> blockIndexExportContent = List.of("block_id(-5|20|0),block_height(4|11|0)", "1,1", "2,2", "3,30");

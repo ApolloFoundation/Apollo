@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigInteger;
 
@@ -15,6 +16,7 @@ import java.math.BigInteger;
 @Builder
 @Data
 public class BlockEntity {
+    @EqualsAndHashCode.Exclude
     private long dbId;
     private long id;
 
