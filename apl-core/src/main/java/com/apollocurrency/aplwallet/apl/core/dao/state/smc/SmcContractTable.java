@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.StringKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContract;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;
@@ -40,12 +39,8 @@ public class SmcContractTable extends VersionedDeletableEntityDbTable<SmcContrac
     private static final SmcContractMapper MAPPER = new SmcContractMapper(KEY_FACTORY);
 
     @Inject
-    public SmcContractTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                 DatabaseManager databaseManager,
-                                 Event<DeleteOnTrimData> deleteOnTrimDataEvent){
-        super(TABLE_NAME, KEY_FACTORY,
-            null, derivedDbTablesRegistry, databaseManager,
-            null, deleteOnTrimDataEvent );
+    public SmcContractTable(DatabaseManager databaseManager, Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+        super(TABLE_NAME, KEY_FACTORY, null, databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override
@@ -58,17 +53,18 @@ public class SmcContractTable extends VersionedDeletableEntityDbTable<SmcContrac
     @Override
     public void save(Connection con, SmcContract entity) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + TABLE_NAME +
-            "(address, data, name, language, fuel, fuel_price, transaction_id, height, latest) "+
-            "VALUES (?, ?, ?, ?, ?, ?, ?,  ?, TRUE)"
+                "(address, data, name, language, fuel, fuel_price, transaction_id, disabled, height, latest) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?,  ?, ?, TRUE)"
             , Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             pstmt.setString(++i, entity.getAddress());
             pstmt.setString(++i, entity.getData());
             pstmt.setString(++i, entity.getContractName());
             pstmt.setString(++i, entity.getLanguageName());
-            pstmt.setString(++i, entity.getFuelValue().toString());
-            pstmt.setString(++i, entity.getFuelPrice().toString());
+            pstmt.setBytes(++i, entity.getFuelValue().toByteArray());
+            pstmt.setBytes(++i, entity.getFuelPrice().toByteArray());
             pstmt.setString(++i, entity.getTransactionId());
+            pstmt.setBoolean(++i, entity.isDisabled());
             pstmt.setInt(i, entity.getHeight());
             pstmt.executeUpdate();
             try (final ResultSet rs = pstmt.getGeneratedKeys()) {

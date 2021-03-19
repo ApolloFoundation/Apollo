@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -24,7 +25,10 @@ class SmcCallMethodAttachmentTest {
 
     final SmcCallMethodAttachment expected = SmcCallMethodAttachment.builder()
         .methodName("purchase")
-        .methodParams(List.of("123","0x0A0B0C0D0E0F"))
+        .methodParams(List.of("123", "0x0A0B0C0D0E0F"))
+        .amount(BigInteger.ONE)
+        .fuelLimit(BigInteger.TEN)
+        .fuelPrice(BigInteger.TWO)
         .build();
 
     @Test
@@ -41,6 +45,9 @@ class SmcCallMethodAttachmentTest {
             expected.getMethodParams().toArray(new String[0]),
             attachment.getMethodParams().toArray(new String[0])
         );
+        assertEquals(expected.getAmount(), attachment.getAmount());
+        assertEquals(expected.getFuelLimit(), attachment.getFuelLimit());
+        assertEquals(expected.getFuelPrice(), attachment.getFuelPrice());
     }
 
     @Test
@@ -63,6 +70,9 @@ class SmcCallMethodAttachmentTest {
             expected.getMethodParams().toArray(new String[0]),
             attachment.getMethodParams().toArray(new String[0])
         );
+        assertEquals(expected.getAmount(), attachment.getAmount());
+        assertEquals(expected.getFuelLimit(), attachment.getFuelLimit());
+        assertEquals(expected.getFuelPrice(), attachment.getFuelPrice());
     }
 
     @Test

@@ -23,7 +23,7 @@ public class SmcContractStateMapper extends VersionedDerivedEntityMapper<SmcCont
         String serializedObject = rs.getString("object");
         String status = rs.getString("status");
 
-
-        return new SmcContractState(null, null, address, transactionId, method, args, status, serializedObject);
+        return new SmcContractState(null, null
+            , address, transactionId, method, args, status, serializedObject);
     }
 }

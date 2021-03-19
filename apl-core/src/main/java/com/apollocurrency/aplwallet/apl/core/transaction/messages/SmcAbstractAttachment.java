@@ -10,6 +10,8 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 
 public abstract class SmcAbstractAttachment extends AbstractAttachment {
+    protected static final String FUEL_LIMIT_FIELD = "fuelLimit";
+    protected static final String FUEL_PRICE_FIELD = "fuelPrice";
 
     SmcAbstractAttachment(RlpReader reader) {
         super(reader);

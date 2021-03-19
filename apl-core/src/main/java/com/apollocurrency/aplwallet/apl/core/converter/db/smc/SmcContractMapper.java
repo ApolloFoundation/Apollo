@@ -24,6 +24,8 @@ public class SmcContractMapper extends VersionedDerivedEntityMapper<SmcContract>
         BigInteger fuelValue = new BigInteger(rs.getBytes("fuel"));
         BigInteger fuelPrice = new BigInteger(rs.getBytes("fuel_price"));
         String transactionId = rs.getString("transaction_id");
-        return new SmcContract(null, null, address, data, contractName, languageName, fuelValue, fuelPrice, transactionId);
+        boolean disabled = rs.getBoolean("disabled");
+
+        return new SmcContract(null, null, address, data, contractName, languageName, fuelValue, fuelPrice, transactionId, disabled);
     }
 }

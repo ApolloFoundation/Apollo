@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkStrKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractState;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;
@@ -40,13 +39,8 @@ public class SmcContractStateTable extends VersionedDeletableEntityDbTable<SmcCo
     private static final SmcContractStateMapper MAPPER = new SmcContractStateMapper(KEY_FACTORY);
 
     @Inject
-    public SmcContractStateTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                 DatabaseManager databaseManager,
-                                 Event<DeleteOnTrimData> deleteOnTrimDataEvent){
-        super(TABLE_NAME, KEY_FACTORY,
-            null, derivedDbTablesRegistry, databaseManager,
-            null, deleteOnTrimDataEvent );
-
+    public SmcContractStateTable(DatabaseManager databaseManager, Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+        super(TABLE_NAME, KEY_FACTORY, null, databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override

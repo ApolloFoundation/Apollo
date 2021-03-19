@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -24,8 +25,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class SmcPublishContractAttachmentTest {
 
     final SmcPublishContractAttachment expected = SmcPublishContractAttachment.builder()
+        .contractName("A")
         .contractSource("class A {}")
-        .constructorParams(List.of("Deal","123","0x0A0B0C0D0E0F"))
+        .constructorParams(List.of("Deal", "123", "0x0A0B0C0D0E0F"))
+        .languageName("javascript")
+        .fuelLimit(BigInteger.TEN)
+        .fuelPrice(BigInteger.TWO)
         .build();
 
     @Test
@@ -37,11 +42,15 @@ class SmcPublishContractAttachmentTest {
         SmcPublishContractAttachment attachment = new SmcPublishContractAttachment(json);
 
         //THEN
+        assertEquals(expected.getContractName(), attachment.getContractName());
         assertEquals(expected.getContractSource(), attachment.getContractSource());
         assertArrayEquals(
             expected.getConstructorParams().toArray(new String[0]),
             attachment.getConstructorParams().toArray(new String[0])
         );
+        assertEquals(expected.getFuelLimit(), attachment.getFuelLimit());
+        assertEquals(expected.getFuelPrice(), attachment.getFuelPrice());
+
     }
 
     @Test
@@ -59,11 +68,14 @@ class SmcPublishContractAttachmentTest {
         SmcPublishContractAttachment attachment = new SmcPublishContractAttachment(reader);
 
         //THEN
+        assertEquals(expected.getContractName(), attachment.getContractName());
         assertEquals(expected.getContractSource(), attachment.getContractSource());
         assertArrayEquals(
             expected.getConstructorParams().toArray(new String[0]),
             attachment.getConstructorParams().toArray(new String[0])
         );
+        assertEquals(expected.getFuelLimit(), attachment.getFuelLimit());
+        assertEquals(expected.getFuelPrice(), attachment.getFuelPrice());
     }
 
     @Test

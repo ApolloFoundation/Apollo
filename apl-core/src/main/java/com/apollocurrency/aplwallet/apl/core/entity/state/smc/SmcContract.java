@@ -28,22 +28,20 @@ public class SmcContract extends VersionedDerivedEntity {
 
     private BigInteger fuelPrice;
 
-    private BigInteger fuelRemaining;
-
     private String transactionId;
 
-    public SmcContract(Long dbId, Integer height,
-                       String address, String data, String contractName, String languageName,
-                       BigInteger fuelValue, BigInteger fuelPrice, String transactionId) {
+    private boolean disabled;
+
+    public SmcContract(Long dbId, Integer height, String address, String data, String contractName, String languageName, BigInteger fuelValue, BigInteger fuelPrice, String transactionId, boolean disabled) {
         super(dbId, height);
         this.address = address;
         this.data = data;
         this.contractName = contractName;
         this.languageName = languageName;
         this.fuelValue = fuelValue;
-        this.fuelRemaining = fuelValue;
         this.fuelPrice = fuelPrice;
         this.transactionId = transactionId;
+        this.disabled = disabled;
     }
 
     @Override
@@ -57,13 +55,12 @@ public class SmcContract extends VersionedDerivedEntity {
             && Objects.equals(contractName, that.contractName)
             && Objects.equals(languageName, that.languageName)
             && Objects.equals(fuelValue, that.fuelValue)
-            && Objects.equals(fuelRemaining, that.fuelRemaining)
             && Objects.equals(fuelPrice, that.fuelPrice)
             && Objects.equals(transactionId, that.transactionId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), address, data, contractName, languageName, fuelValue, fuelRemaining, fuelPrice, transactionId);
+        return Objects.hash(super.hashCode(), address, data, contractName, languageName, fuelValue, fuelPrice, transactionId);
     }
 }
