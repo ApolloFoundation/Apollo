@@ -22,7 +22,7 @@ import java.util.Objects;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class SmcCallMethodAttachment extends SmcAbstractAttachment {
-    private static final String METHOD_NAME_FIELD = "contractSource";
+    private static final String METHOD_NAME_FIELD = "contractMethod";
     private static final String METHOD_PARAMS_FIELD = "params";
 
     private final String methodName;// method or constructor name
