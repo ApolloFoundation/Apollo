@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020. Apollo Foundation.
+ * Copyright (c) 2020-2021. Apollo Foundation.
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
@@ -25,9 +25,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class SmcPublishContractAttachmentTest {
 
     final SmcPublishContractAttachment expected = SmcPublishContractAttachment.builder()
-        .contractName("A")
-        .contractSource("class A {}")
-        .constructorParams(List.of("Deal", "123", "0x0A0B0C0D0E0F"))
+        .contractName("Deal")
+        .contractSource("class Deal {}")
+        .constructorParams(List.of("123", "0x0A0B0C0D0E0F"))
         .languageName("javascript")
         .fuelLimit(BigInteger.TEN)
         .fuelPrice(BigInteger.TWO)

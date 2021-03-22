@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS `smc_contract`
     `disabled`       tinyint(1)                              NOT NULL DEFAULT 0,
     `height`         int(11)                                 NOT NULL,
     `latest`         tinyint(1)                              NOT NULL DEFAULT 1,
+    `deleted`        tinyint(1)                              NOT NULL DEFAULT 0,
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `smc_contract_address_height_idx` (`address`, `height`)
 ) ENGINE = ROCKSDB
@@ -33,8 +34,9 @@ CREATE TABLE IF NOT EXISTS `smc_state`
     `status`         varchar(20) COLLATE utf8mb4_unicode_ci  NOT NULL,
     `height`         int(11)                                 NOT NULL,
     `latest`         tinyint(1)                              NOT NULL DEFAULT 1,
+    `deleted`        tinyint(1)                              NOT NULL DEFAULT 0,
     UNIQUE KEY `db_id` (`db_id`),
-    UNIQUE KEY `smc_contract_address_height_idx` (`address`, `height`)
+    UNIQUE KEY `smc_contract_address_txid_height_idx` (`address`, `transaction_id`, `height`)
 ) ENGINE = ROCKSDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;

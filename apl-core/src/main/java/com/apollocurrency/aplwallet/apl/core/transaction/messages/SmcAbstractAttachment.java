@@ -10,6 +10,7 @@ import org.json.simple.JSONObject;
 import java.nio.ByteBuffer;
 
 public abstract class SmcAbstractAttachment extends AbstractAttachment {
+    protected static final String AMOUNT_FIELD = "amount";
     protected static final String FUEL_LIMIT_FIELD = "fuelLimit";
     protected static final String FUEL_PRICE_FIELD = "fuelPrice";
 

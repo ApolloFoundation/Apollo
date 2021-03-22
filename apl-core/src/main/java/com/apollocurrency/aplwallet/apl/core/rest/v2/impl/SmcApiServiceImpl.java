@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.v2.impl;
 
 import com.apollocurrency.aplwallet.api.v2.NotFoundException;
 import com.apollocurrency.aplwallet.api.v2.SmcApiService;
+import com.apollocurrency.aplwallet.api.v2.model.CallContractMethodReqTest;
 import com.apollocurrency.aplwallet.api.v2.model.PublishContractReqTest;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionArrayResp;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
@@ -17,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -71,8 +73,12 @@ public class SmcApiServiceImpl implements SmcApiService {
         BigInteger fuelPrice = new BigInteger(body.getFuelPrice());
 
         SmcPublishContractAttachment attachment = SmcPublishContractAttachment.builder()
+            .contractName(body.getName())
             .contractSource(body.getSource())
             .constructorParams(body.getParams())
+            .languageName("javascript")
+            .fuelLimit(fuelLimit)
+            .fuelPrice(fuelPrice)
             .build();
 
         byte[] publicKey = generatePublicKey(account, attachment.getContractSource());
@@ -84,6 +90,57 @@ public class SmcApiServiceImpl implements SmcApiService {
             .senderAccount(account)
             .recipientPublicKey(Convert.toHexString(publicKey))
             .recipientId(recipientId)
+            .secretPhrase(body.getSecret())
+            .deadlineValue(String.valueOf(1440))
+            .nonce(BigInteger.ONE)//V3
+            .amount(BigInteger.TEN)//V3
+            .fuelLimit(fuelLimit)//V3
+            .fuelPrice(fuelPrice)//V3
+            .attachment(attachment)
+            .credential(new MultiSigCredential(1, Crypto.getKeySeed(body.getSecret())))
+            .broadcast(false)
+            .validate(false)
+            .build();
+
+        Transaction transaction = transactionCreator.createTransactionThrowingException(txRequest);
+
+        Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
+        response.setTx(Convert.toHexString(signedTxBytes.array()));
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response createCallContractMethodTx(CallContractMethodReqTest body, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+
+        long address = Convert.parseAccountId(body.getAddress());
+        Account contractAccount = accountService.getAccount(address);
+        if (contractAccount == null) {
+            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "contract_address", body.getAddress()).build();
+        }
+        long senderAccountId = Convert.parseAccountId(body.getSender());
+        Account account = accountService.getAccount(senderAccountId);
+        if (account == null) {
+            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "sender_account", body.getSender()).build();
+        }
+        TransactionArrayResp response = new TransactionArrayResp();
+
+        BigInteger fuelLimit = new BigInteger(body.getFuelLimit());
+        BigInteger fuelPrice = new BigInteger(body.getFuelPrice());
+
+        SmcCallMethodAttachment attachment = SmcCallMethodAttachment.builder()
+            .methodName(body.getName())
+            .methodParams(body.getParams())
+            .build();
+
+        CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
+            .chainId(blockchainConfig.getChain().getChainId().toString())//V3
+            .version(3)
+            .senderAccount(account)
+            .recipientPublicKey(Convert.toHexString(contractAccount.getPublicKey().getPublicKey()))
+            .recipientId(contractAccount.getId())
             .secretPhrase(body.getSecret())
             .deadlineValue(String.valueOf(1440))
             .nonce(BigInteger.ONE)//V3

@@ -45,7 +45,6 @@ class SmcCallMethodAttachmentTest {
             expected.getMethodParams().toArray(new String[0]),
             attachment.getMethodParams().toArray(new String[0])
         );
-        assertEquals(expected.getAmount(), attachment.getAmount());
         assertEquals(expected.getFuelLimit(), attachment.getFuelLimit());
         assertEquals(expected.getFuelPrice(), attachment.getFuelPrice());
     }
@@ -70,7 +69,6 @@ class SmcCallMethodAttachmentTest {
             expected.getMethodParams().toArray(new String[0]),
             attachment.getMethodParams().toArray(new String[0])
         );
-        assertEquals(expected.getAmount(), attachment.getAmount());
         assertEquals(expected.getFuelLimit(), attachment.getFuelLimit());
         assertEquals(expected.getFuelPrice(), attachment.getFuelPrice());
     }

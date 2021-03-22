@@ -24,11 +24,9 @@ import java.util.Objects;
 public class SmcCallMethodAttachment extends SmcAbstractAttachment {
     private static final String METHOD_NAME_FIELD = "contractSource";
     private static final String METHOD_PARAMS_FIELD = "params";
-    private static final String AMOUNT_FIELD = "amount";
 
     private final String methodName;// method or constructor name
     private final List<String> methodParams;
-    private final BigInteger amount;
     private final BigInteger fuelLimit;
     private final BigInteger fuelPrice;
 
@@ -36,7 +34,6 @@ public class SmcCallMethodAttachment extends SmcAbstractAttachment {
     public SmcCallMethodAttachment(String methodName, List<String> methodParams, BigInteger amount, BigInteger fuelLimit, BigInteger fuelPrice) {
         this.methodName = Objects.requireNonNull(methodName);
         this.methodParams = Objects.requireNonNull(methodParams);
-        this.amount = Objects.requireNonNull(amount);
         this.fuelLimit = Objects.requireNonNull(fuelLimit);
         this.fuelPrice = Objects.requireNonNull(fuelPrice);
     }
@@ -45,7 +42,6 @@ public class SmcCallMethodAttachment extends SmcAbstractAttachment {
         super(reader);
         this.methodName = reader.readString();
         this.methodParams = reader.readList(RlpConverter::toString);
-        this.amount = reader.readBigInteger();
         this.fuelLimit = reader.readBigInteger();
         this.fuelPrice = reader.readBigInteger();
     }
@@ -54,7 +50,6 @@ public class SmcCallMethodAttachment extends SmcAbstractAttachment {
         super(attachmentData);
         this.methodName = String.valueOf(attachmentData.get(METHOD_NAME_FIELD));
         this.methodParams = new ArrayList<>((JSONArray) attachmentData.get(METHOD_PARAMS_FIELD));
-        this.amount = new BigInteger((String) attachmentData.get(AMOUNT_FIELD));
         this.fuelLimit = new BigInteger((String) attachmentData.get(FUEL_LIMIT_FIELD));
         this.fuelPrice = new BigInteger((String) attachmentData.get(FUEL_PRICE_FIELD));
     }
@@ -70,7 +65,6 @@ public class SmcCallMethodAttachment extends SmcAbstractAttachment {
         JSONArray params = new JSONArray();
         params.addAll(this.methodParams);
         json.put(METHOD_PARAMS_FIELD, params);
-        json.put(AMOUNT_FIELD, amount.toString());
         json.put(FUEL_LIMIT_FIELD, fuelLimit.toString());
         json.put(FUEL_PRICE_FIELD, fuelPrice.toString());
     }
@@ -80,7 +74,6 @@ public class SmcCallMethodAttachment extends SmcAbstractAttachment {
         builder
             .add(methodName)
             .add(RlpList.ofStrings(methodParams))
-            .add(amount)
             .add(fuelLimit)
             .add(fuelPrice);
     }
