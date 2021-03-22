@@ -6,8 +6,8 @@
        version="1.1" bean-discovery-mode="all">
   <weld:scan>
     <weld:include name="org.jboss.resteasy.cdi.**" />
-    <weld:include name="com.apollocurrency.**" />
     <weld:include name="io.firstbridge.kms.**" />
+    <weld:include name="com.apollocurrency.**" />
 
     <weld:exclude name="org.jboss.resteasy.plugins.providers.jaxb.**" />
     <weld:exclude name="org.jboss.resteasy.plugins.providers.jackson.**" />
