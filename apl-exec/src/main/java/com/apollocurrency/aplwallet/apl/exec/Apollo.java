@@ -297,7 +297,7 @@ public class Apollo {
         Properties applicationProperties = propertiesLoader.load();
         
 //verify and complete configuration        
-        applicationProperties = configVerifier.parse(applicationProperties);
+        applicationProperties = configVerifier.parse(applicationProperties, Constants.VERSION);
         
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
             configDirProvider,

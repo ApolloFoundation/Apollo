@@ -5,8 +5,10 @@ package com.apollocurrency.aplwallet.apl.conf;
 
 
 import com.apollocurrency.aplwallet.apl.util.Version;
+import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Path;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -69,8 +71,13 @@ public class ConfigVerifier {
   * containing all available information about config propery
   * @param pos output stream where to dump
   */   
-    public void dumpToProperties(OutputStream pos){
-        //TODO: implement
+    public void dumpToProperties(OutputStream pos) throws IOException{
+        Writer w = new OutputStreamWriter(pos);
+        for(ConfigRecord cr: knownProps.values()){
+            w.write("# "+cr.description);
+            w.write("# Command line option: "+cr.cmdLineOpt+" Environment variable: "+cr.envVar);
+            w.write(cr.name+"="+cr.defaultValue);            
+        }
     }
 
     
@@ -79,16 +86,29 @@ public class ConfigVerifier {
  * @param config Properties file from resource or disk.
  * Unknown proerties will be logged with WARN level; missing required properties will
  * be filled with default and warning will be logged
+ * @param currentVer
  * @return reaqdy to use properties
  */
-    public Properties parse(Properties config){
+    public Properties parse(Properties config, Version currentVer){
         //go trough suppied config and check it: warn on deprecated and on unknown
-        for(Object propery: config.entrySet()){
+        for(Object key: config.keySet()){
+            String name = (String)key;
+            String value = config.getProperty(name);
+            ConfigRecord cr = knownProps.get(name);
+            if(cr==null){
+                log.warn("Unknown config property: "+name+" with value: "+value + ". It propbably will be ignored");
+            }else if (cr.deprecatedSince.lessThan(currentVer)){
+                log.warn("Config property: "+name+" is deprecated since version "+cr.deprecatedSince);
+            }
             
         }
         //define required properties, warn on undefined
         for(ConfigRecord pr: knownProps.values()){
-            
+            String val = config.getProperty(pr.name);
+            if(pr.isRequired && (val==null || val.isEmpty())){
+                config.put(pr.name, pr.defaultValue);
+                log.warn("Required property: "+pr.name+" is not defined in config. Putting default value: "+pr.defaultValue);
+            }
         }
         return config;
     }
