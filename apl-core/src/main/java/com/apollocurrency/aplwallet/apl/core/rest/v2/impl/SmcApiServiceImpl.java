@@ -22,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodA
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
@@ -33,7 +32,6 @@ import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -81,7 +79,7 @@ public class SmcApiServiceImpl implements SmcApiService {
             .fuelPrice(fuelPrice)
             .build();
 
-        byte[] publicKey = generatePublicKey(account, attachment.getContractSource());
+        byte[] publicKey = AccountService.generatePublicKey(account, attachment.getContractSource());
         long recipientId = AccountService.getId(publicKey);
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
@@ -165,15 +163,5 @@ public class SmcApiServiceImpl implements SmcApiService {
     @Override
     public Response createPublishContractTx(PublishContractReqTest body, SecurityContext securityContext) throws NotFoundException {
         return null;
-    }
-
-    private static byte[] generatePublicKey(Account account, String src) {
-        return Crypto.getPublicKey(
-            Crypto.getKeySeed(
-                Convert2.rsAccount(account.getId())
-                , Crypto.sha256().digest(src.getBytes(StandardCharsets.UTF_8))
-                , Crypto.getSecureRandom().generateSeed(32)
-            )
-        );
     }
 }

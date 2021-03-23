@@ -308,7 +308,7 @@ public class TransactionBuilderFactory {
             }
 
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(chainId, transactionType, version,
-                senderPublicKey, nonce,amount, fuelLimit, fuelPrice,deadline, timestamp, attachment);
+                senderPublicKey, nonce, amount, fuelLimit, fuelPrice, deadline, timestamp, attachment);
 
             appendages.forEach(builder::appendix);
 

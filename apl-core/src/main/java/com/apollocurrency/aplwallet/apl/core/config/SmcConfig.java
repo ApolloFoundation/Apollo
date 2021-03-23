@@ -73,8 +73,13 @@ public class SmcConfig {
     public CryptoLibProvider createCryptoLibProvider() {
         return new CryptoLibProvider() {
             @Override
-            public byte[] getPublicKey(String secretPhrase) {
-                return Crypto.getPublicKey(secretPhrase);
+            public byte[] getPublicKey(byte[] secretPhrase, byte[] nonce, byte[] salt) {
+                return Crypto.getPublicKey(Crypto.getKeySeed(secretPhrase, nonce, salt));
+            }
+
+            @Override
+            public byte[] getKeySeed(byte[] secretPhrase, byte[] nonce, byte[] salt) {
+                return Crypto.getKeySeed(secretPhrase, nonce, salt);
             }
 
             @Override

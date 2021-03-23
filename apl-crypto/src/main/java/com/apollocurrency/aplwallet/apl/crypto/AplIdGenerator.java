@@ -21,8 +21,9 @@ public class AplIdGenerator {
     }
 
     public static final IdGenerator ACCOUNT = new ToLongGenerator();
-    public static final IdGenerator TRANSACTION = new ToLongGenerator();
     public static final IdGenerator BLOCK = new ToLongGenerator();
+    public static final IdGenerator CONTRACT = new ToLongGenerator();
+    public static final IdGenerator TRANSACTION = new ToLongGenerator();
 
     static class ToLongGenerator implements IdGenerator {
         @Override

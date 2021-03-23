@@ -4,11 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.smc;
 
-import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractStateMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractStateRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkStrKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractState;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
@@ -23,12 +23,12 @@ import java.sql.Statement;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public class SmcContractStateTable extends VersionedDeletableEntityDbTable<SmcContractState> {
-    public static final LinkStrKeyFactory<SmcContractState> KEY_FACTORY = new LinkStrKeyFactory<>("address", "transaction_id") {
+public class SmcContractStateTable extends VersionedDeletableEntityDbTable<SmcContractStateEntity> {
+    public static final LongKeyFactory<SmcContractStateEntity> KEY_FACTORY = new LongKeyFactory<>("address") {
         @Override
-        public DbKey newKey(SmcContractState contract) {
+        public DbKey newKey(SmcContractStateEntity contract) {
             if (contract.getDbKey() == null) {
-                contract.setDbKey(newKey(contract.getAddress(), contract.getTransactionId()));
+                contract.setDbKey(newKey(contract.getAddress()));
             }
             return contract.getDbKey();
         }
@@ -36,7 +36,7 @@ public class SmcContractStateTable extends VersionedDeletableEntityDbTable<SmcCo
 
     private static final String TABLE_NAME = "smc_state";
 
-    private static final SmcContractStateMapper MAPPER = new SmcContractStateMapper(KEY_FACTORY);
+    private static final SmcContractStateRowMapper MAPPER = new SmcContractStateRowMapper(KEY_FACTORY);
 
     @Inject
     public SmcContractStateTable(DatabaseManager databaseManager, Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
@@ -44,23 +44,20 @@ public class SmcContractStateTable extends VersionedDeletableEntityDbTable<SmcCo
     }
 
     @Override
-    protected SmcContractState load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
-        SmcContractState value = MAPPER.map(rs, null);
+    protected SmcContractStateEntity load(Connection con, ResultSet rs, DbKey dbKey) throws SQLException {
+        SmcContractStateEntity value = MAPPER.map(rs, null);
         value.setDbKey(dbKey);
         return value;
     }
 
     @Override
-    public void save(Connection con, SmcContractState entity) throws SQLException {
+    public void save(Connection con, SmcContractStateEntity entity) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + TABLE_NAME +
-                "(address, transaction_id, method, args, object, status, height, latest) "+
-                "VALUES (?, ?, ?, ?, ?, ?, ?,  ?, TRUE)"
+                "(address, object, status, height, latest) " +
+                "VALUES (?, ?, ?, ?, ?, ?,  ?, TRUE)"
             , Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
-            pstmt.setString(++i, entity.getAddress());
-            pstmt.setString(++i, entity.getTransactionId());
-            pstmt.setString(++i, entity.getMethod());
-            pstmt.setString(++i, entity.getArgs());
+            pstmt.setLong(++i, entity.getAddress());
             pstmt.setString(++i, entity.getSerializedObject());
             pstmt.setString(++i, entity.getStatus());
             pstmt.setInt(i, entity.getHeight());

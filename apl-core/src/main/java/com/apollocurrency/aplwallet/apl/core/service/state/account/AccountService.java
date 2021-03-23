@@ -11,9 +11,11 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.DoubleSpendingException;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -21,9 +23,19 @@ import java.util.List;
  */
 public interface AccountService {
 
+    static byte[] generatePublicKey(Account account, String salt) {
+        return Crypto.getPublicKey(
+            Crypto.getKeySeed(
+                Convert2.rsAccount(account.getId())                             // account reference
+                , account.getNonce().toByteArray()                              // nonce
+                , Crypto.sha256().digest(salt.getBytes(StandardCharsets.UTF_8)) // salt
+            )
+        );
+    }
+
     static long getId(byte[] publicKey) {
         byte[] publicKeyHash = Crypto.sha256().digest(publicKey);
-        return Convert.transactionFullHashToId(publicKeyHash);
+        return AplIdGenerator.ACCOUNT.getIdByHash(publicKeyHash).longValue();
     }
 
     static void checkBalance(long accountId, long confirmed, long unconfirmed) {
