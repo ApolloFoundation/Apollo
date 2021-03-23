@@ -25,8 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;
@@ -39,11 +37,9 @@ import java.util.List;
 public abstract class VersionedDeletableValuesDbTable<T extends VersionedDeletableEntity> extends ValuesDbTable<T> {
 
     public VersionedDeletableValuesDbTable(String table, KeyFactory<T> dbKeyFactory,
-                                           DerivedTablesRegistry derivedDbTablesRegistry,
                                            DatabaseManager databaseManager,
-                                           FullTextConfig fullTextConfig,
                                            Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(table, dbKeyFactory, true, derivedDbTablesRegistry, databaseManager, fullTextConfig, deleteOnTrimDataEvent);
+        super(table, dbKeyFactory, true, databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override

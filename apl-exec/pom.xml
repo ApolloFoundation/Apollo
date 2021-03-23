@@ -8,7 +8,6 @@
     <artifactId>apollo-blockchain</artifactId>
     <version>1.48.3</version>
   </parent>
-
   <artifactId>apl-exec</artifactId>
   <name>apl-exec</name>
   <packaging>jar</packaging>

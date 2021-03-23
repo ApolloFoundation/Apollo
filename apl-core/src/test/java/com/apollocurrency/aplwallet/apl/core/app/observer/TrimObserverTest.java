@@ -53,10 +53,11 @@ class TrimObserverTest {
     Random random = Mockito.mock(Random.class);
     Blockchain blockchain = mock(Blockchain.class);
     @WeldSetup
-    WeldInitiator weld = WeldInitiator.from(TrimObserver.class, PropertyProducer.class, TrimConfig.class)
+    WeldInitiator weld = WeldInitiator.from(TrimObserver.class, PropertyProducer.class)
         .addBeans(MockBean.of(trimService, TrimService.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class))
+        .addBeans(MockBean.of(new TrimConfig(5, 1000, 50), TrimConfig.class))
         .build();
     @Inject
     Event<Block> blockEvent;
@@ -68,8 +69,6 @@ class TrimObserverTest {
 
     public TrimObserverTest() {
         doReturn(2000).when(propertiesHolder).getIntProperty("apl.maxRollback", 720);
-        doReturn(-1).when(propertiesHolder).getIntProperty("apl.trimProcessingDelay", 500);
-        doReturn(1000).when(propertiesHolder).getIntProperty("apl.trimFrequency", 1000);
     }
 
     @BeforeEach
@@ -164,7 +163,7 @@ class TrimObserverTest {
             stepCounter.set(1);
             ThreadUtils.sleep(100);
             stepCounter.set(2);
-        });
+        }).join();
         waitTrim(List.of(5000));
         assertFalse(observer.trimEnabled());
         fireBlockPushed(7000);
@@ -179,7 +178,7 @@ class TrimObserverTest {
     void testOnBlockPushed_trimDelayAdjustements() {
         long beginningTime = System.currentTimeMillis();
         doReturn(0).when(random).nextInt(6); // simulating 1s delay
-        observer.setTrimConfig(new TrimConfig(6, 1000));
+        observer.setTrimConfig(new TrimConfig(6, 1000, 0));
         AtomicInteger stepCounter = mockBlockchainHeights(List.of(100000));
 
         fireBlockPushed(4998);
@@ -198,8 +197,8 @@ class TrimObserverTest {
         stepCounter.set(1);
 
         waitTrim(List.of(5000, 6000, 7000, 8000, 9000, 10000, 15000, 16000));
-        // verify at least 4 one second delays between trims, no delays for > 4 trimHeights accumulated
-        assertTrue(System.currentTimeMillis() - beginningTime > 4000);
+        // verify at least 3 one second delays between trims, no delays for > 4 trimHeights accumulated
+        assertTrue(System.currentTimeMillis() - beginningTime > 3000);
     }
 
     private AtomicInteger mockBlockchainHeights(List<Integer> heights) {

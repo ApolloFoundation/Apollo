@@ -9,8 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import lombok.extern.slf4j.Slf4j;
@@ -36,12 +34,10 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
     private final Event<DeleteOnTrimData> deleteOnTrimDataEvent;
 
     protected BasicDbTable(String table, KeyFactory<T> keyFactory, boolean multiversion,
-                           DerivedTablesRegistry derivedDbTablesRegistry,
                            DatabaseManager databaseManager,
-                           FullTextConfig fullTextConfig,
                            Event<DeleteOnTrimData> deleteOnTrimDataEvent,
                            String fullTextSearchColumns) {
-        super(table, derivedDbTablesRegistry, databaseManager, fullTextConfig, fullTextSearchColumns);
+        super(table, databaseManager, fullTextSearchColumns);
         this.keyFactory = keyFactory;
         this.multiversion = multiversion;
         this.deleteOnTrimDataEvent = deleteOnTrimDataEvent;

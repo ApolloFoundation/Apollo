@@ -80,18 +80,18 @@ public class TrimObserver {
 
     private void scheduleTrimTask() {
         long delay = calculateDelay();
-        log.debug("Next trim operation delay '{}' ms", delay);
         executorService.schedule(taskToCall, delay, TimeUnit.MILLISECONDS);
     }
 
     private long calculateDelay() {
-        long delay = 0;
-        synchronized (trimHeights) {
+        long delay = trimConfig.getDefaultTrimDelay();
+        synchronized (lock) {
             int trimDelay = trimConfig.getTrimDelay();
-            if (trimHeights.size() <= QUEUE_NO_SPEEDUP_SIZE_THRESHOLD && trimDelay >= 0) {
+            if (trimDerivedTablesEnabled && !trimHeights.isEmpty() && trimHeights.size() <= QUEUE_NO_SPEEDUP_SIZE_THRESHOLD && trimDelay >= 0) {
                 int correctedTrimDelay  = Math.max(trimDelay, MIN_ALLOWED_TRIM_DELAY);
                 int minTrimDelay = trimDelay / 4;
                 delay = 1000L * (random.nextInt(correctedTrimDelay - minTrimDelay + 1) + minTrimDelay);
+                log.debug("Next trim operation delay '{}' ms", delay);
             }
         }
         return delay;

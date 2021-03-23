@@ -353,7 +353,8 @@ class BlockDaoTest extends DbContainerBaseTest {
     void testBlocksAfter() {
         List<BlockEntity> blocksAfter = blockDao.getBlocksAfter(td.BLOCK_8.getHeight(), 3);
 
-        assertEquals(List.of(td.BLOCK_9, td.BLOCK_10, td.BLOCK_11).stream().map(new BlockModelToEntityConverter()).collect(Collectors.toList()), blocksAfter);
+        List<BlockEntity> entities = List.of(td.BLOCK_9, td.BLOCK_10, td.BLOCK_11).stream().map(new BlockModelToEntityConverter()).collect(Collectors.toList());
+        assertEquals(entities, blocksAfter);
     }
 
     @Test
