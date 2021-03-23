@@ -120,6 +120,7 @@ public class ShardServiceIntegrationTest extends DbContainerBaseTest {
         }
         dbProperties.setDatabaseHost(mariaDBContainer.getHost());
         dbProperties.setDbName(((MariaDBContainer<?>) mariaDBContainer).getDatabaseName());
+        dbProperties.setSystemDbUrl(dbProperties.formatJdbcUrlString(true));
         DatabaseManagerImpl databaseManager = new DatabaseManagerImpl(dbProperties, new PropertiesHolder(), new JdbiHandleFactory());
 //        Chain mockChain = mock(Chain.class);
 //        doReturn(mockChain).when(blockchainConfig).getChain();

@@ -173,9 +173,9 @@ import static org.mockito.Mockito.mock;
 class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+    TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer, Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
+    DbExtension extension = new DbExtension(mariaDBContainer, Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
     @Inject
     Event<DeleteOnTrimData> deleteOnTrimDataEvent;
 
@@ -221,7 +221,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         BlockDaoImpl.class,
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         TransactionDaoImpl.class,
-        CsvEscaperImpl.class, UnconfirmedTransactionTable.class, AccountService.class, TaskDispatchManager.class)
+        CsvEscaperImpl.class, UnconfirmedTransactionTable.class, AccountService.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
@@ -252,6 +252,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(memPool, MemPool.class))
         .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
         .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class))
+        .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
         .build();
 
     @Inject
@@ -289,7 +290,6 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
     @Tag("skip-fts-init")
     @DisplayName("Gather all derived tables, export data up to height = 8000," +
         " delete rows up to height = 8000, import data back into db table")
-    @Test
     void testExportAndImportData() {
         DirProvider dirProvider = mock(DirProvider.class);
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
@@ -414,6 +414,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
             while (rs.next()) {
                 for (int i = 0; i < columnsCount; i++) {
                     Object object = rs.getObject(i + 1);
+                    log.info(",{}", object);
                     log.trace("{}[{} : {}] = {}", meta.getColumnName(i + 1), i + 1, meta.getColumnTypeName(i + 1), object);
 
                     if (object != null && (meta.getColumnType(i + 1) == Types.BINARY || meta.getColumnType(i + 1) == Types.VARBINARY)) {
@@ -443,7 +444,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
                         preparedInsertStatement.setObject(i + 1, object);
                     }
                 }
-                log.trace("sql = {}", sqlInsert);
+                log.info("sql = {}", sqlInsert);
                 importedCount += preparedInsertStatement.executeUpdate();
                 if (batchLimit % importedCount == 0) {
                     con.commit();

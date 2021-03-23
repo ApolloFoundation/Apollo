@@ -214,7 +214,7 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
         BlockDaoImpl.class,
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         TransactionDaoImpl.class,
-        UnconfirmedTransactionTable.class, AccountService.class, TaskDispatchManager.class)
+        UnconfirmedTransactionTable.class, AccountService.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(mock(PublicKeyDao.class), PublicKeyDao.class))
@@ -242,6 +242,7 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(blockSerializer, BlockSerializer.class))
         .addBeans(MockBean.of(unconfirmedTransactionProcessingService, UnconfirmedTransactionProcessingService.class))
         .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
+        .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
         .addBeans(MockBean.of(memPool, MemPool.class))
         .build();
 
