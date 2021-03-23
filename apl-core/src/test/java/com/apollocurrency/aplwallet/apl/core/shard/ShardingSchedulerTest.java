@@ -47,7 +47,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
-public class ShardSchedulerTest {
+public class ShardingSchedulerTest {
 
     @Mock
     BlockchainConfig blockchainConfig;
@@ -281,6 +281,7 @@ public class ShardSchedulerTest {
         fireBlockPushed(4000); // skip, sharding disabled
         fireBlockPushed(4999); // skip, height is not multiple of frequency
         fireBlockPushed(5000); // do sharding
+        fireBlockPushed(5000); // skip sharding (height duplicate)
 
         verify(trimEvent, times(1)).fire(new TrimEventCommand(false, false));
         assertEquals(shardScheduler.scheduledShardings(), List.of(new ShardingScheduler.ShardScheduledRecord(0, 3000, 5000, 30)));
