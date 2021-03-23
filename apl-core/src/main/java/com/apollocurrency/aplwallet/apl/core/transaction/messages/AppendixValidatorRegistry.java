@@ -29,7 +29,7 @@ public class AppendixValidatorRegistry {
         return (AppendixValidator<T>) validators.get(t.getClass());
     }
 
-    void init(Instance<AppendixValidator<?>> appendixValidators) {
+    void init(Instance<AppendixValidator<? extends Appendix>> appendixValidators) {
        appendixValidators.iterator().forEachRemaining(e-> validators.put(e.forClass(), e));
     }
 }

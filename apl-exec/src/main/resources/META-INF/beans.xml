@@ -26,5 +26,6 @@
     <weld:exclude name="org.jdbi.**" />
     <weld:exclude name="com.fasterxml.**" />
     <weld:exclude name="javax.mail.**" />
+    <weld:exclude name="io.swagger.v3.jaxrs2.**" />
   </weld:scan>
 </beans>

@@ -349,7 +349,7 @@ public class Apollo {
         // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/
         // run with ./bin/apl-run-jmx.sh
         //
-        // aplContainerBuilder.devMode();
+         aplContainerBuilder.devMode();
         //
         //!!!!!!!!!!!!!!!
 

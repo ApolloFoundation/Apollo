@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer;
 
+import javax.enterprise.inject.Vetoed;
+
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -13,6 +15,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Vetoed
 public class TimeTraceDecoratedThreadPoolExecutor extends DecoratedThreadPoolExecutor {
 
     public TimeTraceDecoratedThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue) {
@@ -37,6 +40,7 @@ public class TimeTraceDecoratedThreadPoolExecutor extends DecoratedThreadPoolExe
     }
 
 
+    @Vetoed
     @Slf4j
     static class TimeThreadJob implements Event {
         private static final AtomicInteger taskIdCounter = new AtomicInteger(0);

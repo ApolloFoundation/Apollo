@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.signature;
 
+import javax.enterprise.inject.Vetoed;
+
 import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
@@ -21,6 +23,7 @@ import java.util.Set;
 /**
  * @author andrii.zinchenko@firstbridge.io
  */
+@Vetoed
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class SignatureToolFactory {
@@ -111,6 +114,7 @@ public class SignatureToolFactory {
         return signatureCredential;
     }
 
+    @Vetoed
     static class MultiSigVerifierImpl implements SignatureVerifier {
 
         @Override
@@ -149,6 +153,7 @@ public class SignatureToolFactory {
         }
     }
 
+    @Vetoed
     static class SignatureVerifierV1 implements SignatureVerifier {
         @Override
         public boolean verify(byte[] document, Signature signature, Credential credential) {
@@ -173,6 +178,7 @@ public class SignatureToolFactory {
         }
     }
 
+    @Vetoed
     static class MultiSigSigner implements DocumentSigner {
         @Override
         public Signature sign(byte[] document, Credential credential) {
@@ -208,6 +214,7 @@ public class SignatureToolFactory {
         }
     }
 
+    @Vetoed
     static class DocumentSignerV1 implements DocumentSigner {
         @Override
         public Signature sign(byte[] document, Credential credential) {

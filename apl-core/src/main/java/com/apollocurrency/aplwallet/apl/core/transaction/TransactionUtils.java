@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import javax.enterprise.inject.Vetoed;
+
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
@@ -19,6 +21,7 @@ import java.util.Objects;
 /**
  * @author andrii.zinchenko@firstbridge.io
  */
+@Vetoed
 @NoArgsConstructor(access = AccessLevel.NONE)
 public class TransactionUtils {
     public static boolean convertAppendixToString(StringBuilder builder, Appendix appendix) {
