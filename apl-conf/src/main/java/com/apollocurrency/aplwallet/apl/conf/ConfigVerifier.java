@@ -24,9 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ConfigVerifier {
     private final static String FIRST_RELEASE = "1.0.0";
-    private final static String DEX_RELEASE = "1.35.0";
-    private final static String SHARDING_RELEASE = "1.36.0";
-    private final static String MARIADB_RELEASE = "1.36.0";
+    private final static String DEX_RELEASE = "1.36.0";
+    private final static String SHARDING_RELEASE = "1.35.0";
+    private final static String MARIADB_RELEASE = "1.48.0";
 
     private ConfigVerifier() {
     }
