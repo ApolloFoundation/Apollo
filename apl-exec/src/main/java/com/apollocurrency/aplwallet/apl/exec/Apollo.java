@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import javax.enterprise.inject.spi.CDI;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -84,7 +85,7 @@ public class Apollo {
     private static AplContainer container;
     private static AplCoreRuntime aplCoreRuntime;
     
-    private static final  ConfigVerifier configVerifier = ConfigVerifier.create();
+    private static  ConfigVerifier configVerifier;
     
     private static void setLogLevel(int logLevel) {
         // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
@@ -162,10 +163,12 @@ public class Apollo {
         String dexKeystoreDir = StringUtils.byPrecednce(args.dexKeystoreDir, vars.dexKeystoreDir, props.getProperty("apl.customDexStorageDir"));
         props.setProperty("apl.customDexStorageDir", dexKeystoreDir);
         // {"--no-shard-import"}
-        String noShardImport = StringUtils.byPrecednce(args.noShardImport.toString(), props.getProperty("apl.noshardimport"));
+        String nsi = args.noShardImport==null ? "": args.noShardImport.toString();
+        String noShardImport = StringUtils.byPrecednce(nsi, props.getProperty("apl.noshardimport"));
         props.setProperty("apl.noshardimport",noShardImport);
         // {"--no-shard-create"}
-        String  noShardCreate = StringUtils.byPrecednce(args.noShardCreate.toString(), props.getProperty("apl.noshardcreate"));
+        String nsc = args.noShardCreate == null ? "": args.noShardCreate.toString();
+        String  noShardCreate = StringUtils.byPrecednce(nsc, props.getProperty("apl.noshardcreate"));
         props.setProperty("apl.noshardcreate",noShardCreate);
         // {"--2fa-dir"}
         String twoFactorAuthDir = StringUtils.byPrecednce(args.twoFactorAuthDir,vars.twoFactorAuthDir, props.getProperty("apl.dir2FA"));
@@ -296,8 +299,14 @@ public class Apollo {
 // is collected from configs, command line and environment variables
         Properties applicationProperties = propertiesLoader.load();
         
-//verify and complete configuration        
-        applicationProperties = configVerifier.parse(applicationProperties, Constants.VERSION);
+        try {
+            //verify and complete configuration
+            configVerifier = ConfigVerifier.create(configDirProvider.getConfigName()+"/apl-blockchain.properties");
+            applicationProperties = configVerifier.parse(applicationProperties, Constants.VERSION);
+        } catch (IOException ex) {
+            System.err.println("WARNING! Can not verify config because can not read/parse default config fropm resources!");
+        }
+        
         
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
             configDirProvider,

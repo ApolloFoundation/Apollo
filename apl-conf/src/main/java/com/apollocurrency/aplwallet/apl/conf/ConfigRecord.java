@@ -16,10 +16,12 @@ public class ConfigRecord {
     public String name;
     @Default
     public String defaultValue="";
-    public String description;
+    @Default
+    public String description="";
     @Default
     public Version sinceRelease = new Version("1.0.0");
-    public Version deprecatedSince;
+    @Default
+    public Version deprecatedSince = new Version("999.0.0");
     @Default
     public String cmdLineOpt="";
     @Default

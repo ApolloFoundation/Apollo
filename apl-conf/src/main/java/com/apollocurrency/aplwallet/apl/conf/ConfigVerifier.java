@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.conf;
 
 import com.apollocurrency.aplwallet.apl.util.Version;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -42,12 +43,19 @@ public class ConfigVerifier {
     }    
     
     public ConfigRecord get(String propName){
-        return knownProps.get(propName);
+        ConfigRecord res =  knownProps.get(propName);
+        return res;
     }
-    
-    private void put(String name, ConfigRecord pr){
-        pr.name = name;
-        knownProps.put(name, pr);
+
+    private ConfigRecord getOrAdd(String propName){
+        ConfigRecord res =  knownProps.get(propName);
+        if(res==null){
+            res = ConfigRecord.builder()
+                    .name(propName)
+                    .build();
+            knownProps.put(propName,res);
+        }
+        return res;
     }
     
     public List<ConfigRecord> listDeprecated(Version currVersion){
@@ -97,7 +105,7 @@ public class ConfigVerifier {
             ConfigRecord cr = knownProps.get(name);
             if(cr==null){
                 log.warn("Unknown config property: "+name+" with value: "+value + ". It propbably will be ignored");
-            }else if (cr.deprecatedSince.lessThan(currentVer)){
+            }else if (currentVer.greaterThan(cr.deprecatedSince)){
                 log.warn("Config property: "+name+" is deprecated since version "+cr.deprecatedSince);
             }
             
@@ -112,71 +120,36 @@ public class ConfigVerifier {
         }
         return config;
     }
+
 /**
- * All known properties must be inited in this method; 
+ * All known properties must be inited in this method; All known properties are defined
+ * in resource file conf/apl-blockchain.properties or in files in corresponding testnet config
+ * directories.TODO: keywords for deprecation, command line options and env variables
+ * @param respurcePath path to properties file in resources
  * @return created properties fully inited with default values
  */
-    public static ConfigVerifier create(){
+    public static ConfigVerifier create( String respurcePath ) throws IOException {
         ConfigVerifier kp = new ConfigVerifier();
+        DefaultConfig dc=null;
+        if(respurcePath==null || respurcePath.isEmpty()){
+            respurcePath="conf/apl-blockchain.properties";
+        }
+        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         
-        kp.put("apl.shareMyAddress", 
-            ConfigRecord.builder()
-                  .defaultValue("true")
-                  .description("Announce my IP address/hostname to peers and allow them to share it with other peers. If disabled, peer networking servlet will not be started at all.")
-                  .sinceRelease(new Version(FIRST_RELEASE))  
-            .build()
-        );
+        try (InputStream is = classloader.getResourceAsStream(respurcePath)) {
+             dc = DefaultConfig.fromStream(is);
+        }
         
-    //TODO: hardcode all known properties with ddescription from properies in resources
+        kp.knownProps = dc.getKnownProperties();
+
+    //TODO: hardcode command line and env if so
     
-    //
-        kp.put("apl.customDbDir", 
-            ConfigRecord.builder()
-                  .defaultValue("")
-                  .description("Directory where database is located. Default location is $HOME/.apl-blockchain/apl-blockchain-db. Could be overrided by  env vars and cmd args")
-                  .sinceRelease(new Version(MARIADB_RELEASE))  
-            .build()
-        ); 
+        kp.getOrAdd("apl.customDbDir").sinceRelease = new Version(MARIADB_RELEASE);  
         
-        kp.put("apl.customVaultKeystoreDir", 
-            ConfigRecord.builder()
-                  .defaultValue("")
-                  .description("Absolute path to custom keystore dir. Could be overrided by env vars and cmd args")
-                  .sinceRelease(new Version(DEX_RELEASE))  
-            .build()
-        );
+        kp.getOrAdd("apl.customVaultKeystoreDir").sinceRelease = (new Version(DEX_RELEASE));  
         
-        kp.put("apl.customPidFile", 
-            ConfigRecord.builder()
-                  .defaultValue("")
-                  .description("Absolute path to  PID file. Could be overrided by env vars and cmd args")
-                  .sinceRelease(new Version(MARIADB_RELEASE))  
-            .build()
-        );      
-        
-        kp.put("apl.dir2FA", 
-            ConfigRecord.builder()
-                  .defaultValue("")
-                  .description("Absolute path to 2FAdata dir. Could be overrided by env vars and cmd args")
-                  .sinceRelease(new Version(DEX_RELEASE))  
-            .build()
-        );   
-        
-        kp.put("apl.customDataExportDir", 
-            ConfigRecord.builder()
-                  .defaultValue("")
-                  .description("Absolute path to custom data export dir (shard files and other data). Could be overrided by env vars and cmd args")
-                  .sinceRelease(new Version(SHARDING_RELEASE))  
-            .build()
-        );   
-        
-        kp.put("apl.customDexStorageDir", 
-            ConfigRecord.builder()
-                  .defaultValue("")
-                  .description("Absolute path to custom DEX storage. Could be overrided by env vars and cmd args")
-                  .sinceRelease(new Version(DEX_RELEASE))  
-            .build()
-        );        
+        kp.getOrAdd("apl.customPidFile").sinceRelease = new Version(MARIADB_RELEASE);   
+
         return kp;
     }
 }
