@@ -1,26 +1,20 @@
-/*
- * Copyright (c) 2020-2021. Apollo Foundation.
- */
-
 package com.apollocurrency.aplwallet.apl.core.converter.db.smc;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
-import com.apollocurrency.aplwallet.apl.core.model.smc.AplSmcContract;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
+import com.apollocurrency.smc.contract.SmartContract;
 
+import javax.inject.Singleton;
 import java.math.BigInteger;
 
-/**
- * @author andrew.zinchenko@gmail.com
- */
-public class SmcContractStateToEntityConverter implements Converter<AplSmcContract, SmcContractStateEntity> {
+@Singleton
+public class ContractModelToStateEntityConverter implements Converter<SmartContract, SmcContractStateEntity> {
     @Override
-    public SmcContractStateEntity apply(AplSmcContract model) {
-
+    public SmcContractStateEntity apply(SmartContract model) {
         return SmcContractStateEntity.builder()
             .address(new BigInteger(model.getAddress().get()).longValueExact())
             .serializedObject(model.getSerializedObject())
-            .status(model.getStatus())
+            .status(model.getState().name())
             .build();
     }
 }

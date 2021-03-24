@@ -27,6 +27,8 @@ public abstract class AbstractContractCmdProcessor implements ContractCmdProcess
         this.contractService = Objects.requireNonNull(contractService);
     }
 
+    public abstract ExecutionLog doProcess(SMCMachine smcMachine, Transaction smcTransaction);
+
     @Override
     public ExecutionLog process(SMCMachine smcMachine, Transaction smcTransaction) {
         TransactionTypes.TransactionTypeSpec spec = smcTransaction.getAttachment().getTransactionTypeSpec();
@@ -34,7 +36,7 @@ public abstract class AbstractContractCmdProcessor implements ContractCmdProcess
             && spec != TransactionTypes.TransactionTypeSpec.SMC_CALL_METHOD) {
             throw new IllegalStateException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec());
         }
-        return ExecutionLog.EMPTY_LOG;
+        return doProcess(smcMachine, smcTransaction);
     }
 
     public void validateState(ContractState expected, SmartContract smartContract) {

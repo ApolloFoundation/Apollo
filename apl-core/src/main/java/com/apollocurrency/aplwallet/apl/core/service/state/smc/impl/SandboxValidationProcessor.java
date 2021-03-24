@@ -9,7 +9,8 @@ import com.apollocurrency.smc.contract.vm.SMCMachine;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Validate transaction, perform smart contract and manipulate balances
+ * Validate the smart contract - create and initialize the smart contract and manipulate balances in sandbox.
+ * This validation process doesn't change the blockchain state.
  *
  * @author andrew.zinchenko@gmail.com
  */
@@ -21,7 +22,7 @@ public class SandboxValidationProcessor extends AbstractContractCmdProcessor {
     }
 
     @Override
-    public ExecutionLog process(SMCMachine smcMachine, Transaction smcTransaction) {
+    public ExecutionLog doProcess(SMCMachine smcMachine, Transaction smcTransaction) {
         boolean isValid;
         SmartContract smartContract = contractService.createNewContract(smcTransaction);
         validateState(ContractState.CREATED, smartContract);

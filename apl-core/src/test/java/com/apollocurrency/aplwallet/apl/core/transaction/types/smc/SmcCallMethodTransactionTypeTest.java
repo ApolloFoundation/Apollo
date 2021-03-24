@@ -21,7 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-import java.math.BigInteger;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -37,9 +37,7 @@ class SmcCallMethodTransactionTypeTest {
     private static final String CHAIN_ID_TN1 = "a2e9b946-290b-48b6-9985-dc2e5a5860a1";
     private static final String SMC_CALL_METHOD_ATTACHMENT_JSON = "{" +
         " \"version.SmcCallMethod\":1," +
-        " \"amount\":\"1\"," +
         " \"contractMethod\":\"purchase\"," +
-        " \"fuelPrice\":\"2\",\"fuelLimit\":\"10\"," +
         " \"params\":[\"123\",\"0x0A0B0C0D0E0F\"]" +
         "}";
 
@@ -75,8 +73,7 @@ class SmcCallMethodTransactionTypeTest {
         //THEN
         assertNotNull(attachment);
         assertEquals("purchase", attachment.getMethodName());
-        assertEquals(BigInteger.TEN, attachment.getFuelLimit());
-        assertEquals(BigInteger.TWO, attachment.getFuelPrice());
+        assertEquals(List.of("123", "0x0A0B0C0D0E0F"), attachment.getMethodParams());
     }
 
     @SneakyThrows
@@ -100,8 +97,7 @@ class SmcCallMethodTransactionTypeTest {
         //THEN
         assertNotNull(attachment);
         assertEquals("purchase", attachment.getMethodName());
-        assertEquals(BigInteger.TEN, attachment.getFuelLimit());
-        assertEquals(BigInteger.TWO, attachment.getFuelPrice());
+        assertEquals(List.of("123", "0x0A0B0C0D0E0F"), attachment.getMethodParams());
     }
 
 }

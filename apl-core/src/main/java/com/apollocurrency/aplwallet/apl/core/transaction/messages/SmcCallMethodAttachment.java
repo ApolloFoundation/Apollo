@@ -14,7 +14,6 @@ import lombok.Getter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -27,31 +26,23 @@ public class SmcCallMethodAttachment extends SmcAbstractAttachment {
 
     private final String methodName;// method or constructor name
     private final List<String> methodParams;
-    private final BigInteger fuelLimit;
-    private final BigInteger fuelPrice;
 
     @Builder
-    public SmcCallMethodAttachment(String methodName, List<String> methodParams, BigInteger amount, BigInteger fuelLimit, BigInteger fuelPrice) {
+    public SmcCallMethodAttachment(String methodName, List<String> methodParams) {
         this.methodName = Objects.requireNonNull(methodName);
         this.methodParams = Objects.requireNonNull(methodParams);
-        this.fuelLimit = Objects.requireNonNull(fuelLimit);
-        this.fuelPrice = Objects.requireNonNull(fuelPrice);
     }
 
     public SmcCallMethodAttachment(RlpReader reader) {
         super(reader);
         this.methodName = reader.readString();
         this.methodParams = reader.readList(RlpConverter::toString);
-        this.fuelLimit = reader.readBigInteger();
-        this.fuelPrice = reader.readBigInteger();
     }
 
     public SmcCallMethodAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.methodName = String.valueOf(attachmentData.get(METHOD_NAME_FIELD));
         this.methodParams = new ArrayList<>((JSONArray) attachmentData.get(METHOD_PARAMS_FIELD));
-        this.fuelLimit = new BigInteger((String) attachmentData.get(FUEL_LIMIT_FIELD));
-        this.fuelPrice = new BigInteger((String) attachmentData.get(FUEL_PRICE_FIELD));
     }
 
     @Override
@@ -65,17 +56,13 @@ public class SmcCallMethodAttachment extends SmcAbstractAttachment {
         JSONArray params = new JSONArray();
         params.addAll(this.methodParams);
         json.put(METHOD_PARAMS_FIELD, params);
-        json.put(FUEL_LIMIT_FIELD, fuelLimit.toString());
-        json.put(FUEL_PRICE_FIELD, fuelPrice.toString());
     }
 
     @Override
     public void putMyBytes(RlpList.RlpListBuilder builder) {
         builder
             .add(methodName)
-            .add(RlpList.ofStrings(methodParams))
-            .add(fuelLimit)
-            .add(fuelPrice);
+            .add(RlpList.ofStrings(methodParams));
     }
 
 }

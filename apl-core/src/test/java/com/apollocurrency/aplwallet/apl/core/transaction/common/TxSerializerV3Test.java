@@ -17,9 +17,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcPublishTra
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
+import com.apollocurrency.aplwallet.apl.util.io.JsonBuffer;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
 import lombok.SneakyThrows;
+import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,7 +72,7 @@ class TxSerializerV3Test {
     void serializeV3toByteArray() {
         //GIVEN
         //Rlp encoded Tx V3
-        String expectedTxBytes = "0b30a466666666663662642d303061332d333436622d616164362d3631666566633062643163368205a08405fd846e82014b887acb9b4da22ff07001a039dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d3796015288759dabed86da1fe80a6482138880f857f28001844465616c8d636c617373204465616c207b7dcd883078313233343536833132338a6a61766173637269707482138864e30401a07653845d30f81cef94756ac619684bbe2f306239bd40133c353004dabaa8f909c0f84df84b8839dc2e813bb45ff0b840480c3708fa937e37d7406f4524ed9a530ed3a076384ff09ac9d8f529d58e7901d6c1e65cf117d2c7452c02d50e42c3a43bb8e227521b591d632b6b91fa703ad3";
+        String expectedTxBytes = "0b30a466666666663662642d303061332d333436622d616164362d3631666566633062643163368205a0840600113f82014b887acb9b4da22ff07001a039dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d3796015288031c903d8dbb15a40a6482138880f852ed8001844465616c8d636c617373204465616c207b7dcc8331323387307839383736358a6a617661736372697074e30401a0114b9482b83043c3e850da9e9e8a497d3e3ba673c8b68ea6c42c6f157af6a764c0f84df84b8839dc2e813bb45ff0b840ad329b7d044a1afc5f7329a472e37008275b383283097423c57db44cae246c01934859980f781899dbfcfd4577e415217cfbd6f993a76fb7bd94b8ae7009cd62";
 
         //WHEN
         Transaction tx = transactionBuilderFactory.newTransaction(Convert.parseHexString(expectedTxBytes));
@@ -78,7 +80,7 @@ class TxSerializerV3Test {
         //THEN
         assertEquals(3, tx.getVersion());
         assertEquals(11, tx.getType().getSpec().getType());
-        assertEquals(8475119110439182312L, tx.getRecipientId());
+        assertEquals(224212675506935204L, tx.getRecipientId());
 
         assertEquals(1440, tx.getDeadline());
         assertEquals(5000L, tx.getFuelLimit().longValue());
@@ -88,7 +90,7 @@ class TxSerializerV3Test {
         SmcPublishContractAttachment contractAttachment = ((SmcPublishContractAttachment) tx.getAttachment());
         assertEquals("class Deal {}", contractAttachment.getContractSource());
         assertEquals("Deal", contractAttachment.getContractName());
-        assertEquals(List.of("0x123456", "123"), contractAttachment.getConstructorParams());
+        assertEquals(List.of("123", "0x98765"), contractAttachment.getConstructorParams());
 
         //WHEN
         TxSerializer serializer = context.createSerializer(tx.getVersion());
@@ -98,6 +100,15 @@ class TxSerializerV3Test {
         //THEN
         assertNotNull(result.array());
         assertEquals(expectedTxBytes, Convert.toHexString(result.array()));
+
+        //WHEN
+        PayloadResult jsonResult = PayloadResult.createJsonResult();
+        serializer.serialize(tx, jsonResult);
+
+        //THEN
+        assertNotNull(jsonResult.getBuffer());
+        JSONObject object = ((JsonBuffer) jsonResult.getBuffer()).getJsonObject();
+        assertEquals((short) 1440, object.get("deadline"));
     }
 
 }

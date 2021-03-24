@@ -1,4 +1,8 @@
-package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
+/*
+ * Copyright (c) 2020-2021. Apollo Foundation.
+ */
+
+package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractCmdProcessor;

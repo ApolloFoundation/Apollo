@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -29,8 +28,6 @@ class SmcPublishContractAttachmentTest {
         .contractSource("class Deal {}")
         .constructorParams(List.of("123", "0x0A0B0C0D0E0F"))
         .languageName("javascript")
-        .fuelLimit(BigInteger.TEN)
-        .fuelPrice(BigInteger.TWO)
         .build();
 
     @Test
@@ -48,9 +45,7 @@ class SmcPublishContractAttachmentTest {
             expected.getConstructorParams().toArray(new String[0]),
             attachment.getConstructorParams().toArray(new String[0])
         );
-        assertEquals(expected.getFuelLimit(), attachment.getFuelLimit());
-        assertEquals(expected.getFuelPrice(), attachment.getFuelPrice());
-
+        assertEquals(expected.getLanguageName(), attachment.getLanguageName());
     }
 
     @Test
@@ -74,8 +69,8 @@ class SmcPublishContractAttachmentTest {
             expected.getConstructorParams().toArray(new String[0]),
             attachment.getConstructorParams().toArray(new String[0])
         );
-        assertEquals(expected.getFuelLimit(), attachment.getFuelLimit());
-        assertEquals(expected.getFuelPrice(), attachment.getFuelPrice());
+        assertEquals(expected.getLanguageName(), attachment.getLanguageName());
+
     }
 
     @Test

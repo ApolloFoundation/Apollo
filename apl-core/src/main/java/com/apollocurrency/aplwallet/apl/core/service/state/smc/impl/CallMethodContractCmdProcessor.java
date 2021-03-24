@@ -3,7 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
 import com.apollocurrency.smc.contract.ContractState;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
@@ -24,25 +24,18 @@ public class CallMethodContractCmdProcessor extends AbstractContractCmdProcessor
     }
 
     @Override
-    public ExecutionLog process(SMCMachine smcMachine, Transaction smcTransaction) {
+    public ExecutionLog doProcess(SMCMachine smcMachine, Transaction smcTransaction) {
         log.debug("process: txType={} tx={}", smcTransaction.getType().getSpec(), smcTransaction);
         ExecutionLog executionLog = new ExecutionLog();
-        executionLog.join(
-            super.process(smcMachine, smcTransaction)
-        );
-        SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) smcTransaction.getAttachment();
+        SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) smcTransaction.getAttachment();
 
         SmartContract smartContract = contractService.loadContract(new AplAddress(smcTransaction.getRecipientId()));
         validateState(ContractState.ACTIVE, smartContract);
 
-        validateState(ContractState.ACTIVE, smartContract);
-
         SmartMethod smartMethod = SmartMethod.builder()
-/*
-            .name(smcTransaction.getMethodName())
-            .args(smcTransaction.getArgs())
-            .value(smcTransaction.getValue())
-*/
+            .name(attachment.getMethodName())
+            .args(String.join(",", attachment.getMethodParams()))
+            .value(smcTransaction.getAmount())
             .build();
 
         //call the method and charge the fuel
@@ -52,6 +45,7 @@ public class CallMethodContractCmdProcessor extends AbstractContractCmdProcessor
         smcMachine.resetExecutionLog();
 
         contractService.updateContractState(smartContract);
+
         return executionLog;
     }
 

@@ -75,8 +75,6 @@ public class SmcApiServiceImpl implements SmcApiService {
             .contractSource(body.getSource())
             .constructorParams(body.getParams())
             .languageName("javascript")
-            .fuelLimit(fuelLimit)
-            .fuelPrice(fuelPrice)
             .build();
 
         byte[] publicKey = AccountService.generatePublicKey(account, attachment.getContractSource());

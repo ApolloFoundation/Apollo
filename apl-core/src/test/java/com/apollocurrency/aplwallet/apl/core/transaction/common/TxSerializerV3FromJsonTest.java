@@ -18,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -55,42 +54,32 @@ class TxSerializerV3FromJsonTest {
     }
 
     //TODO not implemented yest, adjust signature field - change to RLP-encoded one
-    @Disabled
     @SneakyThrows
     @ParameterizedTest(name = "[{index}] tx")
     @ValueSource(strings = {
         //#1
-        "{ \"id\": \"9175410632340250178\"," + //actual id=16091200120166840182
-            "    \"version\": 3,\n" +
-            "    \"type\": 11,\n" +
-            "    \"subtype\": 1,\n" +
-            "    \"senderPublicKey\": \"39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152\",\n" +
-            "    \"signature\": \"7ecae5825a24dedc42dd11e2239ced7ad797c6d6c9aedc3d3275204630b7e20832f9543d1063787ea1f32ab0993ea733aa46a52664755d9e54f211cdc3c5c5fd\",\n" +
-            "    \"transactionIndex\": 0,\n" +
-            "    \"requestProcessingTime\": 6,\n" +
-            "    \"confirmations\": 3597408,\n" +
-            "    \"fullHash\": \"429efb505b9b557f5d2a1d6d506cf75de6c3692ca1a21217ae6160c7658c7312\",\n" +
-            "    \"amountATM\": \"0\",\n" +
-            "    \"phased\": false,\n" +
-            "    \"ecBlockId\": \"4407210215527895706\",\n" +
-            "    \"signatureHash\": \"09683525960033f729de68e079dcc52428d9f63729bb663f158b1abb5ad956e2\",\n" +
-            "    \"attachment\": {\n" +
-            "        \"version.SmcCallMethod\":1," +
-            "        \"amount\":\"1\"," +
-            "        \"contractMethod\":\"purchase\"," +
-            "        \"fuelPrice\":\"2\",\"fuelLimit\":\"10\"," +
-            "        \"params\":[\"123\",\"0x0A0B0C0D0E0F\"]" +
-            "    }," +
-            "    \"senderRS\": \"APL-X5JH-TJKJ-DVGC-5T2V8\",\n" +
-            "    \"sender\": \"3705364957971254799\",\n" +
-            "    \"feeATM\": \"1000000000\",\n" +
-            "    \"ecBlockHeight\": 552605,\n" +
-            "    \"block\": \"12480056480475132870\",\n" +
-            "    \"blockTimestamp\": 41974339,\n" +
-            "    \"deadline\": 1440,\n" +
-            "    \"transaction\": \"9175410632340250178\",\n" +
-            "    \"timestamp\": 41974329,\n" +
-            "    \"height\": 553326\n" +
+        "{" +
+            "  \"senderPublicKey\":\"39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152\"," +
+            "  \"signature\":\"c0f84df84b8839dc2e813bb45ff0b840ad329b7d044a1afc5f7329a472e37008275b383283097423c57db44cae246c01934859980f781899dbfcfd4577e415217cfbd6f993a76fb7bd94b8ae7009cd62\"," +
+            "  \"type\":11," +
+            "  \"version\":3," +
+            "  \"amountATM\":10," +
+            "  \"ecBlockId\":\"8848336650635309168\"," +
+            "  \"attachment\":{" +
+            "     \"version.PublicKeyAnnouncement\":1," +
+            "     \"recipientPublicKey\":\"114b9482b83043c3e850da9e9e8a497d3e3ba673c8b68ea6c42c6f157af6a764\"," +
+            "     \"name\":\"Deal\"," +
+            "     \"version.SmcPublish\":1," +
+            "     \"language\":\"javascript\"," +
+            "     \"source\":\"class Deal {}\"," +
+            "     \"params\":[\"123\",\"0x98765\"]}," +
+            "  \"subtype\":0," +
+            "  \"recipient\":\"224212675506935204\"," +
+            "  \"feeATM\":500000," +
+            "  \"ecBlockHeight\":331," +
+            "  \"id\":\"13070961154492438733\"," +
+            "  \"deadline\":1440," +
+            "  \"timestamp\":100667711" +
             "}"
     })
     void jsonDeSerializer_Tx(String jsonTx) {

@@ -11,6 +11,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
+import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -52,10 +54,15 @@ public class SmcContractStateTable extends VersionedDeletableEntityDbTable<SmcCo
 
     @Override
     public void save(Connection con, SmcContractStateEntity entity) throws SQLException {
-        try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + TABLE_NAME +
-                "(address, object, status, height, latest) " +
-                "VALUES (?, ?, ?, ?, ?, ?,  ?, TRUE)"
-            , Statement.RETURN_GENERATED_KEYS)) {
+        try (
+            @DatabaseSpecificDml(DmlMarker.MERGE)
+            @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + TABLE_NAME +
+                    "(address, object, status, height, latest) " +
+                    "VALUES (?, ?, ?, ?, ?, ?,  ?, TRUE) " +
+                    "ON DUPLICATE KEY UPDATE " +
+                    "address = VALUES(address), object = VALUES(object), status = VALUES(status), height = VALUES(height), latest = TRUE"
+                , Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             pstmt.setLong(++i, entity.getAddress());
             pstmt.setString(++i, entity.getSerializedObject());

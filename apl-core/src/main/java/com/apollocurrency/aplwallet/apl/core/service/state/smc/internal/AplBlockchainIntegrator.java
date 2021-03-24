@@ -1,10 +1,15 @@
-package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
+/*
+ * Copyright (c) 2020-2021. Apollo Foundation.
+ */
+
+package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.blockchain.tx.SMCTransactionReceipt;
+import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.internal.BlockchainInfo;
 import com.apollocurrency.smc.data.type.Address;
 import lombok.extern.slf4j.Slf4j;
@@ -29,12 +34,12 @@ public class AplBlockchainIntegrator implements BlockchainIntegrator {
     }
 
     @Override
-    public SMCTransactionReceipt sendMessage(String from, String to, String data) {
+    public SMCTransactionReceipt sendMessage(Address from, Address to, String data) {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public SMCTransactionReceipt sendMoney(final String from, String to, BigInteger amount) {
+    public SMCTransactionReceipt sendMoney(final Address from, Address to, BigInteger amount) {
         //return aplBlockchainService.sendMoney(from, to, amount, credential.getSecret());
         throw new UnsupportedOperationException("Not implemented.");
     }
@@ -45,8 +50,8 @@ public class AplBlockchainIntegrator implements BlockchainIntegrator {
     }
 
     @Override
-    public void putSerializedObject(Address address, String contract) {
-        contractService.saveSerializedContract(address, contract);
+    public void putSerializedObject(SmartContract contract, String serializedContract) {
+        contractService.saveSerializedContract(contract, serializedContract);
     }
 
     @Override

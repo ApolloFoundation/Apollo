@@ -22,12 +22,9 @@ public class PublishContractCmdProcessor extends AbstractContractCmdProcessor {
     }
 
     @Override
-    public ExecutionLog process(SMCMachine smcMachine, Transaction smcTransaction) {
+    public ExecutionLog doProcess(SMCMachine smcMachine, Transaction smcTransaction) {
         log.debug("process: txType={} tx={}", smcTransaction.getType().getSpec(), smcTransaction);
         ExecutionLog executionLog = new ExecutionLog();
-        executionLog.join(
-            super.process(smcMachine, smcTransaction)
-        );
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) smcTransaction.getAttachment();
 
         SmartContract smartContract = contractService.createNewContract(smcTransaction);

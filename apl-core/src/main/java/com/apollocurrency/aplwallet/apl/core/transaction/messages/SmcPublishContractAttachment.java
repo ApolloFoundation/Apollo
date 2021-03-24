@@ -14,10 +14,8 @@ import lombok.Getter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
@@ -31,17 +29,13 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
     private final String contractSource;
     private final List<String> constructorParams;
     private final String languageName;
-    private final BigInteger fuelLimit;//initial fuel limit for constructor call
-    private final BigInteger fuelPrice;
 
     @Builder
-    public SmcPublishContractAttachment(String contractName, String contractSource, List<String> constructorParams, String languageName, BigInteger fuelLimit, BigInteger fuelPrice) {
-        this.contractName = Objects.requireNonNull(contractName);
-        this.contractSource = Objects.requireNonNull(contractSource);
-        this.constructorParams = Objects.requireNonNull(constructorParams);
-        this.languageName = Objects.requireNonNull(languageName);
-        this.fuelLimit = Objects.requireNonNull(fuelLimit);
-        this.fuelPrice = Objects.requireNonNull(fuelPrice);
+    public SmcPublishContractAttachment(String contractName, String contractSource, List<String> constructorParams, String languageName) {
+        this.contractName = contractName;
+        this.contractSource = contractSource;
+        this.constructorParams = constructorParams;
+        this.languageName = languageName;
     }
 
     public SmcPublishContractAttachment(RlpReader reader) {
@@ -50,8 +44,6 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
         this.contractSource = reader.readString();
         this.constructorParams = reader.readList(RlpConverter::toString);
         this.languageName = reader.readString();
-        this.fuelLimit = reader.readBigInteger();
-        this.fuelPrice = reader.readBigInteger();
     }
 
     public SmcPublishContractAttachment(JSONObject attachmentData) {
@@ -60,8 +52,6 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
         this.contractSource = String.valueOf(attachmentData.get(CONTRACT_SOURCE_FIELD));
         this.constructorParams = new ArrayList<>((JSONArray) attachmentData.get(CONSTRUCTOR_PARAMS_FIELD));
         this.languageName = String.valueOf(attachmentData.get(LANGUAGE_FIELD));
-        this.fuelLimit = new BigInteger((String) attachmentData.get(FUEL_LIMIT_FIELD));
-        this.fuelPrice = new BigInteger((String) attachmentData.get(FUEL_PRICE_FIELD));
     }
 
     @Override
@@ -77,8 +67,6 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
         params.addAll(this.constructorParams);
         json.put(CONSTRUCTOR_PARAMS_FIELD, params);
         json.put(LANGUAGE_FIELD, languageName);
-        json.put(FUEL_LIMIT_FIELD, fuelLimit.toString());
-        json.put(FUEL_PRICE_FIELD, fuelPrice.toString());
     }
 
     @Override
@@ -87,9 +75,7 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
             .add(contractName)
             .add(contractSource)
             .add(RlpList.ofStrings(constructorParams))
-            .add(languageName)
-            .add(fuelLimit)
-            .add(fuelPrice);
+            .add(languageName);
     }
 
 }
