@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.util.env.dirprovider;
 
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
+import java.util.Properties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -42,7 +43,7 @@ class DirProviderFactoryTest {
 
     @Test
     void getInstance2() {
-        PredefinedDirLocations dirLocations = new PredefinedDirLocations();
+        PredefinedDirLocations dirLocations = new PredefinedDirLocations(new Properties());
         DirProviderFactory.setup(true, UUID.randomUUID(), "Default", dirLocations);
         DirProvider df = DirProviderFactory.getProvider();
         assertNotNull(df.getAppBaseDir());

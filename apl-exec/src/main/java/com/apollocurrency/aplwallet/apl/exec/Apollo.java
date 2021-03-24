@@ -5,13 +5,12 @@ package com.apollocurrency.aplwallet.apl.exec;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
-import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
+import com.apollocurrency.aplwallet.apl.conf.ConfigVerifier;
 import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
-import com.apollocurrency.aplwallet.apl.core.utils.LegacyDbUtil;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
 import com.apollocurrency.aplwallet.apl.updater.core.UpdaterCoreImpl;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -42,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import javax.enterprise.inject.spi.CDI;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -84,7 +84,9 @@ public class Apollo {
     private static Logger log;
     private static AplContainer container;
     private static AplCoreRuntime aplCoreRuntime;
-
+    
+    private static  ConfigVerifier configVerifier;
+    
     private static void setLogLevel(int logLevel) {
         // let's SET LEVEL EXPLOCITLY only when it was passed via command line params
         String packageName = "com.apollocurrency.aplwallet.apl";
@@ -137,34 +139,55 @@ public class Apollo {
         return res;
     }
 
-    public static PredefinedDirLocations merge(CmdLineArgs args, EnvironmentVariables vars, CustomDirLocations customDirLocations) {
-        return new PredefinedDirLocations(
-            customDirLocations.getDbDir().isEmpty() ? StringUtils.isBlank(args.dbDir) ? vars.dbDir : args.dbDir : customDirLocations.getDbDir().get(),
-            StringUtils.isBlank(args.logDir) ? vars.logDir : args.logDir,
-            customDirLocations.getKeystoreDir().isEmpty() ? StringUtils.isBlank(args.vaultKeystoreDir) ? vars.vaultKeystoreDir : args.vaultKeystoreDir : customDirLocations.getKeystoreDir().get(),
-            StringUtils.isBlank(args.pidFile) ? vars.pidFile : args.pidFile,
-            StringUtils.isBlank(args.twoFactorAuthDir) ? vars.twoFactorAuthDir : args.twoFactorAuthDir,
-            StringUtils.isBlank(args.dataExportDir) ? vars.dataExportDir : args.dataExportDir,
-            StringUtils.isBlank(args.dexKeystoreDir) ? vars.dexKeystoreDir : args.dexKeystoreDir
-        );
+/**
+ * Merge command line argumentsm environment variables and properties from config files
+ * into one set of properties. Precedence: command line, environment vars, configs.
+ * It means that command line can overwrite env vars and configs
+ * @param args parsed command line arguments
+ * @param vars parsed environment variables
+ * @param props parsed application config files
+ * @return properties, reqady to use in the application
+ */     
+    public static Properties merge(CmdLineArgs args, EnvironmentVariables vars, Properties props){
+        
+        //{"--log-dir", "-l"}
+        String logDir = StringUtils.byPrecednce(args.logDir, vars.logDir, props.getProperty("apl.customLogDir"));
+        props.setProperty("apl.customLogDir",logDir);
+        //{"--db-dir"}
+        String dbDir = StringUtils.byPrecednce(args.dbDir, vars.dbDir, props.getProperty("apl.customDbDir"));
+        props.setProperty("apl.customDbDir", dbDir);
+        // {"--vault-key-dir"}
+        String vaultKeystoreDir = StringUtils.byPrecednce(args.vaultKeystoreDir, vars.vaultKeystoreDir, props.getProperty("apl.customVaultKeystoreDir"));
+        props.setProperty("apl.customVaultKeystoreDir", vaultKeystoreDir);
+        // {"--dex-key-dir"}
+        String dexKeystoreDir = StringUtils.byPrecednce(args.dexKeystoreDir, vars.dexKeystoreDir, props.getProperty("apl.customDexStorageDir"));
+        props.setProperty("apl.customDexStorageDir", dexKeystoreDir);
+        // {"--no-shard-import"}
+        String nsi = args.noShardImport==null ? "": args.noShardImport.toString();
+        String noShardImport = StringUtils.byPrecednce(nsi, props.getProperty("apl.noshardimport"));
+        props.setProperty("apl.noshardimport",noShardImport);
+        // {"--no-shard-create"}
+        String nsc = args.noShardCreate == null ? "": args.noShardCreate.toString();
+        String  noShardCreate = StringUtils.byPrecednce(nsc, props.getProperty("apl.noshardcreate"));
+        props.setProperty("apl.noshardcreate",noShardCreate);
+        // {"--2fa-dir"}
+        String twoFactorAuthDir = StringUtils.byPrecednce(args.twoFactorAuthDir,vars.twoFactorAuthDir, props.getProperty("apl.dir2FA"));
+        props.setProperty("apl.dir2FA",twoFactorAuthDir);
+        // {"--dexp-dir"}
+        String  dataExportDir  = StringUtils.byPrecednce(args.dataExportDir, vars.dataExportDir, props.getProperty("apl.customDataExportDir"));
+        props.setProperty("apl.customDataExportDir",dataExportDir);
+        // {"--pid-file"}
+        String pidFile =  StringUtils.byPrecednce(args.pidFile, vars.pidFile, props.getProperty("apl.customPidFile"));
+        props.getProperty("apl.customPidFile", pidFile);
+        return props;
     }
-
+    
+ //TODO: check this piece of art   
     public static void setSystemProperties(CmdLineArgs args){
         System.setProperty("apl.runtime.mode", args.serviceMode ? "service" : "user");
         System.setProperty("javax.net.ssl.trustStore", "cacerts");
         System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
         System.setProperty("javax.net.ssl.trustStoreType", "JKS");
-    }
-
-    private static String getCustomDbPath(UUID chainId, Properties properties) { //maybe better to set dbUrl or add to dirProvider
-        String customDbDir = properties.getProperty(CustomDirLocations.DB_DIR_PROPERTY_NAME);
-        if (customDbDir != null) {
-            Path legacyHomeDir = LegacyDbUtil.getLegacyHomeDir();
-            Path customDbPath = legacyHomeDir.resolve(customDbDir).resolve(chainId.toString().substring(0, 6)).normalize();
-            System.out.println("Using custom db path " + customDbPath.toAbsolutePath().toString());
-            return customDbPath.toAbsolutePath().toString();
-        }
-        return null;
     }
 
     private void initUpdater(String attachmentFilePath, boolean debug, PropertiesHolder propertiesHolder) {
@@ -243,8 +266,6 @@ public class Apollo {
         RuntimeEnvironment.getInstance().setMain(Apollo.class);
 //set some important system properties
         setSystemProperties(args);
-//cheat classloader to get access to "conf" package resources
-        ConfPlaceholder ph = new ConfPlaceholder();
 
 //--------------- config locading section -------------------------------------
 
@@ -277,7 +298,16 @@ public class Apollo {
 // load everuthing into applicationProperies. This is the place where all configuration
 // is collected from configs, command line and environment variables
         Properties applicationProperties = propertiesLoader.load();
-
+        
+        try {
+            //verify and complete configuration
+            configVerifier = ConfigVerifier.create(configDirProvider.getConfigName()+"/apl-blockchain.properties");
+            applicationProperties = configVerifier.parse(applicationProperties, Constants.VERSION);
+        } catch (IOException ex) {
+            System.err.println("WARNING! Can not verify config because can not read/parse default config fropm resources!");
+        }
+        
+        
         ChainsConfigLoader chainsConfigLoader = new ChainsConfigLoader(
             configDirProvider,
             configDir,
@@ -287,27 +317,14 @@ public class Apollo {
 // init chains configurations by loading chains.json file
         Map<UUID, Chain> chains = chainsConfigLoader.load();
         UUID chainId = ChainUtils.getActiveChain(chains).getChainId();
-
-//over-write config options from command line if set
-
-        if (args.noShardImport != null) {
-            applicationProperties.setProperty("apl.noshardimport", "" + args.noShardImport);
-        }
-        if (args.noShardCreate != null) {
-            applicationProperties.setProperty("apl.noshardcreate", "" + args.noShardCreate);
-        }
-//TODO: check this piece of art
-        CustomDirLocations customDirLocations = new CustomDirLocations(
-                getCustomDbPath(chainId, applicationProperties),
-                applicationProperties.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME)
-        );
-
-        DirProviderFactory.setup(args.serviceMode,
-                chainId,
-                Constants.APPLICATION_DIR_NAME,
-                merge(args, envVars, customDirLocations)
-        );
-
+       
+        DirProviderFactory.setup( args.serviceMode, 
+                                  chainId, 
+                                  Constants.APPLICATION_DIR_NAME, 
+                                  new PredefinedDirLocations(merge(args,envVars,applicationProperties))
+                                );
+        
+        
         dirProvider = DirProviderFactory.getProvider();
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);
 
