@@ -28,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.AliasOffer;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -59,11 +58,10 @@ public class AliasOfferTable extends VersionedDeletableEntityDbTable<AliasOffer>
     };
 
     @Inject
-    public AliasOfferTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                           DatabaseManager databaseManager,
+    public AliasOfferTable(DatabaseManager databaseManager,
                            Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("alias_offer", offerDbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override
@@ -75,9 +73,12 @@ public class AliasOfferTable extends VersionedDeletableEntityDbTable<AliasOffer>
     public void save(Connection con, AliasOffer offer) throws SQLException {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO alias_offer (id, price, buyer_id, "
-                + "height) KEY (id, height) VALUES (?, ?, ?, ?)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO alias_offer (id, price, buyer_id, height) "
+                + "VALUES (?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "id = VALUES(id), price = VALUES(price), buyer_id = VALUES(buyer_id), height = VALUES(height)")
         ) {
+
             int i = 0;
             pstmt.setLong(++i, offer.getAliasId());
             pstmt.setLong(++i, offer.getPriceATM());

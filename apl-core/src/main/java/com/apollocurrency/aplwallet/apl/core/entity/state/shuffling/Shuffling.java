@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.shuffling;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
@@ -75,7 +75,7 @@ public final class Shuffling extends VersionedDeletableEntity {
         this.blocksRemaining = rs.getShort("blocks_remaining");
         this.stage = ShufflingStage.get(rs.getByte("stage"));
         this.assigneeAccountId = rs.getLong("assignee_account_id");
-        this.recipientPublicKeys = DbUtils.getArray(rs, "recipient_public_keys", byte[][].class, Convert.EMPTY_BYTES);
+        this.recipientPublicKeys = DbUtils.get2dByteArray(rs, "recipient_public_keys", Convert.EMPTY_BYTES);
         this.registrantCount = rs.getByte("registrant_count");
     }
 

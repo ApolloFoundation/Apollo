@@ -3,11 +3,11 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -41,7 +41,7 @@ public final class DigitalGoodsListing extends AbstractAttachment {
         this.name = (String) attachmentData.get("name");
         this.description = (String) attachmentData.get("description");
         this.tags = (String) attachmentData.get("tags");
-        this.quantity = ((Long) attachmentData.get("quantity")).intValue();
+        this.quantity = ((Number) attachmentData.get("quantity")).intValue();
         this.priceATM = Convert.parseLong(attachmentData.get("priceATM"));
     }
 

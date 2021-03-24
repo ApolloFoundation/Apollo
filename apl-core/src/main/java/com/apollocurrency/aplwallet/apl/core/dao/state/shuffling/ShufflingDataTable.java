@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingData;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -36,13 +35,11 @@ public class ShufflingDataTable extends PrunableDbTable<ShufflingData> {
     };
 
     @Inject
-    public ShufflingDataTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                              DatabaseManager databaseManager,
+    public ShufflingDataTable(DatabaseManager databaseManager,
                               BlockchainConfig blockchainConfig,
                               PropertiesHolder propertiesHolder,
                               Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super("shuffling_data", dbKeyFactory, false, null,
-            derivedDbTablesRegistry, databaseManager, null, blockchainConfig, propertiesHolder, deleteOnTrimDataEvent);
+        super("shuffling_data", dbKeyFactory, false, null, databaseManager, blockchainConfig, propertiesHolder, deleteOnTrimDataEvent);
     }
 
 
@@ -68,7 +65,7 @@ public class ShufflingDataTable extends PrunableDbTable<ShufflingData> {
             int i = 0;
             pstmt.setLong(++i, shufflingData.getShufflingId());
             pstmt.setLong(++i, shufflingData.getAccountId());
-            DbUtils.setArrayEmptyToNull(pstmt, ++i, shufflingData.getData());
+            DbUtils.set2dByteArray(pstmt, ++i, shufflingData.getData());
             pstmt.setInt(++i, shufflingData.getTransactionTimestamp());
             pstmt.setInt(++i, shufflingData.getHeight());
             pstmt.executeUpdate();

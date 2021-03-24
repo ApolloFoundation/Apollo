@@ -20,16 +20,19 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSigner;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSignerImpl;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSigner;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 
@@ -41,7 +44,7 @@ import javax.servlet.http.HttpServletRequest;
 public final class SignTransaction extends AbstractAPIRequestHandler {
 
     private static final TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
-    private static final TransactionSigner signer = CDI.current().select(TransactionSigner.class).get();
+    private static final TransactionSigner signerService = CDI.current().select(TransactionSignerImpl.class).get();
 
     public SignTransaction() {
         super(new APITag[]{APITag.TRANSACTIONS}, "unsignedTransactionJSON", "unsignedTransactionBytes", "prunableAttachmentJSON", "secretPhrase",
@@ -55,15 +58,18 @@ public final class SignTransaction extends AbstractAPIRequestHandler {
         String transactionBytes = Convert.emptyToNull(req.getParameter("unsignedTransactionBytes"));
         String prunableAttachmentJSON = Convert.emptyToNull(req.getParameter("prunableAttachmentJSON"));
         long senderId = HttpParameterParserUtil.getAccountId(req, "sender", false);
-        Transaction.Builder builder = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
-
         byte[] keySeed = HttpParameterParserUtil.getKeySeed(req, senderId, true);
         boolean validate = !"false".equalsIgnoreCase(req.getParameter("validate"));
 
         JSONObject response = new JSONObject();
         try {
-            Transaction transaction = builder.build();
-            signer.sign(transaction, keySeed);
+            Transaction transaction = HttpParameterParserUtil.parseTransaction(transactionJSON, transactionBytes, prunableAttachmentJSON);
+
+            signerService.sign(transaction, keySeed);
+
+            Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+            txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
+
             JSONObject signedTransactionJSON = JSONData.unconfirmedTransaction(transaction);
             if (validate) {
                 validator.validateFully(transaction);
@@ -73,7 +79,7 @@ public final class SignTransaction extends AbstractAPIRequestHandler {
             response.put("fullHash", signedTransactionJSON.get("fullHash"));
             response.put("signatureHash", signedTransactionJSON.get("signatureHash"));
             response.put("transaction", transaction.getStringId());
-            response.put("transactionBytes", Convert.toHexString(transaction.getCopyTxBytes()));
+            response.put("transactionBytes", Convert.toHexString(signedTxBytes.array()));
             JSONData.putPrunableAttachment(response, transaction);
         } catch (AplException.ValidationException | RuntimeException e) {
             JSONData.putException(response, e, "Incorrect unsigned transaction json or bytes");

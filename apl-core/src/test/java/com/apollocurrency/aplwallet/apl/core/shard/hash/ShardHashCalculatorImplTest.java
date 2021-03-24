@@ -4,16 +4,25 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.hash;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
@@ -21,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
@@ -28,7 +38,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -36,7 +46,10 @@ import com.apollocurrency.aplwallet.apl.data.BlockTestData;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -44,10 +57,10 @@ import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -59,32 +72,42 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.slf4j.LoggerFactory.getLogger;
 
+@Slf4j
+
+@Tag("slow")
 @EnableWeld
-public class ShardHashCalculatorImplTest {
+public class ShardHashCalculatorImplTest extends DbContainerBaseTest {
+
     static final String SHA_256 = "SHA-256";
     static final byte[] PARTIAL_MERKLE_ROOT_2_6 = Convert.parseHexString("57a86e3f4966f6751d661fbb537780b65d4b0edfc1b01f48780a360c4babdea7");
     static final byte[] PARTIAL_MERKLE_ROOT_7_12 = Convert.parseHexString("da5ad74821dc77fa9fb0f0ddd2e48284fe630fee9bf70f98d7aa38032ddc8f57");
     static final byte[] PARTIAL_MERKLE_ROOT_1_8 = Convert.parseHexString("3987b0f2fb15fdbe3e815cbdd1ff8f9527d4dc18989ae69bc446ca0b40759a6b");
-    private static final Logger log = getLogger(ShardHashCalculatorImplTest.class);
+
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension();
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer);
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     HeightConfig heightConfig = mock(HeightConfig.class);
     TransactionTestData ttd = new TransactionTestData();
     private final PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
 
     {
+        doReturn(chain).when(blockchainConfig).getChain();
         doReturn(new PublicKey(1L, new byte[32], 2)).when(publicKeyDao).searchAll(anyLong());
     }
 
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(BlockchainImpl.class, ShardHashCalculatorImpl.class,
         BlockImpl.class, BlockDaoImpl.class,
+        BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         DerivedDbTablesRegistryImpl.class, TimeServiceImpl.class, GlobalSyncImpl.class, TransactionDaoImpl.class,
-        DaoConfig.class, TransactionRowMapper.class, TransactionBuilder.class)
+        DaoConfig.class,
+        TransactionServiceImpl.class, ShardDbExplorerImpl.class,
+        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
+        TransactionBuilderFactory.class)
         .addBeans(
             MockBean.of(blockchainConfig, BlockchainConfig.class),
             MockBean.of(propertiesHolder, PropertiesHolder.class),

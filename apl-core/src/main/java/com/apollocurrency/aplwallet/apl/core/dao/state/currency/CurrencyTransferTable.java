@@ -4,10 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.currency;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -16,9 +12,11 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyTransfer;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -38,11 +36,10 @@ public class CurrencyTransferTable extends EntityDbTable<CurrencyTransfer> {
     };
 
     @Inject
-    public CurrencyTransferTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                 DatabaseManager databaseManager,
+    public CurrencyTransferTable(DatabaseManager databaseManager,
                                  Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("currency_transfer", currencyTransferDbKeyFactory, false, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override
@@ -53,7 +50,7 @@ public class CurrencyTransferTable extends EntityDbTable<CurrencyTransfer> {
     @Override
     public void save(Connection con, CurrencyTransfer transfer) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO currency_transfer (id, currency_id, "
-            + "sender_id, recipient_id, units, timestamp, height) "
+            + "sender_id, recipient_id, units, `timestamp`, height) "
             + "VALUES (?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, transfer.getId());

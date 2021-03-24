@@ -10,6 +10,7 @@ scriptdir = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScri
 WshShell.CurrentDirectory = scriptdir
 WshShell.Run chr(34) & scriptdir & "\apl-run-secure-transport.bat" & chr(34), 0, False  
 Set fso = CreateObject("Scripting.FileSystemObject")
-if fso.FileExists(scriptdir & "\apl-run-desktop.bat") Then 
-    WshShell.Run chr(34) & scriptdir & "\apl-run-desktop.bat" & chr(34) & " secure-transport", 0, False 
+if fso.FileExists(scriptdir & "\..\..\apollo-desktop\bin\apl-run-desktop.bat") Then 	
+	WshShell.CurrentDirectory = scriptdir & "\..\..\apollo-desktop\bin\"
+	WshShell.Run chr(34) & "apl-run-desktop.bat" & chr(34) & " secure-transport", 0, False 
 End If

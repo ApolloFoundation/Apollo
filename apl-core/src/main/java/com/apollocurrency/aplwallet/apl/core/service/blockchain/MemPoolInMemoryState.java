@@ -4,12 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.config.Property;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.util.SizeBoundedPriorityQueue;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import lombok.Data;
-import lombok.Getter;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -26,6 +25,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,8 +46,7 @@ public class MemPoolInMemoryState {
     private final PriorityBlockingQueue<TxWithArrivalTimestamp> broadcastPendingTransactions;
     private final PriorityBlockingQueue<UnconfirmedTransaction> processLaterQueue;
 
-    @Getter
-    private volatile boolean cacheInitialized;
+    private AtomicBoolean cacheInitialized = new AtomicBoolean(false);
     private final int maxPendingBroadcastQueueSize;
     private final int maxCachedTransactions;
 
@@ -102,19 +101,11 @@ public class MemPoolInMemoryState {
     }
 
     public void initializeCache(Stream<UnconfirmedTransaction> unconfirmedTransactionStream) {
-        if (cacheInitialized) {
-            unconfirmedTransactionStream.forEach(e -> {});
-            return;
-        }
-        synchronized (this) {
-            if (cacheInitialized) {
-                unconfirmedTransactionStream.forEach(e -> {
-                });
-                return;
-            }
+        if(cacheInitialized.compareAndSet(false, true)){
             unconfirmedTransactionStream.forEach(e -> transactionCache.put(e.getId(), e));
+        } else {
+            unconfirmedTransactionStream.close();
         }
-        cacheInitialized = true;
     }
 
     public Set<UnconfirmedTransaction> getFromCache(List<String> exclude) {
@@ -125,6 +116,10 @@ public class MemPoolInMemoryState {
             }
         });
         return sortedUnconfirmedTransactions;
+    }
+
+    public List<Long> getAllUnconfirmedTransactionIds(){
+        return new ArrayList(transactionCache.keySet());
     }
 
     public void clear() {
@@ -192,5 +187,9 @@ public class MemPoolInMemoryState {
     private static class TxWithArrivalTimestamp {
         private final long arrivalTime = System.currentTimeMillis();
         private final Transaction tx;
+    }
+
+    public boolean isCacheInitialized(){
+        return cacheInitialized.get();
     }
 }

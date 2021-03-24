@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;
@@ -40,11 +39,10 @@ public final class AssetDividendTable extends EntityDbTable<AssetDividend> {
     };
 
     @Inject
-    public AssetDividendTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                              DatabaseManager databaseManager,
+    public AssetDividendTable(DatabaseManager databaseManager,
                               Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("asset_dividend", dividendDbKeyFactory, false, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override
@@ -55,7 +53,7 @@ public final class AssetDividendTable extends EntityDbTable<AssetDividend> {
     @Override
     public void save(Connection con, AssetDividend assetDividend) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO asset_dividend (id, asset_id, "
-            + "amount, dividend_height, total_dividend, num_accounts, timestamp, height) "
+            + "amount, dividend_height, total_dividend, num_accounts, `timestamp`, height) "
             + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
             int i = 0;
             pstmt.setLong(++i, assetDividend.getId());

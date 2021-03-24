@@ -1,14 +1,21 @@
+/*
+ * Copyright © 2019-2021 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.converter.db.MandatoryTransactionEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.MandatoryTransactionModelToEntityConverter;
+import com.apollocurrency.aplwallet.apl.core.blockchain.MandatoryTransaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransactionEntity;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,6 +23,7 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Singleton
 @Slf4j
@@ -25,19 +33,21 @@ public class MandatoryTransactionServiceImpl implements MandatoryTransactionServ
     private static final int TX_SELECT_SIZE = 50;
     private final TransactionProcessor txProcessor;
     private final TransactionValidator txValidator;
-    private final TransactionBuilder transactionBuilder;
     private final TaskDispatchManager taskManager;
     private final MandatoryTransactionDao dao;
     private final Blockchain blockchain;
+    private final MandatoryTransactionEntityToModelConverter toModelConverter;
+    private final MandatoryTransactionModelToEntityConverter toEntityConverter;
 
     @Inject
-    public MandatoryTransactionServiceImpl(TransactionProcessor txProcessor, TransactionValidator txValidator, TransactionBuilder transactionBuilder, TaskDispatchManager taskManager, MandatoryTransactionDao dao, Blockchain blockchain) {
+    public MandatoryTransactionServiceImpl(TransactionProcessor txProcessor, TransactionValidator txValidator, TaskDispatchManager taskManager, MandatoryTransactionDao dao, Blockchain blockchain, MandatoryTransactionEntityToModelConverter toModelConverter, MandatoryTransactionModelToEntityConverter toEntityConverter) {
         this.txProcessor = txProcessor;
         this.txValidator = txValidator;
-        this.transactionBuilder = transactionBuilder;
         this.taskManager = taskManager;
         this.dao = dao;
         this.blockchain = blockchain;
+        this.toModelConverter = toModelConverter;
+        this.toEntityConverter = toEntityConverter;
     }
 
     @PostConstruct
@@ -57,43 +67,44 @@ public class MandatoryTransactionServiceImpl implements MandatoryTransactionServ
         long startTime = System.currentTimeMillis();
         long dbId = 0;
         while (true) {
-            List<MandatoryTransaction> all = dao.getAll(dbId, TX_SELECT_SIZE);
-            for (MandatoryTransaction currentTx : all) {
+            List<MandatoryTransactionEntity> all = dao.getAll(dbId, TX_SELECT_SIZE);
+            for (MandatoryTransactionEntity currentTxEntity : all) {
                 try {
-                    dbId = currentTx.getDbEntryId();
+                    dbId = currentTxEntity.getDbId();
+                    Transaction currentTx = toModelConverter.convert(currentTxEntity).getTransactionImpl();
                     boolean expired = blockchain.isExpired(currentTx);
-                    boolean confirmed = blockchain.hasTransaction(currentTx.getId());
+                    boolean confirmed = blockchain.hasTransaction(currentTxEntity.getId());
                     if (!expired) {
                         if (!confirmed) {
-                            byte[] requiredTxHash = currentTx.getRequiredTxHash();
-                            MandatoryTransaction prevRequiredTx = null;
-                            boolean brodcast = true; // brodcast current tx
+                            byte[] requiredTxHash = currentTxEntity.getRequiredTxHash();
+                            MandatoryTransactionEntity prevRequiredTxEntity = null;
+                            boolean brodcast = true; // broadcast current tx
                             while (requiredTxHash != null) {
-                                long id = Convert.fullHashToId(requiredTxHash);
-                                MandatoryTransaction requiredTx = dao.get(id);
-                                boolean requiredTxConfirmed = blockchain.hasTransaction(requiredTx.getId());
+                                long id = Convert.transactionFullHashToId(requiredTxHash);
+                                MandatoryTransactionEntity requiredTxEntity = dao.get(id);
+                                boolean requiredTxConfirmed = blockchain.hasTransaction(requiredTxEntity.getId());
                                 if (requiredTxConfirmed) {
-                                    if (prevRequiredTx != null) {
-                                        validateAndBroadcast(prevRequiredTx.getTransaction());
+                                    if (prevRequiredTxEntity != null) {
+                                        validateAndBroadcast(toModelConverter.convert(prevRequiredTxEntity).getTransactionImpl());
                                         brodcast = false;
                                     }
                                     break;
-                                } else if (requiredTx.getRequiredTxHash() == null) {
-                                    validateAndBroadcast(requiredTx.getTransaction());
+                                } else if (requiredTxEntity.getRequiredTxHash() == null) {
+                                    validateAndBroadcast(toModelConverter.convert(requiredTxEntity).getTransactionImpl());
                                     break;
                                 }
-                                prevRequiredTx = requiredTx;
-                                requiredTxHash = requiredTx.getRequiredTxHash();
+                                prevRequiredTxEntity = requiredTxEntity;
+                                requiredTxHash = requiredTxEntity.getRequiredTxHash();
                             }
                             if (brodcast) {
-                                validateAndBroadcast(currentTx.getTransaction());
+                                validateAndBroadcast(currentTx);
                             }
                         }
                     } else {
-                        dao.delete(currentTx.getId());
+                        dao.delete(currentTxEntity.getId());
                     }
                 } catch (Throwable e) {
-                    log.warn("Unable to brodcast mandatory tx {}, reason - {}", currentTx.getId(), e.getMessage());
+                    log.warn("Unable to brodcast mandatory tx {}, reason - {}", currentTxEntity.getId(), e.getMessage());
                 }
             }
             if (all.size() < TX_SELECT_SIZE) {
@@ -124,22 +135,15 @@ public class MandatoryTransactionServiceImpl implements MandatoryTransactionServ
 
     @Override
     public List<MandatoryTransaction> getAll(long from, int limit) {
-        List<MandatoryTransaction> all = dao.getAll(from, limit);
-        all.forEach(this::loadTransaction);
-        return all;
-    }
-
-    private void loadTransaction(MandatoryTransaction mandatoryTransaction) {
-        try {
-            mandatoryTransaction.setTransaction(transactionBuilder.newTransactionBuilder(mandatoryTransaction.getTransactionBytes()).build());
-        } catch (AplException.NotValidException notValidException) {
-            throw new RuntimeException(notValidException.toString(), notValidException);
-        }
+        return dao.getAll(from, limit).stream().map(toModelConverter).collect(Collectors.toList());
     }
 
     @Override
     @Transactional
-    public void add(Transaction tx, byte[] requiredTxHash) {
-        dao.insert(new MandatoryTransaction(tx, requiredTxHash, null));
+    public void saveMandatoryTransaction(Transaction tx, byte[] requiredTxHash) {
+        MandatoryTransactionEntity entity = toEntityConverter.convert(
+            new MandatoryTransaction(tx, requiredTxHash)
+        );
+        dao.insert(entity);
     }
 }

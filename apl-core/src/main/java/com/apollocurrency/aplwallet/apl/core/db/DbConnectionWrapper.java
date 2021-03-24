@@ -29,22 +29,22 @@ public class DbConnectionWrapper extends FilteredConnection {
 
     @Override
     public void commit() throws SQLException {
-        if (localConnection.get() == null) {
+        if (this.localConnection.get() == null) {
             super.commit();
-        } else if (this != localConnection.get()) {
+        } else if (this != this.localConnection.get()) {
             throw new IllegalStateException("Previous connection not committed");
         } else {
             // repeated commit() functionality
-            DbConnectionWrapper con = localConnection.get();
+            DbConnectionWrapper con = this.localConnection.get();
             if (con == null) {
                 throw new IllegalStateException("Not in transaction");
             }
             try {
                 con.doCommit();
-                Set<TransactionCallback> callbacks = transactionCallback.get();
+                Set<TransactionCallback> callbacks = this.transactionCallback.get();
                 if (callbacks != null) {
                     callbacks.forEach(TransactionCallback::commit);
-                    transactionCallback.set(null);
+                    this.transactionCallback.set(null);
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
@@ -58,13 +58,13 @@ public class DbConnectionWrapper extends FilteredConnection {
 
     @Override
     public void rollback() throws SQLException {
-        if (localConnection.get() == null) {
+        if (this.localConnection.get() == null) {
             super.rollback();
-        } else if (this != localConnection.get()) {
+        } else if (this != this.localConnection.get()) {
             throw new IllegalStateException("Previous connection not committed");
         } else {
             // repeated rollback() functionality
-            DbConnectionWrapper con = localConnection.get();
+            DbConnectionWrapper con = this.localConnection.get();
             if (con == null) {
                 throw new IllegalStateException("Not in transaction");
             }
@@ -73,10 +73,10 @@ public class DbConnectionWrapper extends FilteredConnection {
             } catch (SQLException e) {
                 throw new RuntimeException(e.toString(), e);
             } finally {
-                Set<TransactionCallback> callbacks = transactionCallback.get();
+                Set<TransactionCallback> callbacks = this.transactionCallback.get();
                 if (callbacks != null) {
                     callbacks.forEach(TransactionCallback::rollback);
-                    transactionCallback.set(null);
+                    this.transactionCallback.set(null);
                 }
             }
         }
@@ -88,9 +88,9 @@ public class DbConnectionWrapper extends FilteredConnection {
 
     @Override
     public void close() throws SQLException {
-        if (localConnection.get() == null) {
+        if (this.localConnection.get() == null) {
             super.close();
-        } else if (this != localConnection.get()) {
+        } else if (this != this.localConnection.get()) {
             throw new IllegalStateException("Previous connection not committed");
         }
     }

@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.rest.utils;
 
-import com.apollocurrency.aplwallet.apl.core.model.TwoFactorAuthParameters;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
+import com.apollocurrency.aplwallet.api.dto.auth.TwoFactorAuthParameters;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.resteasy.core.interception.jaxrs.PostMatchContainerRequestContext;
 
@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
+import static com.apollocurrency.aplwallet.vault.service.auth.Account2FAService.TWO_FACTOR_AUTH_PARAMETERS_ATTRIBUTE_NAME;
 
 @Slf4j
 @Vetoed

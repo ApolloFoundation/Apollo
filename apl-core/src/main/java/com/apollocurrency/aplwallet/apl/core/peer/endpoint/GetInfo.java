@@ -37,8 +37,10 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.StringWriter;
+import lombok.extern.slf4j.Slf4j;
 
 @Singleton
+@Slf4j
 public class GetInfo extends PeerRequestHandler {
     private static final Logger log = LoggerFactory.getLogger(GetInfo.class);
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
@@ -86,9 +88,9 @@ public class GetInfo extends PeerRequestHandler {
                 announcedAddress = announcedAddress.toLowerCase();
                 if (announcedAddress != null) {
                     if (!peerImpl.verifyAnnouncedAddress(announcedAddress)) {
-                        log.trace("GetInfo: ignoring invalid announced address for " + peerImpl.getHost());
+                        log.trace("GetInfo: ignoring invalid announced address for " + peerImpl.getHostWithPort());
                         if (!peerImpl.verifyAnnouncedAddress(peerImpl.getAnnouncedAddress())) {
-                            log.trace("GetInfo: old announced address for " + peerImpl.getHost() + " no longer valid");
+                            log.trace("GetInfo: old announced address for " + peerImpl.getHostWithPort()+ " no longer valid");
                             lookupPeersService().setAnnouncedAddress(peerImpl, null);
                         }
                         peer.deactivate("Invalid announced address: " + announcedAddress);
@@ -105,7 +107,7 @@ public class GetInfo extends PeerRequestHandler {
         }
 
         if (!peerImpl.setApplication(pi.getApplication().trim())) {
-            log.trace("Invalid application. IP: {}, application value: '{}', removing", peerImpl.getHost(), pi.getApplication());
+            log.trace("Invalid application. IP: {}, application value: '{}', removing", peerImpl.getHostWithPort(), pi.getApplication());
 //            log.debug("Peer = {} Received Invalid App in PI = \n{}", peerImpl, pi);
             peerImpl.remove();
             return INVALID_APPLICATION;
@@ -123,7 +125,7 @@ public class GetInfo extends PeerRequestHandler {
             log.error("Cannot parse version = '{}'", pi.getVersion(), e);
             version = new Version(1, 0, 0);
         }
-        log.trace("PEER-GetINFO: IP: {}, application: {} version {}", peerImpl.getHost(), pi.getApplication(), version);
+        log.trace("PEER-GetINFO: IP: {}, application: {} version {}", peerImpl.getHostWithPort(), pi.getApplication(), version);
         peerImpl.setVersion(version);
 
         if (pi.getPlatform() == null) {

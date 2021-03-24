@@ -25,12 +25,11 @@ import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.ProcessBlockRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.ProcessTransactionsRequest;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.limiter.TimeLimiterService;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.PeerEntity;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.security.id.IdentityService;
@@ -51,6 +50,7 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.NamedThreadFactory;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
@@ -202,7 +202,7 @@ public class PeersService {
 //        this.txSendingDispatcher = new ThreadPoolExecutor(5, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(asyncTxSendingPoolSize), new NamedThreadFactory("P2PTxSendingPool", true));
 
         this.sendingService = new TimeTraceDecoratedThreadPoolExecutor(10, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(1000), new NamedThreadFactory("PeersSendingService"));
-    isLightClient = propertiesHolder.isLightClient();
+        isLightClient = propertiesHolder.isLightClient();
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -430,7 +430,7 @@ public class PeersService {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonOrgModule());
         ThisActorIdHandler myId = identityService.getThisNodeIdHandler();
-        pi.setX509_cert(myId.getCertHelper().getCertPEM());
+        pi.setX509_cert(myId.getExtCert().getCertPEM());
         myPeerInfo = mapper.convertValue(pi, JSONObject.class);
         LOG.debug("My peer info:\n" + myPeerInfo.toJSONString());
         myPI = pi;
@@ -718,8 +718,10 @@ public class PeersService {
     public Peer removePeer(Peer peer) {
         Peer p = null;
         if (peer.getAnnouncedAddress() != null) {
+
             PeerEntity entry = new PeerEntity(peer.getIdentity(), 0, 0,null,peer.getHostWithPort());
             peerDao.deletePeer(entry);
+
             if (connectablePeers.containsKey(peer.getAnnouncedAddress())) {
                 p = connectablePeers.remove(peer.getAnnouncedAddress());
             }
@@ -950,8 +952,11 @@ public class PeersService {
     }
 
     public BlockchainState getMyBlockchainState() {
-        checkBlockchainState();
         return currentBlockchainState;
+    }
+
+    public PeerDao getPeerDb() {
+        return peerDao;
     }
 
     public enum Event {

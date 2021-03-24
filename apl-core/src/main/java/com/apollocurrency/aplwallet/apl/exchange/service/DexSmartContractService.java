@@ -1,38 +1,38 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
-import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
-import com.apollocurrency.aplwallet.apl.eth.contracts.DexContract;
-import com.apollocurrency.aplwallet.apl.eth.contracts.DexContractImpl;
-import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
-import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
-import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.eth.web3j.ComparableStaticGasProvider;
-import com.apollocurrency.aplwallet.apl.eth.web3j.DefaultRawTransactionManager;
-import com.apollocurrency.aplwallet.apl.exchange.dao.DexTransactionDao;
-import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
-import com.apollocurrency.aplwallet.apl.exchange.mapper.DepositedOrderDetailsMapper;
-import com.apollocurrency.aplwallet.apl.exchange.mapper.ExpiredSwapMapper;
-import com.apollocurrency.aplwallet.apl.exchange.mapper.SwapDataInfoMapper;
-import com.apollocurrency.aplwallet.apl.exchange.mapper.UserAddressesMapper;
-import com.apollocurrency.aplwallet.apl.exchange.mapper.UserEthDepositInfoMapper;
-import com.apollocurrency.aplwallet.apl.exchange.model.DepositedOrderDetails;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexTransaction;
-import com.apollocurrency.aplwallet.apl.exchange.model.EthDepositsWithOffset;
-import com.apollocurrency.aplwallet.apl.exchange.model.ExpiredSwap;
-import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
-import com.apollocurrency.aplwallet.apl.exchange.model.SwapDataInfo;
-import com.apollocurrency.aplwallet.apl.exchange.model.UserAddressesWithOffset;
+import com.apollocurrency.aplwallet.apl.core.model.dex.DexOrder;
+import com.apollocurrency.aplwallet.apl.dex.core.dao.DexTransactionDao;
+import com.apollocurrency.aplwallet.apl.dex.core.exception.NotValidTransactionException;
+import com.apollocurrency.aplwallet.apl.dex.core.mapper.DepositedOrderDetailsMapper;
+import com.apollocurrency.aplwallet.apl.dex.core.mapper.ExpiredSwapMapper;
+import com.apollocurrency.aplwallet.apl.dex.core.mapper.SwapDataInfoMapper;
+import com.apollocurrency.aplwallet.apl.dex.core.mapper.UserAddressesMapper;
+import com.apollocurrency.aplwallet.apl.dex.core.mapper.UserEthDepositInfoMapper;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DepositedOrderDetails;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexTransaction;
+import com.apollocurrency.aplwallet.apl.dex.core.model.ExpiredSwap;
+import com.apollocurrency.aplwallet.apl.dex.core.model.OrderType;
+import com.apollocurrency.aplwallet.apl.dex.core.model.SwapDataInfo;
+import com.apollocurrency.aplwallet.apl.dex.core.model.UserAddressesWithOffset;
+import com.apollocurrency.aplwallet.apl.dex.eth.contracts.DexContract;
+import com.apollocurrency.aplwallet.apl.dex.eth.contracts.DexContractImpl;
+import com.apollocurrency.aplwallet.apl.dex.eth.model.EthDepositsWithOffset;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.DexBeanProducer;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.DexEthService;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
+import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.dex.eth.web3j.ComparableStaticGasProvider;
+import com.apollocurrency.aplwallet.apl.dex.eth.web3j.DefaultRawTransactionManager;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
+import com.apollocurrency.aplwallet.vault.model.EthWalletKey;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
 import lombok.extern.slf4j.Slf4j;
-import org.ethereum.util.blockchain.EtherUtil;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
@@ -62,7 +62,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -74,21 +73,20 @@ public class DexSmartContractService {
 
     private final String smartContractAddress;
     private final String paxContractAddress;
-    private final KeyStoreService keyStoreService;
     private final DexEthService dexEthService;
     private final EthereumWalletService ethereumWalletService;
     private final DexTransactionDao dexTransactionDao;
     private final DexBeanProducer dexBeanProducer;
     private final TaskDispatchManager taskManager;
+    private final KMSService KMSService;
 
     private Map<String, Object> idLocks = Collections.synchronizedMap(new HashMap<>());
     private Set<String> locksToRemoveLater = ConcurrentHashMap.newKeySet();
 
     @Inject
-    public DexSmartContractService(PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService,
+    public DexSmartContractService(PropertiesHolder propertiesHolder, DexEthService dexEthService,
                                    EthereumWalletService ethereumWalletService, DexTransactionDao dexTransactionDao,
-                                   DexBeanProducer dexBeanProducer, TaskDispatchManager taskDispatchManager) {
-        this.keyStoreService = keyStoreService;
+                                   DexBeanProducer dexBeanProducer, TaskDispatchManager taskDispatchManager, KMSService KMSService) {
         this.smartContractAddress = propertiesHolder.getStringProperty("apl.eth.swap.proxy.contract.address");
         this.paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
         this.dexEthService = dexEthService;
@@ -96,6 +94,7 @@ public class DexSmartContractService {
         this.dexTransactionDao = dexTransactionDao;
         this.taskManager = taskDispatchManager;
         this.dexBeanProducer = dexBeanProducer;
+        this.KMSService = KMSService;
     }
 
     @PostConstruct
@@ -125,7 +124,7 @@ public class DexSmartContractService {
      * @return String transaction hash.
      */
     public String deposit(String passphrase, Long offerId, Long accountId, String fromAddress, BigInteger weiValue, Long gas, DexCurrency currency) throws AplException.ExecutiveProcessException {
-        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+        EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, passphrase, fromAddress);
         Long gasPrice = gas;
         if (gasPrice == null) {
             gasPrice = getEthGasPrice();
@@ -141,7 +140,7 @@ public class DexSmartContractService {
                 allowance = ethereumWalletService.getAllowance(smartContractAddress, ethWalletKey.getCredentials().getAddress(), paxContractAddress);
 
                 if (allowance.compareTo(weiValue) < 0) {
-                    String approvedTx = ethereumWalletService.sendApproveTransaction(ethWalletKey, smartContractAddress, Constants.ETH_MAX_POS_INT);
+                    String approvedTx = ethereumWalletService.sendApproveTransaction(ethWalletKey.getCredentials(), smartContractAddress, Constants.ETH_MAX_POS_INT);
 
                     if (approvedTx == null) {
                         log.error("Approved tx wasn't send for PAX. AccountId:{}, OrderIs:{}, FromAddress:{}", accountId, offerId, fromAddress);
@@ -165,7 +164,7 @@ public class DexSmartContractService {
      * @return String transaction hash.
      */
     public String withdraw(String passphrase, long accountId, String fromAddress, BigInteger orderId, Long gas) throws AplException.ExecutiveProcessException {
-        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+        EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, passphrase, fromAddress);
 
         Long gasPrice = gas;
         if (gasPrice == null) {
@@ -177,7 +176,7 @@ public class DexSmartContractService {
 
 
     public String initiate(String passphrase, long accountId, String fromAddress, Long orderId, byte[] secretHash, String recipient, Integer refundTimestamp, Long gas) throws AplException.ExecutiveProcessException {
-        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+        EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, passphrase, fromAddress);
         Long gasPrice = gas;
         if (gasPrice == null) {
             gasPrice = getEthGasPrice();
@@ -187,21 +186,21 @@ public class DexSmartContractService {
     }
 
     public String approve(String passphrase, byte[] secret, String fromAddress, long accountId) throws AplException.ExecutiveProcessException {
-        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+        EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, passphrase, fromAddress);
 
         return approve(ethWalletKey.getCredentials(), secret, getEthGasPrice());
 
     }
 
     public String refund(byte[] secretHash, String passphrase, String fromAddress, long accountId, boolean waitConfirmation) throws AplException.ExecutiveProcessException {
-        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+        EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, passphrase, fromAddress);
 
         String params = Numeric.toHexString(secretHash);
         String identifier = fromAddress + params + DexTransaction.Op.REFUND;
         synchronized (idLocks.compute(identifier, (k, v) -> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(params, fromAddress, DexTransaction.Op.REFUND), waitConfirmation);
             if (txHash == null) {
-                ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(getEthGasPrice(), EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
+                ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EthUtil.gweiToWei(getEthGasPrice()), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
                 DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.Op.REFUND, params, fromAddress), ethWalletKey.getCredentials());
                 txHash = dexContract.refund(secretHash, waitConfirmation);
             }
@@ -212,14 +211,14 @@ public class DexSmartContractService {
     }
 
     public String refundAndWithdraw(byte[] secretHash, String passphrase, String fromAddress, long accountId, boolean waitConfirmation) throws AplException.ExecutiveProcessException {
-        EthWalletKey ethWalletKey = getEthWalletKey(passphrase, accountId, fromAddress);
+        EthWalletKey ethWalletKey = KMSService.getEthWallet(accountId, passphrase, fromAddress);
 
         String params = Numeric.toHexString(secretHash);
         String identifier = fromAddress + params + DexTransaction.Op.REFUND;
         synchronized (idLocks.compute(identifier, (k, v) -> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(params, fromAddress, DexTransaction.Op.REFUND), waitConfirmation);
             if (txHash == null) {
-                ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(getEthGasPrice(), EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
+                ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EthUtil.gweiToWei(getEthGasPrice()), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
                 DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.Op.REFUND, params, fromAddress), ethWalletKey.getCredentials());
                 txHash = dexContract.refundAndWithdraw(secretHash, waitConfirmation);
             }
@@ -308,21 +307,13 @@ public class DexSmartContractService {
         return depositedOrderDetails != null && depositedOrderDetails.isCreated() && !depositedOrderDetails.isWithdrawn() && depositedOrderDetails.getAmount().compareTo(amountEth) == 0;
     }
 
-    public List<String> getEthUserAddresses(String passphrase, Long accountId) {
-        WalletKeysInfo walletKeysInfo = keyStoreService.getWalletKeysInfo(passphrase, accountId);
-
-        return walletKeysInfo.getEthWalletKeys().stream()
-            .map(k -> k.getCredentials().getAddress())
-            .collect(Collectors.toList());
-    }
-
     private String approve(Credentials credentials, byte[] secret, Long gasPrice) {
         String params = Numeric.toHexString(secret);
         String identifier = credentials.getAddress() + params + DexTransaction.Op.REDEEM;
         synchronized (idLocks.compute(identifier, (k, v) -> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(params, credentials.getAddress(), DexTransaction.Op.REDEEM));
             if (txHash == null) {
-                ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
+                ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EthUtil.gweiToWei(gasPrice), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
                 DexContract dexContract = createDexContract(contractGasProvider, createDexTransaction(DexTransaction.Op.REDEEM, params, credentials.getAddress()), credentials);
                 txHash = dexContract.redeem(secret);
             }
@@ -350,7 +341,7 @@ public class DexSmartContractService {
             DexTransaction existingTx = dexTransactionDao.get(params, credentials.getAddress(), DexTransaction.Op.DEPOSIT);
             String txHash = checkExistingTx(existingTx);
             if (txHash == null) {
-                ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
+                ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EthUtil.gweiToWei(gasPrice), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
                 BigInteger orderIdUnsign = new BigInteger(Long.toUnsignedString(orderId));
                 DexTransaction dexTransaction = createDexTransaction(DexTransaction.Op.DEPOSIT, params, credentials.getAddress());
                 DexContract dexContract = createDexContract(contractGasProvider, dexTransaction, credentials);
@@ -450,7 +441,7 @@ public class DexSmartContractService {
 
 
     private String withdraw(Credentials credentials, BigInteger orderId, Long gasPrice) {
-        ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
+        ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EthUtil.gweiToWei(gasPrice), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
         String identifier = credentials.getAddress() + orderId.toString() + DexTransaction.Op.WITHDRAW;
 
         synchronized (idLocks.compute(identifier, (k, v) -> v == null ? new Object() : v)) {
@@ -475,7 +466,7 @@ public class DexSmartContractService {
      * @return link on tx.
      */
     private String initiate(Credentials credentials, BigInteger orderId, byte[] secretHash, String recipient, Integer refundTimestamp, Long gasPrice) {
-        ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EtherUtil.convert(gasPrice, EtherUtil.Unit.GWEI), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
+        ContractGasProvider contractGasProvider = new ComparableStaticGasProvider(EthUtil.gweiToWei(gasPrice), Constants.GAS_LIMIT_FOR_ETH_ATOMIC_SWAP_CONTRACT);
         String identifier = credentials.getAddress() + Numeric.toHexString(secretHash) + DexTransaction.Op.INITIATE;
         synchronized (idLocks.compute(identifier, (k, v) -> v == null ? new Object() : v)) {
             String txHash = checkExistingTx(dexTransactionDao.get(orderId.toString(), credentials.getAddress(), DexTransaction.Op.INITIATE));
@@ -499,18 +490,6 @@ public class DexSmartContractService {
             log.error(e.getMessage(), e);
         }
         return null;
-    }
-
-    private EthWalletKey getEthWalletKey(String passphrase, Long accountId, String fromAddress) throws AplException.ExecutiveProcessException {
-        WalletKeysInfo keyStore = keyStoreService.getWalletKeysInfo(passphrase, accountId);
-        if (keyStore == null) {
-            throw new AplException.ExecutiveProcessException("User wallet wasn't found.");
-        }
-        EthWalletKey ethWalletKey = keyStore.getEthWalletForAddress(fromAddress);
-        if (ethWalletKey == null) {
-            throw new AplException.ExecutiveProcessException("Wallet's address wasn't found. " + fromAddress);
-        }
-        return ethWalletKey;
     }
 
     private Long getEthGasPrice() throws AplException.ExecutiveProcessException {

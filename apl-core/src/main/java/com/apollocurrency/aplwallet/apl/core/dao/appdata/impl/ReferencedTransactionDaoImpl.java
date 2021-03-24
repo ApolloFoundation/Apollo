@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.appdata.impl;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.ReferencedTransactionRowMapper;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
@@ -9,9 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import org.jdbi.v3.core.Jdbi;
 
@@ -35,14 +34,13 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
     };
     private static final String TABLE = "referenced_transaction";
     private static final ReferencedTransactionRowMapper REFERENCED_ROW_MAPPER = new ReferencedTransactionRowMapper();
-    private final TransactionRowMapper transactionRowMapper;
+    private final TransactionEntityRowMapper transactionRowMapper;
 
     @Inject
-    public ReferencedTransactionDaoImpl(DerivedTablesRegistry derivedDbTablesRegistry,
-                                        DatabaseManager databaseManager,
-                                        TransactionRowMapper transactionRowMapper,
+    public ReferencedTransactionDaoImpl(DatabaseManager databaseManager,
+                                        TransactionEntityRowMapper transactionRowMapper,
                                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE, KEY_FACTORY, false, null, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+        super(TABLE, KEY_FACTORY, false, null, databaseManager, deleteOnTrimDataEvent);
         this.transactionRowMapper = transactionRowMapper;
     }
 
@@ -94,17 +92,17 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
     }
 
     @Override
-    public List<Transaction> getReferencingTransactions(long transactionId, int from, Integer limit) {
+    public List<TransactionEntity> getReferencingTransactions(long transactionId, int from, Integer limit) {
         Jdbi jdbi = getDatabaseManager().getJdbi();
         return jdbi.withHandle(handle ->
-            handle.createQuery("SELECT transaction.* FROM transaction, referenced_transaction "
-                + "WHERE referenced_transaction.referenced_transaction_id = :transactionId "
-                + "AND referenced_transaction.transaction_id = transaction.id "
-                + "ORDER BY transaction.block_timestamp DESC, transaction.transaction_index DESC "
-                + "OFFSET :from FETCH FIRST :limit ROWS ONLY")
-                .bind("transactionId", transactionId)
-                .bind("from", from)
-                .bind("limit", limit)
+                handle.createQuery("SELECT transaction.* FROM transaction, referenced_transaction "
+                        + "WHERE referenced_transaction.referenced_transaction_id = :transactionId "
+                        + "AND referenced_transaction.transaction_id = transaction.id "
+                        + "ORDER BY transaction.block_timestamp DESC, transaction.transaction_index DESC "
+                        + "LIMIT :limit OFFSET :from")
+                        .bind("transactionId", transactionId)
+                        .bind("from", from)
+                        .bind("limit", limit)
                 .map(transactionRowMapper)
                 .list()
         );

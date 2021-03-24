@@ -7,12 +7,20 @@ package com.apollocurrency.aplwallet.apl.core.db;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
@@ -20,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.ReferencedTransactionService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
@@ -28,7 +37,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
@@ -36,7 +46,10 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -57,15 +70,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
+
 @Tag("slow")
 @EnableWeld
-public class ReferencedTransactionServiceTest {
+public class ReferencedTransactionServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
     static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension extension = new DbExtension(DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getDbFileProperties(createPath("targetDb").toAbsolutePath().toString()));
     BlockchainConfig blockchainConfig = Mockito.mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
+
+    {
+        doReturn(chain).when(blockchainConfig).getChain();
+    }
+
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     TransactionTestData td = new TransactionTestData();
 
@@ -73,13 +94,17 @@ public class ReferencedTransactionServiceTest {
     public WeldInitiator weld = WeldInitiator.from(
         TransactionImpl.class, BlockchainImpl.class, DaoConfig.class,
         ReferencedTransactionDaoImpl.class,
-        TransactionRowMapper.class,
-        TransactionBuilder.class,
+        TransactionServiceImpl.class, ShardDbExplorerImpl.class,
+        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
+        TransactionBuilderFactory.class,
         GlobalSync.class,
         FullTextConfigImpl.class,
         GlobalSyncImpl.class,
         DerivedDbTablesRegistryImpl.class,
-        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class, ReferencedTransactionService.class)
+        TimeServiceImpl.class, BlockDaoImpl.class,
+        BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
+        TransactionDaoImpl.class, ReferencedTransactionService.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -98,7 +123,7 @@ public class ReferencedTransactionServiceTest {
     @Inject
     ReferencedTransactionService service;
 
-    private Path createPath(String fileName) {
+    private static Path createPath(String fileName) {
         try {
             return temporaryFolderExtension.newFolder().toPath().resolve(fileName);
         } catch (IOException e) {

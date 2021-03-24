@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.api.p2p.respons.GetPeersResponse;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.PeerEntity;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetPeersResponseParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,18 +25,33 @@ import java.util.UUID;
 /**
  * @author alukin@gmail.com
  */
+@Slf4j
 class GetMorePeersThread implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(GetMorePeersThread.class);
     private final TimeService timeService;
     private final PeersService peersService;
     private final GetPeersRequest getPeersRequest;
     private volatile boolean updatedPeer;
+//<<<<<<< HEAD
     private PeerDao peerDao;
+//=======
+//    private final PeerDb peerDb;
+//
+//>>>>>>> develop
 
     public GetMorePeersThread(TimeService timeService, PeersService peersService) {
         this.timeService = timeService;
         this.peersService = peersService;
+//<<<<<<< HEAD
         this.peerDao = peersService.getPeerDao();
+//=======
+//        this.peerDb = peersService.getPeerDb();
+//        if (this.peerDb == null) {
+//            String error = "ERROR, the peerDb instance was not initialized inside peerService";
+//            log.error(error);
+//            throw new RuntimeException(error);
+//        }
+//>>>>>>> develop
         getPeersRequest = new GetPeersRequest(peersService.blockchainConfig.getChain().getChainId());
     }
 
@@ -117,8 +133,13 @@ class GetMorePeersThread implements Runnable {
         //
         // Load the current database entries and map announced address to database entry
         //
+//<<<<<<< HEAD
         List<PeerEntity> oldPeers = peerDao.loadPeers();
         Map<String, PeerEntity> oldMap = new HashMap<>(oldPeers.size());
+//=======
+//        List<PeerDb.Entry> oldPeers = this.peerDb.loadPeers();
+//        Map<String, PeerDb.Entry> oldMap = new HashMap<>(oldPeers.size());
+//>>>>>>> develop
         oldPeers.forEach((entry) -> oldMap.put(entry.getAddress(), entry));
         //
         // Create the current peer map (note that there can be duplicate peer entries with
@@ -161,8 +182,13 @@ class GetMorePeersThread implements Runnable {
         //
 
         try {
+//<<<<<<< HEAD
             peerDao.deletePeers(toDelete);
             peerDao.updatePeers(toUpdate);
+//=======
+//            this.peerDb.deletePeers(toDelete);
+//            this.peerDb.updatePeers(toUpdate);
+//>>>>>>> develop
         } catch (Exception e) {
             throw e;
         }

@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
@@ -31,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
@@ -38,11 +38,11 @@ import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class ShufflingCreate extends CreateTransaction {
+public final class ShufflingCreate extends CreateTransactionHandler {
 
     public ShufflingCreate() {
         super(new APITag[]{APITag.SHUFFLING, APITag.CREATE_TRANSACTION},
-            "holding", "holdingType", "amount", "participantCount", "registrationPeriod");
+                "holding", "holdingType", "amount", "participantCount", "registrationPeriod");
     }
 
     @Override

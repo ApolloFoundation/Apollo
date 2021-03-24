@@ -30,8 +30,8 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.FundingMonitorInstance;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
@@ -95,7 +95,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetTransferSe
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializer;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAssetDelete;
@@ -107,11 +107,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -147,7 +147,7 @@ public final class JSONData {
     private static ShufflingService shufflingService = CDI.current().select(ShufflingService.class).get();
     private static FundingMonitorService fundingMonitorService = CDI.current().select(FundingMonitorService.class).get();
     private static PrunableLoadingService prunableLoadingService = CDI.current().select(PrunableLoadingService.class).get();
-    private static TransactionSerializer transactionSerializer = CDI.current().select(TransactionSerializer.class).get();
+    private static TransactionJsonSerializer transactionJsonSerializer = CDI.current().select(TransactionJsonSerializer.class).get();
 
     private JSONData() {
     } // never
@@ -538,13 +538,13 @@ public final class JSONData {
         putAccount(json, "account", shuffler.getAccountId());
         putAccount(json, "recipient", AccountService.getId(shuffler.getRecipientPublicKey()));
         json.put("shufflingFullHash", Convert.toHexString(shuffler.getShufflingFullHash()));
-        json.put("shuffling", Long.toUnsignedString(Convert.fullHashToId(shuffler.getShufflingFullHash())));
+        json.put("shuffling", Long.toUnsignedString(Convert.transactionFullHashToId(shuffler.getShufflingFullHash())));
         if (shuffler.getFailedTransaction() != null) {
             json.put("failedTransaction", unconfirmedTransaction(shuffler.getFailedTransaction()));
             json.put("failureCause", shuffler.getFailureCause().getMessage());
         }
         if (includeParticipantState) {
-            ShufflingParticipant participant = shufflingService.getParticipant(Convert.fullHashToId(shuffler.getShufflingFullHash()), shuffler.getAccountId());
+            ShufflingParticipant participant = shufflingService.getParticipant(Convert.transactionFullHashToId(shuffler.getShufflingFullHash()), shuffler.getAccountId());
             if (participant != null) {
                 json.put("participantState", participant.getState().getCode());
             }
@@ -1351,7 +1351,7 @@ public final class JSONData {
     }
 
     public static void putPrunableAttachment(JSONObject json, Transaction transaction) {
-        JSONObject prunableAttachment = transactionSerializer.getPrunableAttachmentJSON(transaction);
+        JSONObject prunableAttachment = transactionJsonSerializer.getPrunableAttachmentJSON(transaction);
         if (prunableAttachment != null) {
             json.put("prunableAttachmentJSON", prunableAttachment);
         }

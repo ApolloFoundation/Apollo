@@ -4,17 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.publickey;
 
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.core.cache.PublicKeyCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.CachedTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import com.google.common.cache.Cache;
@@ -46,14 +45,12 @@ public class PublicKeyTableProducer {
     public PublicKeyTableProducer(PropertiesHolder propertiesHolder,
                                   InMemoryCacheManager cacheManager,
                                   TaskDispatchManager taskManager,
-                                  DerivedTablesRegistry derivedDbTablesRegistry,
                                   DatabaseManager databaseManager,
                                   Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         this.cacheManager = Objects.requireNonNull(cacheManager, "Cache manager is NULL");
-        Objects.requireNonNull(derivedDbTablesRegistry);
         Objects.requireNonNull(databaseManager);
-        this.publicKeyTable = new PublicKeyTable(derivedDbTablesRegistry, databaseManager, deleteOnTrimDataEvent);
-        this.genesisPublicKeyTable = new GenesisPublicKeyTable(derivedDbTablesRegistry, databaseManager, deleteOnTrimDataEvent);
+        this.publicKeyTable = new PublicKeyTable(databaseManager, deleteOnTrimDataEvent);
+        this.genesisPublicKeyTable = new GenesisPublicKeyTable(databaseManager, deleteOnTrimDataEvent);
         this.taskManager = taskManager;
         this.cacheEnabled = propertiesHolder.getBooleanProperty("apl.enablePublicKeyCache");
     }

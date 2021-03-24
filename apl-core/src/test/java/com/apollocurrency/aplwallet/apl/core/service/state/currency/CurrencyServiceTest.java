@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
@@ -30,6 +30,9 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
@@ -124,6 +127,10 @@ class CurrencyServiceTest {
     private MonetaryCurrencyMintingService monetaryCurrencyMintingService;
     @Mock
     CurrencyMintTable currencyMintTable;
+    @Mock
+    private FullTextSearchUpdater fullTextSearchUpdater;
+    @Mock
+    private FullTextSearchService fullTextSearchService;
 
     @Mock
     TransactionValidationHelper transactionValidationHelper;
@@ -133,7 +140,8 @@ class CurrencyServiceTest {
         td = new CurrencyTestData();
         service = new CurrencyServiceImpl(currencySupplyTable, currencyTable, currencyMintTable, monetaryCurrencyMintingService, blockChainInfoService,
             accountService, accountCurrencyService, currencyExchangeOfferFacade, currencyFounderService,
-            exchangeService, currencyTransferService, shufflingService, blockchainConfig, transactionValidationHelper);
+            exchangeService, currencyTransferService, shufflingService, blockchainConfig,
+            transactionValidationHelper, fullTextSearchUpdater, fullTextSearchService);
     }
 
     @Test
@@ -145,12 +153,14 @@ class CurrencyServiceTest {
         doReturn("ANY_CODE").when(attach).getCode();
         doReturn("ANY_NAME").when(attach).getName();
         doReturn(null).doReturn(null).when(currencyTable).getBy(any(DbClause.StringClause.class));
+        doReturn("currency").when(currencyTable).getTableName();
 
         //WHEN
         service.addCurrency(LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), tr, account, attach);
 
         //THEN
         verify(currencyTable).insert(any(Currency.class));
+        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
     }
 
     @Test
@@ -229,7 +239,7 @@ class CurrencyServiceTest {
         Stream<CurrencyBuyOffer> buyOffers = Stream.of(mock(CurrencyBuyOffer.class));
         doReturn(buyOffers).when(buyOfferService).getOffersStream(td.CURRENCY_3, 0, -1);
         doReturn(buyOfferService).when(currencyExchangeOfferFacade).getCurrencyBuyOfferService();
-
+        doReturn("currency").when(currencyTable).getTableName();
         //WHEN
         service.delete(td.CURRENCY_3, LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), account);
         //THEN
@@ -237,6 +247,7 @@ class CurrencyServiceTest {
         verify(accountCurrencyService).addToUnconfirmedCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
         verify(accountCurrencyService).addToCurrencyUnits(any(Account.class), any(LedgerEvent.class), anyLong(), anyLong(), anyLong());
         verify(currencyTable).deleteAtHeight(any(Currency.class), anyInt());
+        verify(fullTextSearchUpdater).putFullTextOperationData(any(FullTextOperationData.class));
     }
 
     @Test

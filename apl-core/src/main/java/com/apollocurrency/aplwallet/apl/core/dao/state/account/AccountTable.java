@@ -13,8 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
@@ -52,13 +50,11 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     private final BlockchainConfig blockchainConfig;
 
     @Inject
-    //TODO Remove references to the Blockchain and BlockchainConfig classes when the EntityDbTable class will be refactored
-    public AccountTable(Blockchain blockchain, BlockchainConfig blockchainConfig/*, @Named("CREATOR_ID")long creatorId*/,
-                        DerivedTablesRegistry derivedDbTablesRegistry,
+    public AccountTable(BlockchainConfig blockchainConfig/*, @Named("CREATOR_ID")long creatorId*/,
                         DatabaseManager databaseManager,
                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("account", accountDbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL.");
     }
 
@@ -78,11 +74,17 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     @Override
     public void save(Connection con, Account account) throws SQLException {
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("MERGE INTO account (id, "
+            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("INSERT INTO account (id, "
                 + "parent, is_multi_sig, addr_scope, "
                 + "balance, unconfirmed_balance, forged_balance, "
                 + "active_lessee_id, has_control_phasing, height, latest, deleted) "
-                + "KEY (id, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)")
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)"
+                + "ON DUPLICATE KEY UPDATE "
+                + "id = VALUES(id), parent = VALUES(parent), is_multi_sig = VALUES(is_multi_sig), addr_scope = VALUES(addr_scope), "
+                + "balance = VALUES(balance), unconfirmed_balance = VALUES(unconfirmed_balance), "
+                + "forged_balance = VALUES(forged_balance), active_lessee_id = VALUES(active_lessee_id), "
+                + "has_control_phasing = VALUES(has_control_phasing), height = VALUES(height), latest = TRUE, deleted = FALSE"
+            )
         ) {
             int i = 0;
             pstmt.setLong(++i, account.getId());
@@ -109,11 +111,11 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
 
     @Override
-    public void trim(int height, boolean isSharding) {
+    public void trim(int height) {
         if (height <= blockchainConfig.getGuaranteedBalanceConfirmations()) {
             return;
         }
-        super.trim(height, isSharding);
+        super.trim(height);
     }
 
     public long getTotalSupply(long creatorId) {
@@ -155,7 +157,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
              @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
              PreparedStatement pstmt =
                  con.prepareStatement("SELECT sum(balance) as total_amount FROM (select balance from account WHERE balance > 0 AND latest = true" +
-                     " ORDER BY balance desc " + DbUtils.limitsClause(0, numberOfTopAccounts - 1) + ")")) {
+                     " ORDER BY balance desc " + DbUtils.limitsClause(0, numberOfTopAccounts - 1) + ") as acc_ballance")) {
             int i = 0;
             DbUtils.setLimits(++i, pstmt, 0, numberOfTopAccounts - 1);
             try (ResultSet rs = pstmt.executeQuery()) {

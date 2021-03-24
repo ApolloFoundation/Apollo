@@ -75,7 +75,7 @@ public class ShardRecoveryDaoJdbcImpl implements ShardRecoveryDaoJdbc {
         List<ShardRecovery> result = new ArrayList<>();
         try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM shard_recovery")) {
             try (ResultSet rs = pstmt.executeQuery()) {
-                ShardRecovery recovery = null;
+                ShardRecovery recovery;
                 while ((recovery = getIfPresent(rs)) != null) {
                     result.add(recovery);
                 }

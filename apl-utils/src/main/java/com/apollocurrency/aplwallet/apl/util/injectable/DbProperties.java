@@ -4,20 +4,30 @@
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
+import lombok.Builder;
+import lombok.Data;
+import lombok.ToString;
+
 import javax.enterprise.inject.Vetoed;
 import java.util.Optional;
 import java.util.UUID;
 
 @Vetoed
-public final class DbProperties implements Cloneable {
+@ToString
+@Builder
+@Data
+public class DbProperties implements Cloneable {
+    //TODO APL-1714
+    @Deprecated
     public static final String DB_EXTENSION = "mv.db";
+    @Deprecated
     public static final String DB_EXTENSION_WITH_DOT = "." + DbProperties.DB_EXTENSION;
+    public static final String DB_SYSTEM_NAME = "mysql";
 
-    private long maxCacheSize;
     private String dbUrl;
     private String dbType;
     private String dbDir;
-    private String dbFileName;
+    private String dbName;
     private String dbParams;
     private String dbUsername;
     private String dbPassword;
@@ -26,127 +36,19 @@ public final class DbProperties implements Cloneable {
     private int loginTimeout;
     private int defaultLockTimeout;
     private int maxMemoryRows;
-    private Long dbIdentity = null;
+    private String dbIdentity;
 
-    public long getMaxCacheSize() {
-        return maxCacheSize;
-    }
+    private String databaseHost;
+    private Integer databasePort;
+    private String systemDbUrl;
 
-    public String getDbUrl() {
-        return dbUrl;
-    }
-
-    public String getDbType() {
-        return dbType;
-    }
-
-    public String getDbDir() {
-        return dbDir;
-    }
-
-    public String getDbFileName() {
-        return dbFileName;
-    }
-
-    public String getDbParams() {
-        return dbParams;
-    }
-
-    public String getDbUsername() {
-        return dbUsername;
-    }
-
-    public String getDbPassword() {
-        return dbPassword;
-    }
-
-    public int getMaxConnections() {
-        return maxConnections;
-    }
-
-    public int getLoginTimeout() {
-        return loginTimeout;
-    }
-
-    public int getDefaultLockTimeout() {
-        return defaultLockTimeout;
-    }
-
-    public int getMaxMemoryRows() {
-        return maxMemoryRows;
-    }
-
-    public Optional<Long> getDbIdentity() {
+    public Optional<String> getDbIdentity() {
         return Optional.ofNullable(dbIdentity);
     }
 
-    public DbProperties maxCacheSize(int maxCacheSize) {
-        this.maxCacheSize = maxCacheSize;
-        return this;
-    }
 
-    public DbProperties dbUrl(String dbUrl) {
-        this.dbUrl = dbUrl;
-        return this;
-    }
-
-    public DbProperties dbFileName(String dbFileName) {
-        this.dbFileName = dbFileName;
-        return this;
-    }
-
-    public DbProperties dbType(String dbType) {
-        this.dbType = dbType;
-        return this;
-    }
-
-    public DbProperties dbDir(String dbDir) {
-        this.dbDir = dbDir;
-        return this;
-    }
-
-    public DbProperties dbParams(String dbParams) {
-        this.dbParams = dbParams;
-        return this;
-    }
-
-    public DbProperties dbUsername(String dbUsername) {
-        this.dbUsername = dbUsername;
-        return this;
-    }
-
-    public DbProperties dbPassword(String dbPassword) {
-        this.dbPassword = dbPassword;
-        return this;
-    }
-
-    public DbProperties maxConnections(int maxConnections) {
-        this.maxConnections = maxConnections;
-        return this;
-    }
-
-    public DbProperties chainId(UUID chainId) {
-        this.chainId = chainId;
-        return this;
-    }
-
-    public DbProperties loginTimeout(int loginTimeout) {
-        this.loginTimeout = loginTimeout;
-        return this;
-    }
-
-    public DbProperties defaultLockTimeout(int defaultLockTimeout) {
-        this.defaultLockTimeout = defaultLockTimeout;
-        return this;
-    }
-
-    public DbProperties maxMemoryRows(int maxMemoryRows) {
-        this.maxMemoryRows = maxMemoryRows;
-        return this;
-    }
-
-    public DbProperties dbIdentity(long shardIdOrTempId) {
-        if (shardIdOrTempId == 0) {
+    public DbProperties dbIdentity(String shardIdOrTempId) {
+        if (shardIdOrTempId == null || shardIdOrTempId.isEmpty()) {
             return this;
         }
         this.dbIdentity = shardIdOrTempId;
@@ -160,28 +62,38 @@ public final class DbProperties implements Cloneable {
             throw new RuntimeException(e);
         }
     }
-
-    @Override
-    public String toString() {
-        return "DbProperties{" +
-            "maxCacheSize=" + maxCacheSize +
-            ", dbUrl='" + dbUrl + '\'' +
-            ", dbType='" + dbType + '\'' +
-            ", dbDir='" + dbDir + '\'' +
-            ", dbFileName='" + dbFileName + '\'' +
-            ", dbParams='" + dbParams + '\'' +
-            ", dbUsername='" + dbUsername + '\'' +
-            ", dbPassword='" + dbPassword + '\'' +
-            ", chainId=" + chainId +
-            ", maxConnections=" + maxConnections +
-            ", loginTimeout=" + loginTimeout +
-            ", defaultLockTimeout=" + defaultLockTimeout +
-            ", maxMemoryRows=" + maxMemoryRows +
-            ", dbIdentity=" + dbIdentity +
-            '}';
-    }
-
-    public UUID getChainId() {
-        return chainId;
-    }
+    
+    public String formatJdbcUrlString(boolean isSystemDb) {
+        String finalDbUrl;
+        String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s%s";
+        String passwordlessUrlString = "jdbc:%s://%s:%d/%s?user=%s%s"; // skip password for 'password less mode' (in docker container)
+        String tempDbName = getDbName();
+        if (isSystemDb) {
+            tempDbName = "testdb".equalsIgnoreCase(getDbName()) ? getDbName() : DbProperties.DB_SYSTEM_NAME;
+        }
+        if (getDbPassword() != null && !getDbPassword().isEmpty()) {
+            finalDbUrl = String.format(
+                fullUrlString,
+                getDbType(),
+                getDatabaseHost(),
+                getDatabasePort(),
+                tempDbName,
+                getDbUsername() != null ? getDbUsername() : "",
+                getDbPassword(),
+                getDbParams() != null ? getDbParams() : ""
+            );
+        } else {
+            // skip password for 'password less mode' (in docker container)
+            finalDbUrl = String.format(
+                passwordlessUrlString,
+                getDbType(),
+                getDatabaseHost(),
+                getDatabasePort(),
+                tempDbName,
+                getDbUsername() != null ? getDbUsername() : "",
+                getDbParams() != null ? getDbParams() : ""
+            );
+        }
+        return finalDbUrl;
+    }    
 }

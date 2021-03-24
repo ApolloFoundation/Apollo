@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.api.v2.model.TransactionInfoResp;
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.api.v2.model.TxRequest;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TransactionInfoMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -24,11 +24,12 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.child.CreateChildTransactionType;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,15 +66,21 @@ class TransactionApiServiceImplTest {
     Blockchain blockchain;
     @Mock
     SecurityContext securityContext;
-    @Mock
-    BlockchainConfig blockchainConfig;
+
+    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+    Chain chain = mock(Chain.class);
+
+    {
+        doReturn(chain).when(blockchainConfig).getChain();
+    }
+
     @Mock
     BlockChainInfoService blockChainInfoService;
 
     MemPool memPool = mock(MemPool.class);
     @Mock
     PrunableLoadingService prunableLoadingService;
-    TransactionBuilder transactionBuilder;
+    TransactionBuilderFactory transactionBuilderFactory;
     @Mock
     AccountService accountService;
     @Mock
@@ -85,11 +92,11 @@ class TransactionApiServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        transactionBuilder = new TransactionBuilder(new CachedTransactionTypeFactory(List.of(new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain))));
-        Convert2.init(blockchainConfig);
+        transactionBuilderFactory = new TransactionBuilderFactory(new CachedTransactionTypeFactory(List.of(new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain))), blockchainConfig);
+        Convert2.init("APL", 1739068987193023818L);
         txReceiptMapper = new TxReceiptMapper(blockChainInfoService);
         transactionInfoMapper = new TransactionInfoMapper(blockchain, prunableLoadingService);
-        transactionApiService = new TransactionApiServiceImpl(memPool, blockchain, txReceiptMapper, transactionInfoMapper, transactionBuilder);
+        transactionApiService = new TransactionApiServiceImpl(memPool, blockchainConfig, blockchain, txReceiptMapper, transactionInfoMapper, transactionBuilderFactory);
     }
 
     @SneakyThrows

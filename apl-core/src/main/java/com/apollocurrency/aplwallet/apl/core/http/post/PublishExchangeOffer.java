@@ -20,7 +20,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType;
@@ -29,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
@@ -65,7 +65,7 @@ import javax.servlet.http.HttpServletRequest;
  * for the account, removes the existing exchange offer and publishes the new exchange offer
  */
 @Vetoed
-public final class PublishExchangeOffer extends CreateTransaction {
+public final class PublishExchangeOffer extends CreateTransactionHandler {
 
     public PublishExchangeOffer() {
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "buyRateATM", "sellRateATM",

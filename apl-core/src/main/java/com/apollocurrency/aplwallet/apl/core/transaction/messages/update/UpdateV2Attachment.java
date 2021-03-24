@@ -1,6 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages.update;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -10,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.util.Version;
 import com.apollocurrency.aplwallet.apl.util.env.Arch;
 import com.apollocurrency.aplwallet.apl.util.env.OS;
 import com.apollocurrency.aplwallet.apl.util.env.PlatformSpec;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -61,11 +61,11 @@ public class UpdateV2Attachment extends AbstractAttachment {
     public UpdateV2Attachment(JSONObject attachmentData) {
         super(attachmentData);
         this.manifestUrl = Convert.nullToEmpty((String) attachmentData.get("manifestUrl"));
-        this.updateLevel = Level.from(((Long) Convert.parseLong(attachmentData.get("level"))).intValue());
+        this.updateLevel = Level.from(((Number) Convert.parseLong(attachmentData.get("level"))).intValue());
         List<?> platforms = (List<?>) attachmentData.get("platforms");
         for (Object platformObj : platforms) {
             Map<?,?> platformJsonObj = (Map<?,?>) platformObj;
-            PlatformSpec platformSpec = new PlatformSpec(OS.from(((Long) platformJsonObj.get("platform")).intValue()), Arch.from(((Long) platformJsonObj.get("architecture")).intValue()));
+            PlatformSpec platformSpec = new PlatformSpec(OS.from(((Number) platformJsonObj.get("platform")).intValue()), Arch.from(((Number) platformJsonObj.get("architecture")).intValue()));
             this.platforms.add(platformSpec);
         }
         this.cn = (String) attachmentData.get("cn");

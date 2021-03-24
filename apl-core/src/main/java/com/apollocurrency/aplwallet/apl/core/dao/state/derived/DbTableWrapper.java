@@ -161,11 +161,6 @@ public class DbTableWrapper<T extends DerivedEntity> implements EntityDbTableInt
     }
 
     @Override
-    public void trim(int height, boolean isSharding) {
-        table.trim(height, isSharding);
-    }
-
-    @Override
     public DerivedTableData<T> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException {
         return table.getAllByDbId(from, limit, dbIdLimit);
     }

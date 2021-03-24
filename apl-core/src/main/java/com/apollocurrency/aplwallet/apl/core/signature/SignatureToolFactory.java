@@ -22,7 +22,7 @@ import java.util.Set;
  * @author andrii.zinchenko@firstbridge.io
  */
 @Slf4j
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class SignatureToolFactory {
 
     private static final SignatureVerifier[] validators = new SignatureVerifier[]
@@ -31,23 +31,23 @@ public class SignatureToolFactory {
     private static final SignatureParser[] parsers = new SignatureParser[]
         {new SigData.Parser(), new MultiSigData.Parser()};
 
-    private static final DocumentSigner[] sigSigners = new DocumentSigner[]
+    private static final DocumentSigner[] docSigners = new DocumentSigner[]
         {new DocumentSignerV1(), new MultiSigSigner()};
 
     public static Signature createSignature(byte[] signature) {
         return new SigData(Objects.requireNonNull(signature));
     }
 
-    public static Credential createCredential(int version, byte[]... keys) {
+    public static Credential createCredential(int transactionVersion, byte[]... keys) {
         Objects.requireNonNull(keys);
-        switch (version) {
+        switch (transactionVersion) {
             case 0:
             case 1:
                 return new SignatureCredential(keys[0]);
             case 2:
                 return new MultiSigCredential(keys.length, keys);
             default:
-                throw new UnsupportedTransactionVersion("Can't crate credential a given transaction version: " + version);
+                throw new UnsupportedTransactionVersion("Can't crate credential a given transaction version: " + transactionVersion);
         }
     }
 
@@ -59,8 +59,8 @@ public class SignatureToolFactory {
         return selectTool(transactionVersion, parsers);
     }
 
-    public static Optional<DocumentSigner> selectBuilder(int transactionVersion) {
-        return selectTool(transactionVersion, sigSigners);
+    public static Optional<DocumentSigner> selectSigner(int transactionVersion) {
+        return selectTool(transactionVersion, docSigners);
     }
 
     private static <T> Optional<T> selectTool(int transactionVersion, T[] tools) {
@@ -111,7 +111,7 @@ public class SignatureToolFactory {
         return signatureCredential;
     }
 
-    private static class MultiSigVerifierImpl implements SignatureVerifier {
+    static class MultiSigVerifierImpl implements SignatureVerifier {
 
         @Override
         public boolean verify(byte[] document, Signature signature, Credential credential) {
@@ -149,7 +149,7 @@ public class SignatureToolFactory {
         }
     }
 
-    private static class SignatureVerifierV1 implements SignatureVerifier {
+    static class SignatureVerifierV1 implements SignatureVerifier {
         @Override
         public boolean verify(byte[] document, Signature signature, Credential credential) {
             Objects.requireNonNull(document);
@@ -173,7 +173,7 @@ public class SignatureToolFactory {
         }
     }
 
-    private static class MultiSigSigner implements DocumentSigner {
+    static class MultiSigSigner implements DocumentSigner {
         @Override
         public Signature sign(byte[] document, Credential credential) {
             Objects.requireNonNull(document);
@@ -208,7 +208,7 @@ public class SignatureToolFactory {
         }
     }
 
-    private static class DocumentSignerV1 implements DocumentSigner {
+    static class DocumentSignerV1 implements DocumentSigner {
         @Override
         public Signature sign(byte[] document, Credential credential) {
             Objects.requireNonNull(document);

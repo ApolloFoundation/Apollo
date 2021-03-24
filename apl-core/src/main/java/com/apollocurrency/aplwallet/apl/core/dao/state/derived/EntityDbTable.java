@@ -29,16 +29,12 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
-import lombok.Getter;
 import org.slf4j.Logger;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.inject.spi.CDI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -49,18 +45,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTable<T> implements EntityDbTableInterface<T> {
     private static final Logger log = getLogger(EntityDbTable.class);
     private final String defaultSort;
-    @Getter
-    private final String fullTextSearchColumns;
-//    private Blockchain blockchain;
 
     public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns,
-                         DerivedTablesRegistry derivedDbTablesRegistry,
                          DatabaseManager databaseManager,
-                         FullTextConfig fullTextConfig,
                          Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(table, dbKeyFactory, multiversion, derivedDbTablesRegistry, databaseManager, fullTextConfig, deleteOnTrimDataEvent);
+        super(table, dbKeyFactory, multiversion, databaseManager,
+                deleteOnTrimDataEvent, fullTextSearchColumns);
         this.defaultSort = " ORDER BY " + (multiversion ? dbKeyFactory.getPKColumns() : " height DESC, db_id DESC ");
-        this.fullTextSearchColumns = fullTextSearchColumns;
     }
 
     /***
@@ -230,14 +221,11 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         final boolean doCache = cache && dataSource.isInTransaction();
         return new DbIterator<>(con, pstmt, (connection, rs) -> {
-            T t = null;
             DbKey dbKey = null;
             if (doCache) {
                 dbKey = keyFactory.newKey(rs);
             }
-            if (t == null) {
-                t = (T) load(connection, rs, dbKey);
-            }
+            T t = load(connection, rs, dbKey);
             return t;
         });
     }
@@ -435,10 +423,4 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
         }
     }
 
-/*    private Blockchain lookupBlockchain() {
-        if (blockchain == null) {
-            blockchain = CDI.current().select(Blockchain.class).get();
-        }
-        return blockchain;
-    }*/
 }

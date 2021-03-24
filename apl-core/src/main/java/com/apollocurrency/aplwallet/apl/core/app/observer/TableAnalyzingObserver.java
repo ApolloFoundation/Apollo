@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.app.observer;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import org.slf4j.Logger;
@@ -33,15 +33,11 @@ public class TableAnalyzingObserver {
     public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
         if (block.getHeight() % 5000 == 0) {
             log.info("received block " + block.getHeight());
-            if (!lookupBlockchainProcessor().isDownloading() || block.getHeight() % 50000 == 0) {
-                databaseManager.getDataSource().analyzeTables();
-            }
         }
     }
 
     //async
     public void onRescanEnd(@ObservesAsync @BlockEvent(BlockEventType.RESCAN_END) Block block) {
-        databaseManager.getDataSource().analyzeTables();
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {

@@ -8,8 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConv
 import com.apollocurrency.aplwallet.apl.core.dao.state.exchange.ExchangeTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyExchangeOffer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.exchange.Exchange;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;

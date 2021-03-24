@@ -19,20 +19,30 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 
-import java.sql.Array;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Arrays;
+import java.util.Optional;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 public final class DbUtils {
     private static final Logger log = getLogger(DbUtils.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    public static final String EMPTY_JS_ARRAY = "[]";
 
     private DbUtils() {
     } // never
@@ -134,33 +144,91 @@ public final class DbUtils {
     }
 
     public static <T> T[] getArray(ResultSet rs, String columnName, Class<? extends T[]> cls, T[] ifNull) throws SQLException {
-        Array array = rs.getArray(columnName);
-        if (array != null) {
-            Object[] objects = (Object[]) array.getArray();
-            return Arrays.copyOf(objects, objects.length, cls);
-        } else {
+        final String string = rs.getString(columnName);
+        if (string == null || EMPTY_JS_ARRAY.equals(string)) {
             return ifNull;
+        } else {
+            try {
+                return OBJECT_MAPPER.readValue(string, cls);
+            } catch (JsonProcessingException e) {
+                throw new SQLException(e);
+            }
         }
     }
 
     public static <T> void setArray(PreparedStatement pstmt, int index, T[] array) throws SQLException {
         if (array != null) {
-            pstmt.setObject(index, array);
+            try {
+                pstmt.setString(index, OBJECT_MAPPER.writeValueAsString(array));
+            } catch (JsonProcessingException e) {
+                throw new SQLException(e);
+            }
         } else {
-            pstmt.setNull(index, Types.ARRAY);
+            pstmt.setString(index, EMPTY_JS_ARRAY);
         }
     }
 
     public static <T> void setArrayEmptyToNull(PreparedStatement pstmt, int index, T[] array) throws SQLException {
         if (array != null && array.length > 0) {
-            pstmt.setObject(index, array);
+            try {
+                pstmt.setString(index, OBJECT_MAPPER.writeValueAsString(array));
+            } catch (JsonProcessingException e) {
+                throw new SQLException(e);
+            }
         } else {
-            pstmt.setNull(index, Types.ARRAY);
+            pstmt.setString(index, "[]");
+        }
+    }
+
+    public static byte[][] get2dByteArray(
+        final ResultSet resultSet,
+        final String columnName,
+        final byte[][] defaultValue
+    ) throws SQLException {
+        final byte[] resultSetBytes = resultSet.getBytes(columnName);
+        return Optional.ofNullable(convertFromBytes(resultSetBytes))
+            .map(byte[][].class::cast)
+            .orElse(defaultValue);
+    }
+
+    public static void set2dByteArray(PreparedStatement pstmt, int index, byte[][] bytes) throws SQLException {
+        if (bytes != null) {
+            pstmt.setBytes(index, convertToBytes(bytes));
+        } else {
+            pstmt.setNull(index, Types.BINARY);
+        }
+    }
+
+    private static byte[] convertToBytes(final Object object) {
+        try (
+            final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            final ObjectOutput out = new ObjectOutputStream(bos)
+        ) {
+            out.writeObject(object);
+            return bos.toByteArray();
+        } catch (IOException e) {
+            log.debug("Failed to convertToBytes: {}", e.getMessage());
+            throw new IllegalArgumentException(e.getMessage(), e);
+        }
+    }
+
+    private static Object convertFromBytes(final byte[] bytes) {
+        try (
+            final ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+            final ObjectInput in = new ObjectInputStream(bis)
+        ) {
+            return in.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            log.debug("Failed to convertFromBytes: {}", e.getMessage());
+            throw new IllegalArgumentException(e.getMessage(), e);
         }
     }
 
     public static int calculateLimit(int from, int to) {
-        return to >= 0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
+        return to >= 0
+            && to >= from
+            && to < Integer.MAX_VALUE ?
+            to - from + 1 : 0;
     }
 
     public static String limitsClause(int from, int to) {
@@ -170,7 +238,11 @@ public final class DbUtils {
         } else if (limit > 0) {
             return " LIMIT ? ";
         } else if (from > 0) {
-            return " LIMIT NULL OFFSET ? ";
+            if (to > 0) {
+                return String.format(" LIMIT %d OFFSET ? ", to);
+            } else {
+                return " LIMIT 0 OFFSET ? ";
+            }
         } else {
             return "";
         }

@@ -27,7 +27,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class ShardDataSourceCreateHelper {
     public static final int MAX_CACHE_SIZE = 16 * 1024; // 16mb
-    public static final int MAX_CONNECTIONS = 60;
+    public static final int MAX_CONNECTIONS = 10; // change from 60 to 10 for every shard
     public static final int MAX_MEMORY_ROWS = 10_000;
     private static final Logger log = getLogger(ShardDataSourceCreateHelper.class);
     private final DatabaseManager databaseManager;
@@ -80,16 +80,15 @@ public class ShardDataSourceCreateHelper {
     public ShardDataSourceCreateHelper createUninitializedDataSource() {
         checkGenerateShardName();
         log.debug("Create new SHARD '{}'", shardName);
-//        logStackTrace("Dump stack on DS creation...", Thread.currentThread().getStackTrace());
-        DbProperties shardDbProperties = null;
-        shardDbProperties = databaseManager.getBaseDbProperties().deepCopy()
-            .dbFileName(shardName) // change file name
-            .maxCacheSize(MAX_CACHE_SIZE)
-            .maxConnections(MAX_CONNECTIONS)
-            .maxMemoryRows(MAX_MEMORY_ROWS)
-            .dbUrl(null)  // nullify dbUrl intentionally!;
-            .dbIdentity(shardId); // put shard related info
+        DbProperties shardDbProperties;
+        shardDbProperties = databaseManager.getBaseDbProperties().deepCopy();
+        shardDbProperties.setDbName(shardName); // change file name
+        shardDbProperties.setMaxConnections(MAX_CONNECTIONS);
+        shardDbProperties.setMaxMemoryRows(MAX_MEMORY_ROWS);
+        shardDbProperties.setDbUrl(null);  // nullify dbUrl intentionally!;
+        shardDbProperties.setDbIdentity(shardDbProperties.getDbName() != null ? shardDbProperties.getDbName() : DbProperties.DB_SYSTEM_NAME); // put shard related info
         shardDb = new TransactionalDataSource(shardDbProperties, databaseManager.getPropertiesHolder());
+
         return this;
     }
 

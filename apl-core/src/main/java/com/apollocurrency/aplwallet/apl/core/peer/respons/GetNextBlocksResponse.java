@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.peer.respons;
 
 import com.apollocurrency.aplwallet.api.p2p.respons.BaseP2PResponse;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
 import lombok.Getter;
 
 import java.util.List;

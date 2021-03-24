@@ -6,9 +6,8 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.48.0</version>
+    <version>1.48.3</version>
   </parent>
-
   <artifactId>apl-exec</artifactId>
   <name>apl-exec</name>
   <packaging>jar</packaging>
@@ -34,6 +33,10 @@
       <artifactId>apl-conf</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+        <groupId>io.firstbridge</groupId>
+        <artifactId>fbprocess</artifactId>        
+    </dependency>    
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>

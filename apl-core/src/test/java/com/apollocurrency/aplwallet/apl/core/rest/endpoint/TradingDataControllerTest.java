@@ -4,7 +4,7 @@ import com.apollocurrency.aplwallet.api.dto.TradingDataOutputDTO;
 import com.apollocurrency.aplwallet.api.trading.TradingDataOutput;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TradingDataOutputToDtoConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
-import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
+import com.apollocurrency.aplwallet.apl.dex.core.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.service.graph.DexTradingDataService;
 import com.apollocurrency.aplwallet.apl.exchange.service.graph.TimeFrame;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,7 +37,7 @@ class TradingDataControllerTest {
     @BeforeEach
     void setup() {
         dispatcher = MockDispatcherFactory.createDispatcher();
-        TradingDataController tradingDataController = new TradingDataController(service, null, null, null);
+        TradingDataController tradingDataController = new TradingDataController(service, null);
         dispatcher.getRegistry().addSingletonResource(tradingDataController);
         dispatcher.getProviderFactory().registerProvider(LegacyParameterExceptionMapper.class);
         tradingDataOutput.init();

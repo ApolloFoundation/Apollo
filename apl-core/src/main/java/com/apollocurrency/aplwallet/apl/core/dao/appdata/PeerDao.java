@@ -40,15 +40,17 @@ import java.util.List;
 @Singleton
 public class PeerDao {
 
-    private static DatabaseManager databaseManager;
+    private final DatabaseManager databaseManager;
 
     @Inject
     public PeerDao(DatabaseManager databaseManagerParam) {
         databaseManager = databaseManagerParam;
     }
 
+
     public List<PeerEntity> loadPeers() {
         List<PeerEntity> peers = new ArrayList<>();
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * FROM peer");
@@ -69,7 +71,9 @@ public class PeerDao {
         return peers;
     }
 
+
     public void deletePeer(PeerEntity peer) {
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection()) {
             PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?");
@@ -80,7 +84,9 @@ public class PeerDao {
         }
     }
 
+
     public void deletePeers(Collection<PeerEntity> peers) {
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("DELETE FROM peer WHERE address = ?")) {
@@ -94,12 +100,18 @@ public class PeerDao {
     }
 
     public void updatePeers(Collection<PeerEntity> peers) {
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         dataSource.begin();
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.MERGE)
-             PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
-                 + "(address, services, last_updated, x509pem, ip_and_port) KEY(address) VALUES(?, ?, ?, ?, ?)")) {
+
+             PreparedStatement pstmt = con.prepareStatement("INSERT INTO peer "
+                 + "(address, services, last_updated) "
+                 + "VALUES(?, ?, ?) "
+                 + "ON DUPLICATE KEY UPDATE "
+                 + "address = VALUES(address), services = VALUES(services), last_updated = VALUES(last_updated)")
+        ) {
             for (PeerEntity peer : peers) {
                 pstmt.setString(1, peer.getAddress());
                 pstmt.setLong(2, peer.getServices());
@@ -113,13 +125,17 @@ public class PeerDao {
         }
     }
 
+
     public void updatePeer(Peer peer) {
+
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         dataSource.begin();
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.MERGE)
-             PreparedStatement pstmt = con.prepareStatement("MERGE INTO peer "
-                 + "(address, services, last_updated) KEY(address) VALUES(?, ?, ?)")) {
+             PreparedStatement pstmt = con.prepareStatement("INSERT INTO peer "
+                 + "(address, services, last_updated) VALUES(?, ?, ?) "
+                 + "ON DUPLICATE KEY UPDATE "
+                 + "address = VALUES(address), services = VALUES(services), last_updated = VALUES(last_updated)")) {
             pstmt.setString(1, peer.getAnnouncedAddress());
             pstmt.setLong(2, peer.getServices());
             pstmt.setInt(3, peer.getLastUpdated());

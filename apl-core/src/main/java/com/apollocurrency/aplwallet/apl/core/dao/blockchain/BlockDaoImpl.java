@@ -15,26 +15,25 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.app.BlockNotFoundException;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -51,48 +50,37 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Singleton
 public class BlockDaoImpl implements BlockDao {
     private static final Logger LOG = getLogger(BlockDaoImpl.class);
+    static final String SELECT_ALL_AFTER_HEIGHT_QUERY = "SELECT * FROM block WHERE height > ? ORDER BY height LIMIT ?";
 
-//    @Inject
-//    @CacheProducer
-//    @CacheType(PUBLIC_KEY_CACHE_NAME)
-//    private Cache<Long, BlockIndex> publicKeyCache;
-
+    private final BlockEntityRowMapper entityRowMapper;
     private final DatabaseManager databaseManager;
 
     @Inject
-    public BlockDaoImpl(DatabaseManager databaseManager) {
-        // this.blockCacheSize = blockCacheSize;
+    public BlockDaoImpl(DatabaseManager databaseManager, BlockEntityRowMapper blockEntityRowMapper) {
         this.databaseManager = Objects.requireNonNull(databaseManager, "DatabaseManager cannot be null");
-    }
-
-    private void clearBlockCache() {
-//        synchronized (blockCache) {
-//            blockCache.clear();
-//            heightMap.clear();
-//            transactionCache.clear();
-//        }
+        this.entityRowMapper = Objects.requireNonNull(blockEntityRowMapper);
     }
 
     @Transactional(readOnly = true)
     @Override
-    public Block findBlock(long blockId, TransactionalDataSource dataSource) {
+    public BlockEntity findBlock(long blockId, TransactionalDataSource dataSource) {
         // Check the block cache
         // Search the database
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE id = ?")) {
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE id = ?")
+        ) {
             pstmt.setLong(1, blockId);
             try (ResultSet rs = pstmt.executeQuery()) {
-                Block block = null;
+                BlockEntity blockEntity = null;
                 if (rs.next()) {
-                    block = loadBlock(con, rs);
+                    blockEntity = entityRowMapper.map(rs, null);
                 }
-                return block;
+                return blockEntity;
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
     }
-
 
     @Transactional(readOnly = true)
     @Override
@@ -101,13 +89,14 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public Block findFirstBlock() {
+    public BlockEntity findFirstBlock() {
         try (Connection con = databaseManager.getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block order by db_id LIMIT 1")) {
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block order by db_id LIMIT 1")
+        ) {
             try (ResultSet rs = pstmt.executeQuery()) {
-                Block block = null;
+                BlockEntity block = null;
                 if (rs.next()) {
-                    block = loadBlock(con, rs);
+                    block = entityRowMapper.map(rs, null);
                 }
                 return block;
             }
@@ -123,7 +112,8 @@ public class BlockDaoImpl implements BlockDao {
         // Search the database
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                 "SELECT height FROM block WHERE id = ? AND (next_block_id <> 0 OR next_block_id IS NULL)")) {
+                 "SELECT height FROM block WHERE id = ? AND (next_block_id <> 0 OR next_block_id IS NULL)")
+        ) {
             pstmt.setLong(1, blockId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next() && rs.getInt("height") <= height;
@@ -139,7 +129,8 @@ public class BlockDaoImpl implements BlockDao {
         // Check the cache
         // Search the database
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height = ?")) {
+             PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height = ?")
+        ) {
             pstmt.setInt(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (!rs.next()) {
@@ -154,16 +145,17 @@ public class BlockDaoImpl implements BlockDao {
 
     @Transactional(readOnly = true)
     @Override
-    public Block findBlockAtHeight(int height, TransactionalDataSource dataSource) {
+    public BlockEntity findBlockAtHeight(int height, TransactionalDataSource dataSource) {
         // Check the cache
         // Search the database
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height = ?")) {
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE height = ?")
+        ) {
             pstmt.setInt(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {
-                Block block;
+                BlockEntity block;
                 if (rs.next()) {
-                    block = loadBlock(con, rs);
+                    block = entityRowMapper.map(rs, null);
                 } else {
                     throw new BlockNotFoundException("Block at height " + height + " not found in database!");
                 }
@@ -175,16 +167,17 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public Block findLastBlock() {
+    public BlockEntity findLastBlock() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
              PreparedStatement pstmt = con.prepareStatement(
-                 "SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY timestamp DESC LIMIT 1")) {
-            Block block = null;
+                 "SELECT * FROM block WHERE next_block_id <> 0 OR next_block_id IS NULL ORDER BY `timestamp` DESC LIMIT 1")
+        ) {
+            BlockEntity block = null;
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    block = loadBlock(con, rs);
+                    block = entityRowMapper.map(rs, null);
                 }
             }
             return block;
@@ -193,29 +186,14 @@ public class BlockDaoImpl implements BlockDao {
         }
     }
 
-/*
-    @Override
-    public DbIterator<Block> getAllBlocks() {
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block ORDER BY db_id ASC");
-            return getBlocks(con, pstmt);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-*/
-
     @Override
     public List<byte[]> getBlockSignaturesFrom(int fromHeight, int toHeight) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         List<byte[]> blockSignatures = new ArrayList<>();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT block_signature FROM block "
-                 + "WHERE height >= ? AND height < ? ")) {
+                 + "WHERE height >= ? AND height < ? ")
+        ) {
             pstmt.setInt(1, fromHeight);
             pstmt.setInt(2, toHeight);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -230,47 +208,17 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public DbIterator<Block> getBlocks(Connection con, PreparedStatement pstmt) {
-        return new DbIterator<>(con, pstmt, this::loadBlock);
-    }
-
-    @Override
-    public DbIterator<Block> getBlocksByAccount(long accountId, int from, int to, int timestamp) {
-        LOG.trace("start getBlocksByAccount DbIter(accountId={}, from={}, to={}, timestamp={} )...",
-            accountId, from, to, timestamp);
-        Connection con = null;
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE generator_id = ? "
-                + (timestamp > 0 ? " AND timestamp >= ? " : " ") + "ORDER BY height DESC"
-                + DbUtils.limitsClause(from, to));
-            int i = 0;
-            pstmt.setLong(++i, accountId);
-            if (timestamp > 0) {
-                pstmt.setInt(++i, timestamp);
-            }
-            DbUtils.setLimits(++i, pstmt, from, to);
-            return getBlocks(con, pstmt);
-        } catch (SQLException e) {
-            DbUtils.close(con);
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    @Override
-    public DbIterator<Block> getBlocksByAccount(TransactionalDataSource dataSource, long accountId, int from, int to, int timestamp) {
-        LOG.trace("start getBlocksByAccount DbIter(dataSource={}, accountId={}, from={}, to={}, timestamp={} )...",
+    public List<BlockEntity> getBlocksByAccount(TransactionalDataSource dataSource, long accountId, int from, int to, int timestamp) {
+        LOG.trace("start getBlocksByAccount(dataSource={}, accountId={}, from={}, to={}, timestamp={} )...",
             dataSource != null ? dataSource.getDbIdentity() : null, accountId, from, to, timestamp);
         if (dataSource == null) {
             dataSource = databaseManager.getDataSource();
         }
-        Connection con = null;
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE generator_id = ? "
-                + (timestamp > 0 ? " AND timestamp >= ? " : " ") + "ORDER BY height DESC"
-                + DbUtils.limitsClause(from, to));
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE generator_id = ? "
+                 + (timestamp > 0 ? " AND `timestamp` >= ? " : " ") + "ORDER BY height DESC"
+                 + DbUtils.limitsClause(from, to))
+        ) {
             int i = 0;
             pstmt.setLong(++i, accountId);
             if (timestamp > 0) {
@@ -279,46 +227,38 @@ public class BlockDaoImpl implements BlockDao {
             DbUtils.setLimits(++i, pstmt, from, to);
             return getBlocks(con, pstmt);
         } catch (SQLException e) {
-            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }
 
     @Override
-    public DbIterator<Block> getBlocks(TransactionalDataSource dataSource, int from, int to, int timestamp) {
+    public List<BlockEntity> getBlocks(TransactionalDataSource dataSource, int from, int to, int timestamp) {
         LOG.debug("start getBlocks DbIter( from={}, to={}, timestamp={} )...", from, to, timestamp);
-        Connection con = null;
         if (dataSource == null) {
             dataSource = databaseManager.getDataSource();
         }
-        try {
-            con = dataSource.getConnection();
-            PreparedStatement pstmt = con.prepareStatement(
-                "SELECT * FROM block WHERE height <= ? AND height >= ? and timestamp >= ? ORDER BY height DESC");
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(
+                 "SELECT * FROM block WHERE height <= ? AND height >= ? and `timestamp` >= ? ORDER BY height DESC");
+        ) {
             pstmt.setInt(1, from);
             pstmt.setInt(2, to);
             pstmt.setInt(3, timestamp);
             return getBlocks(con, pstmt);
         } catch (SQLException e) {
-            DbUtils.close(con);
             throw new RuntimeException(e.toString(), e);
         }
     }
 
     @Override
-    public Long getBlockCount(int from, int to) {
-        // select from main db
-        return getBlockCount(null, from, to);
-    }
-
-    @Override
-    public Long getBlockCount(TransactionalDataSource dataSource, int from, int to) {
+    public long getBlockCount(TransactionalDataSource dataSource, int from, int to) {
         if (dataSource == null) {
             // select from main db
             dataSource = databaseManager.getDataSource();
         }
-        try (Connection con = dataSource.getConnection()) {
-            PreparedStatement pstmt = con.prepareStatement("SELECT count(*) as blockCount FROM block WHERE height >= ? AND height < ?");
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT count(*) as blockCount FROM block WHERE height >= ? AND height < ?")
+        ) {
             pstmt.setInt(1, from);
             pstmt.setInt(2, to);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -333,27 +273,13 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public int getBlockCount(long accountId) {
-        TransactionalDataSource dataSource = databaseManager.getDataSource();
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM block WHERE generator_id = ?")) {
-            pstmt.setLong(1, accountId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                rs.next();
-                return rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    @Override
     public int getBlockCount(TransactionalDataSource dataSource, long accountId) {
         if (dataSource == null) {
             dataSource = databaseManager.getDataSource();
         }
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM block WHERE generator_id = ?")) {
+             PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(*) FROM block WHERE generator_id = ?")
+        ) {
             pstmt.setLong(1, accountId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 rs.next();
@@ -387,52 +313,45 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public List<Block> getBlocksAfter(int height, List<Long> blockIdList, List<Block> result, TransactionalDataSource dataSource, int index) {
+    public List<BlockEntity> getBlocksAfter(int height, List<Long> blockIdList, List<BlockEntity> result, TransactionalDataSource dataSource, int index) {
         // Search the database
-        try (Connection con = dataSource.getConnection()) {
-            return getBlocksAfter(height, blockIdList, result, con, index);
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
-
-    @Override
-    public List<Block> getBlocksAfter(int height, List<Long> blockIdList, List<Block> result, Connection con, int index) {
-        // Search the database
-        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
-            + "WHERE height > ? "
-            + "ORDER BY height ASC LIMIT ?")) {
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block "
+                 + "WHERE height > ? "
+                 + "ORDER BY height ASC LIMIT ?")
+        ) {
             pstmt.setLong(1, height);
             pstmt.setInt(2, blockIdList.size() - index);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    Block block = this.loadBlock(con, rs);
+                    BlockEntity block = entityRowMapper.map(rs, null);
                     if (block.getId() != blockIdList.get(index++)) {
                         LOG.debug("Block id {} not equal to {}", block.getId(), blockIdList.get(index - 1));
                         break;
                     }
                     result.add(block);
                 }
+                return result;
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        return result;
     }
 
     @Override
-    public Block findBlockWithVersion(int skipCount, int version) {
+    public BlockEntity findBlockWithVersion(int skipCount, int version) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                 "SELECT * FROM block WHERE version = ? ORDER BY timestamp DESC LIMIT 1 OFFSET ?")) {
+                 "SELECT * FROM block WHERE version = ? ORDER BY `timestamp` DESC LIMIT 1 OFFSET ?")
+        ) {
             int i = 0;
             pstmt.setInt(++i, version);
             pstmt.setInt(++i, skipCount);
-            Block block = null;
+            BlockEntity block = null;
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    block = loadBlock(con, rs);
+                    block = entityRowMapper.map(rs, null);
                 }
             }
             return block;
@@ -442,15 +361,16 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public Block findLastBlock(int timestamp) {
+    public BlockEntity findLastBlock(int timestamp) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE timestamp <= ? ORDER BY timestamp DESC LIMIT 1")) {
+             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM block WHERE `timestamp` <= ? ORDER BY `timestamp` DESC LIMIT 1")
+        ) {
             pstmt.setInt(1, timestamp);
-            Block block = null;
+            BlockEntity block = null;
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    block = loadBlock(con, rs);
+                    block = entityRowMapper.map(rs, null);
                 }
             }
             return block;
@@ -465,7 +385,8 @@ public class BlockDaoImpl implements BlockDao {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(
-                 "SELECT generator_id, COUNT(generator_id) AS count FROM block WHERE height >= ? GROUP BY generator_id having count > 1 limit ?")) {
+                 "SELECT generator_id, COUNT(generator_id) AS count FROM block WHERE height >= ? GROUP BY generator_id having count > 1 limit ?")
+        ) {
             pstmt.setInt(1, startHeight);
             pstmt.setInt(2, limit);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -480,44 +401,29 @@ public class BlockDaoImpl implements BlockDao {
     }
 
     @Override
-    public Block loadBlock(Connection con, ResultSet rs) {
-        try {
-            int version = rs.getInt("version");
-            int timestamp = rs.getInt("timestamp");
-            long previousBlockId = rs.getLong("previous_block_id");
-            long totalAmountATM = rs.getLong("total_amount");
-            long totalFeeATM = rs.getLong("total_fee");
-            int payloadLength = rs.getInt("payload_length");
-            long generatorId = rs.getLong("generator_id");
-            byte[] previousBlockHash = rs.getBytes("previous_block_hash");
-            BigInteger cumulativeDifficulty = new BigInteger(rs.getBytes("cumulative_difficulty"));
-            long baseTarget = rs.getLong("base_target");
-            long nextBlockId = rs.getLong("next_block_id");
-            if (nextBlockId == 0 && !rs.wasNull()) {
-                throw new IllegalStateException("Attempting to load invalid block");
+    public List<BlockEntity> getBlocks(Connection con, PreparedStatement pstmt) {
+        List<BlockEntity> blocks = new ArrayList<>();
+        try (ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                BlockEntity blockEntity = entityRowMapper.mapWithException(rs, null);
+                blocks.add(blockEntity);
             }
-            int height = rs.getInt("height");
-            byte[] generationSignature = rs.getBytes("generation_signature");
-            byte[] blockSignature = rs.getBytes("block_signature");
-            byte[] payloadHash = rs.getBytes("payload_hash");
-            long id = rs.getLong("id");
-            int timeout = rs.getInt("timeout");
-            return new BlockImpl(version, timestamp, previousBlockId, totalAmountATM, totalFeeATM, payloadLength, payloadHash,
-                generatorId, generationSignature, blockSignature, previousBlockHash,
-                cumulativeDifficulty, baseTarget, nextBlockId, height, id, timeout,
-                null);
-        } catch (SQLException e) {
+        } catch (SQLException | AplException.NotValidException e) {
             throw new RuntimeException(e.toString(), e);
         }
+        return blocks;
     }
 
     @Override
-    public void saveBlock(Connection con, Block block) {
+    public void saveBlock(BlockEntity block) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
         try {
-            try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, timestamp, previous_block_id, "
-                + "total_amount, total_fee, payload_length, previous_block_hash, next_block_id, cumulative_difficulty, "
-                + "base_target, height, generation_signature, block_signature, payload_hash, generator_id, timeout) "
-                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            try (Connection con = dataSource.getConnection();
+                 PreparedStatement pstmt = con.prepareStatement("INSERT INTO block (id, version, `timestamp`, previous_block_id, "
+                     + "total_amount, total_fee, payload_length, previous_block_hash, next_block_id, cumulative_difficulty, "
+                     + "base_target, height, generation_signature, block_signature, payload_hash, generator_id, timeout) "
+                     + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+            ) {
                 int i = 0;
                 pstmt.setLong(++i, block.getId());
                 pstmt.setInt(++i, block.getVersion());
@@ -539,19 +445,13 @@ public class BlockDaoImpl implements BlockDao {
                 pstmt.executeUpdate();
             }
             if (block.getPreviousBlockId() != 0) {
-                try (PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = ? WHERE id = ?")) {
+                try (Connection con = dataSource.getConnection();
+                     PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = ? WHERE id = ?")
+                ) {
                     pstmt.setLong(1, block.getId());
                     pstmt.setLong(2, block.getPreviousBlockId());
                     pstmt.executeUpdate();
                 }
-//                Update next block id for cached block
-//                Block previousBlock;
-//                synchronized (blockCache) {
-//                    previousBlock = blockCache.get(block.getPreviousBlockId());
-//                }
-//                if (previousBlock != null) {
-//                    previousBlock.setNextBlockId(block.getId());
-//                }
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -560,11 +460,12 @@ public class BlockDaoImpl implements BlockDao {
 
     //set next_block_id to null instead of 0 to indicate successful block push
     @Override
-    public void commit(Block block) {
+    public void commit(long blockId) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = NULL WHERE id = ?")) {
-            pstmt.setLong(1, block.getId());
+             PreparedStatement pstmt = con.prepareStatement("UPDATE block SET next_block_id = NULL WHERE id = ?")
+        ) {
+            pstmt.setLong(1, blockId);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
@@ -576,7 +477,8 @@ public class BlockDaoImpl implements BlockDao {
         long blockId;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height = ?")) {
+             PreparedStatement pstmt = con.prepareStatement("SELECT id FROM block WHERE height = ?")
+        ) {
             pstmt.setInt(1, height);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (!rs.next()) {
@@ -587,7 +489,7 @@ public class BlockDaoImpl implements BlockDao {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        LOG.debug("Deleting blocks starting from height %s", height);
+        LOG.debug("Deleting blocks starting from height {}", height);
         deleteBlocksFrom(blockId);
     }
 
@@ -595,11 +497,11 @@ public class BlockDaoImpl implements BlockDao {
      * {@inheritDoc}
      */
     @Override
-    public Block deleteBlocksFrom(long blockId) {
+    public BlockEntity deleteBlocksFrom(long blockId) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         boolean inTransaction = dataSource.isInTransaction();
         if (!inTransaction) {
-            Block lastBlock;
+            BlockEntity lastBlock;
             try {
                 dataSource.begin();
                 lastBlock = deleteBlocksFrom(blockId);
@@ -613,11 +515,12 @@ public class BlockDaoImpl implements BlockDao {
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
              @DatabaseSpecificDml(DmlMarker.IFNULL_USE)
-             PreparedStatement pstmtBlockSelect = con.prepareStatement("SELECT db_id, id FROM block WHERE timestamp >= "
-                 + "IFNULL ((SELECT timestamp FROM block WHERE id = ?), " + Integer.MAX_VALUE + ") ORDER BY timestamp DESC");
+             PreparedStatement pstmtBlockSelect = con.prepareStatement("SELECT db_id, id FROM block WHERE `timestamp` >= "
+                 + "IFNULL ((SELECT `timestamp` FROM block WHERE id = ?), " + Integer.MAX_VALUE + ") ORDER BY `timestamp` DESC");
              PreparedStatement pstmtBlockDelete = con.prepareStatement("DELETE FROM block WHERE db_id = ?");
+//             PreparedStatement pstmtTransactionDelete = con.prepareStatement("DELETE TX, US from transaction AS TX LEFT JOIN update_status AS US ON TX.id = US.transaction_id WHERE TX.db_id = ?");
              PreparedStatement pstmtTransactionDelete = con.prepareStatement("DELETE FROM transaction WHERE db_id = ?");
-             PreparedStatement pstmtTransactionSelect = con.prepareStatement("SELECT db_id FROM transaction WHERE block_id = ?")
+             PreparedStatement pstmtTransactionSelect = con.prepareStatement("SELECT db_id FROM transaction WHERE block_id = ?");
         ) {
             try {
                 pstmtBlockSelect.setLong(1, blockId);
@@ -636,7 +539,7 @@ public class BlockDaoImpl implements BlockDao {
                         dataSource.commit(false);
                     }
                 }
-                Block lastBlock = findLastBlock();
+                BlockEntity lastBlock = findLastBlock();
                 if (lastBlock == null) {
                     // should never happen, but possible in rare error cases
                     LOG.warn("Block was not found in 'main db' by blockId = {}", blockId);
@@ -656,8 +559,6 @@ public class BlockDaoImpl implements BlockDao {
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
-        } finally {
-//            clearBlockCache();
         }
     }
 
@@ -677,18 +578,33 @@ public class BlockDaoImpl implements BlockDao {
         }
         LOG.debug("Deleting blockchain...");
         try (Connection con = dataSource.getConnection();
-             Statement stmt = con.createStatement()) {
-            try {
-                stmt.executeUpdate("TRUNCATE TABLE transaction");
-                stmt.executeUpdate("TRUNCATE TABLE block");
-                LOG.debug("DONE Deleting blockchain...");
-            } catch (SQLException e) {
-                dataSource.rollback(false);
-                throw e;
-            }
+             Statement stmt = con.createStatement()
+        ) {
+            stmt.executeUpdate("TRUNCATE TABLE transaction");
+            stmt.executeUpdate("TRUNCATE TABLE block");
+            LOG.debug("DONE Deleting blockchain...");
         } catch (SQLException e) {
+            dataSource.rollback(false);
             throw new RuntimeException(e.toString(), e);
         }
     }
 
+    @Override
+    public List<BlockEntity> getBlocksAfter(int height, int limit) {
+        List<BlockEntity> resultList = new ArrayList<>();
+        try (Connection con = databaseManager.getDataSource().getConnection();
+            PreparedStatement pstmt = con.prepareStatement(SELECT_ALL_AFTER_HEIGHT_QUERY)) {
+            pstmt.setLong(1, height);
+            pstmt.setInt(2, limit);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    BlockEntity block = entityRowMapper.map(rs, null);
+                    resultList.add(block);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        return resultList;
+    }
 }

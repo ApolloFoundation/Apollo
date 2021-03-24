@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
@@ -33,7 +33,8 @@ public class GetAllTransactions extends AbstractAPIRequestHandler {
 
         byte type = HttpParameterParserUtil.getByteOrNegative(req, "type", false);
         byte subtype = HttpParameterParserUtil.getByteOrNegative(req, "subtype", false);
-        if (TransactionTypes.find(type, subtype) == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
+        TransactionTypes.TransactionTypeSpec privatePayment = TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT;
+        if (privatePayment.getType() == type && privatePayment.getSubtype() == subtype) {
             return PRIVATE_TRANSACTIONS_ACCESS_DENIED;
         }
         int firstIndex = HttpParameterParserUtil.getFirstIndex(req);

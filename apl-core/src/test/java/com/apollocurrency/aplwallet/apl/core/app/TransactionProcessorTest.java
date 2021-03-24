@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.app.runnable.TaskDispatchManager;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTxValidationResult;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
@@ -31,17 +32,20 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,6 +59,7 @@ import java.util.List;
 import static com.apollocurrency.aplwallet.apl.data.BlockTestData.BLOCK_5_HEIGHT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -78,10 +83,11 @@ class TransactionProcessorTest {
     private GlobalSync globalSync = mock(GlobalSync.class);
     private TaskDispatchManager taskDispatchManager = mock(TaskDispatchManager.class);
     private AccountPublicKeyService accountPublicKeyService = mock(AccountPublicKeyService.class);
-    private TransactionBuilder transactionBuilder = mock(TransactionBuilder.class);
+    private TransactionBuilderFactory transactionBuilderFactory = mock(TransactionBuilderFactory.class);
     private PrunableLoadingService prunableLoadingService = mock(PrunableLoadingService.class);
     private TransactionTypeFactory transactionTypeFactory = mock(TransactionTypeFactory.class);
     private UnconfirmedTransactionProcessingService processingService = mock(UnconfirmedTransactionProcessingService.class);
+    private UnconfirmedTransactionCreator unconfirmedTransactionCreator = mock(UnconfirmedTransactionCreator.class);
     private MemPool memPool = mock(MemPool.class);
 
     @WeldSetup
@@ -104,6 +110,7 @@ class TransactionProcessorTest {
         .addBeans(MockBean.of(taskDispatchManager, TaskDispatchManager.class))
         .addBeans(MockBean.of(accountPublicKeyService, AccountPublicKeyService.class))
         .addBeans(MockBean.of(transactionTypeFactory, TransactionTypeFactory.class))
+        .addBeans(MockBean.of(unconfirmedTransactionCreator, UnconfirmedTransactionCreator.class))
         .build();
 
     private TransactionProcessor service;
@@ -111,12 +118,20 @@ class TransactionProcessorTest {
     @Mock
     private javax.enterprise.event.Event<List<Transaction>> listEvent;
 
+    @BeforeAll
+    static void beforeAll() {
+        Convert2.init("APL", 0);
+    }
+
     @BeforeEach
     void setUp() {
         td = new TransactionTestData();
         service = new TransactionProcessorImpl(transactionValidator,
             listEvent, databaseManager,
-            globalSync, timeService, blockchainConfig, peersService, blockchain, transactionBuilder, prunableLoadingService, processingService, memPool);
+            globalSync, timeService, blockchainConfig, peersService, blockchain, transactionBuilderFactory, prunableLoadingService,
+            processingService,
+            unconfirmedTransactionCreator,
+            memPool);
     }
 
     @Test
@@ -130,8 +145,8 @@ class TransactionProcessorTest {
             .when(processingService)
             .validateBeforeProcessing(any(UnconfirmedTransaction.class));
         doReturn(-9128485677221760321L).when(transaction).getId();
-        doReturn(100L).when(transaction).getFeeATM();
-        doReturn(100).when(transaction).getFullSize();
+        UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, expirationTimestamp, 10, 100);
+        doReturn(unconfirmedTransaction).when(unconfirmedTransactionCreator).from(eq(transaction), anyLong());
         doReturn(true).when(transactionValidator).verifySignature(transaction);
         doReturn(true).when(processingService).addNewUnconfirmedTransaction(any(UnconfirmedTransaction.class));
         doReturn(false).when(blockchain).hasTransaction(-9128485677221760321L);
@@ -163,11 +178,9 @@ class TransactionProcessorTest {
         doReturn(UnconfirmedTxValidationResult.OK_RESULT)
             .when(processingService)
             .validateBeforeProcessing(any(UnconfirmedTransaction.class));
-        doReturn(100L).when(transaction).getFeeATM();
-        doReturn(100).when(transaction).getFullSize();
         doReturn(true).when(processingService).addNewUnconfirmedTransaction(any(UnconfirmedTransaction.class));
-        UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, expirationTimestamp);
-//        doReturn(false).when(blockchain).hasTransaction(-9128485677221760321L);
+        UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, expirationTimestamp, 10, 100);
+        doReturn(unconfirmedTransaction).when(unconfirmedTransactionCreator).from(eq(transaction), anyLong());
         doReturn(BLOCK_5_HEIGHT).when(blockchain).getHeight();
         doReturn(Long.valueOf(BLOCK_5_HEIGHT - 1)).when(blockchainConfig).getLastKnownBlock();
         TransactionalDataSource dataSource = mock(TransactionalDataSource.class);
@@ -179,8 +192,8 @@ class TransactionProcessorTest {
 
         //THEN
         verify(transactionValidator).validateLightly(transaction);
-        verify(transactionValidator).validateSignatureWithTxFee(transaction);
-        verify(processingService).addNewUnconfirmedTransaction(any(UnconfirmedTransaction.class));
+        verify(transactionValidator).validateSignatureWithTxFeeLessStrict(transaction);
+        verify(processingService).addNewUnconfirmedTransaction(unconfirmedTransaction);
     }
 
 }

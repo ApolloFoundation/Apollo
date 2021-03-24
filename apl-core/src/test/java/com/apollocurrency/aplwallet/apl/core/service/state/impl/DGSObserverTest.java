@@ -9,10 +9,18 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.DGSObserver;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
+import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
@@ -22,7 +30,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSTagTable;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
@@ -34,6 +41,8 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
@@ -43,7 +52,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountLedgerServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.DGSTestData;
@@ -51,13 +59,16 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -71,21 +82,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+@Slf4j
 @Tag("slow")
 @EnableWeld
-public class DGSObserverTest {
+public class DGSObserverTest extends DbContainerBaseTest {
+
     @RegisterExtension
-    DbExtension extension = new DbExtension();
+    static DbExtension extension = new DbExtension(mariaDBContainer);
     Blockchain blockchain = mock(Blockchain.class);
     private TransactionTestData td = new TransactionTestData();
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
-        PropertiesHolder.class, BlockchainConfig.class, DaoConfig.class,
+        PropertiesHolder.class, DaoConfig.class,
         GlobalSyncImpl.class,
         FullTextConfigImpl.class,
         DGSPublicFeedbackTable.class,
-        TransactionRowMapper.class,
-        TransactionBuilder.class,
+        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionBuilderFactory.class,
         DGSFeedbackTable.class,
         DGSGoodsTable.class,
         DGSTagTable.class,
@@ -93,13 +106,16 @@ public class DGSObserverTest {
         DGSServiceImpl.class,
         DGSObserver.class,
         DerivedDbTablesRegistryImpl.class,
-        TimeServiceImpl.class, BlockDaoImpl.class, TransactionDaoImpl.class,
-        BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class,
-        BlockchainConfig.class)
+        TimeServiceImpl.class, BlockDaoImpl.class,
+        BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
+        TransactionDaoImpl.class,
+        BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
+        .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class))
         .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
         .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
@@ -111,6 +127,7 @@ public class DGSObserverTest {
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
+        .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
         .build();
     @Inject
     DGSService service;
@@ -127,6 +144,11 @@ public class DGSObserverTest {
     @BeforeEach
     public void setUp() {
         dtd = new DGSTestData();
+    }
+
+    @AfterEach
+    void tearDown() {
+        extension.cleanAndPopulateDb();
     }
 
     @Test

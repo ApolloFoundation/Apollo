@@ -25,7 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.alias.Alias;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -37,6 +36,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Locale;
+import java.util.Objects;
 
 @Singleton
 public class AliasTable extends VersionedDeletableEntityDbTable<Alias> {
@@ -52,11 +53,10 @@ public class AliasTable extends VersionedDeletableEntityDbTable<Alias> {
     };
 
     @Inject
-    public AliasTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                      DatabaseManager databaseManager,
+    public AliasTable(DatabaseManager databaseManager,
                       Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("alias", aliasDbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override
@@ -69,14 +69,22 @@ public class AliasTable extends VersionedDeletableEntityDbTable<Alias> {
         try (
             @DatabaseSpecificDml(DmlMarker.MERGE)
             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
-            PreparedStatement pstmt = con.prepareStatement("MERGE INTO alias (id, account_id, alias_name, "
-                + "alias_uri, timestamp, height) KEY (id, height) "
-                + "VALUES (?, ?, ?, ?, ?, ?)")
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO alias (id, account_id, alias_name, "
+                + "alias_name_lower, alias_uri, `timestamp`, height) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE id = VALUES(id), account_id = VALUES(account_id), alias_name = VALUES(alias_name), "
+                + "alias_name_lower = VALUES(alias_name_lower), alias_uri = VALUES(alias_uri), "
+                + "`timestamp` = VALUES(`timestamp`), height = VALUES(height)")
         ) {
+            Objects.requireNonNull(alias);
+            final String aliasName = alias.getAliasName();
+            Objects.requireNonNull(aliasName);
+
             int i = 0;
             pstmt.setLong(++i, alias.getId());
             pstmt.setLong(++i, alias.getAccountId());
             pstmt.setString(++i, alias.getAliasName());
+            pstmt.setString(++i, aliasName.toLowerCase(Locale.US));
             pstmt.setString(++i, alias.getAliasURI());
             pstmt.setInt(++i, alias.getTimestamp());
             pstmt.setInt(++i, alias.getHeight());

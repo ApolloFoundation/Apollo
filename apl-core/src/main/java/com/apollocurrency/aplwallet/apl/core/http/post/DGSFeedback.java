@@ -21,13 +21,13 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
-import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
+import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsFeedback;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
@@ -38,13 +38,13 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.GOODS_NOT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_PURCHASE;
 
 @Vetoed
-public final class DGSFeedback extends CreateTransaction {
+public final class DGSFeedback extends CreateTransactionHandler {
 
     private DGSService service = CDI.current().select(DGSService.class).get();
 
     public DGSFeedback() {
         super(new APITag[]{APITag.DGS, APITag.CREATE_TRANSACTION},
-            "purchase");
+                "purchase");
     }
 
     @Override

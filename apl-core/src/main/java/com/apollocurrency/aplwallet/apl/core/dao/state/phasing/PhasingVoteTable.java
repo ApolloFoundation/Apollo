@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingVote;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 
@@ -40,10 +39,9 @@ public class PhasingVoteTable extends EntityDbTable<PhasingVote> {
     private static final String TABLE_NAME = "phasing_vote";
 
     @Inject
-    public PhasingVoteTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                            DatabaseManager databaseManager,
+    public PhasingVoteTable(DatabaseManager databaseManager,
                             Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, KEY_FACTORY, false, null, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+        super(TABLE_NAME, KEY_FACTORY, false, null, databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override
