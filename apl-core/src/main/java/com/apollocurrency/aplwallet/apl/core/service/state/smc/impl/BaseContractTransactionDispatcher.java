@@ -1,12 +1,12 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractCmdProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractTransactionDispatcher;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.smc.IllegalStateException;
 import com.apollocurrency.smc.SMCException;
 import com.apollocurrency.smc.blockchain.crypt.CryptoLibProvider;
-import com.apollocurrency.smc.blockchain.tx.SMCTransaction;
-import com.apollocurrency.smc.blockchain.tx.SMCTransactionType;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SMCMachine;
 import com.apollocurrency.smc.contract.vm.SMCMachineFactory;
@@ -23,29 +23,29 @@ import java.util.Objects;
 public class BaseContractTransactionDispatcher implements ContractTransactionDispatcher {
     protected final CryptoLibProvider cryptoLibProvider;
     private final SMCMachineFactory machineFactory;
-    private final Map<SMCTransactionType, ContractCmdProcessor> registeredProcessors;
+    private final Map<TransactionTypes.TransactionTypeSpec, ContractCmdProcessor> registeredProcessors;
 
     public BaseContractTransactionDispatcher(CryptoLibProvider cryptoLibProvider, SMCMachineFactory machineFactory) {
-        this(cryptoLibProvider, machineFactory, new EnumMap<>(SMCTransactionType.class));
+        this(cryptoLibProvider, machineFactory, new EnumMap<>(TransactionTypes.TransactionTypeSpec.class));
     }
 
     public BaseContractTransactionDispatcher(CryptoLibProvider cryptoLibProvider,
                                              SMCMachineFactory machineFactory,
-                                             Map<SMCTransactionType, ContractCmdProcessor> registeredProcessors) {
+                                             Map<TransactionTypes.TransactionTypeSpec, ContractCmdProcessor> registeredProcessors) {
         this.cryptoLibProvider = Objects.requireNonNull(cryptoLibProvider);
         this.registeredProcessors = Objects.requireNonNull(registeredProcessors);
         this.machineFactory = Objects.requireNonNull(machineFactory);
     }
 
     @Override
-    public ContractCmdProcessor registerProcessor(SMCTransactionType transactionType,
+    public ContractCmdProcessor registerProcessor(TransactionTypes.TransactionTypeSpec transactionSpec,
                                                   ContractCmdProcessor processor) {
-        return registeredProcessors.put(transactionType, processor);
+        return registeredProcessors.put(transactionSpec, processor);
     }
 
     @Override
-    public ExecutionLog dispatch(SMCTransaction smcTransaction) {
-        ContractCmdProcessor proc = registeredProcessors.get(smcTransaction.getType());
+    public ExecutionLog dispatch(Transaction smcTransaction) {
+        ContractCmdProcessor proc = registeredProcessors.get(smcTransaction.getType().getSpec());
         if (proc != null) {
             try {
                 SMCMachine machine = machineFactory.createNewInstance();

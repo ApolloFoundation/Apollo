@@ -1,7 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
-import com.apollocurrency.smc.blockchain.tx.SMCTransaction;
-import com.apollocurrency.smc.blockchain.tx.SMCTransactionType;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 
 /**
@@ -10,13 +10,13 @@ import com.apollocurrency.smc.contract.vm.ExecutionLog;
 
 public interface ContractTransactionDispatcher {
 
-    ContractCmdProcessor registerProcessor(SMCTransactionType transactionType, ContractCmdProcessor processor);
+    ContractCmdProcessor registerProcessor(TransactionTypes.TransactionTypeSpec transactionType, ContractCmdProcessor processor);
 
     /**
      * Validate transaction, perform smart contract and manipulate balances
      *
      * @return the execution log
      */
-    ExecutionLog dispatch(SMCTransaction smcTransaction);
+    ExecutionLog dispatch(Transaction smcTransaction);
 
 }
