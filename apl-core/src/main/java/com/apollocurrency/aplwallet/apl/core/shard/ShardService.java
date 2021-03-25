@@ -232,8 +232,8 @@ public class ShardService {
 
     public CompletableFuture<MigrateState> tryCreateShardAsync(int newShardBlockHeight, int currentBlockchainHeight) {
         CompletableFuture<MigrateState> newShardingProcess = null;
-        log.debug(">> tryCreateShardAsync, scanning ? = {}, !isSharding={},\nCurrent config = {}",
-            !blockchainProcessor.isScanning(), !isSharding, blockchainConfig.getCurrentConfig());
+        log.debug(">> tryCreateShardAsync, scanning = {}, isSharding={},\nCurrent config = {}",
+            blockchainProcessor.isScanning(), isSharding, blockchainConfig.getCurrentConfig());
         if (!blockchainProcessor.isScanning()) {
             if (!isSharding) {
                 Shard lastShard = shardDao.getLastShard();
