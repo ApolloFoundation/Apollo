@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class SandboxValidationProcessor extends AbstractContractCmdProcessor {
+public class SandboxValidationProcessor extends AbstractContractTxProcessor {
 
     public SandboxValidationProcessor(ContractService contractService) {
         super(contractService);

@@ -17,9 +17,9 @@ import lombok.extern.slf4j.Slf4j;
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class CallMethodContractCmdProcessor extends AbstractContractCmdProcessor {
+public class CallMethodContractTxProcessor extends AbstractContractTxProcessor {
 
-    public CallMethodContractCmdProcessor(ContractService contractService) {
+    public CallMethodContractTxProcessor(ContractService contractService) {
         super(contractService);
     }
 
