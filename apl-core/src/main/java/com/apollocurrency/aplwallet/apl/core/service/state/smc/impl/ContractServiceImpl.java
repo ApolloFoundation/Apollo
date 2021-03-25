@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
@@ -38,6 +39,7 @@ import java.util.Objects;
 @Slf4j
 @Singleton
 public class ContractServiceImpl implements ContractService {
+    private Blockchain blockchain;
     private SmcContractTable smcContractTable;
     private SmcContractStateTable smcContractStateTable;
 
@@ -47,7 +49,8 @@ public class ContractServiceImpl implements ContractService {
     private HashSumProvider hashSumProvider;
 
     @Inject
-    public ContractServiceImpl(SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, HashSumProvider hashSumProvider) {
+    public ContractServiceImpl(Blockchain blockchain, SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, HashSumProvider hashSumProvider) {
+        this.blockchain = blockchain;
         this.smcContractTable = smcContractTable;
         this.smcContractStateTable = smcContractStateTable;
         this.contractModelToEntityConverter = contractModelToEntityConverter;
@@ -58,8 +61,14 @@ public class ContractServiceImpl implements ContractService {
     @Override
     @Transactional
     public void saveContract(SmartContract contract) {
+        //it's a new contract
         SmcContractEntity smcContractEntity = contractModelToEntityConverter.convert(contract);
+        smcContractEntity.setHeight(blockchain.getHeight()); // new height value
         SmcContractStateEntity smcContractStateEntity = contractModelToStateConverter.convert(contract);
+        smcContractStateEntity.setHeight(blockchain.getHeight()); // new height value
+        if (log.isTraceEnabled()) {
+            log.trace("Save smart contract at height {}, smc={}, state={}", smcContractEntity.getHeight(), smcContractEntity, smcContractStateEntity);
+        }
         //save contract
         smcContractTable.insert(smcContractEntity);
         //save state
@@ -86,9 +95,17 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    public boolean isContractExist(Address address) {
+        AplAddress aplAddress = new AplAddress(address);
+        SmcContractStateEntity smcStateEntity = smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(aplAddress.getLongId()));
+        return (smcStateEntity != null);
+    }
+
+    @Override
     @Transactional
     public void updateContractState(SmartContract contract) {
         SmcContractStateEntity smcContractStateEntity = contractModelToStateConverter.convert(contract);
+        smcContractStateEntity.setHeight(blockchain.getHeight()); // new height value
         smcContractStateTable.insert(smcContractStateEntity);
     }
 

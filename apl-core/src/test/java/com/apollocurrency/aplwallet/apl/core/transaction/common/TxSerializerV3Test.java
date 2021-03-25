@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcPublishTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcPublishContractTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
@@ -62,7 +62,7 @@ class TxSerializerV3Test {
         doReturn(chain).when(blockchainConfig).getChain();
         context = TxBContext.newInstance(chain);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
-            new SmcPublishTransactionType(blockchainConfig, accountService, accountPublicKeyService)
+            new SmcPublishContractTransactionType(blockchainConfig, accountService, accountPublicKeyService)
         ));
         transactionBuilderFactory = new TransactionBuilderFactory(transactionTypeFactory, blockchainConfig);
     }

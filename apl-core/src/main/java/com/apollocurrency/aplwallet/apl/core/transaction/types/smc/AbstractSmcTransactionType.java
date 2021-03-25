@@ -8,23 +8,31 @@ import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.ContractTxProcessorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
-import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.Objects;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public abstract class SmcTransactionType extends TransactionType {
+public abstract class AbstractSmcTransactionType extends TransactionType {
+    protected static final int MACHINE_WORD_SIZE = 32;
 
-    public SmcTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
+    protected ContractService contractService;
+    protected ContractTxProcessorFactory processorFactory;
+
+    public AbstractSmcTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, ContractService contractService, ContractTxProcessorFactory processorFactory) {
         super(blockchainConfig, accountService);
+        this.contractService = contractService;
+        this.processorFactory = processorFactory;
     }
 
     @Override
@@ -38,13 +46,18 @@ public abstract class SmcTransactionType extends TransactionType {
     }
 
     @Override
-    public @TransactionFee(FeeMarker.UNDO_UNCONFIRMED_BALANCE) void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
+    public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
     }
 
     @Override
     public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
         Objects.requireNonNull(buffer);
         return parseAttachment(new RlpReader(buffer.array()));
+    }
+
+    @Override
+    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
+        return isDuplicate(getSpec(), Long.toUnsignedString(transaction.getId()), duplicates, true);
     }
 
     @Override

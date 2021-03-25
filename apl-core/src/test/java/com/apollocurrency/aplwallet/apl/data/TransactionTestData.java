@@ -34,7 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSCurrencyIssu
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryPaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PrivatePaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcCallMethodTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcPublishTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcPublishContractTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.CriticalUpdateTransactiionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.ImportantUpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -166,7 +166,7 @@ public class TransactionTestData {
             new CriticalUpdateTransactiionType(blockchainConfig, accountService),
             new ImportantUpdateTransactionType(blockchainConfig, accountService),
             new ListingTransactionType(blockchainConfig, accountService, dgsService, prunableLoadingService),
-            new SmcPublishTransactionType(blockchainConfig, accountService, accountPublicKeyService),
+            new SmcPublishContractTransactionType(blockchainConfig, accountService, accountPublicKeyService),
             new SmcCallMethodTransactionType(blockchainConfig, accountService),
             new MSCurrencyDeletionTransactionType(blockchainConfig, accountService, currencyService)
         ));

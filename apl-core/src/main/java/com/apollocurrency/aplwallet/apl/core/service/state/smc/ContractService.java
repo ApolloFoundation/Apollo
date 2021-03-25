@@ -28,6 +28,14 @@ public interface ContractService {
      */
     SmartContract loadContract(Address address);
 
+    /**
+     * Checks if contract already exists
+     *
+     * @param address given contract address
+     * @return true if contract exists at given address
+     */
+    boolean isContractExist(Address address);
+
     void updateContractState(SmartContract contract);
 
     String loadSerializedContract(Address address);

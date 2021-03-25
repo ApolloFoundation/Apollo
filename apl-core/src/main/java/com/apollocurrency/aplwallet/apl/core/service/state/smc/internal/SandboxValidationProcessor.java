@@ -1,7 +1,9 @@
-package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
+/*
+ * Copyright (c) 2020-2021. Apollo Foundation.
+ */
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
+package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
+
 import com.apollocurrency.smc.contract.ContractState;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
@@ -11,20 +13,28 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Validate the smart contract - create and initialize the smart contract and manipulate balances in sandbox.
  * This validation process doesn't change the blockchain state.
+ * This processor should be used during the state independent validation routine of the transaction
  *
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class SandboxValidationProcessor extends AbstractContractTxProcessor {
+public class SandboxValidationProcessor implements ContractTxProcessor {
+    private SMCMachine smcMachine;
+    private SmartContract smartContract;
 
-    public SandboxValidationProcessor(ContractService contractService) {
-        super(contractService);
+    public SandboxValidationProcessor(SMCMachine smcMachine, SmartContract smartContract) {
+        this.smcMachine = smcMachine;
+        this.smartContract = smartContract;
     }
 
     @Override
-    public ExecutionLog doProcess(SMCMachine smcMachine, Transaction smcTransaction) {
+    public SmartContract smartContract() {
+        return smartContract;
+    }
+
+    @Override
+    public ExecutionLog process() {
         boolean isValid;
-        SmartContract smartContract = contractService.createNewContract(smcTransaction);
         validateState(ContractState.CREATED, smartContract);
 
         isValid = smcMachine.validate(smartContract);
@@ -33,9 +43,6 @@ public class SandboxValidationProcessor extends AbstractContractTxProcessor {
             //TODO: Update the Error code
             executionLog.setErrorCode(1L);
         }
-
-        smcMachine.shutdown();
-
         return executionLog;
     }
 }

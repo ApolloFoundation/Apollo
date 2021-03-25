@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEnt
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.ContractServiceImpl;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.contract.SmartContract;
@@ -26,6 +27,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 class ContractServiceTest {
 
     @Mock
+    Blockchain blockchain;
+    @Mock
     SmcContractTable smcContractTable;
     @Mock
     SmcContractStateTable smcContractStateTable;
@@ -42,7 +45,8 @@ class ContractServiceTest {
     void setUp() {
         initMocks(this);
 
-        contractService = new ContractServiceImpl(smcContractTable,
+        contractService = new ContractServiceImpl(blockchain,
+            smcContractTable,
             smcContractStateTable,
             contractModelToEntityConverter,
             contractModelToStateConverter,
