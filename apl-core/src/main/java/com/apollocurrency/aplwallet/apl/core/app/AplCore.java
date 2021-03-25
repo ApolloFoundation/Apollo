@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -285,7 +285,7 @@ public final class AplCore {
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 100.0, message);
             log.info("Copyright © 2013-2016 The NXT Core Developers.");
             log.info("Copyright © 2016-2017 Jelurida IP B.V..");
-            log.info("Copyright © 2017-2020 Apollo Foundation.");
+            log.info("Copyright © 2017-2021 Apollo Foundation.");
             log.info("See LICENSE.txt for more information");
             if (API.getWelcomePageUri() != null) {
                 log.info("Client UI is at " + API.getWelcomePageUri());
