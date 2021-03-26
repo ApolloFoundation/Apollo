@@ -289,7 +289,15 @@ public class PeersService {
         if (useProxy) {
             LOG.info("Using a proxy, will not create outbound websockets.");
         }
-
+        
+        if(!identityService.loadMyIdentity()){
+            log.error("Can not load or generate this node identity certificate or key");
+        }
+        
+        if(!identityService.loadTrusterCaCerts()){
+            log.error("Can not load trusted CA certificates, node ID verification is impossible");
+        }
+        
         fillMyPeerInfo();
 
         addListener(peer -> peersExecutorService.submit(() -> {
@@ -302,15 +310,7 @@ public class PeersService {
             }
         }), PeersService.Event.CHANGED_SERVICES);
 
-        // moved to Weld Event
-        /* Account.addListener(account -> connectablePeers.values().forEach(peer -> {
-            if (peer.getHallmark() != null && peer.getHallmark().getAccountId() == account.getId()) {
-                listeners.notify(peer, Event.WEIGHT);
-            }
-        }), AccountEventType.BALANCE);*/
-
         configureBackgroundTasks();
-        identityService.loadAll();
         peerHttpServer.start();
     }
 
