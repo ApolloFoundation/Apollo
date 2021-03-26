@@ -5,17 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpConverter;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
@@ -27,11 +22,11 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
 
     private final String contractName;//contract name is a constructor name
     private final String contractSource;
-    private final List<String> constructorParams;
+    private final String constructorParams;//coma separated string of values
     private final String languageName;
 
     @Builder
-    public SmcPublishContractAttachment(String contractName, String contractSource, List<String> constructorParams, String languageName) {
+    public SmcPublishContractAttachment(String contractName, String contractSource, String constructorParams, String languageName) {
         this.contractName = contractName;
         this.contractSource = contractSource;
         this.constructorParams = constructorParams;
@@ -42,7 +37,7 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
         super(reader);
         this.contractName = reader.readString();
         this.contractSource = reader.readString();
-        this.constructorParams = reader.readList(RlpConverter::toString);
+        this.constructorParams = reader.readString();
         this.languageName = reader.readString();
     }
 
@@ -50,7 +45,7 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
         super(attachmentData);
         this.contractName = String.valueOf(attachmentData.get(CONTRACT_NAME_FIELD));
         this.contractSource = String.valueOf(attachmentData.get(CONTRACT_SOURCE_FIELD));
-        this.constructorParams = new ArrayList<>((JSONArray) attachmentData.get(CONSTRUCTOR_PARAMS_FIELD));
+        this.constructorParams = String.valueOf(attachmentData.get(CONSTRUCTOR_PARAMS_FIELD));
         this.languageName = String.valueOf(attachmentData.get(LANGUAGE_FIELD));
     }
 
@@ -63,9 +58,7 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
     public void putMyJSON(JSONObject json) {
         json.put(CONTRACT_NAME_FIELD, this.contractName);
         json.put(CONTRACT_SOURCE_FIELD, this.contractSource);
-        JSONArray params = new JSONArray();
-        params.addAll(this.constructorParams);
-        json.put(CONSTRUCTOR_PARAMS_FIELD, params);
+        json.put(CONSTRUCTOR_PARAMS_FIELD, this.constructorParams);
         json.put(LANGUAGE_FIELD, languageName);
     }
 
@@ -74,7 +67,7 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
         builder
             .add(contractName)
             .add(contractSource)
-            .add(RlpList.ofStrings(constructorParams))
+            .add(constructorParams)
             .add(languageName);
     }
 

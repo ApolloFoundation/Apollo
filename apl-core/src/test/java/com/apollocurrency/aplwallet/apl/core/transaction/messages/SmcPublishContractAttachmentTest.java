@@ -11,9 +11,7 @@ import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -26,7 +24,7 @@ class SmcPublishContractAttachmentTest {
     final SmcPublishContractAttachment expected = SmcPublishContractAttachment.builder()
         .contractName("Deal")
         .contractSource("class Deal {}")
-        .constructorParams(List.of("123", "0x0A0B0C0D0E0F"))
+        .constructorParams("\"123\", \"0x0A0B0C0D0E0F\"")
         .languageName("javascript")
         .build();
 
@@ -41,10 +39,7 @@ class SmcPublishContractAttachmentTest {
         //THEN
         assertEquals(expected.getContractName(), attachment.getContractName());
         assertEquals(expected.getContractSource(), attachment.getContractSource());
-        assertArrayEquals(
-            expected.getConstructorParams().toArray(new String[0]),
-            attachment.getConstructorParams().toArray(new String[0])
-        );
+        assertEquals(expected.getConstructorParams(), attachment.getConstructorParams());
         assertEquals(expected.getLanguageName(), attachment.getLanguageName());
     }
 
@@ -65,12 +60,8 @@ class SmcPublishContractAttachmentTest {
         //THEN
         assertEquals(expected.getContractName(), attachment.getContractName());
         assertEquals(expected.getContractSource(), attachment.getContractSource());
-        assertArrayEquals(
-            expected.getConstructorParams().toArray(new String[0]),
-            attachment.getConstructorParams().toArray(new String[0])
-        );
+        assertEquals(expected.getConstructorParams(), attachment.getConstructorParams());
         assertEquals(expected.getLanguageName(), attachment.getLanguageName());
-
     }
 
     @Test

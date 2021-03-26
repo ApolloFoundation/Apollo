@@ -11,9 +11,7 @@ import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -24,7 +22,7 @@ class SmcCallMethodAttachmentTest {
 
     final SmcCallMethodAttachment expected = SmcCallMethodAttachment.builder()
         .methodName("purchase")
-        .methodParams(List.of("123", "0x0A0B0C0D0E0F"))
+        .methodParams("\"123\", \"0x0A0B0C0D0E0F\"")
         .build();
 
     @Test
@@ -37,10 +35,7 @@ class SmcCallMethodAttachmentTest {
 
         //THEN
         assertEquals(expected.getMethodName(), attachment.getMethodName());
-        assertArrayEquals(
-            expected.getMethodParams().toArray(new String[0]),
-            attachment.getMethodParams().toArray(new String[0])
-        );
+        assertEquals(expected.getMethodParams(), attachment.getMethodParams());
     }
 
     @Test
@@ -59,10 +54,7 @@ class SmcCallMethodAttachmentTest {
 
         //THEN
         assertEquals(expected.getMethodName(), attachment.getMethodName());
-        assertArrayEquals(
-            expected.getMethodParams().toArray(new String[0]),
-            attachment.getMethodParams().toArray(new String[0])
-        );
+        assertEquals(expected.getMethodParams(), attachment.getMethodParams());
     }
 
     @Test

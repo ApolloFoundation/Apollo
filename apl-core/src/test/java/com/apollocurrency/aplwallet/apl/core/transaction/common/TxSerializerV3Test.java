@@ -10,8 +10,10 @@ import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactor
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcPublishContractTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -20,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.io.JsonBuffer;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
+import com.apollocurrency.smc.contract.vm.SMCMachineFactory;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeAll;
@@ -48,6 +51,11 @@ class TxSerializerV3Test {
     BlockchainConfig blockchainConfig;
     @Mock
     Chain chain;
+    @Mock
+    ContractService contractService;
+    @Mock
+    SMCMachineFactory smcMachineFactory;
+
     TxBContext context;
     TransactionTypeFactory transactionTypeFactory;
     TransactionBuilderFactory transactionBuilderFactory;
@@ -62,7 +70,7 @@ class TxSerializerV3Test {
         doReturn(chain).when(blockchainConfig).getChain();
         context = TxBContext.newInstance(chain);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
-            new SmcPublishContractTransactionType(blockchainConfig, accountService, accountPublicKeyService)
+            new SmcPublishContractTransactionType(blockchainConfig, accountService, contractService, smcMachineFactory)
         ));
         transactionBuilderFactory = new TransactionBuilderFactory(transactionTypeFactory, blockchainConfig);
     }
@@ -72,7 +80,7 @@ class TxSerializerV3Test {
     void serializeV3toByteArray() {
         //GIVEN
         //Rlp encoded Tx V3
-        String expectedTxBytes = "0b30a466666666663662642d303061332d333436622d616164362d3631666566633062643163368205a0840600113f82014b887acb9b4da22ff07001a039dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d3796015288031c903d8dbb15a40a6482138880f852ed8001844465616c8d636c617373204465616c207b7dcc8331323387307839383736358a6a617661736372697074e30401a0114b9482b83043c3e850da9e9e8a497d3e3ba673c8b68ea6c42c6f157af6a764c0f84df84b8839dc2e813bb45ff0b840ad329b7d044a1afc5f7329a472e37008275b383283097423c57db44cae246c01934859980f781899dbfcfd4577e415217cfbd6f993a76fb7bd94b8ae7009cd62";
+        String expectedTxBytes = "0b30a466666666663662642d303061332d333436622d616164362d3631666566633062643163368205a084060246ca82014b887acb9b4da22ff07001a039dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d3796015288461282f08a3184740a6482138880f861f83b8001844465616c8d636c617373204465616c207b7d9a226669727374506172616d222c3132332c2230783938373635228a6a617661736372697074e30401a030b7c63fde11877d7affd4c64f47f314dc1d7baaa7faf4fab905a8bd61e6a732c0f84df84b8839dc2e813bb45ff0b84055719abd90fb66d63da4d2fafc88b7f270edb7ffe399fd569b3d4478cbd3300fe6092c96b309de1adbf9a80fa04e67d1fa5dd68e60901fd81640c772e87f520e";
 
         //WHEN
         Transaction tx = transactionBuilderFactory.newTransaction(Convert.parseHexString(expectedTxBytes));
@@ -80,7 +88,7 @@ class TxSerializerV3Test {
         //THEN
         assertEquals(3, tx.getVersion());
         assertEquals(11, tx.getType().getSpec().getType());
-        assertEquals(224212675506935204L, tx.getRecipientId());
+        assertEquals(5049242101858010228L, tx.getRecipientId());
 
         assertEquals(1440, tx.getDeadline());
         assertEquals(5000L, tx.getFuelLimit().longValue());
@@ -90,7 +98,11 @@ class TxSerializerV3Test {
         SmcPublishContractAttachment contractAttachment = ((SmcPublishContractAttachment) tx.getAttachment());
         assertEquals("class Deal {}", contractAttachment.getContractSource());
         assertEquals("Deal", contractAttachment.getContractName());
-        assertEquals(List.of("123", "0x98765"), contractAttachment.getConstructorParams());
+        assertEquals("\"firstParam\",123,\"0x98765\"", contractAttachment.getConstructorParams());
+
+        for (AbstractAppendix appendage : tx.getAppendages()) {
+            Class clazz = appendage.getClass();
+        }
 
         //WHEN
         TxSerializer serializer = context.createSerializer(tx.getVersion());

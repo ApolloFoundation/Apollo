@@ -1291,7 +1291,7 @@ components:
         secret:
           type: string
           description: sender secret phrase
-          example: 'topSecretPhrase'
+          example: '1'
         source:
           type: string
           description: the contract source code
@@ -1306,7 +1306,7 @@ components:
           maxItems: 128
           items:
             type: string
-            example: '0x0a0b0c0d0e0f'
+            example: '\"firstParam\"", "123", "\"0x98765\"'
         fuelLimit:
           type: string
           description: the fuel value
@@ -1345,7 +1345,7 @@ components:
           maxItems: 128
           items:
             type: string
-            example: '0x0a0b0c0d0e0f'
+            example: '\"firstParam\"", "123", "\"0x98765\"'
         fuelLimit:
           type: string
           description: the fuel value

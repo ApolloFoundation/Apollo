@@ -34,8 +34,7 @@ public class PublishContractTxProcessor implements ContractTxProcessor {
     public ExecutionLog process() {
         ExecutionLog executionLog = new ExecutionLog();
         validateState(ContractState.CREATED, smartContract);
-
-        validateState(ContractState.PUBLISHED, smartContract);
+        smartContract.setState(ContractState.PUBLISHED);
 
         //call smart contract constructor, charge the fuel
         smcMachine.callConstructor(smartContract);

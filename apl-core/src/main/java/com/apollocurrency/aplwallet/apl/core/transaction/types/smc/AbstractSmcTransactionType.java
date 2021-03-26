@@ -9,12 +9,13 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.ContractTxProcessorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
+import com.apollocurrency.smc.contract.vm.SMCMachineFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -23,16 +24,17 @@ import java.util.Objects;
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 public abstract class AbstractSmcTransactionType extends TransactionType {
     protected static final int MACHINE_WORD_SIZE = 32;
 
     protected ContractService contractService;
-    protected ContractTxProcessorFactory processorFactory;
+    protected final SMCMachineFactory machineFactory;
 
-    public AbstractSmcTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, ContractService contractService, ContractTxProcessorFactory processorFactory) {
+    public AbstractSmcTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, ContractService contractService, SMCMachineFactory machineFactory) {
         super(blockchainConfig, accountService);
         this.contractService = contractService;
-        this.processorFactory = processorFactory;
+        this.machineFactory = machineFactory;
     }
 
     @Override
@@ -73,5 +75,13 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     @Override
     public boolean canHaveRecipient() {
         return true;
+    }
+
+    protected void checkPrecondition(Transaction smcTransaction) {
+        smcTransaction.getAttachment().getTransactionTypeSpec();
+        if (smcTransaction.getAttachment().getTransactionTypeSpec() != this.getSpec()) {
+            log.error("Invalid transaction attachment, txType={} txId={}", smcTransaction.getType(), smcTransaction.getChainId());
+            throw new IllegalStateException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec());
+        }
     }
 }

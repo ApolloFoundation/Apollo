@@ -17,7 +17,7 @@ public class ContractModelToEntityConverter implements Converter<SmartContract, 
             .transactionId(new BigInteger(model.getTxId().get()).longValueExact())
             .contractName(model.getName())
             .data(model.getSourceCode())
-            .args(String.join(",", model.getArgs()))
+            .args(model.getArgs())
             .languageName(model.getLanguageName())
             .languageVersion(model.getLanguageVersion())
             .status(model.getState().name())

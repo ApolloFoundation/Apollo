@@ -12,7 +12,8 @@ import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.ContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.ContractTxProcessorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxValidationProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -24,6 +25,8 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
+import com.apollocurrency.smc.contract.vm.SMCMachine;
+import com.apollocurrency.smc.contract.vm.SMCMachineFactory;
 import com.apollocurrency.smc.data.type.Address;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -39,18 +42,21 @@ import javax.inject.Singleton;
 public class SmcPublishContractTransactionType extends AbstractSmcTransactionType {
     protected final Fee PUBLISH_CONTRACT_FEE = new Fee.SizeBasedFee(
         Math.multiplyExact(150_000, getBlockchainConfig().getOneAPL()),
-        Math.multiplyExact(1_000, getBlockchainConfig().getOneAPL()), MACHINE_WORD_SIZE) {
+        Math.multiplyExact(10, getBlockchainConfig().getOneAPL()), 1) {
         public int getSize(Transaction transaction, Appendix appendage) {
             SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
-            String smc = attachment.getContractSource() + String.join(",", attachment.getConstructorParams());
+            int size = attachment.getContractSource().length();
+            if (attachment.getConstructorParams() != null) {
+                size += attachment.getConstructorParams().length();
+            }
             //TODO ??? what about string compressing, something like: output = Compressor.deflate(input)
-            return smc.length();
+            return size;
         }
     };
 
     @Inject
-    public SmcPublishContractTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, ContractService contractService, ContractTxProcessorFactory processorFactory) {
-        super(blockchainConfig, accountService, contractService, processorFactory);
+    public SmcPublishContractTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, ContractService contractService, SMCMachineFactory machineFactory) {
+        super(blockchainConfig, accountService, contractService, machineFactory);
     }
 
     @Override
@@ -58,8 +64,9 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         return TransactionTypes.TransactionTypeSpec.SMC_PUBLISH;
     }
 
+    @TransactionFee(FeeMarker.BASE_FEE)
     @Override
-    public @TransactionFee(FeeMarker.BASE_FEE) Fee getBaselineFee(Transaction transaction) {
+    public Fee getBaselineFee(Transaction transaction) {
         return PUBLISH_CONTRACT_FEE;
     }
 
@@ -90,7 +97,11 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         log.debug("SMC: doStateIndependentValidation");
-        ContractTxProcessor processor = processorFactory.createContractValidationProcessor(transaction);
+        checkPrecondition(transaction);
+        SmartContract smartContract = contractService.createNewContract(transaction);
+        SMCMachine smcMachine = machineFactory.createNewInstance();
+
+        ContractTxProcessor processor = new SandboxValidationProcessor(smcMachine, smartContract);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             throw new AplException.NotCurrentlyValidException(executionLog.toJsonString());
@@ -99,14 +110,19 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        log.debug("SMC: applyAttachment");
-        ContractTxProcessor processor = processorFactory.createPublishContractProcessor(transaction);
+        log.debug("SMC: applyAttachment: publish smart contract and call constructor.");
+        checkPrecondition(transaction);
+        SmartContract smartContract = contractService.createNewContract(transaction);
+        SMCMachine smcMachine = machineFactory.createNewInstance();
+        ContractTxProcessor processor = new PublishContractTxProcessor(smcMachine, smartContract);
+
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             throw new AplException.SMCProcessingException(executionLog.toJsonString());
         }
-        SmartContract smartContract = processor.smartContract();
 
+        //save contract and contract state
+        contractService.saveContract(smartContract);
     }
 
     @Override

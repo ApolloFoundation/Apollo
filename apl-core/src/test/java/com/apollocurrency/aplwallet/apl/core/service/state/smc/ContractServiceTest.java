@@ -57,11 +57,11 @@ class ContractServiceTest {
     @Test
     void saveContract() {
         //GIVEN
-        SmartContract =
+        SmartContract smartContract = null;
 
 
-            //WHEN
-            contractService.saveContract();
+        //WHEN
+        //contractService.saveContract(smartContract);
 
         //THEN
 

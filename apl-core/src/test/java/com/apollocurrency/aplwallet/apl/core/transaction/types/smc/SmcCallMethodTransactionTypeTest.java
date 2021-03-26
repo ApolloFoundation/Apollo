@@ -8,12 +8,14 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
+import com.apollocurrency.smc.contract.vm.SMCMachineFactory;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -21,7 +23,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,7 +39,7 @@ class SmcCallMethodTransactionTypeTest {
     private static final String SMC_CALL_METHOD_ATTACHMENT_JSON = "{" +
         " \"version.SmcCallMethod\":1," +
         " \"contractMethod\":\"purchase\"," +
-        " \"params\":[\"123\",\"0x0A0B0C0D0E0F\"]" +
+        " \"params\": \"\\\"123\\\",\\\"0x0A0B0C0D0E0F\\\"\"" +
         "}";
 
     TransactionTestData td = new TransactionTestData();
@@ -49,6 +50,10 @@ class SmcCallMethodTransactionTypeTest {
     private BlockchainConfig blockchainConfig;
     @Mock
     private AccountService accountService;
+    @Mock
+    ContractService contractService;
+    @Mock
+    SMCMachineFactory smcMachineFactory;
 
     private SmcCallMethodTransactionType smcCallMethodTransactionType;
 
@@ -58,7 +63,7 @@ class SmcCallMethodTransactionTypeTest {
         GenesisImporter.CREATOR_ID = 1739068987193023818L;//TN1
         doReturn(UUID.fromString(CHAIN_ID_TN1)).when(chain).getChainId();
         doReturn(chain).when(blockchainConfig).getChain();
-        smcCallMethodTransactionType = new SmcCallMethodTransactionType(blockchainConfig, accountService);
+        smcCallMethodTransactionType = new SmcCallMethodTransactionType(blockchainConfig, accountService, contractService, smcMachineFactory);
     }
 
     @SneakyThrows
@@ -73,7 +78,7 @@ class SmcCallMethodTransactionTypeTest {
         //THEN
         assertNotNull(attachment);
         assertEquals("purchase", attachment.getMethodName());
-        assertEquals(List.of("123", "0x0A0B0C0D0E0F"), attachment.getMethodParams());
+        assertEquals("\"123\",\"0x0A0B0C0D0E0F\"", attachment.getMethodParams());
     }
 
     @SneakyThrows
@@ -97,7 +102,7 @@ class SmcCallMethodTransactionTypeTest {
         //THEN
         assertNotNull(attachment);
         assertEquals("purchase", attachment.getMethodName());
-        assertEquals(List.of("123", "0x0A0B0C0D0E0F"), attachment.getMethodParams());
+        assertEquals("\"123\",\"0x0A0B0C0D0E0F\"", attachment.getMethodParams());
     }
 
 }

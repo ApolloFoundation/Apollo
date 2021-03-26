@@ -45,7 +45,6 @@ public class SmcApiServiceImpl implements SmcApiService {
     private final CryptoLibProvider cryptoLibProvider;
     private final TxBContext txBContext;
 
-
     @Inject
     public SmcApiServiceImpl(BlockchainConfig blockchainConfig, AccountService accountService, TransactionCreator transactionCreator, CryptoLibProvider cryptoLibProvider) {
         this.blockchainConfig = blockchainConfig;
@@ -73,7 +72,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         SmcPublishContractAttachment attachment = SmcPublishContractAttachment.builder()
             .contractName(body.getName())
             .contractSource(body.getSource())
-            .constructorParams(body.getParams())
+            .constructorParams(String.join(",", body.getParams()))
             .languageName("javascript")
             .build();
 
@@ -128,7 +127,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         SmcCallMethodAttachment attachment = SmcCallMethodAttachment.builder()
             .methodName(body.getName())
-            .methodParams(body.getParams())
+            .methodParams(String.join(",", body.getParams()))
             .build();
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()

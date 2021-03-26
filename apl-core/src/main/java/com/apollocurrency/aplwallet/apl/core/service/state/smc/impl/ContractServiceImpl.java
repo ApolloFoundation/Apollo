@@ -145,7 +145,7 @@ public class ContractServiceImpl implements ContractService {
             .code(SmartSource.builder()
                 .sourceCode(attachment.getContractSource())
                 .name(attachment.getContractName())
-                .args(String.join(",", attachment.getConstructorParams()))
+                .args(attachment.getConstructorParams())
                 .languageName(attachment.getLanguageName())
                 .build()
             )

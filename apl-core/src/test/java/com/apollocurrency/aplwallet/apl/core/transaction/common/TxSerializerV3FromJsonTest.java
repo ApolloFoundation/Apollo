@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -53,6 +54,7 @@ class TxSerializerV3FromJsonTest {
         GenesisImporter.CREATOR_ID = 1739068987193023818L;
     }
 
+    @Disabled
     //TODO not implemented yest, adjust signature field - change to RLP-encoded one
     @SneakyThrows
     @ParameterizedTest(name = "[{index}] tx")
