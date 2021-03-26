@@ -447,9 +447,9 @@ public class PeersService {
         pi.setBlockTimeSigantureHex(Hex.encode(signature));
         
         myPeerInfo = mapper.convertValue(pi, JSONObject.class);
-        LOG.debug("My peer info:\n" + myPeerInfo.toJSONString());
+        LOG.trace("My peer info:\n" + myPeerInfo.toJSONString());
         myPI = pi;
-        LOG.debug("Finished filling 'MyPeerInfo'");
+        LOG.trace("Finished filling 'MyPeerInfo'");
         return myPeerInfo;
     }
 
