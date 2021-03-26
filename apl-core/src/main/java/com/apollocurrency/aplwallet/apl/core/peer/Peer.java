@@ -33,8 +33,6 @@ import java.util.UUID;
 public interface Peer extends Comparable<Peer> {
     /**
      * ID of peer. It is UID field of X.509 certificate
-     * To keep a temporary compatibility with old peers,
-     * it could be announced address with port
      * @return 
      */
     String getIdentity();

@@ -167,11 +167,18 @@ public class PeerInfo extends BaseP2PResponse {
     /**
      * PEM-encoded X.509 Certificate of host as String, including
      * BEGIN-CETIFICATE and END-CERTIFICATE marks. Certificate
-     * should be verified and used for private key cryptography. Certificate
-     * also contains some important attributes, that is used widely in communications.
+     * should be verified. CA-signed certificate should be verified using CA x.509 cert.
+     * Self-signed certificate should be verified by checking signature of "blockTime" field
+     * with proposed self-signed certificate to ensure private key ownership.
      * New!
      */
     private String X509_cert;
+    /**
+     * HEX string represenataion of the signature of blockTime (as 4 bytes in netowk order).
+     * Signature algorithm is the default for given public key type of X.509 certiificate,
+     * for more information please see fb-cryptoo library documentation
+     */
+    private String blockTimeSigantureHex;
     /**
      * blacklist cause
      */

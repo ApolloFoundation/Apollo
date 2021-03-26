@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.security.id.IdentityService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Version;
@@ -47,6 +48,7 @@ import io.firstbridge.identity.cert.ActorType;
 import io.firstbridge.identity.cert.CertException;
 import io.firstbridge.identity.cert.CertKeyPersistence;
 import io.firstbridge.identity.cert.ExtCert;
+import io.firstbridge.identity.handler.IdValidator;
 import io.firstbridge.identity.utils.Hex;
 import java.io.ByteArrayInputStream;
 import lombok.Getter;
@@ -61,6 +63,7 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.security.cert.X509Certificate;
 import java.sql.SQLException;
@@ -134,7 +137,7 @@ public final class PeerImpl implements Peer {
     @Getter
     private PeerTrustLevel trustLevel = PeerTrustLevel.NOT_TRUSTED;
     private volatile ThreadPoolExecutor asyncExecutor;
-
+    private final IdentityService identityService;
     PeerImpl(PeerAddress addrByFact,
              PeerAddress announcedAddress,
              BlockchainConfig blockchainConfig,
@@ -143,7 +146,8 @@ public final class PeerImpl implements Peer {
              PeerServlet peerServlet,
              PeersService peers,
              TimeLimiter timeLimiter,
-             AccountService accountService
+             AccountService accountService,
+             IdentityService identityService
     ) {
         //TODO: remove Json.org entirely from P2P
         mapper.registerModule(new JsonOrgModule());
@@ -168,6 +172,7 @@ public final class PeerImpl implements Peer {
         this.p2pTransport = new Peer2PeerTransport(this, peerServlet, timeLimiter);
         state = PeerState.NON_CONNECTED; // set this peer its' initial state
         this.accountService = accountService;
+        this.identityService = identityService;
     }
 
     private void initAsyncExecutor() {
@@ -991,21 +996,32 @@ public final class PeerImpl implements Peer {
         if (pem == null || pem.isEmpty()){
             return;
         }
-        InputStream is = new ByteArrayInputStream(pem.getBytes());
-        ExtCert xc=null;
-        X509Certificate caCert = null;
         try {
-            xc = CertKeyPersistence.loadCertPEMFromStream(is);
-            if (xc.isSelfSigned()){
-                trustLevel = PeerTrustLevel.REGISTERED;
-            }else if(xc.isSignedBy(caCert)){
+            ExtCert xc = CertKeyPersistence.loadCertPEMFromStream(new ByteArrayInputStream(pem.getBytes()));
+            IdValidator idValidator = identityService.getPeerIdValidator();
+            if(xc.isSelfSigned()){
+                //we should verify private key ownership by checking the signature of timestamp
+                ByteBuffer bb = ByteBuffer.allocate(Integer.SIZE);
+                bb.putInt(pi.getBlockTime());
+                byte[] data = bb.array();
+                byte[] signature = Hex.decode(pi.getBlockTimeSigantureHex());
+                if(identityService.getPeerIdValidator().verifySelfSigned(xc.getCertificate(),data,signature)){
+                    peerId=Hex.encode(xc.getActorId());
+                    trustLevel = PeerTrustLevel.REGISTERED;
+                }else{
+                    log.debug("Ignoring self-signed certificate because timestamp signature is wrong for peer: {}"+getHostWithPort());
+                }
+            }else if (idValidator.isTrusted(xc.getCertificate())) {
                 trustLevel = PeerTrustLevel.TRUSTED;
                 if( (xc.getAuthorityId().getActorType().getType() & ActorType.NODE_CERTIFIED_STORAGE) !=0 ){
                     trustLevel = PeerTrustLevel.SYSTEM_TRUSTED;
                 }
+                peerId=Hex.encode(xc.getActorId());
+            }else{
+                log.debug("Can not determine trust level of peer certificate, signed by unknown CA for peer: {}",getHostWithPort());
             }
-            peerId=Hex.encode(xc.getActorId());
         } catch (IOException | CertException ex) {
+            log.debug("Can not read certificate of peer: {}", getHostWithPort());
         }
     }
     
@@ -1015,7 +1031,7 @@ public final class PeerImpl implements Peer {
         if (peerId!=null){
             res = peerId;
         }else{
-            res = getAnnouncedAddress(); // host with port?
+            res = "";
         }
         return res;
     }

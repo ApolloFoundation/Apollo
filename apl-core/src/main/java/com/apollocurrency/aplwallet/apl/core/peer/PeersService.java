@@ -57,7 +57,10 @@ import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import com.apollocurrency.aplwallet.apl.util.task.Tasks;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
+import io.firstbridge.identity.cert.ExtCert;
 import io.firstbridge.identity.handler.ThisActorIdHandler;
+import io.firstbridge.identity.utils.Hex;
+import java.nio.ByteBuffer;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -130,7 +133,6 @@ public class PeersService {
     private static int pushThreshold;
     private static int pullThreshold;
     private static int sendToPeersLimit;
-    private static volatile JSONObject myPeerInfo;
     public final ExecutorService peersExecutorService = new QueuedThreadPool(2, 15, "PeersExecutorService");
     public final boolean isLightClient;
     @Getter
@@ -298,7 +300,9 @@ public class PeersService {
             log.error("Can not load trusted CA certificates, node ID verification is impossible");
         }
         
-        fillMyPeerInfo();
+        //NodeID feature
+        identityService.loadMyIdentity();
+        identityService.loadTrusterCaCerts();
 
         addListener(peer -> peersExecutorService.submit(() -> {
             if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
@@ -354,8 +358,8 @@ public class PeersService {
         }
     }
 
-    private void fillMyPeerInfo() {
-        myPeerInfo = new JSONObject();
+    private JSONObject fillMyPeerInfo() {
+        JSONObject myPeerInfo = new JSONObject();
         PeerInfo pi = new PeerInfo();
         LOG.debug("Start filling 'MyPeerInfo'...");
         List<Peer.Service> servicesList = new ArrayList<>();
@@ -429,12 +433,24 @@ public class PeersService {
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JsonOrgModule());
-        ThisActorIdHandler myId = identityService.getThisNodeIdHandler();
-        pi.setX509_cert(myId.getExtCert().getCertPEM());
+        
+        
+        ExtCert myId = identityService.getThisNodeIdHandler().getExtCert();
+        if(myId!=null){
+            pi.setX509_cert(myId.getCertPEM());
+        }
+//NodeId feature
+        pi.setBlockTime(timeService.getEpochTime());
+        ByteBuffer bb = ByteBuffer.allocate(Integer.SIZE);
+        bb.putInt(pi.getBlockTime());
+        byte[] signature = identityService.getThisNodeIdHandler().sign(bb.array());
+        pi.setBlockTimeSigantureHex(Hex.encode(signature));
+        
         myPeerInfo = mapper.convertValue(pi, JSONObject.class);
         LOG.debug("My peer info:\n" + myPeerInfo.toJSONString());
         myPI = pi;
         LOG.debug("Finished filling 'MyPeerInfo'");
+        return myPeerInfo;
     }
 
     public PeerInfo getMyPeerInfo() {
@@ -637,7 +653,7 @@ public class PeersService {
         //if it is not resolvable
         PeerAddress apa = resolveAnnouncedAddress(announcedAddress);
         peer = new PeerImpl(actualAddr, apa, blockchainConfig, blockchain, timeService, peerHttpServer.getPeerServlet(),
-            this, timeLimiterService.acquireLimiter("P2PTransport"), accountService);
+            this, timeLimiterService.acquireLimiter("P2PTransport"), accountService, identityService);
         listeners.notify(peer, Event.NEW_PEER);
         if (apa != null) {
             connectablePeers.put(apa.getAddrWithPort(), peer);
@@ -930,9 +946,10 @@ public class PeersService {
             : (blockchain.getLastBlock().getBaseTarget() / blockchainConfig.getCurrentConfig().getInitialBaseTarget() > 10)
             ? BlockchainState.FORK
             : BlockchainState.UP_TO_DATE;
-        if (state != currentBlockchainState) {
-            JSONObject json = new JSONObject(myPeerInfo);
+        if (state != currentBlockchainState) {            
+            JSONObject json = new JSONObject(fillMyPeerInfo());
             json.put("blockchainState", state.ordinal());
+            
             myPeerInfoResponse = JSON.prepare(json);
             json.put("requestType", "getInfo");
             myPeerInfoRequest = JSON.prepareRequest(json);
