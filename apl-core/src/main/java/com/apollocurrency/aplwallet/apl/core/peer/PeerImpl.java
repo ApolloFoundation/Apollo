@@ -993,32 +993,39 @@ public final class PeerImpl implements Peer {
     }
 
     public void setX509pem(String pem) {
-        if (pem == null || pem.isEmpty()){
+        if (pem == null || pem.isEmpty()) {
             return;
         }
         try {
             ExtCert xc = CertKeyPersistence.loadCertPEMFromStream(new ByteArrayInputStream(pem.getBytes()));
+            if (xc == null) {
+                log.debug("Error reading certificate of peer: {}", getHostWithPort());
+                return;
+            }
+
+            //we should verify private key ownership by checking the signature of timestamp
+            ByteBuffer bb = ByteBuffer.allocate(Integer.SIZE);
+            bb.putInt(pi.getBlockTime());
+            byte[] data = bb.array();
+            byte[] signature = Hex.decode(pi.getBlockTimeSigantureHex());
+
+            boolean isSignatureValid = identityService.getPeerIdValidator().verifySelfSigned(xc.getCertificate(), data, signature);
+            //TODO A.B: to avoid replay attacks, time should be checked also
+            if (!isSignatureValid) {
+                log.debug("Ignoring self-signed certificate because timestamp signature is wrong for peer: {}" + getHostWithPort());
+                return;
+            }
+            peerId = Hex.encode(xc.getActorId());
             IdValidator idValidator = identityService.getPeerIdValidator();
-            if(xc.isSelfSigned()){
-                //we should verify private key ownership by checking the signature of timestamp
-                ByteBuffer bb = ByteBuffer.allocate(Integer.SIZE);
-                bb.putInt(pi.getBlockTime());
-                byte[] data = bb.array();
-                byte[] signature = Hex.decode(pi.getBlockTimeSigantureHex());
-                if(identityService.getPeerIdValidator().verifySelfSigned(xc.getCertificate(),data,signature)){
-                    peerId=Hex.encode(xc.getActorId());
-                    trustLevel = PeerTrustLevel.REGISTERED;
-                }else{
-                    log.debug("Ignoring self-signed certificate because timestamp signature is wrong for peer: {}"+getHostWithPort());
-                }
-            }else if (idValidator.isTrusted(xc.getCertificate())) {
+            if (xc.isSelfSigned()) {               
+                trustLevel = PeerTrustLevel.REGISTERED;
+            } else if (idValidator.isTrusted(xc.getCertificate())) {
                 trustLevel = PeerTrustLevel.TRUSTED;
-                if( (xc.getAuthorityId().getActorType().getType() & ActorType.NODE_CERTIFIED_STORAGE) !=0 ){
+                if ((xc.getAuthorityId().getActorType().getType() & ActorType.NODE_CERTIFIED_STORAGE) != 0) {
                     trustLevel = PeerTrustLevel.SYSTEM_TRUSTED;
                 }
-                peerId=Hex.encode(xc.getActorId());
-            }else{
-                log.debug("Can not determine trust level of peer certificate, signed by unknown CA for peer: {}",getHostWithPort());
+            } else {
+                log.debug("Can not determine trust level of peer certificate, signed by unknown CA for peer: {}", getHostWithPort());
             }
         } catch (IOException | CertException ex) {
             log.debug("Can not read certificate of peer: {}", getHostWithPort());
