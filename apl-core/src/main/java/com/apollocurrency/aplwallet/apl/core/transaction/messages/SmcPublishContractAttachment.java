@@ -12,6 +12,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 
+import java.util.Objects;
+
 @EqualsAndHashCode(callSuper = true)
 @Getter
 public class SmcPublishContractAttachment extends SmcAbstractAttachment {
@@ -27,10 +29,10 @@ public class SmcPublishContractAttachment extends SmcAbstractAttachment {
 
     @Builder
     public SmcPublishContractAttachment(String contractName, String contractSource, String constructorParams, String languageName) {
-        this.contractName = contractName;
-        this.contractSource = contractSource;
+        this.contractName = Objects.requireNonNull(contractName);
+        this.contractSource = Objects.requireNonNull(contractSource);
         this.constructorParams = constructorParams;
-        this.languageName = languageName;
+        this.languageName = Objects.requireNonNull(languageName);
     }
 
     public SmcPublishContractAttachment(RlpReader reader) {

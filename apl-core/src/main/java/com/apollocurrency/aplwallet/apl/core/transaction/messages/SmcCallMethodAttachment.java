@@ -26,7 +26,7 @@ public class SmcCallMethodAttachment extends SmcAbstractAttachment {
     @Builder
     public SmcCallMethodAttachment(String methodName, String methodParams) {
         this.methodName = Objects.requireNonNull(methodName);
-        this.methodParams = Objects.requireNonNull(methodParams);
+        this.methodParams = methodParams;
     }
 
     public SmcCallMethodAttachment(RlpReader reader) {

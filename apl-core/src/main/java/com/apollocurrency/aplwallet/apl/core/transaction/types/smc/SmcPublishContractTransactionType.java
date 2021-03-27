@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.ContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxValidationProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxContractValidationProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -24,10 +24,12 @@ import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.smc.contract.SmartContract;
+import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SMCMachine;
 import com.apollocurrency.smc.contract.vm.SMCMachineFactory;
 import com.apollocurrency.smc.data.type.Address;
+import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
@@ -98,10 +100,21 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         log.debug("SMC: doStateIndependentValidation");
         checkPrecondition(transaction);
+        SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
+        if (Strings.isNullOrEmpty(attachment.getContractName())) {
+            throw new AplException.NotCurrentlyValidException("Empty contract name.");
+        }
+        if (Strings.isNullOrEmpty(attachment.getContractSource())) {
+            throw new AplException.NotCurrentlyValidException("Empty contract source.");
+        }
+        if (Strings.isNullOrEmpty(attachment.getLanguageName())) {
+            throw new AplException.NotCurrentlyValidException("Empty contract language name.");
+        }
+        //syntactical and semantic validation
         SmartContract smartContract = contractService.createNewContract(transaction);
         SMCMachine smcMachine = machineFactory.createNewInstance();
 
-        ContractTxProcessor processor = new SandboxValidationProcessor(smcMachine, smartContract);
+        ContractTxProcessor processor = new SandboxContractValidationProcessor(smcMachine, smartContract);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             throw new AplException.NotCurrentlyValidException(executionLog.toJsonString());
@@ -114,13 +127,16 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         checkPrecondition(transaction);
         SmartContract smartContract = contractService.createNewContract(transaction);
         SMCMachine smcMachine = machineFactory.createNewInstance();
+        log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
         ContractTxProcessor processor = new PublishContractTxProcessor(smcMachine, smartContract);
-
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             throw new AplException.SMCProcessingException(executionLog.toJsonString());
         }
-
+        //TODO refund remaining fuel
+        @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
+        Fuel fuel = smartContract.getFuel();
+        log.debug("After processing Address={} Fuel={}", smartContract.getAddress(), fuel);
         //save contract and contract state
         contractService.saveContract(smartContract);
     }

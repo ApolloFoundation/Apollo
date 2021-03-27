@@ -18,11 +18,11 @@ import lombok.extern.slf4j.Slf4j;
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class SandboxValidationProcessor implements ContractTxProcessor {
-    private SMCMachine smcMachine;
-    private SmartContract smartContract;
+public class SandboxContractValidationProcessor implements ContractTxProcessor {
+    private final SMCMachine smcMachine;
+    private final SmartContract smartContract;
 
-    public SandboxValidationProcessor(SMCMachine smcMachine, SmartContract smartContract) {
+    public SandboxContractValidationProcessor(SMCMachine smcMachine, SmartContract smartContract) {
         this.smcMachine = smcMachine;
         this.smartContract = smartContract;
     }
