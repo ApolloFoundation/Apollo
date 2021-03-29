@@ -50,6 +50,7 @@ public class ShardingScheduler {
     private final BlockchainConfig blockchainConfig;
     private final TimeService timeService;
     private volatile boolean shardingFailed = false;
+    private volatile int lastShardScheduledHeight;
     private volatile int standardShardDelay;
     private final ShardSchedulingConfig config;
 
@@ -241,6 +242,11 @@ public class ShardingScheduler {
     }
 
     private Long getLastShardHeight() {
+        Long lastDbShardHeight = getLastDbShardHeight();
+        return Math.max(lastDbShardHeight, lastShardScheduledHeight);
+    }
+
+    private Long getLastDbShardHeight() {
         long lastShardHeight = 0;
         Shard shard = shardService.getLastShard();
         if (shard != null) {
@@ -250,9 +256,10 @@ public class ShardingScheduler {
     }
 
     private synchronized void scheduleSharding(int height, int blockchainHeight) {
-        ShardScheduledRecord record = new ShardScheduledRecord(shardingDelayMs(), height, blockchainHeight, timeService.systemTimeMillis());
+        lastShardScheduledHeight = height;
+        ShardScheduledRecord record = new ShardScheduledRecord(shardingDelayMs(), lastShardScheduledHeight, blockchainHeight, timeService.systemTimeMillis());
         scheduledShards.add(record);
-        log.info("Schedule new shard creation at height {}, blockchain height {}, delay {} min", height, blockchainHeight, record.timeDelay / 60 / 1000);
+        log.info("Schedule new shard creation at height {}, blockchain height {}, delay {} min", lastShardScheduledHeight, blockchainHeight, record.timeDelay / 60 / 1000);
         updateTrimConfig(false, false);
     }
 
