@@ -41,7 +41,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.MISSING_D
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 
 @Vetoed
-public final class DGSQuantityChange extends CreateTransaction {
+public final class DGSQuantityChange extends CreateTransactionHandler {
 
     private DGSService service = CDI.current().select(DGSService.class).get();
 

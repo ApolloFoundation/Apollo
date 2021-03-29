@@ -8,8 +8,7 @@ import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcher;
 import com.apollocurrency.aplwallet.apl.util.task.TaskDispatcherFactory;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import javax.enterprise.inject.Vetoed;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -17,15 +16,17 @@ import java.util.Objects;
 import static com.apollocurrency.aplwallet.apl.util.task.DefaultTaskDispatcher.DEFAULT_THREAD_POOL_SIZE;
 
 @Slf4j
-@Singleton
+@Vetoed
 public class TaskDispatchManager {
 
     private final Object dispatchersMonitor = new Object();
     private volatile boolean isTasksStarted = false;
     private PropertiesHolder propertiesHolder;
     private Map<String, TaskDispatcher> dispatchers;
+//just to be proxyable
+    public TaskDispatchManager() {
+    }
 
-    @Inject
     public TaskDispatchManager(PropertiesHolder propertiesHolder) {
         this.propertiesHolder = propertiesHolder;
         dispatchers = new HashMap<>();

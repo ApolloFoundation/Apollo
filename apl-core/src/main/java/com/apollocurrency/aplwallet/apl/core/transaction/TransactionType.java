@@ -20,8 +20,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -30,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 
@@ -77,7 +78,12 @@ public abstract class TransactionType {
 
     public abstract LedgerEvent getLedgerEvent();
 
+    @Deprecated(since = "TransactionV3")
     public abstract AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException;
+
+    public AbstractAttachment parseAttachment(RlpReader reader) throws AplException.NotValidException{
+        throw new AplException.NotValidException("Unsupported RLP reader for transaction=" + getSpec());
+    }
 
     public abstract AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException;
 
@@ -89,6 +95,8 @@ public abstract class TransactionType {
     @TransactionFee(FeeMarker.UNCONFIRMED_BALANCE)
     public final boolean applyUnconfirmed(Transaction transaction, Account senderAccount) {
         long amountATM = transaction.getAmountATM();
+        //TODO implement a procedure to operate with fuelLimit and fuelPrice values
+        @TransactionFee(FeeMarker.FEE)
         long feeATM = transaction.getFeeATM();
         if (transaction.referencedTransactionFullHash() != null) {
             feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
@@ -107,6 +115,7 @@ public abstract class TransactionType {
 
     public abstract boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount);
 
+    @TransactionFee(FeeMarker.BALANCE)
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         long amount = transaction.getAmountATM();
         long transactionId = transaction.getId();
@@ -192,7 +201,7 @@ public abstract class TransactionType {
         return Integer.MAX_VALUE;
     }
 
-    @TransactionFee(FeeMarker.FEE)
+    @TransactionFee({FeeMarker.FEE, FeeMarker.BACK_FEE})
     public long[] getBackFees(Transaction transaction) {
         return Convert.EMPTY_LONG;
     }

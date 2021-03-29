@@ -1,9 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -50,14 +50,14 @@ public class TransactionApplier {
         if (transaction.getRecipientId() != 0) {
             recipientAccount = accountService.getAccount(transaction.getRecipientId());
             if (recipientAccount == null) {
-                recipientAccount = accountService.createAccount(transaction.getRecipientId());
+                recipientAccount = accountService.addAccount(transaction.getRecipientId(), false);
             }
         }
         if (transaction.getReferencedTransactionFullHash() != null) {
             accountService.addToUnconfirmedBalanceATM(senderAccount, transaction.getType().getLedgerEvent(), transaction.getId(),
                 0, blockchainConfig.getUnconfirmedPoolDepositAtm());
 
-            referencedTransactionDao.insert(new ReferencedTransaction((long) 0, transaction.getId(), Convert.fullHashToId(transaction.referencedTransactionFullHash()), transaction.getHeight()));
+            referencedTransactionDao.insert(new ReferencedTransaction((long) 0, transaction.getId(), Convert.transactionFullHashToId(transaction.referencedTransactionFullHash()), transaction.getHeight()));
         }
         if (transaction.attachmentIsPhased()) {
             accountService.addToBalanceATM(senderAccount, transaction.getType().getLedgerEvent(), transaction.getId(), 0, -transaction.getFeeATM());

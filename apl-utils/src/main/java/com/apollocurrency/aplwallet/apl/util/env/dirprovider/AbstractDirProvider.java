@@ -77,7 +77,7 @@ public abstract class AbstractDirProvider implements DirProvider {
     @Override
     public Path getDbDir() {
         return dbDir == null
-            ? Paths.get(baseDir, applicationName + "-db", (chainId))
+            ? Paths.get(baseDir, applicationName + "-db")
             : dbDir;
     }
 

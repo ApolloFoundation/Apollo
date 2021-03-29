@@ -35,7 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_CURRENCY;
 
 @Vetoed
-public final class TransferCurrency extends CreateTransaction {
+public final class TransferCurrency extends CreateTransactionHandler {
 
     public TransferCurrency() {
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "recipient", "currency", "units");

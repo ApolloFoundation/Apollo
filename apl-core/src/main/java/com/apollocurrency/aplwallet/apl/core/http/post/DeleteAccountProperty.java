@@ -35,7 +35,7 @@ import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
-public final class DeleteAccountProperty extends CreateTransaction {
+public final class DeleteAccountProperty extends CreateTransactionHandler {
 
     public DeleteAccountProperty() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.CREATE_TRANSACTION}, "recipient", "property", "setter");

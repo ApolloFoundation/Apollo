@@ -25,8 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -46,13 +44,11 @@ public abstract class PrunableDbTable<T extends DerivedEntity> extends EntityDbT
     public final PropertiesHolder propertiesHolder;
 
     public PrunableDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns,
-                           DerivedTablesRegistry derivedDbTablesRegistry,
                            DatabaseManager databaseManager,
-                           FullTextConfig fullTextConfig,
                            BlockchainConfig blockchainConfig,
                            PropertiesHolder propertiesHolder,
                            Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(table, dbKeyFactory, multiversion, fullTextSearchColumns, derivedDbTablesRegistry, databaseManager, fullTextConfig, deleteOnTrimDataEvent);
+        super(table, dbKeyFactory, multiversion, fullTextSearchColumns, databaseManager, deleteOnTrimDataEvent);
         this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
     }

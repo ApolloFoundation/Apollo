@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
@@ -99,9 +99,20 @@ class PendingBroadcastTaskTest {
     @Test
     void broadcastBatch_memPool_is_full() {
         doReturn(20).when(batchSizeCalculator).currentBatchSize();
+        doReturn(50).when(memPool).pendingBroadcastQueueSize();
         doReturn(0).when(memPool).canSafelyAccept();
         pendingBroadcastTask.broadcastBatch();
 
         verify(transactionProcessor, never()).broadcast(any(List.class));
+    }
+
+    @Test
+    void broadcastBatch_memPool_is_empty() {
+        doReturn(20).when(batchSizeCalculator).currentBatchSize();
+        doReturn(0).when(memPool).pendingBroadcastQueueSize();
+        pendingBroadcastTask.broadcastBatch();
+
+        verify(transactionProcessor, never()).broadcast(any(List.class));
+        verify(memPool, never()).canSafelyAccept();
     }
 }

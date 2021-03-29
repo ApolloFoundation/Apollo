@@ -38,7 +38,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.POLL_FINISHED;
 
 @Vetoed
-public final class CastVote extends CreateTransaction {
+public final class CastVote extends CreateTransactionHandler {
 
     public CastVote() {
         super(new APITag[]{APITag.VS, APITag.CREATE_TRANSACTION}, "poll", "vote00", "vote01", "vote02");

@@ -9,9 +9,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author andrii.zinchenko@firstbridge.io
@@ -76,41 +78,27 @@ class SignatureToolFactoryTest extends AbstractSigData {
 
     @Test
     void selectValidator() {
-        //GIVEN
-        //WHEN
-        Optional<SignatureVerifier> tool1 = SignatureToolFactory.selectValidator(1);
-        Optional<SignatureVerifier> tool2 = SignatureToolFactory.selectValidator(2);
-        Optional<SignatureVerifier> tool3 = SignatureToolFactory.selectValidator(3);
-        //THEN
-        assertTrue(tool1.isPresent());
-        assertTrue(tool2.isPresent());
-        assertTrue(tool3.isEmpty());
+        assertTrue(SignatureToolFactory.selectValidator(1).isPresent());
+        assertTrue(SignatureToolFactory.selectValidator(2).isPresent());
+        assertTrue(SignatureToolFactory.selectValidator(3).isPresent());
+        assertTrue(SignatureToolFactory.selectValidator(4).isEmpty());
+
     }
 
     @Test
     void selectParser() {
-        //GIVEN
-        //WHEN
-        Optional<SignatureParser> parser1 = SignatureToolFactory.selectParser(1);
-        Optional<SignatureParser> parser2 = SignatureToolFactory.selectParser(2);
-        Optional<SignatureParser> parser3 = SignatureToolFactory.selectParser(3);
-        //THEN
-        assertTrue(parser1.isPresent());
-        assertTrue(parser2.isPresent());
-        assertTrue(parser3.isEmpty());
+        assertTrue(SignatureToolFactory.selectParser(1).isPresent());
+        assertTrue(SignatureToolFactory.selectParser(2).isPresent());
+        assertTrue(SignatureToolFactory.selectParser(3).isPresent());
+        assertTrue(SignatureToolFactory.selectParser(4).isEmpty());
     }
 
     @Test
-    void selectBuilder() {
-        //GIVEN
-        //WHEN
-        Optional<DocumentSigner> tool1 = SignatureToolFactory.selectBuilder(1);
-        Optional<DocumentSigner> tool2 = SignatureToolFactory.selectBuilder(2);
-        Optional<DocumentSigner> tool3 = SignatureToolFactory.selectBuilder(3);
-        //THEN
-        assertTrue(tool1.isPresent());
-        assertTrue(tool2.isPresent());
-        assertTrue(tool3.isEmpty());
+    void selectSigner() {
+        assertTrue(SignatureToolFactory.selectSigner(1).isPresent());
+        assertTrue(SignatureToolFactory.selectSigner(2).isPresent());
+        assertTrue(SignatureToolFactory.selectSigner(3).isPresent());
+        assertTrue(SignatureToolFactory.selectSigner(4).isEmpty());
     }
 
     @Test
@@ -120,7 +108,7 @@ class SignatureToolFactoryTest extends AbstractSigData {
         byte[] document = "The document".getBytes();
         Credential signCredential = SignatureToolFactory.createCredential(1, Crypto.getKeySeed(secretPhrase));
         Credential verifyCredential = SignatureToolFactory.createCredential(1, Crypto.getPublicKey(secretPhrase));
-        DocumentSigner documentSigner = SignatureToolFactory.selectBuilder(1).get();
+        DocumentSigner documentSigner = SignatureToolFactory.selectSigner(1).get();
         SignatureVerifier signatureVerifier = SignatureToolFactory.selectValidator(1).get();
 
         //WHEN
@@ -143,7 +131,7 @@ class SignatureToolFactoryTest extends AbstractSigData {
         byte[] document = "The document".getBytes();
         Credential signCredential = SignatureToolFactory.createCredential(2, Crypto.getKeySeed(secretPhrase1), Crypto.getKeySeed(secretPhrase2));
         Credential verifyCredential = SignatureToolFactory.createCredential(2, Crypto.getPublicKey(secretPhrase2), Crypto.getPublicKey(secretPhrase1));
-        DocumentSigner documentSigner = SignatureToolFactory.selectBuilder(2).get();
+        DocumentSigner documentSigner = SignatureToolFactory.selectSigner(2).get();
         SignatureVerifier signatureVerifier = SignatureToolFactory.selectValidator(2).get();
 
         //WHEN

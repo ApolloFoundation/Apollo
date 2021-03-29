@@ -1,6 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -24,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteed
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableData;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountGuaranteedBalance;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -46,7 +47,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.impl.BlockChainInfoSe
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -137,9 +137,15 @@ class GenesisImporterTest extends DbContainerBaseTest {
     TransactionTestData td = new TransactionTestData();
     private ResourceLocator resourceLocator;
 
+    {
+        doReturn(config).when(blockchainConfig).getCurrentConfig();
+        doReturn(chain).when(blockchainConfig).getChain();
+        doReturn("APL").when(blockchainConfig).getAccountPrefix();
+
+    }
 
     @BeforeAll
-    public static void beforeAll(){
+    public static void beforeAll() {
         ConfigDirProviderFactory.setup(false, "Apollo", 0, "", null);
     }
 
@@ -163,7 +169,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
         TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TwoTablesPublicKeyDao.class,
-        TransactionBuilder.class,
+        TransactionBuilderFactory.class,
         TransactionDaoImpl.class, BlockchainImpl.class,
         BlockDaoImpl.class,
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
@@ -200,14 +206,11 @@ class GenesisImporterTest extends DbContainerBaseTest {
 
     @BeforeEach
     void setUp() {
-        doReturn(config).when(blockchainConfig).getCurrentConfig();
-        doReturn(chain).when(blockchainConfig).getChain();
-        doReturn("APL").when(blockchainConfig).getAccountPrefix();
         doReturn(3000000000000000000L).when(config).getMaxBalanceATM();
         doReturn(100L).when(config).getInitialBaseTarget();
 
         testData = new BalancesPublicKeysTestData();
-        propertiesHolder.init(
+        propertiesHolder = new PropertiesHolder(
             getGenesisAccountTotalProperties("230730", "84832")
         );
         resourceLocator = weld.select(ResourceLocator.class).get();
@@ -217,7 +220,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
     @Test
     void newGenesisBlock() {
 
-        propertiesHolder.init(
+        propertiesHolder= new PropertiesHolder(
             getGenesisAccountTotalProperties("10", "10")
         );
         GenesisImporter genesisImporter = new GenesisImporter(
@@ -470,7 +473,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
     @Test
     void loadGenesisAccountsIncorrectKey() {
 
-        propertiesHolder.init(getGenesisAccountTotalProperties("10", "10"));
+        propertiesHolder = new PropertiesHolder((getGenesisAccountTotalProperties("10", "10")));
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,
@@ -500,7 +503,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
         final JsonParser jsonParser = mock(JsonParser.class);
         when(jsonFactory.createParser(any(InputStream.class))).thenReturn(jsonParser);
         when(jsonParser.isClosed()).thenReturn(true);
-        propertiesHolder.init(getGenesisAccountTotalProperties("10", "10"));
+        propertiesHolder= new PropertiesHolder(getGenesisAccountTotalProperties("10", "10"));
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
             blockchainConfigUpdater,

@@ -354,7 +354,7 @@ public class UtilsController {
         long longId = 0;
         FullHashToIdDto dto = new FullHashToIdDto();
         try {
-            longId = Convert.fullHashToId(Convert.parseHexString(fullHash));
+            longId = Convert.transactionFullHashToId(Convert.parseHexString(fullHash));
             dto.longId = String.valueOf(longId);
             dto.stringId = Long.toUnsignedString(longId);
         } catch (NumberFormatException e) {

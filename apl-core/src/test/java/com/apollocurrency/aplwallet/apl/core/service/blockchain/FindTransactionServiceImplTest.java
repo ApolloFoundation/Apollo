@@ -5,9 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.model.AplQueryObject;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -88,18 +88,6 @@ class FindTransactionServiceImplTest {
         //THEN
         assertNotNull(stream);
         assertEquals(1, stream.count());
-    }
-
-    @Test
-    void getAllUnconfirmedTransactionsCount() {
-        //GIVEN
-        doReturn(11).when(memPool).allProcessedCount();
-
-        //WHEN
-        long result = findTransactionService.getAllUnconfirmedTransactionsCount();
-
-        //THEN
-        assertEquals(11, result);
     }
 
     @Test

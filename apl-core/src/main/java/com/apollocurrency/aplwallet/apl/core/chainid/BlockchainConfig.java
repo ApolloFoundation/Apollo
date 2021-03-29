@@ -9,13 +9,16 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Singleton;
+import javax.enterprise.inject.Vetoed;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -25,7 +28,7 @@ import java.util.stream.Collectors;
  */
 
 @Slf4j
-@Singleton
+@Vetoed
 public class BlockchainConfig {
     static final int DEFAULT_MIN_PRUNABLE_LIFETIME = 14 * 1440 * 60; // two weeks in seconds
 
@@ -39,13 +42,12 @@ public class BlockchainConfig {
     private long shufflingDepositAtm;
     private int guaranteedBalanceConfirmations;
     private volatile HeightConfig currentConfig;
-    private volatile Optional<HeightConfig> previousConfig = Optional.empty(); // keep a previous config for easy access
     private Chain chain;
     private TreeMap<Integer, HeightConfig> heightConfigMap = new TreeMap<>();
-    private volatile boolean isJustUpdated = false;
 
     public BlockchainConfig() {
     }
+
 
     public BlockchainConfig(Chain chain, PropertiesHolder holder) {
         updateChain(chain, holder);
@@ -228,6 +230,21 @@ public class BlockchainConfig {
         return false;
     }
 
+    public Optional<Integer> getTransactionV3Height() {
+        if (chain.getFeaturesHeightRequirement() != null) {
+            return Optional.ofNullable(chain.getFeaturesHeightRequirement().getTransactionV3Height());
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public boolean isTransactionV3ActiveAtHeight(int height) {
+        if (getTransactionV3Height().isPresent()) {
+            return height >= getTransactionV3Height().get();
+        }
+        return false;
+    }
+
     public HeightConfig getCurrentConfig() {
         return currentConfig;
     }
@@ -238,34 +255,37 @@ public class BlockchainConfig {
      * @param currentConfig configuration to be assigned as current
      */
     public void setCurrentConfig(HeightConfig currentConfig) {
-        this.previousConfig = Optional.ofNullable(this.currentConfig);
         this.currentConfig = currentConfig;
-        this.isJustUpdated = true; // setup flag to catch chains.json config change on APPLY_BLOCK
     }
 
     public Chain getChain() {
         return chain;
     }
 
-    public Optional<HeightConfig> getPreviousConfig() {
-        return previousConfig;
-    }
-
-    public void setPreviousConfig(Optional<HeightConfig> previousConfig) {
-        this.previousConfig = previousConfig;
-    }
-
     /**
-     * Flag to catch configuration changing
-     * // TODO: YL after separating 'shard' and 'trim' logic, we can remove 'isJustUpdated() + resetJustUpdated()' usage
-     *
-     * @return if config was recently updated to new height
+     * @param fromHeight height from which height configs should be fetched (inclusive)
+     * @param toHeight height to which height configs should be fetched (exclusive)
+     * @return ordered list of height configs (from lover height to higher) between given heights
      */
-    public boolean isJustUpdated() {
-        return isJustUpdated;
-    }
+    public List<HeightConfig> getAllActiveConfigsBetweenHeights(int fromHeight, int toHeight) {
+        if (fromHeight >= toHeight) {
+            throw new IllegalArgumentException("fromHeight should be lesser than toHeight, given: fromHeight=" + fromHeight + ", toHeight=" + toHeight);
+        }
+        HeightConfig configAtHeight = null;
+        if (fromHeight - 1 > 0) {
+            configAtHeight = getConfigAtHeight(fromHeight - 1); // active config at the beginning of [fromHeight; toHeight] range
+        }
 
-    public void resetJustUpdated() {
-        this.isJustUpdated = false; // reset flag
+        ArrayList<HeightConfig> heightConfigs = new ArrayList<>(heightConfigMap
+            .entrySet()
+            .stream()
+            .filter(e -> e.getKey() >= fromHeight && e.getKey() < toHeight)
+            .map(Map.Entry::getValue)
+            .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(HeightConfig::getHeight)))));
+        if (configAtHeight != null) {
+            heightConfigs.add(0, configAtHeight);
+        }
+        return heightConfigs;
+
     }
 }

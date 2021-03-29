@@ -65,7 +65,7 @@ import javax.servlet.http.HttpServletRequest;
  * for the account, removes the existing exchange offer and publishes the new exchange offer
  */
 @Vetoed
-public final class PublishExchangeOffer extends CreateTransaction {
+public final class PublishExchangeOffer extends CreateTransactionHandler {
 
     public PublishExchangeOffer() {
         super(new APITag[]{APITag.MS, APITag.CREATE_TRANSACTION}, "currency", "buyRateATM", "sellRateATM",

@@ -133,4 +133,9 @@ select concat(user, '@', host, ' => ', json_detailed(priv)) from mysql.global_pr
 
 ##### Links
 
-MariaDB reserved keyword list - https://github.com/AnanthaRajuCprojects/Reserved-Key-Words-list-of-various-programming-languages/blob/master/MariaDB%20Reserved%20Words.md 
+MariaDB reserved keyword list - https://github.com/AnanthaRajuCprojects/Reserved-Key-Words-list-of-various-programming-languages/blob/master/MariaDB%20Reserved%20Words.md
+
+MariaDB backup and restore databases in docker container :
+https://blog.confirm.ch/backup-mysql-mariadb-docker-container/
+https://stackoverflow.com/questions/26331651/how-can-i-backup-a-docker-container-with-its-data-volumes
+

@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.signature;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +26,7 @@ class MultiSigDataTest extends AbstractSigData {
 
     @BeforeEach
     void setUp() {
-        multiSigData = new MultiSigData(2);
+        multiSigData = new MultiSigData(2, SignatureToolFactory.selectParser(2).get());
         multiSigData.addSignature(PUBLIC_KEY1, SIGNATURE1);
         multiSigData.addSignature(PUBLIC_KEY2, SIGNATURE2);
     }
@@ -58,7 +59,7 @@ class MultiSigDataTest extends AbstractSigData {
     void getPayload() {
         //GIVEN
         byte[] payload = new byte[]{1, 2, 3, 4};
-        multiSigData = new MultiSigData(2, payload);
+        multiSigData = new MultiSigData(2, payload, SignatureToolFactory.selectParser(2).get());
         //WHEN
         byte[] rc = multiSigData.getPayload();
 
@@ -205,6 +206,28 @@ class MultiSigDataTest extends AbstractSigData {
         assertEquals(4 + 4 + 2 + 2 * (8 + 64), parser.calcDataSize(2));
 
         checkData(sigData);
+    }
+
+    @Test
+    void testParser2() {
+        //GIVEN
+        String sigStr = "4d53494700000000020039dc2e813bb45ff0c9e2d8f29da5c5c9d9246cabd6ef9046e3bbec6980ac7b23ebdb86e3b2254f0cf3694dae2acebcc2e474a1f7053a56fb7441e8d1b543d6ef1355732dc3f05b0e98e3de5568034d3367242a496b61a370198b652667051ec4fc4fdb7d5ffcbf7f11f5da7f665e230278bd9416ffd4010e951a98e04b2301450dd112b3aca6b2f1636c21a28936d5e8";
+        byte[] signature = Convert.parseHexString(sigStr);
+        byte[] pkId1 = Convert.parseHexString("39dc2e813bb45ff0");
+        byte[] pkId2 = Convert.parseHexString("98e3de5568034d33");
+
+        ByteBuffer byteBuffer = ByteBuffer.wrap(signature);
+        MultiSigData.Parser parser = new MultiSigData.Parser();
+        //WHEN
+        MultiSigData sigData = (MultiSigData) parser.parse(byteBuffer);
+
+        //THEN
+        assertEquals(4 + 4 + 2 + 2 * (8 + 64), parser.calcDataSize(2));
+        assertEquals(2, sigData.getThresholdParticipantCount());
+        assertTrue(sigData.getPublicKeyIdSet().contains(new MultiSigData.KeyIdImpl(pkId1)));
+        assertTrue(sigData.getPublicKeyIdSet().contains(new MultiSigData.KeyIdImpl(pkId2)));
+
+
     }
 
     private void checkData(Signature sigData) {

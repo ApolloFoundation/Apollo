@@ -88,9 +88,10 @@ public class ChunkedFileOps {
             res = -2;
             return res;
         }
-        RandomAccessFile rf = new RandomAccessFile(absPath.toFile(), "r");
-        rf.skipBytes(offset.intValue());
-        res = rf.read(dataBuf, 0, size.intValue());
+        try (RandomAccessFile rf = new RandomAccessFile(absPath.toFile(), "r")) {
+            rf.skipBytes(offset.intValue());
+            res = rf.read(dataBuf, 0, size.intValue());
+        }
         CheckSum cs = new CheckSum();
         cs.update(dataBuf, size.intValue());
         lastRDChunkCrc = cs.finish();

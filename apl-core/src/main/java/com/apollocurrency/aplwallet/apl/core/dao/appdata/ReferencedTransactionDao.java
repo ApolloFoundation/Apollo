@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,5 +20,5 @@ public interface ReferencedTransactionDao {
 
     void insert(ReferencedTransaction referencedTransaction);
 
-    List<Transaction> getReferencingTransactions(long transactionId, int from, Integer limit);
+    List<TransactionEntity> getReferencingTransactions(long transactionId, int from, Integer limit);
 }

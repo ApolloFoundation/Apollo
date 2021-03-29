@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
@@ -193,6 +193,11 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
     @Override
     public final boolean hasPrunableData() {
         return (prunableMessage != null || encryptedData != null);
+    }
+
+    @Override
+    public int getAppendixFlag() {
+        return 0x40;
     }
 
 }

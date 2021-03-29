@@ -13,7 +13,6 @@ import com.apollocurrency.aplwallet.api.dto.ThreadInfoDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.BlockEntity;
 import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;

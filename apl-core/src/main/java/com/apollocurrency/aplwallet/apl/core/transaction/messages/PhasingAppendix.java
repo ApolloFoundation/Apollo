@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
@@ -67,7 +67,7 @@ public class PhasingAppendix extends AbstractAppendix {
         String hashedSecret = Convert.emptyToNull((String) attachmentData.get("phasingHashedSecret"));
         if (hashedSecret != null) {
             this.hashedSecret = Convert.parseHexString(hashedSecret);
-            this.algorithm = ((Long) attachmentData.get("phasingHashedSecretAlgorithm")).byteValue();
+            this.algorithm = ((Number) attachmentData.get("phasingHashedSecretAlgorithm")).byteValue();
         } else {
             this.hashedSecret = Convert.EMPTY_BYTE;
             this.algorithm = 0;
@@ -199,5 +199,9 @@ public class PhasingAppendix extends AbstractAppendix {
         return params;
     }
 
+    @Override
+    public int getAppendixFlag() {
+        return 0x10;
+    }
 
 }

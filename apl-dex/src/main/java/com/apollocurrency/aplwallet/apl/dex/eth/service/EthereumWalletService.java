@@ -339,11 +339,11 @@ public class EthereumWalletService {
 
         RawTransaction rawTransaction = RawTransaction
             .createEtherTransaction(
-                nonce,
-                EthUtil.gweiToWei(gasPrice),
-                Constants.GAS_LIMIT_ETHER_TX,
-                toAddress,
-                amountWei
+                    nonce,
+                    EthUtil.gweiToWei(gasPrice),
+                    Constants.GAS_LIMIT_ETHER_TX,
+                    toAddress,
+                    amountWei
             );
 
         byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
@@ -390,9 +390,9 @@ public class EthereumWalletService {
         EthGetTransactionReceipt receipt;
         try {
             receipt = web3j
-                .ethGetTransactionReceipt(transactionHash)
-                .sendAsync()
-                .get();
+                    .ethGetTransactionReceipt(transactionHash)
+                    .sendAsync()
+                    .get();
         } catch (ExecutionException | InterruptedException e) {
             log.error(e.getMessage(), e);
             throw new DexException(e.getMessage(), e);

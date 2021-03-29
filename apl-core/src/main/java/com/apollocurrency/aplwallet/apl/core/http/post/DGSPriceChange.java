@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_GOODS;
 
 @Vetoed
-public final class DGSPriceChange extends CreateTransaction {
+public final class DGSPriceChange extends CreateTransactionHandler {
 
     private DGSService service = CDI.current().select(DGSService.class).get();
 

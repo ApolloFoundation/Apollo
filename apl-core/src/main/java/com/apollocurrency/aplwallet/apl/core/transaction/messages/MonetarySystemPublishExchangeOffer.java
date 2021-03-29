@@ -44,7 +44,7 @@ public final class MonetarySystemPublishExchangeOffer extends AbstractAttachment
         this.totalSellLimit = Convert.parseLong(attachmentData.get("totalSellLimit"));
         this.initialBuySupply = Convert.parseLong(attachmentData.get("initialBuySupply"));
         this.initialSellSupply = Convert.parseLong(attachmentData.get("initialSellSupply"));
-        this.expirationHeight = ((Long) attachmentData.get("expirationHeight")).intValue();
+        this.expirationHeight = ((Number) attachmentData.get("expirationHeight")).intValue();
     }
 
     public MonetarySystemPublishExchangeOffer(long currencyId, long buyRateATM, long sellRateATM, long totalBuyLimit, long totalSellLimit, long initialBuySupply, long initialSellSupply, int expirationHeight) {

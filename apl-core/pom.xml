@@ -5,12 +5,13 @@
   <properties>
     <!--    move to BOM -->
     <mariadb-java-client.version>2.6.1</mariadb-java-client.version>
+    <smc-lib.version>0.1.7</smc-lib.version>
   </properties>
 
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.48.2</version>
+    <version>1.48.5</version>
   </parent>
   <artifactId>apl-core</artifactId>
   <name>apl-core</name>
@@ -35,31 +36,37 @@
     </dependency>
     <dependency>
       <groupId>com.apollocurrency</groupId>
-        <artifactId>apl-db-updater</artifactId>
-        <version>${project.version}</version>
+      <artifactId>apl-db-updater</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
-      <dependency>
-          <groupId>com.apollocurrency</groupId>
-          <artifactId>apl-dex</artifactId>
-          <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-dex</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-      <dependency>
-          <groupId>com.apollocurrency</groupId>
-          <artifactId>apl-vault-wallet</artifactId>
-          <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-vault-wallet</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-      <!-- EXT BOM DEPENDENCIES -->
-      <dependency>
-          <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-classic</artifactId>
-      </dependency>
-      <dependency>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-      </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>smc-lib</artifactId>
+      <version>${smc-lib.version}</version>
+    </dependency>
+
+    <!-- EXT BOM DEPENDENCIES -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
@@ -284,7 +291,7 @@
       <scope>test</scope>
     </dependency>
 
-      <dependency>
+    <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
     </dependency>

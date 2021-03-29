@@ -35,7 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.INCORRECT_ALIAS_OWNER;
 
 @Vetoed
-public final class DeleteAlias extends CreateTransaction {
+public final class DeleteAlias extends CreateTransactionHandler {
 
     public DeleteAlias() {
         super(new APITag[]{APITag.ALIASES, APITag.CREATE_TRANSACTION}, "alias", "aliasName");

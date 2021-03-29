@@ -27,11 +27,11 @@ public class DbTestData {
         .loginTimeout(2)
         .maxMemoryRows(100000)
         .defaultLockTimeout(1)
-        .maxConnections(55)
         .build();
 
     public static DbProperties getInMemDbProps() {
-        return getDbUrlProps();
+        DbProperties dbUrlProps = getDbUrlProps();
+        return dbUrlProps;
     }
 
     public static DbProperties getDbUrlProps() {
@@ -48,7 +48,7 @@ public class DbTestData {
     }
 
     public static DbProperties getDbFileProperties(GenericContainer jdbcDatabaseContainer) {
-        DbProperties dbProperties = DB_PROPERTIES.deepCopy();
+        DbProperties dbProperties = getDbUrlProps();
         dbProperties.setDbUsername(((MariaDBContainer) jdbcDatabaseContainer).getUsername());
         if (((MariaDBContainer) jdbcDatabaseContainer).getPassword() != null && !((MariaDBContainer) jdbcDatabaseContainer).getPassword().isEmpty()) {
             dbProperties.setDbPassword(((MariaDBContainer) jdbcDatabaseContainer).getPassword());
@@ -59,6 +59,7 @@ public class DbTestData {
 //        dbProperties.setDatabasePort(3306); // docker container default for quick test only
         dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
         dbProperties.setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
+        dbProperties.setSystemDbUrl(dbProperties.formatJdbcUrlString(true));
         return dbProperties;
     }
 

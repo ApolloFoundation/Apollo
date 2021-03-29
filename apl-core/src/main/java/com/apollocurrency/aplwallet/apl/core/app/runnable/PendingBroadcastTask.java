@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
@@ -90,7 +90,13 @@ public class PendingBroadcastTask implements Runnable {
     }
 
     private int calculateAllowedBatch(int desirableBatch) {
-        return Math.min(memPool.canSafelyAccept(), Math.min(desirableBatch, memPool.pendingBroadcastQueueSize()));
+        int pendingTxCount = memPool.pendingBroadcastQueueSize();
+        if(pendingTxCount > 0) {
+            // memPool.canSafelyAccept() make call to the db.
+            return Math.min(memPool.canSafelyAccept(), Math.min(desirableBatch, pendingTxCount));
+        } else {
+            return pendingTxCount;
+        }
     }
 
     NextPendingTx nextValidTxFromPendingQueue() {

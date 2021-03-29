@@ -36,7 +36,7 @@ import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
 
 @Vetoed
-public class DividendPayment extends CreateTransaction {
+public class DividendPayment extends CreateTransactionHandler {
 
     public DividendPayment() {
         super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "asset", "height", "amountATMPerATU");

@@ -110,7 +110,7 @@ class PeerConnectingThread implements Runnable {
                         peersService.peersExecutorService.submit(() -> peersService.connectPeer(peer));
                     }
                 });
-                if (peersService.hasTooManyKnownPeers() && peersService.hasEnoughConnectedPublicPeers(peersService.maxNumberOfConnectedPublicPeers)) {
+                if (peersService.hasTooManyKnownPeers() && peersService.hasEnoughConnectedPublicPeers(PeersService.maxNumberOfConnectedPublicPeers)) {
                     for (Peer peer : peersService.getPeers(peer -> now - peer.getLastUpdated() > Constants.ONE_DAY_SECS)) {
                         peer.remove();
                         if (peersService.hasTooFewKnownPeers()) {

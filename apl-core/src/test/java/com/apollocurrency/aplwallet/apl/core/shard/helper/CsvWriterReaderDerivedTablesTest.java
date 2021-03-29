@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
@@ -20,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToMod
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
@@ -29,11 +31,13 @@ import com.apollocurrency.aplwallet.apl.core.dao.prunable.DataTagDao;
 import com.apollocurrency.aplwallet.apl.core.dao.prunable.TaggedDataTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountAssetTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountCurrencyTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountLedgerTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactoryProducer;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollTable;
@@ -41,9 +45,11 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollVoterT
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingVoteTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.GenesisPublicKeyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
@@ -61,6 +67,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.ReferencedTransa
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
@@ -69,6 +76,7 @@ import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageSer
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
+import com.apollocurrency.aplwallet.apl.core.service.state.TableRegistryInitializer;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -89,8 +97,6 @@ import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.ValueParser;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionSerializerImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator;
@@ -103,6 +109,7 @@ import com.apollocurrency.aplwallet.apl.exchange.dao.DexOrderTable;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
@@ -116,17 +123,16 @@ import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.mockito.Mockito;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -167,17 +173,13 @@ import static org.mockito.Mockito.mock;
 class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
+    TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer, Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
-    @Inject
-    DerivedTablesRegistry registry;
+    DbExtension extension = new DbExtension(mariaDBContainer, Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
     @Inject
     Event<DeleteOnTrimData> deleteOnTrimDataEvent;
 
-    BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
-    HeightConfig config = Mockito.mock(HeightConfig.class);
-    Chain chain = Mockito.mock(Chain.class);
+    BlockchainConfig blockchainConfig = mockBlockchainConfig();
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
@@ -192,20 +194,21 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         BlockchainImpl.class, DaoConfig.class,
-        PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class,
-        TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class,
-        GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class,
+        PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class, PublicKeyTableProducer.class,
+        TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class, TransactionEntityRowMapper.class,
+        GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class, TransactionModelToEntityConverter.class, ShardDbExplorerImpl.class, PrunableTxRowMapper.class, TransactionEntityToModelConverter.class, UnconfirmedTransactionEntityRowMapper.class, TxReceiptRowMapper.class, TransactionServiceImpl.class, TransactionRowMapper.class,
         ReferencedTransactionDaoImpl.class,
         TaggedDataTable.class, PropertyBasedFileConfig.class,
         DGSGoodsTable.class,
         AppendixApplierRegistry.class,
         AppendixValidatorRegistry.class,
-        DataTagDao.class,
-        TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
-        TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
-        TransactionBuilder.class, TransactionSerializerImpl.class,
-        KeyFactoryProducer.class, FeeCalculator.class,
+        TransactionBuilderFactory.class, DexOrderTable.class,TableRegistryInitializer.class,
+        UnconfirmedTransactionCreator.class, AccountGuaranteedBalanceTable.class, DGSPurchaseTable.class, DexContractTable.class,
+        TaggedDataTable.class, AccountCurrencyTable.class, AccountAssetTable.class,  PublicKeyTable.class, AccountLedgerTable.class,
+        PropertyBasedFileConfig.class,
+        DataTagDao.class, PhasingPollResultTable.class, GenesisPublicKeyTable.class,
+        UnconfirmedTransactionCreator.class,
+        FeeCalculator.class,
         TaggedDataTimestampDao.class,
         TaggedDataExtendDao.class,
         FullTextConfigImpl.class,
@@ -218,7 +221,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         BlockDaoImpl.class,
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         TransactionDaoImpl.class,
-        CsvEscaperImpl.class, UnconfirmedTransactionTable.class, AccountService.class, TaskDispatchManager.class)
+        CsvEscaperImpl.class, UnconfirmedTransactionTable.class, AccountService.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
@@ -247,47 +250,46 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))
         .addBeans(MockBean.of(unconfirmedTransactionProcessingService, UnconfirmedTransactionProcessingService.class))
         .addBeans(MockBean.of(memPool, MemPool.class))
+        .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
         .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class))
+        .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
         .build();
 
     @Inject
-    private DerivedTablesRegistry derivedTablesRegistry;
+    DerivedTablesRegistry derivedTablesRegistry;
     @Inject
-    private CsvEscaper translator;
+    CsvEscaper translator;
+    @Inject
+    TableRegistryInitializer tableRegistryInitializer;
+    @Inject
+    @Named("genesisPublicKeyTable")
+    EntityDbTableInterface<PublicKey> genesisPublicKeyTable;
+    @Inject
+    AccountAssetTable accountAssetTable;
+    @Inject
+    AccountCurrencyTable accountCurrencyTable;
+    @Inject
+    @Named("publicKeyTable")
+    EntityDbTableInterface<PublicKey> publicKeyTable;
+    @Inject
+    AccountLedgerTable accountLedgerTable;
+
+    @Inject
+    AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
+    @Inject
+    DGSPurchaseTable purchaseTable;
+    @Inject
+    DexContractTable dexContractTable;
+    @Inject
+    DexOrderTable dexOrderTable;
 
     public CsvWriterReaderDerivedTablesTest() throws Exception {
     }
 
-    @BeforeEach
-    void setUp() {
-        doReturn(config).when(blockchainConfig).getCurrentConfig();
-        doReturn(chain).when(blockchainConfig).getChain();
-        doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
-        long accountId = -208393164898941117L;
-        // init several derived tables
-        AccountCurrencyTable accountCurrencyTable = new AccountCurrencyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
-        accountCurrencyTable.init();
-        // TODO: YL I can't fix that table, unknown problem = CONSTRAINT `account_control_phasing.whitelist` failed for `testdb`.`account_control_phasing`
-//        AccountControlPhasingTable accountControlPhasingTable = new AccountControlPhasingTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
-//        accountControlPhasingTable.init();
-        AccountAssetTable accountAssetTable = new AccountAssetTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
-        accountAssetTable.init();
-        GenesisPublicKeyTable genesisPublicKeyTable = new GenesisPublicKeyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
-        genesisPublicKeyTable.init();
-        PublicKeyTable publicKeyTable = new PublicKeyTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
-        publicKeyTable.init();
-        DGSPurchaseTable purchaseTable = new DGSPurchaseTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
-        purchaseTable.init();
-        DexContractTable dexContractTable = new DexContractTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
-        registry.registerDerivedTable(dexContractTable);
-        DexOrderTable dexOrderTable = new DexOrderTable(derivedTablesRegistry, extension.getDatabaseManager(), deleteOnTrimDataEvent);
-        registry.registerDerivedTable(dexOrderTable);
-    }
 
     @Tag("skip-fts-init")
     @DisplayName("Gather all derived tables, export data up to height = 8000," +
         " delete rows up to height = 8000, import data back into db table")
-    @Test
     void testExportAndImportData() {
         DirProvider dirProvider = mock(DirProvider.class);
         doReturn(temporaryFolderExtension.newFolder("csvExport").toPath()).when(dirProvider).getDataExportDir();
@@ -295,7 +297,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         Set<String> excludeColumnNames = Set.of("DB_ID", "LATEST");
         // init Cvs reader, writer components
 
-        Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
+        Collection<DerivedTableInterface> result = derivedTablesRegistry.getDerivedTables(); // extract all derived tables
 
         assertNotNull(result);
         log.debug("Processing [{}] tables", result.size());
@@ -412,6 +414,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
             while (rs.next()) {
                 for (int i = 0; i < columnsCount; i++) {
                     Object object = rs.getObject(i + 1);
+                    log.info(",{}", object);
                     log.trace("{}[{} : {}] = {}", meta.getColumnName(i + 1), i + 1, meta.getColumnTypeName(i + 1), object);
 
                     if (object != null && (meta.getColumnType(i + 1) == Types.BINARY || meta.getColumnType(i + 1) == Types.VARBINARY)) {
@@ -433,12 +436,15 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
                     } else if (object != null && (meta.getColumnType(i + 1) == Types.ARRAY)) {
                         preparedInsertStatement.setObject(i + 1, object);
                     } else if (object != null && (meta.getColumnType(i + 1) == Types.LONGVARCHAR)) {
-                        preparedInsertStatement.setString(i + 1, object.toString());
+
+                        String unescaped = translator.unEscape(object.toString()); // unescape
+                        unescaped = unescaped.substring(1, unescaped.length() - 1); // remove quotes
+                        preparedInsertStatement.setString(i + 1, unescaped);
                     } else {
                         preparedInsertStatement.setObject(i + 1, object);
                     }
                 }
-                log.trace("sql = {}", sqlInsert);
+                log.info("sql = {}", sqlInsert);
                 importedCount += preparedInsertStatement.executeUpdate();
                 if (batchLimit % importedCount == 0) {
                     con.commit();
@@ -479,6 +485,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         }
         return -1;
     }
+//    con.createStatement().executeUpdate("INSERT INTO tagged_data (id,account_id,name,description,tags,parsed_tags,type,data,is_text,channel,filename,block_timestamp,transaction_timestamp,height,latest) VALUES(-780794814210884355,9211698109297098287,'tag1','tag1' 'descr','tag1 tag2 tag3 tag2 sl','[\"tag1\",\"tag2\",\"tag3\"]',null,null,1,null,null,18400,35078473,2000)");
 
     @Tag("skip-fts-init")
     @Test
@@ -549,5 +556,14 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
             Object accountId = rs.getObject("account_id");
             assertEquals("batman", accountId);
         }
+    }
+    BlockchainConfig mockBlockchainConfig() {
+        BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+        HeightConfig config = mock(HeightConfig.class);
+        Chain chain = mock(Chain.class);
+        doReturn(config).when(blockchainConfig).getCurrentConfig();
+        doReturn(chain).when(blockchainConfig).getChain();
+        doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
+        return blockchainConfig;
     }
 }

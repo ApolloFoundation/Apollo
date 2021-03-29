@@ -4,9 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -20,6 +22,11 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
         super(buffer);
         this.publicKey = new byte[32];
         buffer.get(this.publicKey);
+    }
+
+    public PublicKeyAnnouncementAppendix(RlpReader reader) {
+        super(reader);
+        this.publicKey = reader.read();
     }
 
     public PublicKeyAnnouncementAppendix(JSONObject attachmentData) {
@@ -54,6 +61,12 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
     }
 
     @Override
+    public void putMyBytes(RlpList.RlpListBuilder builder) {
+        builder
+            .add(publicKey);
+    }
+
+    @Override
     public void putMyJSON(JSONObject json) {
         json.put("recipientPublicKey", Convert.toHexString(publicKey));
     }
@@ -71,6 +84,11 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
     @Override
     public void apply(Transaction transaction, Account senderAccount, Account recipientAccount) {
         throw new UnsupportedOperationException("Apply is not supported, use separate class");
+    }
+
+    @Override
+    public int getAppendixFlag() {
+        return 0x04;
     }
 
     @Override

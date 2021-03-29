@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONArray;
 
@@ -30,8 +30,6 @@ import java.util.List;
 public interface TransactionProcessor {
 
     void broadcastWhenConfirmed(Transaction transaction, Transaction uncTransaction);
-
-    void printMemPoolStat();
 
     void broadcast(Collection<Transaction> transactions);
 
@@ -48,8 +46,6 @@ public interface TransactionProcessor {
     void processDelayedTxs(int number);
 
     void processLater(Collection<Transaction> transactions);
-
-    int getUnconfirmedTxCount();
 
     void processPeerTransactions(List<Transaction> transactions) throws AplException.NotValidException;
 

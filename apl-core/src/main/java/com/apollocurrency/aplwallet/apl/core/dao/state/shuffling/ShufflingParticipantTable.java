@@ -13,7 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipantState;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -38,11 +37,10 @@ public class ShufflingParticipantTable  extends VersionedDeletableEntityDbTable<
     };
 
     @Inject
-    public ShufflingParticipantTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                                     DatabaseManager databaseManager,
+    public ShufflingParticipantTable(DatabaseManager databaseManager,
                                      Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("shuffling_participant", dbKeyFactory, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override

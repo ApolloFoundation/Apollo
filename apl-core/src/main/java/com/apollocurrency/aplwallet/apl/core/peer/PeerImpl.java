@@ -145,7 +145,7 @@ public final class PeerImpl implements Peer {
     }
 
     private void initAsyncExecutor() {
-        this.asyncExecutor = new TimeTraceDecoratedThreadPoolExecutor(1, Runtime.getRuntime().availableProcessors() / 2, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1000), new NamedThreadFactory(getHost() + "-AsyncExecutor"));
+        this.asyncExecutor = new TimeTraceDecoratedThreadPoolExecutor(1, Math.max(Runtime.getRuntime().availableProcessors() / 2, 1), 10, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1000), new NamedThreadFactory(getHost() + "-AsyncExecutor"));
     }
 
     @Override
@@ -194,8 +194,8 @@ public final class PeerImpl implements Peer {
             peers.notifyListeners(this, PeersService.Event.CHANGED_ACTIVE_PEER);
         }
         log.debug("Peer={} {} oldState={} newState={}", this.getAnnouncedAddress(),
-            newState != PeerState.CONNECTED && oldState == PeerState.CONNECTED ? "was disconnected" : "",
-            oldState, newState);
+                newState != PeerState.CONNECTED && oldState == PeerState.CONNECTED ? "was disconnected" : "",
+                oldState, newState);
     }
 
     @Override
@@ -693,14 +693,14 @@ public final class PeerImpl implements Peer {
 
                 if (!setApplication(newPi.getApplication())) {
                     log.trace("Peer: {} has different Application value '{}', removing",
-                        getHost(), newPi.getApplication());
+                            getHost(), newPi.getApplication());
                     remove();
                     return false;
                 }
 
                 if (newPi.getChainId() == null || !targetChainId.equals(UUID.fromString(newPi.getChainId()))) {
                     log.trace("Peer: {} has different chainId: '{}', removing",
-                        getHost(), newPi.getChainId());
+                            getHost(), newPi.getChainId());
                     remove();
                     return false;
                 }
@@ -713,7 +713,7 @@ public final class PeerImpl implements Peer {
                 }
                 if (!analyzeHallmark(newPi.getHallmark())) {
                     log.debug("PEER-Connect host {}: version: {} hallmark failed, blacklisting",
-                        host, peerVersion);
+                            host, peerVersion);
                     blacklist("Bad hallmark");
                     return false;
                 }
@@ -742,7 +742,7 @@ public final class PeerImpl implements Peer {
                         }
                         if (!newPi.getAnnouncedAddress().equalsIgnoreCase(pi.getAnnouncedAddress())) {
                             log.debug("peer '{}' has new announced address '{}', old is '{}'",
-                                host, newPi.getAnnouncedAddress(), pi.getAnnouncedAddress());
+                                    host, newPi.getAnnouncedAddress(), pi.getAnnouncedAddress());
                             peers.setAnnouncedAddress(this, newPi.getAnnouncedAddress());
                             // force checking connectivity to new announced port
                             deactivate("Announced address change");
@@ -779,7 +779,7 @@ public final class PeerImpl implements Peer {
         int announcedPort = pa.getPort();
         if (hallmark != null && announcedPort != hallmark.getPort()) {
             log.debug("Announced port {} does not match hallmark {}, ignoring hallmark for {}",
-                announcedPort, hallmark.getPort(), host
+                    announcedPort, hallmark.getPort(), host
             );
             unsetHallmark();
             return false;

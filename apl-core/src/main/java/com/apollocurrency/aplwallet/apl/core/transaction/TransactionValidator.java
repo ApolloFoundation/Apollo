@@ -5,8 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.antifraud.AntifraudValidator;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
@@ -19,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureCredential;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureVerifier;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
@@ -29,6 +31,8 @@ import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentChildSpecific;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentMarker;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -50,6 +54,8 @@ public class TransactionValidator {
     private final AppendixValidatorRegistry validatorRegistry;
     private final AntifraudValidator antifraudValidator;
 
+    private final TxBContext txBContext;
+
     @Inject
     public TransactionValidator(BlockchainConfig blockchainConfig, PhasingPollService phasingPollService,
                                 Blockchain blockchain, FeeCalculator feeCalculator, AccountService accountService,
@@ -66,6 +72,7 @@ public class TransactionValidator {
         this.keyValidator = new PublicKeyValidator(accountPublicKeyService);
         this.validatorRegistry = validatorRegistry;
         this.antifraudValidator = new AntifraudValidator();
+        this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }
 
 
@@ -165,13 +172,15 @@ public class TransactionValidator {
             AppendixValidator<AbstractAppendix> validator = validatorRegistry.getValidatorFor(appendage);
             doAppendixFullValidation(validatingAtFinish, validator, transaction, appendage);
         }
-        int fullSize = transaction.getFullSize();
+        Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion()).serialize(transaction, byteArrayTx);
+        int fullSize = byteArrayTx.payloadSize();
         if (fullSize > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
             throw new AplException.NotValidException("Transaction size " + fullSize + " exceeds maximum payload size");
         }
         int blockchainHeight = blockchain.getHeight();
         if (!validatingAtFinish) {
-            validateFee(sender, transaction, blockchainHeight);
+            validateFeeSufficiency(transaction, blockchainHeight);
             long ecBlockId = transaction.getECBlockId();
             int ecBlockHeight = transaction.getECBlockHeight();
             if (ecBlockId != 0) {
@@ -230,24 +239,38 @@ public class TransactionValidator {
         Account sender = accountService.getAccount(transaction.getSenderId());
         int height = blockchain.getHeight();
         validateFee(sender, transaction, height);
-        if (!checkSignature(sender, transaction)) {
+        checkSignatureThrowingEx(transaction, sender);
+    }
+    public void validateSignatureWithTxFeeLessStrict(Transaction transaction) throws AplException.NotCurrentlyValidException, AplException.NotValidException {
+        int height = blockchain.getHeight();
+        validateFeeSufficiency(transaction, height);
+        checkSignatureThrowingEx(transaction, null);
+    }
+
+    private void checkSignatureThrowingEx(Transaction transaction, Account account) throws AplException.NotValidException {
+        if (!checkSignature(account, transaction)) {
             throw new AplException.NotValidException("Invalid signature for transaction " + transaction.getId());
         }
     }
 
     void validateFee(Account account, Transaction transaction, int blockchainHeight) throws AplException.NotCurrentlyValidException {
+        validateFeeSufficiency(transaction, blockchainHeight);
+        long feeATM = transaction.getFeeATM();
+        if (transaction.referencedTransactionFullHash() != null) {
+            feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
+        }
+        if (account.getUnconfirmedBalanceATM() < feeATM) {
+            throw new AplException.NotCurrentlyValidException("Account balance " + account.getUnconfirmedBalanceATM() + " is not enough to pay tx fee " + feeATM);
+        }
+    }
+
+    void validateFeeSufficiency(Transaction transaction, int blockchainHeight) throws AplException.NotCurrentlyValidException {
         long feeATM = transaction.getFeeATM();
         long minimumFeeATM = feeCalculator.getMinimumFeeATM(transaction, blockchainHeight);
         if (feeATM < minimumFeeATM) {
             throw new AplException.NotCurrentlyValidException(String.format("Transaction fee %f %s less than minimum fee %f %s at height %d",
                 ((double) feeATM) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol(), ((double) minimumFeeATM) / blockchainConfig.getOneAPL(), blockchainConfig.getCoinSymbol(),
                 blockchainHeight));
-        }
-        if (transaction.referencedTransactionFullHash() != null) {
-            feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
-        }
-        if (account.getUnconfirmedBalanceATM() < feeATM) {
-            throw new AplException.NotCurrentlyValidException("Account balance " + account.getUnconfirmedBalanceATM() + " is not enough to pay tx fee " + feeATM);
         }
     }
 
@@ -300,23 +323,26 @@ public class TransactionValidator {
         if (transaction.getSignature() != null && transaction.getSignature().isVerified()) {
             return true;
         } else {
+            Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
+            txBContext.createSerializer(transaction.getVersion())
+                .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), byteArrayTx);
+
             if (log.isTraceEnabled()) {
                 log.trace("#MULTI_SIG# verify signature={} publicKey={} document={}",
                     Convert.toHexString(transaction.getSignature().bytes()),
                     signatureCredential,
-                    Convert.toHexString(transaction.getUnsignedBytes()));
+                    Convert.toHexString(byteArrayTx.array()));
             }
 
             boolean verifiedOk = signatureVerifier.verify(
-                transaction.getUnsignedBytes(), transaction.getSignature(), signatureCredential
+                byteArrayTx.array(), transaction.getSignature(), signatureCredential
             );
             if (verifiedOk) {
-                transaction.withValidSignature();
+                ((TransactionImpl) transaction.getTransactionImpl()).withValidSignature(verifiedOk);
             }
             return verifiedOk;
         }
     }
-
 
     public boolean verifySignature(Transaction transaction) {
         return checkSignature(transaction) && accountPublicKeyService.setOrVerifyPublicKey(transaction.getSenderId(), transaction.getSenderPublicKey());

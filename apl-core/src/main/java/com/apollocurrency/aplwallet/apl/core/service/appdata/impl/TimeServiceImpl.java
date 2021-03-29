@@ -37,11 +37,20 @@ public class TimeServiceImpl implements TimeService {
         return toEpochTime;
     }
 
+
+    /**
+     * Returns current time in seconds
+     * @return current time in seconds
+     */
     @Override
     public long systemTime() {
         return ntpTime.getTime() / 1000;
     }
 
+    /**
+     * Returns current time in milliseconds
+     * @return current time in milliseconds
+     */
     @Override
     public long systemTimeMillis() {
         return ntpTime.getTime();

@@ -26,6 +26,8 @@ tags:
     description: List operations by account (the bank reconcilation)
   - name: info
     description: An information
+  - name: smc
+    description: Smart contract transactions management
 
 paths:
   /@@account:
@@ -524,6 +526,105 @@ paths:
                 $ref: '#/components/schemas/BlockchainInfo'
         500:
           $ref: '#/components/responses/ServerError'
+
+  /@@smc/publish:
+    post:
+      tags:
+        - smc
+      summary: Publish the smart contract
+      description: |
+        Publish the smart contract.
+      operationId: createPublishContractTx
+      requestBody:
+        description: the contract source and constructor paramters
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishContractReqTest'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionArrayResp'
+        401:
+          description: Unauthorized Error
+        403:
+          description: Access Forbidden
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: []
+
+  /@@smc/publish/test:
+    post:
+      tags:
+        - smc
+      summary: Returns signed PublishContract transaction
+      description: |
+        Returns signed PublishContract transaction as a byte array.
+      operationId: createPublishContractTxTest
+      requestBody:
+        description: the contract source and constructor paramters
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishContractReqTest'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionArrayResp'
+        401:
+          description: Unauthorized Error
+        403:
+          description: Access Forbidden
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: [ ]
+
+  /@@smc/call:
+    post:
+      tags:
+        - smc
+      summary: Call a method of the smart contract
+      description: |
+        Call a metod of the the smart contract.
+      operationId: createCallContractMethodTx
+      requestBody:
+        description: the contract method and method paramters
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CallContractMethodReqTest'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionArrayResp'
+        401:
+          description: Unauthorized Error
+        403:
+          description: Access Forbidden
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: [ ]
 
 components:
   schemas:
@@ -1176,6 +1277,96 @@ components:
             isTrimActive:
               type: boolean
               description: "Returns true if the trimming process is active"
+
+    PublishContractReqTest:
+      required:
+        - sender
+        - secret
+      type: object
+      properties:
+        sender:
+          type: string
+          description: sender account id
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        secret:
+          type: string
+          description: sender secret phrase
+          example: '1'
+        source:
+          type: string
+          description: the contract source code
+          example: 'class Deal {}'
+        name:
+          type: string
+          description: the contract name
+          example: 'Deal'
+        params:
+          type: array
+          description: list of constructor parameters
+          maxItems: 128
+          items:
+            type: string
+            example: '\"firstParam\"", "123", "\"0x98765\"'
+        fuelLimit:
+          type: string
+          description: the fuel value
+          example: '5000'
+        fuelPrice:
+          type: string
+          description: the fuel price value
+          example: '100'
+
+    CallContractMethodReqTest:
+      required:
+        - address
+        - sender
+        - secret
+      type: object
+      properties:
+        address:
+          type: string
+          description: the contract address
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        sender:
+          type: string
+          description: sender account id
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        secret:
+          type: string
+          description: sender secret phrase
+          example: 'topSecretPhrase'
+        name:
+          type: string
+          description: the contract method name
+          example: 'purchase'
+        params:
+          type: array
+          description: list of method parameters
+          maxItems: 128
+          items:
+            type: string
+            example: '\"firstParam\"", "123", "\"0x98765\"'
+        fuelLimit:
+          type: string
+          description: the fuel value
+          example: '5000'
+        fuelPrice:
+          type: string
+          description: the fuel price value
+          example: '100'
+
+    TransactionArrayResp:
+      required:
+        - tx
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            tx:
+              description: Unsigned transaction data
+              type: string
+              format: hex_bytearray
+              example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
 
     BaseResponse:
       type: object

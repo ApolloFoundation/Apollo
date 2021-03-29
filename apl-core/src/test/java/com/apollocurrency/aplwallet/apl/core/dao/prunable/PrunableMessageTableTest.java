@@ -57,12 +57,12 @@ class PrunableMessageTableTest extends DbContainerBaseTest {
         PrunableMessageTable.class,
         DerivedDbTablesRegistryImpl.class,
         FullTextConfigImpl.class,
-        BlockchainConfig.class,
         PropertiesHolder.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
+        .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
         .build();
     @Inject
     PrunableMessageTable table;

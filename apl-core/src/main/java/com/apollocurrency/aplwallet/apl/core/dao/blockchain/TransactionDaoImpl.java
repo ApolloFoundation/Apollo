@@ -102,7 +102,7 @@ public class TransactionDaoImpl implements TransactionDao {
     @Transactional(readOnly = true)
     @Override
     public TransactionEntity findTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource) {
-        long transactionId = Convert.fullHashToId(fullHash);
+        long transactionId = Convert.transactionFullHashToId(fullHash);
         // Check the cache
         // Search the database
         try (Connection con = dataSource.getConnection();
@@ -147,13 +147,13 @@ public class TransactionDaoImpl implements TransactionDao {
     @Override
     @Transactional(readOnly = true)
     public boolean hasTransactionByFullHash(byte[] fullHash, TransactionalDataSource dataSource) {
-        return Arrays.equals(fullHash, getFullHash(Convert.fullHashToId(fullHash), dataSource));
+        return Arrays.equals(fullHash, getFullHash(Convert.transactionFullHashToId(fullHash), dataSource));
     }
 
     @Transactional(readOnly = true)
     @Override
     public boolean hasTransactionByFullHash(byte[] fullHash, int height, TransactionalDataSource dataSource) {
-        long transactionId = Convert.fullHashToId(fullHash);
+        long transactionId = Convert.transactionFullHashToId(fullHash);
         // Check the block cache
         // Search the database
         try (Connection con = dataSource.getConnection();
@@ -275,6 +275,7 @@ public class TransactionDaoImpl implements TransactionDao {
                          + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index) "
                          + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                     int i = 0;
+                    log.debug("Save transaction {}", transaction.getId());
                     pstmt.setLong(++i, transaction.getId());
                     pstmt.setShort(++i, transaction.getDeadline());
                     DbUtils.setLongZeroToNull(pstmt, ++i, transaction.getRecipientId());

@@ -35,7 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_ASSETS;
 
 @Vetoed
-public final class TransferAsset extends CreateTransaction {
+public final class TransferAsset extends CreateTransactionHandler {
 
     public TransferAsset() {
         super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "recipient", "asset", "quantityATU");

@@ -4,14 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
+import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
+import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  *
@@ -25,8 +28,13 @@ public abstract class AbstractAppendix implements Appendix {
         this.version = ((Number) attachmentData.get("version." + getAppendixName())).byteValue();
     }
 
+    @Deprecated(since = "TransactionV3")
     AbstractAppendix(ByteBuffer buffer) {
         this.version = buffer.get();
+    }
+
+    AbstractAppendix(RlpReader reader) {
+        this.version = reader.readByte();
     }
 
     AbstractAppendix(int version) {
@@ -36,8 +44,6 @@ public abstract class AbstractAppendix implements Appendix {
     AbstractAppendix() {
         this.version = getVersion() > 0 ? getVersion() : 1;
     }
-
-    public abstract String getAppendixName();
 
     @Override
     public final int getSize() {
@@ -51,10 +57,31 @@ public abstract class AbstractAppendix implements Appendix {
 
     public abstract int getMySize();
 
+    /**
+     * Returns the size of payload i.e. payable transaction part
+     *
+     * @return size in bytes
+     */
     public int getMyFullSize() {
         return getMySize();
     }
 
+    @Override
+    public void putBytes(WriteBuffer buffer) {
+        int size = getSize();
+        if (size > 0) {
+            ByteBuffer appBuffer = ByteBuffer.allocate(size);
+            appBuffer.order(ByteOrder.LITTLE_ENDIAN);
+            putBytes(appBuffer);
+
+            buffer.write(appBuffer.array());
+        }
+    }
+
+    /**
+     * @deprecated use {@link #putBytes(RlpList.RlpListBuilder)}
+     */
+    @Deprecated(since = "TransactionV3")
     @Override
     public final void putBytes(ByteBuffer buffer) {
         if (version > 0) {
@@ -63,7 +90,26 @@ public abstract class AbstractAppendix implements Appendix {
         putMyBytes(buffer);
     }
 
+    /**
+     * @deprecated use {@link #putMyBytes(RlpList.RlpListBuilder)}
+     */
+    @Deprecated(since = "TransactionV3")
     public abstract void putMyBytes(ByteBuffer buffer);
+
+    @Override
+    public final void putBytes(RlpList.RlpListBuilder builder) {
+        RlpList.RlpListBuilder attachment = RlpList.builder()
+            .add( getAppendixFlag() )
+            .add(version);
+
+        putMyBytes(attachment);
+
+        builder.add(attachment.build());
+    }
+
+    public void putMyBytes(RlpList.RlpListBuilder builder){
+        throw new UnsupportedOperationException("Unsupported RLP writer for appendix=" + getAppendixName());
+    }
 
     @Override
     public final JSONObject getJSONObject() {
@@ -95,10 +141,6 @@ public abstract class AbstractAppendix implements Appendix {
         }
         performFullValidation(transaction, blockHeight);
     }
-
-    public abstract void apply(Transaction transaction, Account senderAccount, Account recipientAccount);
-
-    public abstract boolean isPhasable();
 
     @Override
     public final boolean isPhased(Transaction transaction) {

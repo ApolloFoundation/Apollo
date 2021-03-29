@@ -12,5 +12,8 @@ public enum FeeMarker {
     UNCONFIRMED_BALANCE,
     UNDO_BALANCE,
     UNDO_UNCONFIRMED_BALANCE,
-    FEE_RATE
+    FEE_RATE,
+    BACK_FEE,
+    FORGER_FEE,
+    FUEL
 }

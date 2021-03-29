@@ -66,6 +66,7 @@ class VaultKeyStoreServiceImplTest {
             Files.delete(tempDirectory);
         }
     }
+
     /*
         saveSecretBytes was deleted.
      */
