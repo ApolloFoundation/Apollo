@@ -995,11 +995,17 @@ public final class PeerImpl implements Peer {
 
     public void setX509pem(PeerInfo pi) {
         String pem = pi.getX509_cert();
+
         if (pem == null || pem.isEmpty()) {
             return;
         }
         try {
             ExtCert xc = CertKeyPersistence.loadCertPEMFromStream(new ByteArrayInputStream(pem.getBytes()));
+            if (xc == null) {
+                log.debug("Error reading certificate of peer: {}", getHostWithPort());
+                return;
+            }
+
             IdValidator idValidator = identityService.getPeerIdValidator();
             //we should verify private key ownership by checking the signature of timestamp
             ByteBuffer bb = ByteBuffer.allocate(Integer.SIZE);
@@ -1008,6 +1014,7 @@ public final class PeerImpl implements Peer {
             byte[] signature = Hex.decode(pi.getEpochTimeSigantureHex());
             boolean signatureValid = identityService.getPeerIdValidator().verifySelfSigned(xc.getCertificate(), data, signature);
             boolean timeDiffValid = abs(timeService.getEpochTime() - pi.getEpochTime()) <= MAX_TIME_DIFF;
+            
             if (!timeDiffValid) {
                 log.warn("Time difference exceeds max allowed value for node {}", getHostWithPort());
                 return;
@@ -1016,9 +1023,10 @@ public final class PeerImpl implements Peer {
                 log.debug("Ignoring self-signed certificate because timestamp signature is wrong for peer: {}" + getHostWithPort());
                 return;
             }
+            
             peerId = Hex.encode(xc.getActorId());
-
             if (xc.isSelfSigned()) {
+
                 trustLevel = PeerTrustLevel.REGISTERED;
             } else if (idValidator.isTrusted(xc.getCertificate())) {
                 trustLevel = PeerTrustLevel.TRUSTED;
