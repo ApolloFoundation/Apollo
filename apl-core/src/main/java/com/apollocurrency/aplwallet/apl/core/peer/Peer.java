@@ -31,6 +31,10 @@ import java.util.Set;
 import java.util.UUID;
 
 public interface Peer extends Comparable<Peer> {
+    /** max time difference allowed between this and remote node to
+     * check siganture of epoch time
+     */
+    public static final int MAX_TIME_DIFF = 2;
     /**
      * ID of peer. It is UID field of X.509 certificate
      * @return 

@@ -174,11 +174,16 @@ public class PeerInfo extends BaseP2PResponse {
      */
     private String X509_cert;
     /**
+     * Epoch time of the node. Needed to approve private key ownership and make 
+     * replay attacks less possible
+     */
+    private Integer epochTime;
+    /**
      * HEX string represenataion of the signature of blockTime (as 4 bytes in netowk order).
      * Signature algorithm is the default for given public key type of X.509 certiificate,
      * for more information please see fb-cryptoo library documentation
      */
-    private String blockTimeSigantureHex;
+    private String epochTimeSigantureHex;
     /**
      * blacklist cause
      */

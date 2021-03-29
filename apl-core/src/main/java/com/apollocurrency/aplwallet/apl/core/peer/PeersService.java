@@ -440,11 +440,11 @@ public class PeersService {
             pi.setX509_cert(myId.getCertPEM());
         }
 //NodeId feature
-        pi.setBlockTime(timeService.getEpochTime());
+        pi.setEpochTime(timeService.getEpochTime());
         ByteBuffer bb = ByteBuffer.allocate(Integer.SIZE);
-        bb.putInt(pi.getBlockTime());
+        bb.putInt(pi.getEpochTime());
         byte[] signature = identityService.getThisNodeIdHandler().sign(bb.array());
-        pi.setBlockTimeSigantureHex(Hex.encode(signature));
+        pi.setEpochTimeSigantureHex(Hex.encode(signature));
         
         myPeerInfo = mapper.convertValue(pi, JSONObject.class);
         LOG.trace("My peer info:\n" + myPeerInfo.toJSONString());

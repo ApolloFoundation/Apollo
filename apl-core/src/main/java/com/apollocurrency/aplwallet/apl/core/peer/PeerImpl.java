@@ -61,6 +61,7 @@ import org.json.simple.parser.ParseException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import static java.lang.Math.abs;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -707,7 +708,7 @@ public final class PeerImpl implements Peer {
 
                 setPlatform(newPi.getPlatform());
                 setShareAddress(newPi.getShareAddress());
-                setX509pem(newPi.getX509_cert());
+                setX509pem(newPi);
 
                 if (!PeersService.ignorePeerAnnouncedAddress) {
                     if (newPi.getAnnouncedAddress() != null && newPi.getShareAddress()) {
@@ -992,33 +993,40 @@ public final class PeerImpl implements Peer {
         return pi.getX509_cert();
     }
 
-    public void setX509pem(String pem) {
-        if (pem == null || pem.isEmpty()){
+    public void setX509pem(PeerInfo pi) {
+        String pem = pi.getX509_cert();
+        if (pem == null || pem.isEmpty()) {
             return;
         }
         try {
             ExtCert xc = CertKeyPersistence.loadCertPEMFromStream(new ByteArrayInputStream(pem.getBytes()));
             IdValidator idValidator = identityService.getPeerIdValidator();
-            if(xc.isSelfSigned()){
-                //we should verify private key ownership by checking the signature of timestamp
-                ByteBuffer bb = ByteBuffer.allocate(Integer.SIZE);
-                bb.putInt(pi.getBlockTime());
-                byte[] data = bb.array();
-                byte[] signature = Hex.decode(pi.getBlockTimeSigantureHex());
-                if(identityService.getPeerIdValidator().verifySelfSigned(xc.getCertificate(),data,signature)){
-                    peerId=Hex.encode(xc.getActorId());
-                    trustLevel = PeerTrustLevel.REGISTERED;
-                }else{
-                    log.debug("Ignoring self-signed certificate because timestamp signature is wrong for peer: {}"+getHostWithPort());
-                }
-            }else if (idValidator.isTrusted(xc.getCertificate())) {
+            //we should verify private key ownership by checking the signature of timestamp
+            ByteBuffer bb = ByteBuffer.allocate(Integer.SIZE);
+            bb.putInt(pi.getBlockTime());
+            byte[] data = bb.array();
+            byte[] signature = Hex.decode(pi.getEpochTimeSigantureHex());
+            boolean signatureValid = identityService.getPeerIdValidator().verifySelfSigned(xc.getCertificate(), data, signature);
+            boolean timeDiffValid = abs(timeService.getEpochTime() - pi.getEpochTime()) <= MAX_TIME_DIFF;
+            if (!timeDiffValid) {
+                log.warn("Time difference exceeds max allowed value for node {}", getHostWithPort());
+                return;
+            }
+            if (signatureValid) {
+                log.debug("Ignoring self-signed certificate because timestamp signature is wrong for peer: {}" + getHostWithPort());
+                return;
+            }
+            peerId = Hex.encode(xc.getActorId());
+
+            if (xc.isSelfSigned()) {
+                trustLevel = PeerTrustLevel.REGISTERED;
+            } else if (idValidator.isTrusted(xc.getCertificate())) {
                 trustLevel = PeerTrustLevel.TRUSTED;
-                if( (xc.getAuthorityId().getActorType().getType() & ActorType.NODE_CERTIFIED_STORAGE) !=0 ){
+                if ((xc.getAuthorityId().getActorType().getType() & ActorType.NODE_CERTIFIED_STORAGE) != 0) {
                     trustLevel = PeerTrustLevel.SYSTEM_TRUSTED;
                 }
-                peerId=Hex.encode(xc.getActorId());
-            }else{
-                log.debug("Can not determine trust level of peer certificate, signed by unknown CA for peer: {}",getHostWithPort());
+            } else {
+                log.debug("Can not determine trust level of peer certificate, signed by unknown CA for peer: {}", getHostWithPort());
             }
         } catch (IOException | CertException ex) {
             log.debug("Can not read certificate of peer: {}", getHostWithPort());
@@ -1031,7 +1039,7 @@ public final class PeerImpl implements Peer {
         if (peerId!=null){
             res = peerId;
         }else{
-            res = "";
+            res = getHostWithPort();
         }
         return res;
     }

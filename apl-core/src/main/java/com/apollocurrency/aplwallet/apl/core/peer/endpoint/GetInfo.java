@@ -75,7 +75,7 @@ public class GetInfo extends PeerRequestHandler {
         PeerInfo pi = mapper.convertValue(req, PeerInfo.class);
         log.trace("GetInfo - PeerInfo from request = {}", pi);
         
-        peerImpl.setX509pem(pi.getX509_cert());
+        peerImpl.setX509pem(pi);
         peerImpl.setLastUpdated(timeService.getEpochTime());
         long origServices = peerImpl.getServices();
         String servicesString = pi.getServices();
