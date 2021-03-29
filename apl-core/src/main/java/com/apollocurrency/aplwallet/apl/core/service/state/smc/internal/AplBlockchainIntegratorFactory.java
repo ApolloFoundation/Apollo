@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.blockchain.SMCNotFoundException;
-import com.apollocurrency.smc.blockchain.tx.SMCTransactionReceipt;
+import com.apollocurrency.smc.blockchain.tx.SMCOperationReceipt;
 import com.apollocurrency.smc.contract.vm.SMCMessageSenderException;
 import com.apollocurrency.smc.contract.vm.internal.BlockchainInfo;
 import com.apollocurrency.smc.data.type.Address;
@@ -39,18 +39,17 @@ public class AplBlockchainIntegratorFactory {
     public BlockchainIntegrator createInstance(final long originatorTransactionId, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
         return new BlockchainIntegrator() {
             @Override
-            public SMCTransactionReceipt sendMessage(Address from, Address to, String data) {
+            public SMCOperationReceipt sendMessage(Address from, Address to, String data) {
                 throw new UnsupportedOperationException("Not implemented.");
             }
 
             @Override
-            public SMCTransactionReceipt sendMoney(final Address fromAdr, Address toAdr, BigInteger value) {
-                SMCTransactionReceipt.SMCTransactionReceiptBuilder txReceiptBuilder = SMCTransactionReceipt.builder()
-                    .transactionId(Long.toUnsignedString(originatorTransactionId))
-                    .amount(value);
+            public SMCOperationReceipt sendMoney(final Address fromAdr, Address toAdr, BigInteger value) {
+                SMCOperationReceipt.SMCOperationReceiptBuilder txReceiptBuilder = SMCOperationReceipt.builder()
+                    .transactionId(Long.toUnsignedString(originatorTransactionId));
                 long amount = value.longValueExact();
-                Account sender = null;
-                Account recipient = null;
+                Account sender;
+                Account recipient;
                 /* case 1) from txSenderAccount to txRecipientAccount
                  * case 2) from txRecipientAccount to arbitrary target account
                  */
@@ -91,13 +90,12 @@ public class AplBlockchainIntegratorFactory {
             @Override
             public BlockchainInfo getBlockchainInfo() {
                 BlockchainStatusDto blockchainStatus = serverInfoService.getBlockchainStatus();
-                BlockchainInfo blockchainInfo = BlockchainInfo.builder()
+                return BlockchainInfo.builder()
                     .chainId(blockchainStatus.getChainId().toString())
                     .height(blockchainStatus.getNumberOfBlocks())
                     .blockId(blockchainStatus.getLastBlock())
                     .timestamp(blockchainStatus.getTime())
                     .build();
-                return blockchainInfo;
             }
         };
     }
