@@ -1012,7 +1012,9 @@ public final class PeerImpl implements Peer {
             bb.putInt(pi.getBlockTime());
             byte[] data = bb.array();
             byte[] signature = Hex.decode(pi.getEpochTimeSigantureHex());
-            boolean signatureValid = identityService.getPeerIdValidator().verifySelfSigned(xc.getCertificate(), data, signature);
+            
+            boolean signatureValid =  identityService.getPeerIdValidator().verifySignedData(xc.getCertificate(), data, signature);
+            
             boolean timeDiffValid = abs(timeService.getEpochTime() - pi.getEpochTime()) <= MAX_TIME_DIFF;
             
             if (!timeDiffValid) {
@@ -1026,7 +1028,6 @@ public final class PeerImpl implements Peer {
             
             peerId = Hex.encode(xc.getActorId());
             if (xc.isSelfSigned()) {
-
                 trustLevel = PeerTrustLevel.REGISTERED;
             } else if (idValidator.isTrusted(xc.getCertificate())) {
                 trustLevel = PeerTrustLevel.TRUSTED;
