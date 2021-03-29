@@ -290,10 +290,10 @@ public class Apollo {
 
 //over-write config options from command line if set
 
-        if (args.noShardImport != null) {
+        if (args.noShardImport) {
             applicationProperties.setProperty("apl.noshardimport", "" + args.noShardImport);
         }
-        if (args.noShardCreate != null) {
+        if (args.noShardCreate) {
             applicationProperties.setProperty("apl.noshardcreate", "" + args.noShardCreate);
         }
 //TODO: check this piece of art
