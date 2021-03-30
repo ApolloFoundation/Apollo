@@ -99,4 +99,23 @@ public class AplBlockchainIntegratorFactory {
             }
         };
     }
+
+    public BlockchainIntegrator createMockInstance(final long originatorTransactionId) {
+        return new BlockchainIntegrator() {
+            @Override
+            public BlockchainInfo getBlockchainInfo() {
+                return BlockchainInfo.builder().build();
+            }
+
+            @Override
+            public SMCOperationReceipt sendMessage(Address address, Address address1, String s) {
+                return SMCOperationReceipt.OK_RECEIPT;
+            }
+
+            @Override
+            public SMCOperationReceipt sendMoney(Address address, Address address1, BigInteger bigInteger) {
+                return SMCOperationReceipt.OK_RECEIPT;
+            }
+        };
+    }
 }

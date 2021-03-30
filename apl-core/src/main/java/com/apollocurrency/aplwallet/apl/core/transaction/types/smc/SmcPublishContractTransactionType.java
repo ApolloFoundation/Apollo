@@ -6,11 +6,14 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.AplBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.AplMachine;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.ContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxContractValidationProcessor;
@@ -23,11 +26,11 @@ import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
+import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SMCMachine;
-import com.apollocurrency.smc.contract.vm.SMCMachineFactory;
 import com.apollocurrency.smc.data.type.Address;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
@@ -57,8 +60,8 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     };
 
     @Inject
-    public SmcPublishContractTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, ContractService contractService, SMCMachineFactory machineFactory) {
-        super(blockchainConfig, accountService, contractService, machineFactory);
+    public SmcPublishContractTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, ContractService contractService, AplBlockchainIntegratorFactory integratorFactory) {
+        super(blockchainConfig, accountService, contractService, integratorFactory);
     }
 
     @Override
@@ -112,7 +115,8 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         }
         //syntactical and semantic validation
         SmartContract smartContract = contractService.createNewContract(transaction);
-        SMCMachine smcMachine = machineFactory.createNewInstance();
+        BlockchainIntegrator integrator = integratorFactory.createMockInstance(transaction.getId());
+        SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
 
         ContractTxProcessor processor = new SandboxContractValidationProcessor(smcMachine, smartContract);
         ExecutionLog executionLog = processor.process();
@@ -126,7 +130,8 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         log.debug("SMC: applyAttachment: publish smart contract and call constructor.");
         checkPrecondition(transaction);
         SmartContract smartContract = contractService.createNewContract(transaction);
-        SMCMachine smcMachine = machineFactory.createNewInstance();
+        BlockchainIntegrator integrator = integratorFactory.createInstance(transaction.getId(), senderAccount, recipientAccount, getLedgerEvent());
+        SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
         ContractTxProcessor processor = new PublishContractTxProcessor(smcMachine, smartContract);
         ExecutionLog executionLog = processor.process();
