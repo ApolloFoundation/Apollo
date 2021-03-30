@@ -150,6 +150,9 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
 
     @Override
     public String getChainIdPart() {
-        return partialUuid;
+        if(partialUuid==null || partialUuid.isEmpty()){
+           partialUuid  = chainUuid.toString().substring(0,6);
+        }
+        return partialUuid;        
     }
 }

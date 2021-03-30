@@ -95,12 +95,13 @@ public class AplContainerBuilder {
 
         if (devMode) {
             weld.enableDevMode();
+            //it helps to localize problems!
+            weld.disableIsolation();
         }
 
         if (concurrentDeploymentDisabled) {
             weld.property(ConfigurationKey.CONCURRENT_DEPLOYMENT.get(), "false");
         }
-
         WeldContainer newContainer = weld.initialize();
 
         if (newContainer.isUnsatisfied()) {

@@ -26,11 +26,8 @@ class PeerLoaderThread implements Runnable {
     private final Set<PeerEntity> entries = new HashSet<>();
     private final TimeService timeService;
     private final PeersService peersService;
-//<<<<<<< HEAD
-    private PeerDao peerDao;
-//=======
-//    private final PeerDb peerDb;
 
+    private PeerDao peerDao;
 
     public PeerLoaderThread(List<String> defaultPeers,
                             List<Future<String>> unresolvedPeers,
@@ -39,27 +36,14 @@ class PeerLoaderThread implements Runnable {
         this.defaultPeers = defaultPeers;
         this.unresolvedPeers = unresolvedPeers;
         this.timeService = timeService;
-//<<<<<<< HEAD
         this.peersService = peersService;        
-//=======
-//        this.peersService = peersService;
-//        this.peerDb = peersService.getPeerDb();
-//>>>>>>> develop
     }
 
     @Override
     public void run() {
         LOG.trace("'Peer loader': thread starting...");
-//<<<<<<< HEAD
         if (peerDao == null) {
             peerDao = peersService.getPeerDao();
-//=======
-//        if (this.peerDb == null) {
-////            peerDb = CDI.current().select(PeerDb.class).get();
-//            String error = "ERROR, the peerDb instance was not initialized inside peerService";
-//            log.error(error);
-//            throw new RuntimeException(error);
-//>>>>>>> develop
         }
         final int now = timeService.getEpochTime();
         //TODO: add enties after connection established and x.509 is known

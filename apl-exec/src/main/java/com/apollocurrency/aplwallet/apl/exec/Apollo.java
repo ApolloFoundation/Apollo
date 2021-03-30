@@ -343,7 +343,6 @@ public class Apollo {
             // See https://docs.jboss.org/cdi/spec/2.0.EDR2/cdi-spec.html#se_bootstrap for more details
             // we already have it in beans.xml in core
             .annotatedDiscoveryMode();
-
         //!!!!!!!!!!!!!!
         //TODO:  turn it on periodically in development process to check CDI errors
         // Enable for development only, see http://weld.cdi-spec.org/news/2015/11/10/weld-probe-jmx/

@@ -32,26 +32,12 @@ class GetMorePeersThread implements Runnable {
     private final PeersService peersService;
     private final GetPeersRequest getPeersRequest;
     private volatile boolean updatedPeer;
-//<<<<<<< HEAD
-    private PeerDao peerDao;
-//=======
-//    private final PeerDb peerDb;
-//
-//>>>>>>> develop
+    private final PeerDao peerDao;
 
     public GetMorePeersThread(TimeService timeService, PeersService peersService) {
         this.timeService = timeService;
         this.peersService = peersService;
-//<<<<<<< HEAD
         this.peerDao = peersService.getPeerDao();
-//=======
-//        this.peerDb = peersService.getPeerDb();
-//        if (this.peerDb == null) {
-//            String error = "ERROR, the peerDb instance was not initialized inside peerService";
-//            log.error(error);
-//            throw new RuntimeException(error);
-//        }
-//>>>>>>> develop
         getPeersRequest = new GetPeersRequest(peersService.blockchainConfig.getChain().getChainId());
     }
 
@@ -133,13 +119,8 @@ class GetMorePeersThread implements Runnable {
         //
         // Load the current database entries and map announced address to database entry
         //
-//<<<<<<< HEAD
         List<PeerEntity> oldPeers = peerDao.loadPeers();
         Map<String, PeerEntity> oldMap = new HashMap<>(oldPeers.size());
-//=======
-//        List<PeerDb.Entry> oldPeers = this.peerDb.loadPeers();
-//        Map<String, PeerDb.Entry> oldMap = new HashMap<>(oldPeers.size());
-//>>>>>>> develop
         oldPeers.forEach((entry) -> oldMap.put(entry.getAddress(), entry));
         //
         // Create the current peer map (note that there can be duplicate peer entries with
@@ -182,13 +163,8 @@ class GetMorePeersThread implements Runnable {
         //
 
         try {
-//<<<<<<< HEAD
             peerDao.deletePeers(toDelete);
             peerDao.updatePeers(toUpdate);
-//=======
-//            this.peerDb.deletePeers(toDelete);
-//            this.peerDb.updatePeers(toUpdate);
-//>>>>>>> develop
         } catch (Exception e) {
             throw e;
         }

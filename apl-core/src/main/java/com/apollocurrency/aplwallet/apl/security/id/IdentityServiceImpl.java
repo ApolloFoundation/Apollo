@@ -92,7 +92,9 @@ public class IdentityServiceImpl implements IdentityService {
             KeyWriter kw = CryptoFactory.newInstance().getKeyWriter();
             
             try {
+                myKeyPath.getParent().toFile().mkdirs();
                 kw.writePvtKeyPEM(myKeyPath.toString(), certAndKey.getPvtKey());
+                myCertPath.getParent().toFile().mkdirs();
                 kw.writeX509CertificatePEM(myCertPath.toString(), certAndKey.getCert());
             } catch (IOException ex) {
                 log.error("Can not wirite generated node keys");
