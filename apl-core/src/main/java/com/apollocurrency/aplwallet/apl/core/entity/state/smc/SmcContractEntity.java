@@ -28,7 +28,7 @@ public class SmcContractEntity extends VersionedDerivedEntity {
     private String args;//constructor parameters
 
     private String languageName;//"javascript"
-    private String languageVersion;//"0.0.1"
+    private String languageVersion;//"0.1.1"
 
     private String status;//ref to ContractState enum
 

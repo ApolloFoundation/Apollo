@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
@@ -58,8 +59,10 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistryHelper;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendixApplier;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
@@ -72,6 +75,7 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
+import com.apollocurrency.smc.contract.SmartContract;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -86,23 +90,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Locale;
 
-import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_1;
-import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_2;
-import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_ACCOUNT_ATTACHMENT;
-import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_PUBLIC_KEY_1;
-import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.CHILD_PUBLIC_KEY_2;
-import static com.apollocurrency.aplwallet.apl.core.transaction.ChildAccountTestData.SENDER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -139,7 +136,7 @@ class SmcPublishContractTransactionTypeApplyTest extends DbContainerBaseTest {
         AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
         FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
         DefaultBlockValidator.class, ReferencedTransactionService.class,
-        AppendixApplierRegistry.class,
+        PublicKeyAnnouncementAppendixApplier.class, AppendixApplierRegistry.class,
         AppendixValidatorRegistry.class,
         //TransactionRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         ReferencedTransactionDaoImpl.class,
@@ -181,6 +178,10 @@ class SmcPublishContractTransactionTypeApplyTest extends DbContainerBaseTest {
     ContractService contractService;
     @Inject
     AplBlockchainIntegratorFactory integratorFactory;
+    @Inject
+    PublicKeyAnnouncementAppendixApplier applier;
+    @Inject
+    AppendixApplierRegistry registry;
     AccountService spyAccountService;
 
     TxBContext context;
@@ -194,7 +195,9 @@ class SmcPublishContractTransactionTypeApplyTest extends DbContainerBaseTest {
 
     @BeforeEach
     void setUp() {
+        AppendixApplierRegistryHelper.addApplier(applier, registry);
         doReturn(chain).when(blockchainConfig).getChain();
+        doReturn(100).when(blockchain).getHeight();
         spyAccountService = spy(accountService);
         context = TxBContext.newInstance(chain);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
@@ -206,8 +209,9 @@ class SmcPublishContractTransactionTypeApplyTest extends DbContainerBaseTest {
     @Test
     void applyAttachment() throws AplException.NotValidException {
         //GIVEN
-        Account account = new Account(3705364957971254799L, 1000000000L, 1000000000L, 1000000000L, 0L, 10);
-        doReturn(account).when(spyAccountService).getAccount(3705364957971254799L);
+        //Account account = new Account(3705364957971254799L, 1000000000L, 1000000000L, 1000000000L, 0L, 10);
+        byte[] announcedPublicKey = Convert.parseHexString("30B7C63FDE11877D7AFFD4C64F47F314DC1D7BAAA7FAF4FAB905A8BD61E6A732".toLowerCase(Locale.ROOT));
+
         doNothing().when(spyAccountService).addToBalanceATM(any(Account.class), any(LedgerEvent.class), eq(-7715091681280036635L), eq(-10L), eq(-500000L));
         doNothing().when(spyAccountService).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), eq(-7715091681280036635L), eq(10L));
 
@@ -227,23 +231,9 @@ class SmcPublishContractTransactionTypeApplyTest extends DbContainerBaseTest {
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx));
 
+        SmartContract smartContract = contractService.loadContract(new AplAddress(newTx.getRecipientId()));
         //THEN
-        verify(accountPublicKeyService).apply(any(Account.class), eq(CHILD_PUBLIC_KEY_1));
-        verify(accountPublicKeyService).apply(any(Account.class), eq(CHILD_PUBLIC_KEY_2));
-
-        Account child1 = accountService.getAccount(CHILD_1.getId());
-        Account child2 = accountService.getAccount(CHILD_2.getId());
-
-        assertEquals(SENDER.getId(), child1.getParentId());
-        assertEquals(SENDER.getId(), child2.getParentId());
-
-        assertTrue(child1.isChild());
-        assertTrue(child2.isChild());
-
-        assertTrue(child1.isMultiSig());
-        assertTrue(child2.isMultiSig());
-
-        assertEquals(CHILD_ACCOUNT_ATTACHMENT.getAddressScope(), child1.getAddrScope());
-        assertEquals(CHILD_ACCOUNT_ATTACHMENT.getAddressScope(), child2.getAddrScope());
+        assertNotNull(smartContract);
+        assertEquals(new AplAddress(newTx.getId()).getHex(), smartContract.getTxId().getHex());
     }
 }

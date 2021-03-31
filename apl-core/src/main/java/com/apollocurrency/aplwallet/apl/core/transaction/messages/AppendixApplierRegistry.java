@@ -14,12 +14,18 @@ import java.util.Map;
 public class AppendixApplierRegistry {
     private final Map<Class<?>, AppendixApplier<?>> appliers = new HashMap<>();
 
-    public AppendixApplierRegistry() {}
+    public AppendixApplierRegistry() {
+    }
 
 
     void init(Instance<AppendixApplier<?>> instances) {
         instances.iterator().forEachRemaining(e -> appliers.put(e.forClass(), e));
     }
+
+    void addApplier(AppendixApplier<?> applier) {
+        appliers.put(applier.forClass(), applier);
+    }
+
     public AppendixApplierRegistry(Collection<AppendixApplier<?>> appliers) {
         appliers.iterator().forEachRemaining(e -> this.appliers.put(e.forClass(), e));
     }

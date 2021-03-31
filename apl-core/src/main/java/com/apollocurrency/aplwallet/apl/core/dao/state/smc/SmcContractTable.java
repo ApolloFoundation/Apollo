@@ -66,7 +66,7 @@ public class SmcContractTable extends VersionedDeletableEntityDbTable<SmcContrac
             pstmt.setString(++i, entity.getLanguageVersion());
             pstmt.setString(++i, entity.getArgs());
             pstmt.setString(++i, entity.getStatus());
-            pstmt.setInt(i, entity.getHeight());
+            pstmt.setInt(++i, entity.getHeight());
             pstmt.executeUpdate();
             try (final ResultSet rs = pstmt.getGeneratedKeys()) {
                 if (rs.next()) {
