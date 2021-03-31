@@ -19,7 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishCont
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.smc.blockchain.SMCNotFoundException;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
-import com.apollocurrency.smc.contract.ContractState;
+import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.ContractType;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartSource;
@@ -27,6 +27,7 @@ import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.persistence.tx.log.ArrayTxLog;
 import com.apollocurrency.smc.persistence.tx.log.TxLog;
+import com.apollocurrency.smc.polyglot.Languages;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -140,6 +141,7 @@ public class ContractServiceImpl implements ContractService {
             .address(contractAddress)
             .owner(new AplAddress(smcTransaction.getSenderId()))
             .sender(new AplAddress(smcTransaction.getSenderId()))
+            .txId(new AplAddress(smcTransaction.getId()))
             //TODO determine the contract type by source code
             .type(ContractType.PAYABLE)
             .code(SmartSource.builder()
@@ -147,9 +149,10 @@ public class ContractServiceImpl implements ContractService {
                 .name(attachment.getContractName())
                 .args(attachment.getConstructorParams())
                 .languageName(attachment.getLanguageName())
+                .languageVersion(Languages.languageVersion(attachment.getContractSource()).getVersion())
                 .build()
             )
-            .state(ContractState.CREATED)
+            .status(ContractStatus.CREATED)
             .fuel(new ContractFuel(smcTransaction.getFuelLimit(), smcTransaction.getFuelPrice()))
             .txLog(createLog(contractAddress.getHex()))
             .build();
@@ -163,8 +166,8 @@ public class ContractServiceImpl implements ContractService {
         return SmartContract.builder()
             .address(new AplAddress(smcContractEntity.getAddress()))
             .owner(new AplAddress(smcContractEntity.getOwner()))
-            //TODO get the senderId by transactionId
             .sender(new AplAddress(smcContractEntity.getOwner()))
+            .txId(new AplAddress(smcContractEntity.getTransactionId()))
             //TODO determine the contract type by source code
             .type(ContractType.PAYABLE)
             .code(SmartSource.builder()
@@ -176,7 +179,7 @@ public class ContractServiceImpl implements ContractService {
                 .build()
             )
             .serializedObject(smcContractStateEntity.getSerializedObject())
-            .state(ContractState.valueOf(smcContractStateEntity.getStatus()))
+            .status(ContractStatus.valueOf(smcContractStateEntity.getStatus()))
             .build();
     }
 

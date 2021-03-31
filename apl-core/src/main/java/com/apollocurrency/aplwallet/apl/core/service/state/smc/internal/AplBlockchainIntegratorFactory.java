@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.blockchain.SMCNotFoundException;
 import com.apollocurrency.smc.blockchain.tx.SMCOperationReceipt;
@@ -96,6 +97,27 @@ public class AplBlockchainIntegratorFactory {
                     .blockId(blockchainStatus.getLastBlock())
                     .timestamp(blockchainStatus.getTime())
                     .build();
+            }
+        };
+    }
+
+    public BlockchainIntegrator createMockInstance(final long originatorTransactionId) {
+        SMCOperationReceipt rc = SMCOperationReceipt.OK_RECEIPT;
+        rc.setTransactionId(Convert.toHexString(BigInteger.valueOf(originatorTransactionId).toByteArray()));
+        return new BlockchainIntegrator() {
+            @Override
+            public BlockchainInfo getBlockchainInfo() {
+                return BlockchainInfo.builder().build();
+            }
+
+            @Override
+            public SMCOperationReceipt sendMessage(Address address, Address address1, String s) {
+                return rc;
+            }
+
+            @Override
+            public SMCOperationReceipt sendMoney(Address address, Address address1, BigInteger bigInteger) {
+                return rc;
             }
         };
     }

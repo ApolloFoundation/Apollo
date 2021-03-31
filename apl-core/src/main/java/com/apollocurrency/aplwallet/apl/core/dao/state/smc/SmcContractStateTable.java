@@ -59,7 +59,7 @@ public class SmcContractStateTable extends VersionedDeletableEntityDbTable<SmcCo
             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
             PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + TABLE_NAME +
                     "(address, object, status, height, latest) " +
-                    "VALUES (?, ?, ?, ?, ?, ?,  ?, TRUE) " +
+                    "VALUES (?, ?, ?, ?, TRUE) " +
                     "ON DUPLICATE KEY UPDATE " +
                     "address = VALUES(address), object = VALUES(object), status = VALUES(status), height = VALUES(height), latest = TRUE"
                 , Statement.RETURN_GENERATED_KEYS)) {
@@ -67,7 +67,7 @@ public class SmcContractStateTable extends VersionedDeletableEntityDbTable<SmcCo
             pstmt.setLong(++i, entity.getAddress());
             pstmt.setString(++i, entity.getSerializedObject());
             pstmt.setString(++i, entity.getStatus());
-            pstmt.setInt(i, entity.getHeight());
+            pstmt.setInt(++i, entity.getHeight());
             pstmt.executeUpdate();
             try (final ResultSet rs = pstmt.getGeneratedKeys()) {
                 if (rs.next()) {

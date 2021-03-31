@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
-import com.apollocurrency.smc.contract.ContractState;
+import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SMCMachine;
@@ -33,13 +33,13 @@ public class PublishContractTxProcessor implements ContractTxProcessor {
     @Override
     public ExecutionLog process() {
         ExecutionLog executionLog = new ExecutionLog();
-        validateState(ContractState.CREATED, smartContract);
-        smartContract.setState(ContractState.PUBLISHED);
+        validateStatus(ContractStatus.CREATED, smartContract);
+        smartContract.setStatus(ContractStatus.PUBLISHED);
 
         //call smart contract constructor, charge the fuel
         smcMachine.callConstructor(smartContract);
         executionLog.join(smcMachine.getExecutionLog());
-        validateState(ContractState.ACTIVE, smartContract);
+        validateStatus(ContractStatus.ACTIVE, smartContract);
 
         smcMachine.resetExecutionLog();
 

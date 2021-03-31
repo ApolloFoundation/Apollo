@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -160,6 +161,7 @@ public class TransactionTestData {
         PrunableLoadingService prunableLoadingService = mock(PrunableLoadingService.class);
         ContractService contractService = mock(ContractService.class);
         SMCMachineFactory smcMachineFactory = mock(SMCMachineFactory.class);
+        AplBlockchainIntegratorFactory integratorFactory = mock(AplBlockchainIntegratorFactory.class);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
             new OrdinaryPaymentTransactionType(blockchainConfig, accountService),
             new PrivatePaymentTransactionType(blockchainConfig, accountService),
@@ -170,8 +172,8 @@ public class TransactionTestData {
             new CriticalUpdateTransactiionType(blockchainConfig, accountService),
             new ImportantUpdateTransactionType(blockchainConfig, accountService),
             new ListingTransactionType(blockchainConfig, accountService, dgsService, prunableLoadingService),
-            new SmcPublishContractTransactionType(blockchainConfig, accountService, contractService, smcMachineFactory),
-            new SmcCallMethodTransactionType(blockchainConfig, accountService, contractService, smcMachineFactory),
+            new SmcPublishContractTransactionType(blockchainConfig, accountService, contractService, integratorFactory),
+            new SmcCallMethodTransactionType(blockchainConfig, accountService, contractService, integratorFactory),
             new MSCurrencyDeletionTransactionType(blockchainConfig, accountService, currencyService)
         ));
         initTransactions();

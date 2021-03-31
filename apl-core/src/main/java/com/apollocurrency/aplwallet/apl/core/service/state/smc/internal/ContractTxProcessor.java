@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
-import com.apollocurrency.smc.contract.ContractState;
+import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 
@@ -27,10 +27,10 @@ public interface ContractTxProcessor {
      */
     SmartContract smartContract();
 
-    default void validateState(ContractState expected, SmartContract smartContract) {
-        if (expected != smartContract.getState()) {
+    default void validateStatus(ContractStatus expected, SmartContract smartContract) {
+        if (expected != smartContract.getStatus()) {
             throw new IllegalStateException("Expected " + expected.name() +
-                " actually " + smartContract.getState().name());
+                " actually " + smartContract.getStatus().name());
         }
     }
 

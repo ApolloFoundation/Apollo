@@ -20,7 +20,7 @@ public class ContractModelToEntityConverter implements Converter<SmartContract, 
             .args(model.getArgs())
             .languageName(model.getLanguageName())
             .languageVersion(model.getLanguageVersion())
-            .status(model.getState().name())
+            .status(model.getStatus().name())
             .build();
     }
 }

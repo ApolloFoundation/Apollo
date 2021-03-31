@@ -9,12 +9,12 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
-import com.apollocurrency.smc.contract.vm.SMCMachineFactory;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.ByteBuffer;
@@ -29,12 +29,12 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     protected static final int MACHINE_WORD_SIZE = 32;
 
     protected ContractService contractService;
-    protected final SMCMachineFactory machineFactory;
+    protected final AplBlockchainIntegratorFactory integratorFactory;
 
-    public AbstractSmcTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, ContractService contractService, SMCMachineFactory machineFactory) {
+    public AbstractSmcTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, ContractService contractService, AplBlockchainIntegratorFactory integratorFactory) {
         super(blockchainConfig, accountService);
         this.contractService = contractService;
-        this.machineFactory = machineFactory;
+        this.integratorFactory = integratorFactory;
     }
 
     @Override

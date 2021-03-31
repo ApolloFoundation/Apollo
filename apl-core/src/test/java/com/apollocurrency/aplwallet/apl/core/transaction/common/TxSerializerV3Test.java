@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
@@ -22,7 +23,6 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.io.JsonBuffer;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
-import com.apollocurrency.smc.contract.vm.SMCMachineFactory;
 import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeAll;
@@ -54,7 +54,7 @@ class TxSerializerV3Test {
     @Mock
     ContractService contractService;
     @Mock
-    SMCMachineFactory smcMachineFactory;
+    AplBlockchainIntegratorFactory integratorFactory;
 
     TxBContext context;
     TransactionTypeFactory transactionTypeFactory;
@@ -70,7 +70,7 @@ class TxSerializerV3Test {
         doReturn(chain).when(blockchainConfig).getChain();
         context = TxBContext.newInstance(chain);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
-            new SmcPublishContractTransactionType(blockchainConfig, accountService, contractService, smcMachineFactory)
+            new SmcPublishContractTransactionType(blockchainConfig, accountService, contractService, integratorFactory)
         ));
         transactionBuilderFactory = new TransactionBuilderFactory(transactionTypeFactory, blockchainConfig);
     }

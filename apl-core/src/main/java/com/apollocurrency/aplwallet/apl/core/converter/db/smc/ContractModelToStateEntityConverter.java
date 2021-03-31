@@ -14,7 +14,7 @@ public class ContractModelToStateEntityConverter implements Converter<SmartContr
         return SmcContractStateEntity.builder()
             .address(new BigInteger(model.getAddress().get()).longValueExact())
             .serializedObject(model.getSerializedObject())
-            .status(model.getState().name())
+            .status(model.getStatus().name())
             .build();
     }
 }

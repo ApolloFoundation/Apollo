@@ -35,7 +35,7 @@ public class SmcConfig {
     }
 
     @Produces
-    public LanguageContext createLanguageContext() {
+    public static LanguageContext createLanguageContext() {
         return LanguageContextFactory.createJSContext(
             new DenyGlobalObjectsPolicy(),
             new AllowFullHostAccessPolicy(),
