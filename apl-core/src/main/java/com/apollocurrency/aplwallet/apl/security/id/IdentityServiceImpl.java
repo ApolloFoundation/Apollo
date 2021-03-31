@@ -58,6 +58,7 @@ public class IdentityServiceImpl implements IdentityService {
                 .resolve(dirProvider.getChainIdPart())
                 .resolve("this_node.key");
         apolloCaPath =  Path.of(dirProvider.getInstallationConfigLocation())
+                .resolve("conf")
                 .resolve("CA-certs");
         
     }

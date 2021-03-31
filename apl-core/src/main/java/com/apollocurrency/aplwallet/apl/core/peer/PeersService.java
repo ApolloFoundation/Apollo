@@ -58,7 +58,6 @@ import com.apollocurrency.aplwallet.apl.util.task.Tasks;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import io.firstbridge.identity.cert.ExtCert;
-import io.firstbridge.identity.handler.ThisActorIdHandler;
 import io.firstbridge.identity.utils.Hex;
 import java.nio.ByteBuffer;
 import lombok.Getter;
@@ -171,6 +170,8 @@ public class PeersService {
     private final PeerDao peerDao;
     private final TransactionConverter transactionConverter;
     private final BlockConverter blockConverter;
+    private ObjectMapper mapper;
+    
 //    private final ExecutorService txSendingDispatcher;
 
     @Inject
@@ -205,6 +206,10 @@ public class PeersService {
 
         this.sendingService = new TimeTraceDecoratedThreadPoolExecutor(10, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(1000), new NamedThreadFactory("PeersSendingService"));
         isLightClient = propertiesHolder.isLightClient();
+        //configure object mapper for PeerInfo
+        mapper = new ObjectMapper();
+        mapper.registerModule(new JsonOrgModule());
+        
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -292,6 +297,7 @@ public class PeersService {
             LOG.info("Using a proxy, will not create outbound websockets.");
         }
         
+        //NodeID feature        
         if(!identityService.loadMyIdentity()){
             log.error("Can not load or generate this node identity certificate or key");
         }
@@ -300,10 +306,6 @@ public class PeersService {
             log.error("Can not load trusted CA certificates, node ID verification is impossible");
         }
         
-        //NodeID feature
-        identityService.loadMyIdentity();
-        identityService.loadTrusterCaCerts();
-
         addListener(peer -> peersExecutorService.submit(() -> {
             if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
                 try {
@@ -430,10 +432,6 @@ public class PeersService {
         }
         pi.setServices(Long.toUnsignedString(services));
         myServices = Collections.unmodifiableList(servicesList);
-
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JsonOrgModule());
-        
         
         ExtCert myId = identityService.getThisNodeIdHandler().getExtCert();
         if(myId!=null){
