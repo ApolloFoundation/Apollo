@@ -267,7 +267,10 @@ public class TransactionValidator {
             feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
         }
         //TODO: A.B. check it
-        if (account == null || account.getUnconfirmedBalanceATM() < feeATM) {
+        if (account == null){
+            throw new AplException.NotCurrentlyValidException("Account for TX does not exist yet. TX: "+transaction.getStringId());
+        }
+        if(account.getUnconfirmedBalanceATM() < feeATM){
             throw new AplException.NotCurrentlyValidException("Account balance " + account.getUnconfirmedBalanceATM() + " is not enough to pay tx fee " + feeATM);
         }
     }
