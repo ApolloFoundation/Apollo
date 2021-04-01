@@ -4,26 +4,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
-import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.util.AnnotationLiteral;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,12 +34,10 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
     private final Event<DeleteOnTrimData> deleteOnTrimDataEvent;
 
     protected BasicDbTable(String table, KeyFactory<T> keyFactory, boolean multiversion,
-                           DerivedTablesRegistry derivedDbTablesRegistry,
                            DatabaseManager databaseManager,
-                           FullTextConfig fullTextConfig,
                            Event<DeleteOnTrimData> deleteOnTrimDataEvent,
                            String fullTextSearchColumns) {
-        super(table, derivedDbTablesRegistry, databaseManager, fullTextConfig, fullTextSearchColumns);
+        super(table, databaseManager, fullTextSearchColumns);
         this.keyFactory = keyFactory;
         this.multiversion = multiversion;
         this.deleteOnTrimDataEvent = deleteOnTrimDataEvent;
@@ -139,11 +132,11 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
 
 
     @Override
-    public void trim(int height, boolean isSharding) {
+    public void trim(int height) {
         if (multiversion) {
-            doMultiversionTrim(height, isSharding);
+            doMultiversionTrim(height);
         } else {
-            super.trim(height, isSharding);
+            super.trim(height);
         }
     }
 
@@ -188,11 +181,8 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
      *                                                               100        4          100        7       true   false
      *                                                               }</pre>
      *               </p>
-     *  After selecting DB_IDs to be deleted in case trim they are
-     *    - either 'sent to DeleteTrimObserver' for later deleting in case usual trim
-     *    - or used for 'sharding trim' to delete at once ('Reset' event is sent to DeleteTrimObserver)
      */
-    private void doMultiversionTrim(final int height, boolean isSharding) {
+    private void doMultiversionTrim(final int height) {
         log.trace("doMultiversionTrim(), height={} for '{}'", height, table);
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
@@ -219,33 +209,17 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                 log.trace("Select 2. '{}' time: {} ms", table, System.currentTimeMillis() - startSelectTime);
 
                 startDeleteTime = System.currentTimeMillis();
-                if (isSharding) { // trim on sharding
-                    log.trace("Before delete, SEND reset. isSharding = {}, table: {}, size=[{}]", isSharding, table, keysToDelete.size());
-                    // sent 'Reset' event when trim for sharding
-                    deleteOnTrimDataEvent.select(new AnnotationLiteral<TrimEvent>() {
-                    }).fireAsync(new DeleteOnTrimData(true, Collections.emptySet(), table, height));
-                    if (keysToDelete.size() > 0) {
-                        for (Long id : keysToDelete) {
-                            deleted += deleteByDbId(pstmtDeleteById, id);
-                            if (deleted % ShardConstants.DEFAULT_COMMIT_BATCH_SIZE == 0) {
-                                dataSource.commit(false);
-                            }
+                if (keysToDelete.size() > 0) {
+                    for (Long id : keysToDelete) {
+                        deleted += deleteByDbId(pstmtDeleteById, id);
+                        if (deleted % ShardConstants.DEFAULT_COMMIT_BATCH_SIZE == 0) {
+                            dataSource.commit(false);
                         }
-                        log.debug("Delete for table '{}' took {} ms", table, System.currentTimeMillis() - startDeleteTime);
                     }
+                    log.debug("Delete for table {} took {} ms", table, System.currentTimeMillis() - startDeleteTime);
                     dataSource.commit(false);
                     log.trace("Delete table '{}' in {} ms: deleted=[{}]",
                         table, System.currentTimeMillis() - startDeleteTime, deleted);
-                } else {
-                    // send 'Delete DB_IDs' event only if we have bigger then 100 records for deleting
-                    boolean isEnoughToDelete = keysToDelete.size() >= ShardConstants.DEFAULT_COMMIT_BATCH_SIZE;
-                    log.trace("Should SEND to delete? = {}, isSharding = {}, table: {} , size = [{}]",
-                        isEnoughToDelete, isSharding, table, keysToDelete.size());
-                    if (isEnoughToDelete) { // low limit
-                        log.trace("SENDING delete event. isSharding = {}, table: {} , size = [{}]", isSharding, table, keysToDelete.size());
-                        deleteOnTrimDataEvent.select(new AnnotationLiteral<TrimEvent>() {
-                        }).fireAsync(new DeleteOnTrimData(false, keysToDelete, table, height));
-                    }
                 }
             }
             long trimTime = System.currentTimeMillis() - startTime;

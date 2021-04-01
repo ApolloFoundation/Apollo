@@ -169,7 +169,7 @@ class BlockchainTest extends DBContainerRootTest {
     private static DbPopulator initDb(String dataScriptPath, long shardId) {
         // initialize main db only one time !!
         if (shardId == 1 && extension == null) {
-            DbProperties inMemDbProps = DbTestData.getInMemDbProps();
+            DbProperties inMemDbProps = DbTestData.getDbFileProperties(mariaDBContainer);
             inMemDbProps.setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
             extension = new DbExtension(mariaDBContainer, inMemDbProps, "db/shard-main-data.sql", "db/schema.sql");
             TransactionalDataSource mainDb = extension.getDatabaseManager().getDataSource();

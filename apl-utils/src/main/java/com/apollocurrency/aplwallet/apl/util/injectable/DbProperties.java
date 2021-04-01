@@ -62,4 +62,38 @@ public class DbProperties implements Cloneable {
             throw new RuntimeException(e);
         }
     }
+    
+    public String formatJdbcUrlString(boolean isSystemDb) {
+        String finalDbUrl;
+        String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s%s";
+        String passwordlessUrlString = "jdbc:%s://%s:%d/%s?user=%s%s"; // skip password for 'password less mode' (in docker container)
+        String tempDbName = getDbName();
+        if (isSystemDb) {
+            tempDbName = "testdb".equalsIgnoreCase(getDbName()) ? getDbName() : DbProperties.DB_SYSTEM_NAME;
+        }
+        if (getDbPassword() != null && !getDbPassword().isEmpty()) {
+            finalDbUrl = String.format(
+                fullUrlString,
+                getDbType(),
+                getDatabaseHost(),
+                getDatabasePort(),
+                tempDbName,
+                getDbUsername() != null ? getDbUsername() : "",
+                getDbPassword(),
+                getDbParams() != null ? getDbParams() : ""
+            );
+        } else {
+            // skip password for 'password less mode' (in docker container)
+            finalDbUrl = String.format(
+                passwordlessUrlString,
+                getDbType(),
+                getDatabaseHost(),
+                getDatabasePort(),
+                tempDbName,
+                getDbUsername() != null ? getDbUsername() : "",
+                getDbParams() != null ? getDbParams() : ""
+            );
+        }
+        return finalDbUrl;
+    }    
 }

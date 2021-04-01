@@ -22,8 +22,6 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -65,13 +63,13 @@ public class ProcessTransactionsThread implements Runnable {
                 if (peer == null) {
                     return;
                 }
+
                 GetUnconfirmedTransactionsRequest request = new GetUnconfirmedTransactionsRequest(blockchainConfig.getChain().getChainId());
-
-                List<String> exclude = new ArrayList<>();
-                memPool.getAllProcessedIds().forEach(
-                    transactionId -> exclude.add(Long.toUnsignedString(transactionId)));
-                Collections.sort(exclude);
-
+                List<String> exclude = memPool.getAllProcessedIds()
+                    .stream()
+                    .sorted(Long::compareTo)
+                    .map(Long::toUnsignedString)
+                    .collect(Collectors.toList());
                 request.setExclude(exclude);
 
                 GetUnconfirmedTransactionsResponse response = peer.send(request, new GetUnconfirmedTransactionsResponseParser());

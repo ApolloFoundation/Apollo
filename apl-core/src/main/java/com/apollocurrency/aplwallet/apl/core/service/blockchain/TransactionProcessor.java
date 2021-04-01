@@ -31,8 +31,6 @@ public interface TransactionProcessor {
 
     void broadcastWhenConfirmed(Transaction transaction, Transaction uncTransaction);
 
-    void printMemPoolStat();
-
     void broadcast(Collection<Transaction> transactions);
 
     void clearUnconfirmedTransactions();
@@ -48,8 +46,6 @@ public interface TransactionProcessor {
     void processDelayedTxs(int number);
 
     void processLater(Collection<Transaction> transactions);
-
-    int getUnconfirmedTxCount();
 
     void processPeerTransactions(List<Transaction> transactions) throws AplException.NotValidException;
 

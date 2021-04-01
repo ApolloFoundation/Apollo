@@ -29,8 +29,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -49,12 +47,10 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
     private final String defaultSort;
 
     public EntityDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion, String fullTextSearchColumns,
-                         DerivedTablesRegistry derivedDbTablesRegistry,
                          DatabaseManager databaseManager,
-                         FullTextConfig fullTextConfig,
                          Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(table, dbKeyFactory, multiversion, derivedDbTablesRegistry, databaseManager,
-            fullTextConfig, deleteOnTrimDataEvent, fullTextSearchColumns);
+        super(table, dbKeyFactory, multiversion, databaseManager,
+                deleteOnTrimDataEvent, fullTextSearchColumns);
         this.defaultSort = " ORDER BY " + (multiversion ? dbKeyFactory.getPKColumns() : " height DESC, db_id DESC ");
     }
 
@@ -225,14 +221,11 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         final boolean doCache = cache && dataSource.isInTransaction();
         return new DbIterator<>(con, pstmt, (connection, rs) -> {
-            T t = null;
             DbKey dbKey = null;
             if (doCache) {
                 dbKey = keyFactory.newKey(rs);
             }
-            if (t == null) {
-                t = (T) load(connection, rs, dbKey);
-            }
+            T t = load(connection, rs, dbKey);
             return t;
         });
     }

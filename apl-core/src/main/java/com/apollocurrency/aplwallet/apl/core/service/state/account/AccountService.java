@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.DoubleSpendingException;
@@ -122,4 +122,12 @@ public interface AccountService {
 
     //Delegated from  AccountPublicKeyService
     byte[] getPublicKeyByteArray(long id);
+
+    /**
+     * Creates an account with the given id and save empty public key entity into the public key table for it
+     * @param id new account id
+     * @param isGenesis whether the account belongs to genesis type or not
+     * @return created account
+     */
+    Account addAccount(long id, boolean isGenesis);
 }

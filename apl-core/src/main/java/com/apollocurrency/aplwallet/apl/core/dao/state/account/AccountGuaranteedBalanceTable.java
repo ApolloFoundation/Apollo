@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountGuaranteedBalance;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -50,9 +49,8 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable<AccountGuarant
     @Inject
     public AccountGuaranteedBalanceTable(BlockchainConfig blockchainConfig,
                                          PropertiesHolder propertiesHolder,
-                                         DerivedTablesRegistry derivedDbTablesRegistry,
                                          DatabaseManager databaseManager) {
-        super(TABLE_NAME, derivedDbTablesRegistry, databaseManager, null, null);
+        super(TABLE_NAME, databaseManager, null);
         this.blockchainConfig = blockchainConfig;
         this.batchCommitSize = propertiesHolder.BATCH_COMMIT_SIZE();
     }
@@ -62,7 +60,7 @@ public class AccountGuaranteedBalanceTable extends DerivedDbTable<AccountGuarant
     }
 
     @Override
-    public void trim(int height, boolean isSharding) {
+    public void trim(int height) {
         TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
         try (Connection con = dataSource.getConnection();
              @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT)

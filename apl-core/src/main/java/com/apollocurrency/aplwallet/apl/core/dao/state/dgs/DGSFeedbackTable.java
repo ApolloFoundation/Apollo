@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSFeedback;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.EncryptedDataUtil;
 
@@ -40,10 +39,9 @@ public class DGSFeedbackTable extends ValuesDbTable<DGSFeedback> {
     private static final DGSFeedbackMapper MAPPER = new DGSFeedbackMapper(KEY_FACTORY);
 
     @Inject
-    public DGSFeedbackTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                            DatabaseManager databaseManager,
+    public DGSFeedbackTable(DatabaseManager databaseManager,
                             Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, KEY_FACTORY, true, derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+        super(TABLE_NAME, KEY_FACTORY, true, databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override

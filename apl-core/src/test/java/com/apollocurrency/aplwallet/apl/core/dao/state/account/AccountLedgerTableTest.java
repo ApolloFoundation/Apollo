@@ -113,7 +113,7 @@ class AccountLedgerTableTest extends DbContainerBaseTest {
     void testTrim_on_MAX_height() {
         doReturn(Integer.MAX_VALUE).when(propertiesHolder).BATCH_COMMIT_SIZE();
         doReturn(testData.LEDGER_HEIGHT + TRIM_KEEP).when(blockchain).getHeight();
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(testData.LEDGER_HEIGHT + TRIM_KEEP, true));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(testData.LEDGER_HEIGHT + TRIM_KEEP));
 
         List<LedgerEntry> expected = Collections.emptyList();
 
@@ -130,7 +130,7 @@ class AccountLedgerTableTest extends DbContainerBaseTest {
 
         doReturn(Integer.MAX_VALUE).when(propertiesHolder).BATCH_COMMIT_SIZE();
         doReturn(testData.LEDGER_HEIGHT - 1 + TRIM_KEEP).when(blockchain).getHeight();
-        DbUtils.inTransaction(dbExtension, (con) -> table.trim(testData.LEDGER_HEIGHT, true));
+        DbUtils.inTransaction(dbExtension, (con) -> table.trim(testData.LEDGER_HEIGHT));
 
         List<LedgerEntry> expected = testData.ALL_LEDGERS.stream().filter(e -> e.getHeight() > testData.LEDGER_HEIGHT - TRIM_KEEP)
             .sorted(Comparator.comparing(LedgerEntry::getDbId, Comparator.reverseOrder()))

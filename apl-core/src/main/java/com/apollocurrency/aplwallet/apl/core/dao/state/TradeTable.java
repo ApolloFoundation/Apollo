@@ -27,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.Trade;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;
@@ -54,11 +53,10 @@ public class TradeTable extends EntityDbTable<Trade> {
     };
 
     @Inject
-    public TradeTable(DerivedTablesRegistry derivedDbTablesRegistry,
-                      DatabaseManager databaseManager,
+    public TradeTable(DatabaseManager databaseManager,
                       Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("trade", TRADE_DB_KEY_FACTORY, false, null,
-            derivedDbTablesRegistry, databaseManager, null, deleteOnTrimDataEvent);
+                databaseManager, deleteOnTrimDataEvent);
     }
 
     public void save(final Connection con, final Trade trade) throws SQLException {

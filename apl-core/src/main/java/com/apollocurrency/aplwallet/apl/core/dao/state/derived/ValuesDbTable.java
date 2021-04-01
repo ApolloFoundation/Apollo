@@ -25,8 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
-import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,12 +40,10 @@ import java.util.List;
 public abstract class ValuesDbTable<T extends DerivedEntity> extends BasicDbTable<T> {
 
     public ValuesDbTable(String table, KeyFactory<T> dbKeyFactory, boolean multiversion,
-                         DerivedTablesRegistry derivedDbTablesRegistry,
                          DatabaseManager databaseManager,
-                         FullTextConfig fullTextConfig,
                          Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(table, dbKeyFactory, multiversion, derivedDbTablesRegistry, databaseManager,
-            fullTextConfig, deleteOnTrimDataEvent, null);
+        super(table, dbKeyFactory, multiversion, databaseManager,
+                deleteOnTrimDataEvent, null);
     }
 
     public final List<T> get(DbKey dbKey) {

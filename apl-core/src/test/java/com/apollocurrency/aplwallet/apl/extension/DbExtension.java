@@ -63,6 +63,7 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
         log.trace("Host: {}", jdbcDatabaseContainer.getHost());
         dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
         dbProperties.setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
+        dbProperties.setSystemDbUrl(dbProperties.formatJdbcUrlString(true));
 
 //        log.trace("DockerDaemonInfo: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
         log.trace("DockerImageName: {}", jdbcDatabaseContainer.getDockerImageName());
@@ -94,7 +95,7 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
     }
 
     public DbExtension(GenericContainer jdbcDatabaseContainer) {
-        this(jdbcDatabaseContainer, DbTestData.getInMemDbProps(), null, null, null);
+        this(jdbcDatabaseContainer, DbTestData.getDbFileProperties(jdbcDatabaseContainer), null, null, null);
     }
 
     public FullTextSearchService getFullTextSearchService() {

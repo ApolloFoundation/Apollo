@@ -143,7 +143,7 @@ then
     notify "Removing old version..."
     
     notify "Moving extra files..."
-    cp -Rfv $1/* $1/..
+#    cp -Rfv $1/* $1/..
     cd $1/..
 #    rm -rfv $1
     cp -Rfv $2/* .

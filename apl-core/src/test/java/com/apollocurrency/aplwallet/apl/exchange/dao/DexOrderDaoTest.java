@@ -55,6 +55,35 @@ class DexOrderDaoTest extends DbContainerBaseTest {
     }
 
     @Test
+    void testGetOrdersWithoutOffset() {
+        List<DexOrder> orders = dexOrderDao.getOrders(
+            DexOrderDBRequest.builder().limit(2).build(),
+            DexOrderSortBy.DB_ID, DBSortOrder.ASC);
+
+        assertEquals(List.of(td.ORDER_BEA_1, td.ORDER_SPA_2), orders); // sorted by pair rate desc
+    }
+
+    @Test
+    void testGetOrdersWithoutLimitAndOffset() {
+        List<DexOrder> orders = dexOrderDao.getOrders(
+            DexOrderDBRequest.builder().build(),
+            DexOrderSortBy.DB_ID, DBSortOrder.ASC);
+
+        assertEquals(List.of(
+            td.ORDER_BEA_1,
+            td.ORDER_SPA_2,
+            td.ORDER_BPB_1,
+            td.ORDER_SEA_3,
+            td.ORDER_BEA_4,
+            td.ORDER_BPA_5,
+            td.ORDER_BEA_6,
+            td.ORDER_BPB_2,
+            td.ORDER_SEA_7,
+            td.ORDER_BEA_8
+        ), orders); // sorted by pair rate desc
+    }
+
+    @Test
     void testGetOrdersByAccountAndDbId() {
         List<DexOrder> orders = dexOrderDao.getOrders(DexOrderDBRequest.builder()
                 .dbId(td.ORDER_SPA_2.getDbId())

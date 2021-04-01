@@ -30,6 +30,19 @@ public class DbTransactionHelper {
             throw new DbTransactionExecutionException(e.toString(), e);
         }
     }
+    public static<T> T executeInConnection(TransactionalDataSource dataSource, TransactionFunction<T> op) {
+        TransactionalDataSource.StartedConnection startedConnection = dataSource.beginTransactionIfNotStarted();
+        try {
+            T result = op.execute();
+            if (!startedConnection.isAlreadyStarted()) {
+                dataSource.commit(true);
+            }
+            return result;
+        } catch (Exception e) {
+            dataSource.rollback(!startedConnection.isAlreadyStarted());
+            throw new DbTransactionExecutionException(e.toString(), e);
+        }
+    }
     public interface TransactionOperation {
         void execute() throws Exception;
     }

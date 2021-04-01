@@ -56,7 +56,7 @@ public class BidOrderTable extends OrderTable<BidOrder> {
     public BidOrderTable(DerivedTablesRegistry derivedDbTablesRegistry,
                          DatabaseManager databaseManager,
                          Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super("bid_order", bidOrderDbKeyFactory, derivedDbTablesRegistry, databaseManager, deleteOnTrimDataEvent);
+        super("bid_order", bidOrderDbKeyFactory, databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override

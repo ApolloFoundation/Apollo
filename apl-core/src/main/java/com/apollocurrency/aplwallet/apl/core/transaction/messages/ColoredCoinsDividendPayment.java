@@ -28,7 +28,7 @@ public final class ColoredCoinsDividendPayment extends AbstractAttachment {
     public ColoredCoinsDividendPayment(JSONObject attachmentData) {
         super(attachmentData);
         this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
-        this.height = ((Long) attachmentData.get("height")).intValue();
+        this.height = ((Number) attachmentData.get("height")).intValue();
         this.amountATMPerATU = Convert.parseLong(attachmentData.get("amountATMPerATU"));
     }
 

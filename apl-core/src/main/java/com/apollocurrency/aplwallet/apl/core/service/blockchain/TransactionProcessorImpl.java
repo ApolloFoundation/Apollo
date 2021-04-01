@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
@@ -33,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
@@ -124,14 +124,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     @Override
     public void broadcastWhenConfirmed(Transaction transaction, Transaction uncTransaction) {
         memPool.broadcastWhenConfirmed(transaction, uncTransaction);
-    }
-
-    @Override
-    public void printMemPoolStat() {
-        int memPoolSize = memPool.allProcessedCount();
-        int cacheSize = memPool.currentCacheSize();
-
-        log.trace("Txs: {}, pending broadcast - {}, cache size - {}, processLaterQueue - {}", memPoolSize, memPool.pendingBroadcastQueueSize(), cacheSize, memPool.processLaterQueueSize());
     }
 
     @Override
@@ -331,11 +323,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         }
     }
 
-    @Override
-    public int getUnconfirmedTxCount() {
-        return memPool.allProcessedCount();
-    }
-
     public void processPeerTransactions(List<Transaction> transactions) throws AplException.NotValidException {
         if (blockchain.getHeight() <= blockchainConfig.getLastKnownBlock()) {
             return;
@@ -356,7 +343,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     UnconfirmedTransaction unconfirmedTransaction = unconfirmedTransactionCreator.from(transaction, arrivalTimestamp);
                     UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
                     if (validationResult.isOk()) {
-                        transactionValidator.validateSignatureWithTxFee(transaction);
+                        transactionValidator.validateSignatureWithTxFeeLessStrict(transaction);
                         transactionValidator.validateLightly(transaction);
                         TxSavingStatus status = saveUnconfirmedTransaction(unconfirmedTransaction);
                         if (status == TxSavingStatus.NOT_SAVED) {

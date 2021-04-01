@@ -26,7 +26,7 @@ public final class DigitalGoodsQuantityChange extends AbstractAttachment {
     public DigitalGoodsQuantityChange(JSONObject attachmentData) {
         super(attachmentData);
         this.goodsId = Convert.parseUnsignedLong((String) attachmentData.get("goods"));
-        this.deltaQuantity = ((Long) attachmentData.get("deltaQuantity")).intValue();
+        this.deltaQuantity = ((Number) attachmentData.get("deltaQuantity")).intValue();
     }
 
     public DigitalGoodsQuantityChange(long goodsId, int deltaQuantity) {

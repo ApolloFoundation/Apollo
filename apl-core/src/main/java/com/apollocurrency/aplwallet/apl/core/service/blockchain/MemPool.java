@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.MemPoolUnconfirmedTransactionTable;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
@@ -28,9 +28,7 @@ import java.util.stream.Stream;
 @Slf4j
 @Singleton
 public class MemPool {
-
     private final IteratorToStreamConverter<UnconfirmedTransactionEntity> streamConverter = new IteratorToStreamConverter<>();
-    ;
     private final MemPoolUnconfirmedTransactionTable table;
     private final MemPoolInMemoryState memoryState;
     private final GlobalSync globalSync;
@@ -39,6 +37,7 @@ public class MemPool {
     private final UnconfirmedTransactionModelToEntityConverter toEntityConverter;
     private final boolean enableRebroadcasting;
     private final int maxUnconfirmedTransactions;
+    private final int maxCachedTransactions;
 
     @Inject
     public MemPool(MemPoolUnconfirmedTransactionTable table,
@@ -48,15 +47,24 @@ public class MemPool {
                    UnconfirmedTransactionEntityToModelConverter toModelConverter,
                    UnconfirmedTransactionModelToEntityConverter toEntityConverter,
                    @Property(name = "apl.maxUnconfirmedTransactions", defaultValue = "" + Integer.MAX_VALUE) int maxUnconfirmedTransactions,
+                   @Property(name = "apl.mempool.maxCachedTransactions", defaultValue = "2000") int maxCachedTransactions,
                    @Property(name = "apl.enableTransactionRebroadcasting") boolean enableRebroadcasting) {
         this.table = table;
         this.maxUnconfirmedTransactions = maxUnconfirmedTransactions;
+        this.maxCachedTransactions = maxCachedTransactions;
         this.enableRebroadcasting = enableRebroadcasting;
         this.memoryState = memoryState;
         this.globalSync = globalSync;
         this.validator = validator;
         this.toModelConverter = toModelConverter;
         this.toEntityConverter = toEntityConverter;
+    }
+
+    public void initCache(){
+        // Initialize the unconfirmed transaction cache if it hasn't been done yet
+        if (!memoryState.isCacheInitialized()) {
+            memoryState.initializeCache(streamConverter.apply(table.getAll(0, -1)).map(toModelConverter));
+        }
     }
 
     public Transaction getUnconfirmedTransaction(long id) {
@@ -85,12 +93,6 @@ public class MemPool {
     }
 
     public Set<UnconfirmedTransaction> getCachedUnconfirmedTransactions(List<String> exclude) {
-        //
-        // Initialize the unconfirmed transaction cache if it hasn't been done yet
-        //
-        if (!memoryState.isCacheInitialized()) {
-            memoryState.initializeCache(streamConverter.apply(table.getAll(0, -1)).map(toModelConverter));
-        }
         return memoryState.getFromCache(exclude);
     }
 
@@ -103,7 +105,7 @@ public class MemPool {
     }
 
     public boolean addProcessed(UnconfirmedTransaction tx) {
-        boolean canSaveTxs = allProcessedCount() < maxUnconfirmedTransactions;
+        boolean canSaveTxs = getUnconfirmedTxCount() < maxUnconfirmedTransactions;
         if (canSaveTxs) {
             table.insert(
                 toEntityConverter.convert(tx)
@@ -117,8 +119,16 @@ public class MemPool {
         return table.getAllUnconfirmedTransactionsStream().map(toModelConverter);
     }
 
-    public int allProcessedCount() {
-        return table.getCount();
+    public int getUnconfirmedTxCount() {
+        if(getCachedUnconfirmedTxCount() < maxCachedTransactions){
+            return getCachedUnconfirmedTxCount();
+        } else {
+            return table.getCount();
+        }
+    }
+
+    public int getCachedUnconfirmedTxCount() {
+        return memoryState.txCacheSize();
     }
 
     public void removeBroadcastedTransaction(Transaction transaction) {
@@ -130,15 +140,11 @@ public class MemPool {
     }
 
     public int canSafelyAccept() {
-        return maxUnconfirmedTransactions - allProcessedCount();
+        return maxUnconfirmedTransactions - getUnconfirmedTxCount();
     }
 
     public List<Transaction> allPendingTransactions() {
         return memoryState.allPendingTransactions();
-    }
-
-    public boolean isProcessedTxPoolFull() {
-        return allProcessedCount() >= maxUnconfirmedTransactions;
     }
 
     public Stream<UnconfirmedTransaction> getProcessed(int from, int to) {
@@ -179,10 +185,6 @@ public class MemPool {
         });
     }
 
-    public int currentCacheSize() {
-        return memoryState.txCacheSize();
-    }
-
     public boolean removeProcessedTransaction(long id) {
         boolean deleted = table.deleteById(id);
         memoryState.removeFromCache(id);
@@ -192,14 +194,15 @@ public class MemPool {
     public void rebroadcast(Transaction tx) {
         if (enableRebroadcasting) {
             memoryState.addToBroadcasted(tx);
-//            log.debug("Transaction {} already in unconfirmed pool, will re-broadcast", tx.getStringId());
-        } else {
-//            log.debug("Transaction {} already in unconfirmed pool, will not broadcast again", tx.getStringId());
         }
     }
 
     public List<Long> getAllProcessedIds() {
-        return table.getAllUnconfirmedTransactionIds();
+        if(getCachedUnconfirmedTxCount() < maxCachedTransactions){
+            return memoryState.getAllUnconfirmedTransactionIds();
+        } else {
+            return table.getAllUnconfirmedTransactionIds();
+        }
     }
 
     public int countExpiredTxs(int epochTime) {
