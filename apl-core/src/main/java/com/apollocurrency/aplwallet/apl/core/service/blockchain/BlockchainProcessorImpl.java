@@ -314,7 +314,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     scan(new ScanEntity(propertiesHolder.getBooleanProperty("apl.forceValidate"), 0, false ));
                 } else {
                     ScanEntity scanEntity = scanDao.get();
-                    if (scanEntity.isRescan()) {
+                    if (scanEntity != null && scanEntity.isRescan()) {
                         scan(scanEntity);
                     } else {
                         if (blockchain.getShardInitialBlock() == null) { // prevent NPE on empty node
