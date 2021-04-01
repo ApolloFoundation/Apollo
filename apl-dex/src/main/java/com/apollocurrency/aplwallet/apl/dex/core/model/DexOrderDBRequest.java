@@ -24,8 +24,10 @@ public class DexOrderDBRequest {
     private OrderStatus status;
     private BigDecimal minAskPrice;
     private BigDecimal maxBidPrice;
-    private Integer offset;
-    private Integer limit;
+    @Builder.Default
+    private Integer offset = 0;
+    @Builder.Default
+    private Integer limit = 100;
     private Boolean hasFrozenMoney;
 
     private DexOrderSortBy sortBy = DexOrderSortBy.PAIR_RATE;
