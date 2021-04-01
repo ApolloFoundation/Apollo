@@ -266,7 +266,8 @@ public class TransactionValidator {
         if (transaction.referencedTransactionFullHash() != null) {
             feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
         }
-        if (account.getUnconfirmedBalanceATM() < feeATM) {
+        //TODO: A.B. check it
+        if (account == null || account.getUnconfirmedBalanceATM() < feeATM) {
             throw new AplException.NotCurrentlyValidException("Account balance " + account.getUnconfirmedBalanceATM() + " is not enough to pay tx fee " + feeATM);
         }
     }
