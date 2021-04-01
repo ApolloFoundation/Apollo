@@ -134,10 +134,11 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
         Long highDbIdValue = 0L;
         try (PreparedStatement selectStatement = sourceConnect.prepareStatement(selectValueSql)) {
             selectStatement.setInt(1, snapshotBlockHeight);
-            ResultSet rs = selectStatement.executeQuery();
-            if (rs.next()) {
-                highDbIdValue = rs.getLong("db_id");
-                log.trace("FOUND Upper DB_ID value = {}", highDbIdValue);
+            try (ResultSet rs = selectStatement.executeQuery()) {
+                if (rs.next()) {
+                    highDbIdValue = rs.getLong("db_id");
+                    log.trace("FOUND Upper DB_ID value = {}", highDbIdValue);
+                }
             }
         } catch (Exception e) {
             log.error("Error finding Upper DB_ID by snapshot block height = " + snapshotBlockHeight, e);
@@ -156,8 +157,8 @@ public abstract class AbstractHelper implements BatchedPaginationOperation {
         Objects.requireNonNull(selectValueSql, "selectValueSql is NULL");
         // select DB_ID as = (min(DB_ID) - 1)  OR  = 0 if value is missing
         Long bottomDbIdValue = 0L;
-        try (PreparedStatement selectStatement = sourceConnect.prepareStatement(sqlSelectBottomBound)) {
-            ResultSet rs = selectStatement.executeQuery();
+        try (PreparedStatement selectStatement = sourceConnect.prepareStatement(sqlSelectBottomBound);
+             ResultSet rs = selectStatement.executeQuery()) {
             if (rs.next()) {
                 bottomDbIdValue = rs.getLong("db_id");
                 log.trace("FOUND Bottom db_id value = {}", bottomDbIdValue);
