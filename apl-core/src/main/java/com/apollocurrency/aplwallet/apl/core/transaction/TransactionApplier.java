@@ -12,6 +12,8 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplie
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixApplierRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -37,12 +39,14 @@ public class TransactionApplier {
         this.applierRegistry = applierRegistry;
     }
 
+    @TransactionFee(FeeMarker.UNCONFIRMED_BALANCE)
     // returns false iff double spending
     public boolean applyUnconfirmed(Transaction transaction) {
         Account senderAccount = accountService.getAccount(transaction.getSenderId());
         return senderAccount != null && transaction.getType().applyUnconfirmed(transaction, senderAccount);
     }
 
+    @TransactionFee({FeeMarker.BALANCE, FeeMarker.UNCONFIRMED_BALANCE})
     public void apply(Transaction transaction) {
         Account senderAccount = accountService.getAccount(transaction.getSenderId());
         accountPublicKeyService.apply(senderAccount, transaction.getSenderPublicKey());
@@ -75,6 +79,7 @@ public class TransactionApplier {
         }
     }
 
+    @TransactionFee(FeeMarker.UNDO_UNCONFIRMED_BALANCE)
     public void undoUnconfirmed(Transaction transaction) {
         Account senderAccount = accountService.getAccount(transaction.getSenderId());
         transaction.getType().undoUnconfirmed(transaction, senderAccount);

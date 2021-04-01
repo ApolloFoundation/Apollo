@@ -79,8 +79,8 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
 
     protected void checkPrecondition(Transaction smcTransaction) {
         smcTransaction.getAttachment().getTransactionTypeSpec();
-        if (smcTransaction.getAttachment().getTransactionTypeSpec() != this.getSpec()) {
-            log.error("Invalid transaction attachment, txType={} txId={}", smcTransaction.getType(), smcTransaction.getChainId());
+        if (smcTransaction.getAttachment().getTransactionTypeSpec() != getSpec()) {
+            log.error("Invalid transaction attachment, txType={} txId={}", smcTransaction.getType(), smcTransaction.getId());
             throw new IllegalStateException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec());
         }
     }

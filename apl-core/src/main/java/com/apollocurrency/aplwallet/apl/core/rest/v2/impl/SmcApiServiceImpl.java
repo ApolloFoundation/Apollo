@@ -74,23 +74,20 @@ public class SmcApiServiceImpl implements SmcApiService {
             .contractSource(body.getSource())
             .constructorParams(String.join(",", body.getParams()))
             .languageName("javascript")
+            .fuelLimit(fuelLimit)
+            .fuelPrice(fuelPrice)
             .build();
 
         byte[] publicKey = AccountService.generatePublicKey(account, attachment.getContractSource());
         long recipientId = AccountService.getId(publicKey);
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
-            .chainId(blockchainConfig.getChain().getChainId().toString())//V3
-            .version(3)
+            .version(2)
             .senderAccount(account)
             .recipientPublicKey(Convert.toHexString(publicKey))
             .recipientId(recipientId)
             .secretPhrase(body.getSecret())
             .deadlineValue(String.valueOf(1440))
-            .nonce(BigInteger.ONE)//V3
-            .amount(BigInteger.TEN)//V3
-            .fuelLimit(fuelLimit)//V3
-            .fuelPrice(fuelPrice)//V3
             .attachment(attachment)
             .credential(new MultiSigCredential(1, Crypto.getKeySeed(body.getSecret())))
             .broadcast(false)
@@ -128,20 +125,17 @@ public class SmcApiServiceImpl implements SmcApiService {
         SmcCallMethodAttachment attachment = SmcCallMethodAttachment.builder()
             .methodName(body.getName())
             .methodParams(String.join(",", body.getParams()))
+            .fuelLimit(fuelLimit)
+            .fuelPrice(fuelPrice)
             .build();
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
-            .chainId(blockchainConfig.getChain().getChainId().toString())//V3
-            .version(3)
+            .version(2)
             .senderAccount(account)
             .recipientPublicKey(Convert.toHexString(contractAccount.getPublicKey().getPublicKey()))
             .recipientId(contractAccount.getId())
             .secretPhrase(body.getSecret())
             .deadlineValue(String.valueOf(1440))
-            .nonce(BigInteger.ONE)//V3
-            .amount(BigInteger.ZERO)//V3
-            .fuelLimit(fuelLimit)//V3
-            .fuelPrice(fuelPrice)//V3
             .attachment(attachment)
             .credential(new MultiSigCredential(1, Crypto.getKeySeed(body.getSecret())))
             .broadcast(false)

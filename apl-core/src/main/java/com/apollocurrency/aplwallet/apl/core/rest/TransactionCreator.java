@@ -2,18 +2,17 @@ package com.apollocurrency.aplwallet.apl.core.rest;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
@@ -130,10 +129,11 @@ public class TransactionCreator {
                     txRequest.getAmountATM(), txRequest.getFeeATM(),
                     deadline, txRequest.getAttachment(), timestamp);
             }else {
-                builder = transactionBuilderFactory.newUnsignedTransactionBuilder(txRequest.getChainId(), transactionType,
+                throw new IllegalStateException("Unsupported transaction version.");
+                /*builder = transactionBuilderFactory.newUnsignedTransactionBuilder(txRequest.getChainId(), transactionType,
                     (byte) version, txRequest.getPublicKey(),
                     txRequest.getNonce(), txRequest.getAmount(), txRequest.getFuelLimit(), txRequest.getFuelPrice(),
-                    deadline, timestamp, (AbstractAttachment) txRequest.getAttachment());
+                    deadline, timestamp, (AbstractAttachment) txRequest.getAttachment());*/
             }
             builder.referencedTransactionFullHash(txRequest.getReferencedTransactionFullHash());
             if (transactionType.canHaveRecipient()) {

@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
-import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
@@ -23,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
+import java.math.BigInteger;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -40,9 +40,9 @@ class SmcCallMethodTransactionTypeTest {
         " \"version.SmcCallMethod\":1," +
         " \"contractMethod\":\"purchase\"," +
         " \"params\": \"\\\"123\\\",\\\"0x0A0B0C0D0E0F\\\"\"" +
+        " \"fuelLimit\": 5000, " +
+        " \"fuelPrice\": 100, " +
         "}";
-
-    TransactionTestData td = new TransactionTestData();
 
     @Mock
     Chain chain;
@@ -79,6 +79,8 @@ class SmcCallMethodTransactionTypeTest {
         assertNotNull(attachment);
         assertEquals("purchase", attachment.getMethodName());
         assertEquals("\"123\",\"0x0A0B0C0D0E0F\"", attachment.getMethodParams());
+        assertEquals( BigInteger.valueOf(5000L), attachment.getFuelLimit());
+        assertEquals( BigInteger.valueOf(100L), attachment.getFuelPrice());
     }
 
     @SneakyThrows
@@ -103,6 +105,8 @@ class SmcCallMethodTransactionTypeTest {
         assertNotNull(attachment);
         assertEquals("purchase", attachment.getMethodName());
         assertEquals("\"123\",\"0x0A0B0C0D0E0F\"", attachment.getMethodParams());
+        assertEquals( BigInteger.valueOf(5000L), attachment.getFuelLimit());
+        assertEquals( BigInteger.valueOf(100L), attachment.getFuelPrice());
     }
 
 }

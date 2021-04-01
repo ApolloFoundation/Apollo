@@ -39,6 +39,7 @@ import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigInteger;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -48,7 +49,7 @@ import javax.inject.Singleton;
 public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
 
     protected final Fee CALL_CONTRACT_METHOD_FEE = new Fee.SizeBasedFee(
-        Math.multiplyExact(10_000, getBlockchainConfig().getOneAPL()),
+        Math.multiplyExact(100, getBlockchainConfig().getOneAPL()),
         Math.multiplyExact(1_000, getBlockchainConfig().getOneAPL()), MACHINE_WORD_SIZE) {
         public int getSize(Transaction transaction, Appendix appendage) {
             SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
@@ -69,7 +70,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     }
 
     @Override
-    public @TransactionFee(FeeMarker.BASE_FEE) Fee getBaselineFee(Transaction transaction) {
+    public Fee getBaselineFee(Transaction transaction) {
         return CALL_CONTRACT_METHOD_FEE;
     }
 
@@ -110,7 +111,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         SmartMethod smartMethod = SmartMethod.builder()
             .name(attachment.getMethodName())
             .args(attachment.getMethodParams())
-            .value(transaction.getAmount())
+            .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
         BlockchainIntegrator integrator = integratorFactory.createMockInstance(transaction.getId());
         SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
@@ -132,7 +133,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         SmartMethod smartMethod = SmartMethod.builder()
             .name(attachment.getMethodName())
             .args(attachment.getMethodParams())
-            .value(transaction.getAmount())
+            .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
         BlockchainIntegrator integrator = integratorFactory.createInstance(transaction.getId(), senderAccount, recipientAccount, getLedgerEvent());
         SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
@@ -142,10 +143,13 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         if (executionLog.isError()) {
             throw new AplException.SMCProcessingException(executionLog.toJsonString());
         }
-        //TODO refund remaining fuel
         @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
         Fuel fuel = smartContract.getFuel();
         log.debug("After processing Address={} Fuel={}", smartContract.getAddress(), fuel);
+        if (fuel.refundedFee().signum() > 0) {
+            //refund remaining fuel
+            getAccountService().addToBalanceAndUnconfirmedBalanceATM(senderAccount, LedgerEvent.SMC_REFUNDED_FEE, transaction.getId(), 0, fuel.refundedFee().longValueExact());
+        }
         contractService.updateContractState(smartContract);
     }
 }

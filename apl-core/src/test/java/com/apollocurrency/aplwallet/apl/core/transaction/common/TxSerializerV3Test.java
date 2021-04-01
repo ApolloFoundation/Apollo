@@ -91,14 +91,14 @@ class TxSerializerV3Test {
         assertEquals(5049242101858010228L, tx.getRecipientId());
 
         assertEquals(1440, tx.getDeadline());
-        assertEquals(5000L, tx.getFuelLimit().longValue());
-        assertEquals(100L, tx.getFuelPrice().longValue());
         assertEquals("APL-X5JH-TJKJ-DVGC-5T2V8", Convert2.rsAccount(tx.getSenderId()));//3705364957971254799L
 
         SmcPublishContractAttachment contractAttachment = ((SmcPublishContractAttachment) tx.getAttachment());
         assertEquals("class Deal {}", contractAttachment.getContractSource());
         assertEquals("Deal", contractAttachment.getContractName());
         assertEquals("\"firstParam\",123,\"0x98765\"", contractAttachment.getConstructorParams());
+        assertEquals(5000L, contractAttachment.getFuelLimit().longValue());
+        assertEquals(100L, contractAttachment.getFuelPrice().longValue());
 
         for (AbstractAppendix appendage : tx.getAppendages()) {
             Class clazz = appendage.getClass();

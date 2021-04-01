@@ -153,7 +153,7 @@ public class ContractServiceImpl implements ContractService {
                 .build()
             )
             .status(ContractStatus.CREATED)
-            .fuel(new ContractFuel(smcTransaction.getFuelLimit(), smcTransaction.getFuelPrice()))
+            .fuel(new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice()))
             .txLog(createLog(contractAddress.getHex()))
             .build();
 

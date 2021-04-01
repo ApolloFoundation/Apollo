@@ -876,7 +876,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         e, transaction, blockSerializer.getJSONObject(block));
                 }
             }
-            SortedSet<Transaction> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
+            SortedSet<Transaction> possiblyApprovedPhasedTransactions = new TreeSet<>(finishingTransactionsComparator);
             log.trace(":accept: validate all block transactions");
             blockchain.getOrLoadTransactions(block).forEach(transaction -> {
                 phasingPollService.getLinkedPhasedTransactions(transaction.getFullHash()).forEach(phasedTransaction -> {
@@ -885,7 +885,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         && ((PhasingAppendixV2) phasedTransaction.getPhasing()).getFinishTime() > block.getTimestamp()
                     )
                         && phasingPollService.getResult(phasedTransaction.getId()) == null) {
-                        possiblyApprovedTransactions.add(phasedTransaction);
+                        possiblyApprovedPhasedTransactions.add(phasedTransaction);
                     }
                 });
                 if (transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PHASING_VOTE_CASTING && !transaction.attachmentIsPhased()) {
@@ -896,7 +896,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                             && (phasingPoll.getFinishHeight() > block.getHeight()
                             || phasingPoll.getFinishTime() > block.getTimestamp())
                             && phasingPollService.getResult(phasingPoll.getId()) == null) {
-                            possiblyApprovedTransactions.add(blockchain.getTransaction(phasingPoll.getId()));
+                            possiblyApprovedPhasedTransactions.add(blockchain.getTransaction(phasingPoll.getId()));
                         }
                     });
                 }
@@ -913,14 +913,14 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                 && (phasingPoll.getFinishHeight() > block.getHeight()
                                 || phasingPoll.getFinishTime() > block.getTimestamp())
                                 && phasingPollService.getResult(phasingPoll.getId()) == null) {
-                                possiblyApprovedTransactions.add(blockchain.getTransaction(phasingPoll.getId()));
+                                possiblyApprovedPhasedTransactions.add(blockchain.getTransaction(phasingPoll.getId()));
                             }
                         });
                     }
                 }
             });
-            log.trace(":accept: validate Approved transactions");
-            possiblyApprovedTransactions.forEach(transaction -> {
+            log.trace(":accept: validate Approved phased transactions");
+            possiblyApprovedPhasedTransactions.forEach(transaction -> {
                 // checked before
                 //                if (phasingPollService.getResult(transaction.getId()) == null) {
                 try {
@@ -937,14 +937,16 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             try {
                 dexService.closeOverdueOrders(block.getTimestamp());
 
-                if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3() != null && block.getHeight() > blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3()) {
+                if (blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3() != null
+                    && block.getHeight() > blockchainConfig.getDexExpiredContractWithFinishedPhasingHeightAndStep3()) {
                     dexService.closeExpiredContractsStep1_2_3(block.getTimestamp());
                 } else {
                     dexService.closeExpiredContractsStep1_2(block.getTimestamp());
                 }
 
 
-                if (blockchainConfig.getDexPendingOrdersReopeningHeight() != null && block.getHeight() >= blockchainConfig.getDexPendingOrdersReopeningHeight()) {
+                if (blockchainConfig.getDexPendingOrdersReopeningHeight() != null
+                    && block.getHeight() >= blockchainConfig.getDexPendingOrdersReopeningHeight()) {
                     dexService.reopenPendingOrders(block.getHeight(), block.getTimestamp());
                 }
             } catch (AplException.ExecutiveProcessException e) {

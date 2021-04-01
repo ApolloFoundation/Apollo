@@ -90,12 +90,12 @@ public class TransactionImpl implements Transaction {
     /**
      * Transaction V3 properties
      */
-    private final String chainId;
+    /*private final String chainId;
     private final BigInteger nonce;
     private final BigInteger amount;
     private final BigInteger fuelLimit;
     private final BigInteger fuelPrice;
-    private final long longTimestamp;
+    private final long longTimestamp;*/
 
     TransactionImpl(BuilderImpl builder) {
 
@@ -118,12 +118,12 @@ public class TransactionImpl implements Transaction {
         this.ecBlockId = builder.ecBlockId;
         this.feeATM = builder.feeATM;
         /* Transaction V3 properties */
-        this.chainId = builder.chainId;
+        /*this.chainId = builder.chainId;
         this.nonce = builder.nonce;
         this.amount = builder.amount;
         this.fuelLimit = builder.fuelLimit;
         this.fuelPrice = builder.fuelPrice;
-        this.longTimestamp = builder.timestamp;
+        this.longTimestamp = builder.timestamp;*/
         /*         ***              */
 
         List<AbstractAppendix> list = new ArrayList<>();
@@ -423,36 +423,6 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
-    public String getChainId() {
-        return chainId;
-    }
-
-    @Override
-    public BigInteger getNonce() {
-        return nonce;
-    }
-
-    @Override
-    public BigInteger getAmount() {
-        return amount;
-    }
-
-    @Override
-    public BigInteger getFuelPrice() {
-        return fuelPrice;
-    }
-
-    @Override
-    public BigInteger getFuelLimit() {
-        return fuelLimit;
-    }
-
-    @Override
-    public long getLongTimestamp() {
-        return longTimestamp;
-    }
-
-    @Override
     public boolean ofType(TransactionTypes.TransactionTypeSpec spec) {
         return type.getSpec() == spec;
     }
@@ -633,11 +603,11 @@ public class TransactionImpl implements Transaction {
         /**
          * Transaction V3 properties
          */
-        private String chainId;
+        /*private String chainId;
         private BigInteger nonce;
         private BigInteger amount;
         private BigInteger fuelLimit;
-        private BigInteger fuelPrice;
+        private BigInteger fuelPrice;*/
 
         public BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
                            AbstractAttachment attachment, int timestamp, TransactionType transactionType) {
@@ -663,11 +633,11 @@ public class TransactionImpl implements Transaction {
 
             this(version, senderPublicKey, amount.longValueExact(), fuelLimit.multiply(fuelPrice).longValueExact(),
                 (short) deadline, attachment, (int) timestamp, transactionType);
-            this.chainId = chainId;
+            /*this.chainId = chainId;
             this.nonce = nonce;
             this.amount = amount;
             this.fuelLimit = fuelLimit;
-            this.fuelPrice = fuelPrice;
+            this.fuelPrice = fuelPrice;*/
         }
 
         @Override
@@ -828,16 +798,6 @@ public class TransactionImpl implements Transaction {
         @Override
         public BuilderImpl index(short index) {
             this.index = index;
-            return this;
-        }
-
-        public BuilderImpl chainId(String chainId){
-            this.chainId = chainId;
-            return this;
-        }
-
-        public BuilderImpl nonce(BigInteger nonce){
-            this.nonce = nonce;
             return this;
         }
     }

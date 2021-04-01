@@ -46,8 +46,10 @@ import javax.inject.Singleton;
 @Singleton
 public class SmcPublishContractTransactionType extends AbstractSmcTransactionType {
     protected final Fee PUBLISH_CONTRACT_FEE = new Fee.SizeBasedFee(
-        Math.multiplyExact(150_000, getBlockchainConfig().getOneAPL()),
-        Math.multiplyExact(10, getBlockchainConfig().getOneAPL()), 1) {
+        Math.multiplyExact(1_500, getBlockchainConfig().getOneAPL()),//APL
+        10,//ATM
+        1)//BYTE
+    {
         public int getSize(Transaction transaction, Appendix appendage) {
             SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
             int size = attachment.getContractSource().length();
@@ -69,7 +71,6 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         return TransactionTypes.TransactionTypeSpec.SMC_PUBLISH;
     }
 
-    @TransactionFee(FeeMarker.BASE_FEE)
     @Override
     public Fee getBaselineFee(Transaction transaction) {
         return PUBLISH_CONTRACT_FEE;
@@ -138,10 +139,13 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         if (executionLog.isError()) {
             throw new AplException.SMCProcessingException(executionLog.toJsonString());
         }
-        //TODO refund remaining fuel
         @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
         Fuel fuel = smartContract.getFuel();
         log.debug("After processing Address={} Fuel={}", smartContract.getAddress(), fuel);
+        if (fuel.refundedFee().signum() > 0) {
+            //refund remaining fuel
+            getAccountService().addToBalanceAndUnconfirmedBalanceATM(senderAccount, LedgerEvent.SMC_REFUNDED_FEE, transaction.getId(), 0, fuel.refundedFee().longValueExact());
+        }
         //save contract and contract state
         contractService.saveContract(smartContract);
     }

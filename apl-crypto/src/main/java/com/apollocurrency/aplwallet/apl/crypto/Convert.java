@@ -358,6 +358,28 @@ public final class Convert {
         return Convert.toString(bytes);
     }
 
+    public static void writeString(ByteBuffer buffer, String value) {
+        if(value == null || value.isEmpty()){
+            buffer.putInt(0);
+        }else {
+            byte[] data = Convert.toBytes(value);
+            buffer.putInt(data.length);
+            buffer.put(data);
+        }
+    }
+
+    public static String readString(ByteBuffer buffer) throws NotValidException {
+        int len = buffer.getInt();
+        if(len<0){
+            throw new NotValidException("The string length can't be negative.");
+        }else if (len == 0){
+            return "";
+        }
+        byte[] bytes = new byte[len];
+        buffer.get(bytes);
+        return Convert.toString(bytes);
+    }
+
     public static String truncate(String s, String replaceNull, int limit, boolean dots) {
         return s == null ? replaceNull : s.length() > limit ? (s.substring(0, dots ? limit - 3 : limit) + (dots ? "..." : "")) : s;
     }

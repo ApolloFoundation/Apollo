@@ -96,7 +96,7 @@ public abstract class TransactionType {
     public final boolean applyUnconfirmed(Transaction transaction, Account senderAccount) {
         long amountATM = transaction.getAmountATM();
         //TODO implement a procedure to operate with fuelLimit and fuelPrice values
-        @TransactionFee(FeeMarker.FEE)
+        @TransactionFee({FeeMarker.FEE, FeeMarker.FUEL})
         long feeATM = transaction.getFeeATM();
         if (transaction.referencedTransactionFullHash() != null) {
             feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
@@ -181,6 +181,11 @@ public abstract class TransactionType {
 
     public boolean isPhasable() {
         return true;
+    }
+
+    public boolean isSmartContractAddressed(Transaction transaction){
+        return transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.SMC_PUBLISH
+            || transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.SMC_CALL_METHOD;
     }
 
     @TransactionFee(FeeMarker.BASE_FEE)
