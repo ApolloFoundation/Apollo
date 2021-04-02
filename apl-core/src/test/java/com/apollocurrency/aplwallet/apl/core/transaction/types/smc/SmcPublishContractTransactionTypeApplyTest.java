@@ -5,9 +5,13 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
@@ -21,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.inject.Inject;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +44,12 @@ import static org.mockito.Mockito.when;
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
 class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionTypeApplyTest {
+
+
+    @Inject
+    ContractModelToEntityConverter contractModelToEntityConverter;
+    @Inject
+    ContractModelToStateEntityConverter contractModelToStateEntityConverter;
 
     @Test
     void publishSmcApplyAttachment() throws AplException.NotValidException {
@@ -89,6 +100,43 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
     @Test
     void callSmcApplyAttachment() throws AplException.NotValidException {
         //GIVEN
+
+        String aa = "class Deal extends Contract{\n" +
+            "  constructor( value, vendor ){\n" +
+            "    console.log(\"--- in constructor ---\", value, vendor);\n" +
+            "    super();\n" +
+            "    this.value = value;\n" +
+            "    this.vendor = vendor;\n" +
+            "    this.customer = '';\n" +
+            "    this.paid = false;\n" +
+            "    this.accepted = false;\n" +
+            "  }\n" +
+            "  pay() {\n" +
+            "      console.log(\"--- in pay msg.getValue()---\", msg.getValue(), typeof msg.getValue());\n" +
+            "      console.log(\"--- in pay this.value ---\", this.value, typeof this.value);\n" +
+            "      if ( this.value <= msg.getValue() ){\n" +
+            "         super.transfer( msg.getValue() );\n" +
+            "         this.paid = true;\n" +
+            "         this.customer = msg.getSender();\n" +
+            "      }\n" +
+            "  }\n" +
+            "  trace() {\n" +
+            "      console.log(\"--- in trace msg.getValue()---\", msg.getValue(), typeof msg.getValue());\n" +
+            "      console.log(\"--- in trace this.value ---\", this.value, typeof this.value);\n" +
+            "  }\n" +
+            "  accept(){\n" +
+            "    console.log(\"--- in accept msg=\", msg.getValue(), \" \", msg.getSender());\n" +
+            "    console.log(\"--- in accept accepted=\", this.accepted);\n" +
+            "    console.log(\"--- in accept paid=\", this.paid);\n" +
+            "    console.log(\"--- in accept customer=\", this.customer);\n" +
+            "    if (!this.accepted && this.paid && this.customer == msg.getSender()){\n" +
+            "      super.send(this.value, this.vendor)\n" +
+            "      this.accepted = true \n" +
+            "    }\n" +
+            "  }\n" +
+            "}";
+
+
         TxData txData = TxData.builder()
             .sender("APL-X5JH-TJKJ-DVGC-5T2V8")
             .name("Deal")
@@ -110,6 +158,10 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
                 "         this.paid = true;\n" +
                 "         this.customer = msg.getSender();\n" +
                 "      }\n" +
+                "  }\n" +
+                "  trace() {\n" +
+                "      console.log('--- in trace msg.getValue()---', msg.getValue(), typeof msg.getValue());\n" +
+                "      console.log('--- in trace this.value ---', this.value, typeof this.value);\n" +
                 "  }\n" +
                 "  accept(){\n" +
                 "    console.log('--- in accept msg=', msg.getValue(), ' ', msg.getSender());\n" +
@@ -156,6 +208,10 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx));
         SmartContract smartContract = contractService.loadContract(new AplAddress(newTx.getRecipientId()));
 
+        SmcContractEntity contractEntity = contractModelToEntityConverter.convert(smartContract);
+        SmcContractStateEntity contractStateEntity = contractModelToStateEntityConverter.convert(smartContract);
+
+
         //THEN
         assertNotNull(smartContract);
         assertEquals(new AplAddress(newTx.getId()).getHex(), smartContract.getTxId().getHex());
@@ -165,7 +221,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             .sender("APL-LTR8-GMHB-YG56-4NWSE")
             .recipient(Convert.defaultRsAccount(newTx.getRecipientId()))
             .recipientPublicKey(Convert.toHexString(recipientPublicKey))
-            .method("pay")
+            .method("trace")
             .params(Collections.emptyList())
             .amountATM(1400000000L)
             .fuelLimit(5000L)
@@ -181,14 +237,14 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             .build();
 
         long senderAccountId2 = Convert.parseAccountId(txData2.getSender());
-        Account account2 = new Account(senderAccountId, 1000000000000000L, 1000000000000000L, 1000000000L, 0L, 1);
+        Account account2 = new Account(senderAccountId2, 1000000000000000L, 1000000000000000L, 1000000000L, 0L, 1);
 
         Transaction newTx2 = createTransaction(txData2, attachment2, account2, Convert.parseHexString(txData2.getRecipientPublicKey()), Convert.parseAccountId(txData2.getRecipient()));
         assertNotNull(newTx);
 
         doNothing().when(spyAccountService).addToBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx2.getId()), eq(-txData2.getAmountATM()), eq(-(txData2.getFuelLimit() * txData2.getFuelPrice())));
         doNothing().when(spyAccountService).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx2.getId()), eq(txData2.getAmountATM()));
-        long senderId2 = AccountService.getId(newTx.getSenderPublicKey());
+        long senderId2 = AccountService.getId(newTx2.getSenderPublicKey());
         when(publicKeyDao.searchAll(senderId2)).thenReturn(new PublicKey(senderId2, newTx2.getSenderPublicKey(), newTx2.getHeight()));
 
         //WHEN
@@ -197,7 +253,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
 
         //THEN
         assertNotNull(smartContract2);
-        assertEquals(new AplAddress(newTx2.getId()).getHex(), smartContract.getTxId().getHex());
+        assertEquals(smartContract.getTxId().getHex(), smartContract2.getTxId().getHex());
     }
 
 }

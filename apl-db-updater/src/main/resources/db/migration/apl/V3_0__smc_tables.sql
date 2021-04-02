@@ -2,7 +2,6 @@
  * Copyright (c) 2021. Apollo Foundation.
  */
 
-#(address, data, name, language, fuel, fuel_price, transaction_id, height, latest)
 CREATE TABLE IF NOT EXISTS `smc_contract`
 (
     `db_id`          bigint(20) unsigned                     NOT NULL AUTO_INCREMENT,
@@ -17,15 +16,12 @@ CREATE TABLE IF NOT EXISTS `smc_contract`
     `status`         varchar(20) COLLATE utf8mb4_unicode_ci  NOT NULL,
     `height`         int(11)                                 NOT NULL,
     `latest`         tinyint(1)                              NOT NULL DEFAULT 1,
-    `deleted`        tinyint(1)                              NOT NULL DEFAULT 0,
     UNIQUE KEY `db_id` (`db_id`),
-    UNIQUE KEY `smc_contract_address_height_idx` (`address`, `height`),
-    KEY `smc_contract_height_address_idx` (`height`, `address`)
+    UNIQUE KEY `smc_contract_address_height_idx` (`address`)
 ) ENGINE = ROCKSDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
-#(address, transaction_id, method, args, object, status, height, latest)
 CREATE TABLE IF NOT EXISTS `smc_state`
 (
     `db_id`   bigint(20) unsigned                    NOT NULL AUTO_INCREMENT,

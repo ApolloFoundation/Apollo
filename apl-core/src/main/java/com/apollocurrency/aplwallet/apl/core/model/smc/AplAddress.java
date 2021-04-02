@@ -36,11 +36,6 @@ public class AplAddress implements Address {
     }
 
     @Override
-    public String getHex() {
-        return "0x" + BigInteger.valueOf(id).toString(16);
-    }
-
-    @Override
     public String toString() {
         return id + "(" + getHex() + ")";
     }

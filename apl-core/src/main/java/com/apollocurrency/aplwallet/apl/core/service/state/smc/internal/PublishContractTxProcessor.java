@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
+import com.apollocurrency.smc.SMCException;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
@@ -36,12 +37,22 @@ public class PublishContractTxProcessor implements ContractTxProcessor {
         validateStatus(ContractStatus.CREATED, smartContract);
         smartContract.setStatus(ContractStatus.PUBLISHED);
 
-        //call smart contract constructor, charge the fuel
-        smcMachine.callConstructor(smartContract);
-        executionLog.join(smcMachine.getExecutionLog());
-        validateStatus(ContractStatus.ACTIVE, smartContract);
-
-        smcMachine.resetExecutionLog();
+        try {
+            //call smart contract constructor, charge the fuel
+            smcMachine.callConstructor(smartContract);
+            executionLog.join(smcMachine.getExecutionLog());
+            validateStatus(ContractStatus.ACTIVE, smartContract);
+            smcMachine.resetExecutionLog();
+        } catch (Exception e) {
+            SMCException smcException;
+            if (e instanceof SMCException) {
+                smcException = (SMCException) e;
+            } else {
+                smcException = new SMCException(e);
+            }
+            executionLog.add("publishContract", smcException);
+            executionLog.setErrorCode(1L);
+        }
 
         return executionLog;
     }

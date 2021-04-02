@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
+import com.apollocurrency.smc.SMCException;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
@@ -39,11 +40,21 @@ public class CallMethodContractTxProcessor implements ContractTxProcessor {
         ExecutionLog executionLog = new ExecutionLog();
         validateStatus(ContractStatus.ACTIVE, smartContract);
 
-        //call the method and charge the fuel
-        smcMachine.callMethod(smartContract, smartMethod);
-        executionLog.join(smcMachine.getExecutionLog());
-
-        smcMachine.resetExecutionLog();
+        try {
+            //call the method and charge the fuel
+            smcMachine.callMethod(smartContract, smartMethod);
+            executionLog.join(smcMachine.getExecutionLog());
+            smcMachine.resetExecutionLog();
+        } catch (Exception e) {
+            SMCException smcException;
+            if (e instanceof SMCException) {
+                smcException = (SMCException) e;
+            } else {
+                smcException = new SMCException(e);
+            }
+            executionLog.add("callMethod", smcException);
+            executionLog.setErrorCode(1L);
+        }
 
         return executionLog;
     }

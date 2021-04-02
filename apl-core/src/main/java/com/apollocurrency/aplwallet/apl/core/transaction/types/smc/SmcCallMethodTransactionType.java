@@ -29,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
+import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SMCMachine;
@@ -130,6 +131,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
         Address address = new AplAddress(transaction.getRecipientId());
         SmartContract smartContract = contractService.loadContract(address);
+        smartContract.setFuel(new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice()));
         SmartMethod smartMethod = SmartMethod.builder()
             .name(attachment.getMethodName())
             .args(attachment.getMethodParams())
@@ -141,6 +143,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         ContractTxProcessor processor = new CallMethodContractTxProcessor(smcMachine, smartContract, smartMethod);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
+            log.error(executionLog.toJsonString());
             throw new AplException.SMCProcessingException(executionLog.toJsonString());
         }
         @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
