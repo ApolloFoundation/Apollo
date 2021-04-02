@@ -41,6 +41,8 @@ import org.json.simple.JSONObject;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -78,6 +80,12 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     @Override
     public LedgerEvent getLedgerEvent() {
         return LedgerEvent.SMC_CALL_METHOD;
+    }
+
+    @Override
+    public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        return new SmcCallMethodAttachment(buffer);
     }
 
     @Override

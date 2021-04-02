@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.Builder;
@@ -33,6 +35,16 @@ public class SmcCallMethodAttachment extends AbstractSmcAttachment {
         super(fuelLimit, fuelPrice);
         this.methodName = Objects.requireNonNull(methodName);
         this.methodParams = methodParams;
+    }
+
+    public SmcCallMethodAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        super(buffer);
+        try {
+            this.methodName = Convert.readString(buffer);
+            this.methodParams = Convert.readString(buffer);
+        } catch (NotValidException ex) {
+            throw new AplException.NotValidException(ex.getMessage());
+        }
     }
 
     public SmcCallMethodAttachment(RlpReader reader) {
@@ -70,6 +82,7 @@ public class SmcCallMethodAttachment extends AbstractSmcAttachment {
     @Override
     public void putMyBytes(ByteBuffer buffer) {
         buffer.order(ByteOrder.LITTLE_ENDIAN);
+        super.putMyBytes(buffer);
         Convert.writeString(buffer, methodName);
         Convert.writeString(buffer, methodParams);
 

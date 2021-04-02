@@ -42,7 +42,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.update.ImportantU
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
-import com.apollocurrency.smc.contract.vm.SMCMachineFactory;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -160,7 +159,6 @@ public class TransactionTestData {
         DGSService dgsService = mock(DGSService.class);
         PrunableLoadingService prunableLoadingService = mock(PrunableLoadingService.class);
         ContractService contractService = mock(ContractService.class);
-        SMCMachineFactory smcMachineFactory = mock(SMCMachineFactory.class);
         AplBlockchainIntegratorFactory integratorFactory = mock(AplBlockchainIntegratorFactory.class);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
             new OrdinaryPaymentTransactionType(blockchainConfig, accountService),

@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.Builder;
@@ -39,6 +41,18 @@ public class SmcPublishContractAttachment extends AbstractSmcAttachment {
         this.contractSource = Objects.requireNonNull(contractSource);
         this.constructorParams = constructorParams;
         this.languageName = Objects.requireNonNull(languageName);
+    }
+
+    public SmcPublishContractAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        super(buffer);
+        try {
+            this.contractName = Convert.readString(buffer);
+            this.contractSource = Convert.readString(buffer);
+            this.constructorParams = Convert.readString(buffer);
+            this.languageName = Convert.readString(buffer);
+        } catch (NotValidException ex) {
+            throw new AplException.NotValidException(ex.getMessage());
+        }
     }
 
     public SmcPublishContractAttachment(RlpReader reader) {
@@ -84,6 +98,7 @@ public class SmcPublishContractAttachment extends AbstractSmcAttachment {
     @Override
     public void putMyBytes(ByteBuffer buffer) {
         buffer.order(ByteOrder.LITTLE_ENDIAN);
+        super.putMyBytes(buffer);
         Convert.writeString(buffer, contractName);
         Convert.writeString(buffer, contractSource);
         Convert.writeString(buffer, constructorParams);

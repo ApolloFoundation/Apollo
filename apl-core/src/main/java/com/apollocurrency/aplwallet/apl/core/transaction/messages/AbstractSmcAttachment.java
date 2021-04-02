@@ -60,6 +60,12 @@ public abstract class AbstractSmcAttachment extends AbstractAttachment {
     }
 
     @Override
+    public void putMyBytes(ByteBuffer buffer) {
+        buffer.putLong(fuelLimit.longValueExact());
+        buffer.putLong(fuelPrice.longValueExact());
+    }
+
+    @Override
     public boolean isPhasable() {
         return false;
     }

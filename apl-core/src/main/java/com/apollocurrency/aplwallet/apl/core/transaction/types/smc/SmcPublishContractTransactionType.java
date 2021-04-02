@@ -38,6 +38,8 @@ import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -79,6 +81,12 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     @Override
     public LedgerEvent getLedgerEvent() {
         return LedgerEvent.SMC_PUBLISH;
+    }
+
+    @Override
+    public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        return new SmcPublishContractAttachment(buffer);
     }
 
     @Override

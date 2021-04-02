@@ -12,14 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
-import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.extern.slf4j.Slf4j;
 
-import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -49,12 +44,6 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-    }
-
-    @Override
-    public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        Objects.requireNonNull(buffer);
-        return parseAttachment(new RlpReader(buffer.array()));
     }
 
     @Override
