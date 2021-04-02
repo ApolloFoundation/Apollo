@@ -609,11 +609,11 @@ class CsvImporterTest extends DbContainerBaseTest {
     }
 
     private void verifyCount(TransactionalDataSource dataSource, String tableName, long count) {
+        long result = -1;
         try (Connection con = dataSource.getConnection();
-             PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName)
+             PreparedStatement preparedCount = con.prepareStatement("select count(*) as count from " + tableName);
+             ResultSet rs = preparedCount.executeQuery()
         ) {
-            long result = -1;
-            ResultSet rs = preparedCount.executeQuery();
             if (rs.next()) {
                 result = rs.getLong("count");
             }

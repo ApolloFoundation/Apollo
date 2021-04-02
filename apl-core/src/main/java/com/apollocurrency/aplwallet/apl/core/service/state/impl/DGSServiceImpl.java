@@ -484,8 +484,7 @@ public class DGSServiceImpl implements DGSService {
         Objects.requireNonNull(luceneQuery, "luceneQuery is empty");
         StringBuffer inRange = new StringBuffer("(");
         int index = 0;
-        try {
-            ResultSet rs = fullTextSearchService.search("public", goodsTable.getTableName(), luceneQuery, Integer.MAX_VALUE, 0);
+        try (ResultSet rs = fullTextSearchService.search("public", goodsTable.getTableName(), luceneQuery, Integer.MAX_VALUE, 0)) {
             while (rs.next()) {
                 Long DB_ID = rs.getLong(5);
                 if (index == 0) {

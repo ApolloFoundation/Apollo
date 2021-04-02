@@ -164,8 +164,8 @@ public class CsvWriterImpl extends CsvAbstractBase implements CsvWriter {
     @Override
     public CsvExportData write(Connection conn, String outputFileName, String sql, String charset) throws SQLException {
         CsvExportData exportData;
-        try (Statement stat = conn.createStatement()) {
-            ResultSet rs = stat.executeQuery(sql);
+        try (Statement stat = conn.createStatement();
+             ResultSet rs = stat.executeQuery(sql)) {
             exportData = write(outputFileName, rs);
         }
         return exportData;
