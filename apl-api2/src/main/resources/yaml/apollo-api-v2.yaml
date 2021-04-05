@@ -626,6 +626,39 @@ paths:
       security:
         - bearerAuth: [ ]
 
+  /@@smc/call/test:
+    post:
+      tags:
+        - smc
+      summary: Returns signed transaction to call the contract method.
+      description: |
+        Returns signed transaction to call the contract method.
+      operationId: createCallContractMethodTxTest
+      requestBody:
+        description: the contract method and method paramters
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CallContractMethodReqTest'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionArrayResp'
+        401:
+          description: Unauthorized Error
+        403:
+          description: Access Forbidden
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: [ ]
+
 components:
   schemas:
     TransactionInfoArrayResp:

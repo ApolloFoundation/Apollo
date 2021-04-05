@@ -152,6 +152,11 @@ public class SmcApiServiceImpl implements SmcApiService {
     }
 
     @Override
+    public Response createCallContractMethodTxTest(CallContractMethodReqTest body, SecurityContext securityContext) throws NotFoundException {
+        return null;
+    }
+
+    @Override
     public Response createPublishContractTx(PublishContractReqTest body, SecurityContext securityContext) throws NotFoundException {
         return null;
     }

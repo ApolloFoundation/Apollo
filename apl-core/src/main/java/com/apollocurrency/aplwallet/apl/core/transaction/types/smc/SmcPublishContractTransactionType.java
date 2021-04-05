@@ -101,16 +101,18 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-        log.debug("SMC: doStateDependentValidation");
+        log.debug("SMC: doStateDependentValidation = ...");
         Address address = new AplAddress(transaction.getRecipientId());
         if (contractService.isContractExist(address)) {
+            log.debug("SMC: doStateDependentValidation = INVALID");
             throw new AplException.NotCurrentlyValidException("Contract already exists at address " + address);
         }
+        log.debug("SMC: doStateDependentValidation = VALID");
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        log.debug("SMC: doStateIndependentValidation");
+        log.debug("SMC: doStateIndependentValidation = ...");
         checkPrecondition(transaction);
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
         if (Strings.isNullOrEmpty(attachment.getContractName())) {
@@ -126,12 +128,14 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         SmartContract smartContract = contractService.createNewContract(transaction);
         BlockchainIntegrator integrator = integratorFactory.createMockInstance(transaction.getId());
         SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
+        log.debug("Created virtual machine for the contract validation, smcMachine={}", smcMachine);
 
         ContractTxProcessor processor = new SandboxContractValidationProcessor(smcMachine, smartContract);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             throw new AplException.NotCurrentlyValidException(executionLog.toJsonString());
         }
+        log.debug("SMC: doStateIndependentValidation = VALID");
     }
 
     @Override

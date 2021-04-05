@@ -115,8 +115,8 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         if (Strings.isNullOrEmpty(attachment.getMethodName())) {
             throw new AplException.NotCurrentlyValidException("Empty contract method name.");
         }
+        SmartContract smartContract = contractService.loadContract(new AplAddress(transaction.getRecipientId()));
         //syntactical and semantic validation
-        SmartContract smartContract = contractService.createNewContract(transaction);
         SmartMethod smartMethod = SmartMethod.builder()
             .name(attachment.getMethodName())
             .args(attachment.getMethodParams())

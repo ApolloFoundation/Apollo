@@ -129,6 +129,8 @@ public final class Convert {
             return ((Long) o);
         } else if (o instanceof String) {
             return Long.parseLong((String) o);
+        } else if (o instanceof Number) {
+            return ((Number) o).longValue();
         } else {
             throw new IllegalArgumentException("Not a long: " + o);
         }

@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.Getter;
@@ -42,8 +43,8 @@ public abstract class AbstractSmcAttachment extends AbstractAttachment {
 
     AbstractSmcAttachment(JSONObject attachmentData) {
         super(attachmentData);
-        this.fuelLimit = BigInteger.valueOf(((Number) attachmentData.get(FUEL_LIMIT_FIELD)).longValue());
-        this.fuelPrice = BigInteger.valueOf(((Number) attachmentData.get(FUEL_PRICE_FIELD)).longValue());
+        this.fuelLimit = BigInteger.valueOf(Convert.parseLong(attachmentData.get(FUEL_LIMIT_FIELD)));
+        this.fuelPrice = BigInteger.valueOf(Convert.parseLong(attachmentData.get(FUEL_PRICE_FIELD)));
     }
 
     @Override
