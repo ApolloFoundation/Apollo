@@ -36,6 +36,7 @@ public class UnconfirmedTransactionEntityRowMapper implements RowMapper<Unconfir
                     .transactionBytes(rs.getBytes("transaction_bytes"))
                     .prunableAttachmentJsonString(rs.getString("prunable_json"))
                     .build();
+            entity.setDbId(rs.getLong("db_id"));
             return entity;
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);

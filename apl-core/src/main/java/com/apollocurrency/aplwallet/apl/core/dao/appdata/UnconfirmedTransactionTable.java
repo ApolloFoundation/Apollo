@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
@@ -101,7 +102,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
     }
 
     public Stream<UnconfirmedTransactionEntity> getExpiredTxsStream(int time) {
-        return streamConverter.apply(getManyBy(new DbClause.IntClause("expiration", DbClause.Op.LT, time), 0, -1, ""));
+        return CollectionUtil.toList(getManyBy(new DbClause.IntClause("expiration", DbClause.Op.LT, time), 0, -1, "")).stream();
     }
 
     public int countExpiredTransactions(int epochTime) {
@@ -110,7 +111,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
     }
 
     public Stream<UnconfirmedTransactionEntity> getAllUnconfirmedTransactions() {
-        return streamConverter.convert(this.getAll(0, -1));
+        return CollectionUtil.toList(this.getAll(0, -1)).stream();
     }
 
     @Override
