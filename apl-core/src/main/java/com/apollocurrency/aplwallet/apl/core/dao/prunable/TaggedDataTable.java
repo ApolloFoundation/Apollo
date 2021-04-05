@@ -15,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -50,19 +49,16 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
     };
     private DataTagDao dataTagDao;
     private BlockchainConfig blockchainConfig;
-    private TimeService timeService;
     private TaggedDataMapper MAPPER = new TaggedDataMapper();
 
     @Inject
     public TaggedDataTable(DataTagDao dataTagDao,
                            BlockchainConfig blockchainConfig,
-                           TimeService timeService,
                            DatabaseManager databaseManager,
                            PropertiesHolder propertiesHolder,
                            Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super(DB_TABLE, taggedDataKeyFactory, true, FULL_TEXT_SEARCH_COLUMNS, databaseManager, blockchainConfig, propertiesHolder, deleteOnTrimDataEvent);
         this.dataTagDao = dataTagDao;
-        this.timeService = timeService;
         this.blockchainConfig = blockchainConfig;
     }
 
@@ -100,15 +96,15 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
             try (Connection con = getDatabaseManager().getDataSource().getConnection();
                  PreparedStatement pstmtSelect = con.prepareStatement("SELECT parsed_tags "
                      + "FROM tagged_data WHERE transaction_timestamp < ? AND latest = TRUE ")) {
-                int expiration = timeService.getEpochTime() - blockchainConfig.getMaxPrunableLifetime();
+                int expiration = time - blockchainConfig.getMaxPrunableLifetime();
                 pstmtSelect.setInt(1, expiration);
                 Map<String, Integer> expiredTags = new HashMap<>();
                 try (ResultSet rs = pstmtSelect.executeQuery()) {
                     while (rs.next()) {
-                        Object[] array = (Object[]) rs.getArray("parsed_tags").getArray();
-                        for (Object tag : array) {
+                        String[] array = DbUtils.getArray(rs, "parsed_tags", String[].class);
+                        for (String tag : array) {
                             Integer count = expiredTags.get(tag);
-                            expiredTags.put((String) tag, count != null ? count + 1 : 1);
+                            expiredTags.put(tag, count != null ? count + 1 : 1);
                         }
                     }
                 }

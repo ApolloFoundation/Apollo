@@ -48,9 +48,8 @@ public class UpdaterDbRepository implements UpdaterRepository {
     @Override
     public UpdateTransaction getLast() {
         try (Connection connection = dataSource.getConnection();
-
-             PreparedStatement statement = connection.prepareStatement("SELECT * FROM update_status")) {
-            ResultSet rs = statement.executeQuery();
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM update_status");
+             ResultSet rs = statement.executeQuery()) {
             if (rs.next()) {
                 long txId = rs.getLong("transaction_id");
                 Transaction tr = updaterMediator.getTransaction(txId);
