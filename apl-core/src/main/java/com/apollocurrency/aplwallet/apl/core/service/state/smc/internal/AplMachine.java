@@ -7,14 +7,11 @@ import com.apollocurrency.smc.polyglot.config.JsLimitsConfig;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 import com.apollocurrency.smc.polyglot.engine.ExecutionModeHelper;
 
-import javax.inject.Inject;
-
 /**
  * @author andrew.zinchenko@gmail.com
  */
 public class AplMachine extends BaseContractMachine {
 
-    @Inject
     public AplMachine(LanguageContext languageContext, BlockchainIntegrator blockchainIntegrator) {
         super(languageContext,
             ExecutionEnv.builder()

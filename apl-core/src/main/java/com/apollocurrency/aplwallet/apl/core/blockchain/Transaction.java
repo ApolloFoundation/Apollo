@@ -37,7 +37,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -147,20 +146,20 @@ public interface Transaction {
     /**
      * Transaction V3 properties
      */
-    String getChainId();
+    //String getChainId();
 
     /**
      * the number of transactions sent by the sender
      * @return the number of transactions sent by the sender
      */
-    BigInteger getNonce();
+    //BigInteger getNonce();
 
-    BigInteger getAmount();//long:getAmountATM
+    //BigInteger getAmount();//long:getAmountATM
 
-    BigInteger getFuelPrice();
-    BigInteger getFuelLimit();
+    //BigInteger getFuelPrice();
+    //BigInteger getFuelLimit();
 
-    long getLongTimestamp();//int getTimestamp
+    //long getLongTimestamp();//int getTimestamp
 
     /**
      * end V3 properties

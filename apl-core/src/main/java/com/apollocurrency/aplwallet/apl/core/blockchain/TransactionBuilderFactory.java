@@ -365,6 +365,7 @@ public class TransactionBuilderFactory {
     }
 
     private TransactionImpl.BuilderImpl newTransactionBuilder(TransactionDTO txDto) {
+        JSONObject attachmentData = null;
         try {
             byte[] senderPublicKey = Convert.parseHexString(txDto.getSenderPublicKey());
             byte version = txDto.getVersion() == null ? 0 : txDto.getVersion();
@@ -384,7 +385,6 @@ public class TransactionBuilderFactory {
                 throw new AplException.NotValidException("Invalid transaction type: " + txDto.getType() + ", " + txDto.getSubtype());
             }
 
-            JSONObject attachmentData;
             if (!CollectionUtil.isEmpty(txDto.getAttachment())) {
                 attachmentData = new JSONObject(txDto.getAttachment());
             } else {
@@ -418,7 +418,8 @@ public class TransactionBuilderFactory {
             builder.signature(signature);
             return builder;
         } catch (RuntimeException | AplException.NotValidException e) {
-            log.debug("Failed to parse transaction: " + txDto.toString());
+            log.debug("Failed to parse transaction: {}, attachment={}", txDto.toString(), attachmentData);
+            log.debug("Error: " + e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }

@@ -74,23 +74,22 @@ public class SmcApiServiceImpl implements SmcApiService {
             .contractSource(body.getSource())
             .constructorParams(String.join(",", body.getParams()))
             .languageName("javascript")
+            .fuelLimit(fuelLimit)
+            .fuelPrice(fuelPrice)
             .build();
 
         byte[] publicKey = AccountService.generatePublicKey(account, attachment.getContractSource());
         long recipientId = AccountService.getId(publicKey);
+        String valueStr = body.getValue() != null ? body.getValue() : "0";
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
-            .chainId(blockchainConfig.getChain().getChainId().toString())//V3
-            .version(3)
+            .version(2)
+            .amountATM(Convert.parseLong(valueStr))
             .senderAccount(account)
             .recipientPublicKey(Convert.toHexString(publicKey))
             .recipientId(recipientId)
             .secretPhrase(body.getSecret())
             .deadlineValue(String.valueOf(1440))
-            .nonce(BigInteger.ONE)//V3
-            .amount(BigInteger.TEN)//V3
-            .fuelLimit(fuelLimit)//V3
-            .fuelPrice(fuelPrice)//V3
             .attachment(attachment)
             .credential(new MultiSigCredential(1, Crypto.getKeySeed(body.getSecret())))
             .broadcast(false)
@@ -124,24 +123,23 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         BigInteger fuelLimit = new BigInteger(body.getFuelLimit());
         BigInteger fuelPrice = new BigInteger(body.getFuelPrice());
+        String valueStr = body.getValue() != null ? body.getValue() : "0";
 
         SmcCallMethodAttachment attachment = SmcCallMethodAttachment.builder()
             .methodName(body.getName())
             .methodParams(String.join(",", body.getParams()))
+            .fuelLimit(fuelLimit)
+            .fuelPrice(fuelPrice)
             .build();
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
-            .chainId(blockchainConfig.getChain().getChainId().toString())//V3
-            .version(3)
+            .version(2)
+            .amountATM(Convert.parseLong(valueStr))
             .senderAccount(account)
             .recipientPublicKey(Convert.toHexString(contractAccount.getPublicKey().getPublicKey()))
             .recipientId(contractAccount.getId())
             .secretPhrase(body.getSecret())
             .deadlineValue(String.valueOf(1440))
-            .nonce(BigInteger.ONE)//V3
-            .amount(BigInteger.ZERO)//V3
-            .fuelLimit(fuelLimit)//V3
-            .fuelPrice(fuelPrice)//V3
             .attachment(attachment)
             .credential(new MultiSigCredential(1, Crypto.getKeySeed(body.getSecret())))
             .broadcast(false)
@@ -155,6 +153,11 @@ public class SmcApiServiceImpl implements SmcApiService {
         response.setTx(Convert.toHexString(signedTxBytes.array()));
 
         return builder.bind(response).build();
+    }
+
+    @Override
+    public Response createCallContractMethodTxTest(CallContractMethodReqTest body, SecurityContext securityContext) throws NotFoundException {
+        return null;
     }
 
     @Override

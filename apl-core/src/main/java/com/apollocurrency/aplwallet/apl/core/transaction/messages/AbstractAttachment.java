@@ -7,6 +7,8 @@ import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.EqualsAndHashCode;
@@ -81,6 +83,7 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
         transactionType().apply(transaction, senderAccount, recipientAccount);
     }
 
+    @TransactionFee(FeeMarker.BASE_FEE)
     @Override
     public final Fee getBaselineFee(Transaction transaction, long oneAPL) {
         return transactionType().getBaselineFee(transaction);

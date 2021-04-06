@@ -12,8 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendi
 import lombok.Builder;
 import lombok.Data;
 
-import java.math.BigInteger;
-
 @Data
 @Builder
 public class CreateTransactionRequest {
@@ -60,10 +58,10 @@ public class CreateTransactionRequest {
     /**
      * Transaction V3 properties
      */
-    private String chainId;
+    /*private String chainId;
     private BigInteger nonce;
     private BigInteger amount;
     private BigInteger fuelLimit;
-    private BigInteger fuelPrice;
+    private BigInteger fuelPrice;*/
 
 }

@@ -11,10 +11,10 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.AplBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.AplMachine;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.ContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxContractValidationProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
@@ -38,6 +38,8 @@ import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -46,8 +48,10 @@ import javax.inject.Singleton;
 @Singleton
 public class SmcPublishContractTransactionType extends AbstractSmcTransactionType {
     protected final Fee PUBLISH_CONTRACT_FEE = new Fee.SizeBasedFee(
-        Math.multiplyExact(150_000, getBlockchainConfig().getOneAPL()),
-        Math.multiplyExact(10, getBlockchainConfig().getOneAPL()), 1) {
+        Math.multiplyExact(1_500, getBlockchainConfig().getOneAPL()),//APL
+        10,//ATM
+        1)//BYTE
+    {
         public int getSize(Transaction transaction, Appendix appendage) {
             SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
             int size = attachment.getContractSource().length();
@@ -69,7 +73,6 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         return TransactionTypes.TransactionTypeSpec.SMC_PUBLISH;
     }
 
-    @TransactionFee(FeeMarker.BASE_FEE)
     @Override
     public Fee getBaselineFee(Transaction transaction) {
         return PUBLISH_CONTRACT_FEE;
@@ -78,6 +81,12 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     @Override
     public LedgerEvent getLedgerEvent() {
         return LedgerEvent.SMC_PUBLISH;
+    }
+
+    @Override
+    public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        return new SmcPublishContractAttachment(buffer);
     }
 
     @Override
@@ -92,16 +101,18 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-        log.debug("SMC: doStateDependentValidation");
+        log.debug("SMC: doStateDependentValidation = ...");
         Address address = new AplAddress(transaction.getRecipientId());
         if (contractService.isContractExist(address)) {
+            log.debug("SMC: doStateDependentValidation = INVALID");
             throw new AplException.NotCurrentlyValidException("Contract already exists at address " + address);
         }
+        log.debug("SMC: doStateDependentValidation = VALID");
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        log.debug("SMC: doStateIndependentValidation");
+        log.debug("SMC: doStateIndependentValidation = ...");
         checkPrecondition(transaction);
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
         if (Strings.isNullOrEmpty(attachment.getContractName())) {
@@ -117,12 +128,14 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         SmartContract smartContract = contractService.createNewContract(transaction);
         BlockchainIntegrator integrator = integratorFactory.createMockInstance(transaction.getId());
         SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
+        log.debug("Created virtual machine for the contract validation, smcMachine={}", smcMachine);
 
         ContractTxProcessor processor = new SandboxContractValidationProcessor(smcMachine, smartContract);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             throw new AplException.NotCurrentlyValidException(executionLog.toJsonString());
         }
+        log.debug("SMC: doStateIndependentValidation = VALID");
     }
 
     @Override
@@ -138,10 +151,13 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         if (executionLog.isError()) {
             throw new AplException.SMCProcessingException(executionLog.toJsonString());
         }
-        //TODO refund remaining fuel
         @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
         Fuel fuel = smartContract.getFuel();
         log.debug("After processing Address={} Fuel={}", smartContract.getAddress(), fuel);
+        if (fuel.refundedFee().signum() > 0) {
+            //refund remaining fuel
+            getAccountService().addToBalanceAndUnconfirmedBalanceATM(senderAccount, LedgerEvent.SMC_REFUNDED_FEE, transaction.getId(), 0, fuel.refundedFee().longValueExact());
+        }
         //save contract and contract state
         contractService.saveContract(smartContract);
     }

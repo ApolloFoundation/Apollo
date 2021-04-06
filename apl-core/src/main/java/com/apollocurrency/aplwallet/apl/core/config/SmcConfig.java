@@ -29,7 +29,7 @@ public class SmcConfig {
 
     @Produces
     public FuelPriceLimitProvider createDefaultFuelProvider() {
-        final BigInteger fuelLimit = BigInteger.valueOf(20000);
+        final BigInteger fuelLimit = BigInteger.valueOf(5000);
         final BigInteger fuelPrice = BigInteger.valueOf(1000000);
         return new StaticFuelPriceLimitProvider(fuelPrice, fuelLimit);
     }

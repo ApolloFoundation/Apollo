@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractTxProcessor;
+import com.apollocurrency.smc.SMCException;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
@@ -42,14 +44,28 @@ public class SandboxCallMethodValidationProcessor implements ContractTxProcessor
     @Override
     public ExecutionLog process() {
         boolean isValid;
+        ExecutionLog executionLog = new ExecutionLog();
         validateStatus(ContractStatus.ACTIVE, smartContract);
 
-        isValid = smcMachine.validateMethod(smartContract, smartMethod);
-        ExecutionLog executionLog = new ExecutionLog(smcMachine.getExecutionLog());
-        if (!isValid) {
-            //TODO: Update the Error code
+        try {
+            isValid = smcMachine.validateMethod(smartContract, smartMethod);
+            executionLog.join(smcMachine.getExecutionLog());
+            smcMachine.resetExecutionLog();
+            if (!isValid) {
+                //TODO: Update the Error code
+                executionLog.setErrorCode(1L);
+            }
+        } catch (Exception e) {
+            SMCException smcException;
+            if (e instanceof SMCException) {
+                smcException = (SMCException) e;
+            } else {
+                smcException = new SMCException(e);
+            }
+            executionLog.add("validateCallingMethod", smcException);
             executionLog.setErrorCode(1L);
         }
+
         return executionLog;
     }
 }

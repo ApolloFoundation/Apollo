@@ -7,13 +7,14 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpWriteBuffer;
+import lombok.SneakyThrows;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
 /**
@@ -26,6 +27,8 @@ class SmcPublishContractAttachmentTest {
         .contractSource("class Deal {}")
         .constructorParams("\"123\", \"0x0A0B0C0D0E0F\"")
         .languageName("javascript")
+        .fuelLimit(BigInteger.valueOf(5000L))
+        .fuelPrice(BigInteger.valueOf(100L))
         .build();
 
     @Test
@@ -44,7 +47,7 @@ class SmcPublishContractAttachmentTest {
     }
 
     @Test
-    void putMyBytes() {
+    void putMyBytesToRlpWriter() {
         //GIVEN
         RlpWriteBuffer buffer = new RlpWriteBuffer();
         RlpList.RlpListBuilder listBuilder = RlpList.builder();
@@ -64,13 +67,22 @@ class SmcPublishContractAttachmentTest {
         assertEquals(expected.getLanguageName(), attachment.getLanguageName());
     }
 
+    @SneakyThrows
     @Test
-    void putMyBytesWithException() {
+    void putMyBytes_ByteBuffer() {
         //GIVEN
-        ByteBuffer buffer = ByteBuffer.allocate(1);
+        ByteBuffer buffer = ByteBuffer.allocate(expected.getSize());
 
         //WHEN
+        expected.putBytes(buffer);
+        buffer.rewind();
+        SmcPublishContractAttachment attachment = new SmcPublishContractAttachment(buffer);
         //THEN
-        assertThrows(UnsupportedOperationException.class,() -> expected.putBytes(buffer));
+        assertEquals(expected.getContractName(), attachment.getContractName());
+        assertEquals(expected.getContractSource(), attachment.getContractSource());
+        assertEquals(expected.getConstructorParams(), attachment.getConstructorParams());
+        assertEquals(expected.getLanguageName(), attachment.getLanguageName());
+        assertEquals(expected.getFuelLimit(), attachment.getFuelLimit());
+        assertEquals(expected.getFuelPrice(), attachment.getFuelPrice());
     }
 }

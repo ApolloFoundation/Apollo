@@ -5,7 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.smc;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractRowMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
@@ -23,7 +24,7 @@ import java.sql.Statement;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public class SmcContractTable extends VersionedDeletableEntityDbTable<SmcContractEntity> {
+public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
     public static final LongKeyFactory<SmcContractEntity> KEY_FACTORY = new LongKeyFactory<>("address") {
         @Override
         public DbKey newKey(SmcContractEntity contract) {
@@ -40,7 +41,7 @@ public class SmcContractTable extends VersionedDeletableEntityDbTable<SmcContrac
 
     @Inject
     public SmcContractTable(DatabaseManager databaseManager, Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, KEY_FACTORY, null, databaseManager, deleteOnTrimDataEvent);
+        super(TABLE_NAME, KEY_FACTORY, false, null, databaseManager, deleteOnTrimDataEvent);
     }
 
     @Override
@@ -50,11 +51,28 @@ public class SmcContractTable extends VersionedDeletableEntityDbTable<SmcContrac
         return value;
     }
 
+    /**
+     * Insert new entry only, the update is not supported
+     *
+     * @param entity smart contract entry
+     */
+    @Override
+    public void insert(SmcContractEntity entity) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection()) {
+
+            save(con, entity);
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+
     @Override
     public void save(Connection con, SmcContractEntity entity) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + TABLE_NAME +
-                "(address, owner, transaction_id, data, name, language, version, args, status, height, latest) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)"
+                "(address, owner, transaction_id, data, name, args, language, version, status, height) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             , Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             pstmt.setLong(++i, entity.getAddress());
@@ -62,9 +80,9 @@ public class SmcContractTable extends VersionedDeletableEntityDbTable<SmcContrac
             pstmt.setLong(++i, entity.getTransactionId());
             pstmt.setString(++i, entity.getData());
             pstmt.setString(++i, entity.getContractName());
+            pstmt.setString(++i, entity.getArgs());
             pstmt.setString(++i, entity.getLanguageName());
             pstmt.setString(++i, entity.getLanguageVersion());
-            pstmt.setString(++i, entity.getArgs());
             pstmt.setString(++i, entity.getStatus());
             pstmt.setInt(++i, entity.getHeight());
             pstmt.executeUpdate();

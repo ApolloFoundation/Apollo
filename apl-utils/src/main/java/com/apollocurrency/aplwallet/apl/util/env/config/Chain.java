@@ -35,7 +35,7 @@ public class Chain {
     private String project;
     private long initialSupply;
     private int decimals;
-    private long oneAPL;
+    private long oneAPL;// 10^(decimals)
     private FeaturesHeightRequirement featuresHeightRequirement;
     private Map<Integer, BlockchainProperties> blockchainProperties;
 
