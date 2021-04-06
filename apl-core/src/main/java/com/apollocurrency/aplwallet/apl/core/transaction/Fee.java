@@ -22,6 +22,10 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.smc.contract.fuel.VolumeBasedFuelCalculator;
+
+import java.math.BigInteger;
+import java.util.Objects;
 
 public interface Fee {
 
@@ -84,36 +88,21 @@ public interface Fee {
 
     abstract class FuelBasedFee implements Fee {
 
-        private final long constantFee;
-        private final long feePerSize;
-        private final int unitSize;
+        private final VolumeBasedFuelCalculator fuelCalculator;
 
-        public FuelBasedFee(long feePerSize) {
-            this(0, feePerSize);
+        public FuelBasedFee(VolumeBasedFuelCalculator fuelCalculator) {
+            this.fuelCalculator = Objects.requireNonNull(fuelCalculator);
         }
 
-        public FuelBasedFee(long constantFee, long feePerSize) {
-            this(constantFee, feePerSize, 1024);
-        }
-
-        public FuelBasedFee(long constantFee, long feePerSize, int unitSize) {
-            this.constantFee = constantFee;
-            this.feePerSize = feePerSize;
-            this.unitSize = unitSize;
-        }
-
-        // the first size unit is free if constantFee is 0
         @Override
         public final long getFee(Transaction transaction, Appendix appendage) {
-            int size = getSize(transaction, appendage) - 1;
-            if (size < 0) {
-                return constantFee;
-            }
-            return Math.addExact(constantFee, Math.multiplyExact((long) (size / unitSize), feePerSize));
+            final int size = getSize(transaction, appendage);
+            return getFuelPrice(transaction, appendage).multiply(fuelCalculator.calc(() -> size)).longValueExact();
         }
 
         public abstract int getSize(Transaction transaction, Appendix appendage);
 
+        public abstract BigInteger getFuelPrice(Transaction transaction, Appendix appendage);
     }
 
 }

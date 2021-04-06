@@ -20,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxC
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
@@ -29,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
+import com.apollocurrency.smc.contract.fuel.FuelCost;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SMCMachine;
 import com.apollocurrency.smc.data.type.Address;
@@ -38,6 +40,7 @@ import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -47,11 +50,7 @@ import java.nio.ByteOrder;
 @Slf4j
 @Singleton
 public class SmcPublishContractTransactionType extends AbstractSmcTransactionType {
-    protected final Fee PUBLISH_CONTRACT_FEE = new Fee.SizeBasedFee(
-        Math.multiplyExact(1_500, getBlockchainConfig().getOneAPL()),//APL
-        10,//ATM
-        1)//BYTE
-    {
+    protected static final Fee PUBLISH_CONTRACT_FEE = new Fee.FuelBasedFee(FuelCost.F_PUBLISH) {
         public int getSize(Transaction transaction, Appendix appendage) {
             SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
             int size = attachment.getContractSource().length();
@@ -60,6 +59,11 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             }
             //TODO ??? what about string compressing, something like: output = Compressor.deflate(input)
             return size;
+        }
+
+        @Override
+        public BigInteger getFuelPrice(Transaction transaction, Appendix appendage) {
+            return ((AbstractSmcAttachment) appendage).getFuelPrice();
         }
     };
 
@@ -75,6 +79,9 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
+        SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
+        BigInteger price = attachment.getFuelPrice();
+
         return PUBLISH_CONTRACT_FEE;
     }
 

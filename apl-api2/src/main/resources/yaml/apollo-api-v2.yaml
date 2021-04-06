@@ -1389,11 +1389,11 @@ components:
             example: '\"firstParam\"", "123", "\"0x98765\"'
         fuelLimit:
           type: string
-          description: the scalar value equel to the maximum amount of fuel; fuel limit
+          description: the scalar value equal to the maximum amount of fuel; fuel limit
           example: '5000'
         fuelPrice:
           type: string
-          description: the scalar value equel to the number of ATM; fuel price
+          description: the scalar value equal to the number of ATM; fuel price
           example: '100'
 
     TransactionArrayResp:

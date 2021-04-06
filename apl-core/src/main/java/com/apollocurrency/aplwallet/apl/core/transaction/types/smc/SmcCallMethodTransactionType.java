@@ -20,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxC
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
@@ -31,6 +32,7 @@ import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
+import com.apollocurrency.smc.contract.fuel.FuelCost;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SMCMachine;
 import com.apollocurrency.smc.data.type.Address;
@@ -50,15 +52,17 @@ import java.nio.ByteOrder;
 @Slf4j
 @Singleton
 public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
-
-    protected final Fee CALL_CONTRACT_METHOD_FEE = new Fee.SizeBasedFee(
-        Math.multiplyExact(100, getBlockchainConfig().getOneAPL()),
-        Math.multiplyExact(1_000, getBlockchainConfig().getOneAPL()), MACHINE_WORD_SIZE) {
+    protected static final Fee CALL_CONTRACT_METHOD_FEE = new Fee.FuelBasedFee(FuelCost.F_CALL_VALUE) {
         public int getSize(Transaction transaction, Appendix appendage) {
-            SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
+            SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) appendage;
             String smc = attachment.getMethodName() + " " + attachment.getMethodParams();
             //TODO ??? what about string compressing, something like: output = Compressor.deflate(input)
             return smc.length();
+        }
+
+        @Override
+        public BigInteger getFuelPrice(Transaction transaction, Appendix appendage) {
+            return ((AbstractSmcAttachment) appendage).getFuelPrice();
         }
     };
 
