@@ -53,18 +53,15 @@ public class TxSerializerV1Impl extends AbstractTxSerializer {
         buffer.write(transaction.getECBlockHeight());
         buffer.write(transaction.getECBlockId());
 
-        payloadSize += buffer.size();
 
         for (Appendix appendage : transaction.getAppendages()) {
             appendage.putBytes(buffer);
-            payloadSize += appendage.getFullSize();
         }
         if (transaction.getVersion() >= 2) {
             if (transaction.getSignature() != null) {
                 buffer.concat(transaction.getSignature().bytes());
-                payloadSize += transaction.getSignature().getSize();
             }
         }
-        return payloadSize;
+        return buffer.size();
     }
 }
