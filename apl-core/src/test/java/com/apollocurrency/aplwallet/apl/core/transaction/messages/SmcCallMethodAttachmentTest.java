@@ -45,7 +45,7 @@ class SmcCallMethodAttachmentTest {
     }
 
     @Test
-    void putMyBytes() {
+    void putMyBytes_RlpWriter() {
         //GIVEN
         RlpWriteBuffer buffer = new RlpWriteBuffer();
         RlpList.RlpListBuilder listBuilder = RlpList.builder();
@@ -63,13 +63,19 @@ class SmcCallMethodAttachmentTest {
         assertEquals(expected.getMethodParams(), attachment.getMethodParams());
     }
 
+    @SneakyThrows
     @Test
-    void putMyBytesV2() {
+    void putMyBytes_ByteBuffer() {
         //GIVEN
-        ByteBuffer buffer = ByteBuffer.allocate(expected.getMySize());
+        ByteBuffer buffer = ByteBuffer.allocate(expected.getSize());
         //WHEN
         expected.putBytes(buffer);
+        buffer.rewind();
+        SmcCallMethodAttachment attachment = new SmcCallMethodAttachment(buffer);
         //THEN
-
+        assertEquals(expected.getMethodName(), attachment.getMethodName());
+        assertEquals(expected.getMethodParams(), attachment.getMethodParams());
+        assertEquals(expected.getFuelLimit(), attachment.getFuelLimit());
+        assertEquals(expected.getFuelPrice(), attachment.getFuelPrice());
     }
 }

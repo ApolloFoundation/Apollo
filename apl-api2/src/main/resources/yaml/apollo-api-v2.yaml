@@ -1340,6 +1340,10 @@ components:
           items:
             type: string
             example: '\"firstParam\"", "123", "\"0x98765\"'
+        value:
+          type: string
+          description: the scalar value of ATM
+          example: '20_00000000'
         fuelLimit:
           type: string
           description: the fuel value
@@ -1368,6 +1372,10 @@ components:
           type: string
           description: sender secret phrase
           example: 'topSecretPhrase'
+        value:
+          type: string
+          description: the scalar value of ATM
+          example: '20_00000000'
         name:
           type: string
           description: the contract method name
@@ -1381,11 +1389,11 @@ components:
             example: '\"firstParam\"", "123", "\"0x98765\"'
         fuelLimit:
           type: string
-          description: the fuel value
+          description: the scalar value equel to the maximum amount of fuel; fuel limit
           example: '5000'
         fuelPrice:
           type: string
-          description: the fuel price value
+          description: the scalar value equel to the number of ATM; fuel price
           example: '100'
 
     TransactionArrayResp:

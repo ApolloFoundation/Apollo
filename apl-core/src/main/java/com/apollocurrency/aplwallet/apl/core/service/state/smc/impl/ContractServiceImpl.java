@@ -67,9 +67,8 @@ public class ContractServiceImpl implements ContractService {
         smcContractEntity.setHeight(blockchain.getHeight()); // new height value
         SmcContractStateEntity smcContractStateEntity = contractModelToStateConverter.convert(contract);
         smcContractStateEntity.setHeight(blockchain.getHeight()); // new height value
-        if (log.isTraceEnabled()) {
-            log.trace("Save smart contract at height {}, smc={}, state={}", smcContractEntity.getHeight(), smcContractEntity, smcContractStateEntity);
-        }
+        log.debug("Save smart contract at height {}, smc={}, state={}", smcContractEntity.getHeight(), smcContractEntity, smcContractStateEntity);
+
         //save contract
         smcContractTable.insert(smcContractEntity);
         //save state
@@ -91,6 +90,7 @@ public class ContractServiceImpl implements ContractService {
 
         SmartContract contract = convert(smcEntity, smcStateEntity);
         contract.setTxLog(createLog(address.getHex()));
+        log.debug("Loaded contract={}", contract);
 
         return contract;
     }

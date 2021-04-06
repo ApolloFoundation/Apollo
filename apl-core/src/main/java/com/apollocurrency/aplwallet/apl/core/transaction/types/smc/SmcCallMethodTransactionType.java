@@ -11,11 +11,11 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.AplBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.AplMachine;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.ContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxCallMethodValidationProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -100,16 +100,17 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-        log.debug("SMC: doStateDependentValidation");
+        log.debug("SMC: doStateDependentValidation = ...");
         Address address = new AplAddress(transaction.getRecipientId());
         if (!contractService.isContractExist(address)) {
             throw new AplException.NotCurrentlyValidException("Contract doesn't exist at address " + address);
         }
+        log.debug("SMC: doStateDependentValidation = VALID");
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        log.debug("SMC: doStateIndependentValidation");
+        log.debug("SMC: doStateIndependentValidation = ...");
         checkPrecondition(transaction);
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
         if (Strings.isNullOrEmpty(attachment.getMethodName())) {
@@ -124,12 +125,14 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .build();
         BlockchainIntegrator integrator = integratorFactory.createMockInstance(transaction.getId());
         SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
+        log.debug("Created virtual machine for the contract validation, smcMachine={}", smcMachine);
 
         ContractTxProcessor processor = new SandboxCallMethodValidationProcessor(smcMachine, smartContract, smartMethod);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             throw new AplException.NotCurrentlyValidException(executionLog.toJsonString());
         }
+        log.debug("SMC: doStateIndependentValidation = VALID");
     }
 
     @Override

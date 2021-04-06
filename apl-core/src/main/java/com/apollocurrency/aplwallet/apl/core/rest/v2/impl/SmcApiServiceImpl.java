@@ -80,9 +80,11 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         byte[] publicKey = AccountService.generatePublicKey(account, attachment.getContractSource());
         long recipientId = AccountService.getId(publicKey);
+        String valueStr = body.getValue() != null ? body.getValue() : "0";
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
             .version(2)
+            .amountATM(Convert.parseLong(valueStr))
             .senderAccount(account)
             .recipientPublicKey(Convert.toHexString(publicKey))
             .recipientId(recipientId)
@@ -121,6 +123,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         BigInteger fuelLimit = new BigInteger(body.getFuelLimit());
         BigInteger fuelPrice = new BigInteger(body.getFuelPrice());
+        String valueStr = body.getValue() != null ? body.getValue() : "0";
 
         SmcCallMethodAttachment attachment = SmcCallMethodAttachment.builder()
             .methodName(body.getName())
@@ -131,6 +134,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
             .version(2)
+            .amountATM(Convert.parseLong(valueStr))
             .senderAccount(account)
             .recipientPublicKey(Convert.toHexString(contractAccount.getPublicKey().getPublicKey()))
             .recipientId(contractAccount.getId())
