@@ -32,6 +32,14 @@
     </repository>
   </repositories>
 
+  <pluginRepositories>
+    <pluginRepository>
+      <id>jfrog-plugins-release</id>
+      <name>plugins-release</name>
+      <url>https://oss.jfrog.org/artifactory/plugins-release</url>
+    </pluginRepository>
+  </pluginRepositories>
+
   <modules>
     <module>apl-api</module>
     <module>apl-api2</module>
@@ -210,6 +218,32 @@
         <configuration>
           <showDeprecation>false</showDeprecation>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.jfrog.buildinfo</groupId>
+        <artifactId>artifactory-maven-plugin</artifactId>
+        <version>3.2.0</version>
+        <inherited>false</inherited>
+        <executions>
+          <execution>
+            <id>build-info</id>
+            <goals>
+              <goal>publish</goal>
+            </goals>
+            <configuration>
+              <publisher>
+                <contextUrl>https://arti.firstbridge.work/artifactory/apl</contextUrl>
+                <username>${deployer.name}</username>
+                <password>${deployer.password}</password>
+                <repoKey>apl-release-libs</repoKey>
+                <snapshotRepoKey>apl-snapshots-libs</snapshotRepoKey>
+              </publisher>
+              <buildInfo>
+
+              </buildInfo>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
