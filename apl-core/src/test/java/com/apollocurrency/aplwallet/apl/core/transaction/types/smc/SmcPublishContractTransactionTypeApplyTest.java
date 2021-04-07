@@ -20,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.smc.contract.SmartContract;
+import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import org.jboss.weld.junit5.EnableWeld;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -90,7 +91,10 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
 
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx));
-        SmartContract smartContract = contractService.loadContract(new AplAddress(newTx.getRecipientId()));
+        SmartContract smartContract = contractService.loadContract(
+            new AplAddress(newTx.getRecipientId()),
+            new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
+        );
 
         //THEN
         assertNotNull(smartContract);
@@ -206,7 +210,10 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
 
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx));
-        SmartContract smartContract = contractService.loadContract(new AplAddress(newTx.getRecipientId()));
+        SmartContract smartContract = contractService.loadContract(
+            new AplAddress(newTx.getRecipientId()),
+            new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
+        );
 
         SmcContractEntity contractEntity = contractModelToEntityConverter.convert(smartContract);
         SmcContractStateEntity contractStateEntity = contractModelToStateEntityConverter.convert(smartContract);
@@ -249,7 +256,10 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
 
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx2));
-        SmartContract smartContract2 = contractService.loadContract(new AplAddress(newTx2.getRecipientId()));
+        SmartContract smartContract2 = contractService.loadContract(
+            new AplAddress(newTx2.getRecipientId()),
+            new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
+        );
 
         //THEN
         assertNotNull(smartContract2);

@@ -527,5 +527,18 @@ public class AccountServiceImpl implements AccountService {
         }
         return account;
     }
+
+    @Override
+    public void logAccountLedger(Account account, LedgerEvent event, long eventId, long change) {
+        if (change == 0 || event == null) {
+            return;
+        }
+        LedgerEntry entry = new LedgerEntry(event, eventId, account.getId(),
+            LedgerHolding.UNCONFIRMED_APL_BALANCE, null,
+            change, account.getUnconfirmedBalanceATM() - change,
+            blockChainInfoService.getLastBlock());
+
+        logLedgerEvent.select(AccountLedgerEventBinding.literal(AccountLedgerEventType.LOG_UNCONFIRMED_ENTRY)).fire(entry);
+    }
 }
 

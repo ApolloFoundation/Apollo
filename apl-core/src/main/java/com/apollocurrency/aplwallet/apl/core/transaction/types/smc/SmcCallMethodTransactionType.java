@@ -52,12 +52,10 @@ import java.nio.ByteOrder;
 @Slf4j
 @Singleton
 public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
-    protected static final Fee CALL_CONTRACT_METHOD_FEE = new Fee.FuelBasedFee(FuelCost.F_CALL_VALUE) {
+    protected static final Fee.FuelBasedFee CALL_CONTRACT_METHOD_FEE = new Fee.FuelBasedFee(FuelCost.F_CALL_VALUE) {
+        @Override
         public int getSize(Transaction transaction, Appendix appendage) {
-            SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) appendage;
-            String smc = attachment.getMethodName() + " " + attachment.getMethodParams();
-            //TODO ??? what about string compressing, something like: output = Compressor.deflate(input)
-            return smc.length();
+            return ((AbstractSmcAttachment) transaction.getAttachment()).getPayableSize();
         }
 
         @Override
@@ -120,13 +118,16 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         if (Strings.isNullOrEmpty(attachment.getMethodName())) {
             throw new AplException.NotCurrentlyValidException("Empty contract method name.");
         }
-        SmartContract smartContract = contractService.loadContract(new AplAddress(transaction.getRecipientId()));
-        //syntactical and semantic validation
+        SmartContract smartContract = contractService.loadContract(
+            new AplAddress(transaction.getRecipientId()),
+            new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
+        );
         SmartMethod smartMethod = SmartMethod.builder()
             .name(attachment.getMethodName())
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
+        //syntactical and semantic validation
         BlockchainIntegrator integrator = integratorFactory.createMockInstance(transaction.getId());
         SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
         log.debug("Created virtual machine for the contract validation, smcMachine={}", smcMachine);
@@ -145,8 +146,10 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         checkPrecondition(transaction);
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
         Address address = new AplAddress(transaction.getRecipientId());
-        SmartContract smartContract = contractService.loadContract(address);
-        smartContract.setFuel(new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice()));
+        SmartContract smartContract = contractService.loadContract(
+            address,
+            new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
+        );
         SmartMethod smartMethod = SmartMethod.builder()
             .name(attachment.getMethodName())
             .args(attachment.getMethodParams())
@@ -164,10 +167,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
         Fuel fuel = smartContract.getFuel();
         log.debug("After processing Address={} Fuel={}", smartContract.getAddress(), fuel);
-        if (fuel.refundedFee().signum() > 0) {
-            //refund remaining fuel
-            getAccountService().addToBalanceAndUnconfirmedBalanceATM(senderAccount, LedgerEvent.SMC_REFUNDED_FEE, transaction.getId(), 0, fuel.refundedFee().longValueExact());
-        }
+        refundRemaining(transaction, senderAccount, fuel);
         contractService.updateContractState(smartContract);
     }
 }

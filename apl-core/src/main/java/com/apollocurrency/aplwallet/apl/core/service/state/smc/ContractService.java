@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.smc.contract.SmartContract;
+import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
 
 /**
@@ -23,10 +24,11 @@ public interface ContractService {
     /**
      * Load the saved contract by the given address or null if the given address doesn't correspond the smart contract
      *
-     * @param address given contract address
+     * @param address      given contract address
+     * @param contractFuel given fuel to execute method calling
      * @return loaded smart contract or null
      */
-    SmartContract loadContract(Address address);
+    SmartContract loadContract(Address address, Fuel contractFuel);
 
     /**
      * Checks if contract already exists

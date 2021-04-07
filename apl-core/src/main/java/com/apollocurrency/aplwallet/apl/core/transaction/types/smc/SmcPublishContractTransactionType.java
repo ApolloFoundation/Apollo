@@ -50,15 +50,10 @@ import java.nio.ByteOrder;
 @Slf4j
 @Singleton
 public class SmcPublishContractTransactionType extends AbstractSmcTransactionType {
-    protected static final Fee PUBLISH_CONTRACT_FEE = new Fee.FuelBasedFee(FuelCost.F_PUBLISH) {
+    protected static final Fee.FuelBasedFee PUBLISH_CONTRACT_FEE = new Fee.FuelBasedFee(FuelCost.F_PUBLISH) {
+        @Override
         public int getSize(Transaction transaction, Appendix appendage) {
-            SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
-            int size = attachment.getContractSource().length();
-            if (attachment.getConstructorParams() != null) {
-                size += attachment.getConstructorParams().length();
-            }
-            //TODO ??? what about string compressing, something like: output = Compressor.deflate(input)
-            return size;
+            return ((AbstractSmcAttachment) transaction.getAttachment()).getPayableSize();
         }
 
         @Override
@@ -79,9 +74,6 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
-        BigInteger price = attachment.getFuelPrice();
-
         return PUBLISH_CONTRACT_FEE;
     }
 
@@ -131,8 +123,13 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         if (Strings.isNullOrEmpty(attachment.getLanguageName())) {
             throw new AplException.NotCurrentlyValidException("Empty contract language name.");
         }
-        //syntactical and semantic validation
         SmartContract smartContract = contractService.createNewContract(transaction);
+        BigInteger calculatedFuel = PUBLISH_CONTRACT_FEE.calcFuel(smartContract);
+        if (!smartContract.getFuel().tryToCharge(calculatedFuel)) {
+            log.error("Needed fuel={} but actual limit={}", calculatedFuel, smartContract.getFuel());
+            throw new AplException.NotCurrentlyValidException("Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel());
+        }
+        //syntactical and semantic validation
         BlockchainIntegrator integrator = integratorFactory.createMockInstance(transaction.getId());
         SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
         log.debug("Created virtual machine for the contract validation, smcMachine={}", smcMachine);
@@ -161,10 +158,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
         Fuel fuel = smartContract.getFuel();
         log.debug("After processing Address={} Fuel={}", smartContract.getAddress(), fuel);
-        if (fuel.refundedFee().signum() > 0) {
-            //refund remaining fuel
-            getAccountService().addToBalanceAndUnconfirmedBalanceATM(senderAccount, LedgerEvent.SMC_REFUNDED_FEE, transaction.getId(), 0, fuel.refundedFee().longValueExact());
-        }
+        refundRemaining(transaction, senderAccount, fuel);
         //save contract and contract state
         contractService.saveContract(smartContract);
     }

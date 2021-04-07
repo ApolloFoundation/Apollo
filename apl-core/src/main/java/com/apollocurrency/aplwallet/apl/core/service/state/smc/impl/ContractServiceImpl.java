@@ -24,6 +24,7 @@ import com.apollocurrency.smc.contract.ContractType;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartSource;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
+import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.persistence.tx.log.ArrayTxLog;
 import com.apollocurrency.smc.persistence.tx.log.TxLog;
@@ -84,11 +85,11 @@ public class ContractServiceImpl implements ContractService {
      */
     @Override
     @Transactional(readOnly = true)
-    public SmartContract loadContract(Address address) {
+    public SmartContract loadContract(Address address, Fuel contractFuel) {
         SmcContractEntity smcEntity = loadContractEntity(address);
         SmcContractStateEntity smcStateEntity = loadContractStateEntity(address);
 
-        SmartContract contract = convert(smcEntity, smcStateEntity);
+        SmartContract contract = convert(smcEntity, smcStateEntity, contractFuel);
         contract.setTxLog(createLog(address.getHex()));
         log.debug("Loaded contract={}", contract);
 
@@ -162,7 +163,7 @@ public class ContractServiceImpl implements ContractService {
         return contract;
     }
 
-    public static SmartContract convert(SmcContractEntity smcContractEntity, SmcContractStateEntity smcContractStateEntity) {
+    public static SmartContract convert(SmcContractEntity smcContractEntity, SmcContractStateEntity smcContractStateEntity, Fuel contractFuel) {
         return SmartContract.builder()
             .address(new AplAddress(smcContractEntity.getAddress()))
             .owner(new AplAddress(smcContractEntity.getOwner()))
@@ -180,6 +181,7 @@ public class ContractServiceImpl implements ContractService {
             )
             .serializedObject(smcContractStateEntity.getSerializedObject())
             .status(ContractStatus.valueOf(smcContractStateEntity.getStatus()))
+            .fuel(contractFuel)
             .build();
     }
 

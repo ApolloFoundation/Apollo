@@ -72,6 +72,15 @@ public class SmcPublishContractAttachment extends AbstractSmcAttachment {
     }
 
     @Override
+    public int getPayableSize() {
+        int size = this.getContractSource().length();
+        if (this.getConstructorParams() != null) {
+            size += this.getConstructorParams().length();
+        }
+        return size;
+    }
+
+    @Override
     public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
         return TransactionTypes.TransactionTypeSpec.SMC_PUBLISH;
     }

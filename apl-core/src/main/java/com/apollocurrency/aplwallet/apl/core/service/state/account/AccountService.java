@@ -137,9 +137,12 @@ public interface AccountService {
 
     /**
      * Creates an account with the given id and save empty public key entity into the public key table for it
-     * @param id new account id
+     *
+     * @param id        new account id
      * @param isGenesis whether the account belongs to genesis type or not
      * @return created account
      */
     Account addAccount(long id, boolean isGenesis);
+
+    void logAccountLedger(Account account, LedgerEvent event, long eventId, long change);
 }

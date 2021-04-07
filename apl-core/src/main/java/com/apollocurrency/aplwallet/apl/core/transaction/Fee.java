@@ -22,7 +22,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.smc.contract.fuel.VolumeBasedFuelCalculator;
+import com.apollocurrency.smc.contract.Payable;
+import com.apollocurrency.smc.contract.fuel.FuelCalculator;
 
 import java.math.BigInteger;
 import java.util.Objects;
@@ -86,11 +87,27 @@ public interface Fee {
 
     }
 
+    abstract class FuelBasedConstantFee implements Fee {
+
+        private final FuelCalculator fuelCalculator;
+
+        public FuelBasedConstantFee(FuelCalculator fuelCalculator) {
+            this.fuelCalculator = Objects.requireNonNull(fuelCalculator);
+        }
+
+        @Override
+        public final long getFee(Transaction transaction, Appendix appendage) {
+            return getFuelPrice(transaction, appendage).multiply(fuelCalculator.calc()).longValueExact();
+        }
+
+        public abstract BigInteger getFuelPrice(Transaction transaction, Appendix appendage);
+    }
+
     abstract class FuelBasedFee implements Fee {
 
-        private final VolumeBasedFuelCalculator fuelCalculator;
+        private final FuelCalculator fuelCalculator;
 
-        public FuelBasedFee(VolumeBasedFuelCalculator fuelCalculator) {
+        public FuelBasedFee(FuelCalculator fuelCalculator) {
             this.fuelCalculator = Objects.requireNonNull(fuelCalculator);
         }
 
@@ -98,6 +115,17 @@ public interface Fee {
         public final long getFee(Transaction transaction, Appendix appendage) {
             final int size = getSize(transaction, appendage);
             return getFuelPrice(transaction, appendage).multiply(fuelCalculator.calc(() -> size)).longValueExact();
+        }
+
+        /**
+         * Returns the value equal to fuel needs to successfully publish or call the contract.
+         *
+         * @param value the given payable object
+         * @return the value equal to fuel needs to successfully publish or call the contract.
+         */
+        public BigInteger calcFuel(Payable value) {
+            final int size = value.getPayableSize();
+            return fuelCalculator.calc(() -> size);
         }
 
         public abstract int getSize(Transaction transaction, Appendix appendage);
