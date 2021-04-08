@@ -22,8 +22,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.smc.contract.Payable;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
+import com.apollocurrency.smc.contract.fuel.Payable;
 
 import java.math.BigInteger;
 import java.util.Objects;
@@ -85,22 +85,6 @@ public interface Fee {
 
         public abstract int getSize(Transaction transaction, Appendix appendage);
 
-    }
-
-    abstract class FuelBasedConstantFee implements Fee {
-
-        private final FuelCalculator fuelCalculator;
-
-        public FuelBasedConstantFee(FuelCalculator fuelCalculator) {
-            this.fuelCalculator = Objects.requireNonNull(fuelCalculator);
-        }
-
-        @Override
-        public final long getFee(Transaction transaction, Appendix appendage) {
-            return getFuelPrice(transaction, appendage).multiply(fuelCalculator.calc()).longValueExact();
-        }
-
-        public abstract BigInteger getFuelPrice(Transaction transaction, Appendix appendage);
     }
 
     abstract class FuelBasedFee implements Fee {

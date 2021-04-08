@@ -8,8 +8,6 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.smc.blockchain.crypt.CryptoLibProvider;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
-import com.apollocurrency.smc.contract.fuel.FuelPriceLimitProvider;
-import com.apollocurrency.smc.contract.fuel.StaticFuelPriceLimitProvider;
 import com.apollocurrency.smc.polyglot.LanguageContext;
 import com.apollocurrency.smc.polyglot.LanguageContextFactory;
 import com.apollocurrency.smc.polyglot.security.AllowFullHostAccessPolicy;
@@ -19,20 +17,12 @@ import com.apollocurrency.smc.polyglot.security.DenyGlobalObjectsPolicy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Singleton;
-import java.math.BigInteger;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
 @Singleton
 public class SmcConfig {
-
-    @Produces
-    public FuelPriceLimitProvider createDefaultFuelProvider() {
-        final BigInteger fuelLimit = BigInteger.valueOf(5000);
-        final BigInteger fuelPrice = BigInteger.valueOf(1000000);
-        return new StaticFuelPriceLimitProvider(fuelPrice, fuelLimit);
-    }
 
     @Produces
     public static LanguageContext createLanguageContext() {

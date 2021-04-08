@@ -40,7 +40,7 @@ public class PublishContractTxProcessor implements ContractTxProcessor {
 
         try {
             //call smart contract constructor, charge the fuel
-            smcMachine.callConstructor(smartContract);
+            smcMachine.publishContract(smartContract, smartContract);
             executionLog.join(smcMachine.getExecutionLog());
             validateStatus(ContractStatus.ACTIVE, smartContract);
             smcMachine.resetExecutionLog();

@@ -43,7 +43,7 @@ public class CallMethodContractTxProcessor implements ContractTxProcessor {
 
         try {
             //call the method and charge the fuel
-            smcMachine.callMethod(smartContract, smartMethod);
+            smcMachine.callMethod(smartContract, smartMethod, smartContract);
             executionLog.join(smcMachine.getExecutionLog());
             smcMachine.resetExecutionLog();
         } catch (Exception e) {
