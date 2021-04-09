@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractTxProcessor;
-import com.apollocurrency.smc.SMCException;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
@@ -19,45 +17,22 @@ import lombok.extern.slf4j.Slf4j;
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class CallMethodContractTxProcessor implements ContractTxProcessor {
-    private final SMCMachine smcMachine;
-    private final SmartContract smartContract;
+public class CallMethodContractTxProcessor extends AbstractContractTxProcessor {
     private final SmartMethod smartMethod;
 
     public CallMethodContractTxProcessor(SMCMachine smcMachine, SmartContract smartContract, SmartMethod smartMethod) {
-        this.smcMachine = smcMachine;
-        this.smartContract = smartContract;
+        super(smcMachine, smartContract);
         this.smartMethod = smartMethod;
     }
 
     @Override
-    public SmartContract smartContract() {
-        return smartContract;
-    }
-
-    @Override
-    public ExecutionLog process() {
+    public void executeContract(ExecutionLog executionLog) {
         log.debug("Smart method={}", smartMethod);
-        ExecutionLog executionLog = new ExecutionLog();
         validateStatus(ContractStatus.ACTIVE, smartContract);
-
-        try {
-            //call the method and charge the fuel
-            smcMachine.callMethod(smartContract, smartMethod, smartContract);
-            executionLog.join(smcMachine.getExecutionLog());
-            smcMachine.resetExecutionLog();
-        } catch (Exception e) {
-            SMCException smcException;
-            if (e instanceof SMCException) {
-                smcException = (SMCException) e;
-            } else {
-                smcException = new SMCException(e);
-            }
-            executionLog.add("callMethod", smcException);
-            executionLog.setErrorCode(1L);
-        }
-
-        return executionLog;
+        //call the method and charge the fuel
+        smcMachine.callMethod(smartContract, smartMethod, smartContract);
+        executionLog.join(smcMachine.getExecutionLog());
+        smcMachine.resetExecutionLog();
     }
 
 }

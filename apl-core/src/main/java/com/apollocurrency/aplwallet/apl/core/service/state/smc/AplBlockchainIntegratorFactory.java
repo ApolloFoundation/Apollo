@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.blockchain.SMCNotFoundException;
 import com.apollocurrency.smc.blockchain.tx.SMCOperationReceipt;
@@ -41,11 +42,12 @@ public class AplBlockchainIntegratorFactory {
         return new BlockchainIntegrator() {
             @Override
             public SMCOperationReceipt sendMessage(Address from, Address to, String data) {
-                throw new UnsupportedOperationException("Not implemented.");
+                throw new UnsupportedOperationException("Not implemented yet.");
             }
 
             @Override
             public SMCOperationReceipt sendMoney(final Address fromAdr, Address toAdr, BigInteger value) {
+                log.debug("--send money ---1: from={} to={} value={}", fromAdr, toAdr, value);
                 SMCOperationReceipt.SMCOperationReceiptBuilder txReceiptBuilder = SMCOperationReceipt.builder()
                     .transactionId(Long.toUnsignedString(originatorTransactionId));
                 long amount = value.longValueExact();
@@ -56,14 +58,17 @@ public class AplBlockchainIntegratorFactory {
                  */
                 AplAddress from = new AplAddress(fromAdr);
                 AplAddress to = new AplAddress(toAdr);
+                log.debug("--send money ---2: from={} to={} amount={}", from, to, amount);
                 try {
                     if (from.getLongId() == txSenderAccount.getId()) {//case 1
+                        log.debug("--send money ---2.1: ");
                         if (to.getLongId() != txRecipientAccount.getId()) {
                             throw new SMCMessageSenderException("Wrong recipient address");
                         }
                         sender = txSenderAccount;
                         recipient = txRecipientAccount;
                     } else if (from.getLongId() == txRecipientAccount.getId()) {//case 2
+                        log.debug("--send money ---2.2: ");
                         sender = txRecipientAccount; //contract address
                         recipient = accountService.getAccount(to.getLongId());
                         if (recipient == null) {
@@ -72,18 +77,21 @@ public class AplBlockchainIntegratorFactory {
                     } else {
                         throw new SMCMessageSenderException("Wrong sender address");
                     }
+                    log.debug("--send money ---3: sender={} recipient={}", sender, recipient);
                     txReceiptBuilder
                         .senderId(Long.toUnsignedString(sender.getId()))
                         .recipientId(Long.toUnsignedString(recipient.getId()));
+                    log.debug("--send money ---4: before blockchain tx, receipt={}", txReceiptBuilder.build());
 
                     if (sender.getUnconfirmedBalanceATM() < amount) {
                         throw new SMCMessageSenderException("Insufficient balance.");
                     }
                     accountService.addToBalanceAndUnconfirmedBalanceATM(txSenderAccount, ledgerEvent, originatorTransactionId, -amount);
                     accountService.addToBalanceAndUnconfirmedBalanceATM(txRecipientAccount, ledgerEvent, originatorTransactionId, amount);
+                    log.debug("--send money ---5: before blockchain tx, receipt={}", txReceiptBuilder.build());
                 } catch (Exception e) {
                     //TODO adjust error code
-                    txReceiptBuilder.errorCode(1L).errorDescription(e.getMessage());
+                    txReceiptBuilder.errorCode(1L).errorDescription(e.getMessage()).errorDetails(ThreadUtils.last5Stacktrace());
                 }
                 return txReceiptBuilder.build();
             }

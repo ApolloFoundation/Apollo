@@ -103,21 +103,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         log.debug("SMC: doStateDependentValidation = ...");
-        Address address = new AplAddress(transaction.getRecipientId());
-        if (!contractService.isContractExist(address)) {
-            throw new AplException.NotCurrentlyValidException("Contract doesn't exist at address " + address);
-        }
-        log.debug("SMC: doStateDependentValidation = VALID");
-    }
-
-    @Override
-    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        log.debug("SMC: doStateIndependentValidation = ...");
-        checkPrecondition(transaction);
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
-        if (Strings.isNullOrEmpty(attachment.getMethodName())) {
-            throw new AplException.NotCurrentlyValidException("Empty contract method name.");
-        }
         SmartContract smartContract = contractService.loadContract(
             new AplAddress(transaction.getRecipientId()),
             new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
@@ -136,6 +122,21 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             throw new AplException.NotCurrentlyValidException(executionLog.toJsonString());
+        }
+        log.debug("SMC: doStateDependentValidation = VALID");
+    }
+
+    @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        log.debug("SMC: doStateIndependentValidation = ...");
+        checkPrecondition(transaction);
+        SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
+        if (Strings.isNullOrEmpty(attachment.getMethodName())) {
+            throw new AplException.NotCurrentlyValidException("Empty contract method name.");
+        }
+        Address address = new AplAddress(transaction.getRecipientId());
+        if (!contractService.isContractExist(address)) {
+            throw new AplException.NotCurrentlyValidException("Contract doesn't exist at address " + address);
         }
         log.debug("SMC: doStateIndependentValidation = VALID");
     }

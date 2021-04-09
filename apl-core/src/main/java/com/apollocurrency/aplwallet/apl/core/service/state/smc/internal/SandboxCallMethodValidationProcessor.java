@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractTxProcessor;
-import com.apollocurrency.smc.SMCException;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SMCMachine;
 import lombok.extern.slf4j.Slf4j;
+
+import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT_METHOD_VALIDATION_ERROR;
 
 /**
  * Validate the smart contract - create and initialize the smart contract and manipulate balances in sandbox.
@@ -21,20 +21,12 @@ import lombok.extern.slf4j.Slf4j;
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class SandboxCallMethodValidationProcessor implements ContractTxProcessor {
-    private final SMCMachine smcMachine;
-    private final SmartContract smartContract;
+public class SandboxCallMethodValidationProcessor extends AbstractContractTxProcessor {
     private final SmartMethod smartMethod;
 
     public SandboxCallMethodValidationProcessor(SMCMachine smcMachine, SmartContract smartContract, SmartMethod smartMethod) {
-        this.smcMachine = smcMachine;
-        this.smartContract = smartContract;
+        super(smcMachine, smartContract);
         this.smartMethod = smartMethod;
-    }
-
-    @Override
-    public SmartContract smartContract() {
-        return smartContract;
     }
 
     public SmartMethod smartMethod() {
@@ -42,30 +34,14 @@ public class SandboxCallMethodValidationProcessor implements ContractTxProcessor
     }
 
     @Override
-    public ExecutionLog process() {
+    public void executeContract(ExecutionLog executionLog) {
         boolean isValid;
-        ExecutionLog executionLog = new ExecutionLog();
         validateStatus(ContractStatus.ACTIVE, smartContract);
-
-        try {
-            isValid = smcMachine.validateMethod(smartContract, smartMethod);
-            executionLog.join(smcMachine.getExecutionLog());
-            smcMachine.resetExecutionLog();
-            if (!isValid) {
-                //TODO: Update the Error code
-                executionLog.setErrorCode(1L);
-            }
-        } catch (Exception e) {
-            SMCException smcException;
-            if (e instanceof SMCException) {
-                smcException = (SMCException) e;
-            } else {
-                smcException = new SMCException(e);
-            }
-            executionLog.add("validateCallingMethod", smcException);
-            executionLog.setErrorCode(1L);
+        isValid = smcMachine.validateMethod(smartContract, smartMethod, smartContract);
+        executionLog.join(smcMachine.getExecutionLog());
+        smcMachine.resetExecutionLog();
+        if (!isValid) {
+            executionLog.setErrorCode(CONTRACT_METHOD_VALIDATION_ERROR.getErrorCode());
         }
-
-        return executionLog;
     }
 }
