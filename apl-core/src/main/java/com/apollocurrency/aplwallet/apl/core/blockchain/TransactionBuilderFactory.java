@@ -126,7 +126,7 @@ public class TransactionBuilderFactory {
                 );
             log.error("Unsigned tx     {}: {}", transaction.getId(), Convert.toHexString(bytes));
             log.error("Unsigned cor tx {}: {}",txToVerify.getId(), Convert.toHexString(unsignedDsTxBytes.array()) );
-            log.error("Serialized tx {}: {}", txToVerify.getId(), Convert.toHexString(res.array()));
+            log.error("Serialized tx   {}: {}", txToVerify.getId(), Convert.toHexString(res.array()));
             throw new RuntimeException("Transaction serialization error, id" + txToVerify.getId() + ", expected  " + transaction.getId() + ",bytes " + Convert.toHexString(unsignedDsTxBytes.array()) + ", expected " + Convert.toHexString(res.array()));
         }
         return transaction;
