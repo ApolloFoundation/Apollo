@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
@@ -24,6 +25,7 @@ import java.util.Objects;
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 public class UnconfirmedTransactionModelToEntityConverter implements Converter<UnconfirmedTransaction, UnconfirmedTransactionEntity> {
     private final BlockchainConfig blockchainConfig;
     private final TransactionJsonSerializer transactionJsonSerializer;
@@ -55,6 +57,7 @@ public class UnconfirmedTransactionModelToEntityConverter implements Converter<U
         Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(model.getVersion()).serialize(model.getTransactionImpl(), signedTxBytes);
         builder.transactionBytes(signedTxBytes.array());
+        log.trace("Unc Serialized tx {}: {}", model.getId(), Convert.toHexString(signedTxBytes.array()));
         if (model.getTransactionImpl().getId() != model.getId()) {
             throw new RuntimeException("Not valid id set, expected " + model.getTransactionImpl().getId() + ", got  " + model.getId());
         }

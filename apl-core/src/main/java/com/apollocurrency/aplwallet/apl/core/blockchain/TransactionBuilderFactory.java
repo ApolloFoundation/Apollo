@@ -105,6 +105,27 @@ public class TransactionBuilderFactory {
     public Transaction newTransaction(TransactionDTO txDto) {
         TransactionImpl transaction = newTransactionBuilder(txDto).build();
         reSignTransaction(transaction);
+        PayloadResult res = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion()).serialize(transaction, res);
+        log.trace("Serialized tx {}: {}", transaction.getId(), Convert.toHexString(res.array()));
+        Transaction txToVerify;
+        try {
+            txToVerify = newTransaction(res.array());
+
+
+        } catch (AplException.NotValidException e) {
+            throw new RuntimeException(e);
+        }
+        if (txToVerify.getId() != transaction.getId()) {
+            PayloadResult signedDsTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+            txBContext.createSerializer(transaction.getVersion())
+                .serialize(
+                    txToVerify
+                    , signedDsTxBytes
+
+                );
+            throw new RuntimeException("Transaction serialization error, id" + txToVerify.getId() + ", expected  " + transaction.getId() + ",bytes " + Convert.toHexString(signedDsTxBytes.array()) + ", expected " + Convert.toHexString(res.array()));
+        }
         return transaction;
     }
 
@@ -140,33 +161,6 @@ public class TransactionBuilderFactory {
             );
 
         transaction.sign(transaction.getSignature(), unsignedTxBytes);
-        PayloadResult res = PayloadResult.createLittleEndianByteArrayResult();
-        txBContext.createSerializer(transaction.getVersion()).serialize(transaction, res);
-        TransactionImpl txToVerify;
-        try {
-            txToVerify = newTransactionBuilder(res.array()).build();
-            PayloadResult unsignedTxBytes2 = PayloadResult.createLittleEndianByteArrayResult();
-            txBContext.createSerializer(transaction.getVersion())
-                .serialize(
-                    TransactionWrapperHelper.createUnsignedTransaction(txToVerify)
-                    , unsignedTxBytes2
-                );
-
-            txToVerify.sign(txToVerify.getSignature(), unsignedTxBytes);
-
-        } catch (AplException.NotValidException e) {
-            throw new RuntimeException(e);
-        }
-        if (txToVerify.getId() != transaction.getId()) {
-            PayloadResult signedDsTxBytes = PayloadResult.createLittleEndianByteArrayResult();
-            txBContext.createSerializer(transaction.getVersion())
-                .serialize(
-                    txToVerify
-                    , signedDsTxBytes
-
-                );
-            throw new RuntimeException("Transaction serialization error, id" + txToVerify.getId() + ", expected  " + transaction.getId() + ",bytes " + Convert.toHexString(signedDsTxBytes.array()) + ", expected " + Convert.toHexString(res.array()));
-        }
     }
 
     private TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws AplException.NotValidException {
