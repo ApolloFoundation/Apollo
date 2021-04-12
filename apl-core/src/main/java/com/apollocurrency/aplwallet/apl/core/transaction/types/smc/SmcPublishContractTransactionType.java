@@ -43,6 +43,7 @@ import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Map;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -99,6 +100,11 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     }
 
     @Override
+    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
+        return isDuplicate(getSpec(), Long.toUnsignedString(transaction.getId()), duplicates, true);
+    }
+
+    @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         log.debug("SMC: doStateDependentValidation = ...");
         Address address = new AplAddress(transaction.getRecipientId());
@@ -130,7 +136,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             throw new AplException.NotCurrentlyValidException("Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel());
         }
         //syntactical and semantic validation
-        BlockchainIntegrator integrator = integratorFactory.createMockInstance(transaction.getId());
+        BlockchainIntegrator integrator = integratorFactory.createMockIntegrator(transaction.getId());
         SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
         log.debug("Created virtual machine for the contract validation, smcMachine={}", smcMachine);
 
@@ -147,7 +153,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         log.debug("SMC: applyAttachment: publish smart contract and call constructor.");
         checkPrecondition(transaction);
         SmartContract smartContract = contractService.createNewContract(transaction);
-        BlockchainIntegrator integrator = integratorFactory.createInstance(transaction.getId(), senderAccount, recipientAccount, getLedgerEvent());
+        BlockchainIntegrator integrator = integratorFactory.createIntegrator(transaction.getId(), senderAccount, recipientAccount, getLedgerEvent());
         SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
         ContractTxProcessor processor = new PublishContractTxProcessor(smcMachine, smartContract);

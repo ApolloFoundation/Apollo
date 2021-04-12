@@ -12,11 +12,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Map;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -44,11 +41,6 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-    }
-
-    @Override
-    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        return isDuplicate(getSpec(), Long.toUnsignedString(transaction.getId()), duplicates, true);
     }
 
     @Override

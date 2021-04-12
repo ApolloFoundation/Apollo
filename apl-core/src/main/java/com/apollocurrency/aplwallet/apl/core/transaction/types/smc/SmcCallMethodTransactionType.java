@@ -28,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
+import com.apollocurrency.smc.blockchain.SMCNotFoundException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
@@ -45,6 +46,7 @@ import javax.inject.Singleton;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Map;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -101,23 +103,34 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     }
 
     @Override
+    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
+        //there is only one contract execution in the same block, contract address == transaction.getRecipientId()
+        return isDuplicate(getSpec(), Long.toUnsignedString(transaction.getRecipientId()), duplicates, true);
+    }
+
+    @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
         log.debug("SMC: doStateDependentValidation = ...");
+        Address address = new AplAddress(transaction.getRecipientId());
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
-        SmartContract smartContract = contractService.loadContract(
-            new AplAddress(transaction.getRecipientId()),
-            new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
-        );
+        SmartContract smartContract;
+        try {
+            smartContract = contractService.loadContract(
+                new AplAddress(transaction.getRecipientId()),
+                new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
+            );
+        } catch (SMCNotFoundException e) {
+            throw new AplException.NotCurrentlyValidException("Contract doesn't exist at address " + address);
+        }
         SmartMethod smartMethod = SmartMethod.builder()
             .name(attachment.getMethodName())
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
         //syntactical and semantic validation
-        BlockchainIntegrator integrator = integratorFactory.createMockInstance(transaction.getId());
+        BlockchainIntegrator integrator = integratorFactory.createMockIntegrator(transaction.getId());
         SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
         log.debug("Created virtual machine for the contract validation, smcMachine={}", smcMachine);
-
         ContractTxProcessor processor = new SandboxCallMethodValidationProcessor(smcMachine, smartContract, smartMethod);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
@@ -134,9 +147,17 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         if (Strings.isNullOrEmpty(attachment.getMethodName())) {
             throw new AplException.NotCurrentlyValidException("Empty contract method name.");
         }
-        Address address = new AplAddress(transaction.getRecipientId());
-        if (!contractService.isContractExist(address)) {
-            throw new AplException.NotCurrentlyValidException("Contract doesn't exist at address " + address);
+        SmartMethod smartMethod = SmartMethod.builder()
+            .name(attachment.getMethodName())
+            .args(attachment.getMethodParams())
+            .value(BigInteger.valueOf(transaction.getAmountATM()))
+            .build();
+        //syntactical validation
+        BlockchainIntegrator integrator = integratorFactory.createMockIntegrator(transaction.getId());
+        SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
+        log.debug("Created virtual machine for the contract validation, smcMachine={}", smcMachine);
+        if (!smcMachine.parse(smartMethod.getMethodWithParams())) {
+            throw new AplException.NotCurrentlyValidException("Syntax error.");
         }
         log.debug("SMC: doStateIndependentValidation = VALID");
     }
@@ -156,7 +177,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
-        BlockchainIntegrator integrator = integratorFactory.createInstance(transaction.getId(), senderAccount, recipientAccount, getLedgerEvent());
+        BlockchainIntegrator integrator = integratorFactory.createIntegrator(transaction.getId(), senderAccount, recipientAccount, getLedgerEvent());
         SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
         ContractTxProcessor processor = new CallMethodContractTxProcessor(smcMachine, smartContract, smartMethod);
