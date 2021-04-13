@@ -27,12 +27,12 @@ import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
-import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCost;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SMCMachine;
+import com.apollocurrency.smc.contract.vm.operation.OperationProcessor;
 import com.apollocurrency.smc.data.type.Address;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
@@ -136,7 +136,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             throw new AplException.NotCurrentlyValidException("Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel());
         }
         //syntactical and semantic validation
-        BlockchainIntegrator integrator = integratorFactory.createMockIntegrator(transaction.getId());
+        OperationProcessor integrator = integratorFactory.createMockProcessor(transaction.getId());
         SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
         log.debug("Created virtual machine for the contract validation, smcMachine={}", smcMachine);
 
@@ -153,7 +153,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         log.debug("SMC: applyAttachment: publish smart contract and call constructor.");
         checkPrecondition(transaction);
         SmartContract smartContract = contractService.createNewContract(transaction);
-        BlockchainIntegrator integrator = integratorFactory.createIntegrator(transaction.getId(), senderAccount, recipientAccount, getLedgerEvent());
+        OperationProcessor integrator = integratorFactory.createProcessor(transaction.getId(), senderAccount, recipientAccount, getLedgerEvent());
         SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
         ContractTxProcessor processor = new PublishContractTxProcessor(smcMachine, smartContract);

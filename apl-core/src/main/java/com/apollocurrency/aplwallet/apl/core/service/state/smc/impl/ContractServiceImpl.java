@@ -26,8 +26,8 @@ import com.apollocurrency.smc.contract.SmartSource;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
-import com.apollocurrency.smc.persistence.tx.log.ArrayTxLog;
-import com.apollocurrency.smc.persistence.tx.log.TxLog;
+import com.apollocurrency.smc.persistence.record.log.ArrayTxLog;
+import com.apollocurrency.smc.persistence.record.log.TxLog;
 import com.apollocurrency.smc.polyglot.Languages;
 import lombok.extern.slf4j.Slf4j;
 

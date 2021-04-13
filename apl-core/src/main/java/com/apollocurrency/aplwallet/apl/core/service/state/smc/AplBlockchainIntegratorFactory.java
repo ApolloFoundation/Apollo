@@ -12,13 +12,14 @@ import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
-import com.apollocurrency.smc.SMCException;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.blockchain.SMCNotFoundException;
 import com.apollocurrency.smc.blockchain.tx.SMCOperationReceipt;
-import com.apollocurrency.smc.contract.vm.ContractAddress;
+import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SMCMessageSenderException;
-import com.apollocurrency.smc.contract.vm.internal.BlockchainInfo;
+import com.apollocurrency.smc.contract.vm.global.BlockchainInfo;
+import com.apollocurrency.smc.contract.vm.operation.OperationProcessor;
+import com.apollocurrency.smc.contract.vm.operation.SMCOperationProcessor;
 import com.apollocurrency.smc.data.type.Address;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,6 +39,11 @@ public class AplBlockchainIntegratorFactory {
     public AplBlockchainIntegratorFactory(AccountService accountService, ServerInfoService serverInfoService) {
         this.accountService = Objects.requireNonNull(accountService);
         this.serverInfoService = Objects.requireNonNull(serverInfoService);
+    }
+
+    public OperationProcessor createProcessor(final long originatorTransactionId, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
+        BlockchainIntegrator integrator = createIntegrator(originatorTransactionId, txSenderAccount, txRecipientAccount, ledgerEvent);
+        return SMCOperationProcessor.createProcessor(integrator, new ExecutionLog());
     }
 
     public BlockchainIntegrator createIntegrator(final long originatorTransactionId, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
@@ -110,11 +116,20 @@ public class AplBlockchainIntegratorFactory {
             }
 
             @Override
-            public ContractAddress createAddressInstance(Address address, Address contractAddress) {
-                return new SMCAddress(address, contractAddress, this, accountService);
+            public BigInteger getBalance(Address address) {
+                AplAddress aplAddress = new AplAddress(address);
+                Account account = accountService.getAccount(aplAddress.getLongId());
+                if (account == null) {
+                    throw new SMCNotFoundException("Address not found, address=" + address.getHex());
+                }
+                return BigInteger.valueOf(account.getBalanceATM());
             }
 
         };
+    }
+
+    public OperationProcessor createMockProcessor(final long originatorTransactionId) {
+        return SMCOperationProcessor.createProcessor(createMockIntegrator(originatorTransactionId), ExecutionLog.EMPTY_LOG);
     }
 
     public BlockchainIntegrator createMockIntegrator(final long originatorTransactionId) {
@@ -137,72 +152,9 @@ public class AplBlockchainIntegratorFactory {
             }
 
             @Override
-            public ContractAddress createAddressInstance(Address address, Address contractAddress) {
-                return new ContractAddress() {
-                    @Override
-                    public BigInteger balance() {
-                        return BigInteger.ZERO;
-                    }
-
-                    @Override
-                    public void transfer(BigInteger value) throws SMCException {
-                        //this is a mock object
-                    }
-
-                    @Override
-                    public boolean send(BigInteger value) {
-                        return true;
-                    }
-
-                    @Override
-                    public byte[] get() {
-                        return address.get();
-                    }
-                };
+            public BigInteger getBalance(Address address) {
+                return BigInteger.ZERO;
             }
         };
-    }
-
-    static class SMCAddress implements ContractAddress {
-        private final Address contractAddress;
-        private final AplAddress address;
-        private final long addressId;
-        private final BlockchainIntegrator integrator;
-        private final AccountService accountService;
-
-        public SMCAddress(Address address, Address contractAddress, BlockchainIntegrator integrator, AccountService accountService) {
-            this.contractAddress = Objects.requireNonNull(contractAddress);
-            this.address = new AplAddress(address);
-            this.addressId = this.address.getLongId();
-            this.integrator = integrator;
-            this.accountService = accountService;
-        }
-
-        @Override
-        public BigInteger balance() {
-            Account account = accountService.getAccount(addressId);
-            return BigInteger.valueOf(account.getBalanceATM());
-        }
-
-        @Override
-        public void transfer(BigInteger value) throws SMCException {
-            integrator.sendMoney(contractAddress, address, value);
-        }
-
-        @Override
-        public boolean send(BigInteger value) {
-            try {
-                integrator.sendMoney(contractAddress, address, value);
-                return true;
-            } catch (Exception e) {
-                log.error("Error: address.send(" + contractAddress.getHex() + "," + address.getHex() + "), cause: " + e.getClass().getSimpleName() + ":" + e.getMessage(), e);
-            }
-            return false;
-        }
-
-        @Override
-        public byte[] get() {
-            return address.get();
-        }
     }
 }
