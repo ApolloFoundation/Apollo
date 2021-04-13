@@ -192,6 +192,14 @@
     <appender-ref ref="file"/>
     <appender-ref ref="console"/>
   </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.util.io.PayloadResult" level="trace" additivity="false">
+    <appender-ref ref="file"/>
+    <appender-ref ref="console"/>
+  </logger>
+  <logger name="com.apollocurrency.aplwallet.apl.util.io.ByteArrayStream" level="trace" additivity="false">
+    <appender-ref ref="file"/>
+  </logger>
+
   <logger name="com.apollocurrency.aplwallet" level="INFO"/>
   <!--Uncomment next line to enable trim duration logging-->
   <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedDeletableEntityDbTable" level="trace"/>-->

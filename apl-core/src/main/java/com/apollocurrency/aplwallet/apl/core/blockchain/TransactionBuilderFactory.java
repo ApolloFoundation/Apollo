@@ -44,13 +44,11 @@ import java.nio.ByteOrder;
 @Slf4j
 public class TransactionBuilderFactory {
     private final TransactionTypeFactory factory;
-    private final BlockchainConfig blockchainConfig;
     private final TxBContext txBContext;
 
     @Inject
     public TransactionBuilderFactory(TransactionTypeFactory factory, BlockchainConfig blockchainConfig) {
         this.factory = factory;
-        this.blockchainConfig = blockchainConfig;
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }
 
@@ -162,7 +160,8 @@ public class TransactionBuilderFactory {
                 TransactionWrapperHelper.createUnsignedTransaction(transaction)
                 , unsignedTxBytes
             );
-
+        int size = unsignedTxBytes.size();
+        log.trace("Tx size {}", size);
         transaction.sign(transaction.getSignature(), unsignedTxBytes);
         return unsignedTxBytes.array();
     }
