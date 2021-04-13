@@ -204,7 +204,7 @@ public class Apollo {
             // from Apollo package. If it is first start, data base data dir
             // will be initialized
             Path dbDataDir = dirProvider.getDbDir();
-            Path dbInstalPath = DirProvider.getBinDir().resolve(APOLLO_MARIADB_INSTALL_DIR);
+            Path dbInstalPath = DirProvider.getBinDir().getParent().resolve(APOLLO_MARIADB_INSTALL_DIR);
             mariaDbProcess = new MariaDbProcess(conf,dbInstalPath,dbDataDir);
             res = mariaDbProcess.startAndWaitWhenReady();
         }
