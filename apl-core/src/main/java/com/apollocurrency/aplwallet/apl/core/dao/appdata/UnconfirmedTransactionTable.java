@@ -110,7 +110,7 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
     }
 
     public Stream<UnconfirmedTransactionEntity> getAllUnconfirmedTransactions() {
-        return streamConverter.convert(this.getAll(0, -1));
+        return streamConverter.apply(this.getAll(0, -1));
     }
 
     @Override
