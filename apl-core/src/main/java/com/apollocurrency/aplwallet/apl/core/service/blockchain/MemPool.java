@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConv
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.MemPoolUnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
@@ -149,7 +148,7 @@ public class MemPool {
     }
 
     public Stream<UnconfirmedTransaction> getProcessed(int from, int to) {
-        return CollectionUtil.toList(table.getAll(from, to)).stream().map(toModelConverter);
+        return streamConverter.apply(table.getAll(from, to)).map(toModelConverter);
     }
 
     public void processLater(UnconfirmedTransaction unconfirmedTransaction) {

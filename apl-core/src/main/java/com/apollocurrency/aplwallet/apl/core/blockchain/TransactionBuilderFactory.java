@@ -102,31 +102,7 @@ public class TransactionBuilderFactory {
 
     public Transaction newTransaction(TransactionDTO txDto) {
         TransactionImpl transaction = newTransactionBuilder(txDto).build();
-        byte[] bytes = reSignTransaction(transaction);
-
-        PayloadResult res = PayloadResult.createLittleEndianByteArrayResult();
-        txBContext.createSerializer(transaction.getVersion()).serialize(transaction, res);
-        Transaction txToVerify;
-        try {
-            txToVerify = newTransaction(res.array());
-
-
-        } catch (AplException.NotValidException e) {
-            throw new RuntimeException(e);
-        }
-        if (txToVerify.getId() != transaction.getId()) {
-            PayloadResult unsignedDsTxBytes = PayloadResult.createLittleEndianByteArrayResult();
-            txBContext.createSerializer(transaction.getVersion())
-                .serialize(
-                    TransactionWrapperHelper.createUnsignedTransaction(txToVerify)
-                    , unsignedDsTxBytes
-
-                );
-            log.error("Unsigned tx     {}: {}", transaction.getId(), Convert.toHexString(bytes));
-            log.error("Unsigned cor tx {}: {}",txToVerify.getId(), Convert.toHexString(unsignedDsTxBytes.array()) );
-            log.error("Serialized tx   {}: {}", txToVerify.getId(), Convert.toHexString(res.array()));
-            throw new RuntimeException("Transaction serialization error, id" + txToVerify.getId() + ", expected  " + transaction.getId() + ",bytes " + Convert.toHexString(unsignedDsTxBytes.array()) + ", expected " + Convert.toHexString(res.array()));
-        }
+        reSignTransaction(transaction);
         return transaction;
     }
 
@@ -152,7 +128,7 @@ public class TransactionBuilderFactory {
         return transaction;
     }
 
-    private byte[] reSignTransaction(TransactionImpl transaction) {
+    private void reSignTransaction(TransactionImpl transaction) {
         //re-signe transaction
         PayloadResult unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion())
@@ -160,10 +136,7 @@ public class TransactionBuilderFactory {
                 TransactionWrapperHelper.createUnsignedTransaction(transaction)
                 , unsignedTxBytes
             );
-        int size = unsignedTxBytes.size();
-        log.trace("Tx size {}", size);
         transaction.sign(transaction.getSignature(), unsignedTxBytes);
-        return unsignedTxBytes.array();
     }
 
     private TransactionImpl.BuilderImpl newTransactionBuilder(byte[] bytes) throws AplException.NotValidException {
