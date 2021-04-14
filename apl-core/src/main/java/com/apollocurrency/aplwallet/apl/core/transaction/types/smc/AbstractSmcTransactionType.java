@@ -11,9 +11,15 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
+import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.smc.contract.fuel.Fuel;
+import com.apollocurrency.smc.contract.fuel.FuelCalculator;
 import lombok.extern.slf4j.Slf4j;
+
+import java.math.BigInteger;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -69,9 +75,25 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     protected void refundRemaining(Transaction transaction, Account senderAccount, Fuel fuel) {
         if (fuel.hasRemaining()) {
             //refund remaining fuel
-            log.debug("refunded fee={}, account={}", fuel.refundedFee().longValueExact(), senderAccount.getId());
+            log.debug("fuel={}, refunded fee={}, account={}", fuel, fuel.refundedFee().longValueExact(), senderAccount.getId());
             getAccountService().addToBalanceAndUnconfirmedBalanceATM(senderAccount, null, transaction.getId(), 0, fuel.refundedFee().longValueExact());
             getAccountService().logAccountLedger(senderAccount, LedgerEvent.SMC_REFUNDED_FEE, transaction.getId(), fuel.refundedFee().longValueExact());
+        }
+    }
+
+    static class FuelBasedFee extends Fee.FuelBasedFee {
+        public FuelBasedFee(FuelCalculator fuelCalculator) {
+            super(fuelCalculator);
+        }
+
+        @Override
+        public int getSize(Transaction transaction, Appendix appendage) {
+            return ((AbstractSmcAttachment) transaction.getAttachment()).getPayableSize();
+        }
+
+        @Override
+        public BigInteger getFuelPrice(Transaction transaction, Appendix appendage) {
+            return ((AbstractSmcAttachment) appendage).getFuelPrice();
         }
     }
 

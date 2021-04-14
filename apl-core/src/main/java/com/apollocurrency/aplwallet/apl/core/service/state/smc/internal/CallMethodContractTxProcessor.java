@@ -8,7 +8,7 @@ import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.contract.vm.SMCMachine;
+import com.apollocurrency.smc.contract.vm.operation.OperationProcessor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -20,8 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 public class CallMethodContractTxProcessor extends AbstractContractTxProcessor {
     private final SmartMethod smartMethod;
 
-    public CallMethodContractTxProcessor(SMCMachine smcMachine, SmartContract smartContract, SmartMethod smartMethod) {
-        super(smcMachine, smartContract);
+    public CallMethodContractTxProcessor(SmartContract smartContract, SmartMethod smartMethod, OperationProcessor processor) {
+        super(processor, smartContract);
         this.smartMethod = smartMethod;
     }
 
