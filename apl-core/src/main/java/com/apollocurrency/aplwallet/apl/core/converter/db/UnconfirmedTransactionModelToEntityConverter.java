@@ -47,6 +47,7 @@ public class UnconfirmedTransactionModelToEntityConverter implements Converter<U
             builder.prunableAttachmentJsonString(prunableJSON.toJSONString());
         }
         Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(model.getVersion()).serialize(model, signedTxBytes);
         builder.transactionBytes(signedTxBytes.array());
         return builder.build();
     }
