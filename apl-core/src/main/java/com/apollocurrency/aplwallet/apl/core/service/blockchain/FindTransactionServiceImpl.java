@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.model.AplQueryObject;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -91,8 +92,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
             );
 
         return unconfirmedTransactionStream != null ?
-            Stream.concat(unconfirmedTransactionStream.map(txReceiptMapper), transactionStream)
-                .collect(Collectors.toList())
+            CollectionUtil.toList(Stream.concat(unconfirmedTransactionStream.map(txReceiptMapper), transactionStream))
             : transactionStream.collect(Collectors.toUnmodifiableList());
     }
 
@@ -108,9 +108,8 @@ public class FindTransactionServiceImpl implements FindTransactionService {
         }
         long unconfirmedTxCount = 0;
         if (includeUnconfirmed && query.getLastHeight() <= 0) {
-            unconfirmedTxCount = getAllUnconfirmedTransactionsStream()
-                .filter(transaction -> transaction.getTimestamp() > query.getStartTime() && transaction.getTimestamp() < query.getEndTime())
-                .count();
+            unconfirmedTxCount = CollectionUtil.count(getAllUnconfirmedTransactionsStream()
+                .filter(transaction -> transaction.getTimestamp() > query.getStartTime() && transaction.getTimestamp() < query.getEndTime()));
         }
 
         long txCount = transactionService.getTransactionsCount(query.getAccounts(), query.getType(), (byte) -1,
