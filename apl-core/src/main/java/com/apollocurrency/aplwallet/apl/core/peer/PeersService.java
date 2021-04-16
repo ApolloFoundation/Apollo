@@ -19,7 +19,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.ProcessBlockRequest;
@@ -31,7 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -160,7 +160,7 @@ public class PeersService {
     private volatile JSONStreamAware myPeerInfoResponse;
     private BlockchainProcessor blockchainProcessor;
     private volatile TimeService timeService;
-    private final TransactionConverter transactionConverter;
+    private final UnconfirmedTransactionConverter transactionConverter;
     private final BlockConverter blockConverter;
 //    private final ExecutorService txSendingDispatcher;
     private final PeerDb peerDb;
@@ -174,7 +174,7 @@ public class PeersService {
                         PeerHttpServer peerHttpServer,
                         TimeLimiterService timeLimiterService,
                         AccountService accountService,
-                        TransactionConverter transactionConverter,
+                        UnconfirmedTransactionConverter txConverter,
                         BlockConverter blockConverter,
                         PeerDb peerDb) {
         this.propertiesHolder = propertiesHolder;
@@ -185,8 +185,9 @@ public class PeersService {
         this.peerHttpServer = peerHttpServer;
         this.timeLimiterService = timeLimiterService;
         this.accountService = accountService;
-        this.transactionConverter = transactionConverter;
-        this.blockConverter = new BlockConverter(blockchain, transactionConverter, null, accountService);
+        this.transactionConverter = txConverter;
+        this.transactionConverter.setPriv(false);
+        this.blockConverter = blockConverter;
         this.blockConverter.setAddTransactions(true);
         this.peerDb = peerDb;
         int asyncTxSendingPoolSize = propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30);
@@ -741,7 +742,7 @@ public class PeersService {
         log.debug("Send transactions to peers, {} - {}", transactions.stream().map(Transaction::getId).map(String::valueOf).collect(Collectors.joining(",")), ThreadUtils.lastNStacktrace(10));
         int nextBatchStart = 0;
         while (nextBatchStart < transactions.size()) {
-            List<TransactionDTO> transactionsData = new ArrayList<>();
+            List<UnconfirmedTransactionDTO> transactionsData = new ArrayList<>();
             for (int i = nextBatchStart; i < nextBatchStart + sendTransactionsBatchSize && i < transactions.size(); i++) {
                 transactionsData.add(transactionConverter.convert(transactions.get(i)));
             }

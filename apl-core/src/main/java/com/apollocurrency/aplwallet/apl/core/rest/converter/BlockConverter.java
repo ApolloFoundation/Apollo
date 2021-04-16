@@ -21,6 +21,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Convert block model into a block dto using configured properties to either add txs or phased txs or not.
+ * <p><b>ATTENTION!</b> This class should NOT be SINGLETON, since such case may cause configuration issues between classes, sharing same instance.
+ * <br>
+ * Each caller should instantiate new instance or just use CDI default Dependant Scope</p>
+ */
 public class BlockConverter implements Converter<Block, BlockDTO> {
 
     private final Blockchain blockchain;

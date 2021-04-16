@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
@@ -14,13 +15,24 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
+import lombok.Getter;
+import lombok.Setter;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import java.util.Map;
 
+/**
+ * Converts Transaction model into a transactionDTO using specific configuration
+ * <p><b>ATTENTION!</b> This class should NOT be SINGLETON, since such case may cause configuration issues between classes, sharing same instance.
+ * <br>
+ * Each caller should instantiate new instance or just use CDI default Dependant Scope
+ */
 public class UnconfirmedTransactionConverter implements Converter<Transaction, UnconfirmedTransactionDTO> {
     private final PrunableLoadingService prunableLoadingService;
+    @Getter
+    @Setter
+    private volatile boolean priv = true;
 
     @Inject
     public UnconfirmedTransactionConverter(PrunableLoadingService prunableLoadingService) {
@@ -42,11 +54,11 @@ public class UnconfirmedTransactionConverter implements Converter<Transaction, U
         long amountATM;
         String senderPublicKey;
 
-        if (model.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
+        if (priv && model.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
             recipientId = AccountConverter.anonymizeAccount();
-            senderId = AccountConverter.anonymizeAccount();
-            amountATM = AccountConverter.anonymizeBalance();
             senderPublicKey = AccountConverter.anonymizePublicKey();
+            senderId = AccountService.getId(Convert.parseHexString(senderPublicKey));
+            amountATM = AccountConverter.anonymizeBalance();
 
             dto.setRecipient(Long.toUnsignedString(recipientId));
             dto.setRecipientRS(Convert2.rsAccount(recipientId));
