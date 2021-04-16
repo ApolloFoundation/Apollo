@@ -23,11 +23,11 @@ import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
+import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCost;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.contract.vm.operation.OperationProcessor;
 import com.apollocurrency.smc.data.type.Address;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
@@ -122,7 +122,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             throw new AplException.NotCurrentlyValidException("Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel());
         }
         //syntactical and semantic validation
-        OperationProcessor integrator = integratorFactory.createMockProcessor(transaction.getId());
+        BlockchainIntegrator integrator = integratorFactory.createMockProcessor(smartContract, transaction.getId());
         ContractTxProcessor processor = new SandboxContractValidationProcessor(smartContract, integrator);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
@@ -137,7 +137,8 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         log.debug("SMC: applyAttachment: publish smart contract and call constructor.");
         checkPrecondition(transaction);
         SmartContract smartContract = contractService.createNewContract(transaction);
-        OperationProcessor integrator = integratorFactory.createProcessor(transaction.getId(), senderAccount, recipientAccount, getLedgerEvent());
+        SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
+        BlockchainIntegrator integrator = integratorFactory.createProcessor(smartContract, transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
         ContractTxProcessor processor = new PublishContractTxProcessor(smartContract, integrator);
         ExecutionLog executionLog = processor.process();

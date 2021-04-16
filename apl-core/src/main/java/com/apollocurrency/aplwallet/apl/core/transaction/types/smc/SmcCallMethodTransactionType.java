@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
+import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.blockchain.SMCNotFoundException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
@@ -34,7 +35,6 @@ import com.apollocurrency.smc.contract.fuel.FuelCalculator;
 import com.apollocurrency.smc.contract.fuel.FuelCost;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SMCMachine;
-import com.apollocurrency.smc.contract.vm.operation.OperationProcessor;
 import com.apollocurrency.smc.data.type.Address;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
@@ -120,7 +120,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
         //syntactical and semantic validation
-        OperationProcessor integrator = integratorFactory.createMockProcessor(transaction.getId());
+        BlockchainIntegrator integrator = integratorFactory.createMockProcessor(smartContract, transaction.getId());
         ContractTxProcessor processor = new SandboxCallMethodValidationProcessor(smartContract, smartMethod, integrator);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
@@ -151,7 +151,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
                 + calculatedFuel + " but actual=" + actualFuel);
         }
         //syntactical validation
-        OperationProcessor integrator = integratorFactory.createMockProcessor(transaction.getId());
+        BlockchainIntegrator integrator = integratorFactory.createMockProcessor(actualFuel, transaction.getId());
         SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
         log.debug("Created virtual machine for the contract validation, smcMachine={}", smcMachine);
         if (!smcMachine.parse(smartMethod.getMethodWithParams())) {
@@ -176,7 +176,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
-        OperationProcessor integrator = integratorFactory.createProcessor(transaction.getId(), senderAccount, recipientAccount, getLedgerEvent());
+        BlockchainIntegrator integrator = integratorFactory.createProcessor(smartContract, transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
         ContractTxProcessor processor = new CallMethodContractTxProcessor(smartContract, smartMethod, integrator);
         ExecutionLog executionLog = processor.process();

@@ -5,21 +5,31 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
 import com.apollocurrency.aplwallet.api.dto.info.BlockchainStatusDto;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
+import com.apollocurrency.smc.blockchain.MockIntegrator;
 import com.apollocurrency.smc.blockchain.SMCNotFoundException;
 import com.apollocurrency.smc.blockchain.tx.SMCOperationReceipt;
+import com.apollocurrency.smc.contract.SmartMethod;
+import com.apollocurrency.smc.contract.fuel.Chargeable;
+import com.apollocurrency.smc.contract.vm.ContractBlock;
+import com.apollocurrency.smc.contract.vm.ContractBlockchainTransaction;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SMCMessageSenderException;
 import com.apollocurrency.smc.contract.vm.global.BlockchainInfo;
-import com.apollocurrency.smc.contract.vm.operation.OperationProcessor;
-import com.apollocurrency.smc.contract.vm.operation.SMCOperationProcessor;
+import com.apollocurrency.smc.contract.vm.global.SMCBlock;
+import com.apollocurrency.smc.contract.vm.global.SMCTransaction;
+import com.apollocurrency.smc.contract.vm.operation.PaidOperationProcessor;
 import com.apollocurrency.smc.data.type.Address;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,23 +43,32 @@ import java.util.Objects;
 public class AplBlockchainIntegratorFactory {
 
     private final AccountService accountService;
+    private final Blockchain blockchain;
     private final ServerInfoService serverInfoService;
+    private final BlockConverter blockConverter;
 
     @Inject
-    public AplBlockchainIntegratorFactory(AccountService accountService, ServerInfoService serverInfoService) {
+    public AplBlockchainIntegratorFactory(AccountService accountService, Blockchain blockchain, ServerInfoService serverInfoService) {
         this.accountService = Objects.requireNonNull(accountService);
+        this.blockchain = Objects.requireNonNull(blockchain);
         this.serverInfoService = Objects.requireNonNull(serverInfoService);
+        this.blockConverter = new BlockConverter();
     }
 
-    public OperationProcessor createProcessor(final long originatorTransactionId, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
-        BlockchainIntegrator integrator = createIntegrator(originatorTransactionId, txSenderAccount, txRecipientAccount, ledgerEvent);
-        return SMCOperationProcessor.createProcessor(integrator, new ExecutionLog());
+    public BlockchainIntegrator createProcessor(final Chargeable chargeable, final Transaction originator, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
+        BlockchainIntegrator integrator = createIntegrator(originator, attachment, txSenderAccount, txRecipientAccount, ledgerEvent);
+        return PaidOperationProcessor.createProcessor(chargeable, integrator, new ExecutionLog());
     }
 
-    public BlockchainIntegrator createIntegrator(final long originatorTransactionId, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
+    BlockchainIntegrator createIntegrator(final Transaction transaction, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
+        final long originatorTransactionId = transaction.getId();
+        final ContractBlock currentBlock = blockConverter.apply(transaction.getBlock());
+        Address trAddr = new AplAddress(transaction.getId());
+        final ContractBlockchainTransaction currentTransaction = new SMCTransaction(trAddr.get(), trAddr, attachment.getFuelPrice());
+
         return new BlockchainIntegrator() {
             @Override
-            public SMCOperationReceipt sendMessage(Address from, Address to, String data) {
+            public SMCOperationReceipt sendMessage(Address from, Address to, SmartMethod data) {
                 throw new UnsupportedOperationException("Not implemented yet.");
             }
 
@@ -125,36 +144,53 @@ public class AplBlockchainIntegratorFactory {
                 return BigInteger.valueOf(account.getBalanceATM());
             }
 
+            @Override
+            public ContractBlock getBlock(int height) {
+                Block block = blockchain.getBlockAtHeight(height);
+                return blockConverter.apply(block);
+            }
+
+            @Override
+            public ContractBlock getBlock(Address address) {
+                AplAddress adr = new AplAddress(address);
+                return blockConverter.apply(blockchain.getBlock(adr.getLongId()));
+            }
+
+            @Override
+            public ContractBlock getCurrentBlock() {
+                return currentBlock;
+            }
+
+            @Override
+            public ContractBlockchainTransaction getBlockchainTransaction() {
+                return currentTransaction;
+            }
+
         };
     }
 
-    public OperationProcessor createMockProcessor(final long originatorTransactionId) {
-        return SMCOperationProcessor.createProcessor(createMockIntegrator(originatorTransactionId), ExecutionLog.EMPTY_LOG);
+    public BlockchainIntegrator createMockProcessor(final Chargeable chargeable, final long originatorTransactionId) {
+        return PaidOperationProcessor.createProcessor(chargeable, createMockIntegrator(originatorTransactionId), ExecutionLog.EMPTY_LOG);
     }
 
-    public BlockchainIntegrator createMockIntegrator(final long originatorTransactionId) {
-        SMCOperationReceipt rc = SMCOperationReceipt.OK_RECEIPT;
-        rc.setTransactionId(Convert.toHexString(BigInteger.valueOf(originatorTransactionId).toByteArray()));
-        return new BlockchainIntegrator() {
-            @Override
-            public BlockchainInfo getBlockchainInfo() {
-                return BlockchainInfo.builder().build();
-            }
+    BlockchainIntegrator createMockIntegrator(final long originatorTransactionId) {
+        AplAddress address = new AplAddress(originatorTransactionId);
+        return new MockIntegrator(address);
+    }
 
-            @Override
-            public SMCOperationReceipt sendMessage(Address from, Address to, String s) {
-                return rc;
-            }
+    static class BlockConverter implements Converter<Block, ContractBlock> {
 
-            @Override
-            public SMCOperationReceipt sendMoney(Address from, Address to, BigInteger bigInteger) {
-                return rc;
-            }
-
-            @Override
-            public BigInteger getBalance(Address address) {
-                return BigInteger.ZERO;
-            }
-        };
+        @Override
+        public ContractBlock apply(Block block) {
+            Objects.requireNonNull(block);
+            return new SMCBlock(
+                new AplAddress(block.getId()).get(),
+                new AplAddress(block.getGeneratorId()),
+                block.getCumulativeDifficulty(),
+                BigInteger.ZERO,//TODO not implemented yet
+                block.getHeight(),
+                block.getTimestamp()
+            );
+        }
     }
 }

@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
+import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.contract.vm.operation.OperationProcessor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PublishContractTxProcessor extends AbstractContractTxProcessor {
 
-    public PublishContractTxProcessor(SmartContract smartContract, OperationProcessor processor) {
+    public PublishContractTxProcessor(SmartContract smartContract, BlockchainIntegrator processor) {
         super(processor, smartContract);
     }
 

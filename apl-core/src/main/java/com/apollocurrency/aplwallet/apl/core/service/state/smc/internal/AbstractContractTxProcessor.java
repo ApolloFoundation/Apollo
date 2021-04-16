@@ -6,10 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractTxProcessor;
 import com.apollocurrency.smc.SMCException;
+import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SMCMachine;
-import com.apollocurrency.smc.contract.vm.operation.OperationProcessor;
 import com.apollocurrency.smc.polyglot.LanguageContextFactory;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,14 +22,14 @@ import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT
  */
 @Slf4j
 public abstract class AbstractContractTxProcessor implements ContractTxProcessor {
-    protected final OperationProcessor processor;
+    protected final BlockchainIntegrator integrator;
     protected final SMCMachine smcMachine;
     protected final SmartContract smartContract;
 
-    protected AbstractContractTxProcessor(OperationProcessor processor, SmartContract smartContract) {
-        this.processor = processor;
+    protected AbstractContractTxProcessor(BlockchainIntegrator integrator, SmartContract smartContract) {
+        this.integrator = integrator;
         this.smartContract = smartContract;
-        this.smcMachine = new AplMachine(LanguageContextFactory.createDefaultLanguageContext(), processor);
+        this.smcMachine = new AplMachine(LanguageContextFactory.createDefaultLanguageContext(), integrator);
     }
 
     @Override
