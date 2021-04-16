@@ -188,6 +188,7 @@ public class PeersService {
         this.transactionConverter = txConverter;
         this.transactionConverter.setPriv(false);
         this.blockConverter = blockConverter;
+        this.blockConverter.setPriv(false);
         this.blockConverter.setAddTransactions(true);
         this.peerDb = peerDb;
         int asyncTxSendingPoolSize = propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30);

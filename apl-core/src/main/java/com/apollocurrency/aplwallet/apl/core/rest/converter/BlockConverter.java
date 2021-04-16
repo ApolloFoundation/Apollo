@@ -133,6 +133,10 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         isAddPhasedTransactions = addPhasedTransactions;
     }
 
+    public void setPriv(boolean priv) {
+        transactionConverter.setPriv(priv);
+    }
+
     public void reset() {
         isAddTransactions = false;
         isAddPhasedTransactions = false;
