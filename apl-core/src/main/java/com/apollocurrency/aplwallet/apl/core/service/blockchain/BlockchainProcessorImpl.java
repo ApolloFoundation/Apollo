@@ -81,6 +81,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
@@ -1139,10 +1140,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit) {
 
         List<UnconfirmedTransaction> orderedUnconfirmedTransactions = new ArrayList<>();
-        memPool.getAllProcessedStream()
+        CollectionUtil.forEach(memPool.getAllProcessedStream()
             .filter(transaction -> referencedTransactionService.hasAllReferencedTransactions(
-                transaction.getTransactionImpl(), previousBlock.getHeight() + 1))
-            .forEach(orderedUnconfirmedTransactions::add);
+                transaction.getTransactionImpl(), previousBlock.getHeight() + 1)), orderedUnconfirmedTransactions::add);
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int payloadLength = 0;
         int maxPayloadLength = blockchainConfig.getCurrentConfig().getMaxPayloadLength();

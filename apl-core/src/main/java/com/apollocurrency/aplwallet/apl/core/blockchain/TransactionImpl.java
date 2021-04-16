@@ -74,7 +74,7 @@ public class TransactionImpl implements Transaction {
     private final int appendagesSize;
     private volatile byte[] senderPublicKey;
     private volatile long feeATM; // remove final modifier to set fee outside the class TODO get back 'final' modifier
-    private Signature signature;
+    private volatile Signature signature;
     private volatile int height;
     private volatile long blockId;
     private volatile Block block;

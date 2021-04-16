@@ -5,9 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.converter.db;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransactionEntity;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
@@ -39,6 +39,7 @@ public class UnconfirmedTransactionEntityToModelConverter implements Converter<U
             }
             Transaction tx = transactionBuilderFactory.newTransaction(entity.getTransactionBytes(), prunableAttachments);
             tx.setHeight(entity.getHeight());
+
             return new UnconfirmedTransaction(tx, entity.getArrivalTimestamp(), entity.getFeePerByte(), entity.getTransactionBytes().length);
         } catch (AplException.NotValidException e) {
             throw new RuntimeException(e.toString(), e);

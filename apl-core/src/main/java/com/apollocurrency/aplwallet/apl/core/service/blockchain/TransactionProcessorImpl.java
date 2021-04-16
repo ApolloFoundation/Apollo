@@ -246,7 +246,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         List<UnconfirmedTransaction> unconfirmedTransactions = DbTransactionHelper.executeInTransaction(dataSource, () -> {
             List<UnconfirmedTransaction> txs = new ArrayList<>();
-            memPool.getAllProcessedStream().forEach(txs::add);
+            CollectionUtil.forEach(memPool.getAllProcessedStream(), txs::add);
             memPool.clear();
             log.info("Unc txs cleared");
             return txs;
