@@ -36,8 +36,8 @@ public class SandboxCallMethodValidationProcessor extends AbstractContractTxProc
     @Override
     public void executeContract(ExecutionLog executionLog) {
         boolean isValid;
-        validateStatus(ContractStatus.ACTIVE, smartContract);
-        isValid = smcMachine.validateMethod(smartContract, smartMethod, smartContract);
+        validateStatus(ContractStatus.ACTIVE);
+        isValid = smcMachine.validateMethod(getSmartContract(), smartMethod);
         executionLog.join(smcMachine.getExecutionLog());
         smcMachine.resetExecutionLog();
         if (!isValid) {

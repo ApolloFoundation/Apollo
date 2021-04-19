@@ -25,12 +25,12 @@ public interface ContractTxProcessor {
      *
      * @return smart contract
      */
-    SmartContract smartContract();
+    SmartContract getSmartContract();
 
-    default void validateStatus(ContractStatus expected, SmartContract smartContract) {
-        if (expected != smartContract.getStatus()) {
+    default void validateStatus(ContractStatus expected) {
+        if (expected != getSmartContract().getStatus()) {
             throw new IllegalStateException("Expected " + expected.name() +
-                " actually " + smartContract.getStatus().name());
+                " actually " + getSmartContract().getStatus().name());
         }
     }
 

@@ -22,18 +22,23 @@ import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT
  */
 @Slf4j
 public abstract class AbstractContractTxProcessor implements ContractTxProcessor {
-    protected final BlockchainIntegrator integrator;
     protected final SMCMachine smcMachine;
-    protected final SmartContract smartContract;
+    private final SmartContract smartContract;
+
+    protected AbstractContractTxProcessor(BlockchainIntegrator integrator) {
+        this(integrator, null);
+    }
 
     protected AbstractContractTxProcessor(BlockchainIntegrator integrator, SmartContract smartContract) {
-        this.integrator = integrator;
-        this.smartContract = smartContract;
         this.smcMachine = new AplMachine(LanguageContextFactory.createDefaultLanguageContext(), integrator);
+        this.smartContract = smartContract;
     }
 
     @Override
-    public SmartContract smartContract() {
+    public SmartContract getSmartContract() {
+        if (smartContract == null) {
+            throw new IllegalStateException("SmartContract is null");
+        }
         return smartContract;
     }
 

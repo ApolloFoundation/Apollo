@@ -23,7 +23,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
-import com.apollocurrency.smc.contract.fuel.Payable;
+import com.apollocurrency.smc.contract.fuel.VolumeBasedPayable;
 
 import java.math.BigInteger;
 import java.util.Objects;
@@ -107,7 +107,7 @@ public interface Fee {
          * @param value the given payable object
          * @return the value equal to fuel needs to successfully publish or call the contract.
          */
-        public BigInteger calcFuel(Payable value) {
+        public BigInteger calcFuel(VolumeBasedPayable value) {
             final int size = value.getPayableSize();
             return fuelCalculator.calc(() -> size);
         }

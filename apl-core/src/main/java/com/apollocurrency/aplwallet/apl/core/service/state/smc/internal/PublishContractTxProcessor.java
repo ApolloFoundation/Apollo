@@ -24,12 +24,12 @@ public class PublishContractTxProcessor extends AbstractContractTxProcessor {
 
     @Override
     protected void executeContract(ExecutionLog executionLog) {
-        validateStatus(ContractStatus.CREATED, smartContract);
-        smartContract.setStatus(ContractStatus.PUBLISHED);
+        validateStatus(ContractStatus.CREATED);
+        getSmartContract().setStatus(ContractStatus.PUBLISHED);
         //call smart contract constructor, charge the fuel
-        smcMachine.publishContract(smartContract, smartContract);
+        smcMachine.publishContract(getSmartContract());
         executionLog.join(smcMachine.getExecutionLog());
-        validateStatus(ContractStatus.ACTIVE, smartContract);
+        validateStatus(ContractStatus.ACTIVE);
         smcMachine.resetExecutionLog();
     }
 

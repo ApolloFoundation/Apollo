@@ -12,8 +12,8 @@ import com.apollocurrency.smc.polyglot.engine.ExecutionModeHelper;
  */
 public class AplMachine extends BaseContractMachine {
 
-    public AplMachine(LanguageContext languageContext, BlockchainIntegrator integrator) {
-        super(languageContext,
+    AplMachine(LanguageContext languageContext, BlockchainIntegrator integrator) {
+        this(languageContext,
             ExecutionEnv.builder()
                 .mode(ExecutionModeHelper.createProdExecutionMode())
                 .config(new JsLimitsConfig())
@@ -21,7 +21,7 @@ public class AplMachine extends BaseContractMachine {
             integrator);
     }
 
-    public AplMachine(LanguageContext languageContext, ExecutionEnv env, BlockchainIntegrator integrator) {
+    AplMachine(LanguageContext languageContext, ExecutionEnv env, BlockchainIntegrator integrator) {
         super(languageContext, env, integrator);
     }
 }

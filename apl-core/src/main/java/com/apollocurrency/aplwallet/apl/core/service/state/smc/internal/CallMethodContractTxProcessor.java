@@ -28,9 +28,9 @@ public class CallMethodContractTxProcessor extends AbstractContractTxProcessor {
     @Override
     public void executeContract(ExecutionLog executionLog) {
         log.debug("Smart method={}", smartMethod);
-        validateStatus(ContractStatus.ACTIVE, smartContract);
+        validateStatus(ContractStatus.ACTIVE);
         //call the method and charge the fuel
-        smcMachine.callMethod(smartContract, smartMethod, smartContract);
+        smcMachine.callMethod(getSmartContract(), smartMethod);
         executionLog.join(smcMachine.getExecutionLog());
         smcMachine.resetExecutionLog();
     }

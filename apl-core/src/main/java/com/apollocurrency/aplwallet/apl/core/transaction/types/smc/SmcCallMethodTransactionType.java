@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
@@ -14,9 +13,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.AplMachine;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxCallMethodValidationProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SyntaxParseProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -34,7 +33,6 @@ import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
 import com.apollocurrency.smc.contract.fuel.FuelCost;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.contract.vm.SMCMachine;
 import com.apollocurrency.smc.data.type.Address;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
@@ -152,11 +150,11 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         }
         //syntactical validation
         BlockchainIntegrator integrator = integratorFactory.createMockProcessor(actualFuel, transaction.getId());
-        SMCMachine smcMachine = new AplMachine(SmcConfig.createLanguageContext(), integrator);
-        log.debug("Created virtual machine for the contract validation, smcMachine={}", smcMachine);
-        if (!smcMachine.parse(smartMethod.getMethodWithParams())) {
+        ContractTxProcessor processor = new SyntaxParseProcessor(smartMethod.getMethodWithParams(), integrator);
+        ExecutionLog executionLog = processor.process();
+        if (executionLog.isError()) {
             log.debug("SMC: doStateIndependentValidation = INVALID");
-            throw new AplException.NotCurrentlyValidException("Syntax error.");
+            throw new AplException.NotCurrentlyValidException("Syntax error: " + executionLog.toJsonString());
         }
         log.debug("SMC: doStateIndependentValidation = VALID");
     }
