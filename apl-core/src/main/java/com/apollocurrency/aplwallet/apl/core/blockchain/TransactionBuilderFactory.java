@@ -114,8 +114,11 @@ public class TransactionBuilderFactory {
         TransactionImpl.BuilderImpl builder = newTransactionBuilder(transactionData);
         TransactionImpl transaction = builder.build();
         reSignTransaction(transaction);
-        long id = Long.parseUnsignedLong((String) transactionData.get("id"));
-        if (id != transaction.getId()) {
+        String id = (String) transactionData.get("id");
+        if (id == null) {
+            id = (String) transactionData.get("transaction");
+        }
+        if (id != null && Long.parseUnsignedLong(id) != transaction.getId()) {
             PayloadResult unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
             txBContext.createSerializer(transaction.getVersion())
                 .serialize(
