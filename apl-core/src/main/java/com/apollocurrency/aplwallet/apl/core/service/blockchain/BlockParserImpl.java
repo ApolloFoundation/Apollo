@@ -70,8 +70,7 @@ public class BlockParserImpl implements BlockParser {
             }
             return block;
         } catch (RuntimeException e) {
-            log.debug("Failed to parse block: " + blockData.toJSONString());
-            log.debug("Exception: " + e.getMessage());
+            log.debug("Failed to parse block: " + blockData.toJSONString(), e);
             throw e;
         }
     }
