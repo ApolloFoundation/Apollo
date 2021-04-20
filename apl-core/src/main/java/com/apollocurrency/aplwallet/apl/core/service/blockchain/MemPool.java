@@ -189,7 +189,7 @@ public class MemPool {
     }
 
     public int getReferencedTxsNumber() {
-        return memoryState.canAcceptReferencedTxs();
+        return memoryState.getNumberOfReferencedTxs();
     }
 
     public void rebroadcast(Transaction tx) {

@@ -157,6 +157,10 @@ public class MemPoolInMemoryState {
         return Math.max(0, maxReferencedTxs - cachedNumberOfReferencedTxs.get());
     }
 
+    public int getNumberOfReferencedTxs() {
+        return cachedNumberOfReferencedTxs.get();
+    }
+
     public void broadcastLater(Transaction tx) {
         broadcastedTransactions.add(tx);
     }
