@@ -32,7 +32,6 @@ public class MemPool {
     private final IteratorToStreamConverter<UnconfirmedTransactionEntity> streamConverter = new IteratorToStreamConverter<>();
     private final UnconfirmedTransactionTable table;
     private final MemPoolInMemoryState memoryState;
-    private final GlobalSync globalSync;
     private final TransactionValidator validator;
     private final UnconfirmedTransactionEntityToModelConverter toModelConverter;
     private final UnconfirmedTransactionModelToEntityConverter toEntityConverter;
@@ -43,7 +42,6 @@ public class MemPool {
     @Inject
     public MemPool(UnconfirmedTransactionTable table,
                    MemPoolInMemoryState memoryState,
-                   GlobalSync globalSync,
                    TransactionValidator validator,
                    UnconfirmedTransactionEntityToModelConverter toModelConverter,
                    UnconfirmedTransactionModelToEntityConverter toEntityConverter,
@@ -55,7 +53,6 @@ public class MemPool {
         this.maxCachedTransactions = maxCachedTransactions;
         this.enableRebroadcasting = enableRebroadcasting;
         this.memoryState = memoryState;
-        this.globalSync = globalSync;
         this.validator = validator;
         this.toModelConverter = toModelConverter;
         this.toEntityConverter = toEntityConverter;
@@ -81,12 +78,7 @@ public class MemPool {
     }
 
     public Collection<Transaction> getAllBroadcastedTransactions() {
-        globalSync.readLock();
-        try {
-            return memoryState.getAllBroadcastedTransactions();
-        } finally {
-            globalSync.readUnlock();
-        }
+        return memoryState.getAllBroadcastedTransactions();
     }
 
     public void broadcastWhenConfirmed(Transaction tx, Transaction unconfirmedTx) {
@@ -116,12 +108,16 @@ public class MemPool {
         return canSaveTxs;
     }
 
+    public boolean canAcceptReferenced() {
+        return memoryState.canAcceptReferencedTxs() > 0;
+    }
+
     public Stream<UnconfirmedTransaction> getAllProcessedStream() {
         return table.getAllUnconfirmedTransactions().map(toModelConverter);
     }
 
     public int getUnconfirmedTxCount() {
-        if(getCachedUnconfirmedTxCount() < maxCachedTransactions){
+        if(getCachedUnconfirmedTxCount() < maxCachedTransactions) {
             return getCachedUnconfirmedTxCount();
         } else {
             return table.getCount();
@@ -186,10 +182,14 @@ public class MemPool {
         });
     }
 
-    public boolean removeProcessedTransaction(long id) {
-        int deleted = table.deleteById(id);
-        memoryState.removeFromCache(id);
+    public boolean removeProcessedTransaction(Transaction transaction) {
+        int deleted = table.deleteById(transaction.getId());
+        memoryState.removeFromCache(transaction);
         return deleted > 0;
+    }
+
+    public int getReferencedTxsNumber() {
+        return memoryState.canAcceptReferencedTxs();
     }
 
     public void rebroadcast(Transaction tx) {

@@ -153,6 +153,7 @@ public class AplHealthLogger {
             sb.append("Cache size: ").append(cacheSize).append(", ");
             sb.append("Pending broadcast: ").append(memPool.pendingBroadcastQueueSize()).append(", ");
             sb.append("Process Later Queue: ").append(memPool.processLaterQueueSize()).append(", ");
+            sb.append("Referenced: ").append(memPool.getReferencedTxsNumber());
 
             log.info(sb.toString());
         }
