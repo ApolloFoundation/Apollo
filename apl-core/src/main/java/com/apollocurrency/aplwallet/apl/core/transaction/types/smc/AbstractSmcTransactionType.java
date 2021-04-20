@@ -76,8 +76,7 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
         if (fuel.hasRemaining()) {
             //refund remaining fuel
             log.debug("fuel={}, refunded fee={}, account={}", fuel, fuel.refundedFee().longValueExact(), senderAccount.getId());
-            getAccountService().addToBalanceAndUnconfirmedBalanceATM(senderAccount, null, transaction.getId(), 0, fuel.refundedFee().longValueExact());
-            getAccountService().logAccountLedger(senderAccount, LedgerEvent.SMC_REFUNDED_FEE, transaction.getId(), fuel.refundedFee().longValueExact());
+            getAccountService().addToBalanceAndUnconfirmedBalanceATM(senderAccount, LedgerEvent.SMC_REFUNDED_FEE, transaction.getId(), fuel.refundedFee().longValueExact());
         }
     }
 

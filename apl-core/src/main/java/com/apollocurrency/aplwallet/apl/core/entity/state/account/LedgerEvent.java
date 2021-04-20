@@ -30,7 +30,7 @@ public enum LedgerEvent {
     UPDATE_V2(65, true),
     //PARENT_CHILD
     CHILD_CREATE(66, true), CHILD_CONVERT_TO(67, true),/* reserved 68 69 */
-    SMC_PUBLISH(70, true), SMC_CALL_METHOD(71, true), SMC_REFUNDED_FEE(72, false);
+    SMC_PUBLISH(70, true), SMC_CALL_METHOD(71, true), SMC_REFUNDED_FEE(72, true);
     /**
      * Event code mapping
      */
