@@ -144,7 +144,7 @@ public class AplHealthLogger {
 
     private void printMemPoolStat() {
         StringBuilder sb = new StringBuilder();
-        int memPoolSize = memPool.getUnconfirmedTxCount();
+        int memPoolSize = memPool.getUnconfirmedDbCount();
         int cacheSize = memPool.getCachedUnconfirmedTxCount();
 
         if(memPoolSize > 0 ) {

@@ -104,7 +104,9 @@ public class MemPoolInMemoryState {
         if (transactionCache.size() < maxCachedTransactions) {
             transactionCache.put(unconfirmedTransaction.getId(), unconfirmedTransaction);
         }
-        cachedNumberOfReferencedTxs.incrementAndGet();
+        if (unconfirmedTransaction.getReferencedTransactionFullHash() != null) {
+            cachedNumberOfReferencedTxs.incrementAndGet();
+        }
     }
 
     public void initializeCache(Stream<UnconfirmedTransaction> unconfirmedTransactionStream) {
@@ -113,7 +115,7 @@ public class MemPoolInMemoryState {
             CollectionUtil.forEach(unconfirmedTransactionStream, e -> {
                 transactionCache.put(e.getId(), e);
                 if (e.getReferencedTransactionFullHash() != null) {
-                    referencedCount.getAndIncrement();
+                    referencedCount.incrementAndGet();
                 }
             });
             cachedNumberOfReferencedTxs.set(referencedCount.get());
