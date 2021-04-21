@@ -178,7 +178,7 @@ public class AplBlockchainIntegratorFactory {
         return new MockIntegrator(address);
     }
 
-    static class BlockConverter implements Converter<Block, ContractBlock> {
+    private static class BlockConverter implements Converter<Block, ContractBlock> {
 
         @Override
         public ContractBlock apply(Block block) {
