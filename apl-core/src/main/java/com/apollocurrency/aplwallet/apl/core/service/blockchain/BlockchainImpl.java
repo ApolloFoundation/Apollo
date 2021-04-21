@@ -635,11 +635,11 @@ public class BlockchainImpl implements Blockchain {
     @Override
     @Transactional(readOnly = true)
     public Integer getTransactionHeight(byte[] fullHash, int heightLimit) {
-        Transaction transaction = transactionService.findTransactionCrossShardingByFullHash(fullHash, heightLimit);
-        Integer txHeight = null;
-        if (transaction != null) {
+        Transaction transaction = transactionService.findTransactionByFullHash(fullHash);
+        Integer txHeight;
+        if (transaction != null && transaction.getHeight() <= heightLimit) {
             txHeight = transaction.getHeight();
-        } else if (hasShardTransactionByFullHash(fullHash, heightLimit)) {
+        } else {
             txHeight = transactionIndexDao.getTransactionHeightByTransactionId(Convert.transactionFullHashToId(fullHash));
         }
         return txHeight;
