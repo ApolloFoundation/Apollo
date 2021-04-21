@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
+import com.apollocurrency.aplwallet.apl.util.api.parameter.FirstLastIndexBeanParam;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -35,6 +36,9 @@ import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
+/**
+ * Deprecated, see {@link com.apollocurrency.aplwallet.apl.core.rest.endpoint.BlockController#getBlocks(FirstLastIndexBeanParam, int, boolean, boolean)} instead
+ */
 @Deprecated
 @Slf4j
 @Vetoed
