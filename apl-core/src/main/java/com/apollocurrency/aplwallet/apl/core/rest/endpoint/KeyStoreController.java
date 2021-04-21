@@ -175,7 +175,7 @@ public class KeyStoreController {
     @Secured2FA
     @PermitAll
     public Response downloadKeyStore(@FormParam("account") String account,
-                                     @FormParam("passPhrase") String passphraseReq, @Context HttpServletRequest request) throws ParameterException, IOException {
+                                     @FormParam("passphrase") String passphraseReq, @Context HttpServletRequest request) throws ParameterException, IOException {
         String passphraseStr = HttpParameterParserUtil.getPassphrase(passphraseReq, true);
         long accountId = RestParametersParser.parseAccountId(account);
 
