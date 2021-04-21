@@ -75,10 +75,10 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     public final void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         checkPrecondition(transaction);
         AbstractSmcAttachment attachment = (AbstractSmcAttachment) transaction.getAttachment();
-        if (fuelValidator.validateLimitValue(attachment.getFuelLimit())) {
+        if (!fuelValidator.validateLimitValue(attachment.getFuelLimit())) {
             throw new AplException.NotCurrentlyValidException("Fuel limit value doesn't correspond to the MIN or MAX values.");
         }
-        if (fuelValidator.validatePriceValue(attachment.getFuelPrice())) {
+        if (!fuelValidator.validatePriceValue(attachment.getFuelPrice())) {
             throw new AplException.NotCurrentlyValidException("Fuel price value doesn't correspond to the MIN or MAX values.");
         }
 

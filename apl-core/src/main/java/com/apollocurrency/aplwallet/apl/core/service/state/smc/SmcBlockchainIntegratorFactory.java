@@ -40,7 +40,7 @@ import java.util.Objects;
 
 @Slf4j
 @Singleton
-public class AplBlockchainIntegratorFactory {
+public class SmcBlockchainIntegratorFactory {
 
     private final AccountService accountService;
     private final Blockchain blockchain;
@@ -48,7 +48,7 @@ public class AplBlockchainIntegratorFactory {
     private final BlockConverter blockConverter;
 
     @Inject
-    public AplBlockchainIntegratorFactory(AccountService accountService, Blockchain blockchain, ServerInfoService serverInfoService) {
+    public SmcBlockchainIntegratorFactory(AccountService accountService, Blockchain blockchain, ServerInfoService serverInfoService) {
         this.accountService = Objects.requireNonNull(accountService);
         this.blockchain = Objects.requireNonNull(blockchain);
         this.serverInfoService = Objects.requireNonNull(serverInfoService);

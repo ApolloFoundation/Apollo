@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
-import com.apollocurrency.smc.blockchain.crypt.CryptoLibProvider;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -36,21 +36,20 @@ import java.math.BigInteger;
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 @RequestScoped
 public class SmcApiServiceImpl implements SmcApiService {
 
     private final BlockchainConfig blockchainConfig;
     private final AccountService accountService;
     private final TransactionCreator transactionCreator;
-    private final CryptoLibProvider cryptoLibProvider;
     private final TxBContext txBContext;
 
     @Inject
-    public SmcApiServiceImpl(BlockchainConfig blockchainConfig, AccountService accountService, TransactionCreator transactionCreator, CryptoLibProvider cryptoLibProvider) {
+    public SmcApiServiceImpl(BlockchainConfig blockchainConfig, AccountService accountService, TransactionCreator transactionCreator) {
         this.blockchainConfig = blockchainConfig;
         this.accountService = accountService;
         this.transactionCreator = transactionCreator;
-        this.cryptoLibProvider = cryptoLibProvider;
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }
 
@@ -102,6 +101,8 @@ public class SmcApiServiceImpl implements SmcApiService {
         Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
         response.setTx(Convert.toHexString(signedTxBytes.array()));
+
+        log.debug("Transaction id={} sender={} fee={}", Convert.toHexString(transaction.getId()), Convert.toHexString(senderAccountId), transaction.getFeeATM());
 
         return builder.bind(response).build();
     }
@@ -158,6 +159,8 @@ public class SmcApiServiceImpl implements SmcApiService {
         Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
         response.setTx(Convert.toHexString(signedTxBytes.array()));
+
+        log.debug("Transaction id={} contract={} fee={}", Convert.toHexString(transaction.getId()), Convert.toHexString(contractAccount.getId()), transaction.getFeeATM());
 
         return builder.bind(response).build();
     }

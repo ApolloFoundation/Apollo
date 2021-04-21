@@ -60,9 +60,9 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             .name("Deal")
             .source("class Deal {}")
             .params(List.of("123"))
-            .amountATM(10L)
-            .fuelLimit(5000L)
-            .fuelPrice(100L)
+            .amountATM(10_00000000L)
+            .fuelLimit(20_000_000L)
+            .fuelPrice(10_000L)
             .secret("1")
             .build();
 
@@ -76,13 +76,14 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             .build();
 
         long senderAccountId = Convert.parseAccountId(txData.getSender());
-        Account account = new Account(senderAccountId, 1000000000L, 1000000000L, 1000000000L, 0L, 10);
+        Account account = new Account(senderAccountId, 100_000_00000000L, 100_000_00000000L, 100_000_00000000L, 0L, 10);
 
         byte[] recipientPublicKey = AccountService.generatePublicKey(account, attachment.getContractSource());
         long recipientId = AccountService.getId(recipientPublicKey);
 
         Transaction newTx = createTransaction(txData, attachment, account, recipientPublicKey, recipientId);
         assertNotNull(newTx);
+        newTx.setBlock(lastBlock);
 
         doNothing().when(spyAccountService).addToBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(-txData.getAmountATM()), eq(-(txData.getFuelLimit() * txData.getFuelPrice())));
         doNothing().when(spyAccountService).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(txData.getAmountATM()));
@@ -179,9 +180,9 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
                 "  }\n" +
                 "}")
             .params(List.of("1400000000", "\"APL-X5JH-TJKJ-DVGC-5T2V8\""))
-            .amountATM(10L)
-            .fuelLimit(5000L)
-            .fuelPrice(100L)
+            .amountATM(10_00000000L)
+            .fuelLimit(50_000_000L)
+            .fuelPrice(10_000L)
             .secret("1")
             .build();
 
@@ -195,13 +196,14 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             .build();
 
         long senderAccountId = Convert.parseAccountId(txData.getSender());
-        Account account = new Account(senderAccountId, 1000000000L, 1000000000L, 1000000000L, 0L, 1);
+        Account account = new Account(senderAccountId, 100_000_00000000L, 100_000_00000000L, 100_000_00000000L, 0L, 10);
 
         byte[] recipientPublicKey = AccountService.generatePublicKey(account, attachment.getContractSource());
         long recipientId = AccountService.getId(recipientPublicKey);
 
         Transaction newTx = createTransaction(txData, attachment, account, recipientPublicKey, recipientId);
         assertNotNull(newTx);
+        newTx.setBlock(lastBlock);
 
         doNothing().when(spyAccountService).addToBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(-txData.getAmountATM()), eq(-(txData.getFuelLimit() * txData.getFuelPrice())));
         doNothing().when(spyAccountService).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(txData.getAmountATM()));
@@ -218,7 +220,6 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         SmcContractEntity contractEntity = contractModelToEntityConverter.convert(smartContract);
         SmcContractStateEntity contractStateEntity = contractModelToStateEntityConverter.convert(smartContract);
 
-
         //THEN
         assertNotNull(smartContract);
         assertEquals(new AplAddress(newTx.getId()).getHex(), smartContract.getTxId().getHex());
@@ -230,9 +231,9 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             .recipientPublicKey(Convert.toHexString(recipientPublicKey))
             .method("trace")
             .params(Collections.emptyList())
-            .amountATM(1400000000L)
-            .fuelLimit(5000L)
-            .fuelPrice(100L)
+            .amountATM(14_00000000L)
+            .fuelLimit(15_000_000L)
+            .fuelPrice(10_000L)
             .secret("2")
             .build();
 
@@ -244,10 +245,11 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             .build();
 
         long senderAccountId2 = Convert.parseAccountId(txData2.getSender());
-        Account account2 = new Account(senderAccountId2, 1000000000000000L, 1000000000000000L, 1000000000L, 0L, 1);
+        Account account2 = new Account(senderAccountId2, 10_000_000_00000000L, 10_000_000_00000000L, 1000000000L, 0L, 1);
 
         Transaction newTx2 = createTransaction(txData2, attachment2, account2, Convert.parseHexString(txData2.getRecipientPublicKey()), Convert.parseAccountId(txData2.getRecipient()));
-        assertNotNull(newTx);
+        assertNotNull(newTx2);
+        newTx2.setBlock(lastBlock);
 
         doNothing().when(spyAccountService).addToBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx2.getId()), eq(-txData2.getAmountATM()), eq(-(txData2.getFuelLimit() * txData2.getFuelPrice())));
         doNothing().when(spyAccountService).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx2.getId()), eq(txData2.getAmountATM()));

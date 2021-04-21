@@ -10,15 +10,16 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxCallMethodValidationProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SyntaxParseProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
@@ -32,6 +33,7 @@ import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
 import com.apollocurrency.smc.contract.fuel.FuelCost;
+import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
 import com.google.common.base.Strings;
@@ -52,8 +54,11 @@ import java.util.Map;
 @Singleton
 public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     @Inject
-    public SmcCallMethodTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, ContractService contractService, AplBlockchainIntegratorFactory integratorFactory) {
-        super(blockchainConfig, accountService, contractService, integratorFactory);
+    public SmcCallMethodTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
+                                        ContractService contractService,
+                                        FuelValidator fuelValidator,
+                                        SmcBlockchainIntegratorFactory integratorFactory) {
+        super(blockchainConfig, accountService, contractService, fuelValidator, integratorFactory);
     }
 
     @Override
@@ -68,7 +73,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         if (transaction.getAmountATM() > 0) {
             fuelCalculator.add(FuelCost.F_SEND_MONEY);
         }
-        return new FuelBasedFee(fuelCalculator);
+        return new SmcFuelBasedFee(fuelCalculator);
     }
 
     @Override
@@ -129,10 +134,9 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     }
 
     @Override
-    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+    public void launchStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) throws AplException.ValidationException {
         log.debug("SMC: doStateIndependentValidation = ...");
-        checkPrecondition(transaction);
-        SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
+        SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) abstractSmcAttachment;
         if (Strings.isNullOrEmpty(attachment.getMethodName())) {
             throw new AplException.NotCurrentlyValidException("Empty contract method name.");
         }

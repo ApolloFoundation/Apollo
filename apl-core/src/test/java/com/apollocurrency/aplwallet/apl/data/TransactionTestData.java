@@ -13,8 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublic
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -36,12 +36,14 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSCurrencyIssu
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryPaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PrivatePaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcCallMethodTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcPublishContractTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.CriticalUpdateTransactiionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.ImportantUpdateTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -142,6 +144,7 @@ public class TransactionTestData {
 
     @Getter
     private BlockchainConfig blockchainConfig;
+    private FuelValidator fuelValidator;
 
     public TransactionTypeFactory getTransactionTypeFactory() {
         return transactionTypeFactory;
@@ -149,6 +152,7 @@ public class TransactionTestData {
 
     public TransactionTestData() {
         blockchainConfig = mock(BlockchainConfig.class);
+        fuelValidator = new SmcFuelValidator(blockchainConfig);
         AccountService accountService = mock(AccountService.class);
         AccountPublicKeyService accountPublicKeyService = mock(AccountPublicKeyService.class);
         CurrencyService currencyService = mock(CurrencyService.class);
@@ -159,7 +163,7 @@ public class TransactionTestData {
         DGSService dgsService = mock(DGSService.class);
         PrunableLoadingService prunableLoadingService = mock(PrunableLoadingService.class);
         ContractService contractService = mock(ContractService.class);
-        AplBlockchainIntegratorFactory integratorFactory = mock(AplBlockchainIntegratorFactory.class);
+        SmcBlockchainIntegratorFactory integratorFactory = mock(SmcBlockchainIntegratorFactory.class);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
             new OrdinaryPaymentTransactionType(blockchainConfig, accountService),
             new PrivatePaymentTransactionType(blockchainConfig, accountService),
@@ -170,8 +174,8 @@ public class TransactionTestData {
             new CriticalUpdateTransactiionType(blockchainConfig, accountService),
             new ImportantUpdateTransactionType(blockchainConfig, accountService),
             new ListingTransactionType(blockchainConfig, accountService, dgsService, prunableLoadingService),
-            new SmcPublishContractTransactionType(blockchainConfig, accountService, contractService, integratorFactory),
-            new SmcCallMethodTransactionType(blockchainConfig, accountService, contractService, integratorFactory),
+            new SmcPublishContractTransactionType(blockchainConfig, accountService, contractService, fuelValidator, integratorFactory),
+            new SmcCallMethodTransactionType(blockchainConfig, accountService, contractService, fuelValidator, integratorFactory),
             new MSCurrencyDeletionTransactionType(blockchainConfig, accountService, currencyService)
         ));
         initTransactions();
