@@ -124,6 +124,10 @@ public class MemPool {
         }
     }
 
+    public int getUnconfirmedDbCount() {
+        return table.getCount();
+    }
+
     public int getCachedUnconfirmedTxCount() {
         return memoryState.txCacheSize();
     }
