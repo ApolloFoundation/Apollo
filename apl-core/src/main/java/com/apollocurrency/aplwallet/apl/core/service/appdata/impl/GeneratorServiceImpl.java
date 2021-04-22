@@ -6,9 +6,11 @@ package com.apollocurrency.aplwallet.apl.core.service.appdata.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.runnable.GenerateBlocksTask;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -51,10 +53,8 @@ public class GeneratorServiceImpl implements GeneratorService {
     private final Blockchain blockchain;
     private final GlobalSync globalSync;
     private BlockchainProcessor blockchainProcessor;
-    private final TransactionProcessor transactionProcessor;
-    private volatile TimeService timeService;
+    private final TimeService timeService;
     private final AccountService accountService;
-    private final TaskDispatchManager taskDispatchManager;
     private static volatile boolean suspendForging = false;
 
     private GenerateBlocksTask generateBlocksTask;
@@ -67,27 +67,29 @@ public class GeneratorServiceImpl implements GeneratorService {
                                 TransactionProcessor transactionProcessor,
                                 TimeService timeService,
                                 AccountService accountService,
-                                TaskDispatchManager taskDispatchManager) {
+                                TaskDispatchManager taskDispatchManager, DatabaseManager databaseManager) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = blockchainConfig;
         this.blockchain = blockchain;
         this.globalSync = globalSync;
-        this.transactionProcessor = transactionProcessor;
         this.timeService = timeService;
         this.accountService = accountService;
-        this.taskDispatchManager = taskDispatchManager;
         this.MAX_FORGERS = propertiesHolder.getIntProperty("apl.maxNumberOfForgers");
 
         if (!propertiesHolder.isLightClient()) {
             generateBlocksTask = new GenerateBlocksTask(this.propertiesHolder, this.globalSync,
                 this.blockchain, this.blockchainConfig, this.timeService,
-                this.transactionProcessor, this);
-            this.taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
+                transactionProcessor, this);
+            taskDispatchManager.newBackgroundDispatcher(BACKGROUND_SERVICE_NAME)
                 .schedule(Task.builder()
                     .name("GenerateBlocks")
                     .initialDelay(500)
                     .delay(500)
-                    .task(generateBlocksTask)
+                    .task(()-> {
+                        DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
+                            generateBlocksTask.run();
+                        });
+                    })
                     .build());
         }
     }

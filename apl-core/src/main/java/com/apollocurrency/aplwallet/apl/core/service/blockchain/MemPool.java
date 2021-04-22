@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.cache.RemovedTxsCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
@@ -13,17 +14,21 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionT
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.google.common.cache.Cache;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -35,6 +40,8 @@ public class MemPool {
     private final TransactionValidator validator;
     private final UnconfirmedTransactionEntityToModelConverter toModelConverter;
     private final UnconfirmedTransactionModelToEntityConverter toEntityConverter;
+    private final Cache<Long, Long> removedTransactions;
+
     private final boolean enableRebroadcasting;
     private final int maxUnconfirmedTransactions;
     private final int maxCachedTransactions;
@@ -45,10 +52,12 @@ public class MemPool {
                    TransactionValidator validator,
                    UnconfirmedTransactionEntityToModelConverter toModelConverter,
                    UnconfirmedTransactionModelToEntityConverter toEntityConverter,
+                   InMemoryCacheManager inMemoryCacheManager,
                    @Property(name = "apl.maxUnconfirmedTransactions", defaultValue = "" + Integer.MAX_VALUE) int maxUnconfirmedTransactions,
                    @Property(name = "apl.mempool.maxCachedTransactions", defaultValue = "2000") int maxCachedTransactions,
                    @Property(name = "apl.enableTransactionRebroadcasting") boolean enableRebroadcasting) {
         this.table = table;
+        this.removedTransactions = inMemoryCacheManager.acquireCache(RemovedTxsCacheConfig.CACHE_NAME);
         this.maxUnconfirmedTransactions = maxUnconfirmedTransactions;
         this.maxCachedTransactions = maxCachedTransactions;
         this.enableRebroadcasting = enableRebroadcasting;
@@ -189,7 +198,17 @@ public class MemPool {
     public boolean removeProcessedTransaction(Transaction transaction) {
         int deleted = table.deleteById(transaction.getId());
         memoryState.removeFromCache(transaction);
+        removedTransactions.put(transaction.getId(), System.currentTimeMillis());
         return deleted > 0;
+    }
+
+    public boolean isRemoved(Transaction transaction) {
+        return removedTransactions.getIfPresent(transaction.getId()) != null;
+    }
+
+    public List<Long> getAllRemoved(int limit) {
+        Comparator<Map.Entry<Long, Long>> entryComparator = Map.Entry.comparingByValue();
+        return removedTransactions.asMap().entrySet().stream().sorted(entryComparator.reversed()).map(Map.Entry::getKey).limit(limit).collect(Collectors.toList());
     }
 
     public int getReferencedTxsNumber() {
