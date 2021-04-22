@@ -16,9 +16,8 @@ import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -46,7 +45,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-@Execution(ExecutionMode.CONCURRENT)
 public class ShardingSchedulerTest {
 
     @Mock
@@ -301,6 +299,7 @@ public class ShardingSchedulerTest {
     }
 
     @Test
+    @Timeout(10)
     void testOnBlockPushed_tryShardingFailed_noShardingProcess() {
         prepareFailedSharding();
 
@@ -310,6 +309,7 @@ public class ShardingSchedulerTest {
     }
 
     @Test
+    @Timeout(10)
     void testOnBlockPushed_tryShardingFailed_failedShardProcess() {
         prepareFailedSharding();
         CompletableFuture shardingProcess = mock(CompletableFuture.class);
@@ -322,6 +322,7 @@ public class ShardingSchedulerTest {
     }
 
     @Test
+    @Timeout(10)
     void testOnBlockPushed_tryShardingFailed_noShardInDb() {
         prepareFailedSharding();
 
@@ -335,6 +336,7 @@ public class ShardingSchedulerTest {
     }
 
     @Test
+    @Timeout(10)
     void testOnBlockPushed_tryShardingFailed_lastShardWrongHeight() {
         prepareFailedSharding();
         CompletableFuture shardingProcess = mock(CompletableFuture.class);
@@ -348,6 +350,7 @@ public class ShardingSchedulerTest {
         waitVerifyNoMoreSharding();
     }
     @Test
+    @Timeout(10)
     void testOnBlockPushed_tryShardingFailed_lastShardWrongState() {
         prepareFailedSharding();
         CompletableFuture shardingProcess = mock(CompletableFuture.class);
@@ -363,12 +366,11 @@ public class ShardingSchedulerTest {
 
     void waitVerifyNoMoreSharding() {
 
-        while (!shardScheduler.scheduledShardings().isEmpty()) {
+        while (!shardScheduler.scheduledShardings().isEmpty() || shardScheduler.createShards()) {
             ThreadUtils.sleep(50);
         }
 
         verify(trimEvent).fire(new TrimEventCommand(true, false));
-        assertFalse(shardScheduler.createShards()); // sharding was failed
 
         fireBlockPushed(5000); // do sharding
         assertEquals(shardScheduler.scheduledShardings(), List.of());
