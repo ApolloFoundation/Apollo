@@ -35,8 +35,8 @@
     </dependency>
     <dependency>
         <groupId>io.firstbridge</groupId>
-        <artifactId>fbprocess</artifactId>        
-    </dependency>    
+        <artifactId>fbprocess</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -91,6 +91,7 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
       </plugin>
       <plugin>
