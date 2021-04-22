@@ -103,35 +103,22 @@
     </encoder>
   </appender>
 
-  <appender name="p2p-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${LOGDIR}/p2p.log</file>
-    <immediateFlush>true</immediateFlush>
-    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-      <fileNamePattern>${LOGDIR}/p2p_%i.log.zip</fileNamePattern>
-      <minIndex>1</minIndex>
-      <maxIndex>100</maxIndex>
-    </rollingPolicy>
+<!--  <appender name="p2p-file" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+<!--    <file>${LOGDIR}/p2p.log</file>-->
+<!--    <immediateFlush>true</immediateFlush>-->
+<!--    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">-->
+<!--      <fileNamePattern>${LOGDIR}/p2p_%i.log.zip</fileNamePattern>-->
+<!--      <minIndex>1</minIndex>-->
+<!--      <maxIndex>100</maxIndex>-->
+<!--    </rollingPolicy>-->
 
-    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-        <maxFileSize>300MB</maxFileSize>
-    </triggeringPolicy>
-      <encoder>
-          <pattern>%d [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
-      </encoder>
-  </appender>
-
-  <logger name="com.apollocurrency.aplwallet.apl.core.peer" level="DEBUG" additivity="false">
-    <appender-ref ref="p2p-file"/>
-  </logger>
-
-  <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksThread" level="DEBUG"
-          additivity="false">
-    <appender-ref ref="p2p-file"/>
-  </logger>
-  <logger name="com.apollocurrency.aplwallet.apl.core.app.GetNextBlocksTask" level="DEBUG"
-          additivity="false">
-    <appender-ref ref="p2p-file"/>
-  </logger>
+<!--    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">-->
+<!--        <maxFileSize>300MB</maxFileSize>-->
+<!--    </triggeringPolicy>-->
+<!--      <encoder>-->
+<!--          <pattern>%d [%thread] %-5level %logger{36}:%line - %msg%n</pattern>-->
+<!--      </encoder>-->
+<!--  </appender>-->
 
   <!--
     <logger name="com.apollocurrency.aplwallet.apl.core.app.runnable" level="trace" additivity="false">

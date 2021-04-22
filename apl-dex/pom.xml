@@ -11,10 +11,6 @@
 
   <artifactId>apl-dex</artifactId>
 
-  <properties>
-    <web3jVersion>5.0.0</web3jVersion>
-  </properties>
-
 
   <dependencies>
 
@@ -55,7 +51,6 @@
     <dependency>
       <groupId>org.web3j</groupId>
       <artifactId>core</artifactId>
-      <version>${web3jVersion}</version>
     </dependency>
 
     <!--    <dependency>-->

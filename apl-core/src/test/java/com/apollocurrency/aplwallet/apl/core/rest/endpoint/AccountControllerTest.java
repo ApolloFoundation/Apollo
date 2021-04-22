@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverte
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
@@ -150,6 +151,8 @@ class AccountControllerTest extends AbstractEndpointTest {
     private AssetService assetService = Mockito.mock(AssetService.class);
     @Mock
     private AccountParametersParser accountParametersParser = Mockito.mock(AccountParametersParser.class);
+    @Mock
+    private BlockConverterCreator blockConverterCreator;
 
     private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter(prunableLoadingService));
     private BlockConverter blockConverter = new BlockConverter(
@@ -174,7 +177,7 @@ class AccountControllerTest extends AbstractEndpointTest {
             accountAssetConverter,
             accountCurrencyConverter,
             accountConverter,
-            blockConverter,
+            blockConverterCreator,
             new WalletKeysConverter(),
             new Account2FADetailsConverter(),
             new Account2FAConverter(),
@@ -721,6 +724,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         int to = 200;
 
         doReturn(BLOCKS).when(accountService).getAccountBlocks(ACCOUNT_ID, from, 99, timestamp);
+        doReturn(blockConverter).when(blockConverterCreator).create(false, false);
 
         MockHttpResponse response = sendGetRequest("/accounts/blocks?account=" + ACCOUNT_ID
             + "&timestamp=" + timestamp
