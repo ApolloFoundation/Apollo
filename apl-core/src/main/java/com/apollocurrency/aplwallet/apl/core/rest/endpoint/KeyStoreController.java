@@ -73,7 +73,8 @@ public class KeyStoreController {
     @POST
     @Path("/accountInfo")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get user eth key.",
+    @Operation(summary = "Get user's all eth/apl wallet's public keys and addresses. " +
+        "The passphrase will not be added to the response",
         tags = {"keyStore"},
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -175,7 +176,7 @@ public class KeyStoreController {
     @Secured2FA
     @PermitAll
     public Response downloadKeyStore(@FormParam("account") String account,
-                                     @FormParam("passPhrase") String passphraseReq, @Context HttpServletRequest request) throws ParameterException, IOException {
+                                     @FormParam("passphrase") String passphraseReq, @Context HttpServletRequest request) throws ParameterException, IOException {
         String passphraseStr = HttpParameterParserUtil.getPassphrase(passphraseReq, true);
         long accountId = RestParametersParser.parseAccountId(account);
 

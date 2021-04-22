@@ -54,6 +54,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAs
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.api.parameter.FirstLastIndexBeanParam;
 import com.apollocurrency.aplwallet.apl.util.api.parameter.LongParameter;
 import com.apollocurrency.aplwallet.apl.util.builder.ResponseBuilder;
@@ -250,7 +251,8 @@ public class AccountController {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(
         summary = "Generate new vault account and return the detail information",
-        description = "Generate new vault account on current node and return new account, publicKey, accountRS.",
+        description = "Generate new vault account on current node and return new account, publicKey, accountRS. " +
+            "The passphrase will be added into the response only when it's generated on the node",
         tags = {"accounts"},
         responses = {
             @ApiResponse(responseCode = "200", description = "Successful execution",
@@ -269,6 +271,9 @@ public class AccountController {
         }
 
         WalletKeysInfoDTO dto = walletKeysConverter.convert(walletKeysInfo);
+        if (StringUtils.isBlank(passphrase)) {
+            dto.setPassphrase(walletKeysInfo.getPassphrase());
+        }
 
         return response.bind(dto).build();
     }

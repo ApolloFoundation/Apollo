@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.blockchain;
 
-import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
@@ -100,7 +100,7 @@ public class TransactionBuilderFactory {
         return transaction;
     }
 
-    public Transaction newTransaction(TransactionDTO txDto) {
+    public Transaction newTransaction(UnconfirmedTransactionDTO txDto) {
         TransactionImpl transaction = newTransactionBuilder(txDto).build();
         reSignTransaction(transaction);
         return transaction;
@@ -114,8 +114,11 @@ public class TransactionBuilderFactory {
         TransactionImpl.BuilderImpl builder = newTransactionBuilder(transactionData);
         TransactionImpl transaction = builder.build();
         reSignTransaction(transaction);
-        long id = Long.parseUnsignedLong((String) transactionData.get("id"));
-        if (id != transaction.getId()) {
+        String id = (String) transactionData.get("id");
+        if (id == null) {
+            id = (String) transactionData.get("transaction");
+        }
+        if (id != null && Long.parseUnsignedLong(id) != transaction.getId()) {
             PayloadResult unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
             txBContext.createSerializer(transaction.getVersion())
                 .serialize(
@@ -225,7 +228,7 @@ public class TransactionBuilderFactory {
         }
     }
 
-    private TransactionImpl.BuilderImpl newTransactionBuilder(TransactionDTO txDto) {
+    private TransactionImpl.BuilderImpl newTransactionBuilder(UnconfirmedTransactionDTO txDto) {
         try {
             byte[] senderPublicKey = Convert.parseHexString(txDto.getSenderPublicKey());
             byte version = txDto.getVersion() == null ? 0 : txDto.getVersion();

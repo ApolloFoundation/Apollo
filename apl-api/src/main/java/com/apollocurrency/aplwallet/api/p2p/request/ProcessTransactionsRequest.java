@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.api.p2p.request;
 
-import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,13 +16,13 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 public class ProcessTransactionsRequest extends BaseP2PRequest {
-    public List<TransactionDTO> transactions;
+    public List<UnconfirmedTransactionDTO> transactions;
 
     public ProcessTransactionsRequest(UUID chainId) {
         super("processTransactions", chainId);
     }
 
-    public ProcessTransactionsRequest(List<TransactionDTO> transactions, UUID chainId) {
+    public ProcessTransactionsRequest(List<UnconfirmedTransactionDTO> transactions, UUID chainId) {
         this(chainId);
         this.transactions = transactions;
     }
