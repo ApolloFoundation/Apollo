@@ -34,6 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountAssetConverte
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.AccountCurrencyConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverterCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.Secured2FA;
 import com.apollocurrency.aplwallet.apl.core.rest.parameter.AccountIdParameter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.AccountStatisticsService;
@@ -123,7 +124,7 @@ public class AccountController {
     private AccountAssetConverter accountAssetConverter;
     private AccountCurrencyConverter accountCurrencyConverter;
     private AccountConverter converter;
-    private BlockConverter blockConverter;
+    private BlockConverterCreator blockConverterCreator;
     private WalletKeysConverter walletKeysConverter;
     private Account2FADetailsConverter faDetailsConverter;
     private Account2FAConverter faConverter;
@@ -143,7 +144,7 @@ public class AccountController {
                              AccountAssetConverter accountAssetConverter,
                              AccountCurrencyConverter accountCurrencyConverter,
                              AccountConverter converter,
-                             BlockConverter blockConverter,
+                             BlockConverterCreator blockConverterCreator,
                              WalletKeysConverter walletKeysConverter,
                              Account2FADetailsConverter faDetailsConverter,
                              Account2FAConverter faConverter,
@@ -164,7 +165,7 @@ public class AccountController {
         this.accountAssetConverter = accountAssetConverter;
         this.accountCurrencyConverter = accountCurrencyConverter;
         this.converter = converter;
-        this.blockConverter = blockConverter;
+        this.blockConverterCreator = blockConverterCreator;
         this.walletKeysConverter = walletKeysConverter;
         this.faDetailsConverter = faDetailsConverter;
         this.faConverter = faConverter;
@@ -454,16 +455,14 @@ public class AccountController {
         ResponseBuilder response = ResponseBuilder.startTiming();
         long accountId = accountIdParameter.get();
         indexBeanParam.adjustIndexes(maxAPIFetchRecords);
-
+        BlockConverter blockConverter = blockConverterCreator.create(includeTransaction, false);
         List<Block> blocks = accountService.getAccountBlocks(accountId, indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex(), timestamp);
         if (includeTransaction) {
             blocks.forEach(block -> blockchain.getOrLoadTransactions(block));
-            blockConverter.setAddTransactions(true);
         }
 
         BlocksResponse dto = new BlocksResponse();
         dto.setBlocks(blockConverter.convert(blocks));
-        blockConverter.setAddTransactions(false);
 
         return response.bind(dto).build();
     }
