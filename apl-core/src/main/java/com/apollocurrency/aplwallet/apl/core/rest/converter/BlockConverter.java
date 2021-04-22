@@ -84,6 +84,7 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
 
     public void addTransactions(BlockDTO o, Block model) {
         if (o != null && model != null) {
+            blockchain.getOrLoadTransactions(model);
             List<TransactionDTO> transactionDTOList = model.getTransactions().stream().map(transactionConverter).collect(Collectors.toList());
             o.setNumberOfTransactions((long) model.getTransactions().size());
             o.setTotalAmountATM(String.valueOf(transactionDTOList.stream().map(TransactionDTO::getAmountATM).mapToLong(Long::parseLong).sum()));

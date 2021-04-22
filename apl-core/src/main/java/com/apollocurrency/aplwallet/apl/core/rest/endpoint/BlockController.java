@@ -147,17 +147,8 @@ public class BlockController {
         if (blockData == null) {
             return response.error(ApiErrors.UNKNOWN_VALUE, "block", blockData).build();
         }
-        if (includeTransactions) {
-            blockchain.getOrLoadTransactions(blockData);
-        }
         BlockConverter blockConverter = blockConverterCreator.create(includeTransactions, includeExecutedPhased);
-        blockConverter.setAddTransactions(includeTransactions);
-        blockConverter.setAddPhasedTransactions(includeExecutedPhased);
         BlockDTO dto = blockConverter.convert(blockData);
-        if (!includeTransactions) {
-            long count = blockchain.getBlockTransactionCount(blockData.getId());
-            dto.setNumberOfTransactions(count);
-        }
         log.trace("getBlock result: {}", dto);
         return response.bind(dto).build();
     }
