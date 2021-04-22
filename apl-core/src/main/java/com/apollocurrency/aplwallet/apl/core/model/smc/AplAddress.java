@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.model.smc;
 
 import com.apollocurrency.smc.data.type.Address;
+import com.apollocurrency.smc.data.type.AddressHelper;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigInteger;
@@ -24,6 +25,11 @@ public class AplAddress implements Address {
 
     public AplAddress(Address address) {
         this.id = new BigInteger(address.get()).longValueExact();
+    }
+
+    public AplAddress(String address) {
+        byte[] bytes = AddressHelper.parseHex(address);
+        this.id = new BigInteger(bytes).longValueExact();
     }
 
     public long getLongId() {

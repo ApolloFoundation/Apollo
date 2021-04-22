@@ -107,7 +107,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     }
 
     @Override
-    public void launchStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) throws AplException.ValidationException {
+    public void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) throws AplException.ValidationException {
         log.debug("SMC: doStateIndependentValidation = ...");
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) abstractSmcAttachment;
         if (Strings.isNullOrEmpty(attachment.getContractName())) {
@@ -126,7 +126,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             throw new AplException.NotCurrentlyValidException("Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel());
         }
         //syntactical and semantic validation
-        BlockchainIntegrator integrator = integratorFactory.createMockProcessor(smartContract, transaction.getId());
+        BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
         ContractTxProcessor processor = new SandboxContractValidationProcessor(smartContract, integrator);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
@@ -142,7 +142,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         checkPrecondition(transaction);
         SmartContract smartContract = contractService.createNewContract(transaction);
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
-        BlockchainIntegrator integrator = integratorFactory.createProcessor(smartContract, transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
+        BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
         ContractTxProcessor processor = new PublishContractTxProcessor(smartContract, integrator);
         ExecutionLog executionLog = processor.process();

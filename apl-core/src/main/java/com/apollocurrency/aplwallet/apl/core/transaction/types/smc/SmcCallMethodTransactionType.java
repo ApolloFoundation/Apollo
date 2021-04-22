@@ -123,7 +123,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
         //syntactical and semantic validation
-        BlockchainIntegrator integrator = integratorFactory.createMockProcessor(smartContract, transaction.getId());
+        BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
         ContractTxProcessor processor = new SandboxCallMethodValidationProcessor(smartContract, smartMethod, integrator);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
@@ -134,7 +134,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     }
 
     @Override
-    public void launchStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) throws AplException.ValidationException {
+    public void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) throws AplException.ValidationException {
         log.debug("SMC: doStateIndependentValidation = ...");
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) abstractSmcAttachment;
         if (Strings.isNullOrEmpty(attachment.getMethodName())) {
@@ -153,7 +153,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
                 + calculatedFuel + " but actual=" + actualFuel);
         }
         //syntactical validation
-        BlockchainIntegrator integrator = integratorFactory.createMockProcessor(actualFuel, transaction.getId());
+        BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
         ContractTxProcessor processor = new SyntaxParseProcessor(smartMethod.getMethodWithParams(), integrator);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
@@ -178,7 +178,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
-        BlockchainIntegrator integrator = integratorFactory.createProcessor(smartContract, transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
+        BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
         ContractTxProcessor processor = new CallMethodContractTxProcessor(smartContract, smartMethod, integrator);
         ExecutionLog executionLog = processor.process();

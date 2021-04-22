@@ -82,10 +82,10 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
             throw new AplException.NotCurrentlyValidException("Fuel price value doesn't correspond to the MIN or MAX values.");
         }
 
-        launchStateIndependentValidation(transaction, attachment);
+        executeStateIndependentValidation(transaction, attachment);
     }
 
-    public abstract void launchStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) throws AplException.ValidationException;
+    public abstract void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) throws AplException.ValidationException;
 
     protected void checkPrecondition(Transaction smcTransaction) {
         smcTransaction.getAttachment().getTransactionTypeSpec();

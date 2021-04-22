@@ -21,7 +21,6 @@ import com.apollocurrency.smc.blockchain.MockIntegrator;
 import com.apollocurrency.smc.blockchain.SMCNotFoundException;
 import com.apollocurrency.smc.blockchain.tx.SMCOperationReceipt;
 import com.apollocurrency.smc.contract.SmartMethod;
-import com.apollocurrency.smc.contract.fuel.Chargeable;
 import com.apollocurrency.smc.contract.vm.ContractBlock;
 import com.apollocurrency.smc.contract.vm.ContractBlockchainTransaction;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
@@ -29,7 +28,7 @@ import com.apollocurrency.smc.contract.vm.SMCMessageSenderException;
 import com.apollocurrency.smc.contract.vm.global.BlockchainInfo;
 import com.apollocurrency.smc.contract.vm.global.SMCBlock;
 import com.apollocurrency.smc.contract.vm.global.SMCTransaction;
-import com.apollocurrency.smc.contract.vm.operation.PaidOperationProcessor;
+import com.apollocurrency.smc.contract.vm.operation.SMCOperationProcessor;
 import com.apollocurrency.smc.data.type.Address;
 import lombok.extern.slf4j.Slf4j;
 
@@ -55,9 +54,9 @@ public class SmcBlockchainIntegratorFactory {
         this.blockConverter = new BlockConverter();
     }
 
-    public BlockchainIntegrator createProcessor(final Chargeable chargeable, final Transaction originator, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
+    public BlockchainIntegrator createProcessor(final Transaction originator, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
         BlockchainIntegrator integrator = createIntegrator(originator, attachment, txSenderAccount, txRecipientAccount, ledgerEvent);
-        return PaidOperationProcessor.createProcessor(chargeable, integrator, new ExecutionLog());
+        return SMCOperationProcessor.createProcessor(integrator, new ExecutionLog());
     }
 
     BlockchainIntegrator createIntegrator(final Transaction transaction, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
@@ -169,8 +168,8 @@ public class SmcBlockchainIntegratorFactory {
         };
     }
 
-    public BlockchainIntegrator createMockProcessor(final Chargeable chargeable, final long originatorTransactionId) {
-        return PaidOperationProcessor.createProcessor(chargeable, createMockIntegrator(originatorTransactionId), ExecutionLog.EMPTY_LOG);
+    public BlockchainIntegrator createMockProcessor(final long originatorTransactionId) {
+        return SMCOperationProcessor.createProcessor(createMockIntegrator(originatorTransactionId), ExecutionLog.EMPTY_LOG);
     }
 
     BlockchainIntegrator createMockIntegrator(final long originatorTransactionId) {
