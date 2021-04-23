@@ -17,14 +17,14 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAtt
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
+import com.apollocurrency.smc.blockchain.ContractNotFoundException;
 import com.apollocurrency.smc.blockchain.MockIntegrator;
-import com.apollocurrency.smc.blockchain.SMCNotFoundException;
 import com.apollocurrency.smc.blockchain.tx.SMCOperationReceipt;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.vm.ContractBlock;
 import com.apollocurrency.smc.contract.vm.ContractBlockchainTransaction;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.contract.vm.SMCMessageSenderException;
+import com.apollocurrency.smc.contract.vm.SendMsgException;
 import com.apollocurrency.smc.contract.vm.global.BlockchainInfo;
 import com.apollocurrency.smc.contract.vm.global.SMCBlock;
 import com.apollocurrency.smc.contract.vm.global.SMCTransaction;
@@ -89,7 +89,7 @@ public class SmcBlockchainIntegratorFactory {
                     if (from.getLongId() == txSenderAccount.getId()) {//case 1
                         log.debug("--send money ---2.1: ");
                         if (to.getLongId() != txRecipientAccount.getId()) {
-                            throw new SMCMessageSenderException("Wrong recipient address");
+                            throw new SendMsgException("Wrong recipient address");
                         }
                         sender = txSenderAccount;
                         recipient = txRecipientAccount;
@@ -98,10 +98,10 @@ public class SmcBlockchainIntegratorFactory {
                         sender = txRecipientAccount; //contract address
                         recipient = accountService.getAccount(to.getLongId());
                         if (recipient == null) {
-                            throw new SMCNotFoundException("Recipient not found, recipient=" + to.getLongId());
+                            throw new ContractNotFoundException("Recipient not found, recipient=" + to.getLongId());
                         }
                     } else {
-                        throw new SMCMessageSenderException("Wrong sender address");
+                        throw new SendMsgException("Wrong sender address");
                     }
                     log.debug("--send money ---3: sender={} recipient={}", sender, recipient);
                     txReceiptBuilder
@@ -110,7 +110,7 @@ public class SmcBlockchainIntegratorFactory {
                     log.debug("--send money ---4: before blockchain tx, receipt={}", txReceiptBuilder.build());
 
                     if (sender.getUnconfirmedBalanceATM() < amount) {
-                        throw new SMCMessageSenderException("Insufficient balance.");
+                        throw new SendMsgException("Insufficient balance.");
                     }
                     accountService.addToBalanceAndUnconfirmedBalanceATM(txSenderAccount, ledgerEvent, originatorTransactionId, -amount);
                     accountService.addToBalanceAndUnconfirmedBalanceATM(txRecipientAccount, ledgerEvent, originatorTransactionId, amount);
@@ -138,7 +138,7 @@ public class SmcBlockchainIntegratorFactory {
                 AplAddress aplAddress = new AplAddress(address);
                 Account account = accountService.getAccount(aplAddress.getLongId());
                 if (account == null) {
-                    throw new SMCNotFoundException("Address not found, address=" + address.getHex());
+                    throw new ContractNotFoundException("Address not found, address=" + address.getHex());
                 }
                 return BigInteger.valueOf(account.getBalanceATM());
             }

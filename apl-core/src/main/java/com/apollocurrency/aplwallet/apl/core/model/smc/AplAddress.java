@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.model.smc;
 
 import com.apollocurrency.smc.data.type.Address;
-import com.apollocurrency.smc.data.type.AddressHelper;
+import com.apollocurrency.smc.util.AddressHelper;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigInteger;

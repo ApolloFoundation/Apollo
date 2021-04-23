@@ -5,11 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractTxProcessor;
-import com.apollocurrency.smc.SMCException;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
+import com.apollocurrency.smc.contract.ContractException;
 import com.apollocurrency.smc.contract.SmartContract;
+import com.apollocurrency.smc.contract.vm.ContractVirtualMachine;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.contract.vm.SMCMachine;
 import com.apollocurrency.smc.polyglot.LanguageContextFactory;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,7 +22,7 @@ import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT
  */
 @Slf4j
 public abstract class AbstractContractTxProcessor implements ContractTxProcessor {
-    protected final SMCMachine smcMachine;
+    protected final ContractVirtualMachine smcMachine;
     private final SmartContract smartContract;
 
     protected AbstractContractTxProcessor(BlockchainIntegrator integrator) {
@@ -51,11 +51,11 @@ public abstract class AbstractContractTxProcessor implements ContractTxProcessor
 
         } catch (Exception e) {
             log.error("Contract processing error {}:{}", e.getClass().getName(), e.getMessage());
-            SMCException smcException;
-            if (e instanceof SMCException) {
-                smcException = (SMCException) e;
+            ContractException smcException;
+            if (e instanceof ContractException) {
+                smcException = (ContractException) e;
             } else {
-                smcException = new SMCException(e);
+                smcException = new ContractException(e);
             }
             executionLog.add("Abstract processor", smcException);
             executionLog.setErrorCode(CONTRACT_PROCESSING_ERROR.getErrorCode());
