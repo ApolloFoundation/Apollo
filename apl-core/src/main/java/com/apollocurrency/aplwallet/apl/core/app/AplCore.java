@@ -232,6 +232,8 @@ public final class AplCore {
 
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 52.5, "Exchange matcher initialization");
 
+            GenesisAccounts.init();
+
             tcs = CDI.current().select(IDexMatcherInterface.class).get();
             tcs.initialize();
 
@@ -241,7 +243,7 @@ public final class AplCore {
             blockchain = CDI.current().select(BlockchainImpl.class).get();
             blockchain.update();
             peers.init();
-            GenesisAccounts.init();
+
 
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 55.0, "Apollo Account ledger initialization");
 
