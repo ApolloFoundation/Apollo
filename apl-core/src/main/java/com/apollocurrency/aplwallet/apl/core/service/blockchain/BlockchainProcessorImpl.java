@@ -634,7 +634,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } catch (DbTransactionHelper.DbTransactionExecutionException e) {
                 log.error("PushBlock, error:", e);
                 try {
-                    popOffToCommonBlock(previousLastBlock); // do in new transaction; current is closed
+                    popOffToCommonBlock(previousLastBlock); // do in current transaction
                 } catch (Exception ex) {
                     log.error("Unable to rollback db changes or do pop off for block height " + block.getHeight() + " id " + block.getId(), ex);
                 } finally { // set blockchain last block to point on previous correct block in any case to restore operability and avoid BlockNotFoundException
@@ -1143,6 +1143,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int payloadLength = 0;
         int maxPayloadLength = blockchainConfig.getCurrentConfig().getMaxPayloadLength();
+        List<UnconfirmedTransaction> removedTxs = new ArrayList<>();
         TransactionalDataSource.StartedConnection startedConnection = databaseManager.getDataSource().beginTransactionIfNotStarted();
         try {
             txSelectLoop:
@@ -1166,7 +1167,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         continue;
                     }
                     if (!transactionApplier.applyUnconfirmed(unconfirmedTransaction.getTransactionImpl())) { // persist tx changes and validate against updated state
-                        transactionProcessor.removeUnconfirmedTransaction(unconfirmedTransaction); // remove incorrect transaction and forget about it for 10 minutes
+                        removedTxs.add(unconfirmedTransaction); // remove incorrect transaction and forget about it for 10 minutes
                         continue;
                     }
                     // prefetch data for duplicate validation
@@ -1192,6 +1193,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             // do not apply changes for applyUnconfirmed
             databaseManager.getDataSource().rollback(!startedConnection.isAlreadyStarted());
         }
+        removedTxs.forEach(transactionProcessor::removeUnconfirmedTransaction);
         return sortedTransactions;
     }
 
