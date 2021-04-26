@@ -252,7 +252,7 @@ public class BlockchainImpl implements Blockchain {
             return null;
         }
         if (block.getTransactions() == null) {
-            block.setTransactions(getBlockTransactions(block.getId()));
+            block.setTransactions(getOrLoadTransactions(block));
         }
         PublicKey publicKey = publicKeyDao.searchAll(block.getGeneratorId());
         if (publicKey != null) {

@@ -46,6 +46,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.ScanDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
+import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ScanEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -575,66 +576,64 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         long startTime = System.currentTimeMillis();
         globalSync.writeLock();
         long lockAquireTime = System.currentTimeMillis() - startTime;
+        Block previousLastBlock;
+        previousLastBlock = blockchain.getLastBlock();
         try {
-            Block previousLastBlock = null;
-            byte[] generatorPublicKey;
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
-            dataSource.begin();
             try {
-                previousLastBlock = blockchain.getLastBlock();
-                if (!previousLastBlock.hasGeneratorPublicKey()) {
-                    generatorPublicKey = accountService.getPublicKeyByteArray(previousLastBlock.getGeneratorId());
-                    if (generatorPublicKey != null) {
-                        previousLastBlock.setGeneratorPublicKey(generatorPublicKey);
+                DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
+                    byte[] generatorPublicKey;
+                    if (!previousLastBlock.hasGeneratorPublicKey()) {
+                        generatorPublicKey = accountService.getPublicKeyByteArray(previousLastBlock.getGeneratorId());
+                        if (generatorPublicKey != null) {
+                            previousLastBlock.setGeneratorPublicKey(generatorPublicKey);
+                        }
+                    } else {
+                        generatorPublicKey = previousLastBlock.getGeneratorPublicKey();
                     }
-                } else {
-                    generatorPublicKey = previousLastBlock.getGeneratorPublicKey();
-                }
 //                generatorPublicKey = block.getGeneratorPublicKey();
-                if (generatorPublicKey == null) { // second attempt
-                    generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
-                    block.setGeneratorPublicKey(generatorPublicKey);
-                }
+                    if (generatorPublicKey == null) { // second attempt
+                        generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
+                        block.setGeneratorPublicKey(generatorPublicKey);
+                    }
 
-                validator.validate(block, previousLastBlock, curTime);
+                    validator.validate(block, previousLastBlock, curTime);
 
-                long nextHitTime = generatorService.getNextHitTime(previousLastBlock.getId(), curTime);
-                if (nextHitTime > 0 && block.getTimestamp() > nextHitTime + 1) {
-                    String msg = "Rejecting block " + block.getStringId() + " at height " + previousLastBlock.getHeight()
-                        + " block timestamp " + block.getTimestamp() + " next hit time " + nextHitTime
-                        + " current time " + curTime;
-                    log.debug(msg);
-                    generatorService.setDelay(-propertiesHolder.FORGING_SPEEDUP());
-                    throw new BlockOutOfOrderException(msg, blockSerializer.getJSONObject(block));
-                }
+                    long nextHitTime = generatorService.getNextHitTime(previousLastBlock.getId(), curTime);
+                    if (nextHitTime > 0 && block.getTimestamp() > nextHitTime + 1) {
+                        String msg = "Rejecting block " + block.getStringId() + " at height " + previousLastBlock.getHeight()
+                            + " block timestamp " + block.getTimestamp() + " next hit time " + nextHitTime
+                            + " current time " + curTime;
+                        log.debug(msg);
+                        generatorService.setDelay(-propertiesHolder.FORGING_SPEEDUP());
+                        throw new BlockOutOfOrderException(msg, blockSerializer.getJSONObject(block));
+                    }
 
-                Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates = new HashMap<>();
-                List<Transaction> validPhasedTransactions = new ArrayList<>();
-                List<Transaction> invalidPhasedTransactions = new ArrayList<>();
-                validatePhasedTransactions(block, previousLastBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
-                validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
+                    Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates = new HashMap<>();
+                    List<Transaction> validPhasedTransactions = new ArrayList<>();
+                    List<Transaction> invalidPhasedTransactions = new ArrayList<>();
+                    validatePhasedTransactions(block, previousLastBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
+                    validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
 
-                HeightConfig config = blockchainConfig.getCurrentConfig();
-                Shard lastShard = shardDao.getLastShard();
-                Block shardInitialBlock = blockchain.getShardInitialBlock();
-                int currentHeight = previousLastBlock.getHeight();
-                // put three latest blocks into array TODO: YL optimize to fetch three blocks later
-                fillInBlockArray(previousLastBlock, lastShard, currentHeight);
-                consensusManager.setPrevious(block, threeLatestBlocksArray, config, lastShard, shardInitialBlock.getHeight());
-                block.assignTransactionsIndex(); // IMPORTANT step !!!
-                log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.BEFORE_BLOCK_ACCEPT.name());
-                blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(block);
-                addBlock(block);
+                    HeightConfig config = blockchainConfig.getCurrentConfig();
+                    Shard lastShard = shardDao.getLastShard();
+                    Block shardInitialBlock = blockchain.getShardInitialBlock();
+                    int currentHeight = previousLastBlock.getHeight();
+                    // put three latest blocks into array TODO: YL optimize to fetch three blocks later
+                    fillInBlockArray(previousLastBlock, lastShard, currentHeight);
+                    consensusManager.setPrevious(block, threeLatestBlocksArray, config, lastShard, shardInitialBlock.getHeight());
+                    block.assignTransactionsIndex(); // IMPORTANT step !!!
+                    log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.BEFORE_BLOCK_ACCEPT.name());
+                    blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(block);
+                    addBlock(block);
 
-                accept(block, validPhasedTransactions, invalidPhasedTransactions, duplicates);
+                    accept(block, validPhasedTransactions, invalidPhasedTransactions, duplicates);
 
-                blockchain.commit(block);
-                dataSource.commit(false);
-                log.trace("committed block on = {}, id = '{}'", block.getHeight(), block.getId());
-            } catch (Exception e) {
+                    blockchain.commit(block);
+                    log.trace("committed block on = {}, id = '{}'", block.getHeight(), block.getId());
+                });
+            } catch (DbTransactionHelper.DbTransactionExecutionException e) {
                 log.error("PushBlock, error:", e);
                 try {
-                    dataSource.rollback(false); // do not close current transaction
                     popOffToCommonBlock(previousLastBlock); // do in current transaction
                 } catch (Exception ex) {
                     log.error("Unable to rollback db changes or do pop off for block height " + block.getHeight() + " id " + block.getId(), ex);
@@ -643,8 +642,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     blockchain.setLastBlock(previousLastBlock);
                 }
                 throw e;
-            } finally {
-                dataSource.commit(); // finally close transaction
             }
             log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.AFTER_BLOCK_ACCEPT.name());
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(block);
@@ -1146,6 +1143,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int payloadLength = 0;
         int maxPayloadLength = blockchainConfig.getCurrentConfig().getMaxPayloadLength();
+        List<UnconfirmedTransaction> removedTxs = new ArrayList<>();
         TransactionalDataSource.StartedConnection startedConnection = databaseManager.getDataSource().beginTransactionIfNotStarted();
         try {
             txSelectLoop:
@@ -1169,6 +1167,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         continue;
                     }
                     if (!transactionApplier.applyUnconfirmed(unconfirmedTransaction.getTransactionImpl())) { // persist tx changes and validate against updated state
+                        removedTxs.add(unconfirmedTransaction); // remove incorrect transaction and forget about it for 10 minutes
                         continue;
                     }
                     // prefetch data for duplicate validation
@@ -1194,6 +1193,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             // do not apply changes for applyUnconfirmed
             databaseManager.getDataSource().rollback(!startedConnection.isAlreadyStarted());
         }
+        removedTxs.forEach(transactionProcessor::removeUnconfirmedTransaction);
         return sortedTransactions;
     }
 

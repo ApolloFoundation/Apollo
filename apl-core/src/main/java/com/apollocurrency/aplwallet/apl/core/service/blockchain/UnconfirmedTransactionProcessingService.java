@@ -62,6 +62,9 @@ public class UnconfirmedTransactionProcessingService {
         if (transaction.getReferencedTransactionFullHash() != null && !memPool.canAcceptReferenced()) {
             return new UnconfirmedTxValidationResult(100_122, UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID, "Unable to accept new referenced transactions");
         }
+        if (memPool.isRemoved(transaction)) {
+            return new UnconfirmedTxValidationResult(100_124, UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID, "Transaction was recently processed");
+        }
 
         if (!validator.verifySignature(transaction)) {
             if (accountService.getAccount(transaction.getSenderId()) != null) {

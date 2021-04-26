@@ -25,6 +25,7 @@ import javax.enterprise.inject.spi.CDI;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Class makes lookup of BlockchainProcessor
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ProcessTransactionsThread implements Runnable {
 
+    public static final int REMOVED_TXS_FETCH_LIMIT = 2000;
     private BlockchainProcessor blockchainProcessor;
     private final TransactionProcessor transactionProcessor;
     private final MemPool memPool;
@@ -65,8 +67,7 @@ public class ProcessTransactionsThread implements Runnable {
                 }
 
                 GetUnconfirmedTransactionsRequest request = new GetUnconfirmedTransactionsRequest(blockchainConfig.getChain().getChainId());
-                List<String> exclude = memPool.getAllProcessedIds()
-                    .stream()
+                List<String> exclude = Stream.concat(memPool.getAllProcessedIds().stream(), memPool.getAllRemoved(REMOVED_TXS_FETCH_LIMIT).stream())
                     .sorted(Long::compareTo)
                     .map(Long::toUnsignedString)
                     .collect(Collectors.toList());
