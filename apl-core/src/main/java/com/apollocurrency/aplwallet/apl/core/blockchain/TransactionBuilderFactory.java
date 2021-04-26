@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.blockchain;
 
-import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
@@ -49,13 +49,11 @@ import java.util.List;
 @Slf4j
 public class TransactionBuilderFactory {
     private final TransactionTypeFactory factory;
-    private final BlockchainConfig blockchainConfig;
     private final TxBContext txBContext;
 
     @Inject
     public TransactionBuilderFactory(TransactionTypeFactory factory, BlockchainConfig blockchainConfig) {
         this.factory = factory;
-        this.blockchainConfig = blockchainConfig;
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }
 
@@ -118,7 +116,7 @@ public class TransactionBuilderFactory {
         return transaction;
     }
 
-    public Transaction newTransaction(TransactionDTO txDto) {
+    public Transaction newTransaction(UnconfirmedTransactionDTO txDto) {
         TransactionImpl transaction = newTransactionBuilder(txDto).build();
         reSignTransaction(transaction);
         return transaction;
@@ -132,8 +130,11 @@ public class TransactionBuilderFactory {
         TransactionImpl.BuilderImpl builder = newTransactionBuilder(transactionData);
         TransactionImpl transaction = builder.build();
         reSignTransaction(transaction);
-        long id = Long.parseUnsignedLong((String) transactionData.get("id"));
-        if (id != transaction.getId()) {
+        String id = (String) transactionData.get("id");
+        if (id == null) {
+            id = (String) transactionData.get("transaction");
+        }
+        if (id != null && Long.parseUnsignedLong(id) != transaction.getId()) {
             PayloadResult unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
             txBContext.createSerializer(transaction.getVersion())
                 .serialize(
@@ -154,7 +155,6 @@ public class TransactionBuilderFactory {
                 TransactionWrapperHelper.createUnsignedTransaction(transaction)
                 , unsignedTxBytes
             );
-
         transaction.sign(transaction.getSignature(), unsignedTxBytes);
     }
 
@@ -364,7 +364,7 @@ public class TransactionBuilderFactory {
         return null;
     }
 
-    private TransactionImpl.BuilderImpl newTransactionBuilder(TransactionDTO txDto) {
+    private TransactionImpl.BuilderImpl newTransactionBuilder(UnconfirmedTransactionDTO txDto) {
         JSONObject attachmentData = null;
         try {
             byte[] senderPublicKey = Convert.parseHexString(txDto.getSenderPublicKey());

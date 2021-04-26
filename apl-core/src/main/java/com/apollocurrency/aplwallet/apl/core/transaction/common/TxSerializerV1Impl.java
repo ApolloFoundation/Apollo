@@ -26,7 +26,6 @@ public class TxSerializerV1Impl extends AbstractTxSerializer {
 
     @Override
     public int write(Transaction transaction, WriteBuffer buffer) {
-        int payloadSize = 0;
         buffer.write(transaction.getType().getSpec().getType());
         buffer.write(getVersionSubtypeByte(transaction));
         buffer.write(transaction.getTimestamp());
@@ -52,7 +51,6 @@ public class TxSerializerV1Impl extends AbstractTxSerializer {
         buffer.write(getTransactionFlags(transaction));
         buffer.write(transaction.getECBlockHeight());
         buffer.write(transaction.getECBlockId());
-
 
         for (Appendix appendage : transaction.getAppendages()) {
             appendage.putBytes(buffer);

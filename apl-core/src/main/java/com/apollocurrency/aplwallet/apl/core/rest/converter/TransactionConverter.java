@@ -31,4 +31,8 @@ public class TransactionConverter implements Converter<Transaction, TransactionD
         dto.setTransactionIndex(model.getIndex());
         return dto;
     }
+
+    public void setPriv(boolean priv) {
+        unconfirmedTransactionConverter.setPriv(priv);
+    }
 }

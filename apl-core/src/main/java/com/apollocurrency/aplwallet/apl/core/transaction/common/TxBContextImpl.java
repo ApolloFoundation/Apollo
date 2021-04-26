@@ -31,13 +31,21 @@ public class TxBContextImpl extends TxBContext {
             case 1:
             case 2:
                 if (txSerializerV2 == null) {
-                    txSerializerV2 = new TxSerializerV1Impl(this);
+                    synchronized (this) {
+                        if (txSerializerV2 == null) {
+                            txSerializerV2 = new TxSerializerV1Impl(this);
+                        }
+                    }
                 }
                 return txSerializerV2;
 
             case 3:
                 if (txSerializerV3 == null) {
-                    txSerializerV3 = new TxSerializerV3Impl(this);
+                    synchronized (this) {
+                        if (txSerializerV3 == null) {
+                            txSerializerV3 = new TxSerializerV3Impl(this);
+                        }
+                    }
                 }
                 return txSerializerV3;
             default:
