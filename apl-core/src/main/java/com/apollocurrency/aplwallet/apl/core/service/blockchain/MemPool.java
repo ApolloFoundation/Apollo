@@ -18,10 +18,14 @@ import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.google.common.cache.Cache;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -40,7 +44,7 @@ public class MemPool {
     private final TransactionValidator validator;
     private final UnconfirmedTransactionEntityToModelConverter toModelConverter;
     private final UnconfirmedTransactionModelToEntityConverter toEntityConverter;
-    private final Cache<Long, Long> removedTransactions;
+    private final Cache<Long, RemovedTx> removedTransactions;
 
     private final boolean enableRebroadcasting;
     private final int maxUnconfirmedTransactions;
@@ -198,7 +202,7 @@ public class MemPool {
     public boolean removeProcessedTransaction(Transaction transaction) {
         int deleted = table.deleteById(transaction.getId());
         memoryState.removeFromCache(transaction);
-        removedTransactions.put(transaction.getId(), System.currentTimeMillis());
+        removedTransactions.put(transaction.getId(), new RemovedTx(transaction.getId(), System.currentTimeMillis()));
         return deleted > 0;
     }
 
@@ -207,8 +211,8 @@ public class MemPool {
     }
 
     public List<Long> getAllRemoved(int limit) {
-        Comparator<Map.Entry<Long, Long>> entryComparator = Map.Entry.comparingByValue();
-        return removedTransactions.asMap().entrySet().stream().sorted(entryComparator.reversed()).map(Map.Entry::getKey).limit(limit).collect(Collectors.toList());
+        ArrayList<RemovedTx> listOfRemovedTxs = new ArrayList<>(removedTransactions.asMap().values());
+        return listOfRemovedTxs.stream().sorted(Comparator.comparingLong(RemovedTx::getTime).reversed()).map(RemovedTx::getId).limit(limit).collect(Collectors.toList());
     }
 
     public int getReferencedTxsNumber() {
@@ -260,5 +264,15 @@ public class MemPool {
 
     public double pendingBroadcastQueueLoad() {
         return memoryState.pendingBroadcastQueueLoadFactor();
+    }
+
+
+    @Getter
+    @AllArgsConstructor
+    @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+    private static class RemovedTx {
+        @EqualsAndHashCode.Include
+        private final long id;
+        private final long time;
     }
 }
