@@ -339,6 +339,15 @@ public class GeneratorServiceImpl implements GeneratorService {
                 if (timeService.getEpochTime() - start > 10) { // give up after trying for 10 s
                     throw e;
                 }
+            } catch (BlockchainProcessor.BlockNotAcceptedException e) {
+                if (Convert.nullToEmpty(e.getMessage()).contains("Incorrect regular block")) {
+                    log.debug("Mempool state changed, skip block generation iteration");
+                    if (log.isTraceEnabled()) {
+                        log.trace("Block was not accepted during generation ", e);
+                    }
+                    return false;
+                }
+                throw e;
             }
         }
     }

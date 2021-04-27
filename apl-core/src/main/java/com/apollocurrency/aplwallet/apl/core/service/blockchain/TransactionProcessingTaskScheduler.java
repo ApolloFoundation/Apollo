@@ -41,7 +41,6 @@ public class TransactionProcessingTaskScheduler {
     private final UnconfirmedTransactionProcessingService processingService;
     private final UnconfirmedTransactionCreator unconfirmedTransactionCreator;
     private final BatchSizeCalculator batchSizeCalculator;
-    private final GlobalSync globalSync;
 
     @Inject
     public TransactionProcessingTaskScheduler(PropertiesHolder propertiesHolder, TimeService timeService,
@@ -51,7 +50,7 @@ public class TransactionProcessingTaskScheduler {
                                               TaskDispatchManager taskDispatchManager, TransactionValidator transactionValidator,
                                               UnconfirmedTransactionProcessingService processingService,
                                               BatchSizeCalculator batchSizeCalculator,
-                                              UnconfirmedTransactionCreator unconfirmedTransactionCreator, GlobalSync globalSync) {
+                                              UnconfirmedTransactionCreator unconfirmedTransactionCreator) {
         this.timeService = timeService;
         this.blockchain = blockchain;
         this.memPool = memPool;
@@ -66,7 +65,6 @@ public class TransactionProcessingTaskScheduler {
         this.processingService = processingService;
         this.batchSizeCalculator = batchSizeCalculator;
         this.unconfirmedTransactionCreator = unconfirmedTransactionCreator;
-        this.globalSync = globalSync;
         configureBackgroundTasks();
     }
 
@@ -107,7 +105,7 @@ public class TransactionProcessingTaskScheduler {
                 .name("RemoveUnconfirmedTransactions")
                 .delay(5000)
                 .task(new RemoveUnconfirmedTransactionsThread(
-                    this.databaseManager, transactionProcessor, this.timeService, memPool, globalSync))
+                    this.databaseManager, transactionProcessor, this.timeService, memPool))
                 .build());
 
             dispatcher.schedule(Task.builder()

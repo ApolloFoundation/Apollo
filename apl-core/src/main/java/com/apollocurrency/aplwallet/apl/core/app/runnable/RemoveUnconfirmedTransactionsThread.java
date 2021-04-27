@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
@@ -30,17 +29,15 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
     private final TransactionProcessor transactionProcessor;
     private final TimeService timeService;
     private final MemPool memPool;
-    private final GlobalSync globalSync;
 
     private final AtomicInteger counter = new AtomicInteger(0);
 
     public RemoveUnconfirmedTransactionsThread(DatabaseManager databaseManager,
                                                TransactionProcessor transactionProcessor,
                                                TimeService timeService,
-                                               MemPool memPool, GlobalSync globalSync) {
+                                               MemPool memPool) {
         this.databaseManager = Objects.requireNonNull(databaseManager);
         this.memPool = memPool;
-        this.globalSync = globalSync;
         this.transactionProcessor = Objects.requireNonNull(transactionProcessor);
         this.timeService = Objects.requireNonNull(timeService);
         log.info("Created 'RemoveUnconfirmedTransactionsThread' instance");
@@ -53,16 +50,11 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
                 if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
-                globalSync.updateLock();
-                try {
-                    int op = counter.incrementAndGet();
-                    removeExpiredTransactions();
-                    if (op % 10 == 0) {
-                        removeNotValidTransactions();
-                        counter.set(0);
-                    }
-                } finally {
-                    globalSync.updateUnlock();
+                int op = counter.incrementAndGet();
+                removeExpiredTransactions();
+                if (op % 10 == 0) {
+                    removeNotValidTransactions();
+                    counter.set(0);
                 }
             } catch (Exception e) {
                 log.info("Error removing unconfirmed transactions", e);
