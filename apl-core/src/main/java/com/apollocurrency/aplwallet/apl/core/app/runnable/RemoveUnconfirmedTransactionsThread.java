@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Class makes lookup of BlockchainProcessor
@@ -28,14 +30,17 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
     private final TransactionProcessor transactionProcessor;
     private final TimeService timeService;
     private final MemPool memPool;
-    private volatile int counter = 0;
+    private final GlobalSync globalSync;
+
+    private final AtomicInteger counter = new AtomicInteger(0);
 
     public RemoveUnconfirmedTransactionsThread(DatabaseManager databaseManager,
                                                TransactionProcessor transactionProcessor,
                                                TimeService timeService,
-                                               MemPool memPool) {
+                                               MemPool memPool, GlobalSync globalSync) {
         this.databaseManager = Objects.requireNonNull(databaseManager);
         this.memPool = memPool;
+        this.globalSync = globalSync;
         this.transactionProcessor = Objects.requireNonNull(transactionProcessor);
         this.timeService = Objects.requireNonNull(timeService);
         log.info("Created 'RemoveUnconfirmedTransactionsThread' instance");
@@ -48,11 +53,16 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
                 if (lookupBlockchainProcessor().isDownloading()) {
                     return;
                 }
-                counter++;
-                removeExpiredTransactions();
-                if (counter % 10 == 0) {
-                    removeNotValidTransactions();
-                    counter = 0;
+                globalSync.updateLock();
+                try {
+                    int op = counter.incrementAndGet();
+                    removeExpiredTransactions();
+                    if (op % 10 == 0) {
+                        removeNotValidTransactions();
+                        counter.set(0);
+                    }
+                } finally {
+                    globalSync.updateUnlock();
                 }
             } catch (Exception e) {
                 log.info("Error removing unconfirmed transactions", e);
