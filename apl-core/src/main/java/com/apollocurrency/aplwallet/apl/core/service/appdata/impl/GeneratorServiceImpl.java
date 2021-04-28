@@ -5,10 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.runnable.GenerateBlocksTask;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
@@ -18,9 +19,12 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxSerializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import lombok.extern.slf4j.Slf4j;
@@ -334,20 +338,9 @@ public class GeneratorServiceImpl implements GeneratorService {
                 setDelay(propertiesHolder.FORGING_DELAY());
                 log.debug(generator + " stopped forge loop in ({} ms)", (System.currentTimeMillis() - startLog));
                 return true;
-            } catch (BlockchainProcessor.TransactionNotAcceptedException e) {
-                // the bad transaction has been expunged, try again
-                if (timeService.getEpochTime() - start > 10) { // give up after trying for 10 s
-                    throw e;
-                }
-            } catch (BlockchainProcessor.BlockNotAcceptedException e) {
-                if (Convert.nullToEmpty(e.getMessage()).contains("Incorrect regular block")) {
-                    log.debug("Mempool state changed, skip block generation iteration");
-                    if (log.isTraceEnabled()) {
-                        log.trace("Block was not accepted during generation ", e);
-                    }
-                    return false;
-                }
-                throw e;
+            } catch (DbTransactionHelper.DbTransactionExecutionException e) {
+                handleTransactionNotAcceptedException(start, e);
+                if (handleBlockNotAcceptedException(e)) return false;
             }
         }
     }
@@ -406,5 +399,53 @@ public class GeneratorServiceImpl implements GeneratorService {
             blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
         }
         return blockchainProcessor;
+    }
+
+    private void handleTransactionNotAcceptedException(int start, DbTransactionHelper.DbTransactionExecutionException e) {
+        Throwable noAccepted = findCauseException(e, BlockchainProcessor.TransactionNotAcceptedException.class);
+        if (noAccepted instanceof BlockchainProcessor.TransactionNotAcceptedException) {
+            String txJson = getBadTxJson((BlockchainProcessor.TransactionNotAcceptedException) noAccepted);
+            log.debug("Transaction not accepted during block generation {} , cause {}", txJson, noAccepted.getMessage());
+            if (timeService.getEpochTime() - start > 20) {
+                throw e;
+            }
+        }
+    }
+
+    private String getBadTxJson(BlockchainProcessor.TransactionNotAcceptedException noAccepted) {
+        Transaction transaction = noAccepted.getTransaction();
+        TxSerializer serializer = TxBContext.newInstance(blockchainConfig.getChain()).createSerializer(transaction.getVersion());
+        PayloadResult jsonBuffer = PayloadResult.createJsonResult();
+        serializer.serialize(transaction, jsonBuffer);
+        return new String(jsonBuffer.array());
+    }
+
+    private boolean handleBlockNotAcceptedException(DbTransactionHelper.DbTransactionExecutionException e) {
+        Throwable ex = findCauseException(e, BlockchainProcessor.BlockNotAcceptedException.class);
+        if (ex instanceof BlockchainProcessor.BlockNotAcceptedException) {
+
+            if (Convert.nullToEmpty(ex.getMessage()).contains("Incorrect regular block")) {
+                log.debug("Mempool state changed, skip block generation iteration");
+                if (log.isTraceEnabled()) {
+                    log.trace("Block was not accepted during generation ", e);
+                }
+                return true;
+            }
+            throw e;
+        }
+        return false;
+    }
+
+    private <T extends Throwable> Throwable findCauseException(Exception e, Class<T> exClass) {
+        Throwable cause = e.getCause();
+        Throwable toVerify = e;
+        while (cause != null) {
+            if (exClass.isAssignableFrom(cause.getClass())) {
+                toVerify = cause;
+                break;
+            }
+            cause = cause.getCause();
+        }
+        return toVerify;
     }
 }
