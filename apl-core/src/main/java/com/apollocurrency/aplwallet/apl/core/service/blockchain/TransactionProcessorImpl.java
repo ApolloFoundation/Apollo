@@ -389,6 +389,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             if (memPool.hasUnconfirmedTransaction(unconfirmedTransaction.getId())) {
                 return TxSavingStatus.ALREADY_EXIST;
             }
+            if (memPool.isRemoved(unconfirmedTransaction)) {
+                return TxSavingStatus.INVALID_AFTER_SYNC_STATE;
+            }
             boolean saved = processingService.addNewUnconfirmedTransaction(unconfirmedTransaction);
             if (saved) {
                 log.trace("Tx {} was saved", unconfirmedTransaction.getId());
@@ -499,6 +502,6 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     private enum TxSavingStatus {
-        SAVED, ALREADY_EXIST, NOT_SAVED
+        SAVED, ALREADY_EXIST, NOT_SAVED, INVALID_AFTER_SYNC_STATE
     }
 }
