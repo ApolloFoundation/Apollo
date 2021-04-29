@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
+import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -169,9 +170,9 @@ class BlockchainTest extends DBContainerRootTest {
     private static DbPopulator initDb(String dataScriptPath, long shardId) {
         // initialize main db only one time !!
         if (shardId == 1 && extension == null) {
-            DbProperties inMemDbProps = DbTestData.getDbFileProperties(mariaDBContainer);
-            inMemDbProps.setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
-            extension = new DbExtension(mariaDBContainer, inMemDbProps, "db/shard-main-data.sql", "db/schema.sql");
+            DbConfig dbConfig = DbTestData.getDbFileProperties(mariaDBContainer);
+            dbConfig.getDbProperties().setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
+            extension = new DbExtension(mariaDBContainer, dbConfig, "db/schema.sql", "db/shard-main-data.sql");
             TransactionalDataSource mainDb = extension.getDatabaseManager().getDataSource();
             extension.beforeEach(null); // execute initial schema script
         }

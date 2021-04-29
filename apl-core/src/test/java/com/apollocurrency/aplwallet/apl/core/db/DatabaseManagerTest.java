@@ -51,14 +51,16 @@ import static org.mockito.Mockito.verify;
 @Tag("slow")
 class DatabaseManagerTest extends DBContainerRootTest {
     private static PropertiesHolder propertiesHolder = new PropertiesHolder();
+    private DbConfig dbConfig;
     private DbProperties baseDbProperties;
     private DatabaseManagerImpl databaseManager;
 
     @BeforeEach
     public void setUp() throws IOException {
-        baseDbProperties = DbTestData.getDbFileProperties(mariaDBContainer);
+        dbConfig = DbTestData.getDbFileProperties(mariaDBContainer);
+        baseDbProperties = dbConfig.getDbProperties();
         baseDbProperties.setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
-        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder, new JdbiHandleFactory());
+        databaseManager = new DatabaseManagerImpl(dbConfig, new JdbiHandleFactory());
         DbPopulator dbPopulator = new DbPopulator(null, "db/db-manager-data.sql");
         dbPopulator.initDb(databaseManager.getDataSource());
         dbPopulator.populateDb(databaseManager.getDataSource());

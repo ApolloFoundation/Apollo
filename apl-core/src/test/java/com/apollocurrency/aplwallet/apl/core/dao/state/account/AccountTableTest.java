@@ -58,7 +58,7 @@ import static org.mockito.Mockito.mock;
 class AccountTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbConfig(), "db/schema.sql", "db/acc-data.sql");
     @Inject
     AccountTable table;
     AccountTestData td;

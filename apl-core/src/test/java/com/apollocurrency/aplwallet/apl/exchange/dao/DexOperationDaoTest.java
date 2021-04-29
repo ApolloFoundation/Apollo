@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class DexOperationDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/dex-operation-data.sql", null);
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbConfig(), null, "db/dex-operation-data.sql");
     private DexOperationDao dao;
 
     private DexOperationTestData td;

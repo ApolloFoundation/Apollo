@@ -60,7 +60,7 @@ import static org.mockito.Mockito.mock;
 class PrunableMessageServiceTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), null, null, "db/prunable-message-data.sql");
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbConfig(), null, "db/prunable-message-data.sql");
     Blockchain blockchain = mock(Blockchain.class);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();

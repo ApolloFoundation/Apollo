@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.extension;
 
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchServiceImpl;
@@ -13,8 +14,6 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
-import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -45,25 +44,26 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
     private LuceneFullTextSearchEngine luceneFullTextSearchEngine;
 
     public DbExtension(GenericContainer jdbcDatabaseContainer,
-                       DbProperties dbProperties,
-                       PropertiesHolder propertiesHolder,
+                       DbConfig dbConfig,
                        String schemaScriptPath,
                        String dataScriptPath) {
+        assert dbConfig.getDbProperties() != null;
+
         log.trace("JdbcUrl: {}", ((MariaDBContainer) jdbcDatabaseContainer).getJdbcUrl());
 
         log.trace("Username: {}", ((MariaDBContainer) jdbcDatabaseContainer).getUsername());
-        dbProperties.setDbUsername(((MariaDBContainer) jdbcDatabaseContainer).getUsername());
+        dbConfig.getDbProperties().setDbUsername(((MariaDBContainer) jdbcDatabaseContainer).getUsername());
         log.trace("User pass: {}", ((MariaDBContainer) jdbcDatabaseContainer).getPassword());
-        dbProperties.setDbPassword(((MariaDBContainer) jdbcDatabaseContainer).getPassword());
+        dbConfig.getDbProperties().setDbPassword(((MariaDBContainer) jdbcDatabaseContainer).getPassword());
         log.trace("DriverClassName: {}", ((MariaDBContainer) jdbcDatabaseContainer).getDriverClassName());
         log.trace("MappedPort: {}", jdbcDatabaseContainer.getMappedPort(3306));
         if (jdbcDatabaseContainer.getMappedPort(3306) != null) {
-            dbProperties.setDatabasePort(jdbcDatabaseContainer.getMappedPort(3306));
+            dbConfig.getDbProperties().setDatabasePort(jdbcDatabaseContainer.getMappedPort(3306));
         }
         log.trace("Host: {}", jdbcDatabaseContainer.getHost());
-        dbProperties.setDatabaseHost(jdbcDatabaseContainer.getHost());
-        dbProperties.setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
-        dbProperties.setSystemDbUrl(dbProperties.formatJdbcUrlString(true));
+        dbConfig.getDbProperties().setDatabaseHost(jdbcDatabaseContainer.getHost());
+        dbConfig.getDbProperties().setDbName(((MariaDBContainer<?>) jdbcDatabaseContainer).getDatabaseName());
+        dbConfig.getDbProperties().setSystemDbUrl(dbConfig.getDbProperties().formatJdbcUrlString(true));
 
 //        log.trace("DockerDaemonInfo: {}", jdbcDatabaseContainer.getDockerDaemonInfo());
         log.trace("DockerImageName: {}", jdbcDatabaseContainer.getDockerImageName());
@@ -71,19 +71,15 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
         log.trace("BoundPortNumbers: {}", jdbcDatabaseContainer.getBoundPortNumbers());
         log.trace("PortBindings: {}", jdbcDatabaseContainer.getPortBindings());
 
-        this.manipulator = new DbManipulator(dbProperties, propertiesHolder, dataScriptPath, schemaScriptPath);
+        this.manipulator = new DbManipulator(dbConfig, dataScriptPath, schemaScriptPath);
     }
 
-    public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties dbProperties) {
-        this(jdbcDatabaseContainer, dbProperties, null, null, null);
+    public DbExtension(GenericContainer jdbcDatabaseContainer, DbConfig dbConfig) {
+        this(jdbcDatabaseContainer, dbConfig, null, null);
     }
 
-    public DbExtension(DbProperties dbProperties) {
-        this.manipulator = new DbManipulator(dbProperties, null, null, null);
-    }
-
-    public DbExtension(GenericContainer jdbcDatabaseContainer, DbProperties properties, String dataScriptPath, String schemaScriptPath) {
-        this(jdbcDatabaseContainer, properties, null, schemaScriptPath, dataScriptPath);
+    public DbExtension(DbConfig dbConfig) {
+        this.manipulator = new DbManipulator(dbConfig, null, null);
     }
 
     public DbExtension(GenericContainer jdbcDatabaseContainer, Map<String, List<String>> tableWithColumns) {
@@ -95,7 +91,8 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
     }
 
     public DbExtension(GenericContainer jdbcDatabaseContainer) {
-        this(jdbcDatabaseContainer, DbTestData.getDbFileProperties(jdbcDatabaseContainer), null, null, null);
+        this(jdbcDatabaseContainer, DbTestData.getDbFileProperties(jdbcDatabaseContainer),
+            null, null);
     }
 
     public FullTextSearchService getFullTextSearchService() {

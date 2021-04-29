@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata.impl;
 
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardDataSourceCreateHelper;
@@ -52,7 +53,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     private static final Logger log = getLogger(DatabaseManagerImpl.class);
     private final Object lock = new Object(); // required to sync creation of shard datasources
-    private DbProperties baseDbProperties; // main database properties
+    private DbConfig dbConfig; // main database config with properties
     private PropertiesHolder propertiesHolder;
     private volatile TransactionalDataSource currentTransactionalDataSource; // main/shard database
     /**
@@ -99,15 +100,15 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     /**
      * Create main db instance with db properties, all other properties injected by CDI
      *
-     * @param dbProperties          database only properties from CDI
-     * @param propertiesHolderParam the rest global properties in holder from CDI
+     * @param dbConfig          database properties from CDI
+     * @param jdbiHandleFactory jdbi support
      */
     @Inject
-    public DatabaseManagerImpl(DbProperties dbProperties, PropertiesHolder propertiesHolderParam, JdbiHandleFactory jdbiHandleFactory) {
-        this.baseDbProperties = Objects.requireNonNull(dbProperties, "Db Properties is NULL");
-        this.propertiesHolder = Objects.requireNonNull(propertiesHolderParam, "Properties holder is NULL");
+    public DatabaseManagerImpl(DbConfig dbConfig, JdbiHandleFactory jdbiHandleFactory) {
+        this.dbConfig = Objects.requireNonNull(dbConfig, "dbConfig is NULL");
+        Objects.requireNonNull(dbConfig.getDbProperties(), "Db Properties is NULL");
         this.jdbiHandleFactory = Objects.requireNonNull(jdbiHandleFactory, "jdbiHandleFactory is NULL");
-        initDatasource();
+        initMainDatasource();
         this.available = true;
     }
 
@@ -123,7 +124,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
     public TransactionalDataSource getDataSource() {
         waitAvailability();
         if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
-            initDatasource();
+            initMainDatasource();
         }
         return currentTransactionalDataSource;
     }
@@ -132,8 +133,8 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         this.available = available;
     }
 
-    private void initDatasource() {
-        currentTransactionalDataSource = new TransactionalDataSource(baseDbProperties, propertiesHolder);
+    private void initMainDatasource() {
+        currentTransactionalDataSource = new TransactionalDataSource(this.dbConfig.getDbProperties());
         jdbi = currentTransactionalDataSource.initWithJdbi(new AplDBUpdater());
         jdbiHandleFactory.setJdbi(jdbi);
     }
@@ -317,7 +318,7 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
 
     @Override
     public DbProperties getBaseDbProperties() {
-        return baseDbProperties;
+        return this.dbConfig.getDbProperties();
     }
 
     @Override
@@ -346,12 +347,12 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
 
     @Override
     public UUID getChainId() {
-        return baseDbProperties.getChainId();
+        return this.dbConfig.getDbProperties().getChainId();
     }
 
     @Override
     public String toString() {
-        return "DatabaseManager{" + "baseDbProperties=" + baseDbProperties +
+        return "DatabaseManager{" + "baseDbProperties=" + this.dbConfig.getDbProperties() +
             ", propertiesHolder=" + propertiesHolder +
             ", currentTransactionalDataSource=" + currentTransactionalDataSource +
             ", connectedShardDataSourceMap=" + connectedShardDataSourceMap.size() +

@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class DexCandlestickDaoTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/dex-candlestick-data.sql", null);
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbConfig(), null, "db/dex-candlestick-data.sql");
     private DexCandlestickDao dao;
 
     private DexTradingTestData td;

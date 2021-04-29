@@ -16,6 +16,7 @@ import lombok.ToString;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -24,6 +25,8 @@ import java.util.UUID;
 public class DbConfig {
     private final PropertiesHolder propertiesHolder;
     private final ChainsConfigHolder chainsConfigHolder;
+    private DbProperties dbProperties;
+    private Optional<String> kmsSchemaName = Optional.empty();
 
     @Inject
     public DbConfig(PropertiesHolder propertiesHolder, ChainsConfigHolder chainsConfigHolder) {
@@ -32,32 +35,47 @@ public class DbConfig {
     }
 
     @Produces
-    public DbProperties getDbConfig() {
+    public DbProperties getDbProperties() {
         String dbName = Constants.APPLICATION_DB_NAME;
         DirProvider dp = RuntimeEnvironment.getInstance().getDirProvider();
         UUID chainId = chainsConfigHolder.getActiveChain().getChainId();
 
-        DbProperties dbProperties =  DbProperties.builder()
-            .dbType(propertiesHolder.getStringProperty("apl.dbType"))
-            .dbUrl(propertiesHolder.getStringProperty("apl.dbUrl"))
-            .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "./unit-test-db") // for unit tests
-            .dbName(dbName.concat("_".concat(chainId.toString().substring(0, 6))))
-            .chainId(chainId)
-            .dbParams(propertiesHolder.getStringProperty("apl.dbParams"))
-            .dbUsername(propertiesHolder.getStringProperty("apl.dbUsername"))
-            .dbPassword(propertiesHolder.getStringProperty("apl.dbPassword", null, true))
-            .maxConnections(propertiesHolder.getIntProperty("apl.maxDbConnections"))
-            .loginTimeout(propertiesHolder.getIntProperty("apl.dbLoginTimeout"))
-            .defaultLockTimeout(propertiesHolder.getIntProperty("apl.dbDefaultLockTimeout") * 1000)
-            .maxMemoryRows(propertiesHolder.getIntProperty("apl.dbMaxMemoryRows"))
-            .databaseHost(propertiesHolder.getStringProperty("apl.databaseHost"))
-            .databasePort(propertiesHolder.getIntProperty("apl.databasePort"))
-            .build();
-        if (StringUtils.isBlank(dbProperties.getSystemDbUrl())) {
-            String systemDbUrl = dbProperties.formatJdbcUrlString( true);
-            dbProperties.setSystemDbUrl(systemDbUrl);
+        if (this.dbProperties == null) {
+            this.dbProperties = DbProperties.builder()
+                .dbType(propertiesHolder.getStringProperty("apl.dbType"))
+                .dbUrl(propertiesHolder.getStringProperty("apl.dbUrl"))
+                .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "./unit-test-db") // for unit tests
+                .dbName(dbName.concat("_".concat(chainId.toString().substring(0, 6))))
+                .chainId(chainId)
+                .dbParams(propertiesHolder.getStringProperty("apl.dbParams"))
+                .dbUsername(propertiesHolder.getStringProperty("apl.dbUsername"))
+                .dbPassword(propertiesHolder.getStringProperty("apl.dbPassword", null, true))
+                .maxConnections(propertiesHolder.getIntProperty("apl.maxDbConnections"))
+                .loginTimeout(propertiesHolder.getIntProperty("apl.dbLoginTimeout"))
+                .defaultLockTimeout(propertiesHolder.getIntProperty("apl.dbDefaultLockTimeout") * 1000)
+                .maxMemoryRows(propertiesHolder.getIntProperty("apl.dbMaxMemoryRows"))
+                .databaseHost(propertiesHolder.getStringProperty("apl.databaseHost"))
+                .databasePort(propertiesHolder.getIntProperty("apl.databasePort"))
+                .thresholdData(
+                    DbProperties.ThresholdData.builder()
+                        .stmtThreshold(propertiesHolder.getIntProperty("apl.statementLogThreshold", 1000))
+                        .txThreshold(propertiesHolder.getIntProperty("apl.statementLogThreshold", 1000))
+                        .txInterval(propertiesHolder.getIntProperty("apl.transactionLogInterval", 15) * 60 * 1000)
+                        .enableSqlLogs(propertiesHolder.getBooleanProperty("apl.enableSqlLogs", false))
+                    .build()
+                )
+                .build();
+        }
+        if (StringUtils.isBlank(this.dbProperties.getSystemDbUrl())) {
+            String systemDbUrl = this.dbProperties.formatJdbcUrlString( true);
+            this.dbProperties.setSystemDbUrl(systemDbUrl);
         }
 
-        return dbProperties;
+        return this.dbProperties;
+    }
+
+
+        public void setKmsSchemaName(String kmsSchemaName) {
+        this.kmsSchemaName = Optional.of(kmsSchemaName);
     }
 }

@@ -45,7 +45,7 @@ import static org.mockito.Mockito.mock;
 class CurrencySupplyTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/currency_supply-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbConfig(), "db/schema.sql", "db/currency_supply-data.sql");
 
     @Inject
     CurrencySupplyTable table;

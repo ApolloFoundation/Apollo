@@ -69,23 +69,19 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
      * Created by CDI with previously initialized properties.
      *
      * @param dbProperties     main db properties
-     * @param propertiesHolder the rest of properties
      */
-    @Inject
-    public TransactionalDataSource(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
-        this(dbProperties,
-            propertiesHolder.getIntProperty("apl.statementLogThreshold", 1000),
-            propertiesHolder.getIntProperty("apl.transactionLogThreshold", 5000),
-            propertiesHolder.getIntProperty("apl.transactionLogInterval", 15) * 60 * 1000,
-            propertiesHolder.getBooleanProperty("apl.enableSqlLogs", false));
-    }
+//    @Inject
+//    public TransactionalDataSource(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
+//        this(dbProperties);
+//    }
 
-    public TransactionalDataSource(DbProperties dbProperties, int stmtThreshold, int txThreshold, int txInterval, boolean enableSqlLogs) {
+    @Inject
+    public TransactionalDataSource(DbProperties dbProperties) {
         super(dbProperties);
-        this.txThreshold = txThreshold;
-        this.txInterval = txInterval;
-        this.enableSqlLogs = enableSqlLogs;
-        this.factory = new FilteredFactoryImpl(stmtThreshold);
+        this.txThreshold = dbProperties.getThresholdData().getTxThreshold();
+        this.txInterval = dbProperties.getThresholdData().getTxInterval();
+        this.enableSqlLogs = dbProperties.getThresholdData().isEnableSqlLogs();
+        this.factory = new FilteredFactoryImpl(dbProperties.getThresholdData().getStmtThreshold());
         this.dbIdentity = dbProperties.getDbIdentity();
     }
 

@@ -41,6 +41,7 @@ public class DbProperties implements Cloneable {
     private String databaseHost;
     private Integer databasePort;
     private String systemDbUrl;
+    private ThresholdData thresholdData;
 
     public Optional<String> getDbIdentity() {
         return Optional.ofNullable(dbIdentity);
@@ -62,7 +63,7 @@ public class DbProperties implements Cloneable {
             throw new RuntimeException(e);
         }
     }
-    
+
     public String formatJdbcUrlString(boolean isSystemDb) {
         String finalDbUrl;
         String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s%s";
@@ -95,5 +96,14 @@ public class DbProperties implements Cloneable {
             );
         }
         return finalDbUrl;
-    }    
+    }
+
+    @Data
+    @Builder
+    public static class ThresholdData {
+        int stmtThreshold;
+        int txThreshold;
+        int txInterval;
+        boolean enableSqlLogs;
+    }
 }

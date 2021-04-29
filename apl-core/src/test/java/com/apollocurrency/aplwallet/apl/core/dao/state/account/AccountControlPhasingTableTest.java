@@ -47,7 +47,7 @@ import static org.mockito.Mockito.mock;
 class AccountControlPhasingTableTest extends DbContainerBaseTest {
 
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbConfig(), "db/data.sql", "db/schema.sql");
 
     @Inject
     AccountControlPhasingTable table;

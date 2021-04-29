@@ -87,7 +87,7 @@ public class ShardDataSourceCreateHelper {
         shardDbProperties.setMaxMemoryRows(MAX_MEMORY_ROWS);
         shardDbProperties.setDbUrl(null);  // nullify dbUrl intentionally!;
         shardDbProperties.setDbIdentity(shardDbProperties.getDbName() != null ? shardDbProperties.getDbName() : DbProperties.DB_SYSTEM_NAME); // put shard related info
-        shardDb = new TransactionalDataSource(shardDbProperties, databaseManager.getPropertiesHolder());
+        shardDb = new TransactionalDataSource(shardDbProperties);
 
         return this;
     }

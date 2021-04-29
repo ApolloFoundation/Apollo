@@ -52,6 +52,11 @@
       <groupId>org.web3j</groupId>
       <artifactId>core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>logging-interceptor</artifactId>
+      <scope>compile</scope>
+    </dependency>
 
     <!--    <dependency>-->
     <!--      <groupId>org.web3j</groupId>-->

@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
@@ -114,14 +115,15 @@ public class ShardServiceIntegrationTest extends DbContainerBaseTest {
     void testReset() throws IOException, SQLException {
 //        Path dbDir = folder.newFolder().toPath();
 //        DatabaseManagerImpl databaseManager = new DatabaseManagerImpl(DbTestData.getDbFilePropertiesByPath(dbDir.resolve(Constants.APPLICATION_DIR_NAME)), new PropertiesHolder(), new JdbiHandleFactory());
-        DbProperties dbProperties = DbTestData.getInMemDbProps();
+        DbConfig dbConfig = DbTestData.getInMemDbConfig();
+        DbProperties dbProperties = dbConfig.getDbProperties();
         if (mariaDBContainer.getMappedPort(3306) != null) {
             dbProperties.setDatabasePort(mariaDBContainer.getMappedPort(3306));
         }
         dbProperties.setDatabaseHost(mariaDBContainer.getHost());
         dbProperties.setDbName(((MariaDBContainer<?>) mariaDBContainer).getDatabaseName());
         dbProperties.setSystemDbUrl(dbProperties.formatJdbcUrlString(true));
-        DatabaseManagerImpl databaseManager = new DatabaseManagerImpl(dbProperties, new PropertiesHolder(), new JdbiHandleFactory());
+        DatabaseManagerImpl databaseManager = new DatabaseManagerImpl(dbConfig, new JdbiHandleFactory());
 //        Chain mockChain = mock(Chain.class);
 //        doReturn(mockChain).when(blockchainConfig).getChain();
 //        doReturn(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5")).when(mockChain).getChainId();

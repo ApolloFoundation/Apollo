@@ -181,8 +181,8 @@ public class Apollo {
 
     private static boolean checkDbWithJDBC(DbConfig conf){
         boolean res = true;
-        DbProperties dbConfig = conf.getDbConfig();
-        String dbURL = dbConfig.formatJdbcUrlString(true);
+        DbProperties dbProperties = conf.getDbProperties();
+        String dbURL = dbProperties.formatJdbcUrlString(true);
         Connection conn;
         try {
             conn = DriverManager.getConnection(dbURL);
@@ -368,7 +368,13 @@ public class Apollo {
             System.exit(PosixExitCodes.EX_SOFTWARE.exitCode());
         }
 
-        validateKmsUrl(args);// TODO: YL here we can add checking KMS server to be online (e.g. using  end point like: /check/health )
+        Optional<InetSocketAddress> kmsUrl = validateKmsUrl(args);
+        if (kmsUrl.isEmpty()) {
+            // embedded mode
+            dbConfig.setKmsSchemaName("kms_schema");
+        } else {
+            // TODO: YL check connection
+        }
 
 //-------------- now bring CDI container up! -------------------------------------
 

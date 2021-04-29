@@ -60,7 +60,7 @@ public class UpdaterDbTest {
 
     @BeforeEach
     void setUp() {
-        when(updaterMediator.getDataSource()).thenReturn(new TransactionalDataSource(dbProperties, propertiesHolder));
+        when(updaterMediator.getDataSource()).thenReturn(new TransactionalDataSource(dbProperties));
         repository = new UpdaterDbRepository(updaterMediator);
     }
 
@@ -136,7 +136,7 @@ public class UpdaterDbTest {
 
         @Override
         public TransactionalDataSource getDataSource() {
-            return new TransactionalDataSource(dbProperties, propertiesHolder) {
+            return new TransactionalDataSource(dbProperties) {
                 Connection connection;
 
                 @Override

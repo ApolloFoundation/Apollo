@@ -53,7 +53,7 @@ class AccountLedgerTableTest extends DbContainerBaseTest {
 
     public static final int TRIM_KEEP = 300;
     @RegisterExtension
-    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/acc-data.sql", "db/schema.sql");
+    static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbConfig(), "db/schema.sql", "db/acc-data.sql");
     @Inject
     AccountLedgerTable table;
     AccountTestData testData = new AccountTestData();
