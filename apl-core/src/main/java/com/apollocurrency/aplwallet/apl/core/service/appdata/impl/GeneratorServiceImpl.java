@@ -318,28 +318,30 @@ public class GeneratorServiceImpl implements GeneratorService {
     @Override
     public boolean forge(Block lastBlock, int generationLimit, GeneratorMemoryEntity generator)
         throws BlockchainProcessor.BlockNotAcceptedException {
-        long startLog = System.currentTimeMillis();
+        long startLog = timeService.systemTimeMillis();
         int timestamp = generator.getTimestamp(generationLimit);
-        int[] timeoutAndVersion = getBlockTimeoutAndVersion(timestamp, generationLimit, lastBlock);
-        if (timeoutAndVersion == null) {
-            return false;
-        }
-        int timeout = timeoutAndVersion[0];
         if (!verifyHit(generator, lastBlock, timestamp)) {
-            log.debug(this.toString() + " failed to forge at " + (timestamp + timeout) + " height " + lastBlock.getHeight() + " " +
+            log.debug(this.toString() + " failed to forge at " + (timestamp) + " height " + lastBlock.getHeight() + " " +
                 "last " +
                 "timestamp " + lastBlock.getTimestamp());
             return false;
         }
-        int start = timeService.getEpochTime();
         while (true) {
             try {
-                lookupBlockchainProcessor().generateBlock(generator.getKeySeed(), timestamp + timeout, timeout, timeoutAndVersion[1]);
+                int[] timeoutAndVersion = getBlockTimeoutAndVersion(timestamp, generationLimit, lastBlock);
+                if (timeoutAndVersion == null) {
+                    return false;
+                }
+                int timeout = timeoutAndVersion[0];
+                int blockVersion = timeoutAndVersion[1];
+                lookupBlockchainProcessor().generateBlock(generator.getKeySeed(), timestamp + timeout, timeout, blockVersion);
                 setDelay(propertiesHolder.FORGING_DELAY());
                 log.debug(generator + " stopped forge loop in ({} ms)", (System.currentTimeMillis() - startLog));
                 return true;
+            } catch (BlockchainProcessor.MempoolStateDesyncException e) {
+                log.debug("Mempool desync {}", e.getMessage()); // try another time
             } catch (DbTransactionHelper.DbTransactionExecutionException e) {
-                handleTransactionNotAcceptedException(start, e);
+                handleTransactionNotAcceptedException(startLog, e);
                 if (handleBlockNotAcceptedException(e)) return false;
             }
         }
@@ -401,12 +403,12 @@ public class GeneratorServiceImpl implements GeneratorService {
         return blockchainProcessor;
     }
 
-    private void handleTransactionNotAcceptedException(int start, DbTransactionHelper.DbTransactionExecutionException e) {
+    private void handleTransactionNotAcceptedException(long startTime, DbTransactionHelper.DbTransactionExecutionException e) {
         Throwable noAccepted = findCauseException(e, BlockchainProcessor.TransactionNotAcceptedException.class);
         if (noAccepted instanceof BlockchainProcessor.TransactionNotAcceptedException) {
             String txJson = getBadTxJson((BlockchainProcessor.TransactionNotAcceptedException) noAccepted);
             log.debug("Transaction not accepted during block generation {} , cause {}", txJson, noAccepted.getMessage());
-            if (timeService.getEpochTime() - start > 20) {
+            if (timeService.systemTimeMillis() - startTime > 20_000) {
                 throw e;
             }
         }
