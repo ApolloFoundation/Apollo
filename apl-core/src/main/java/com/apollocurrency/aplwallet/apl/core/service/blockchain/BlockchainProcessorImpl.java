@@ -641,17 +641,17 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     log.trace("committed block on = {}, id = '{}'", block.getHeight(), block.getId());
                 });
             } catch (DbTransactionHelper.DbTransactionExecutionException e) {
+                log.error("PushBlock, error:", e);
+                try {
+                    popOffToCommonBlock(previousLastBlock); // do in current transaction
+                } catch (Exception ex) {
+                    log.error("Unable to rollback db changes or do pop off for block height " + block.getHeight() + " id " + block.getId(), ex);
+                } finally { // set blockchain last block to point on previous correct block in any case to restore operability and avoid BlockNotFoundException
+                    // Need to do so even in case of popOff failure or transaction rollback fatal error (SYS table lock, connection closed, etc)
+                    blockchain.setLastBlock(previousLastBlock);
+                }
                 Throwable realEx = e.getCause();
                 if (realEx instanceof BlockNotAcceptedException) {
-                    log.error("PushBlock, error:", e);
-                    try {
-                        popOffToCommonBlock(previousLastBlock); // do in current transaction
-                    } catch (Exception ex) {
-                        log.error("Unable to rollback db changes or do pop off for block height " + block.getHeight() + " id " + block.getId(), ex);
-                    } finally { // set blockchain last block to point on previous correct block in any case to restore operability and avoid BlockNotFoundException
-                        // Need to do so even in case of popOff failure or transaction rollback fatal error (SYS table lock, connection closed, etc)
-                        blockchain.setLastBlock(previousLastBlock);
-                    }
                     throw (BlockNotAcceptedException) realEx;
                 }
                 throw e;
