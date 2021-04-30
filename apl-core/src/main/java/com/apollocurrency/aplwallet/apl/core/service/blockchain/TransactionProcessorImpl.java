@@ -392,6 +392,9 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             if (memPool.isRemoved(unconfirmedTransaction)) {
                 return TxSavingStatus.INVALID_AFTER_SYNC_STATE;
             }
+            if (blockchain.hasTransaction(unconfirmedTransaction.getId())) {
+                return TxSavingStatus.ALREADY_EXIST;
+            }
             boolean saved = processingService.addNewUnconfirmedTransaction(unconfirmedTransaction);
             if (saved) {
                 log.trace("Tx {} was saved", unconfirmedTransaction.getId());
