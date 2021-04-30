@@ -3,19 +3,23 @@
  */
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.ChainsConfigLoader;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -53,10 +57,33 @@ class HeightConfigFeeSettingsTest {
         HeightConfig  result = blockchainConfig.getConfigAtHeight(height);  // checked method
         log.trace("result = {}", result);
         assertNotNull(result);
-        assertEquals(rate, result.getFeeRate((byte)0,(byte)0));
-        assertEquals(rate, result.getFeeRate((byte)0,(byte)1));
-        assertEquals(rate, result.getFeeRate((byte)1,(byte)1));
-        assertEquals(100, result.getFeeRate((byte)10,(byte)10));//default rate for other type and subType
+        assertEquals(rate, result.getFeeRate(TransactionTypes.TransactionTypeSpec.ORDINARY_PAYMENT));
+        assertEquals(rate, result.getFeeRate(TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT));
+        assertEquals(rate, result.getFeeRate(TransactionTypes.TransactionTypeSpec.ALIAS_ASSIGNMENT));
+        assertEquals(100, result.getFeeRate(TransactionTypes.TransactionTypeSpec.UPDATE_V2));//default rate for other type and subType
+
+    }
+
+    @Test
+    void test_atHeight_sizeBasedConfig() {
+        HeightConfig  result = blockchainConfig.getConfigAtHeight(50);  // checked method
+        assertNotNull(result);
+        assertEquals(new BigDecimal("1.5"), result.getSizeBasedFee(TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT, BigDecimal.valueOf(-2)));
+        assertEquals(new BigDecimal("0.1"), result.getBaseFee(TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT, BigDecimal.valueOf(-2)));
+        BigDecimal[] defaultPrivatePaymentAdditionalFees = {BigDecimal.valueOf(-2), BigDecimal.valueOf(-2)};
+        assertArrayEquals(defaultPrivatePaymentAdditionalFees, result.getAdditionalFees(TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT, defaultPrivatePaymentAdditionalFees));
+
+
+        assertEquals(new BigDecimal("1"), result.getSizeBasedFee(TransactionTypes.TransactionTypeSpec.ALIAS_ASSIGNMENT, BigDecimal.valueOf(-2)));
+        assertEquals(new BigDecimal("-2"), result.getBaseFee(TransactionTypes.TransactionTypeSpec.ALIAS_ASSIGNMENT, BigDecimal.valueOf(-2)));
+        assertArrayEquals(new BigDecimal[] {new BigDecimal("10"),new BigDecimal("10000000000000"), new BigDecimal("0.333"), null}, result.getAdditionalFees(TransactionTypes.TransactionTypeSpec.ALIAS_ASSIGNMENT, new BigDecimal[4]));
+        assertArrayEquals(new BigDecimal[] {new BigDecimal("10"),new BigDecimal("10000000000000")}, result.getAdditionalFees(TransactionTypes.TransactionTypeSpec.ALIAS_ASSIGNMENT, new BigDecimal[2]));
+
+
+        assertEquals(new BigDecimal("11"), result.getBaseFee(TransactionTypes.TransactionTypeSpec.UPDATE_V2, BigDecimal.valueOf(11)));
+        assertEquals(new BigDecimal("11"), result.getSizeBasedFee(TransactionTypes.TransactionTypeSpec.UPDATE_V2, BigDecimal.valueOf(11)));
+        assertArrayEquals(new BigDecimal[2], result.getAdditionalFees(TransactionTypes.TransactionTypeSpec.UPDATE_V2, new BigDecimal[] {null, null}));
+        assertEquals(100, result.getFeeRate(TransactionTypes.TransactionTypeSpec.UPDATE_V2));//default rate for other type and subType
 
     }
 
