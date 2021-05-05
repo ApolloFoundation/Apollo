@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.WrappedTransaction;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.SizeBoundedPriorityQueue;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
@@ -13,6 +14,7 @@ import lombok.Data;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -47,6 +49,7 @@ public class MemPoolInMemoryState {
     private final Set<Transaction> broadcastedTransactions = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final PriorityBlockingQueue<TxWithArrivalTimestamp> broadcastPendingTransactions;
     private final PriorityBlockingQueue<UnconfirmedTransaction> processLaterQueue;
+    private final IdQueue<UnconfirmedTransaction> toBeProcessedQueue;
 
     private final AtomicInteger cachedNumberOfReferencedTxs = new AtomicInteger(-1);
     private final AtomicBoolean cacheInitialized = new AtomicBoolean(false);
@@ -74,10 +77,19 @@ public class MemPoolInMemoryState {
                 return super.offer(txWithArrivalTimestamp);
             }
         };
+        this.toBeProcessedQueue = new IdQueue<>(new ArrayDeque<>(), WrappedTransaction::getId, maxCachedTransactions);
     }
 
     public void processLater(UnconfirmedTransaction unconfirmedTransaction) {
         processLaterQueue.add(unconfirmedTransaction);
+    }
+
+    public int processingQueueSize() {
+        return toBeProcessedQueue.size();
+    }
+
+    public UnconfirmedTransaction nextTxToProcess() {
+        return toBeProcessedQueue.remove();
     }
 
     public Iterator<UnconfirmedTransaction> processLaterQueueIterator() {
@@ -107,6 +119,10 @@ public class MemPoolInMemoryState {
         if (unconfirmedTransaction.getReferencedTransactionFullHash() != null) {
             cachedNumberOfReferencedTxs.incrementAndGet();
         }
+    }
+
+    public IdQueue.ReturnCode putIntoProcessed(UnconfirmedTransaction unconfirmedTransaction) {
+        return toBeProcessedQueue.addWithStatus(unconfirmedTransaction);
     }
 
     public void initializeCache(Stream<UnconfirmedTransaction> unconfirmedTransactionStream) {
@@ -145,6 +161,7 @@ public class MemPoolInMemoryState {
         broadcastPendingTransactions.clear();
         processLaterQueue.clear();
         cachedNumberOfReferencedTxs.set(0);
+        toBeProcessedQueue.clear();
     }
 
     public int txCacheSize() {

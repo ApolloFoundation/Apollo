@@ -165,11 +165,11 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             if (!validationResult.isOk()) {
                 throw new AplException.NotValidException(validationResult.getErrorDescription());
             }
-            TxSavingStatus status = saveUnconfirmedTransaction(unconfirmedTransaction);
-            if (status == TxSavingStatus.NOT_SAVED) {
+            IdQueue.ReturnCode status = memPool.addToProcessingQueue(unconfirmedTransaction);
+            if (status == IdQueue.ReturnCode.FULL || status == IdQueue.ReturnCode.NOT_ADDED) {
                 throw new RuntimeException("Unable to broadcast tx " + unconfirmedTransaction.getId() + ", mempool is full");
             }
-            if (status == TxSavingStatus.ALREADY_EXIST) {
+            if (status == IdQueue.ReturnCode.ALREADY_EXIST) {
                 throw new RuntimeException("Transaction " + transaction.getId() + " was already broadcasted");
             }
             log.debug("Accepted new transaction {}", transaction.getStringId());
@@ -192,11 +192,11 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             for (UnconfirmedTransaction tx : toBroadcast) {
                 try {
                     if (processingService.validateBeforeProcessing(tx).isOk()) {
-                        TxSavingStatus status = saveUnconfirmedTransaction(tx);
-                        if (status == TxSavingStatus.NOT_SAVED) {
+                        IdQueue.ReturnCode status = memPool.addToProcessingQueue(tx);
+                        if (status == IdQueue.ReturnCode.NOT_ADDED || status == IdQueue.ReturnCode.FULL) {
                             log.debug("Limit of mempool is reached, will return to pending queue tx {}", tx.getId());
                             returned.add(tx);
-                        } else if (status == TxSavingStatus.SAVED) {
+                        } else if (status == IdQueue.ReturnCode.ADDED) {
                             processed.add(tx);
                         }
                     } else {
@@ -284,8 +284,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     Transaction tx = txToProcess.getTransactionImpl();
                     if (requireBroadcast(tx)) {
                         if (processingService.validateBeforeProcessing(tx).isOk()) {
-                            TxSavingStatus savingStatus = saveUnconfirmedTransaction(txToProcess);
-                            if (savingStatus == TxSavingStatus.NOT_SAVED) {
+                            IdQueue.ReturnCode savingStatus = memPool.addToProcessingQueue(txToProcess);
+                            if (savingStatus == IdQueue.ReturnCode.FULL || savingStatus == IdQueue.ReturnCode.NOT_ADDED) {
                                 break;
                             }
                         }
@@ -345,12 +345,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     if (validationResult.isOk()) {
                         transactionValidator.validateSignatureWithTxFeeLessStrict(transaction);
                         transactionValidator.validateLightly(transaction);
-                        TxSavingStatus status = saveUnconfirmedTransaction(unconfirmedTransaction);
-                        if (status == TxSavingStatus.NOT_SAVED) {
+                        IdQueue.ReturnCode status = memPool.addToProcessingQueue(unconfirmedTransaction);
+                        if (status == IdQueue.ReturnCode.NOT_ADDED || status == IdQueue.ReturnCode.FULL) {
                             log.trace("Mempool is full, skip broadcasted txs processing {}", transactions.size() - receivedTransactions.size());
                             break;
                         }
-                        if (status == TxSavingStatus.ALREADY_EXIST) {
+                        if (status == IdQueue.ReturnCode.ALREADY_EXIST) {
                             continue;
                         }
                         if (memPool.isAlreadyBroadcasted(transaction)) {
@@ -384,24 +384,24 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         }
     }
 
-    private TxSavingStatus saveUnconfirmedTransaction(UnconfirmedTransaction unconfirmedTransaction) {
-        return multiLock.inLockFor(unconfirmedTransaction, () -> {
-            if (memPool.hasUnconfirmedTransaction(unconfirmedTransaction.getId())) {
-                return TxSavingStatus.ALREADY_EXIST;
-            }
-            if (memPool.isRemoved(unconfirmedTransaction)) {
-                return TxSavingStatus.INVALID_AFTER_SYNC_STATE;
-            }
-            if (blockchain.hasTransaction(unconfirmedTransaction.getId())) {
-                return TxSavingStatus.ALREADY_EXIST;
-            }
-            boolean saved = processingService.addNewUnconfirmedTransaction(unconfirmedTransaction);
-            if (saved) {
-                log.trace("Tx {} was saved", unconfirmedTransaction.getId());
-            }
-            return saved ? TxSavingStatus.SAVED : TxSavingStatus.NOT_SAVED;
-        });
-    }
+//    private TxSavingStatus saveUnconfirmedTransaction(UnconfirmedTransaction unconfirmedTransaction) {
+//        return multiLock.inLockFor(unconfirmedTransaction, () -> {
+//            if (memPool.hasUnconfirmedTransaction(unconfirmedTransaction.getId())) {
+//                return TxSavingStatus.ALREADY_EXIST;
+//            }
+//            if (memPool.isRemoved(unconfirmedTransaction)) {
+//                return TxSavingStatus.INVALID_AFTER_SYNC_STATE;
+//            }
+//            if (blockchain.hasTransaction(unconfirmedTransaction.getId())) {
+//                return TxSavingStatus.ALREADY_EXIST;
+//            }
+//            boolean saved = processingService.addNewUnconfirmedTransaction(unconfirmedTransaction);
+//            if (saved) {
+//                log.trace("Tx {} was saved", unconfirmedTransaction.getId());
+//            }
+//            return saved ? TxSavingStatus.SAVED : TxSavingStatus.NOT_SAVED;
+//        });
+//    }
 
 
     @Override

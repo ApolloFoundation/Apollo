@@ -121,6 +121,19 @@ public class MemPool {
         return canSaveTxs;
     }
 
+    public IdQueue.ReturnCode addToProcessingQueue(UnconfirmedTransaction tx) {
+        return memoryState.putIntoProcessed(tx);
+    }
+
+    public int processingQueueSize() {
+        return memoryState.processingQueueSize();
+    }
+
+    public UnconfirmedTransaction nextProcessingTx() {
+        return memoryState.nextTxToProcess();
+    }
+
+
     public boolean canAcceptReferenced() {
         return memoryState.canAcceptReferencedTxs() > 0;
     }

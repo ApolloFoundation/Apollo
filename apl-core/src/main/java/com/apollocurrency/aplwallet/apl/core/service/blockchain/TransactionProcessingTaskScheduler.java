@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.app.runnable.PendingBroadcastTask;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessLaterTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTxsToBroadcastWhenConfirmed;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessUnconfirmedTransactionsQueueTask;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RebroadcastTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RemoveUnconfirmedTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
@@ -119,6 +120,13 @@ public class TransactionProcessingTaskScheduler {
                 .delay(15000)
                 .task(new ProcessTxsToBroadcastWhenConfirmed(
                     memPool, this.timeService, this.blockchain))
+                .build());
+
+            dispatcher.schedule(Task.builder()
+                .name("ProcessUnconfirmedTransactionsQueue")
+                .delay(500)
+                .task(new ProcessUnconfirmedTransactionsQueueTask(
+                    memPool,transactionValidator, processingService, databaseManager))
                 .build());
         }
     }
