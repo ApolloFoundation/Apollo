@@ -50,7 +50,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.event.ObservesAsync;
+import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -299,7 +299,10 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         });
     }
 
-    public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+    public void onBlockPushed(@Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+        for (Transaction transaction : block.getTransactions()) {
+            memPool.markRemoved(transaction.getId());
+        }
         executor.submit(
             () -> DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(),
                 () -> block.getTransactions().forEach(this::removeUnconfirmedTransaction)));

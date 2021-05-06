@@ -86,6 +86,10 @@ public class MemPool {
         return toModelConverter.convert(table.getById(id));
     }
 
+    public void markRemoved(long id) {
+        removedTransactions.put(id, new RemovedTx(id, System.currentTimeMillis()));
+    }
+
     public boolean hasSavedUnconfirmedTransaction(long id) {
         return  getUnconfirmedTransaction(id) != null;
     }
