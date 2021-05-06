@@ -27,6 +27,7 @@ import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
@@ -62,7 +63,7 @@ class ShufflingCancellationTransactionType extends ShufflingTransactionType {
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        return SHUFFLING_PROCESSING_FEE;
+        return getFeeFactory().createFixed(BigDecimal.TEN);
     }
 
     @Override

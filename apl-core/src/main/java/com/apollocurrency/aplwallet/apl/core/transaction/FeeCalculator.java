@@ -29,7 +29,7 @@ public class FeeCalculator {
     public long getMinimumFeeATM(Transaction transaction, int blockchainHeight) {
         long oneAPL = blockchainConfig.getOneAPL();
         long totalFee = 0;
-        short feeRate;
+        int feeRate;
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             prunableService.loadPrunable(transaction, appendage, false);
             Fee fee = appendage.getBaselineFee(transaction, oneAPL);
@@ -45,7 +45,7 @@ public class FeeCalculator {
             throw new IllegalArgumentException(errMsg);
         }else {
             TransactionTypes.TransactionTypeSpec spec = transaction.getType().getSpec();
-            feeRate = heightConfig.getFeeRate(spec.getType(), spec.getSubtype());
+            feeRate = heightConfig.getFeeRate(spec);
             if(log.isTraceEnabled()){
                 log.trace("Calculate fee for tx type={} subtype={} at height={} totalFee={} * {} / 100 = {}",
                     spec.getType(), spec.getSubtype(), blockchainHeight,

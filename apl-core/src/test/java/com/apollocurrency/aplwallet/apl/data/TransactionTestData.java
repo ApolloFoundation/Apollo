@@ -21,7 +21,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfM
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnouncementAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.cc.CCAssetIssuanceTransactionType;
@@ -150,7 +149,6 @@ public class TransactionTestData {
         AssetService assetService = mock(AssetService.class);
         AliasService aliasService = mock(AliasService.class);
         DGSService dgsService = mock(DGSService.class);
-        PrunableLoadingService prunableLoadingService = mock(PrunableLoadingService.class);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
             new OrdinaryPaymentTransactionType(blockchainConfig, accountService),
             new PrivatePaymentTransactionType(blockchainConfig, accountService),
@@ -160,7 +158,7 @@ public class TransactionTestData {
             new ArbitraryMessageTransactionType(blockchainConfig, accountService),
             new CriticalUpdateTransactiionType(blockchainConfig, accountService),
             new ImportantUpdateTransactionType(blockchainConfig, accountService),
-            new ListingTransactionType(blockchainConfig, accountService, dgsService, prunableLoadingService)
+            new ListingTransactionType(blockchainConfig, accountService, dgsService)
         ));
         initTransactions();
     }
