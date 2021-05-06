@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.app.AplCoreRuntime;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
+import com.apollocurrency.aplwallet.apl.core.kms.config.GrpcHostConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.utils.LegacyDbUtil;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -38,6 +39,8 @@ import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
+import io.firstbridge.kms.client.grpx.GrpcClient;
+import io.firstbridge.kms.client.grpx.config.GrpcHostConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -415,7 +418,13 @@ public class Apollo {
             dbConfig.setKmsSchemaName(KMS_SCHEMA_NAME);
         } else {
             // KMS remote server mode via gRPC
-            // TODO: YL check connection to rest api by using rest client
+            String hostString = kmsUrl.get().toString();
+            log.debug("Checking if KMS connection  is healthy by url = {}...", hostString);
+            GrpcHostConfig grpcHostConfig = new GrpcHostConfigImpl(hostString);
+            GrpcClient grpcClient = new GrpcClient(grpcHostConfig);
+            // check KMS server connectivity
+            log.debug("KMS connection is {} by url = {}...", grpcClient.isHealthy() ? "HEALTHY !" : "==> BROKEN !", hostString);
+            grpcClient.shutDown();
         }
         aplCoreRuntime.init(runtimeMode, dirProvider, applicationProperties, chains, dbConfig);
 

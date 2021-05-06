@@ -56,6 +56,10 @@
       <groupId>io.firstbridge</groupId>
       <artifactId>kms-library</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.firstbridge</groupId>
+      <artifactId>kms-grpc-client</artifactId>
+    </dependency>
 
       <!-- EXT BOM DEPENDENCIES -->
       <dependency>
@@ -105,6 +109,10 @@
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-servlet-initializer</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-core</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>commons-fileupload</groupId>
@@ -120,16 +128,22 @@
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-validator-provider</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>com.fasterxml</groupId>
+          <artifactId>classmate</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-multipart-provider</artifactId>
     </dependency>
-
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-cdi</artifactId>
     </dependency>
+
     <dependency>
       <groupId>org.jboss.logging</groupId>
       <artifactId>jboss-logging</artifactId>

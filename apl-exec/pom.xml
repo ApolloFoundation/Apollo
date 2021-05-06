@@ -33,10 +33,16 @@
       <artifactId>apl-conf</artifactId>
       <version>${project.version}</version>
     </dependency>
+
     <dependency>
         <groupId>io.firstbridge</groupId>
         <artifactId>fbprocess</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.firstbridge</groupId>
+      <artifactId>kms-grpc-client</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
