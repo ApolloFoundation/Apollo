@@ -31,7 +31,7 @@ public class MariaDbProcess {
     private  Path confFileTemplate;
     private MariaDbRunParams dbParams;
 
-    private MariaDbRunParams setDbParams(DbConfig conf, Path dbInstallDir, Path dbDataDir){
+    private MariaDbRunParams setDbParams(DbConfig conf, Path dbInstallDir, Path dbDataDir, Path logPath){
         dbParams = new MariaDbRunParams();
         confFile = dbDataDir.resolve(DB_CONF_FILE);
         confFileTemplate = dbInstallDir.resolve("conf").resolve(DB_CONF_FILE_TEMPLATE);
@@ -49,7 +49,7 @@ public class MariaDbProcess {
                 dbParams.setDbConfigFile(confFile);
                 dbParams.setDbDataDir(dbDataDir);
                 dbParams.setDbInstallDir(dbInstallDir);
-                dbParams.setOut(Path.of("maria_out.log"));
+                dbParams.setOut(logPath);
                 dbParams.setDbUser(dbUser);
                 dbParams.setDbPassword(dbPassword);
 
@@ -65,9 +65,9 @@ public class MariaDbProcess {
         return dbParams;
     }
 
-    public MariaDbProcess(DbConfig conf, Path dbInstallDir, Path dbDataDir) {
+    public MariaDbProcess(DbConfig conf, Path dbInstallDir, Path dbDataDir, Path logPath) {
 
-        dbControl = new MariaDbControl(setDbParams(conf, dbInstallDir, dbDataDir));
+        dbControl = new MariaDbControl(setDbParams(conf, dbInstallDir, dbDataDir, logPath));
     }
     /**
     *
@@ -76,8 +76,8 @@ public class MariaDbProcess {
     * @param dbInstallDir directory where MariaDB dirstibution is installed
     * @return MariaDBProcess instance that should be checked with isOK() method
     */
-    public static MariaDbProcess findRunning(DbConfig conf, Path dbDataDir, Path dbInstallDir){
-        MariaDbProcess process = new MariaDbProcess(conf, dbInstallDir, dbDataDir);
+    public static MariaDbProcess findRunning(DbConfig conf, Path dbDataDir, Path dbInstallDir, Path logPath){
+        MariaDbProcess process = new MariaDbProcess(conf, dbInstallDir, dbDataDir, logPath);
         process.dbControl = new MariaDbControl(process.dbParams);
         process.dbControl.findRunning();
         return process;
