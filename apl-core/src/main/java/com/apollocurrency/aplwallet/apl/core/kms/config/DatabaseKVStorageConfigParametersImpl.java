@@ -1,8 +1,5 @@
 package com.apollocurrency.aplwallet.apl.core.kms.config;
 
-import static io.firstbridge.kms.persistence.storage.KVStorage.KMS_SCHEMA_NAME;
-
-import javax.annotation.Priority;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -13,11 +10,11 @@ import java.util.UUID;
 import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import io.firstbridge.kms.persistence.storage.KVStorage;
+import lombok.ToString;
 
 /**
  * Class is used for local MariaDb url connection configuration.
  */
-@Priority(200)
 @Singleton
 public class DatabaseKVStorageConfigParametersImpl implements KVStorage.KVStorageConfigParameters {
 
@@ -43,6 +40,7 @@ public class DatabaseKVStorageConfigParametersImpl implements KVStorage.KVStorag
         return this.mariaDbConfigParameters;
     }
 
+    @ToString
     public static class MariaDbConfigParameters implements DbConfigParameters {
 
         private String dbUrl;
@@ -82,11 +80,11 @@ public class DatabaseKVStorageConfigParametersImpl implements KVStorage.KVStorag
 
             this.databaseHost = dbProperties.getDatabaseHost();
             this.databasePort = dbProperties.getDatabasePort();
-//            this.dbUrl = dbProperties.formatJdbcUrlString(false);
+            this.dbUrl = dbProperties.formatJdbcUrlString(true);
         }
 
         @Override
-        public String getConnectionUrl(String s) {
+        public String getConnectionUrl() {
             return this.dbUrl;
         }
 
@@ -113,6 +111,44 @@ public class DatabaseKVStorageConfigParametersImpl implements KVStorage.KVStorag
         @Override
         public String getPassword() {
             return this.dbPassword;
+        }
+
+        @Override
+        public void setDatabase(String databaseName) {
+            Objects.requireNonNull(databaseName, "databaseName is NULL");
+            this.dbName = databaseName;
+            this.dbUrl = formatJdbcUrlString();
+        }
+
+        public String formatJdbcUrlString() {
+            String finalDbUrl;
+            String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s%s";
+            String passwordlessUrlString = "jdbc:%s://%s:%d/%s?user=%s%s"; // skip password for 'password less mode' (in docker container)
+            String tempDbName = this.dbName;
+            if (this.dbPassword != null && !this.dbPassword.isEmpty()) {
+                finalDbUrl = String.format(
+                    fullUrlString,
+                    this.dbType,
+                    this.databaseHost,
+                    this.databasePort,
+                    tempDbName,
+                    this.dbUsername != null ? this.dbUsername : "",
+                    this.dbPassword,
+                    this.dbParams != null ? this.dbParams : ""
+                );
+            } else {
+                // skip password for 'password less mode' (in docker container)
+                finalDbUrl = String.format(
+                    passwordlessUrlString,
+                    this.dbType,
+                    this.databaseHost,
+                    this.databasePort,
+                    tempDbName,
+                    this.dbUsername != null ? this.dbUsername : "",
+                    this.dbParams != null ? this.dbParams : ""
+                );
+            }
+            return finalDbUrl;
         }
     }
 }

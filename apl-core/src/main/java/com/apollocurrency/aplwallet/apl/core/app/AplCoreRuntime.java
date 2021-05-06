@@ -13,8 +13,7 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
@@ -32,27 +31,26 @@ import java.util.UUID;
  *
  * @author alukin@gmail.com
  */
+@Slf4j
 @Singleton
 public class AplCoreRuntime {
-    private static final Logger LOG = LoggerFactory.getLogger(AplCoreRuntime.class);
     private final List<AplCore> cores = new ArrayList<>();
     private RuntimeMode runtimeMode;
     private TaskDispatchManager taskDispatchManager;
 
-    private PropertiesHolder propertieHolder;
+    private PropertiesHolder propertiesHolder;
     private ChainsConfigHolder chainsConfigHolder;
     private DbConfig dbConfig;
     private DirProvider dirProvider;
     private BlockchainConfig blockchainConfig;
-
 
     public AplCoreRuntime() {
     }
 
 
     @Produces @ApplicationScoped
-    public PropertiesHolder getPropertieHolder() {
-        return propertieHolder;
+    public PropertiesHolder getPropertiesHolder() {
+        return propertiesHolder;
     }
 
     @Produces @ApplicationScoped
@@ -60,7 +58,7 @@ public class AplCoreRuntime {
         return chainsConfigHolder;
     }
 
-    @Produces @ApplicationScoped
+//    @Produces @ApplicationScoped
     public DbConfig getDbConfig() {
         return dbConfig;
     }
@@ -85,18 +83,19 @@ public class AplCoreRuntime {
     public void init(RuntimeMode runtimeMode,
                      DirProvider dirProvider,
                      Properties properties,
-                     Map<UUID, Chain> chains
-                     )
-    {
+                     Map<UUID, Chain> chains,
+                     DbConfig dbConfig // we will setup that CDI component with other CDI proxied components
+    ) {
         this.runtimeMode = runtimeMode;
-        this.propertieHolder = new PropertiesHolder(properties);
-        this.taskDispatchManager = new TaskDispatchManager(propertieHolder);
+        this.propertiesHolder = new PropertiesHolder(properties);
+        this.taskDispatchManager = new TaskDispatchManager(propertiesHolder);
         this.dirProvider = dirProvider;
         this.chainsConfigHolder = new ChainsConfigHolder(chains);
         Chain chain = chainsConfigHolder.getActiveChain();
-        this.dbConfig = new DbConfig(propertieHolder, chainsConfigHolder);
-        this.blockchainConfig = new BlockchainConfig(chain, propertieHolder);
-
+        this.dbConfig = dbConfig; // assign that as proxied CDI component
+        this.dbConfig.setPropertiesHolder(propertiesHolder); // fill it with related proxied CDI component
+        this.dbConfig.setChainsConfigHolder(chainsConfigHolder); // fill it with related proxied CDI component
+        this.blockchainConfig = new BlockchainConfig(chain, propertiesHolder);
     }
 
 

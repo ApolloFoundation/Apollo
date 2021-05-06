@@ -16,6 +16,7 @@ import lombok.ToString;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,8 +24,8 @@ import java.util.UUID;
 @Singleton
 @ToString
 public class DbConfig {
-    private final PropertiesHolder propertiesHolder;
-    private final ChainsConfigHolder chainsConfigHolder;
+    private PropertiesHolder propertiesHolder;
+    private ChainsConfigHolder chainsConfigHolder;
     private DbProperties dbProperties;
     private Optional<String> kmsSchemaName = Optional.empty();
 
@@ -74,8 +75,40 @@ public class DbConfig {
         return this.dbProperties;
     }
 
+    public PropertiesHolder getPropertiesHolder() {
+        return propertiesHolder;
+    }
 
-        public void setKmsSchemaName(String kmsSchemaName) {
+    /**
+     * Added to make CDI correctly work with Proxied class
+     * @param propertiesHolder proxied cdi component
+     */
+    public void setPropertiesHolder(PropertiesHolder propertiesHolder) {
+        this.propertiesHolder = propertiesHolder;
+    }
+
+    public ChainsConfigHolder getChainsConfigHolder() {
+        return chainsConfigHolder;
+    }
+
+    /**
+     * Added to make CDI correctly work with Proxied class
+     * @param chainsConfigHolder proxied cdi component
+     */
+    public void setChainsConfigHolder(ChainsConfigHolder chainsConfigHolder) {
+        this.chainsConfigHolder = chainsConfigHolder;
+    }
+
+    /**
+     * Set value as sign on embedded mode
+     * @param kmsSchemaName kms db schema name in embedded mode
+     */
+    public void setKmsSchemaName(String kmsSchemaName) {
+        Objects.requireNonNull(kmsSchemaName, "kmsSchemaName is NULL");
         this.kmsSchemaName = Optional.of(kmsSchemaName);
+    }
+
+    public Optional<String> getKmsSchemaName() {
+        return kmsSchemaName;
     }
 }

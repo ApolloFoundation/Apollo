@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.apl.core.kms;
+package com.apollocurrency.aplwallet.apl.core.kms.config;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -19,11 +19,13 @@ import lombok.ToString;
 public class JwtConfigDataPropertiesImpl implements JwtConfigData {
 
     @Inject
-    public JwtConfigDataPropertiesImpl(@Property(name = "apl.jwt.issuer", defaultValue = "") String issuer,
-                                       @Property(name = "apl.jwt.secret", defaultValue = "") String secret,
-                                       @Property(name = "apl.jwt.access.expiration.time", defaultValue = "") String accessTokenExpirationTime,
-                                       @Property(name = "apl.jwt.admin.access.expiration.time", defaultValue = "") String accessAdminTokenExpirationTime,
-                                       @Property(name = "apl.jwt.refresh.expiration.time", defaultValue = "") String refreshTokenExpirationTime) {
+    public JwtConfigDataPropertiesImpl(
+        @Property(name = "apl.jwt.issuer", defaultValue = "") String issuer,
+        @Property(name = "apl.jwt.secret", defaultValue = "") String secret,
+        @Property(name = "apl.jwt.access.expiration.time", defaultValue = "") String accessTokenExpirationTime,
+        @Property(name = "apl.jwt.admin.access.expiration.time", defaultValue = "") String accessAdminTokenExpirationTime,
+        @Property(name = "apl.jwt.refresh.expiration.time", defaultValue = "") String refreshTokenExpirationTime
+    ) {
         this.issuer = issuer;
         this.secret = secret;
         this.accessTokenExpirationTime = accessTokenExpirationTime;

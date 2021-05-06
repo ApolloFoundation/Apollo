@@ -3,6 +3,8 @@
  */
 package com.apollocurrency.aplwallet.apl.exec;
 
+import static io.firstbridge.kms.persistence.storage.KVStorage.KMS_SCHEMA_NAME;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.apollocurrency.aplwallet.apl.conf.ConfPlaceholder;
@@ -359,22 +361,14 @@ public class Apollo {
         runtimeMode = RuntimeEnvironment.getInstance().getRuntimeMode();
         runtimeMode.init(); // instance is NOT PROXIED by CDI !!
 
-// check running or run data base server process.
-
-        DbConfig dbConfig = new DbConfig(new PropertiesHolder(applicationProperties), new ChainsConfigHolder(chains));
-        if (!checkOrRunDatabaseServer(dbConfig)) {
+// create NON-proxied class to do run-time check or run database server process.
+        DbConfig tempDbConfig = new DbConfig(new PropertiesHolder(applicationProperties), new ChainsConfigHolder(chains));
+        if (!checkOrRunDatabaseServer(tempDbConfig)) {
             System.err.println(" ERROR! MariaDB process is not running and can not be started from Apollo!");
             System.err.println(" Please install apollo-mariadb package at the same directory level as apollo-blockchain package.");
             System.exit(PosixExitCodes.EX_SOFTWARE.exitCode());
         }
 
-        Optional<InetSocketAddress> kmsUrl = validateKmsUrl(args);
-        if (kmsUrl.isEmpty()) {
-            // embedded mode
-            dbConfig.setKmsSchemaName("kms_schema");
-        } else {
-            // TODO: YL check connection
-        }
 
 //-------------- now bring CDI container up! -------------------------------------
 
@@ -412,13 +406,21 @@ public class Apollo {
 //aplCoreRuntime is the producer for all config holders, initing it with configs
 
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
+        DbConfig dbConfig = CDI.current().select(DbConfig.class).get();// create proxied cdi component for later use
 
 
-        aplCoreRuntime.init(runtimeMode, dirProvider, applicationProperties, chains);
-
+        Optional<InetSocketAddress> kmsUrl = validateKmsUrl(args);
+        if (kmsUrl.isEmpty()) {
+            // KMS embedded mode
+            dbConfig.setKmsSchemaName(KMS_SCHEMA_NAME);
+        } else {
+            // KMS remote server mode via gRPC
+            // TODO: YL check connection to rest api by using rest client
+        }
+        aplCoreRuntime.init(runtimeMode, dirProvider, applicationProperties, chains, dbConfig);
 
         BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
-        blockchainConfigUpdater.updateChain(aplCoreRuntime.getChainsConfigHolder().getActiveChain(), aplCoreRuntime.getPropertieHolder());
+        blockchainConfigUpdater.updateChain(aplCoreRuntime.getChainsConfigHolder().getActiveChain(), aplCoreRuntime.getPropertiesHolder());
 
 
         // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
@@ -427,14 +429,14 @@ public class Apollo {
         BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
         if (log != null) {
-            log.trace("{}",aplCoreRuntime.getPropertieHolder().dumpAllProperties()); // dumping all properties
+            log.trace("{}",aplCoreRuntime.getPropertiesHolder().dumpAllProperties()); // dumping all properties
         }
 
         try {
             // updated shutdown hook explicitly created with instances
             Runtime.getRuntime().addShutdownHook(new ShutdownHook(aplCoreRuntime));
             aplCoreRuntime.addCoreAndInit();
-            app.initUpdater(args.updateAttachmentFile, args.debugUpdater, aplCoreRuntime.getPropertieHolder());
+            app.initUpdater(args.updateAttachmentFile, args.debugUpdater, aplCoreRuntime.getPropertiesHolder());
         } catch (Throwable t) {
             System.out.println("Fatal error: " + t.toString());
             t.printStackTrace();

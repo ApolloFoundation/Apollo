@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
+import com.apollocurrency.aplwallet.apl.core.kms.service.KmsKvStorageService;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
@@ -88,6 +89,7 @@ public final class AplCore {
     private Blockchain blockchain;
     private BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
+    private KmsKvStorageService kmsKvStorageService;
     //private FullTextSearchService fullTextSearchService;
     private API apiServer;
     private IDexMatcherInterface tcs;
@@ -160,6 +162,10 @@ public final class AplCore {
             databaseManager.shutdown();
             log.info("databaseManager Shutdown...");
         }
+        if (kmsKvStorageService != null) {
+            kmsKvStorageService.shutdown();
+            log.info("kmsKvStorageService Shutdown...");
+        }
 
         if (transportInteractionService != null) {
             log.info("transport interaction service shutdown...");
@@ -214,6 +220,8 @@ public final class AplCore {
 
             databaseManager = CDI.current().select(DatabaseManager.class).get();
             databaseManager.getDataSource();
+            kmsKvStorageService = CDI.current().select(KmsKvStorageService.class).get();
+            kmsKvStorageService.getKmsStorage();
             CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
 //            fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
 //            fullTextSearchService.init(); // first time BEFORE migration
@@ -227,7 +235,7 @@ public final class AplCore {
 
             databaseManager.getDataSource(); // retrieve again after migration to have it fresh for everyone
 
-            aplAppStatus.durableTaskUpdate(initCoreTaskID, 50.1, "Apollo core cleaases initialization");
+            aplAppStatus.durableTaskUpdate(initCoreTaskID, 50.1, "Apollo core classes initialization");
 
 
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 52.5, "Exchange matcher initialization");
