@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEnti
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ChatInfo;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -159,6 +160,11 @@ public class TransactionServiceImpl implements TransactionService {
     public List<Transaction> getTransactionsChatHistory(long account1, long account2, int from, int to) {
         List<TransactionEntity> transactions = transactionDao.getTransactionsChatHistory(account1, account2, from, to);
         return transactions.stream().map(toModelConverter).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ChatInfo> getChatAccounts(long accountId, int from, int to) {
+        return transactionDao.getChatAccounts(accountId, from, to);
     }
 
     @Transactional(readOnly = true)
