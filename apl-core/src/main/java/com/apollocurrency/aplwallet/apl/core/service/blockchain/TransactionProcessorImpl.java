@@ -303,6 +303,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         for (Transaction transaction : block.getTransactions()) {
             memPool.markRemoved(transaction.getId());
         }
+        log.debug("Marked removed [{}]", block.getTransactions().stream().map(Transaction::getId).map(String::valueOf).collect(Collectors.joining(",")));
         executor.submit(
             () -> DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(),
                 () -> block.getTransactions().forEach(this::removeUnconfirmedTransaction)));

@@ -134,6 +134,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -1238,6 +1239,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     public void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException, MempoolStateDesyncException {
         Block previousBlock = blockchain.getLastBlock();
         SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp, Integer.MAX_VALUE);
+        log.debug("Selected txs to generate block with [{}]", sortedTransactions.stream().map(Transaction::getId).map(String::valueOf).collect(Collectors.joining(",")));
         verifyTxSufficiency(sortedTransactions, blockVersion);
 
         List<Transaction> blockTransactions = new ArrayList<>();

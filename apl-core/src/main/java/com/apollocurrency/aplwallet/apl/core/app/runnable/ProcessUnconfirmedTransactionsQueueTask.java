@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.WrappedTransaction;
 import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
@@ -16,9 +17,11 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 // TODO cache rollback, when db transaction fails
@@ -52,23 +55,25 @@ public class ProcessUnconfirmedTransactionsQueueTask implements Runnable {
     }
 
     void processBatch() {
-        DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
+        List<UnconfirmedTransaction> addedTransactions =  DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
             int number = batchSizeCalculator.currentBatchSize();
             List<UnconfirmedTransaction> transactions = collectBatch(number);
             if (!transactions.isEmpty()) {
                 batchSizeCalculator.startTiming(System.currentTimeMillis(), number);
-                log.debug("Processing batch size {}, transactions {}", number, transactions.size());
+                log.trace("Processing batch size {}, transactions {}", number, transactions.size());
                 try {
-                    addToMempool(transactions);
+                    return addToMempool(transactions);
                 } finally {
                     batchSizeCalculator.stopTiming(System.currentTimeMillis());
                 }
             }
+            return Collections.emptyList();
         });
+        log.debug("Added to mempool [{}]", addedTransactions.stream().map(WrappedTransaction::getId).map(String::valueOf).collect(Collectors.joining(",")));
     }
 
-    private void addToMempool(List<UnconfirmedTransaction> transactions) {
-
+    private List<UnconfirmedTransaction> addToMempool(List<UnconfirmedTransaction> transactions) {
+        List<UnconfirmedTransaction> addedTxs = new ArrayList<>();
         for (UnconfirmedTransaction transaction : transactions) {
             log.trace("Processing transaction {}", transaction.getId());
             UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(transaction);
@@ -79,12 +84,15 @@ public class ProcessUnconfirmedTransactionsQueueTask implements Runnable {
                     boolean added = memPool.addProcessed(transaction);
                     if (!added) {
                         log.warn("Unable to add new unconfirmed transaction {}, mempool is full", transaction.getId());
+                    } else {
+                        addedTxs.add(transaction);
                     }
                 } catch (AplException.ValidationException e) {
                     log.trace("Invalid transaction {}, reason {}", transaction.getId(), e.getMessage());
                 }
             }
         }
+        return addedTxs;
     }
 
     private List<UnconfirmedTransaction> collectBatch(int number) {
