@@ -1163,6 +1163,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
                 int prevNumberOfNewTransactions = sortedTransactions.size();
                 for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
+                    if (memPool.isRemoved(unconfirmedTransaction)) {
+                        continue;
+                    }
                     int transactionLength = unconfirmedTransaction.getFullSize();
                     if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > maxPayloadLength) {
                         continue;
