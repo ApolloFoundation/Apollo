@@ -35,13 +35,13 @@ public class Chat {
         try {
             con = lookupDataSource().getConnection();
             PreparedStatement stmt = con.prepareStatement(
-                "select account, max(timestamp) as timestamp from "
-                    + "((SELECT recipient_id as account, timestamp from transaction "
-                    + "where type = ? and subtype = ? and sender_id =?) "
+                "with acc_ts AS ((SELECT recipient_id as account, timestamp from transaction "
+                    + "where type = ? and subtype = ? and sender_id = ?) "
                     + "union "
                     + "(SELECT sender_id as account, timestamp from transaction "
-                    + "where type = ? and subtype = ? and recipient_id = ?)) "
-                    + "group by account order by timestamp desc "
+                    + "where type = ? and subtype = ? and recipient_id = ?)) " +
+                    " select account,  max(timestamp) as last_timestamp from acc_ts "
+                    + " group by account order by timestamp desc "
                     + DbUtils.limitsClause(from, to)
             );
             int i = 0;
@@ -54,7 +54,7 @@ public class Chat {
             DbUtils.setLimits(++i, stmt, from, to);
             return new DbIterator<>(con, stmt, (conection, rs) -> {
                 long account = rs.getLong("account");
-                long timestamp = rs.getLong("timestamp");
+                long timestamp = rs.getLong("last_timestamp");
                 return new ChatInfo(account, timestamp);
             });
         } catch (SQLException e) {
