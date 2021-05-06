@@ -4,9 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTxValidationResult;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
@@ -20,21 +21,20 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
-import java.util.List;
-
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class PendingBroadcastTaskTest {
+class ProcessingQueueTaskTest {
     @Mock
     UnconfirmedTransactionProcessingService processingService;
-    @Mock
-    TransactionProcessor transactionProcessor;
     @Mock
     MemPool memPool;
     @Mock
@@ -42,43 +42,49 @@ class PendingBroadcastTaskTest {
     @Mock
     BatchSizeCalculator batchSizeCalculator;
 
-    PendingBroadcastTask pendingBroadcastTask;
+    ProcessUnconfirmedTransactionsQueueTask task;
+    @Mock
+    DatabaseManager dbManager;
+    @Mock
+    TransactionalDataSource dataSource;
 
     @BeforeEach
     void setUp() {
-        pendingBroadcastTask = new PendingBroadcastTask(transactionProcessor, memPool, batchSizeCalculator, validator, processingService);
-    }
+        doReturn(dataSource).when(dbManager).getDataSource();
+        doReturn(mock(TransactionalDataSource.StartedConnection.class)).when(dataSource).beginTransactionIfNotStarted();
+        task = new ProcessUnconfirmedTransactionsQueueTask(memPool, validator, processingService, batchSizeCalculator, dbManager);
+           }
 
     @Test
-    void broadcastBatchSuccessfully() throws InterruptedException, AplException.ValidationException {
+    void processBatchSuccessfully() throws AplException.ValidationException {
         doReturn(20).when(batchSizeCalculator).currentBatchSize();
         doReturn(20).when(memPool).canSafelyAccept();
         doAnswer(new Answer<Integer>() {
             int iters = 0;
             @Override
-            public Integer answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public Integer answer(InvocationOnMock invocationOnMock) {
                 ++iters;
                 if (iters == 1) {
                     return 5; // initial size
                 }
-                if (iters == 7) {
+                if (iters == 6) {
                     return 0;
                 }
                 return 1;
             }
-        }).when(memPool).pendingBroadcastQueueSize();
-        Transaction tx = mock(Transaction.class);
+        }).when(memPool).processingQueueSize();
+        UnconfirmedTransaction tx = mock(UnconfirmedTransaction.class);
         doAnswer(new Answer() {
             int i;
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                if (++i == 4) {
+                if (++i == 3) {
                     throw new AplException.NotValidException("Test not valid tx");
                 }
                 return null;
             }
         }).when(validator).validateLightly(tx);
-        doReturn(tx).when(memPool).nextSoftBroadcastTransaction();
+        doReturn(tx).when(memPool).nextProcessingTx();
         doAnswer(new Answer<UnconfirmedTxValidationResult>() {
             int iter;
             @Override
@@ -89,30 +95,45 @@ class PendingBroadcastTaskTest {
                 return new UnconfirmedTxValidationResult(0, null, "");
             }
         }).when(processingService).validateBeforeProcessing(tx);
+        doAnswer(new Answer() {
+            int iter = 0;
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                ++iter;
+                if (iter == 2) { // not add to mempool second tx
+                    return false;
+                }
+                return true;
+            }
+        }).when(memPool).addProcessed(tx);
 
-        pendingBroadcastTask.broadcastBatch();
+        task.processBatch();
 
-        verify(transactionProcessor).broadcast(List.of(tx, tx, tx));
-
+        verify(memPool, times(2)).addProcessed(tx);
+        verify(batchSizeCalculator).startTiming(anyLong(), anyInt());
+        verify(batchSizeCalculator).stopTiming(anyLong());
     }
 
     @Test
     void broadcastBatch_memPool_is_full() {
         doReturn(20).when(batchSizeCalculator).currentBatchSize();
-        doReturn(50).when(memPool).pendingBroadcastQueueSize();
+        doReturn(50).when(memPool).processingQueueSize();
         doReturn(0).when(memPool).canSafelyAccept();
-        pendingBroadcastTask.broadcastBatch();
 
-        verify(transactionProcessor, never()).broadcast(any(List.class));
+        task.processBatch();
+
+        verify(memPool, never()).addProcessed(any(UnconfirmedTransaction.class));
     }
 
     @Test
     void broadcastBatch_memPool_is_empty() {
         doReturn(20).when(batchSizeCalculator).currentBatchSize();
-        doReturn(0).when(memPool).pendingBroadcastQueueSize();
-        pendingBroadcastTask.broadcastBatch();
+        doReturn(0).when(memPool).processingQueueSize();
 
-        verify(transactionProcessor, never()).broadcast(any(List.class));
+
+        task.processBatch();
+
+        verify(memPool, never()).addProcessed(any(UnconfirmedTransaction.class));
         verify(memPool, never()).canSafelyAccept();
     }
 }

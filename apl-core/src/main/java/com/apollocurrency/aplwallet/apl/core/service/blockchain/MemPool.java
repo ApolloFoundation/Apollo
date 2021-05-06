@@ -86,8 +86,12 @@ public class MemPool {
         return toModelConverter.convert(table.getById(id));
     }
 
+    public boolean hasSavedUnconfirmedTransaction(long id) {
+        return  getUnconfirmedTransaction(id) != null;
+    }
+
     public boolean hasUnconfirmedTransaction(long id) {
-        return getUnconfirmedTransaction(id) != null;
+        return memoryState.processingQueueContains(id) || getUnconfirmedTransaction(id) != null;
     }
 
     public Collection<Transaction> getAllBroadcastedTransactions() {
@@ -168,6 +172,10 @@ public class MemPool {
 
     public int canSafelyAccept() {
         return maxUnconfirmedTransactions - getUnconfirmedTxCount();
+    }
+
+    public int canAcceptToProcessingQueue() {
+        return memoryState.processingQueueCanAccept();
     }
 
     public List<Transaction> allPendingTransactions() {

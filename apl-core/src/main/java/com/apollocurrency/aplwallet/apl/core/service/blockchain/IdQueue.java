@@ -129,6 +129,10 @@ public class IdQueue<T> implements Queue<T> {
         return ids.contains(hash);
     }
 
+    public synchronized boolean contains(Long hash) {
+        return ids.contains(hash);
+    }
+
     @Override
     public synchronized T element() {
         return queue.element();

@@ -180,47 +180,47 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         }
     }
 
-    @Override
-    public void broadcast(Collection<Transaction> transactions) {
-        List<Transaction> returned = new ArrayList<>();
-        List<UnconfirmedTransaction> processed = new ArrayList<>();
-        DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
-            List<UnconfirmedTransaction> toBroadcast = transactions.stream()
-                .filter(this::requireBroadcast)
-                .map(e -> unconfirmedTransactionCreator.from(e, timeService.systemTimeMillis()))
-                .collect(Collectors.toList());
-            for (UnconfirmedTransaction tx : toBroadcast) {
-                try {
-                    if (processingService.validateBeforeProcessing(tx).isOk()) {
-                        IdQueue.ReturnCode status = memPool.addToProcessingQueue(tx);
-                        if (status == IdQueue.ReturnCode.NOT_ADDED || status == IdQueue.ReturnCode.FULL) {
-                            log.debug("Limit of mempool is reached, will return to pending queue tx {}", tx.getId());
-                            returned.add(tx);
-                        } else if (status == IdQueue.ReturnCode.ADDED) {
-                            processed.add(tx);
-                        }
-                    } else {
-                        log.trace("Not valid unconfirmed tx {}, already exit", tx.getId());
-                    }
-                } catch (DbTransactionHelper.DbTransactionExecutionException validationException) {
-                    log.trace("Not valid tx " + tx.getId(), validationException);
-                }
-            }
-        });
-        peers.sendToSomePeers(processed);
-        List<Transaction> processedTxs = processed.stream().map(UnconfirmedTransaction::getTransactionImpl).collect(Collectors.toList());
-        processedTxs.forEach(memPool::rebroadcast);
-        txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(processedTxs);
-        returned.forEach(e -> {
-            try {
-                memPool.softBroadcast(e);
-            } catch (AplException.ValidationException ignored) {
-            }
-        });
-        if (!returned.isEmpty()) {
-            log.warn("Return {} txs back to pending queue. Mempool is full", returned.size());
-        }
-    }
+//    @Override
+//    public void broadcast(Collection<Transaction> transactions) {
+//        List<Transaction> returned = new ArrayList<>();
+//        List<UnconfirmedTransaction> processed = new ArrayList<>();
+//        DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
+//            List<UnconfirmedTransaction> toBroadcast = transactions.stream()
+//                .filter(this::requireBroadcast)
+//                .map(e -> unconfirmedTransactionCreator.from(e, timeService.systemTimeMillis()))
+//                .collect(Collectors.toList());
+//            for (UnconfirmedTransaction tx : toBroadcast) {
+//                try {
+//                    if (processingService.validateBeforeProcessing(tx).isOk()) {
+//                        IdQueue.ReturnCode status = memPool.addToProcessingQueue(tx);
+//                        if (status == IdQueue.ReturnCode.NOT_ADDED || status == IdQueue.ReturnCode.FULL) {
+//                            log.debug("Limit of mempool is reached, will return to pending queue tx {}", tx.getId());
+//                            returned.add(tx);
+//                        } else if (status == IdQueue.ReturnCode.ADDED) {
+//                            processed.add(tx);
+//                        }
+//                    } else {
+//                        log.trace("Not valid unconfirmed tx {}, already exit", tx.getId());
+//                    }
+//                } catch (DbTransactionHelper.DbTransactionExecutionException validationException) {
+//                    log.trace("Not valid tx " + tx.getId(), validationException);
+//                }
+//            }
+//        });
+//        peers.sendToSomePeers(processed);
+//        List<Transaction> processedTxs = processed.stream().map(UnconfirmedTransaction::getTransactionImpl).collect(Collectors.toList());
+//        processedTxs.forEach(memPool::rebroadcast);
+//        txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(processedTxs);
+//        returned.forEach(e -> {
+//            try {
+//                memPool.softBroadcast(e);
+//            } catch (AplException.ValidationException ignored) {
+//            }
+//        });
+//        if (!returned.isEmpty()) {
+//            log.warn("Return {} txs back to pending queue. Mempool is full", returned.size());
+//        }
+//    }
 
     private boolean requireBroadcast(Transaction tx) {
         if (blockchain.hasTransaction(tx.getId())) {

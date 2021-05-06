@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,19 +17,21 @@ import java.util.List;
 import java.util.Objects;
 
 @Slf4j
-//TODO make soft broadcast
 public class ProcessTxsToBroadcastWhenConfirmed implements Runnable {
 
-    private final MemPool memPool;
     private final TimeService timeService;
+    private final TransactionProcessor processor;
     private final Blockchain blockchain;
+    private final MemPool memPool;
 
-    public ProcessTxsToBroadcastWhenConfirmed(MemPool memPool,
+    public ProcessTxsToBroadcastWhenConfirmed(TransactionProcessor processor,
+                                              MemPool memPool,
                                               TimeService timeService,
                                               Blockchain blockchain) {
-        this.memPool = Objects.requireNonNull(memPool);
+        this.processor = Objects.requireNonNull(processor);
         this.timeService = Objects.requireNonNull(timeService);
         this.blockchain = Objects.requireNonNull(blockchain);
+        this.memPool = memPool;
         log.info("Created 'ProcessTxsToBroadcastWhenConfirmed' instance");
     }
 
@@ -43,7 +46,7 @@ public class ProcessTxsToBroadcastWhenConfirmed implements Runnable {
                     txsToDelete.add(tx);
                 } else if (!hasTransaction(uncTx)) {
                     try {
-                        memPool.softBroadcast(uncTx);
+                        processor.broadcast(uncTx);
                     } catch (AplException.ValidationException e) {
                         log.debug("Unable to broadcast invalid unctx {}, reason {}", tx.getId(), e.getMessage());
                         txsToDelete.add(tx);
@@ -51,10 +54,7 @@ public class ProcessTxsToBroadcastWhenConfirmed implements Runnable {
                 } else if (blockchain.hasTransaction(uncTx.getId())) {
                     if (!hasTransaction(tx)) {
                         try {
-                            boolean broadcasted = memPool.softBroadcast(tx);
-                            if (!broadcasted) {
-                                return;
-                            }
+                            processor.broadcast(tx);
                         } catch (AplException.ValidationException e) {
                             log.debug("Unable to broadcast invalid tx {}, reason {}", tx.getId(), e.getMessage());
                         }
@@ -69,6 +69,6 @@ public class ProcessTxsToBroadcastWhenConfirmed implements Runnable {
     }
 
     private boolean hasTransaction(Transaction tx) {
-        return memPool.getUnconfirmedTransaction(tx.getId()) != null || blockchain.hasTransaction(tx.getId());
+        return memPool.hasUnconfirmedTransaction(tx.getId()) || blockchain.hasTransaction(tx.getId());
     }
 }

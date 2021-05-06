@@ -13,14 +13,15 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTxVal
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.util.BatchSizeCalculator;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
+// TODO cache rollback, when db transaction fails
 public class ProcessUnconfirmedTransactionsQueueTask implements Runnable {
     private final MemPool memPool;
     private final BatchSizeCalculator batchSizeCalculator;
@@ -28,55 +29,62 @@ public class ProcessUnconfirmedTransactionsQueueTask implements Runnable {
     private final UnconfirmedTransactionProcessingService processingService;
     private final DatabaseManager databaseManager;
 
-    public ProcessUnconfirmedTransactionsQueueTask(MemPool memPool, TransactionValidator validator, UnconfirmedTransactionProcessingService processingService, DatabaseManager databaseManager) {
+    public ProcessUnconfirmedTransactionsQueueTask(MemPool memPool,
+                                                   TransactionValidator validator,
+                                                   UnconfirmedTransactionProcessingService processingService,
+                                                   BatchSizeCalculator batchSizeCalculator,
+                                                   DatabaseManager databaseManager) {
         this.memPool = Objects.requireNonNull(memPool);
-        this.validator = validator;
-        this.processingService = processingService;
-        this.databaseManager = databaseManager;
-        this.batchSizeCalculator = new BatchSizeCalculator(1000, 2, 1024);
+        this.validator = Objects.requireNonNull(validator);
+        this.processingService = Objects.requireNonNull(processingService);
+        this.databaseManager = Objects.requireNonNull(databaseManager);
+        this.batchSizeCalculator = Objects.requireNonNull(batchSizeCalculator);
         log.info("Created 'ProcessUnconfirmedTransactionsQueueTask' instance");
     }
 
     @Override
     public void run() {
         try {
-            broadcastBatch();
-
+            processBatch();
         } catch (Throwable e) {
             log.error("Error during processing unconfirmed transaction from queue ", e);
         }
     }
 
-    void broadcastBatch() {
+    void processBatch() {
         DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), ()-> {
             int number = batchSizeCalculator.currentBatchSize();
             List<UnconfirmedTransaction> transactions = collectBatch(number);
             if (!transactions.isEmpty()) {
                 batchSizeCalculator.startTiming(System.currentTimeMillis(), number);
+                log.debug("Processing batch size {}, transactions {}", number, transactions.size());
                 try {
-                    log.debug("Pending processing batch size {}, transactions {}", number, transactions.size());
-                    for (UnconfirmedTransaction transaction : transactions) {
-                        log.trace("Processing transaction {}", transaction.getId());
-                        UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(transaction);
-                        if (validationResult.isOk()) {
-                            try {
-                                validator.validateSignatureWithTxFeeLessStrict(transaction);
-                                validator.validateLightly(transaction);
-                                boolean added = memPool.addProcessed(transaction);
-                                if (!added) {
-
-                                    log.warn("Unable to add new unconfirmed transaction {}, mempool is full", transaction.getId());
-                                }
-                            } catch (AplException.ValidationException e) {
-                                log.trace("Invalid transaction {}, reason {}", transaction.getId(), e.getMessage());
-                            }
-                        }
-                    }
+                    addToMempool(transactions);
                 } finally {
                     batchSizeCalculator.stopTiming(System.currentTimeMillis());
                 }
             }
         });
+    }
+
+    private void addToMempool(List<UnconfirmedTransaction> transactions) {
+
+        for (UnconfirmedTransaction transaction : transactions) {
+            log.trace("Processing transaction {}", transaction.getId());
+            UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(transaction);
+            if (validationResult.isOk()) {
+                try {
+                    validator.validateSignatureWithTxFeeLessStrict(transaction);
+                    validator.validateLightly(transaction);
+                    boolean added = memPool.addProcessed(transaction);
+                    if (!added) {
+                        log.warn("Unable to add new unconfirmed transaction {}, mempool is full", transaction.getId());
+                    }
+                } catch (AplException.ValidationException e) {
+                    log.trace("Invalid transaction {}, reason {}", transaction.getId(), e.getMessage());
+                }
+            }
+        }
     }
 
     private List<UnconfirmedTransaction> collectBatch(int number) {
@@ -87,11 +95,11 @@ public class ProcessUnconfirmedTransactionsQueueTask implements Runnable {
         }
         int collected = 0;
         while (collected < allowedBatch) {
-            TxRes tx = nextTxFromPendingQueue();
-            if (tx.hasTransaction()) {
+            Optional<UnconfirmedTransaction> nextTxOptional = nextTransaction();
+            if (nextTxOptional.isPresent()) {
                 collected++;
-                collectedTxs.add(tx.getTx());
-            } else if (!tx.hasNext) {
+                collectedTxs.add(nextTxOptional.get());
+            } else {
                 break;
             }
         }
@@ -108,22 +116,12 @@ public class ProcessUnconfirmedTransactionsQueueTask implements Runnable {
         }
     }
 
-    TxRes nextTxFromPendingQueue() {
-        if (memPool.processingQueueSize() > 0) { // try to not lock
+    Optional<UnconfirmedTransaction> nextTransaction() {
+        if (memPool.processingQueueSize() > 0) {
             UnconfirmedTransaction tx = memPool.nextProcessingTx();
-            return new TxRes(tx, true);
+            return Optional.of(tx);
         } else {
-            return new TxRes(null, false);
-        }
-    }
-
-    @Data
-    private static class TxRes {
-        private final UnconfirmedTransaction tx;
-        private final boolean hasNext;
-
-        public boolean hasTransaction() {
-            return tx != null;
+            return Optional.empty();
         }
     }
 }

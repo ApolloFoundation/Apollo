@@ -92,6 +92,13 @@ public class MemPoolInMemoryState {
         return toBeProcessedQueue.remove();
     }
 
+    public boolean processingQueueContains(long id) {
+        return toBeProcessedQueue.contains(id);
+    }
+    public int processingQueueCanAccept() {
+        return maxCachedTransactions - toBeProcessedQueue.size();
+    }
+
     public Iterator<UnconfirmedTransaction> processLaterQueueIterator() {
         return processLaterQueue.iterator();
     }
