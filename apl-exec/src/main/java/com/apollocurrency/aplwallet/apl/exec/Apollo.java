@@ -416,14 +416,15 @@ public class Apollo {
         if (kmsUrl.isEmpty()) {
             // KMS embedded mode
             dbConfig.setKmsSchemaName(KMS_SCHEMA_NAME);
+            log.debug("KMS is in 'embedded mode' in db schema = {}...", KMS_SCHEMA_NAME);
         } else {
-            // KMS remote server mode via gRPC
+            // KMS remote server mode via gRPC client
             String hostString = kmsUrl.get().toString();
-            log.debug("Checking if KMS connection  is healthy by url = {}...", hostString);
-            GrpcHostConfig grpcHostConfig = new GrpcHostConfigImpl(hostString);
+            log.debug("Checking if KMS server connection is healthy by url = {}...", hostString);
+            GrpcHostConfig grpcHostConfig = new GrpcHostConfigImpl(kmsUrl.get());
             GrpcClient grpcClient = new GrpcClient(grpcHostConfig);
             // check KMS server connectivity
-            log.debug("KMS connection is {} by url = {}...", grpcClient.isHealthy() ? "HEALTHY !" : "==> BROKEN !", hostString);
+            log.debug("KMS server connection is {} by url = {}...", grpcClient.isHealthy() ? "HEALTHY !" : "==> BROKEN !", hostString);
             grpcClient.shutDown();
         }
         aplCoreRuntime.init(runtimeMode, dirProvider, applicationProperties, chains, dbConfig);
