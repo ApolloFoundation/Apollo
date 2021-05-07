@@ -193,7 +193,7 @@ class TransactionProcessorTest {
         //THEN
         verify(transactionValidator).validateLightly(transaction);
         verify(transactionValidator).validateSignatureWithTxFeeLessStrict(transaction);
-        verify(memPool).addToProcessingQueue(unconfirmedTransaction);
+        verify(memPool).addPendingProcessing(unconfirmedTransaction);
     }
 
 }

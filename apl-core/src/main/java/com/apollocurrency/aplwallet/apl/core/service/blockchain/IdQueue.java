@@ -205,6 +205,16 @@ public class IdQueue<T> implements Queue<T> {
         }
     }
 
+    public synchronized boolean remove(long hash) {
+        boolean contains = contains(hash);
+        if (contains) {
+            ids.remove(hash);
+            return queue.removeIf(o-> hasher.apply(o) == hash);
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public synchronized boolean containsAll(Collection<?> c) {
         for (Object o : c) {

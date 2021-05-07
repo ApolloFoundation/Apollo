@@ -38,7 +38,7 @@ public class ProcessTxsToBroadcastWhenConfirmed implements Runnable {
     @Override
     public void run() {
         List<Transaction> txsToDelete = new ArrayList<>();
-        memPool.getAllBroadcastWhenConfirmedTransactions().forEach((tx, uncTx) -> {
+        memPool.getAllBroadcastWhenConfirmed().forEach((tx, uncTx) -> {
             try {
                 int epochTime = timeService.getEpochTime();
                 if (uncTx.getExpiration() < epochTime || tx.getExpiration() < epochTime) {
@@ -65,10 +65,10 @@ public class ProcessTxsToBroadcastWhenConfirmed implements Runnable {
                 log.error("Unknown error during broadcasting {}", tx.getId());
             }
         });
-        memPool.removeBroadcastedWhenConfirmedTransaction(txsToDelete);
+        memPool.removeBroadcastedWhenConfirmed(txsToDelete);
     }
 
     private boolean hasTransaction(Transaction tx) {
-        return memPool.hasUnconfirmedTransaction(tx.getId()) || blockchain.hasTransaction(tx.getId());
+        return memPool.contains(tx.getId()) || blockchain.hasTransaction(tx.getId());
     }
 }

@@ -340,9 +340,12 @@ public class GeneratorServiceImpl implements GeneratorService {
                 return true;
             } catch (BlockchainProcessor.MempoolStateDesyncException e) {
                 log.debug("Mempool desync {}", e.getMessage()); // try another time
-            } catch (DbTransactionHelper.DbTransactionExecutionException e) {
-                handleTransactionNotAcceptedException(startLog, e);
-                if (handleBlockNotAcceptedException(e)) return false;
+            } catch (BlockchainProcessor.TransactionNotAcceptedException e) {
+                String txJson = txJson(e.getTransaction());
+                log.debug("Transaction not accepted during block generation {} , cause {}", txJson, e.getMessage());
+                if (timeService.systemTimeMillis() - startLog > 20_000) {
+                    throw e;
+                }
             }
         }
     }
@@ -399,51 +402,10 @@ public class GeneratorServiceImpl implements GeneratorService {
         return blockchainProcessor;
     }
 
-    private void handleTransactionNotAcceptedException(long startTime, DbTransactionHelper.DbTransactionExecutionException e) {
-        Throwable noAccepted = findCauseException(e, BlockchainProcessor.TransactionNotAcceptedException.class);
-        if (noAccepted instanceof BlockchainProcessor.TransactionNotAcceptedException) {
-            String txJson = getBadTxJson((BlockchainProcessor.TransactionNotAcceptedException) noAccepted);
-            log.debug("Transaction not accepted during block generation {} , cause {}", txJson, noAccepted.getMessage());
-            if (timeService.systemTimeMillis() - startTime > 20_000) {
-                throw e;
-            }
-        }
-    }
-
-    private String getBadTxJson(BlockchainProcessor.TransactionNotAcceptedException noAccepted) {
-        Transaction transaction = noAccepted.getTransaction();
-        TxSerializer serializer = TxBContext.newInstance(blockchainConfig.getChain()).createSerializer(transaction.getVersion());
+    private String txJson(Transaction tx) {
+        TxSerializer serializer = TxBContext.newInstance(blockchainConfig.getChain()).createSerializer(tx.getVersion());
         PayloadResult jsonBuffer = PayloadResult.createJsonResult();
-        serializer.serialize(transaction, jsonBuffer);
+        serializer.serialize(tx, jsonBuffer);
         return new String(jsonBuffer.array());
-    }
-
-    private boolean handleBlockNotAcceptedException(DbTransactionHelper.DbTransactionExecutionException e) {
-        Throwable ex = findCauseException(e, BlockchainProcessor.BlockNotAcceptedException.class);
-        if (ex instanceof BlockchainProcessor.BlockNotAcceptedException) {
-
-            if (Convert.nullToEmpty(ex.getMessage()).contains("Incorrect regular block")) {
-                log.debug("Mempool state changed, skip block generation iteration");
-                if (log.isTraceEnabled()) {
-                    log.trace("Block was not accepted during generation ", e);
-                }
-                return true;
-            }
-            throw e;
-        }
-        return false;
-    }
-
-    private <T extends Throwable> Throwable findCauseException(Exception e, Class<T> exClass) {
-        Throwable cause = e.getCause();
-        Throwable toVerify = e;
-        while (cause != null) {
-            if (exClass.isAssignableFrom(cause.getClass())) {
-                toVerify = cause;
-                break;
-            }
-            cause = cause.getCause();
-        }
-        return toVerify;
     }
 }

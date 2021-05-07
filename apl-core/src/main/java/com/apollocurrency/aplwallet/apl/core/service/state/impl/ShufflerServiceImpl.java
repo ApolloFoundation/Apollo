@@ -519,7 +519,7 @@ public class ShufflerServiceImpl implements ShufflerService {
     }
 
     private boolean hasUnconfirmedTransaction(Shuffler shuffler, ShufflingAttachment shufflingAttachment) {
-        List<UnconfirmedTransaction> list = CollectionUtil.toList(memPool.getAllProcessedStream());
+        List<UnconfirmedTransaction> list = CollectionUtil.toList(memPool.getAllStream());
         for (UnconfirmedTransaction unconfirmedTransaction : list) {
             if (unconfirmedTransaction.getSenderId() != shuffler.getAccountId()) {
                 continue;

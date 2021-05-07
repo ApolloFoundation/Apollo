@@ -69,7 +69,9 @@ public class ProcessUnconfirmedTransactionsQueueTask implements Runnable {
             }
             return Collections.emptyList();
         });
-        log.debug("Added to mempool [{}]", addedTransactions.stream().map(WrappedTransaction::getId).map(String::valueOf).collect(Collectors.joining(",")));
+        if (!addedTransactions.isEmpty()) {
+            log.debug("Added to mempool [{}]", addedTransactions.stream().map(WrappedTransaction::getId).map(String::valueOf).collect(Collectors.joining(",")));
+        }
     }
 
     private List<UnconfirmedTransaction> addToMempool(List<UnconfirmedTransaction> transactions) {
@@ -118,7 +120,7 @@ public class ProcessUnconfirmedTransactionsQueueTask implements Runnable {
         int pendingTxCount = memPool.processingQueueSize();
         if(pendingTxCount > 0) {
             // memPool.canSafelyAccept() make call to the db.
-            return Math.min(memPool.canSafelyAccept(), Math.min(desirableBatch, pendingTxCount));
+            return Math.min(memPool.remainingCapacity(), Math.min(desirableBatch, pendingTxCount));
         } else {
             return pendingTxCount;
         }
@@ -126,7 +128,7 @@ public class ProcessUnconfirmedTransactionsQueueTask implements Runnable {
 
     Optional<UnconfirmedTransaction> nextTransaction() {
         if (memPool.processingQueueSize() > 0) {
-            UnconfirmedTransaction tx = memPool.nextProcessingTx();
+            UnconfirmedTransaction tx = memPool.nextPendingProcessing();
             return Optional.of(tx);
         } else {
             return Optional.empty();

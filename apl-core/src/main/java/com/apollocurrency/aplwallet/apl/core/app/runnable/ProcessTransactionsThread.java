@@ -67,7 +67,7 @@ public class ProcessTransactionsThread implements Runnable {
                 }
 
                 GetUnconfirmedTransactionsRequest request = new GetUnconfirmedTransactionsRequest(blockchainConfig.getChain().getChainId());
-                List<String> exclude = Stream.concat(memPool.getAllProcessedIds().stream(), memPool.getAllRemoved(REMOVED_TXS_FETCH_LIMIT).stream())
+                List<String> exclude = Stream.concat(memPool.getAllIds().stream(), memPool.getAllRemoved(REMOVED_TXS_FETCH_LIMIT).stream())
                     .sorted(Long::compareTo)
                     .map(Long::toUnsignedString)
                     .collect(Collectors.toList());

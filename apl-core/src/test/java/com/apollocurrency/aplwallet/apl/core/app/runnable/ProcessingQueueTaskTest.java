@@ -58,7 +58,7 @@ class ProcessingQueueTaskTest {
     @Test
     void processBatchSuccessfully() throws AplException.ValidationException {
         doReturn(20).when(batchSizeCalculator).currentBatchSize();
-        doReturn(20).when(memPool).canSafelyAccept();
+        doReturn(20).when(memPool).remainingCapacity();
         doAnswer(new Answer<Integer>() {
             int iters = 0;
             @Override
@@ -84,7 +84,7 @@ class ProcessingQueueTaskTest {
                 return null;
             }
         }).when(validator).validateLightly(tx);
-        doReturn(tx).when(memPool).nextProcessingTx();
+        doReturn(tx).when(memPool).nextPendingProcessing();
         doAnswer(new Answer<UnconfirmedTxValidationResult>() {
             int iter;
             @Override
@@ -118,7 +118,7 @@ class ProcessingQueueTaskTest {
     void broadcastBatch_memPool_is_full() {
         doReturn(20).when(batchSizeCalculator).currentBatchSize();
         doReturn(50).when(memPool).processingQueueSize();
-        doReturn(0).when(memPool).canSafelyAccept();
+        doReturn(0).when(memPool).remainingCapacity();
 
         task.processBatch();
 
@@ -134,6 +134,6 @@ class ProcessingQueueTaskTest {
         task.processBatch();
 
         verify(memPool, never()).addProcessed(any(UnconfirmedTransaction.class));
-        verify(memPool, never()).canSafelyAccept();
+        verify(memPool, never()).remainingCapacity();
     }
 }

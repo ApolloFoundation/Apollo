@@ -1151,7 +1151,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit) {
 
         List<UnconfirmedTransaction> orderedUnconfirmedTransactions = new ArrayList<>();
-        CollectionUtil.forEach(memPool.getAllProcessedStream()
+        CollectionUtil.forEach(memPool.getAllStream()
             .filter(transaction -> referencedTransactionService.hasAllReferencedTransactions(
                 transaction.getTransactionImpl(), previousBlock.getHeight() + 1)), orderedUnconfirmedTransactions::add);
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);

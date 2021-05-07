@@ -56,7 +56,7 @@ public class UnconfirmedTransactionProcessingService {
         if (blockchain.getHeight() < blockchainConfig.getLastKnownBlock()) {
             return new UnconfirmedTxValidationResult(100_115, UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID, "Blockchain not ready to accept transactions");
         }
-        if (memPool.hasSavedUnconfirmedTransaction(transaction.getId()) || blockchain.hasTransaction(transaction.getId())) {
+        if (memPool.hasSaved(transaction.getId()) || blockchain.hasTransaction(transaction.getId())) {
             return new UnconfirmedTxValidationResult(100_120, UnconfirmedTxValidationResult.Error.ALREADY_PROCESSED, "Transaction already processed");
         }
         if (transaction.getReferencedTransactionFullHash() != null && !memPool.canAcceptReferenced()) {

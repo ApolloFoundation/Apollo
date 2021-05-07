@@ -64,7 +64,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
      */
     public Response broadcastTx(TxRequest body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
-        if (memPool.canAcceptToProcessingQueue() <= 0) {
+        if (memPool.pendingProcessingRemainingCapacity() <= 0) {
             return ResponseBuilderV2.apiError(ApiErrors.UNCONFIRMED_TRANSACTION_CACHE_IS_FULL).status(409).build();
         }
         StatusResponse rc = broadcastOneTx(body);
@@ -73,7 +73,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
 
     public Response broadcastTxBatch(List<TxRequest> body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
-        if (memPool.canAcceptToProcessingQueue() < body.size()) {
+        if (memPool.pendingProcessingRemainingCapacity() < body.size()) {
             return ResponseBuilderV2.apiError(ApiErrors.UNCONFIRMED_TRANSACTION_CACHE_IS_FULL).status(409).build();
         }
         ListResponse listResponse = new ListResponse();
@@ -136,7 +136,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
         }
         transaction = blockchain.getTransaction(transactionId);
         if (transaction == null) {
-            transaction = memPool.getUnconfirmedTransaction(transactionId);
+            transaction = memPool.get(transactionId);
         }
         if (transaction == null) {
             throw new NotFoundException("Transaction not found. id=" + transactionIdStr);
