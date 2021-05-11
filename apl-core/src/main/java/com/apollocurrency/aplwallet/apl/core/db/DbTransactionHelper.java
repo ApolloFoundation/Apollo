@@ -5,7 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class DbTransactionHelper {
 
     public static void executeInTransaction(TransactionalDataSource dataSource, TransactionOperation op) {
@@ -14,7 +16,11 @@ public class DbTransactionHelper {
             op.execute();
             dataSource.commit(!startedConnection.isAlreadyStarted());
         } catch (Exception e) {
-            dataSource.rollback(!startedConnection.isAlreadyStarted());
+            try {
+                dataSource.rollback(!startedConnection.isAlreadyStarted());
+            } catch (Exception re) {
+                log.error("Error during db rollback", re);
+            }
             throw new DbTransactionExecutionException(e.toString(), e);
         }
     }

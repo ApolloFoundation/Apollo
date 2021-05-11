@@ -23,12 +23,14 @@ import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Singleton
 public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransactionType {
 
+    public static final BigDecimal[] DEFAULT_FEES = {BigDecimal.valueOf(40), BigDecimal.valueOf(1000), BigDecimal.valueOf(25000)};
     private final Fee FIVE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(Math.multiplyExact(40, getBlockchainConfig().getOneAPL()));
     private final Fee FOUR_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(Math.multiplyExact(1000, getBlockchainConfig().getOneAPL()));
     private final Fee THREE_LETTER_CURRENCY_ISSUANCE_FEE = new Fee.ConstantFee(Math.multiplyExact(25000, getBlockchainConfig().getOneAPL()));
@@ -60,6 +62,7 @@ public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransaction
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
+        BigDecimal[] additionalFees = getBlockchainConfig().getCurrentConfig().getAdditionalFees(getSpec(), DEFAULT_FEES);
         MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
         int minLength = Math.min(attachment.getCode().length(), attachment.getName().length());
         Currency oldCurrency;
@@ -76,19 +79,21 @@ public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransaction
         if ((oldCurrency = currencyService.getCurrencyByName(attachment.getCode())) != null) {
             oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
         }
+        Fee.ConstantFee fiveLetterFee = new Fee.ConstantFee(additionalFees[0].multiply(BigDecimal.valueOf(getBlockchainConfig().getOneAPL())).longValueExact());
         if (minLength >= oldMinLength) {
-            return FIVE_LETTER_CURRENCY_ISSUANCE_FEE;
+            return fiveLetterFee;
         }
+        Fee.ConstantFee threeLettersFee = new Fee.ConstantFee(additionalFees[2].multiply(BigDecimal.valueOf(getBlockchainConfig().getOneAPL())).longValueExact());
         switch (minLength) {
             case 3:
-                return THREE_LETTER_CURRENCY_ISSUANCE_FEE;
+                return threeLettersFee;
             case 4:
-                return FOUR_LETTER_CURRENCY_ISSUANCE_FEE;
+                return new Fee.ConstantFee(additionalFees[1].multiply(BigDecimal.valueOf(getBlockchainConfig().getOneAPL())).longValueExact());
             case 5:
-                return FIVE_LETTER_CURRENCY_ISSUANCE_FEE;
+                return fiveLetterFee;
             default:
                 // never, invalid code length will be checked and caught later
-                return THREE_LETTER_CURRENCY_ISSUANCE_FEE;
+                return threeLettersFee;
         }
     }
 
