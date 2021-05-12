@@ -53,7 +53,7 @@ public final class GetUnconfirmedTransactionIds extends AbstractAPIRequestHandle
 
         JSONArray transactionIds = new JSONArray();
         if (accountIds.isEmpty()) {
-            transactionIds.addAll(lookupMemPool().getProcessed(firstIndex, lastIndex)
+            transactionIds.addAll(lookupMemPool().getAllStream(firstIndex, lastIndex)
                     .map(UnconfirmedTransaction::getStringId)
                     .collect(Collectors.toList()));
         } else {
@@ -61,7 +61,7 @@ public final class GetUnconfirmedTransactionIds extends AbstractAPIRequestHandle
             if (limit == 0) {
                 limit = Integer.MAX_VALUE;
             }
-                CollectionUtil.forEach(lookupMemPool().getAllProcessedStream()
+                CollectionUtil.forEach(lookupMemPool().getAllStream()
                 .filter(transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId()))
                 .limit(limit)
                 .skip(firstIndex), e-> transactionIds.add(e.getStringId()));

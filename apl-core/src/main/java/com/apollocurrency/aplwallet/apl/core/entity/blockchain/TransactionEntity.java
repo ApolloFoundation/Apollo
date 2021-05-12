@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.blockchain;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,6 +13,7 @@ import lombok.Data;
  */
 @Data
 @Builder
+@AllArgsConstructor
 public class TransactionEntity {
     private long dbId;
     private long id;

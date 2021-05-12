@@ -134,6 +134,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -569,6 +570,15 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
+    /**
+     * Pushes the new last block into blockchain fully validating all the transactions
+     * This method uses the full blockchain lock {@link GlobalSync#writeLock()}
+     * @param block block to add into blockchain
+     * @throws com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper.DbTransactionExecutionException which wraps
+     * a real exception cause, this type of exceptions is rare and usually should not be handled, since something wrong
+     * with the running environment: database deadlocks, timeout locking table, too many connections and so on
+     * @throws com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor.BlockNotAcceptedException in case of the block validation failure
+     */
     @Override
     public void pushBlock(final Block block) throws BlockNotAcceptedException {
         int curTime = timeService.getEpochTime();
@@ -640,6 +650,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 } finally { // set blockchain last block to point on previous correct block in any case to restore operability and avoid BlockNotFoundException
                     // Need to do so even in case of popOff failure or transaction rollback fatal error (SYS table lock, connection closed, etc)
                     blockchain.setLastBlock(previousLastBlock);
+                }
+                Throwable realEx = e.getCause();
+                if (realEx instanceof BlockNotAcceptedException) {
+                    throw (BlockNotAcceptedException) realEx;
                 }
                 throw e;
             }
@@ -1137,7 +1151,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit) {
 
         List<UnconfirmedTransaction> orderedUnconfirmedTransactions = new ArrayList<>();
-        CollectionUtil.forEach(memPool.getAllProcessedStream()
+        CollectionUtil.forEach(memPool.getAllStream()
             .filter(transaction -> referencedTransactionService.hasAllReferencedTransactions(
                 transaction.getTransactionImpl(), previousBlock.getHeight() + 1)), orderedUnconfirmedTransactions::add);
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
@@ -1150,6 +1164,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
                 int prevNumberOfNewTransactions = sortedTransactions.size();
                 for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
+                    if (memPool.isRemoved(unconfirmedTransaction)) {
+                        continue;
+                    }
                     int transactionLength = unconfirmedTransaction.getFullSize();
                     if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > maxPayloadLength) {
                         continue;
@@ -1219,9 +1236,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         return sortedTransactions;
     }
 
-    public void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException {
+    public void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException, MempoolStateDesyncException {
         Block previousBlock = blockchain.getLastBlock();
         SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp, Integer.MAX_VALUE);
+        log.debug("Selected txs to generate block with [{}]", sortedTransactions.stream().map(Transaction::getId).map(String::valueOf).collect(Collectors.joining(",")));
+        verifyTxSufficiency(sortedTransactions, blockVersion);
+
         List<Transaction> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
         long totalAmountATM = 0;
@@ -1261,6 +1281,24 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         } catch (BlockNotAcceptedException e) {
             log.debug("Generate block failed: " + e.getMessage());
             throw e;
+        }
+    }
+
+    private void verifyTxSufficiency(Set<UnconfirmedTransaction> txs, int blockVersion) throws MempoolStateDesyncException {
+        HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
+        if (!currentConfig.isAdaptiveForgingEnabled()) {
+            return;
+        }
+        int adaptiveTxsNumber = currentConfig.getNumberOfTransactionsInAdaptiveBlock();
+        int size = txs.size();
+        if (size <= adaptiveTxsNumber && blockVersion == Block.REGULAR_BLOCK_VERSION) {
+            throw new MempoolStateDesyncException("Not enough transactions for regular block generation, got " + size + ", required at least > " + adaptiveTxsNumber);
+        }
+        if (size > adaptiveTxsNumber && blockVersion == Block.ADAPTIVE_BLOCK_VERSION) {
+            throw new MempoolStateDesyncException("Expected " + adaptiveTxsNumber + " for adaptive block generation, but got " + size);
+        }
+        if (size <= adaptiveTxsNumber && blockVersion == Block.INSTANT_BLOCK_VERSION) {
+            throw new MempoolStateDesyncException("Expected greater then " + adaptiveTxsNumber + " for instant block generation, but got " + size);
         }
     }
 

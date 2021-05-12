@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.api.v2.model.TxReceipt;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ChatInfo;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
 
@@ -60,6 +61,8 @@ public interface TransactionService {
                                     int height, int prunableExpiration);
 
     List<Transaction> getTransactionsChatHistory(long account1, long account2, int from, int to);
+
+    List<ChatInfo> getChatAccounts(long accountId, int from, int to);
 
     List<Transaction> getTransactions(byte type, byte subtype, int from, int to);
 

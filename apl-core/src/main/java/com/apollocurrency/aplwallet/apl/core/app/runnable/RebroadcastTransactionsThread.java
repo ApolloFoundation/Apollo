@@ -66,10 +66,10 @@ public class RebroadcastTransactionsThread implements Runnable {
         try {
             List<Transaction> transactionList = new ArrayList<>();
             int curTime = timeService.getEpochTime();
-            Collection<Transaction> broadcastedTransactions = memPool.getAllBroadcastedTransactions();
+            Collection<Transaction> broadcastedTransactions = memPool.getAllBroadcasted();
             for (Transaction transaction : broadcastedTransactions) {
                 if (transaction.getExpiration() < curTime || blockchain.hasTransaction(transaction.getId())) {
-                    memPool.removeBroadcastedTransaction(transaction);
+                    memPool.removeBroadcasted(transaction);
                 } else if (transaction.getTimestamp() < curTime - 30) {
                     transactionList.add(
                         unconfirmedTransactionCreator.from(transaction, Convert2.fromEpochTime(transaction.getTimestamp()))

@@ -61,7 +61,7 @@ public final class GetPrivateTransaction extends AbstractAPIRequestHandler {
         }
         JSONObject response;
         if (transaction == null) {
-            transaction = lookupMemPool().getUnconfirmedTransaction(transactionId);
+            transaction = lookupMemPool().get(transactionId);
             if (transaction == null || transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT || transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT && (transaction.getSenderId() != accountId && transaction.getRecipientId() != accountId)) {
                 return UNKNOWN_TRANSACTION;
             }
