@@ -51,7 +51,7 @@ public final class GetUnconfirmedTransactions extends PeerRequestHandler {
             return JSON.emptyJSON;
         }
 
-        Set<UnconfirmedTransaction> transactionSet = lookupMemPool().getCachedUnconfirmedTransactions(exclude);
+        Set<UnconfirmedTransaction> transactionSet = lookupMemPool().getCached(exclude);
         log.trace("Return {} txs to peer {}", transactionSet.size(), peer.getHost());
         JSONArray transactionsData = new JSONArray();
         for (Transaction transaction : transactionSet) {

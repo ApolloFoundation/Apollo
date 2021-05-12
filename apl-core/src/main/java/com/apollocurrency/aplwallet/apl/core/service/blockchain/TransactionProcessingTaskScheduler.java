@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.app.runnable.PendingBroadcastTask;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessLaterTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessTxsToBroadcastWhenConfirmed;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.ProcessUnconfirmedTransactionsQueueTask;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RebroadcastTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.RemoveUnconfirmedTransactionsThread;
 import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
@@ -82,12 +82,6 @@ public class TransactionProcessingTaskScheduler {
                         builderFactory))
                     .build());
 
-                dispatcher.schedule(Task.builder()
-                    .name("PendingBroadcaster")
-                    .delay(125)
-                    .task(new PendingBroadcastTask( transactionProcessor,  memPool, batchSizeCalculator, transactionValidator, processingService))
-                    .build());
-
                 dispatcher.invokeAfter(Task.builder()
                     .name("InitialUnconfirmedTxsRebroadcasting")
                     .task(transactionProcessor::rebroadcastAllUnconfirmedTransactions)
@@ -117,8 +111,15 @@ public class TransactionProcessingTaskScheduler {
             dispatcher.schedule(Task.builder()
                 .name("ProcessTransactionsToBroadcastWhenConfirmed")
                 .delay(15000)
-                .task(new ProcessTxsToBroadcastWhenConfirmed(
+                .task(new ProcessTxsToBroadcastWhenConfirmed(transactionProcessor,
                     memPool, this.timeService, this.blockchain))
+                .build());
+
+            dispatcher.schedule(Task.builder()
+                .name("ProcessUnconfirmedTransactionsQueue")
+                .delay(500)
+                .task(new ProcessUnconfirmedTransactionsQueueTask(
+                    memPool,transactionValidator, processingService,batchSizeCalculator, databaseManager))
                 .build());
         }
     }

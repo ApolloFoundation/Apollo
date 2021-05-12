@@ -12,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.zaxxer.hikari.HikariPoolMXBean;
 import lombok.NonNull;
 
@@ -25,20 +24,17 @@ import javax.ws.rs.core.SecurityContext;
 public class InfoApiServiceImpl implements InfoApiService {
 
     private final DatabaseManager databaseManager;
-    private final PropertiesHolder propertiesHolder;
     private final BlockchainConfig blockchainConfig;
     private final BlockChainInfoService blockChainInfoService;
     private final MemPool memPool;
     private final AccountService accountService;
 
     @Inject
-    public InfoApiServiceImpl(@NonNull PropertiesHolder propertiesHolder,
-                              @NonNull DatabaseManager databaseManager,
+    public InfoApiServiceImpl(@NonNull DatabaseManager databaseManager,
                               @NonNull BlockchainConfig blockchainConfig,
                               @NonNull BlockChainInfoService blockChainInfoService,
                               @NonNull MemPool memPool,
                               @NonNull AccountService accountService) {
-        this.propertiesHolder = propertiesHolder;
         this.databaseManager = databaseManager;
         this.blockchainConfig = blockchainConfig;
         this.blockChainInfoService = blockChainInfoService;
@@ -71,8 +67,13 @@ public class InfoApiServiceImpl implements InfoApiService {
     public Response getHealthInfo(SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         HealthResponse response = new HealthResponse();
-        response.setMaxUnconfirmedTxCount(propertiesHolder.getIntProperty("apl.maxUnconfirmedTransactions"));
-        response.setUnconfirmedTxCacheSize(memPool.getUnconfirmedTxCount());
+        response.setMaxUnconfirmedTxCount(memPool.getConfig().getMaxUnconfirmedTransactions());
+        response.setUnconfirmedTxCacheSize(memPool.getCount());
+        response.setPendingProcessingTxCount(memPool.processingQueueSize());
+        response.setProcessLaterTxCount(memPool.getProcessLaterCount());
+        response.setUnconfirmedTxCount(memPool.getSavedCount());
+        response.setRemovedTxCount(memPool.getRemovedSize());
+        response.setReferencedTxCount(memPool.getReferencedCount());
         response.setBlockchainHeight(blockChainInfoService.getHeight());
 
         int totalConnections = -1;
