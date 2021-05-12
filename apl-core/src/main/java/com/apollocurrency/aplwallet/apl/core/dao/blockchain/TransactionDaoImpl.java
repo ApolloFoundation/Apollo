@@ -275,7 +275,6 @@ public class TransactionDaoImpl implements TransactionDao {
                          + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index) "
                          + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                     int i = 0;
-                    log.debug("Save transaction {}", transaction.getId());
                     pstmt.setLong(++i, transaction.getId());
                     pstmt.setShort(++i, transaction.getDeadline());
                     DbUtils.setLongZeroToNull(pstmt, ++i, transaction.getRecipientId());

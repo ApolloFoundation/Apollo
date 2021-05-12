@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.vault.service.auth;
 
 import com.apollocurrency.aplwallet.api.dto.auth.Status2FA;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthDetails;
 import com.apollocurrency.aplwallet.vault.model.TwoFactorAuthEntity;
 import com.j256.twofactorauth.TimeBasedOneTimePasswordUtil;
@@ -33,7 +35,7 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
     private TwoFactorAuthRepository targetFileRepository;
 
     @Inject
-    public TwoFactorAuthServiceImpl(String issuerSuffix,
+    public TwoFactorAuthServiceImpl(@Property("apl.issuerSuffix2FA") String issuerSuffix,
                                     @Named("FSRepository") TwoFactorAuthRepository targetFileRepository) {
         this(issuerSuffix, new Random(), targetFileRepository);
     }
@@ -41,9 +43,7 @@ public class TwoFactorAuthServiceImpl implements TwoFactorAuthService {
 
     public TwoFactorAuthServiceImpl(String issuerSuffix, Random random,
                                     TwoFactorAuthRepository targetFileRepository) {
-        if (issuerSuffix == null || issuerSuffix.trim().isEmpty()) {
-            //TODO: what is the difference?
-            //  issuerSuffix = RuntimeEnvironment.getInstance().isDesktopApplicationEnabled() ? "desktop" : "web";
+        if (StringUtils.isBlank(issuerSuffix)) {
             issuerSuffix = "web";
         }
         this.random = random;

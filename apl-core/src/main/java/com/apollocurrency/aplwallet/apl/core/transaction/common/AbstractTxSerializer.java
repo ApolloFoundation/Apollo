@@ -31,9 +31,6 @@ public abstract class AbstractTxSerializer implements TxSerializer {
     @Getter
     private final TxBContextImpl context;
 
-    @Getter
-    private WriteBuffer buffer;
-
     protected AbstractTxSerializer(TxBContextImpl context) {
         Objects.requireNonNull(context);
         this.context = context;
@@ -43,8 +40,8 @@ public abstract class AbstractTxSerializer implements TxSerializer {
 
     @Override
     public void serialize(Transaction transaction, Result result) {
-        this.buffer = createBuffer(result);
-        write(transaction, result);
+        WriteBuffer buffer = createBuffer(result);
+        write(transaction, result, buffer);
     }
 
     private WriteBuffer createBuffer(Result result) {
@@ -58,7 +55,7 @@ public abstract class AbstractTxSerializer implements TxSerializer {
         return writeBuffer;
     }
 
-    protected void write(Transaction transaction, Result result) {
+    protected void write(Transaction transaction, Result result, WriteBuffer buffer) {
         try {
             if (buffer instanceof JsonBuffer) {
                 write(transaction, ((JsonBuffer) buffer));

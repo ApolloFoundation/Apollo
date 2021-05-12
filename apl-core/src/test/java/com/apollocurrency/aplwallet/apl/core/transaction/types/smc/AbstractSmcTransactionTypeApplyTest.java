@@ -52,8 +52,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountP
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.PhasingPollServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.ContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
@@ -81,6 +81,7 @@ import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
+import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import lombok.Builder;
 import lombok.Data;
 import org.jboss.weld.junit.MockBean;
@@ -142,7 +143,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         //TransactionRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
         TransactionValidator.class, TransactionApplier.class,
-        SmcConfig.class, AplBlockchainIntegratorFactory.class,
+        SmcConfig.class, SmcBlockchainIntegratorFactory.class,
         SmcContractTable.class, SmcContractStateTable.class, ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
         ContractServiceImpl.class
     )
@@ -178,7 +179,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
     @Inject
     ContractService contractService;
     @Inject
-    AplBlockchainIntegratorFactory integratorFactory;
+    SmcBlockchainIntegratorFactory integratorFactory;
     @Inject
     PublicKeyAnnouncementAppendixApplier applier;
     @Inject
@@ -199,6 +200,8 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
 
     Block lastBlock = btd.BLOCK_12;
 
+    FuelValidator fuelValidator = new SmcFuelValidator(blockchainConfig);
+
     @BeforeAll
     static void beforeAll() {
         Convert2.init("APL", 0L);
@@ -218,8 +221,8 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         spyAccountService = spy(accountService);
         context = TxBContext.newInstance(chain);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
-            new SmcPublishContractTransactionType(blockchainConfig, spyAccountService, contractService, integratorFactory),
-            new SmcCallMethodTransactionType(blockchainConfig, spyAccountService, contractService, integratorFactory)
+            new SmcPublishContractTransactionType(blockchainConfig, spyAccountService, contractService, fuelValidator, integratorFactory),
+            new SmcCallMethodTransactionType(blockchainConfig, spyAccountService, contractService, fuelValidator, integratorFactory)
         ));
         transactionBuilderFactory = new TransactionBuilderFactory(transactionTypeFactory, blockchainConfig);
         transactionCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor, transactionTypeFactory, transactionBuilderFactory, signerService);

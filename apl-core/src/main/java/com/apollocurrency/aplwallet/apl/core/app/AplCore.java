@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.app;
@@ -232,6 +232,8 @@ public final class AplCore {
 
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 52.5, "Exchange matcher initialization");
 
+            GenesisAccounts.init();
+
             tcs = CDI.current().select(IDexMatcherInterface.class).get();
             tcs.initialize();
 
@@ -241,7 +243,7 @@ public final class AplCore {
             blockchain = CDI.current().select(BlockchainImpl.class).get();
             blockchain.update();
             peers.init();
-            GenesisAccounts.init();
+
 
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 55.0, "Apollo Account ledger initialization");
 
@@ -285,7 +287,7 @@ public final class AplCore {
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 100.0, message);
             log.info("Copyright © 2013-2016 The NXT Core Developers.");
             log.info("Copyright © 2016-2017 Jelurida IP B.V..");
-            log.info("Copyright © 2017-2020 Apollo Foundation.");
+            log.info("Copyright © 2017-2021 Apollo Foundation.");
             log.info("See LICENSE.txt for more information");
             if (API.getWelcomePageUri() != null) {
                 log.info("Client UI is at " + API.getWelcomePageUri());

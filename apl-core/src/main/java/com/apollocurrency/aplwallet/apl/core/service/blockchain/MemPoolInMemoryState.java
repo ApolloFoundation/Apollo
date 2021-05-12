@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.SizeBoundedPriorityQueue;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import lombok.Data;
@@ -26,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,18 +48,22 @@ public class MemPoolInMemoryState {
     private final PriorityBlockingQueue<TxWithArrivalTimestamp> broadcastPendingTransactions;
     private final PriorityBlockingQueue<UnconfirmedTransaction> processLaterQueue;
 
-    private AtomicBoolean cacheInitialized = new AtomicBoolean(false);
+    private final AtomicInteger cachedNumberOfReferencedTxs = new AtomicInteger(-1);
+    private final AtomicBoolean cacheInitialized = new AtomicBoolean(false);
     private final int maxPendingBroadcastQueueSize;
     private final int maxCachedTransactions;
+    private final int maxReferencedTxs;
 
 
     @Inject
     public MemPoolInMemoryState(@Property(name = "apl.mempool.maxPendingTransactions", defaultValue = "3000") int maxPendingTransactions,
                                 @Property(name = "apl.mempool.maxCachedTransactions", defaultValue = "2000") int maxCachedTransactions,
-                                @Property(name = "apl.mempool.processLaterQueueSize", defaultValue = "5000") int processLaterQueueSize
+                                @Property(name = "apl.mempool.processLaterQueueSize", defaultValue = "5000") int processLaterQueueSize,
+                                @Property(name = "apl.mempool.maxReferencedTransactions", defaultValue = "100") int maxReferencedTxs
     ) {
         this.maxCachedTransactions = maxCachedTransactions;
         this.maxPendingBroadcastQueueSize = maxPendingTransactions;
+        this.maxReferencedTxs = maxReferencedTxs;
         this.processLaterQueue = new SizeBoundedPriorityQueue<>(processLaterQueueSize, new UnconfirmedTransactionComparator());
         this.broadcastPendingTransactions = new PriorityBlockingQueue<>(maxPendingBroadcastQueueSize, Comparator.comparing(TxWithArrivalTimestamp::getArrivalTime)) {
             @Override
@@ -98,11 +104,21 @@ public class MemPoolInMemoryState {
         if (transactionCache.size() < maxCachedTransactions) {
             transactionCache.put(unconfirmedTransaction.getId(), unconfirmedTransaction);
         }
+        if (unconfirmedTransaction.getReferencedTransactionFullHash() != null) {
+            cachedNumberOfReferencedTxs.incrementAndGet();
+        }
     }
 
     public void initializeCache(Stream<UnconfirmedTransaction> unconfirmedTransactionStream) {
         if(cacheInitialized.compareAndSet(false, true)){
-            unconfirmedTransactionStream.forEach(e -> transactionCache.put(e.getId(), e));
+            AtomicInteger referencedCount = new AtomicInteger(0);
+            CollectionUtil.forEach(unconfirmedTransactionStream, e -> {
+                transactionCache.put(e.getId(), e);
+                if (e.getReferencedTransactionFullHash() != null) {
+                    referencedCount.incrementAndGet();
+                }
+            });
+            cachedNumberOfReferencedTxs.set(referencedCount.get());
         } else {
             unconfirmedTransactionStream.close();
         }
@@ -128,6 +144,7 @@ public class MemPoolInMemoryState {
         broadcastedTransactions.clear();
         broadcastPendingTransactions.clear();
         processLaterQueue.clear();
+        cachedNumberOfReferencedTxs.set(0);
     }
 
     public int txCacheSize() {
@@ -138,12 +155,23 @@ public class MemPoolInMemoryState {
         return transactionCache.get(id);
     }
 
+    public int canAcceptReferencedTxs() {
+        return Math.max(0, maxReferencedTxs - cachedNumberOfReferencedTxs.get());
+    }
+
+    public int getNumberOfReferencedTxs() {
+        return cachedNumberOfReferencedTxs.get();
+    }
+
     public void broadcastLater(Transaction tx) {
         broadcastedTransactions.add(tx);
     }
 
-    public void removeFromCache(long id) {
-        transactionCache.remove(id);
+    public void removeFromCache(Transaction transaction) {
+        transactionCache.remove(transaction.getId());
+        if (transaction.getReferencedTransactionFullHash() != null) {
+            cachedNumberOfReferencedTxs.decrementAndGet();
+        }
     }
 
     public boolean isBroadcasted(Transaction transaction) {

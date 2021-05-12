@@ -60,6 +60,15 @@ public class SmcCallMethodAttachment extends AbstractSmcAttachment {
     }
 
     @Override
+    public int getPayableSize() {
+        int size = this.getMethodName().length();
+        if (this.getMethodParams() != null) {
+            size += this.getMethodParams().length();
+        }
+        return size;
+    }
+
+    @Override
     public TransactionTypes.TransactionTypeSpec getTransactionTypeSpec() {
         return TransactionTypes.TransactionTypeSpec.SMC_CALL_METHOD;
     }

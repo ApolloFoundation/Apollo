@@ -113,7 +113,7 @@ class BackgroundTaskDispatcherTest {
     }
 
     private void waitEndOfTasksScheduling(AtomicInteger count) {
-        int waitAttempts = 3;
+        int waitAttempts = 100;
         int currentOps = count.get();
         while (true) { // wait until the last scheduled operation ending
             ThreadUtils.sleep(30);

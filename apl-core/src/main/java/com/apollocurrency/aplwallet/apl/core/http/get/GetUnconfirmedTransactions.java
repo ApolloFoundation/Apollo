@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -56,18 +57,16 @@ public final class GetUnconfirmedTransactions extends AbstractAPIRequestHandler 
             limit = Integer.MAX_VALUE;
         }
         if (accountIds.isEmpty()) {
-            lookupMemPool().getAllProcessedStream()
+            CollectionUtil.forEach(lookupMemPool().getAllProcessedStream()
                 .filter(transaction -> transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT)
                 .skip(firstIndex)
-                .limit(limit)
-                .forEach(e -> transactions.add(JSONData.unconfirmedTransaction(e)));
+                .limit(limit),e -> transactions.add(JSONData.unconfirmedTransaction(e)));
         } else {
-            lookupMemPool().getAllProcessedStream()
+            CollectionUtil.forEach(lookupMemPool().getAllProcessedStream()
                 .filter(transaction -> transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT
                     && (accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId())))
                 .skip(firstIndex)
-                .limit(limit)
-                .forEach(e -> transactions.add(JSONData.unconfirmedTransaction(e)));
+                .limit(limit), e -> transactions.add(JSONData.unconfirmedTransaction(e)));
         }
 
         JSONObject response = new JSONObject();

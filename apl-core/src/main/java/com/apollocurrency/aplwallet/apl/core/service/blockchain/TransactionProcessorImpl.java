@@ -246,7 +246,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         List<UnconfirmedTransaction> unconfirmedTransactions = DbTransactionHelper.executeInTransaction(dataSource, () -> {
             List<UnconfirmedTransaction> txs = new ArrayList<>();
-            memPool.getAllProcessedStream().forEach(txs::add);
+            CollectionUtil.forEach(memPool.getAllProcessedStream(), txs::add);
             memPool.clear();
             log.info("Unc txs cleared");
             return txs;
@@ -264,7 +264,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         multiLock.inLockFor(transaction, () -> {
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             DbTransactionHelper.executeInTransaction(dataSource, () -> {
-                boolean removed = memPool.removeProcessedTransaction(transaction.getId());
+                boolean removed = memPool.removeProcessedTransaction(transaction);
                 if (removed) {
                     log.trace("Removing unc tx {}, {}", transaction.getId(), ThreadUtils.lastNStacktrace(10));
                     txsEvent.select(TxEventType.literal(TxEventType.REMOVED_UNCONFIRMED_TRANSACTIONS)).fire(Collections.singletonList(transaction));

@@ -8,8 +8,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
@@ -53,7 +53,7 @@ class SmcCallMethodTransactionTypeTest {
     @Mock
     ContractService contractService;
     @Mock
-    AplBlockchainIntegratorFactory integratorFactory;
+    SmcBlockchainIntegratorFactory integratorFactory;
 
     private SmcCallMethodTransactionType smcCallMethodTransactionType;
 
@@ -63,7 +63,7 @@ class SmcCallMethodTransactionTypeTest {
         GenesisImporter.CREATOR_ID = 1739068987193023818L;//TN1
         doReturn(UUID.fromString(CHAIN_ID_TN1)).when(chain).getChainId();
         doReturn(chain).when(blockchainConfig).getChain();
-        smcCallMethodTransactionType = new SmcCallMethodTransactionType(blockchainConfig, accountService, contractService, integratorFactory);
+        smcCallMethodTransactionType = new SmcCallMethodTransactionType(blockchainConfig, accountService, contractService, new SmcFuelValidator(blockchainConfig), integratorFactory);
     }
 
     @SneakyThrows

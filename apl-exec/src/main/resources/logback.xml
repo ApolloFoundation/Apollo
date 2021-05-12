@@ -227,6 +227,7 @@
   -->
   <logger name="org.testcontainers" level="DEBUG" additivity="false"/>
   <logger name="com.github.dockerjava" level="DEBUG" additivity="false"/>
+  <logger name="io.firstbridge.process" level="DEBUG"/>
 
   <logger name="jdbc" level="off" additivity="false"/>
   <logger name="jdbc.connection" level="info" additivity="false"/>

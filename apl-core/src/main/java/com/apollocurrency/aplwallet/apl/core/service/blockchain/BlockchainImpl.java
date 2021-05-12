@@ -252,7 +252,7 @@ public class BlockchainImpl implements Blockchain {
             return null;
         }
         if (block.getTransactions() == null) {
-            block.setTransactions(getBlockTransactions(block.getId()));
+            block.setTransactions(getOrLoadTransactions(block));
         }
         PublicKey publicKey = publicKeyDao.searchAll(block.getGeneratorId());
         if (publicKey != null) {
@@ -635,12 +635,16 @@ public class BlockchainImpl implements Blockchain {
     @Override
     @Transactional(readOnly = true)
     public Integer getTransactionHeight(byte[] fullHash, int heightLimit) {
-        Transaction transaction = transactionService.findTransactionCrossShardingByFullHash(fullHash, heightLimit);
+        Transaction transaction = transactionService.findTransactionByFullHash(fullHash);
         Integer txHeight = null;
-        if (transaction != null) {
+        if (transaction != null && transaction.getHeight() <= heightLimit) {
             txHeight = transaction.getHeight();
-        } else if (hasShardTransactionByFullHash(fullHash, heightLimit)) {
-            txHeight = transactionIndexDao.getTransactionHeightByTransactionId(Convert.transactionFullHashToId(fullHash));
+        } else {
+            TransactionIndex index = transactionIndexDao.getByTransactionId(Convert.transactionFullHashToId(fullHash));
+            byte[] hash = getTransactionIndexFullHash(index);
+            if (hash != null && Arrays.equals(fullHash, hash) && index.getHeight() <= heightLimit) {
+                txHeight = index.getHeight();
+            }
         }
         return txHeight;
     }

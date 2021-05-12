@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractTxProcessor;
-import com.apollocurrency.smc.SMCException;
+import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.contract.vm.SMCMachine;
 import lombok.extern.slf4j.Slf4j;
+
+import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT_VALIDATION_ERROR;
 
 /**
  * Validate the smart contract - create and initialize the smart contract and manipulate balances in sandbox.
@@ -20,45 +20,21 @@ import lombok.extern.slf4j.Slf4j;
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class SandboxContractValidationProcessor implements ContractTxProcessor {
-    private final SMCMachine smcMachine;
-    private final SmartContract smartContract;
+public class SandboxContractValidationProcessor extends AbstractContractTxProcessor {
 
-    public SandboxContractValidationProcessor(SMCMachine smcMachine, SmartContract smartContract) {
-        this.smcMachine = smcMachine;
-        this.smartContract = smartContract;
+    public SandboxContractValidationProcessor(SmartContract smartContract, BlockchainIntegrator processor) {
+        super(processor, smartContract);
     }
 
     @Override
-    public SmartContract smartContract() {
-        return smartContract;
-    }
-
-    @Override
-    public ExecutionLog process() {
+    public void executeContract(ExecutionLog executionLog) {
         boolean isValid;
-        ExecutionLog executionLog = new ExecutionLog();
-        validateStatus(ContractStatus.CREATED, smartContract);
-
-        try {
-            isValid = smcMachine.validate(smartContract);
-            executionLog.join(smcMachine.getExecutionLog());
-            smcMachine.resetExecutionLog();
-            if (!isValid) {
-                //TODO: Update the Error code
-                executionLog.setErrorCode(1L);
-            }
-        } catch (Exception e) {
-            SMCException smcException;
-            if (e instanceof SMCException) {
-                smcException = (SMCException) e;
-            } else {
-                smcException = new SMCException(e);
-            }
-            executionLog.add("validatePublishing", smcException);
-            executionLog.setErrorCode(1L);
+        validateStatus(ContractStatus.CREATED);
+        isValid = smcMachine.validateContract(getSmartContract());
+        executionLog.join(smcMachine.getExecutionLog());
+        smcMachine.resetExecutionLog();
+        if (!isValid) {
+            executionLog.setErrorCode(CONTRACT_VALIDATION_ERROR.getErrorCode());
         }
-
-        return executionLog;
     }
 }

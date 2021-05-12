@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.rest.converter;
 import com.apollocurrency.aplwallet.api.dto.BlockDTO;
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -21,14 +20,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Convert block model into a block dto using configured properties to either add txs or phased txs or not.
+ * <p><b>ATTENTION!</b> This class should NOT be SINGLETON, since such case may cause configuration issues between classes, sharing same instance.
+ * <br>
+ * Each caller should instantiate new instance or just use CDI default Dependant Scope</p>
+ */
 public class BlockConverter implements Converter<Block, BlockDTO> {
 
     private final Blockchain blockchain;
     private final TransactionConverter transactionConverter;
     private final PhasingPollService phasingPollService;
     private final AccountService accountService;
-    private boolean isAddTransactions = false;
-    private boolean isAddPhasedTransactions = false;
+    private volatile boolean isAddTransactions = false;
+    private volatile boolean isAddPhasedTransactions = false;
 
     @Inject
     public BlockConverter(Blockchain blockchain, TransactionConverter transactionConverter,
@@ -70,13 +75,7 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         dto.setGenerationSignature(Convert.toHexString(model.getGenerationSignature()));
         dto.setBlockSignature(Convert.toHexString(model.getBlockSignature()));
         dto.setTransactions(Collections.emptyList());
-        dto.setTotalAmountATM(String.valueOf(
-            blockchain.getOrLoadTransactions(model).stream().mapToLong(Transaction::getAmountATM).sum()));
-        if (this.isAddTransactions) {
-            this.addTransactions(dto, model);
-        } else {
-            dto.setNumberOfTransactions(blockchain.getBlockTransactionCount(model.getId()));
-        }
+        this.addTransactions(dto, model);
         if (this.isAddPhasedTransactions) {
             this.addPhasedTransactions(dto, model);
         }
@@ -85,9 +84,13 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
 
     public void addTransactions(BlockDTO o, Block model) {
         if (o != null && model != null) {
+            blockchain.getOrLoadTransactions(model);
             List<TransactionDTO> transactionDTOList = model.getTransactions().stream().map(transactionConverter).collect(Collectors.toList());
-            o.setTransactions(transactionDTOList);
             o.setNumberOfTransactions((long) model.getTransactions().size());
+            o.setTotalAmountATM(String.valueOf(transactionDTOList.stream().map(TransactionDTO::getAmountATM).mapToLong(Long::parseLong).sum()));
+            if (this.isAddTransactions) {
+                o.setTransactions(transactionDTOList);
+            }
         }
     }
 
@@ -127,9 +130,14 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         isAddPhasedTransactions = addPhasedTransactions;
     }
 
+    public void setPriv(boolean priv) {
+        transactionConverter.setPriv(priv);
+    }
+
     public void reset() {
         isAddTransactions = false;
         isAddPhasedTransactions = false;
+        transactionConverter.setPriv(true);
     }
 
 

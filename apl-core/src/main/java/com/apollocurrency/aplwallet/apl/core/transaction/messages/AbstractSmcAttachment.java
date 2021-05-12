@@ -47,6 +47,9 @@ public abstract class AbstractSmcAttachment extends AbstractAttachment {
         this.fuelPrice = BigInteger.valueOf(Convert.parseLong(attachmentData.get(FUEL_PRICE_FIELD)));
     }
 
+    //TODO ??? what about string compressing, something like: output = Compressor.deflate(input)
+    public abstract int getPayableSize();
+
     @Override
     public void putMyJSON(JSONObject json) {
         json.put(FUEL_LIMIT_FIELD, this.fuelLimit.longValueExact());

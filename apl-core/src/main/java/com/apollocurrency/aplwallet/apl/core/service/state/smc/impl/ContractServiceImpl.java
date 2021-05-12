@@ -17,16 +17,17 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
-import com.apollocurrency.smc.blockchain.SMCNotFoundException;
+import com.apollocurrency.smc.blockchain.ContractNotFoundException;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.ContractType;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartSource;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
+import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
-import com.apollocurrency.smc.persistence.tx.log.ArrayTxLog;
-import com.apollocurrency.smc.persistence.tx.log.TxLog;
+import com.apollocurrency.smc.persistence.record.log.ArrayTxLog;
+import com.apollocurrency.smc.persistence.record.log.TxLog;
 import com.apollocurrency.smc.polyglot.Languages;
 import lombok.extern.slf4j.Slf4j;
 
@@ -80,15 +81,15 @@ public class ContractServiceImpl implements ContractService {
      * The loaded smart contract instance hase an undefined fuel value.
      *
      * @param address given contract address
-     * @return loaded smart contract or throw {@link SMCNotFoundException}
+     * @return loaded smart contract or throw {@link com.apollocurrency.smc.blockchain.ContractNotFoundException}
      */
     @Override
     @Transactional(readOnly = true)
-    public SmartContract loadContract(Address address) {
+    public SmartContract loadContract(Address address, Fuel contractFuel) {
         SmcContractEntity smcEntity = loadContractEntity(address);
         SmcContractStateEntity smcStateEntity = loadContractStateEntity(address);
 
-        SmartContract contract = convert(smcEntity, smcStateEntity);
+        SmartContract contract = convert(smcEntity, smcStateEntity, contractFuel);
         contract.setTxLog(createLog(address.getHex()));
         log.debug("Loaded contract={}", contract);
 
@@ -162,7 +163,7 @@ public class ContractServiceImpl implements ContractService {
         return contract;
     }
 
-    public static SmartContract convert(SmcContractEntity smcContractEntity, SmcContractStateEntity smcContractStateEntity) {
+    public static SmartContract convert(SmcContractEntity smcContractEntity, SmcContractStateEntity smcContractStateEntity, Fuel contractFuel) {
         return SmartContract.builder()
             .address(new AplAddress(smcContractEntity.getAddress()))
             .owner(new AplAddress(smcContractEntity.getOwner()))
@@ -180,6 +181,7 @@ public class ContractServiceImpl implements ContractService {
             )
             .serializedObject(smcContractStateEntity.getSerializedObject())
             .status(ContractStatus.valueOf(smcContractStateEntity.getStatus()))
+            .fuel(contractFuel)
             .build();
     }
 
@@ -188,7 +190,7 @@ public class ContractServiceImpl implements ContractService {
         SmcContractStateEntity smcStateEntity = smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(aplAddress.getLongId()));
         if (smcStateEntity == null) {
             log.error("Contract state not found at addr={}", address.getHex());
-            throw new SMCNotFoundException("Contract state not found at addr=" + address.getHex());
+            throw new ContractNotFoundException("Contract state not found at addr=" + address.getHex());
         }
         return smcStateEntity;
     }
@@ -198,7 +200,7 @@ public class ContractServiceImpl implements ContractService {
         SmcContractEntity smcContractEntity = smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(aplAddress.getLongId()));
         if (smcContractEntity == null) {
             log.error("Contract not found at addr={}", address.getHex());
-            throw new SMCNotFoundException("Contract not found at addr=" + address.getHex());
+            throw new ContractNotFoundException("Contract not found at addr=" + address.getHex());
         }
         return smcContractEntity;
     }

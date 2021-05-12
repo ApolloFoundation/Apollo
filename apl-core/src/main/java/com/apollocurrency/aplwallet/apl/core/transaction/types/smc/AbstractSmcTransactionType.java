@@ -7,28 +7,38 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.AplBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.smc.contract.fuel.Fuel;
+import com.apollocurrency.smc.contract.fuel.FuelCalculator;
+import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Map;
+import java.math.BigInteger;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
 public abstract class AbstractSmcTransactionType extends TransactionType {
-    protected static final int MACHINE_WORD_SIZE = 32;
-
     protected ContractService contractService;
-    protected final AplBlockchainIntegratorFactory integratorFactory;
+    protected final FuelValidator fuelValidator;
+    protected final SmcBlockchainIntegratorFactory integratorFactory;
 
-    public AbstractSmcTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, ContractService contractService, AplBlockchainIntegratorFactory integratorFactory) {
+    AbstractSmcTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
+                               ContractService contractService,
+                               FuelValidator fuelValidator,
+                               SmcBlockchainIntegratorFactory integratorFactory) {
         super(blockchainConfig, accountService);
         this.contractService = contractService;
+        this.fuelValidator = fuelValidator;
         this.integratorFactory = integratorFactory;
     }
 
@@ -47,11 +57,6 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     }
 
     @Override
-    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        return isDuplicate(getSpec(), Long.toUnsignedString(transaction.getId()), duplicates, true);
-    }
-
-    @Override
     public boolean isPhasingSafe() {
         return false;
     }
@@ -66,6 +71,22 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
         return true;
     }
 
+    @Override
+    public final void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        checkPrecondition(transaction);
+        AbstractSmcAttachment attachment = (AbstractSmcAttachment) transaction.getAttachment();
+        if (!fuelValidator.validateLimitValue(attachment.getFuelLimit())) {
+            throw new AplException.NotCurrentlyValidException("Fuel limit value doesn't correspond to the MIN or MAX values.");
+        }
+        if (!fuelValidator.validatePriceValue(attachment.getFuelPrice())) {
+            throw new AplException.NotCurrentlyValidException("Fuel price value doesn't correspond to the MIN or MAX values.");
+        }
+
+        executeStateIndependentValidation(transaction, attachment);
+    }
+
+    public abstract void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) throws AplException.ValidationException;
+
     protected void checkPrecondition(Transaction smcTransaction) {
         smcTransaction.getAttachment().getTransactionTypeSpec();
         if (smcTransaction.getAttachment().getTransactionTypeSpec() != getSpec()) {
@@ -73,4 +94,29 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
             throw new IllegalStateException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec());
         }
     }
+
+    protected void refundRemaining(Transaction transaction, Account senderAccount, Fuel fuel) {
+        if (fuel.hasRemaining()) {
+            //refund remaining fuel
+            log.debug("fuel={}, refunded fee={}, account={}", fuel, fuel.refundedFee().longValueExact(), senderAccount.getId());
+            getAccountService().addToBalanceAndUnconfirmedBalanceATM(senderAccount, LedgerEvent.SMC_REFUNDED_FEE, transaction.getId(), fuel.refundedFee().longValueExact());
+        }
+    }
+
+    static class SmcFuelBasedFee extends Fee.FuelBasedFee {
+        public SmcFuelBasedFee(FuelCalculator fuelCalculator) {
+            super(fuelCalculator);
+        }
+
+        @Override
+        public int getSize(Transaction transaction, Appendix appendage) {
+            return ((AbstractSmcAttachment) transaction.getAttachment()).getPayableSize();
+        }
+
+        @Override
+        public BigInteger getFuelPrice(Transaction transaction, Appendix appendage) {
+            return ((AbstractSmcAttachment) appendage).getFuelPrice();
+        }
+    }
+
 }

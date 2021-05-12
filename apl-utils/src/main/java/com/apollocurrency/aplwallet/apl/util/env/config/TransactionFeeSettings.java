@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author andrii.zinchenko@firstbridge.io
@@ -29,7 +30,7 @@ import java.util.Objects;
 public class TransactionFeeSettings {
     @Getter
     @JsonIgnore
-    private final Map<Short, Short> feeRateMap;
+    private final Map<Short, FeeRate> feeRateMap;
 
     public TransactionFeeSettings() {
         this(new HashMap<>());
@@ -40,22 +41,17 @@ public class TransactionFeeSettings {
         this();
         Objects.requireNonNull(feeRates);
         for (FeeRate feeRate: feeRates) {
-            feeRateMap.put(FeeRate.createKey(feeRate.getType(), feeRate.getSubType()), feeRate.getRate());
+            feeRateMap.put(FeeRate.createKey(feeRate.getType(), feeRate.getSubType()), feeRate);
         }
     }
 
-    public TransactionFeeSettings(Map<Short, Short> feeRateMap) {
+    public TransactionFeeSettings(Map<Short, FeeRate> feeRateMap) {
         this.feeRateMap = feeRateMap;
     }
 
     @TransactionFee(FeeMarker.FEE_RATE)
-    public short getRate(byte type, byte subType) {
-        if (feeRateMap.isEmpty()) {
-            return FeeRate.DEFAULT_RATE;
-        } else {
-            short key = FeeRate.createKey(type, subType);
-            return feeRateMap.getOrDefault(key, FeeRate.DEFAULT_RATE);
-        }
+    public Optional<FeeRate> getFeeRate(byte type, byte subType) {
+        return Optional.ofNullable(feeRateMap.get(FeeRate.createKey(type, subType)));
     }
 
     public TransactionFeeSettings copy() {
@@ -90,8 +86,8 @@ public class TransactionFeeSettings {
             gen.writeStartObject();
             gen.writeArrayFieldStart("feeRates");
             if(value.getFeeRateMap() != null) {
-                for (Map.Entry<Short, Short> entry : value.getFeeRateMap().entrySet()) {
-                    gen.writeObject(new FeeRate(entry.getKey(), entry.getValue()));
+                for (Map.Entry<Short, FeeRate> entry : value.getFeeRateMap().entrySet()) {
+                    gen.writeObject(entry.getValue().copy());
                 }
             }
             gen.writeEndArray();

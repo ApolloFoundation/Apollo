@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ShufflingEvent;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -23,12 +24,12 @@ import com.apollocurrency.aplwallet.apl.core.service.state.ShufflerService;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistration;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingVerificationAttachment;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -46,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionVersionValidator.DEFAULT_VERSION;
 
@@ -521,7 +521,7 @@ public class ShufflerServiceImpl implements ShufflerService {
     }
 
     private boolean hasUnconfirmedTransaction(Shuffler shuffler, ShufflingAttachment shufflingAttachment) {
-        List<UnconfirmedTransaction> list = memPool.getAllProcessedStream().collect(Collectors.toList());
+        List<UnconfirmedTransaction> list = CollectionUtil.toList(memPool.getAllProcessedStream());
         for (UnconfirmedTransaction unconfirmedTransaction : list) {
             if (unconfirmedTransaction.getSenderId() != shuffler.getAccountId()) {
                 continue;
