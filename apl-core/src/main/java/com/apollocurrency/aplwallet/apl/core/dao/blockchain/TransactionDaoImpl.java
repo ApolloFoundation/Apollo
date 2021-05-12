@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMa
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ChatInfo;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -580,6 +581,41 @@ public class TransactionDaoImpl implements TransactionDao {
             stmt.setLong(++i, account1);
             DbUtils.setLimits(++i, stmt, from, to);
             return getTransactions(conn, stmt);
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+    }
+    @Override
+    public List<ChatInfo> getChatAccounts(long accountId, int from, int to) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+    PreparedStatement stmt = con.prepareStatement(
+        "with acc_ts AS ((SELECT recipient_id as account, timestamp from transaction "
+            + "where type = ? and subtype = ? and sender_id = ?) "
+            + "union "
+            + "(SELECT sender_id as account, timestamp from transaction "
+            + "where type = ? and subtype = ? and recipient_id = ?)) " +
+            " select account,  max(timestamp) as last_timestamp from acc_ts "
+            + " group by account order by last_timestamp desc "
+            + DbUtils.limitsClause(from, to)
+    )) {
+            int i = 0;
+            stmt.setByte(++i, ARBITRARY_MESSAGE.getType());
+            stmt.setByte(++i, ARBITRARY_MESSAGE.getSubtype());
+            stmt.setLong(++i, accountId);
+            stmt.setByte(++i, ARBITRARY_MESSAGE.getType());
+            stmt.setByte(++i, ARBITRARY_MESSAGE.getSubtype());
+            stmt.setLong(++i, accountId);
+            DbUtils.setLimits(++i, stmt, from, to);
+
+            ResultSet rs = stmt.executeQuery();
+            List<ChatInfo> chats = new ArrayList<>();
+            while (rs.next()) {
+                long account = rs.getLong("account");
+                long timestamp = rs.getLong("last_timestamp");
+                chats.add(new ChatInfo(account, timestamp));
+            }
+            return chats;
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
