@@ -321,9 +321,7 @@ public class GeneratorServiceImpl implements GeneratorService {
         long startLog = timeService.systemTimeMillis();
         int timestamp = generator.getTimestamp(generationLimit);
         if (!verifyHit(generator, lastBlock, timestamp)) {
-            log.debug(this.toString() + " failed to forge at " + (timestamp) + " height " + lastBlock.getHeight() + " " +
-                "last " +
-                "timestamp " + lastBlock.getTimestamp());
+            log.debug("{} failed to forge at {} height {} last timestamp {}", generator, timestamp, lastBlock.getHeight(), lastBlock.getTimestamp());
             return false;
         }
         while (true) {
@@ -336,7 +334,7 @@ public class GeneratorServiceImpl implements GeneratorService {
                 int blockVersion = timeoutAndVersion[1];
                 lookupBlockchainProcessor().generateBlock(generator.getKeySeed(), timestamp + timeout, timeout, blockVersion);
                 setDelay(propertiesHolder.FORGING_DELAY());
-                log.debug(generator + " stopped forge loop in ({} ms)", (System.currentTimeMillis() - startLog));
+                log.debug("{} stopped forge loop in ({} ms)", generator, (System.currentTimeMillis() - startLog));
                 return true;
             } catch (BlockchainProcessor.MempoolStateDesyncException e) {
                 log.debug("Mempool desync {}", e.getMessage()); // try another time
