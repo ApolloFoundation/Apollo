@@ -69,6 +69,10 @@ public class TransactionUtils {
         return flags;
     }
 
+    public static int calculateFullSize(Transaction tx, int byteLength) {
+        return byteLength + tx.getAppendages().stream().mapToInt(app-> app.getFullSize() - app.getSize()).sum();
+    }
+
 
     public static byte[] calculateFullHash(byte[] unsignedTxBytes, byte[] signatureBytes) {
         //calculate transaction Id and full hash

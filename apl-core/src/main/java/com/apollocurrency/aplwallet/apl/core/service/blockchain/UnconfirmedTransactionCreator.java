@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionUtils;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -35,7 +36,7 @@ public class UnconfirmedTransactionCreator {
     public UnconfirmedTransaction from(Transaction transaction, long arrivalTimestamp) {
         Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, byteArrayTx);
-        int fullSize = byteArrayTx.payloadSize();
+        int fullSize = TransactionUtils.calculateFullSize(transaction, byteArrayTx.size());
 
         return new UnconfirmedTransaction(transaction, arrivalTimestamp, transaction.getFeeATM() / fullSize, fullSize);
     }
