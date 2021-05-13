@@ -29,17 +29,18 @@ public class DbUtils {
         List<Integer> columnTypes = new ArrayList<>();
         int dbColumn = -1;
         DatabaseMetaData metaData = connection.getMetaData();
-        ResultSet rs = metaData.getColumns(null, schemaName.toLowerCase(), tableName.toLowerCase(), null);
-        int index = 0;
-        while (rs.next()) {
-            String columnName = rs.getString("COLUMN_NAME");
-            int columnType = rs.getInt("DATA_TYPE");
-            columnNames.add(columnName);
-            columnTypes.add(columnType);
-            if (columnName.equalsIgnoreCase("DB_ID")) {
-                dbColumn = index;
+        try (ResultSet rs = metaData.getColumns(null, schemaName.toLowerCase(), tableName.toLowerCase(), null)) {
+            int index = 0;
+            while (rs.next()) {
+                String columnName = rs.getString("COLUMN_NAME");
+                int columnType = rs.getInt("DATA_TYPE");
+                columnNames.add(columnName);
+                columnTypes.add(columnType);
+                if (columnName.equalsIgnoreCase("DB_ID")) {
+                    dbColumn = index;
+                }
+                index++;
             }
-            index++;
         }
         List<Integer> indexedTextSearchColumns = getIndexColumns(connection, columnNames, columnTypes, schemaName, tableName);
         return new TableData(dbColumn, tableName.toLowerCase(), schemaName.toLowerCase(), columnNames, columnTypes, indexedTextSearchColumns);

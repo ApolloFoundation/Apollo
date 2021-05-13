@@ -6,68 +6,71 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.cache.RemovedTxsCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.MemPoolUnconfirmedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransactionEntity;
-import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
+import com.google.common.cache.Cache;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
 public class MemPool {
     private final IteratorToStreamConverter<UnconfirmedTransactionEntity> streamConverter = new IteratorToStreamConverter<>();
-    private final MemPoolUnconfirmedTransactionTable table;
+    private final UnconfirmedTransactionTable table;
     private final MemPoolInMemoryState memoryState;
-    private final GlobalSync globalSync;
-    private final TransactionValidator validator;
     private final UnconfirmedTransactionEntityToModelConverter toModelConverter;
     private final UnconfirmedTransactionModelToEntityConverter toEntityConverter;
-    private final boolean enableRebroadcasting;
-    private final int maxUnconfirmedTransactions;
-    private final int maxCachedTransactions;
+    private final Cache<Long, RemovedTx> removedTransactions;
+    @Getter
+    private final MemPoolConfig config;
 
     @Inject
-    public MemPool(MemPoolUnconfirmedTransactionTable table,
-                   MemPoolInMemoryState memoryState,
-                   GlobalSync globalSync,
-                   TransactionValidator validator,
+    public MemPool(UnconfirmedTransactionTable table,
                    UnconfirmedTransactionEntityToModelConverter toModelConverter,
                    UnconfirmedTransactionModelToEntityConverter toEntityConverter,
-                   @Property(name = "apl.maxUnconfirmedTransactions", defaultValue = "" + Integer.MAX_VALUE) int maxUnconfirmedTransactions,
-                   @Property(name = "apl.mempool.maxCachedTransactions", defaultValue = "2000") int maxCachedTransactions,
-                   @Property(name = "apl.enableTransactionRebroadcasting") boolean enableRebroadcasting) {
-        this.table = table;
-        this.maxUnconfirmedTransactions = maxUnconfirmedTransactions;
-        this.maxCachedTransactions = maxCachedTransactions;
-        this.enableRebroadcasting = enableRebroadcasting;
-        this.memoryState = memoryState;
-        this.globalSync = globalSync;
-        this.validator = validator;
-        this.toModelConverter = toModelConverter;
-        this.toEntityConverter = toEntityConverter;
+                   InMemoryCacheManager inMemoryCacheManager,
+                   MemPoolConfig config
+                  ) {
+        this(table, new MemPoolInMemoryState(config), toModelConverter, toEntityConverter, inMemoryCacheManager.acquireCache(RemovedTxsCacheConfig.CACHE_NAME), config);
     }
 
-    public void initCache(){
+    public MemPool(UnconfirmedTransactionTable table, MemPoolInMemoryState memoryState, UnconfirmedTransactionEntityToModelConverter toModelConverter, UnconfirmedTransactionModelToEntityConverter toEntityConverter, Cache<Long, RemovedTx> removedTransactions, MemPoolConfig config) {
+        this.table = table;
+        this.memoryState = memoryState;
+        this.toModelConverter = toModelConverter;
+        this.toEntityConverter = toEntityConverter;
+        this.removedTransactions = removedTransactions;
+        this.config = config;
+    }
+
+    public void initCache() {
         // Initialize the unconfirmed transaction cache if it hasn't been done yet
         if (!memoryState.isCacheInitialized()) {
             memoryState.initializeCache(streamConverter.apply(table.getAll(0, -1)).map(toModelConverter));
         }
     }
 
-    public Transaction getUnconfirmedTransaction(long id) {
+    public Transaction get(long id) {
         Transaction transaction = memoryState.getFromCache(id);
         if (transaction != null) {
             return transaction;
@@ -75,37 +78,41 @@ public class MemPool {
         return toModelConverter.convert(table.getById(id));
     }
 
-    public boolean hasUnconfirmedTransaction(long id) {
-        return getUnconfirmedTransaction(id) != null;
+    public void markRemoved(long id) {
+        removedTransactions.put(id, new RemovedTx(id, System.currentTimeMillis()));
+        memoryState.removePendingProcessing(id);
     }
 
-    public Collection<Transaction> getAllBroadcastedTransactions() {
-        globalSync.readLock();
-        try {
-            return memoryState.getAllBroadcastedTransactions();
-        } finally {
-            globalSync.readUnlock();
-        }
+    public boolean hasSaved(long id) {
+        return  get(id) != null;
+    }
+
+    public boolean contains(long id) {
+        return memoryState.pendingProcessingContains(id) || get(id) != null;
+    }
+
+    public Collection<Transaction> getAllBroadcasted() {
+        return memoryState.getAllBroadcasted();
     }
 
     public void broadcastWhenConfirmed(Transaction tx, Transaction unconfirmedTx) {
         memoryState.addTxToBroadcastWhenConfirmed(tx, unconfirmedTx);
     }
 
-    public Set<UnconfirmedTransaction> getCachedUnconfirmedTransactions(List<String> exclude) {
+    public Set<UnconfirmedTransaction> getCached(List<String> exclude) {
         return memoryState.getFromCache(exclude);
     }
 
-    public void addToBroadcastedTransactions(Transaction tx) {
+    public void addBroadcasted(Transaction tx) {
         memoryState.addToBroadcasted(tx);
     }
 
-    public void broadcastLater(Transaction tx) {
+    public void addBroadcastLater(Transaction tx) {
         memoryState.broadcastLater(tx);
     }
 
     public boolean addProcessed(UnconfirmedTransaction tx) {
-        boolean canSaveTxs = getUnconfirmedTxCount() < maxUnconfirmedTransactions;
+        boolean canSaveTxs = getCount() < config.getMaxUnconfirmedTransactions();
         if (canSaveTxs) {
             table.insert(
                 toEntityConverter.convert(tx)
@@ -115,57 +122,77 @@ public class MemPool {
         return canSaveTxs;
     }
 
-    public Stream<UnconfirmedTransaction> getAllProcessedStream() {
-        return table.getAllUnconfirmedTransactionsStream().map(toModelConverter);
+    public IdQueue.ReturnCode addPendingProcessing(UnconfirmedTransaction tx) {
+        return memoryState.addPendingProcessing(tx);
     }
 
-    public int getUnconfirmedTxCount() {
-        if(getCachedUnconfirmedTxCount() < maxCachedTransactions){
-            return getCachedUnconfirmedTxCount();
+    public int processingQueueSize() {
+        return memoryState.pendingProcessingSize();
+    }
+
+    public UnconfirmedTransaction nextPendingProcessing() {
+        return memoryState.nextPendingProcessing();
+    }
+
+
+    public boolean canAcceptReferenced() {
+        return memoryState.referencedRemainingCapacity() > 0;
+    }
+
+    public Stream<UnconfirmedTransaction> getAllStream() {
+        return table.getAllUnconfirmedTransactions().map(toModelConverter);
+    }
+
+    public int getCount() {
+        if(getCachedCount() < config.getMaxCachedTransactions()) {
+            return getCachedCount();
         } else {
             return table.getCount();
         }
     }
 
-    public int getCachedUnconfirmedTxCount() {
+    public int getSavedCount() {
+        return table.getCount();
+    }
+
+    public int getCachedCount() {
         return memoryState.txCacheSize();
     }
 
-    public void removeBroadcastedTransaction(Transaction transaction) {
+    public void removeBroadcasted(Transaction transaction) {
         memoryState.removeBroadcasted(List.of(transaction));
     }
 
-    public boolean canSafelyAcceptTransactions(int numTx) {
-        return canSafelyAccept() - numTx >= 0;
+    public boolean canAccept(int numTx) {
+        return remainingCapacity() - numTx >= 0;
     }
 
-    public int canSafelyAccept() {
-        return maxUnconfirmedTransactions - getUnconfirmedTxCount();
+    public int remainingCapacity() {
+        return config.getMaxUnconfirmedTransactions() - getCount();
     }
 
-    public List<Transaction> allPendingTransactions() {
-        return memoryState.allPendingTransactions();
+    public int pendingProcessingRemainingCapacity() {
+        return memoryState.pendingProcessingReminingCapacity();
     }
 
-    public Stream<UnconfirmedTransaction> getProcessed(int from, int to) {
-        return streamConverter.convert(table.getAll(from, to)).map(toModelConverter);
+    public List<UnconfirmedTransaction> getAllPendingProcessing() {
+        return memoryState.getAllPendingProcessing();
     }
 
-    public void processLater(UnconfirmedTransaction unconfirmedTransaction) {
+    public Stream<UnconfirmedTransaction> getAllStream(int from, int to) {
+        return streamConverter.apply(table.getAll(from, to)).map(toModelConverter);
+    }
+
+    public void addProcessLater(UnconfirmedTransaction unconfirmedTransaction) {
         memoryState.processLater(unconfirmedTransaction);
     }
 
-    public Iterator<UnconfirmedTransaction> processLaterQueueIterator() {
-        return memoryState.processLaterQueueIterator();
+    public Iterator<UnconfirmedTransaction> processLaterIterator() {
+        return memoryState.processLaterIterator();
     }
 
-    public int processLaterQueueSize() {
-        return memoryState.processLaterQueueSize();
-    }
-
-    public boolean softBroadcast(Transaction uncTx) throws AplException.ValidationException {
-        validator.validateLightly(uncTx);
-        return memoryState.addToSoftBroadcastingQueue(uncTx);
+    public int getProcessLaterCount() {
+        return memoryState.processLaterSize();
     }
 
     public void clear() {
@@ -173,44 +200,58 @@ public class MemPool {
         table.truncate();
     }
 
-    public Transaction nextSoftBroadcastTransaction() throws InterruptedException {
-        return memoryState.nextBroadcastPendingTransaction();
-    }
-
-    public void rebroadcastAllUnconfirmedTransactions() {
-        getAllProcessedStream().forEach(e -> {
-            if (enableRebroadcasting) {
+    public void rebroadcastAll() {
+        CollectionUtil.forEach(getAllStream(), e -> {
+            if (config.isEnableRebroadcasting()) {
                 memoryState.addToBroadcasted(e.getTransactionImpl());
             }
         });
     }
 
-    public boolean removeProcessedTransaction(long id) {
-        boolean deleted = table.deleteById(id);
-        memoryState.removeFromCache(id);
-        return deleted;
+    public boolean remove(Transaction transaction) {
+        int deleted = table.deleteById(transaction.getId());
+        memoryState.removeCached(transaction);
+        removedTransactions.put(transaction.getId(), new RemovedTx(transaction.getId(), System.currentTimeMillis()));
+        return deleted > 0;
+    }
+
+    public boolean isRemoved(Transaction transaction) {
+        return removedTransactions.getIfPresent(transaction.getId()) != null;
+    }
+
+    public List<Long> getAllRemoved(int limit) {
+        ArrayList<RemovedTx> listOfRemovedTxs = new ArrayList<>(removedTransactions.asMap().values());
+        return listOfRemovedTxs.stream().sorted(Comparator.comparingLong(RemovedTx::getTime).reversed()).map(RemovedTx::getId).limit(limit).collect(Collectors.toList());
+    }
+
+    public int getRemovedSize() {
+        return (int) removedTransactions.size();
+    }
+
+    public int getReferencedCount() {
+        return memoryState.getReferencedCount();
     }
 
     public void rebroadcast(Transaction tx) {
-        if (enableRebroadcasting) {
+        if (config.isEnableRebroadcasting()) {
             memoryState.addToBroadcasted(tx);
         }
     }
 
-    public List<Long> getAllProcessedIds() {
-        if(getCachedUnconfirmedTxCount() < maxCachedTransactions){
-            return memoryState.getAllUnconfirmedTransactionIds();
+    public List<Long> getAllIds() {
+        if(getCachedCount() < config.getMaxCachedTransactions()){
+            return memoryState.getAllCachedIds();
         } else {
             return table.getAllUnconfirmedTransactionIds();
         }
     }
 
-    public int countExpiredTxs(int epochTime) {
+    public int getExpiredCount(int epochTime) {
         return table.countExpiredTransactions(epochTime);
     }
 
 
-    public Stream<UnconfirmedTransaction> getExpiredTxsStream(int epochTime) {
+    public Stream<UnconfirmedTransaction> getExpiredStream(int epochTime) {
         return table.getExpiredTxsStream(epochTime).map(toModelConverter);
     }
 
@@ -218,23 +259,24 @@ public class MemPool {
         return memoryState.isBroadcasted(transaction);
     }
 
-    public void removeFromBroadcasted(List<Transaction> transactions) {
+    public void removeBroadcasted(List<Transaction> transactions) {
         memoryState.removeBroadcasted(transactions);
     }
 
-    public Map<Transaction, Transaction> getAllBroadcastWhenConfirmedTransactions() {
-        return memoryState.getAllBroadcastWhenConfirmedTransactions();
+    public Map<Transaction, Transaction> getAllBroadcastWhenConfirmed() {
+        return memoryState.getAllBroadcastWhenConfirmed();
     }
 
-    public void removeBroadcastedWhenConfirmedTransaction(Collection<Transaction> transactions) {
-        memoryState.removeBroadcastedWhenConfirmedTransactions(transactions);
+    public void removeBroadcastedWhenConfirmed(Collection<Transaction> transactions) {
+        memoryState.removeBroadcastedWhenConfirmed(transactions);
     }
 
-    public int pendingBroadcastQueueSize() {
-        return memoryState.pendingBroadcastQueueSize();
-    }
-
-    public double pendingBroadcastQueueLoad() {
-        return memoryState.pendingBroadcastQueueLoadFactor();
+    @Getter
+    @AllArgsConstructor
+    @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+    private static class RemovedTx {
+        @EqualsAndHashCode.Include
+        private final long id;
+        private final long time;
     }
 }

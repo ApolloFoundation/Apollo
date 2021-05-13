@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -56,8 +56,14 @@ public class UnconfirmedTransactionProcessingService {
         if (blockchain.getHeight() < blockchainConfig.getLastKnownBlock()) {
             return new UnconfirmedTxValidationResult(100_115, UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID, "Blockchain not ready to accept transactions");
         }
-        if (memPool.getUnconfirmedTransaction(transaction.getId()) != null || blockchain.hasTransaction(transaction.getId())) {
+        if (memPool.hasSaved(transaction.getId()) || blockchain.hasTransaction(transaction.getId())) {
             return new UnconfirmedTxValidationResult(100_120, UnconfirmedTxValidationResult.Error.ALREADY_PROCESSED, "Transaction already processed");
+        }
+        if (transaction.getReferencedTransactionFullHash() != null && !memPool.canAcceptReferenced()) {
+            return new UnconfirmedTxValidationResult(100_122, UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID, "Unable to accept new referenced transactions");
+        }
+        if (memPool.isRemoved(transaction)) {
+            return new UnconfirmedTxValidationResult(100_124, UnconfirmedTxValidationResult.Error.NOT_CURRENTLY_VALID, "Transaction was recently processed");
         }
 
         if (!validator.verifySignature(transaction)) {

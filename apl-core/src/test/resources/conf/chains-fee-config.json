@@ -78,12 +78,16 @@
             {
               "type": 0,
               "subType": 1,
-              "rate": 50
+              "rate": 50,
+              "baseFee": "0.1",
+              "sizeFee": "1.5"
             },
             {
               "type": 1,
               "subType": 1,
-              "rate": 50
+              "rate": 50,
+              "sizeFee": "1",
+              "additionalFees": ["10","10000000000000", "0.333"]
             }
           ]
         }

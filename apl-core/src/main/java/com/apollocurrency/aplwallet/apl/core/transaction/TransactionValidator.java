@@ -132,8 +132,8 @@ public class TransactionValidator {
        validateLightlyWithoutAppendices(transaction);
 
         if (!antifraudValidator.validate(
-                blockchain.getHeight(), 
-                blockchainConfig.getChain().getChainId(), 
+                blockchain.getHeight(),
+                blockchainConfig.getChain().getChainId(),
                 transaction.getSenderId(),
                 transaction.getRecipientId())
                 )
@@ -181,7 +181,7 @@ public class TransactionValidator {
         }
         Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, byteArrayTx);
-        int fullSize = byteArrayTx.payloadSize();
+        int fullSize = TransactionUtils.calculateFullSize(transaction, byteArrayTx.size());
         if (fullSize > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
             throw new AplException.NotValidException("Transaction size " + fullSize + " exceeds maximum payload size");
         }
@@ -266,11 +266,10 @@ public class TransactionValidator {
         if (transaction.referencedTransactionFullHash() != null) {
             feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
         }
-        //TODO: A.B. check it
-        if (account == null){
-            throw new AplException.NotCurrentlyValidException("Account for TX does not exist yet. TX: "+transaction.getStringId());
+        if (account == null) {
+            throw new AplException.NotCurrentlyValidException("Account with  id " + transaction.getSenderId() + " is not exist yet");
         }
-        if(account.getUnconfirmedBalanceATM() < feeATM){
+        if (account.getUnconfirmedBalanceATM() < feeATM) {
             throw new AplException.NotCurrentlyValidException("Account balance " + account.getUnconfirmedBalanceATM() + " is not enough to pay tx fee " + feeATM);
         }
     }

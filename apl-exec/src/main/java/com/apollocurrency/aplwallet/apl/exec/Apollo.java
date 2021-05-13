@@ -196,12 +196,14 @@ public class Apollo {
         boolean res = checkDbWithJDBC(conf);
         //if we have connected to database URL from config, wha have nothing to do
         if(!res){
-            // if we can not connect to databse, we'll try start it
+            // if we can not connect to database, we'll try start it
             // from Apollo package. If it is first start, data base data dir
             // will be initialized
             Path dbDataDir = dirProvider.getDbDir();
-            Path dbInstalPath = DirProvider.getBinDir().resolve(APOLLO_MARIADB_INSTALL_DIR);
-            mariaDbProcess = new MariaDbProcess(conf,dbInstalPath,dbDataDir);
+            Path dbInstalPath = DirProvider.getBinDir().getParent().resolve(APOLLO_MARIADB_INSTALL_DIR);
+            Path dbOutPath = Paths.get(new LogDirPropertyDefiner().getPropertyValue(), "maria_out.log");
+            log.info("Setting mariadb process out path: {}", dbOutPath);
+            mariaDbProcess = new MariaDbProcess(conf,dbInstalPath,dbDataDir, dbOutPath);
             res = mariaDbProcess.startAndWaitWhenReady();
         }
         return res;

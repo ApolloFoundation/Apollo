@@ -20,7 +20,7 @@
 package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.PeerDao;
-import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.ProcessBlockRequest;
@@ -34,7 +34,7 @@ import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
 import com.apollocurrency.aplwallet.apl.security.id.IdentityService;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
-import com.apollocurrency.aplwallet.apl.core.rest.converter.TransactionConverter;
+import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -165,13 +165,13 @@ public class PeersService {
     private volatile JSONStreamAware myPeerInfoResponse;
     private BlockchainProcessor blockchainProcessor;
     private volatile TimeService timeService;
+    private final UnconfirmedTransactionConverter transactionConverter;
     private final IdentityService identityService;
     @Getter
     private final PeerDao peerDao;
-    private final TransactionConverter transactionConverter;
     private final BlockConverter blockConverter;
     private ObjectMapper mapper;
-    
+
 //    private final ExecutorService txSendingDispatcher;
 
     @Inject
@@ -183,10 +183,10 @@ public class PeersService {
                         PeerHttpServer peerHttpServer,
                         TimeLimiterService timeLimiterService,
                         AccountService accountService,
+                        UnconfirmedTransactionConverter txConverter,
+                        BlockConverter blockConverter,
                         IdentityService identityService,
-                        PeerDao peerDao,
-                        TransactionConverter transactionConverter,
-                        BlockConverter blockConverter) {
+                        PeerDao peerDao) {
 
         this.propertiesHolder = propertiesHolder;
         this.blockchainConfig = blockchainConfig;
@@ -197,9 +197,11 @@ public class PeersService {
         this.timeLimiterService = timeLimiterService;
         this.accountService = accountService;
         this.identityService = identityService;
-        this.peerDao = peerDao; 
-        this.transactionConverter = transactionConverter;
-        this.blockConverter = new BlockConverter(blockchain, transactionConverter, null, accountService);
+        this.peerDao = peerDao;
+        this.blockConverter = blockConverter;
+        this.transactionConverter = txConverter;
+        this.transactionConverter.setPriv(false);
+        this.blockConverter.setPriv(false);
         this.blockConverter.setAddTransactions(true);
         int asyncTxSendingPoolSize = propertiesHolder.getIntProperty("apl.maxAsyncPeerSendingPoolSize", 30);
 //        this.txSendingDispatcher = new ThreadPoolExecutor(5, asyncTxSendingPoolSize, 10_000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(asyncTxSendingPoolSize), new NamedThreadFactory("P2PTxSendingPool", true));
@@ -209,7 +211,7 @@ public class PeersService {
         //configure object mapper for PeerInfo
         mapper = new ObjectMapper();
         mapper.registerModule(new JsonOrgModule());
-        
+
     }
 
     private BlockchainProcessor lookupBlockchainProcessor() {
@@ -296,16 +298,16 @@ public class PeersService {
         if (useProxy) {
             LOG.info("Using a proxy, will not create outbound websockets.");
         }
-        
-        //NodeID feature        
+
+        //NodeID feature
         if(!identityService.loadMyIdentity()){
             log.error("Can not load or generate this node identity certificate or key");
         }
-        
+
         if(!identityService.loadTrusterCaCerts()){
             log.error("Can not load trusted CA certificates, node ID verification is impossible");
         }
-        
+
         addListener(peer -> peersExecutorService.submit(() -> {
             if (peer.getAnnouncedAddress() != null && !peer.isBlacklisted()) {
                 try {
@@ -432,7 +434,7 @@ public class PeersService {
         }
         pi.setServices(Long.toUnsignedString(services));
         myServices = Collections.unmodifiableList(servicesList);
-        
+
         ExtCert myId = identityService.getThisNodeIdHandler().getExtCert();
         if(myId!=null){
             pi.setX509_cert(myId.getCertPEM());
@@ -443,7 +445,7 @@ public class PeersService {
         bb.putInt(pi.getEpochTime());
         byte[] signature = identityService.getThisNodeIdHandler().sign(bb.array());
         pi.setEpochTimeSigantureHex(Hex.encode(signature));
-        
+
         myPeerInfo = mapper.convertValue(pi, JSONObject.class);
         LOG.trace("My peer info:\n" + myPeerInfo.toJSONString());
         myPI = pi;
@@ -772,7 +774,7 @@ public class PeersService {
         log.debug("Send transactions to peers, {} - {}", transactions.stream().map(Transaction::getId).map(String::valueOf).collect(Collectors.joining(",")), ThreadUtils.lastNStacktrace(10));
         int nextBatchStart = 0;
         while (nextBatchStart < transactions.size()) {
-            List<TransactionDTO> transactionsData = new ArrayList<>();
+            List<UnconfirmedTransactionDTO> transactionsData = new ArrayList<>();
             for (int i = nextBatchStart; i < nextBatchStart + sendTransactionsBatchSize && i < transactions.size(); i++) {
                 transactionsData.add(transactionConverter.convert(transactions.get(i)));
             }
@@ -944,10 +946,10 @@ public class PeersService {
             : (blockchain.getLastBlock().getBaseTarget() / blockchainConfig.getCurrentConfig().getInitialBaseTarget() > 10)
             ? BlockchainState.FORK
             : BlockchainState.UP_TO_DATE;
-        if (state != currentBlockchainState) {            
+        if (state != currentBlockchainState) {
             JSONObject json = new JSONObject(fillMyPeerInfo());
             json.put("blockchainState", state.ordinal());
-            
+
             myPeerInfoResponse = JSON.prepare(json);
             json.put("requestType", "getInfo");
             myPeerInfoRequest = JSON.prepareRequest(json);

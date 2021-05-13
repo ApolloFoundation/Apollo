@@ -1150,29 +1150,49 @@ components:
           properties:
             blockchainHeight:
               type: integer
-              format: int16
+              format: int32
               example: 9900345
               description: "Current height of blockchain"
             dbConnectionTotal:
               type: integer
-              format: int16
+              format: int32
               description: "Total connections in the pool"
             dbConnectionActive:
               type: integer
-              format: int16
+              format: int32
               description: "Active connections in the pool"
             dbConnectionIdle:
               type: integer
-              format: int16
+              format: int32
               description: "Idle connections in the pool"
             unconfirmedTxCacheSize:
               type: integer
-              format: int16
-              description: "The waiting transactions cache size"
+              format: int32
+              description: "Current unconfirmed transactions cache size"
             maxUnconfirmedTxCount:
               type: integer
-              format: int16
-              description: "The max count of the unconfirmed transactions"
+              format: int32
+              description: "Max count of the unconfirmed transactions to store into database"
+            unconfirmedTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the unconfirmed transactions saved into database"
+            pendingProcessingTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the pending processing unconfirmed transactions in the mempool"
+            processLaterTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the unconfirmed transactions to process later"
+            removedTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the removed transactions from the mempool"
+            referencedTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the referenced transaction in the mempool"
             isTrimActive:
               type: boolean
               description: "Returns true if the trimming process is active"

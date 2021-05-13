@@ -202,7 +202,7 @@ public class Account2FAService {
     }
 
     public WalletKeysInfo generateUserWallet(String passphrase, byte[] secretApl) throws RestParameterException {
-        if (passphrase == null) {
+        if (StringUtils.isBlank(passphrase)) {
             passphrase = passphraseGenerator.generate();
         }
 

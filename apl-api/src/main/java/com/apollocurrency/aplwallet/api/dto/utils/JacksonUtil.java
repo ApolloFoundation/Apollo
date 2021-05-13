@@ -37,11 +37,11 @@ public class JacksonUtil {
             }
             return array;
         } else {
-            if (node.isNumber()) {
-                return node.asLong();
-            }
             if (node.isDouble()) {
                 return node.asDouble();
+            }
+            if (node.isNumber()) {
+                return node.asLong();
             }
             if (node.isTextual() || node.isBinary()) {
                 return node.asText();

@@ -28,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
@@ -71,10 +70,9 @@ public class TransactionImpl implements Transaction {
     private final PrunablePlainMessageAppendix prunablePlainMessage;
     private final PrunableEncryptedMessageAppendix prunableEncryptedMessage;
     private final List<AbstractAppendix> appendages;
-    private final int appendagesSize;
     private volatile byte[] senderPublicKey;
     private volatile long feeATM; // remove final modifier to set fee outside the class TODO get back 'final' modifier
-    private Signature signature;
+    private volatile Signature signature;
     private volatile int height;
     private volatile long blockId;
     private volatile Block block;
@@ -132,11 +130,6 @@ public class TransactionImpl implements Transaction {
             list.add(this.prunableEncryptedMessage);
         }
         this.appendages = Collections.unmodifiableList(list);
-        int appendagesSize = 0;
-        for (Appendix appendage : appendages) {
-            appendagesSize += appendage.getSize();
-        }
-        this.appendagesSize = appendagesSize;
         this.signature = builder.signature;
     }
 
@@ -311,13 +304,6 @@ public class TransactionImpl implements Transaction {
         return Convert.toHexString(getFullHash());
     }
 
-/*    @Override
-    public int getFullSize() {
-        if (fullSize <= 0) {
-            throwSignaturePreConditionError("FULL_SIZE");
-        }
-        return fullSize;
-    }*/
 
     @Override
     public long getSenderId() {

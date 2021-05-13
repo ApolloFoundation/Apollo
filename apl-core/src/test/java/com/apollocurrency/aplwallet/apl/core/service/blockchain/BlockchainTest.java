@@ -1,4 +1,8 @@
-package com.apollocurrency.aplwallet.apl.core.app;
+/*
+ *  Copyright © 2018-2021 Apollo Foundation
+ */
+
+package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
@@ -25,9 +29,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.AliasService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
@@ -115,7 +116,8 @@ class BlockchainTest extends DBContainerRootTest {
     PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
     TimeService timeService = mock(TimeService.class);
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
-    TransactionTestData td = new TransactionTestData();
+    private TransactionTestData txd = new TransactionTestData();
+    private BlockTestData btd = new BlockTestData();
 
     {
         initPublicKeyDao();
@@ -142,14 +144,12 @@ class BlockchainTest extends DBContainerRootTest {
         .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
         .addBeans(MockBean.of(mock(AliasService.class), AliasService.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
-        .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
+        .addBeans(MockBean.of(txd.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .build();
     @Inject
     private Blockchain blockchain;
     @Inject
     private BlockEntityRowMapper blockEntityRowMapper;
-    private TransactionTestData txd;
-    private BlockTestData btd;
 
     private static Path createPath(String fileName) {
         try {
@@ -186,8 +186,6 @@ class BlockchainTest extends DBContainerRootTest {
 
     @BeforeEach
     void setUp() {
-        txd = new TransactionTestData();
-        btd = new BlockTestData();
         extension.beforeEach(null); // init main db again !!
         extension.cleanAndPopulateDb();
         shard1Populator = initDb("db/shard1-data.sql", 1); // init shard 1 again
@@ -849,6 +847,13 @@ class BlockchainTest extends DBContainerRootTest {
     }
 
     @Test
+    void testGetTransactionHeightFromIndexGreaterThanRequested() {
+        Integer transactionHeight = blockchain.getTransactionHeight(txd.TRANSACTION_2.getFullHash(), txd.TRANSACTION_2.getHeight() - 1);
+
+        assertNull(transactionHeight);
+    }
+
+    @Test
     void testGetTransactionHeightByFullHashWithCollision() {
         Integer transactionHeight = blockchain.getTransactionHeight(fullHashWithCollision(txd.TRANSACTION_13.getFullHash()), Integer.MAX_VALUE);
 
@@ -860,6 +865,13 @@ class BlockchainTest extends DBContainerRootTest {
         Integer transactionHeight = blockchain.getTransactionHeight(fullHashWithCollision(txd.TRANSACTION_4.getFullHash()), Integer.MAX_VALUE);
 
         assertNull(transactionHeight);
+    }
+
+    @Test
+    void testGetTransactionHeightByFullHashFromIndex() {
+        Integer transactionHeight = blockchain.getTransactionHeight(txd.TRANSACTION_4.getFullHash(), txd.TRANSACTION_4.getHeight());
+
+        assertEquals(txd.TRANSACTION_4.getHeight(), transactionHeight);
     }
 
     @Test

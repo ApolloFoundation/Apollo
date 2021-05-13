@@ -24,4 +24,15 @@ public class SizeBoundedPriorityQueue<T> extends PriorityBlockingQueue<T> {
         }
         return true;
     }
+
+    @Override
+    public boolean offer(T t) {
+        if (!super.offer(t)) {
+            return false;
+        }
+        if (this.size() > maxSize) {
+            remove();
+        }
+        return true;
+    }
 }

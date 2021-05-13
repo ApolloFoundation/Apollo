@@ -46,6 +46,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.ScanDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
+import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ScanEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -73,6 +74,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionUtils;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
@@ -81,6 +83,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPhasi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixV2;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexService;
@@ -132,6 +135,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -314,7 +318,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     scan(new ScanEntity(propertiesHolder.getBooleanProperty("apl.forceValidate"), 0, false ));
                 } else {
                     ScanEntity scanEntity = scanDao.get();
-                    if (scanEntity.isRescan()) {
+                    if (scanEntity != null && scanEntity.isRescan()) {
                         scan(scanEntity);
                     } else {
                         if (blockchain.getShardInitialBlock() == null) { // prevent NPE on empty node
@@ -567,6 +571,15 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
+    /**
+     * Pushes the new last block into blockchain fully validating all the transactions
+     * This method uses the full blockchain lock {@link GlobalSync#writeLock()}
+     * @param block block to add into blockchain
+     * @throws com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper.DbTransactionExecutionException which wraps
+     * a real exception cause, this type of exceptions is rare and usually should not be handled, since something wrong
+     * with the running environment: database deadlocks, timeout locking table, too many connections and so on
+     * @throws com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor.BlockNotAcceptedException in case of the block validation failure
+     */
     @Override
     public void pushBlock(final Block block) throws BlockNotAcceptedException {
         int curTime = timeService.getEpochTime();
@@ -574,66 +587,64 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         long startTime = System.currentTimeMillis();
         globalSync.writeLock();
         long lockAquireTime = System.currentTimeMillis() - startTime;
+        Block previousLastBlock;
+        previousLastBlock = blockchain.getLastBlock();
         try {
-            Block previousLastBlock = null;
-            byte[] generatorPublicKey;
-            TransactionalDataSource dataSource = databaseManager.getDataSource();
-            dataSource.begin();
             try {
-                previousLastBlock = blockchain.getLastBlock();
-                if (!previousLastBlock.hasGeneratorPublicKey()) {
-                    generatorPublicKey = accountService.getPublicKeyByteArray(previousLastBlock.getGeneratorId());
-                    if (generatorPublicKey != null) {
-                        previousLastBlock.setGeneratorPublicKey(generatorPublicKey);
+                DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
+                    byte[] generatorPublicKey;
+                    if (!previousLastBlock.hasGeneratorPublicKey()) {
+                        generatorPublicKey = accountService.getPublicKeyByteArray(previousLastBlock.getGeneratorId());
+                        if (generatorPublicKey != null) {
+                            previousLastBlock.setGeneratorPublicKey(generatorPublicKey);
+                        }
+                    } else {
+                        generatorPublicKey = previousLastBlock.getGeneratorPublicKey();
                     }
-                } else {
-                    generatorPublicKey = previousLastBlock.getGeneratorPublicKey();
-                }
 //                generatorPublicKey = block.getGeneratorPublicKey();
-                if (generatorPublicKey == null) { // second attempt
-                    generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
-                    block.setGeneratorPublicKey(generatorPublicKey);
-                }
+                    if (generatorPublicKey == null) { // second attempt
+                        generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
+                        block.setGeneratorPublicKey(generatorPublicKey);
+                    }
 
-                validator.validate(block, previousLastBlock, curTime);
+                    validator.validate(block, previousLastBlock, curTime);
 
-                long nextHitTime = generatorService.getNextHitTime(previousLastBlock.getId(), curTime);
-                if (nextHitTime > 0 && block.getTimestamp() > nextHitTime + 1) {
-                    String msg = "Rejecting block " + block.getStringId() + " at height " + previousLastBlock.getHeight()
-                        + " block timestamp " + block.getTimestamp() + " next hit time " + nextHitTime
-                        + " current time " + curTime;
-                    log.debug(msg);
-                    generatorService.setDelay(-propertiesHolder.FORGING_SPEEDUP());
-                    throw new BlockOutOfOrderException(msg, blockSerializer.getJSONObject(block));
-                }
+                    long nextHitTime = generatorService.getNextHitTime(previousLastBlock.getId(), curTime);
+                    if (nextHitTime > 0 && block.getTimestamp() > nextHitTime + 1) {
+                        String msg = "Rejecting block " + block.getStringId() + " at height " + previousLastBlock.getHeight()
+                            + " block timestamp " + block.getTimestamp() + " next hit time " + nextHitTime
+                            + " current time " + curTime;
+                        log.debug(msg);
+                        generatorService.setDelay(-propertiesHolder.FORGING_SPEEDUP());
+                        throw new BlockOutOfOrderException(msg, blockSerializer.getJSONObject(block));
+                    }
 
-                Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates = new HashMap<>();
-                List<Transaction> validPhasedTransactions = new ArrayList<>();
-                List<Transaction> invalidPhasedTransactions = new ArrayList<>();
-                validatePhasedTransactions(block, previousLastBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
-                validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
+                    Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates = new HashMap<>();
+                    List<Transaction> validPhasedTransactions = new ArrayList<>();
+                    List<Transaction> invalidPhasedTransactions = new ArrayList<>();
+                    validatePhasedTransactions(block, previousLastBlock, validPhasedTransactions, invalidPhasedTransactions, duplicates);
+                    validateTransactions(block, previousLastBlock, curTime, duplicates, previousLastBlock.getHeight() >= Constants.LAST_CHECKSUM_BLOCK);
 
-                HeightConfig config = blockchainConfig.getCurrentConfig();
-                Shard lastShard = shardDao.getLastShard();
-                Block shardInitialBlock = blockchain.getShardInitialBlock();
-                int currentHeight = previousLastBlock.getHeight();
-                // put three latest blocks into array TODO: YL optimize to fetch three blocks later
-                fillInBlockArray(previousLastBlock, lastShard, currentHeight);
-                consensusManager.setPrevious(block, threeLatestBlocksArray, config, lastShard, shardInitialBlock.getHeight());
-                block.assignTransactionsIndex(); // IMPORTANT step !!!
-                log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.BEFORE_BLOCK_ACCEPT.name());
-                blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(block);
-                addBlock(block);
+                    HeightConfig config = blockchainConfig.getCurrentConfig();
+                    Shard lastShard = shardDao.getLastShard();
+                    Block shardInitialBlock = blockchain.getShardInitialBlock();
+                    int currentHeight = previousLastBlock.getHeight();
+                    // put three latest blocks into array TODO: YL optimize to fetch three blocks later
+                    fillInBlockArray(previousLastBlock, lastShard, currentHeight);
+                    consensusManager.setPrevious(block, threeLatestBlocksArray, config, lastShard, shardInitialBlock.getHeight());
+                    block.assignTransactionsIndex(); // IMPORTANT step !!!
+                    log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.BEFORE_BLOCK_ACCEPT.name());
+                    blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_ACCEPT)).fire(block);
+                    addBlock(block);
 
-                accept(block, validPhasedTransactions, invalidPhasedTransactions, duplicates);
+                    accept(block, validPhasedTransactions, invalidPhasedTransactions, duplicates);
 
-                blockchain.commit(block);
-                dataSource.commit(false);
-                log.trace("committed block on = {}, id = '{}'", block.getHeight(), block.getId());
-            } catch (Exception e) {
+                    blockchain.commit(block);
+                    log.trace("committed block on = {}, id = '{}'", block.getHeight(), block.getId());
+                });
+            } catch (DbTransactionHelper.DbTransactionExecutionException e) {
                 log.error("PushBlock, error:", e);
                 try {
-                    dataSource.rollback(false); // do not close current transaction
                     popOffToCommonBlock(previousLastBlock); // do in current transaction
                 } catch (Exception ex) {
                     log.error("Unable to rollback db changes or do pop off for block height " + block.getHeight() + " id " + block.getId(), ex);
@@ -641,9 +652,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     // Need to do so even in case of popOff failure or transaction rollback fatal error (SYS table lock, connection closed, etc)
                     blockchain.setLastBlock(previousLastBlock);
                 }
+                Throwable realEx = e.getCause();
+                if (realEx instanceof BlockNotAcceptedException) {
+                    throw (BlockNotAcceptedException) realEx;
+                }
                 throw e;
-            } finally {
-                dataSource.commit(); // finally close transaction
             }
             log.trace("fire block on = {}, id = '{}', '{}'", block.getHeight(), block.getId(), BlockEventType.AFTER_BLOCK_ACCEPT.name());
             blockEvent.select(literal(BlockEventType.AFTER_BLOCK_ACCEPT)).fire(block);
@@ -807,7 +820,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             calculatedTotalFee += transaction.getFeeATM();
             Result result = getTxByteArrayResult(transaction);
             digest.update(result.array());
-            payloadLength += result.payloadSize();
+            payloadLength += TransactionUtils.calculateFullSize(transaction, result.size());
         }
         if (calculatedTotalAmount != block.getTotalAmountATM() || calculatedTotalFee != block.getTotalFeeATM()) {
             throw new BlockNotAcceptedException(
@@ -1139,19 +1152,22 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit) {
 
         List<UnconfirmedTransaction> orderedUnconfirmedTransactions = new ArrayList<>();
-        memPool.getAllProcessedStream()
+        CollectionUtil.forEach(memPool.getAllStream()
             .filter(transaction -> referencedTransactionService.hasAllReferencedTransactions(
-                transaction.getTransactionImpl(), previousBlock.getHeight() + 1))
-            .forEach(orderedUnconfirmedTransactions::add);
+                transaction.getTransactionImpl(), previousBlock.getHeight() + 1)), orderedUnconfirmedTransactions::add);
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int payloadLength = 0;
         int maxPayloadLength = blockchainConfig.getCurrentConfig().getMaxPayloadLength();
+        List<UnconfirmedTransaction> removedTxs = new ArrayList<>();
         TransactionalDataSource.StartedConnection startedConnection = databaseManager.getDataSource().beginTransactionIfNotStarted();
         try {
             txSelectLoop:
             while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
                 int prevNumberOfNewTransactions = sortedTransactions.size();
                 for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
+                    if (memPool.isRemoved(unconfirmedTransaction)) {
+                        continue;
+                    }
                     int transactionLength = unconfirmedTransaction.getFullSize();
                     if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > maxPayloadLength) {
                         continue;
@@ -1169,6 +1185,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         continue;
                     }
                     if (!transactionApplier.applyUnconfirmed(unconfirmedTransaction.getTransactionImpl())) { // persist tx changes and validate against updated state
+                        removedTxs.add(unconfirmedTransaction); // remove incorrect transaction and forget about it for 10 minutes
                         continue;
                     }
                     // prefetch data for duplicate validation
@@ -1194,6 +1211,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             // do not apply changes for applyUnconfirmed
             databaseManager.getDataSource().rollback(!startedConnection.isAlreadyStarted());
         }
+        removedTxs.forEach(transactionProcessor::removeUnconfirmedTransaction);
         return sortedTransactions;
     }
 
@@ -1219,9 +1237,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         return sortedTransactions;
     }
 
-    public void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException {
+    public void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException, MempoolStateDesyncException {
         Block previousBlock = blockchain.getLastBlock();
         SortedSet<UnconfirmedTransaction> sortedTransactions = getUnconfirmedTransactions(previousBlock, blockTimestamp, Integer.MAX_VALUE);
+        log.debug("Selected txs to generate block with [{}]", sortedTransactions.stream().map(Transaction::getId).map(String::valueOf).collect(Collectors.joining(",")));
+        verifyTxSufficiency(sortedTransactions, blockVersion);
+
         List<Transaction> blockTransactions = new ArrayList<>();
         MessageDigest digest = Crypto.sha256();
         long totalAmountATM = 0;
@@ -1235,7 +1256,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             digest.update(signedTxBytes.array());
             totalAmountATM += transaction.getAmountATM();
             totalFeeATM += transaction.getFeeATM();
-            payloadLength += signedTxBytes.payloadSize();
+            payloadLength += TransactionUtils.calculateFullSize(transaction, signedTxBytes.size());
         }
         byte[] payloadHash = digest.digest();
         digest.update(previousBlock.getGenerationSignature());
@@ -1261,6 +1282,24 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         } catch (BlockNotAcceptedException e) {
             log.debug("Generate block failed: " + e.getMessage());
             throw e;
+        }
+    }
+
+    private void verifyTxSufficiency(Set<UnconfirmedTransaction> txs, int blockVersion) throws MempoolStateDesyncException {
+        HeightConfig currentConfig = blockchainConfig.getCurrentConfig();
+        if (!currentConfig.isAdaptiveForgingEnabled()) {
+            return;
+        }
+        int adaptiveTxsNumber = currentConfig.getNumberOfTransactionsInAdaptiveBlock();
+        int size = txs.size();
+        if (size <= adaptiveTxsNumber && blockVersion == Block.REGULAR_BLOCK_VERSION) {
+            throw new MempoolStateDesyncException("Not enough transactions for regular block generation, got " + size + ", required at least > " + adaptiveTxsNumber);
+        }
+        if (size > adaptiveTxsNumber && blockVersion == Block.ADAPTIVE_BLOCK_VERSION) {
+            throw new MempoolStateDesyncException("Expected " + adaptiveTxsNumber + " for adaptive block generation, but got " + size);
+        }
+        if (size <= adaptiveTxsNumber && blockVersion == Block.INSTANT_BLOCK_VERSION) {
+            throw new MempoolStateDesyncException("Expected greater then " + adaptiveTxsNumber + " for instant block generation, but got " + size);
         }
     }
 
