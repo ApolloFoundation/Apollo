@@ -7,6 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.v2.impl;
 import com.apollocurrency.aplwallet.api.v2.NotFoundException;
 import com.apollocurrency.aplwallet.api.v2.SmcApiService;
 import com.apollocurrency.aplwallet.api.v2.model.CallContractMethodReqTest;
+import com.apollocurrency.aplwallet.api.v2.model.ContractDetailsResponse;
+import com.apollocurrency.aplwallet.api.v2.model.ContractListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.PublishContractReqTest;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionArrayResp;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
@@ -173,5 +175,43 @@ public class SmcApiServiceImpl implements SmcApiService {
     @Override
     public Response createPublishContractTx(PublishContractReqTest body, SecurityContext securityContext) throws NotFoundException {
         return ResponseBuilderV2.apiError(ApiErrors.CUSTOM_ERROR_MESSAGE, "Not implemented yet").build();
+    }
+
+    @Override
+    public Response getSmcByOwnerAccount(String accountStr, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+
+        long accountId = Convert.parseAccountId(accountStr);
+
+
+        byte[] contractPublicKey;
+        Account account = accountService.getAccount(accountId);
+        if (account == null) {
+            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "account", accountStr).build();
+        }
+
+
+        ContractListResponse response = new ContractListResponse();
+
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response getSmcByAddress(String addressStr, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+
+        long address = Convert.parseAccountId(addressStr);
+
+
+        byte[] contractPublicKey;
+        Account account = accountService.getAccount(address);
+        if (account == null) {
+            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
+        }
+
+        ContractDetailsResponse response = new ContractDetailsResponse();
+
+        return builder.bind(response).build();
     }
 }

@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
+import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEntityToContractInfoConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable;
@@ -37,6 +38,8 @@ class ContractServiceTest {
     @Mock
     ContractModelToStateEntityConverter contractModelToStateConverter;
     @Mock
+    ContractEntityToContractInfoConverter contractEntityToContractInfoConverter;
+    @Mock
     HashSumProvider hashSumProvider;
 
     ContractService contractService;
@@ -50,6 +53,7 @@ class ContractServiceTest {
             smcContractStateTable,
             contractModelToEntityConverter,
             contractModelToStateConverter,
+            contractEntityToContractInfoConverter,
             hashSumProvider);
 
     }

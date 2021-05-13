@@ -4,11 +4,15 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 
+import com.apollocurrency.aplwallet.api.v2.model.ContractDetailsResponse;
+import com.apollocurrency.aplwallet.api.v2.model.ContractInfo;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEntityToContractInfoConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
@@ -16,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.smc.blockchain.ContractNotFoundException;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
@@ -33,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -41,22 +47,24 @@ import java.util.Objects;
 @Slf4j
 @Singleton
 public class ContractServiceImpl implements ContractService {
-    private Blockchain blockchain;
-    private SmcContractTable smcContractTable;
-    private SmcContractStateTable smcContractStateTable;
+    private final Blockchain blockchain;
+    private final SmcContractTable smcContractTable;
+    private final SmcContractStateTable smcContractStateTable;
 
-    private ContractModelToEntityConverter contractModelToEntityConverter;
-    private ContractModelToStateEntityConverter contractModelToStateConverter;
+    private final ContractModelToEntityConverter contractModelToEntityConverter;
+    private final ContractModelToStateEntityConverter contractModelToStateConverter;
+    private final ContractEntityToContractInfoConverter contractEntityToContractInfoConverter;
 
     private HashSumProvider hashSumProvider;
 
     @Inject
-    public ContractServiceImpl(Blockchain blockchain, SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, HashSumProvider hashSumProvider) {
+    public ContractServiceImpl(Blockchain blockchain, SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, ContractEntityToContractInfoConverter contractEntityToContractInfoConverter, HashSumProvider hashSumProvider) {
         this.blockchain = blockchain;
         this.smcContractTable = smcContractTable;
         this.smcContractStateTable = smcContractStateTable;
         this.contractModelToEntityConverter = contractModelToEntityConverter;
         this.contractModelToStateConverter = contractModelToStateConverter;
+        this.contractEntityToContractInfoConverter = contractEntityToContractInfoConverter;
         this.hashSumProvider = hashSumProvider;
     }
 
@@ -160,6 +168,43 @@ public class ContractServiceImpl implements ContractService {
 
         log.debug("Created contract={}", contract);
 
+        return contract;
+    }
+
+    @Override
+    public List<ContractInfo> getContractsByOwner(Address owner) {
+        AplAddress aplAddress = new AplAddress(owner);
+        return contractEntityToContractInfoConverter.convert(CollectionUtil.toList(
+            smcContractTable.getManyBy(new DbClause.LongClause("owner", aplAddress.getLongId()), 0, Integer.MAX_VALUE)
+        ));
+    }
+
+    @Override
+    public ContractDetailsResponse getContractDetails(Address txAddress) {
+        Transaction smcTransaction = blockchain.getTransaction(new AplAddress(txAddress).getLongId());
+        if (smcTransaction == null) {
+            log.error("Transaction not found, addr={}", txAddress.getHex());
+            throw new IllegalArgumentException("Transaction not found, addr=" + txAddress.getHex());
+        }
+        if (smcTransaction.getAttachment().getTransactionTypeSpec() != TransactionTypes.TransactionTypeSpec.SMC_PUBLISH) {
+            throw new IllegalStateException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec()
+                + ", expected " + TransactionTypes.TransactionTypeSpec.SMC_PUBLISH);
+        }
+        SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) smcTransaction.getAttachment();
+        AplAddress contractAddress = new AplAddress(smcTransaction.getRecipientId());
+
+        SmcContractEntity smcContractEntity = loadContractEntity(contractAddress);
+        SmcContractStateEntity smContractStateEntity = loadContractStateEntity(contractAddress);
+
+        ContractDetailsResponse contract = new ContractDetailsResponse();
+        contract.setAddress(new AplAddress(smcContractEntity.getAddress()).getHex());
+        contract.setTransaction(new AplAddress(smcContractEntity.getTransactionId()).getHex());
+        contract.setName(smcContractEntity.getContractName());
+        contract.setParams(smcContractEntity.getArgs());
+        contract.setFuelLimit(attachment.getFuelLimit().toString());
+        contract.setFuelPrice(attachment.getFuelPrice().toString());
+        contract.setStatus(smContractStateEntity.getStatus());
+        log.trace("Transaction details, tx addr={} {}", txAddress, contract);
         return contract;
     }
 

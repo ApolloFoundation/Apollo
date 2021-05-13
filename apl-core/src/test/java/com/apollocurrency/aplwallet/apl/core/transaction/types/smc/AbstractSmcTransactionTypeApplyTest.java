@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEntityToContractInfoConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
@@ -144,7 +145,8 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
         TransactionValidator.class, TransactionApplier.class,
         SmcConfig.class, SmcBlockchainIntegratorFactory.class,
-        SmcContractTable.class, SmcContractStateTable.class, ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
+        SmcContractTable.class, SmcContractStateTable.class,
+        ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class, ContractEntityToContractInfoConverter.class,
         ContractServiceImpl.class
     )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
