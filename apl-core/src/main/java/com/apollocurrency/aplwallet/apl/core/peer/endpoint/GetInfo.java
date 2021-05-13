@@ -21,28 +21,25 @@
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerImpl;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import com.apollocurrency.aplwallet.apl.util.Version;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.StringWriter;
-import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @Slf4j
 public class GetInfo extends PeerRequestHandler {
-    private static final Logger log = LoggerFactory.getLogger(GetInfo.class);
     private static final JSONStreamAware INVALID_ANNOUNCED_ADDRESS;
     private static final JSONStreamAware INVALID_APPLICATION;
     private static final JSONStreamAware INVALID_CHAINID;
@@ -68,13 +65,13 @@ public class GetInfo extends PeerRequestHandler {
         this.timeService = timeService;
     }
 
-    
+
     @Override
     public JSONStreamAware processRequest(JSONObject req, Peer peer) {
         PeerImpl peerImpl = (PeerImpl) peer;
         PeerInfo pi = mapper.convertValue(req, PeerInfo.class);
         log.trace("GetInfo - PeerInfo from request = {}", pi);
-        
+
         peerImpl.setX509pem(pi);
         peerImpl.setLastUpdated(timeService.getEpochTime());
         long origServices = peerImpl.getServices();
@@ -88,16 +85,16 @@ public class GetInfo extends PeerRequestHandler {
                 announcedAddress = announcedAddress.toLowerCase();
                 if (announcedAddress != null) {
                     if (!peerImpl.verifyAnnouncedAddress(announcedAddress)) {
-                        log.trace("GetInfo: ignoring invalid announced address for " + peerImpl.getHostWithPort());
+                        log.trace("GetInfo: ignoring invalid announced address for {}", peerImpl.getHostWithPort());
                         if (!peerImpl.verifyAnnouncedAddress(peerImpl.getAnnouncedAddress())) {
-                            log.trace("GetInfo: old announced address for " + peerImpl.getHostWithPort()+ " no longer valid");
+                            log.trace("GetInfo: old announced address for {} no longer valid", peerImpl.getHostWithPort());
                             lookupPeersService().setAnnouncedAddress(peerImpl, null);
                         }
                         peer.deactivate("Invalid announced address: " + announcedAddress);
                         return INVALID_ANNOUNCED_ADDRESS;
                     }
                     if (!announcedAddress.equals(peerImpl.getAnnouncedAddress())) {
-                        log.trace("GetInfo: peer " + peer.getHost() + " changed announced address from " + peer.getAnnouncedAddress() + " to " + announcedAddress);
+                        log.trace("GetInfo: peer {} changed announced address from {} to {}", peer.getHost(), peer.getAnnouncedAddress(), announcedAddress);
                         lookupPeersService().setAnnouncedAddress(peerImpl, announcedAddress);
                     }
                 } else {

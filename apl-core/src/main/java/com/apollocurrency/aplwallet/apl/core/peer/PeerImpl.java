@@ -50,17 +50,17 @@ import io.firstbridge.identity.cert.CertKeyPersistence;
 import io.firstbridge.identity.cert.ExtCert;
 import io.firstbridge.identity.handler.IdValidator;
 import io.firstbridge.identity.utils.Hex;
-import java.io.ByteArrayInputStream;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONStreamAware;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
-import static java.lang.Math.abs;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -80,14 +80,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static java.lang.Math.abs;
 
 @Slf4j
 public final class PeerImpl implements Peer {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PeerImpl.class);
     @Getter
     public static final String CAN_NOT_DESERIALIZE_REQUEST_MSG = "Can not deserialize request";
 
@@ -984,7 +982,7 @@ public final class PeerImpl implements Peer {
             return true;
         }
     }
-    
+
 //--------- X.509 certificates related methods
     @Override
     public String getX509pem() {
@@ -1010,20 +1008,20 @@ public final class PeerImpl implements Peer {
             bb.putInt(pi.getBlockTime());
             byte[] data = bb.array();
             byte[] signature = Hex.decode(pi.getEpochTimeSigantureHex());
-            
+
             boolean signatureValid =  identityService.getPeerIdValidator().verifySignedData(xc.getCertificate(), data, signature);
-            
+
             boolean timeDiffValid = abs(timeService.getEpochTime() - pi.getEpochTime()) <= MAX_TIME_DIFF;
-            
+
             if (!timeDiffValid) {
                 log.warn("Time difference exceeds max allowed value for node {}", getHostWithPort());
                 return;
             }
             if (signatureValid) {
-                log.debug("Ignoring self-signed certificate because timestamp signature is wrong for peer: {}" + getHostWithPort());
+                log.debug("Ignoring self-signed certificate because timestamp signature is wrong for peer: {}", getHostWithPort());
                 return;
             }
-            
+
             peerId = Hex.encode(xc.getActorId());
             if (xc.isSelfSigned()) {
                 trustLevel = PeerTrustLevel.REGISTERED;
@@ -1039,7 +1037,7 @@ public final class PeerImpl implements Peer {
             log.debug("Can not read certificate of peer: {}", getHostWithPort());
         }
     }
-    
+
     @Override
     public String getIdentity() {
         String res;
@@ -1050,7 +1048,7 @@ public final class PeerImpl implements Peer {
         }
         return res;
     }
-    
+
 //----------- overwitten methods of Object
     @Override
     public boolean equals(Object o) {

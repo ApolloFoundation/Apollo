@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
@@ -57,9 +57,9 @@ public class PeerDao {
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
                 peers.add(new PeerEntity(
-                        rs.getString("address"), 
-                        rs.getLong("services"), 
-                        rs.getInt("last_updated"), 
+                        rs.getString("address"),
+                        rs.getLong("services"),
+                        rs.getInt("last_updated"),
                         rs.getString("x509pem"),
                         rs.getString("ip_and_port")
                        )

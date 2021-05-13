@@ -19,7 +19,6 @@
  */
 package com.apollocurrency.aplwallet.apl.core.peer;
 
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.PeerDao;
 import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
@@ -29,10 +28,10 @@ import com.apollocurrency.aplwallet.apl.core.app.runnable.limiter.TimeLimiterSer
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.PeerDao;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.PeerEntity;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIEnum;
-import com.apollocurrency.aplwallet.apl.security.id.IdentityService;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.BlockConverter;
 import com.apollocurrency.aplwallet.apl.core.rest.converter.UnconfirmedTransactionConverter;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -40,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.security.id.IdentityService;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -59,7 +59,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import io.firstbridge.identity.cert.ExtCert;
 import io.firstbridge.identity.utils.Hex;
-import java.nio.ByteBuffer;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -70,6 +69,7 @@ import org.slf4j.LoggerFactory;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -304,7 +304,7 @@ public class PeersService {
             log.error("Can not load or generate this node identity certificate or key");
         }
 
-        if(!identityService.loadTrusterCaCerts()){
+        if(!identityService.loadTrustedCaCerts()){
             log.error("Can not load trusted CA certificates, node ID verification is impossible");
         }
 

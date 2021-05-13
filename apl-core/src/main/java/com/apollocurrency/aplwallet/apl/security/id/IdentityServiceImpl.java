@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2018-2020. Apollo Foundation.
+ * Copyright (c)  2018-2021. Apollo Foundation.
  */
 package com.apollocurrency.aplwallet.apl.security.id;
 
@@ -21,13 +21,15 @@ import io.firstbridge.identity.handler.PrivateKeyLoader;
 import io.firstbridge.identity.handler.PrivateKeyLoaderImpl;
 import io.firstbridge.identity.handler.ThisActorIdHandler;
 import io.firstbridge.identity.handler.ThisActorIdHandlerImpl;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.util.List;
-import javax.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Identity service implementation
@@ -35,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author alukin@gmail.com
  */
 @Slf4j
+@Singleton
 public class IdentityServiceImpl implements IdentityService {
 
     private ThisActorIdHandler thisNodeIdHandler;
@@ -42,9 +45,9 @@ public class IdentityServiceImpl implements IdentityService {
     public Path myCertPath;
     public Path myKeyPath;
     public Path apolloCaPath;
-    
+
     private final ConfigDirProvider dirProvider;
-    
+
     @Inject
     public IdentityServiceImpl(ConfigDirProvider dirProvider) {
         this.dirProvider=dirProvider;
@@ -60,7 +63,7 @@ public class IdentityServiceImpl implements IdentityService {
         apolloCaPath =  Path.of(dirProvider.getInstallationConfigLocation())
                 .resolve("conf")
                 .resolve("CA-certs");
-        
+
     }
 
     @Override
@@ -76,7 +79,7 @@ public class IdentityServiceImpl implements IdentityService {
     @Override
     public boolean loadMyIdentity() {
         boolean res = true;
-        CertificateLoader cl = new CertificateLoaderImpl();        
+        CertificateLoader cl = new CertificateLoaderImpl();
         ExtCert myCert = cl.loadCert(myCertPath);
         PrivateKey privKey = null;
         if(myCert!=null){
@@ -89,9 +92,9 @@ public class IdentityServiceImpl implements IdentityService {
         }else{ //we do not have node certificate yet, have to generate it
             thisNodeIdHandler = new ThisActorIdHandlerImpl();
             CertAndKey certAndKey = thisNodeIdHandler.generateSelfSignedCert(fillCertProperties());
-            
+
             KeyWriter kw = CryptoFactory.newInstance().getKeyWriter();
-            
+
             try {
                 myKeyPath.getParent().toFile().mkdirs();
                 kw.writePvtKeyPEM(myKeyPath.toString(), certAndKey.getPvtKey());
@@ -101,16 +104,16 @@ public class IdentityServiceImpl implements IdentityService {
                 log.error("Can not wirite generated node keys");
                 res=false;
             }
-            
+
         }
-               
+
         return res;
     }
-    
+
     /**
      * Fill the fields of X.509 certificate actually
      * with some "placeholders" and generated NodeID
-     * @return filled CSR ready to sifn or self-sign
+     * @return filled CSR ready to sign or self-sign
      */
     private ExtCSR fillCertProperties() {
         //generate random 256-bit NodeID
@@ -118,15 +121,15 @@ public class IdentityServiceImpl implements IdentityService {
         SecureRandom sr = new SecureRandom();
         sr.nextBytes(nodeId);
         ExtCSR csr = new ExtCSR();
-        
+
         csr.setActorId(nodeId);
-        
+
         AuthorityID authId = new AuthorityID();
         authId.setActorType(ActorType.NODE);
         authId.setNetId(dirProvider.getChainId());
         authId.setAuthorityCode(0);
         authId.setBusinessCode(0);
-        
+
         csr.setAuthorityId(authId);
         String email = csr.getActorIdAsHex()+"@apollowallet.org";
         csr.setCN(email);
@@ -142,13 +145,13 @@ public class IdentityServiceImpl implements IdentityService {
     }
 
     @Override
-    public boolean loadTrusterCaCerts() {
+    public boolean loadTrustedCaCerts() {
         CertificateLoader cl = new CertificateLoaderImpl();
-        List<ExtCert> calist = cl.loadCertsFromDir(apolloCaPath);
-        if(calist.isEmpty()){
+        List<ExtCert> caList = cl.loadCertsFromDir(apolloCaPath);
+        if(caList.isEmpty()){
             return false;
         }
-        calist.forEach(cert -> {
+        caList.forEach(cert -> {
             peerIdValidator.addTrustedSignerCert(cert.getCertificate());
         });
         return true;

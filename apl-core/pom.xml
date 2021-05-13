@@ -38,10 +38,8 @@
     <dependency>
       <groupId>io.firstbridge</groupId>
       <artifactId>fb-identity</artifactId>
-      <version>1.0.1</version>
-      <type>jar</type>
     </dependency>
-    
+
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
