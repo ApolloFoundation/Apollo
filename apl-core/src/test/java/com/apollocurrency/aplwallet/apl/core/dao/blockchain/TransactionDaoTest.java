@@ -1,5 +1,11 @@
-package com.apollocurrency.aplwallet.apl.core.app;
+/*
+ *  Copyright © 2018-2021 Apollo Foundation
+ */
 
+package com.apollocurrency.aplwallet.apl.core.dao.blockchain;
+
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
@@ -7,9 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToMod
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
-import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDao;
-import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.entity.appdata.ChatInfo;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -19,7 +23,6 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.transaction.PrunableTransaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
@@ -48,6 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
@@ -338,6 +342,69 @@ class TransactionDaoTest extends DbContainerBaseTest {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    @Test
+    void testGetChats() {
+        try {
+            insertMockMessageTx(-1, 100, 200, 900);
+            insertMockMessageTx(-2, 200, 100, 999);
+            insertMockMessageTx(-3, 300, 100, 999);
+            insertMockMessageTx(-4, 300, 0, 999);
+            insertMockMessageTx(-5, 200, 100, 1000);
+
+            List<ChatInfo> chats = dao.getChatAccounts(100, 0, -1);
+
+            assertEquals(List.of(new ChatInfo(200, 1000), new ChatInfo(300, 999)), chats);
+
+            List<ChatInfo> paginatedChats = dao.getChatAccounts(100, 0, 0);
+
+            assertEquals(List.of(new ChatInfo(200, 1000)), paginatedChats);
+        } finally {
+            removeTransactions(List.of(-1L, -2L, -3L, -4L, -5L));
+        }
+    }
+
+    @Test
+    void testGetTransactionsChatHistory() {
+        try {
+            insertMockMessageTx(-1, 100, 200, 900);
+            insertMockMessageTx(-2, 200, 100, 999);
+            insertMockMessageTx(-3, 300, 100, 999);
+            insertMockMessageTx(-4, 300, 0, 999);
+            insertMockMessageTx(-5, 200, 100, 1000);
+
+            List<TransactionEntity> txs = dao.getTransactionsChatHistory(100, 200, 0, -1);
+            List<Long> txIds = txs.stream().map(TransactionEntity::getId).collect(Collectors.toList());
+
+            assertEquals(List.of(-5L, -2L, -1L), txIds);
+
+            List<TransactionEntity> paginatedChatTxs = dao.getTransactionsChatHistory(100, 200, 1, 1);
+            List<Long> paginatedIds = paginatedChatTxs.stream().map(TransactionEntity::getId).collect(Collectors.toList());
+
+            assertEquals(List.of(-2L), paginatedIds);
+
+        } finally {
+            removeTransactions(List.of(-1L, -2L, -3L, -4L, -5L));
+        }
+    }
+
+    private void removeTransactions(List<Long> ids) {
+        DbUtils.inTransaction(extension, (con)-> {
+            for (Long id : ids) {
+                try {
+                    con.createStatement().executeUpdate("delete from transaction where id = " + id);
+                } catch (SQLException e) {
+                    fail(e);
+                }
+
+            }
+        });
+    }
+
+    private void insertMockMessageTx(long id, long sender, long recipient, int timestamp) {
+        TransactionEntity transactionEntity = new TransactionEntity(0L, id, (short) 12, recipient, (short) 0, 0L, 100_000_000, new byte[32], 100000, 1L, 100000, 1, new byte[64], timestamp, (byte) 1, (byte) 0, sender, new byte[32], 650, new byte[32], (byte) 1, false, false, false, false, false, false, false, false, new byte[0]);
+        dao.saveTransactions(List.of(transactionEntity));
     }
 
 }

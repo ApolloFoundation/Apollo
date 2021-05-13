@@ -48,7 +48,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
 
     @Override
     public Stream<UnconfirmedTransaction> getAllUnconfirmedTransactionsStream() {
-        return memPool.getAllProcessedStream();
+        return memPool.getAllStream();
     }
 
     @Override
@@ -58,7 +58,7 @@ public class FindTransactionServiceImpl implements FindTransactionService {
 
     @Override
     public Optional<Transaction> findUnconfirmedTransaction(long transactionId) {
-        return Optional.ofNullable(memPool.getUnconfirmedTransaction(transactionId));
+        return Optional.ofNullable(memPool.get(transactionId));
     }
 
     @Override

@@ -74,7 +74,7 @@ public final class GetTransactionBytes extends AbstractAPIRequestHandler {
 
         JSONObject response = new JSONObject();
         if (transaction == null) {
-            transaction = lookupMemPool().getUnconfirmedTransaction(transactionId);
+            transaction = lookupMemPool().get(transactionId);
             if (transaction == null) {
                 return UNKNOWN_TRANSACTION;
             }

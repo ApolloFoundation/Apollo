@@ -60,7 +60,7 @@ public interface BlockchainProcessor {
 
     SortedSet<UnconfirmedTransaction> getUnconfirmedTransactions(Block previousBlock, int blockTimestamp, int limit);
 
-    void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException;
+    void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException, MempoolStateDesyncException;
 
     SortedSet<UnconfirmedTransaction> selectUnconfirmedTransactions(
         Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit);
@@ -107,6 +107,19 @@ public interface BlockchainProcessor {
         public String getMessage() {
             return block == null ? super.getMessage() :
                 super.getMessage() + ", block " + block.get("stringId") + " " + block.toJSONString();
+        }
+
+    }
+
+    class MempoolStateDesyncException extends AplException {
+
+
+        public MempoolStateDesyncException(String message) {
+            super(message);
+        }
+
+        public MempoolStateDesyncException(String message, Throwable cause) {
+            super(message, cause);
         }
 
     }

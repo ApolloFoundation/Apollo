@@ -174,7 +174,7 @@ public class TransactionValidator {
         }
         Result byteArrayTx = PayloadResult.createLittleEndianByteArrayResult();
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, byteArrayTx);
-        int fullSize = byteArrayTx.payloadSize();
+        int fullSize = TransactionUtils.calculateFullSize(transaction, byteArrayTx.size());
         if (fullSize > blockchainConfig.getCurrentConfig().getMaxPayloadLength()) {
             throw new AplException.NotValidException("Transaction size " + fullSize + " exceeds maximum payload size");
         }

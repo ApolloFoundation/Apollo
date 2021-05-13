@@ -50,7 +50,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.event.ObservesAsync;
+import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -131,7 +131,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         if (blockchain.hasTransaction(transaction.getId())) {
             throw new AplException.ExistingTransactionException("Transaction " + transaction.getId() + " is already saved in blockchain");
         }
-        if (memPool.hasUnconfirmedTransaction(transaction.getId())) {
+        if (memPool.contains(transaction.getId())) {
             throw new AplException.ExistingTransactionException("Transaction " + transaction.getId() + " is already saved in mempool");
         }
         transactionValidator.validateSignatureWithTxFee(transaction);
@@ -149,7 +149,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             log.debug("Transaction {} already in blockchain, will not broadcast again", transaction.getStringId());
             return;
         }
-        if (memPool.hasUnconfirmedTransaction(transaction.getId())) {
+        if (memPool.contains(transaction.getId())) {
             memPool.rebroadcast(transaction);
             return;
         }
@@ -158,18 +158,18 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         UnconfirmedTransaction unconfirmedTransaction = unconfirmedTransactionCreator.from(transaction, timeService.systemTimeMillis());
         boolean broadcastLater = lookupBlockchainProcessor().isProcessingBlock();
         if (broadcastLater) {
-            memPool.broadcastLater(transaction);
+            memPool.addBroadcastLater(transaction);
                 log.debug("Will broadcast new transaction later {}", transaction.getStringId());
         } else {
             UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(unconfirmedTransaction);
             if (!validationResult.isOk()) {
                 throw new AplException.NotValidException(validationResult.getErrorDescription());
             }
-            TxSavingStatus status = saveUnconfirmedTransaction(unconfirmedTransaction);
-            if (status == TxSavingStatus.NOT_SAVED) {
+            IdQueue.ReturnCode status = memPool.addPendingProcessing(unconfirmedTransaction);
+            if (status == IdQueue.ReturnCode.FULL || status == IdQueue.ReturnCode.NOT_ADDED) {
                 throw new RuntimeException("Unable to broadcast tx " + unconfirmedTransaction.getId() + ", mempool is full");
             }
-            if (status == TxSavingStatus.ALREADY_EXIST) {
+            if (status == IdQueue.ReturnCode.ALREADY_EXIST) {
                 throw new RuntimeException("Transaction " + transaction.getId() + " was already broadcasted");
             }
             log.debug("Accepted new transaction {}", transaction.getStringId());
@@ -181,72 +181,11 @@ public class TransactionProcessorImpl implements TransactionProcessor {
     }
 
     @Override
-    public void broadcast(Collection<Transaction> transactions) {
-        List<Transaction> returned = new ArrayList<>();
-        List<UnconfirmedTransaction> processed = new ArrayList<>();
-        DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
-            List<UnconfirmedTransaction> toBroadcast = transactions.stream()
-                .filter(this::requireBroadcast)
-                .map(e -> unconfirmedTransactionCreator.from(e, timeService.systemTimeMillis()))
-                .collect(Collectors.toList());
-            for (UnconfirmedTransaction tx : toBroadcast) {
-                try {
-                    if (processingService.validateBeforeProcessing(tx).isOk()) {
-                        TxSavingStatus status = saveUnconfirmedTransaction(tx);
-                        if (status == TxSavingStatus.NOT_SAVED) {
-                            log.debug("Limit of mempool is reached, will return to pending queue tx {}", tx.getId());
-                            returned.add(tx);
-                        } else if (status == TxSavingStatus.SAVED) {
-                            processed.add(tx);
-                        }
-                    } else {
-                        log.trace("Not valid unconfirmed tx {}, already exit", tx.getId());
-                    }
-                } catch (DbTransactionHelper.DbTransactionExecutionException validationException) {
-                    log.trace("Not valid tx " + tx.getId(), validationException);
-                }
-            }
-        });
-        peers.sendToSomePeers(processed);
-        List<Transaction> processedTxs = processed.stream().map(UnconfirmedTransaction::getTransactionImpl).collect(Collectors.toList());
-        processedTxs.forEach(memPool::rebroadcast);
-        txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(processedTxs);
-        returned.forEach(e -> {
-            try {
-                memPool.softBroadcast(e);
-            } catch (AplException.ValidationException ignored) {
-            }
-        });
-        if (!returned.isEmpty()) {
-            log.warn("Return {} txs back to pending queue. Mempool is full", returned.size());
-        }
-    }
-
-    private boolean requireBroadcast(Transaction tx) {
-        if (blockchain.hasTransaction(tx.getId())) {
-            log.info("Transaction {} already in blockchain, will not broadcast again", tx.getStringId());
-            return false;
-        }
-        if (memPool.hasUnconfirmedTransaction(tx.getId())) {
-            memPool.rebroadcast(tx);
-            return false;
-        }
-        try {
-            transactionValidator.validateSignatureWithTxFee(tx);
-            transactionValidator.validateLightly(tx);
-        } catch (AplException.ValidationException e) {
-            log.trace("Tx " + tx.getId() + " is not valid before broadcast", e);
-            return false;
-        }
-        return true;
-    }
-
-    @Override
     public void clearUnconfirmedTransactions() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         List<UnconfirmedTransaction> unconfirmedTransactions = DbTransactionHelper.executeInTransaction(dataSource, () -> {
             List<UnconfirmedTransaction> txs = new ArrayList<>();
-            CollectionUtil.forEach(memPool.getAllProcessedStream(), txs::add);
+            CollectionUtil.forEach(memPool.getAllStream(), txs::add);
             memPool.clear();
             log.info("Unc txs cleared");
             return txs;
@@ -257,14 +196,14 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public void rebroadcastAllUnconfirmedTransactions() {
-        memPool.rebroadcastAllUnconfirmedTransactions();
+        memPool.rebroadcastAll();
     }
 
     public void removeUnconfirmedTransaction(Transaction transaction) {
         multiLock.inLockFor(transaction, () -> {
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             DbTransactionHelper.executeInTransaction(dataSource, () -> {
-                boolean removed = memPool.removeProcessedTransaction(transaction);
+                boolean removed = memPool.remove(transaction);
                 if (removed) {
                     log.trace("Removing unc tx {}, {}", transaction.getId(), ThreadUtils.lastNStacktrace(10));
                     txsEvent.select(TxEventType.literal(TxEventType.REMOVED_UNCONFIRMED_TRANSACTIONS)).fire(Collections.singletonList(transaction));
@@ -275,7 +214,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public void processDelayedTxs(int number) {
-        Iterator<UnconfirmedTransaction> it = memPool.processLaterQueueIterator();
+        Iterator<UnconfirmedTransaction> it = memPool.processLaterIterator();
         DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
             int processed = 0;
             while (it.hasNext() && processed < number) {
@@ -284,8 +223,8 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     Transaction tx = txToProcess.getTransactionImpl();
                     if (requireBroadcast(tx)) {
                         if (processingService.validateBeforeProcessing(tx).isOk()) {
-                            TxSavingStatus savingStatus = saveUnconfirmedTransaction(txToProcess);
-                            if (savingStatus == TxSavingStatus.NOT_SAVED) {
+                            IdQueue.ReturnCode savingStatus = memPool.addPendingProcessing(txToProcess);
+                            if (savingStatus == IdQueue.ReturnCode.FULL || savingStatus == IdQueue.ReturnCode.NOT_ADDED) {
                                 break;
                             }
                         }
@@ -299,7 +238,11 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         });
     }
 
-    public void onBlockPushed(@ObservesAsync @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+    public void onBlockPushed(@Observes @BlockEvent(BlockEventType.BLOCK_PUSHED) Block block) {
+        for (Transaction transaction : block.getTransactions()) {
+            memPool.markRemoved(transaction.getId());
+        }
+        log.debug("Marked removed [{}]", block.getTransactions().stream().map(Transaction::getId).map(String::valueOf).collect(Collectors.joining(",")));
         executor.submit(
             () -> DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(),
                 () -> block.getTransactions().forEach(this::removeUnconfirmedTransaction)));
@@ -314,7 +257,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
             }
             log.trace("Process later tx {}", transaction.getId());
             transaction.unsetBlock();
-            memPool.processLater(
+            memPool.addProcessLater(
                 unconfirmedTransactionCreator.from(
                     transaction,
                     Math.min(currentTime, Convert2.fromEpochTime(transaction.getTimestamp()))
@@ -345,12 +288,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                     if (validationResult.isOk()) {
                         transactionValidator.validateSignatureWithTxFeeLessStrict(transaction);
                         transactionValidator.validateLightly(transaction);
-                        TxSavingStatus status = saveUnconfirmedTransaction(unconfirmedTransaction);
-                        if (status == TxSavingStatus.NOT_SAVED) {
+                        IdQueue.ReturnCode status = memPool.addPendingProcessing(unconfirmedTransaction);
+                        if (status == IdQueue.ReturnCode.NOT_ADDED || status == IdQueue.ReturnCode.FULL) {
                             log.trace("Mempool is full, skip broadcasted txs processing {}", transactions.size() - receivedTransactions.size());
                             break;
                         }
-                        if (status == TxSavingStatus.ALREADY_EXIST) {
+                        if (status == IdQueue.ReturnCode.ALREADY_EXIST) {
                             continue;
                         }
                         if (memPool.isAlreadyBroadcasted(transaction)) {
@@ -377,30 +320,39 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         if (!addedUnconfirmedTransactions.isEmpty()) {
             txsEvent.select(TxEventType.literal(TxEventType.ADDED_UNCONFIRMED_TRANSACTIONS)).fire(addedUnconfirmedTransactions);
         }
-        memPool.removeFromBroadcasted(receivedTransactions);
+        memPool.removeBroadcasted(receivedTransactions);
         log.trace("Processing time of {} txs - {}", transactions.size(), System.currentTimeMillis() - startTime);
         if (!exceptions.isEmpty()) {
             throw new AplException.NotValidException("Peer sends invalid transactions: " + exceptions.toString());
         }
     }
 
-    private TxSavingStatus saveUnconfirmedTransaction(UnconfirmedTransaction unconfirmedTransaction) {
-        return multiLock.inLockFor(unconfirmedTransaction, () -> {
-            if (memPool.hasUnconfirmedTransaction(unconfirmedTransaction.getId())) {
-                return TxSavingStatus.ALREADY_EXIST;
-            }
-            boolean saved = processingService.addNewUnconfirmedTransaction(unconfirmedTransaction);
-            if (saved) {
-                log.trace("Tx {} was saved", unconfirmedTransaction.getId());
-            }
-            return saved ? TxSavingStatus.SAVED : TxSavingStatus.NOT_SAVED;
-        });
-    }
+//    private TxSavingStatus saveUnconfirmedTransaction(UnconfirmedTransaction unconfirmedTransaction) {
+//        return multiLock.inLockFor(unconfirmedTransaction, () -> {
+//            if (memPool.hasUnconfirmedTransaction(unconfirmedTransaction.getId())) {
+//                return TxSavingStatus.ALREADY_EXIST;
+//            }
+//            if (memPool.isRemoved(unconfirmedTransaction)) {
+//                return TxSavingStatus.INVALID_AFTER_SYNC_STATE;
+//            }
+//            if (blockchain.hasTransaction(unconfirmedTransaction.getId())) {
+//                return TxSavingStatus.ALREADY_EXIST;
+//            }
+//            boolean saved = processingService.addNewUnconfirmedTransaction(unconfirmedTransaction);
+//            if (saved) {
+//                log.trace("Tx {} was saved", unconfirmedTransaction.getId());
+//            }
+//            return saved ? TxSavingStatus.SAVED : TxSavingStatus.NOT_SAVED;
+//        });
+//    }
 
 
     @Override
     public boolean isFullyValidTransaction(Transaction tx) {
-        boolean isValid = false;
+        if (memPool.isRemoved(tx) || blockchain.hasTransaction(tx.getId())) {
+            return false;
+        }
+        boolean isValid = false ;
             try {
                 transactionValidator.validateSignatureWithTxFee(tx);
                 transactionValidator.validateFully(tx);
@@ -498,7 +450,22 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         return transaction;
     }
 
-    private enum TxSavingStatus {
-        SAVED, ALREADY_EXIST, NOT_SAVED
+    private boolean requireBroadcast(Transaction tx) {
+        if (blockchain.hasTransaction(tx.getId())) {
+            log.info("Transaction {} already in blockchain, will not broadcast again", tx.getStringId());
+            return false;
+        }
+        if (memPool.contains(tx.getId())) {
+            memPool.rebroadcast(tx);
+            return false;
+        }
+        try {
+            transactionValidator.validateSignatureWithTxFee(tx);
+            transactionValidator.validateLightly(tx);
+        } catch (AplException.ValidationException e) {
+            log.trace("Tx " + tx.getId() + " is not valid before broadcast", e);
+            return false;
+        }
+        return true;
     }
 }

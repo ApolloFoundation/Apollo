@@ -137,7 +137,7 @@ public final class ScheduleCurrencyBuy extends CreateTransactionHandler {
                     response.put("broadcasted", true);
                     return response;
                 }
-                for (UnconfirmedTransaction unconfirmedTransaction : CollectionUtil.toList(lookupMemPool().getAllProcessedStream())) {
+                for (UnconfirmedTransaction unconfirmedTransaction : CollectionUtil.toList(lookupMemPool().getAllStream())) {
                     if (filter.test(unconfirmedTransaction)) {
                         LOG.debug("Exchange offer found in unconfirmed pool, broadcasting transaction " + transaction.getStringId());
                         try {
