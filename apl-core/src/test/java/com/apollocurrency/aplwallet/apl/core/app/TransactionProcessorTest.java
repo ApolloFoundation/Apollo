@@ -145,7 +145,7 @@ class TransactionProcessorTest {
             .when(processingService)
             .validateBeforeProcessing(any(UnconfirmedTransaction.class));
         doReturn(-9128485677221760321L).when(transaction).getId();
-        UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, expirationTimestamp, 10, 100);
+        UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, expirationTimestamp, 10, 176);
         doReturn(unconfirmedTransaction).when(unconfirmedTransactionCreator).from(eq(transaction), anyLong());
         doReturn(true).when(transactionValidator).verifySignature(transaction);
         doReturn(true).when(processingService).addNewUnconfirmedTransaction(any(UnconfirmedTransaction.class));
@@ -179,7 +179,7 @@ class TransactionProcessorTest {
             .when(processingService)
             .validateBeforeProcessing(any(UnconfirmedTransaction.class));
         doReturn(true).when(processingService).addNewUnconfirmedTransaction(any(UnconfirmedTransaction.class));
-        UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, expirationTimestamp, 10, 100);
+        UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, expirationTimestamp, 10, 176);
         doReturn(unconfirmedTransaction).when(unconfirmedTransactionCreator).from(eq(transaction), anyLong());
         doReturn(BLOCK_5_HEIGHT).when(blockchain).getHeight();
         doReturn(Long.valueOf(BLOCK_5_HEIGHT - 1)).when(blockchainConfig).getLastKnownBlock();

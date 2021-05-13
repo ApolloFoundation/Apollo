@@ -69,6 +69,18 @@ public class TransactionUtils {
         return flags;
     }
 
+    /**
+     * Calculates the full size of transaction using {@link Transaction} itself
+     * and it's default serialization size with appendices typically obtained using {@link com.apollocurrency.aplwallet.apl.core.transaction.common.TxSerializer}
+     * @param tx transaction with appendices to calculate full size
+     * @param txStandardByteSize default serialized size of given transaction obtained using {@link com.apollocurrency.aplwallet.apl.core.transaction.common.TxSerializer}
+     * @return full size of the given transaction
+     */
+    public static int calculateFullSize(Transaction tx, int txStandardByteSize) {
+        //byteLength acts here as tx size with appendices default size, to get tx size with appendices full size we need to substract default size and add full size
+        return txStandardByteSize + tx.getAppendages().stream().mapToInt(app-> app.getFullSize() - app.getSize()).sum();
+    }
+
 
     public static byte[] calculateFullHash(byte[] unsignedTxBytes, byte[] signatureBytes) {
         //calculate transaction Id and full hash

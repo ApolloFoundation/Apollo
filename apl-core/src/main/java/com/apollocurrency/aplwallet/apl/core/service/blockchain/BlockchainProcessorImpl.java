@@ -74,6 +74,7 @@ import com.apollocurrency.aplwallet.apl.core.shard.ShardImporter;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionApplier;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializer;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionUtils;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
@@ -819,7 +820,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             calculatedTotalFee += transaction.getFeeATM();
             Result result = getTxByteArrayResult(transaction);
             digest.update(result.array());
-            payloadLength += result.payloadSize();
+            payloadLength += TransactionUtils.calculateFullSize(transaction, result.size());
         }
         if (calculatedTotalAmount != block.getTotalAmountATM() || calculatedTotalFee != block.getTotalFeeATM()) {
             throw new BlockNotAcceptedException(
@@ -1255,7 +1256,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             digest.update(signedTxBytes.array());
             totalAmountATM += transaction.getAmountATM();
             totalFeeATM += transaction.getFeeATM();
-            payloadLength += signedTxBytes.payloadSize();
+            payloadLength += TransactionUtils.calculateFullSize(transaction, signedTxBytes.size());
         }
         byte[] payloadHash = digest.digest();
         digest.update(previousBlock.getGenerationSignature());
