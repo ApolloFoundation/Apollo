@@ -80,7 +80,7 @@ class FindTransactionServiceImplTest {
         //GIVEN
         UnconfirmedTransaction tr = mock(UnconfirmedTransaction.class);
         Stream<UnconfirmedTransaction> result = List.of(tr).stream();
-        doReturn(result).when(memPool).getAllProcessedStream();
+        doReturn(result).when(memPool).getAllStream();
 
         //WHEN
         Stream<UnconfirmedTransaction> stream = findTransactionService.getAllUnconfirmedTransactionsStream();
@@ -112,7 +112,7 @@ class FindTransactionServiceImplTest {
         //GIVEN
         long transactionId = 111L;
         Transaction tx = mock(Transaction.class);
-        doReturn(tx).when(memPool).getUnconfirmedTransaction(transactionId);
+        doReturn(tx).when(memPool).get(transactionId);
 
         //WHEN
         Optional<Transaction> result = findTransactionService.findUnconfirmedTransaction(transactionId);
@@ -133,7 +133,7 @@ class FindTransactionServiceImplTest {
         doReturn(endTime + 1000).when(tr3).getTimestamp();
 
         Stream<UnconfirmedTransaction> unconfirmedTransactionStream = List.of(tr1, tr2, tr3).stream();
-        doReturn(unconfirmedTransactionStream).when(memPool).getAllProcessedStream();
+        doReturn(unconfirmedTransactionStream).when(memPool).getAllStream();
 
         TxReceipt tx1 = mock(TxReceipt.class);
         TxReceipt tx2 = mock(TxReceipt.class);
@@ -168,7 +168,7 @@ class FindTransactionServiceImplTest {
         doReturn(endTime + 1000).when(tr3).getTimestamp();
 
         Stream<UnconfirmedTransaction> unconfirmedTransactionStream = List.of(tr1, tr2, tr3).stream();
-        doReturn(unconfirmedTransactionStream).when(memPool).getAllProcessedStream();
+        doReturn(unconfirmedTransactionStream).when(memPool).getAllStream();
 
         //getTransactions(List<Long> accounts, type, subtype, startTime, endTime, fromHeight, toHeight, String sortOrder, from, to)
         doReturn(4).when(transactionService).getTransactionsCount(Collections.emptyList(),

@@ -233,7 +233,7 @@ public class BlockDaoImpl implements BlockDao {
 
     @Override
     public List<BlockEntity> getBlocks(TransactionalDataSource dataSource, int from, int to, int timestamp) {
-        LOG.debug("start getBlocks DbIter( from={}, to={}, timestamp={} )...", from, to, timestamp);
+        LOG.trace("start getBlocks DbIter( from={}, to={}, timestamp={} )...", from, to, timestamp);
         if (dataSource == null) {
             dataSource = databaseManager.getDataSource();
         }

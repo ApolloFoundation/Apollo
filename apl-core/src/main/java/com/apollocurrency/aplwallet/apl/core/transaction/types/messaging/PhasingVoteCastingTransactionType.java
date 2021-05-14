@@ -24,16 +24,12 @@ import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 @Singleton
 public class PhasingVoteCastingTransactionType extends MessagingTransactionType {
-    private final Fee PHASING_VOTE_FEE = (transaction, appendage) -> {
-        MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) transaction.getAttachment();
-        return Math.multiplyExact(attachment.getTransactionFullHashes().size(), getBlockchainConfig().getOneAPL());
-    };
-
     private final PhasingPollService phasingPollService;
     private final TransactionValidator transactionValidator;
 
@@ -62,7 +58,10 @@ public class PhasingVoteCastingTransactionType extends MessagingTransactionType 
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        return PHASING_VOTE_FEE;
+        return getFeeFactory().createSizeBased(BigDecimal.ONE, BigDecimal.ONE, (tx, app)-> {
+            MessagingPhasingVoteCasting attachment = (MessagingPhasingVoteCasting) tx.getAttachment();
+            return attachment.getTransactionFullHashes().size();
+        }, 1);
     }
 
     @Override

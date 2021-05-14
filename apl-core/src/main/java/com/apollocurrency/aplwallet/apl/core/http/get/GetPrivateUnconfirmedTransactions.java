@@ -44,7 +44,7 @@ public final class GetPrivateUnconfirmedTransactions extends AbstractAPIRequestH
         }
         JSONArray transactions = new JSONArray();
         CollectionUtil.forEach(lookupMemPool()
-            .getAllProcessedStream()
+            .getAllStream()
             .filter(transaction -> data.getAccountId() == transaction.getSenderId() || data.getAccountId() == transaction.getRecipientId())
             .skip(firstIndex)
             .limit(limit) ,e-> {

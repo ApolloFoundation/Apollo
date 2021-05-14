@@ -60,7 +60,7 @@ public class BlockchainProperties {
         @JsonProperty("height") int height,
         @JsonProperty("maxNumberOfTransactions") int maxNumberOfTransactions,
         @JsonProperty("maxArbitraryMessageLength") int maxArbitraryMessageLength,
-        @JsonProperty("maxNumberOfChildAccount") int maxNumberOfChildAccounts,
+        @JsonProperty("maxNumberOfChildAccounts") int maxNumberOfChildAccounts,
         @JsonProperty("blockTime") int blockTime,
         @JsonProperty("maxBlockTimeLimit") int maxBlockTimeLimit,
         @JsonProperty("minBlockTimeLimit") int minBlockTimeLimit,

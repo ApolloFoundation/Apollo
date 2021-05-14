@@ -7,9 +7,8 @@ import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.core.kms.config.DatabaseKVStorageConfigParametersImpl;
-import io.firstbridge.kms.persistence.storage.KVStorage;
 import io.firstbridge.kms.persistence.storage.KVStorageProviderFactory;
-import io.firstbridge.kms.security.model.KmsAccountInterface;
+import io.firstbridge.kms.persistence.storage.repository.KmsAccountRepository;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -19,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 public class KmsKvStorageService {
 
-    private KVStorage<String, KmsAccountInterface> kmsStorage;
+    private KmsAccountRepository kmsStorage;
     private KVStorageProviderFactory kvStorageProviderFactory;
 
     @Inject
@@ -29,13 +28,13 @@ public class KmsKvStorageService {
 
         if (dbConfig.getKmsSchemaName().isPresent()) {
             this.kvStorageProviderFactory = new KVStorageProviderFactory(new DatabaseKVStorageConfigParametersImpl(dbConfig));
-            this.kmsStorage = this.kvStorageProviderFactory.getKmsStorage();
+            this.kmsStorage = this.kvStorageProviderFactory.getKmsAccountRepository();
         } else {
             // TODO: YL rest client should be used for access remote REST API
         }
     }
 
-    public KVStorage<String, KmsAccountInterface> getKmsStorage() {
+    public KmsAccountRepository getKmsStorage() {
         return this.kmsStorage;
     }
 

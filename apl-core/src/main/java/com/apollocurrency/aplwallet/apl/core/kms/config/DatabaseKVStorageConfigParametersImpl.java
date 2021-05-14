@@ -5,18 +5,19 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import java.util.Objects;
+import java.util.Properties;
 import java.util.UUID;
 
 import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import io.firstbridge.kms.persistence.storage.KVStorage;
+import io.firstbridge.kms.persistence.storage.config.KVStorageConfigProvider;
 import lombok.ToString;
 
 /**
  * Class is used for local MariaDb url connection configuration.
  */
 @Singleton
-public class DatabaseKVStorageConfigParametersImpl implements KVStorage.KVStorageConfigParameters {
+public class DatabaseKVStorageConfigParametersImpl implements KVStorageConfigProvider {
 
     /**
      *  we need DbProperties mostly to create new URL connection string to KMS db schema
@@ -33,7 +34,7 @@ public class DatabaseKVStorageConfigParametersImpl implements KVStorage.KVStorag
 
     @Produces
     @Override
-    public DbConfigParameters getDbConfigParameters() {
+    public KvStoreConfigParameters getKvStoreConfigParameters() {
         if (this.mariaDbConfigParameters == null) {
             this.mariaDbConfigParameters = new MariaDbConfigParameters(this.dbProperties);
         }
@@ -41,7 +42,7 @@ public class DatabaseKVStorageConfigParametersImpl implements KVStorage.KVStorag
     }
 
     @ToString
-    public static class MariaDbConfigParameters implements DbConfigParameters {
+    public static class MariaDbConfigParameters implements KvStoreConfigParameters {
 
         private String dbUrl;
         private String dbType;
@@ -111,6 +112,21 @@ public class DatabaseKVStorageConfigParametersImpl implements KVStorage.KVStorag
         @Override
         public String getPassword() {
             return this.dbPassword;
+        }
+
+        @Override
+        public String getStoragePath() {
+            return null;
+        }
+
+        @Override
+        public Properties getConfigProperties() {
+            return null;
+        }
+
+        @Override
+        public void setConfigProperties(Properties properties) {
+
         }
 
         @Override

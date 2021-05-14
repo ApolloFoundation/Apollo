@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.messaging;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.PollService;
@@ -22,6 +22,7 @@ import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Map;
 @Singleton
@@ -34,27 +35,6 @@ public class PollCreationTransactionType extends MessagingTransactionType {
         this.pollService = pollService;
         this.transactionValidator = transactionValidator;
     }
-
-    private final Fee POLL_OPTIONS_FEE = new Fee.SizeBasedFee(Math.multiplyExact(10, getBlockchainConfig().getOneAPL()), getBlockchainConfig().getOneAPL(), 1) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendage) {
-            int numOptions = ((MessagingPollCreation) appendage).getPollOptions().length;
-            return numOptions <= 19 ? 0 : numOptions - 19;
-        }
-    };
-    private final Fee POLL_SIZE_FEE = new Fee.SizeBasedFee(0, Math.multiplyExact(2, getBlockchainConfig().getOneAPL()), 32) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendage) {
-            MessagingPollCreation attachment = (MessagingPollCreation) appendage;
-            int size = attachment.getPollName().length() + attachment.getPollDescription().length();
-            for (String option : ((MessagingPollCreation) appendage).getPollOptions()) {
-                size += option.length();
-            }
-            return size <= 288 ? 0 : size - 288;
-        }
-    };
-    private final Fee POLL_FEE = (transaction, appendage) -> POLL_OPTIONS_FEE.getFee(transaction, appendage) + POLL_SIZE_FEE.getFee(transaction, appendage);
-
 
     @Override
     public TransactionTypes.TransactionTypeSpec getSpec() {
@@ -73,7 +53,27 @@ public class PollCreationTransactionType extends MessagingTransactionType {
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        return POLL_FEE;
+        return getFeeFactory().createCustom((tx, app) -> {
+            Fee optionsFee = getFeeFactory().createSizeBased(BigDecimal.TEN, BigDecimal.ONE, (t, a) -> {
+                int numOptions = ((MessagingPollCreation) a).getPollOptions().length;
+                return numOptions <= 19 ? 0 : numOptions - 19;
+            }, 1);
+            BigDecimal[] additionalFees = getBlockchainConfig().getCurrentConfig().getAdditionalFees(getSpec(), new BigDecimal[]{BigDecimal.ZERO, BigDecimal.valueOf(2)});
+            long oneAPL = getBlockchainConfig().getOneAPL();
+            Fee sizeFee = new Fee.SizeBasedFee(additionalFees[0].multiply(BigDecimal.valueOf(oneAPL)).longValueExact(),
+                additionalFees[1].multiply(BigDecimal.valueOf(oneAPL)).longValueExact(), 32) {
+                @Override
+                public int getSize(Transaction transaction, Appendix appendage) {
+                    MessagingPollCreation attachment = (MessagingPollCreation) appendage;
+                    int size = attachment.getPollName().length() + attachment.getPollDescription().length();
+                    for (String option : attachment.getPollOptions()) {
+                        size += option.length();
+                    }
+                    return size <= 288 ? 0 : size - 288;
+                }
+            };
+            return optionsFee.getFee(tx, app) + sizeFee.getFee(tx, app);
+        });
     }
 
     @Override

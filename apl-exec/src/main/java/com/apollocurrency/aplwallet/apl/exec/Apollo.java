@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.exec;
 
-import static io.firstbridge.kms.persistence.storage.KVStorage.KMS_SCHEMA_NAME;
+import static io.firstbridge.kms.persistence.storage.repository.KmsAccountRepository.KMS_SCHEMA_NAME;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -210,7 +210,9 @@ public class Apollo {
             // will be initialized
             Path dbDataDir = dirProvider.getDbDir();
             Path dbInstalPath = DirProvider.getBinDir().getParent().resolve(APOLLO_MARIADB_INSTALL_DIR);
-            mariaDbProcess = new MariaDbProcess(conf,dbInstalPath,dbDataDir);
+            Path dbOutPath = Paths.get(new LogDirPropertyDefiner().getPropertyValue(), "maria_out.log");
+            log.info("Setting mariadb process out path: {}", dbOutPath);
+            mariaDbProcess = new MariaDbProcess(conf,dbInstalPath,dbDataDir, dbOutPath);
             res = mariaDbProcess.startAndWaitWhenReady();
         }
         return res;

@@ -25,18 +25,15 @@ import java.util.Map;
 public class MariaDbProcess {
     public static final String DB_CONF_FILE="my-apl.cnf";
     public static final String DB_CONF_FILE_TEMPLATE="my-apl.cnf.template";
-    public static final String OUTPUT_FILE_NAME = "maria_out.log";
 
     private DbControl dbControl;
     private  Path confFile;
     private  Path confFileTemplate;
-    private Path outFile;
     private MariaDbRunParams dbParams;
 
-    private MariaDbRunParams setDbParams(DbConfig conf, Path dbInstallDir, Path dbDataDir){
+    private MariaDbRunParams setDbParams(DbConfig conf, Path dbInstallDir, Path dbDataDir, Path logPath){
         dbParams = new MariaDbRunParams();
         confFile = dbDataDir.resolve(DB_CONF_FILE);
-        outFile = dbDataDir.resolve(OUTPUT_FILE_NAME); // output file in db dir
         confFileTemplate = dbInstallDir.resolve("conf").resolve(DB_CONF_FILE_TEMPLATE);
         String dbUser = conf.getDbProperties().getDbUsername();
         String dbPassword = conf.getDbProperties().getDbPassword();
@@ -52,7 +49,7 @@ public class MariaDbProcess {
                 dbParams.setDbConfigFile(confFile);
                 dbParams.setDbDataDir(dbDataDir);
                 dbParams.setDbInstallDir(dbInstallDir);
-                dbParams.setOut(outFile);
+                dbParams.setOut(logPath);
                 dbParams.setDbUser(dbUser);
                 dbParams.setDbPassword(dbPassword);
 
@@ -68,9 +65,9 @@ public class MariaDbProcess {
         return dbParams;
     }
 
-    public MariaDbProcess(DbConfig conf, Path dbInstallDir, Path dbDataDir) {
+    public MariaDbProcess(DbConfig conf, Path dbInstallDir, Path dbDataDir, Path logPath) {
         log.debug("Attempt to start MariaDb by params: {}\ndbInstallDir = {}\ndbDataDir = {}", conf, dbInstallDir, dbDataDir);
-        dbControl = new MariaDbControl(setDbParams(conf, dbInstallDir, dbDataDir));
+        dbControl = new MariaDbControl(setDbParams(conf, dbInstallDir, dbDataDir, logPath));
     }
     /**
     *
@@ -79,8 +76,8 @@ public class MariaDbProcess {
     * @param dbInstallDir directory where MariaDB dirstibution is installed
     * @return MariaDBProcess instance that should be checked with isOK() method
     */
-    public static MariaDbProcess findRunning(DbConfig conf, Path dbDataDir, Path dbInstallDir){
-        MariaDbProcess process = new MariaDbProcess(conf, dbInstallDir, dbDataDir);
+    public static MariaDbProcess findRunning(DbConfig conf, Path dbDataDir, Path dbInstallDir, Path logPath){
+        MariaDbProcess process = new MariaDbProcess(conf, dbInstallDir, dbDataDir, logPath);
         process.dbControl = new MariaDbControl(process.dbParams);
         process.dbControl.findRunning();
         return process;

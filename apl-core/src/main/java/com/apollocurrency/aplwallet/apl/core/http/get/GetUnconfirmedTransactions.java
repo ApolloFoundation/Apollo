@@ -57,12 +57,12 @@ public final class GetUnconfirmedTransactions extends AbstractAPIRequestHandler 
             limit = Integer.MAX_VALUE;
         }
         if (accountIds.isEmpty()) {
-            CollectionUtil.forEach(lookupMemPool().getAllProcessedStream()
+            CollectionUtil.forEach(lookupMemPool().getAllStream()
                 .filter(transaction -> transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT)
                 .skip(firstIndex)
                 .limit(limit),e -> transactions.add(JSONData.unconfirmedTransaction(e)));
         } else {
-            CollectionUtil.forEach(lookupMemPool().getAllProcessedStream()
+            CollectionUtil.forEach(lookupMemPool().getAllStream()
                 .filter(transaction -> transaction.getType().getSpec() != TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT
                     && (accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId())))
                 .skip(firstIndex)
