@@ -97,7 +97,7 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
     }
 
     public DbIterator<Shuffling> getAll(int from, int to) {
-        return getAll(from, to, " ORDER BY blocks_remaining NULLS LAST, height DESC ");
+        return getAll(from, to, " ORDER BY -blocks_remaining DESC, height DESC ");
     }
 
     public DbIterator<Shuffling> getActiveShufflings(int from, int to) {
@@ -140,7 +140,7 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
         if (stage != null) {
             clause = clause.and(new DbClause.ByteClause("stage", stage.getCode()));
         }
-        return getManyBy(clause, from, to, " ORDER BY blocks_remaining NULLS LAST, height DESC ");
+        return getManyBy(clause, from, to, " ORDER BY -blocks_remaining DESC, height DESC ");
     }
 
     public DbIterator<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to) {
@@ -150,7 +150,7 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
             PreparedStatement pstmt = con.prepareStatement("SELECT shuffling.* FROM shuffling, shuffling_participant WHERE "
                 + "shuffling_participant.account_id = ? AND shuffling.id = shuffling_participant.shuffling_id "
                 + (includeFinished ? "" : "AND shuffling.blocks_remaining IS NOT NULL ")
-                + "AND shuffling.latest = TRUE AND shuffling_participant.latest = TRUE ORDER BY blocks_remaining NULLS LAST, height DESC "
+                + "AND shuffling.latest = TRUE AND shuffling_participant.latest = TRUE ORDER BY -blocks_remaining DESC, height DESC "
                 + DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setLong(++i, accountId);
@@ -165,7 +165,7 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> {
     public DbIterator<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
         return getManyBy(new DbClause.LongClause("assignee_account_id", assigneeAccountId)
                 .and(new DbClause.ByteClause("stage", ShufflingStage.PROCESSING.getCode())), from, to,
-            " ORDER BY blocks_remaining NULLS LAST, height DESC ");
+            " ORDER BY -blocks_remaining DESC, height DESC ");
     }
 
 }
