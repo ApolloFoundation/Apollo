@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -48,5 +49,30 @@ public class CollectionUtil {
 
     public static boolean isEmpty(Map map) {
         return map == null || map.isEmpty();
+    }
+
+    public static <T> DbIterator<T> toDbIterator(final Collection<T> data) {
+        final Iterator<T> iterator = data.iterator();
+        return new DbIterator<>(null, null, null) {
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public T next() {
+                return iterator.next();
+            }
+
+            @Override
+            public void close() {
+
+            }
+
+            @Override
+            public Iterator<T> iterator() {
+                return iterator;
+            }
+        };
     }
 }

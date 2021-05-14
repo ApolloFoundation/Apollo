@@ -172,15 +172,26 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    public List<ContractInfo> getContractsByOwner(Address owner) {
-        AplAddress aplAddress = new AplAddress(owner);
-        return contractEntityToContractInfoConverter.convert(CollectionUtil.toList(
-            smcContractTable.getManyBy(new DbClause.LongClause("owner", aplAddress.getLongId()), 0, Integer.MAX_VALUE)
-        ));
+    public List<ContractInfo> loadContractsByOwner(Address owner) {
+        long id = new AplAddress(owner).getLongId();
+        return contractEntityToContractInfoConverter.convert(CollectionUtil.toList(smcContractTable.getManyBy(new DbClause.LongClause("owner", id), 0, Integer.MAX_VALUE)));
     }
 
     @Override
-    public ContractDetailsResponse getContractDetails(Address txAddress) {
+    public ContractInfo loadContractInfo(Address contract) {
+        long id = new AplAddress(contract).getLongId();
+        return contractEntityToContractInfoConverter.convert(smcContractTable.get(SmcContractStateTable.KEY_FACTORY.newKey(id)));
+    }
+
+    @Override
+    public ContractDetailsResponse getContractDetailsByAddress(Address address) {
+        SmcContractEntity smcEntity = loadContractEntity(address);
+        AplAddress txAddress = new AplAddress(smcEntity.getTransactionId());
+        return getContractDetailsByTransaction(txAddress);
+    }
+
+    @Override
+    public ContractDetailsResponse getContractDetailsByTransaction(Address txAddress) {
         Transaction smcTransaction = blockchain.getTransaction(new AplAddress(txAddress).getLongId());
         if (smcTransaction == null) {
             log.error("Transaction not found, addr={}", txAddress.getHex());

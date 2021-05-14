@@ -62,14 +62,17 @@ public interface ContractService {
      * @param owner given owner
      * @return the list of contracts
      */
-    List<ContractInfo> getContractsByOwner(Address owner);
+    List<ContractInfo> loadContractsByOwner(Address owner);
+
+    ContractInfo loadContractInfo(Address contract);
 
     /**
      * Returns the details information about contract given transaction id
      *
-     * @param txAddress the given transaction id
+     * @param address the given transaction id
      * @return the details information about contract
      */
-    ContractDetailsResponse getContractDetails(Address txAddress);
+    ContractDetailsResponse getContractDetailsByAddress(Address address);
 
+    ContractDetailsResponse getContractDetailsByTransaction(Address txAddress);
 }
