@@ -131,15 +131,8 @@ public class TransactionValidator {
     public void validateFully(Transaction transaction) throws AplException.ValidationException {
        validateLightlyWithoutAppendices(transaction);
 
-        if (!antifraudValidator.validate(
-                blockchain.getHeight(),
-                blockchainConfig.getChain().getChainId(),
-                transaction.getSenderId(),
-                transaction.getRecipientId())
-                )
-        {
-            throw new AplException.NotValidException("Incorrect Passphrase");
-        }
+        if (!antifraudValidator.validate(blockchain.getHeight(), blockchainConfig.getChain().getChainId(), transaction.getSenderId(),
+            transaction.getRecipientId())) throw new AplException.NotValidException("Incorrect Passphrase");
 
         Account sender = accountService.getAccount(transaction.getSenderId());
         if (sender != null && sender.isChild()) {

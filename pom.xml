@@ -64,7 +64,7 @@
     <antifraud.version>1.1.3</antifraud.version>
 
     <!-- We have to define this property and change it accordingly for correct version of packages -->
-    <apl-bom-ext.version>1.0.6</apl-bom-ext.version>
+    <apl-bom-ext.version>1.0.7</apl-bom-ext.version>
     <base-dist-dir>ApolloWallet/apollo-blockchain</base-dist-dir>
 
     <build-helper-maven-plugin.version>1.9.1</build-helper-maven-plugin.version>

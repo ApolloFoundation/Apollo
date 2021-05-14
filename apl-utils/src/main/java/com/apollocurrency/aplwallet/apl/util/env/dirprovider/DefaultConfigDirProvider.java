@@ -33,11 +33,11 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
         "conf-tn3" //test net 3
     };
 
-    protected String applicationName;
-    protected String partialUuid;
-    protected UUID chainUuid;
-    protected boolean isService;
-    protected int netIndex;
+    protected final String applicationName;
+    protected volatile String partialUuid;
+    protected volatile UUID chainUuid;
+    protected final boolean isService;
+    protected final int netIndex;
 
     /**
      * Constructs config dir provider
@@ -67,13 +67,13 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
                 partialUuid = uuidOrPart;
             }
         }
-
+        int netIdxToAssign;
         if (netIdx > CONF_DIRS.length - 1) {
             System.err.println("Net index " + netIdx + " is greater than last known.");
-            this.netIndex = CONF_DIRS.length - 1;
+            netIdxToAssign = CONF_DIRS.length - 1;
             System.err.println("Net index now is last one: " + netIdx);
         } else {
-            this.netIndex = netIdx;
+            netIdxToAssign = netIdx;
         }
 
         if (netIdx >= 0) {
@@ -85,13 +85,13 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
             for (int i = 0; i < CHAIN_IDS.length; i++) {
                 String id = CHAIN_IDS[i];
                 if (id.startsWith(uuidOrPart.toLowerCase())) {
-                    this.netIndex = i;
+                    netIdxToAssign = i;
                     chainUuid = UUID.fromString(id);
                     break;
                 }
             }
         }
-
+        this.netIndex = netIdxToAssign;
     }
 
     @Override
@@ -153,6 +153,6 @@ public class DefaultConfigDirProvider implements ConfigDirProvider {
         if(partialUuid==null || partialUuid.isEmpty()){
            partialUuid  = chainUuid.toString().substring(0,6);
         }
-        return partialUuid;        
+        return partialUuid;
     }
 }

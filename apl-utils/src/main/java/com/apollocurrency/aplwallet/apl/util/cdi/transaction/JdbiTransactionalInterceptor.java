@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.util.cdi.transaction;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import org.slf4j.Logger;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
@@ -16,6 +17,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @Transactional
 @Interceptor
+@Priority(100)
 public class JdbiTransactionalInterceptor {
     private static final Logger log = getLogger(JdbiHandleFactory.class);
 

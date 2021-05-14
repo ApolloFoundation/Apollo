@@ -8,7 +8,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -26,6 +29,8 @@ public class AplContainerBuilder {
     private Boolean disableDiscovery;
 
     private List<Class<?>> interceptors;
+
+    private Set<Class<?>> beanClasses = new HashSet<>();
 
     private boolean concurrentDeploymentDisabled = false;
 
@@ -66,6 +71,12 @@ public class AplContainerBuilder {
         return this;
     }
 
+    public AplContainerBuilder beanClasses(Class<?>... beanClasses) {
+        Objects.requireNonNull(beanClasses);
+        this.beanClasses.addAll(Arrays.asList(beanClasses));
+        return this;
+    }
+
 //    public AplContainerBuilder recursiveScanPackages(Class<?>... recursiveScanPackages) {
 //        if (recursiveScanPackages != null && recursiveScanPackages.length > 0) {
 //            this.recursiveScanPackages = Arrays.stream(recursiveScanPackages).collect(Collectors.toList());
@@ -92,6 +103,7 @@ public class AplContainerBuilder {
         if (interceptors != null && !interceptors.isEmpty()) {
             interceptors.forEach(weld::addInterceptor);
         }
+        weld.addBeanClasses(beanClasses.toArray(new Class[0]));
 
         if (devMode) {
             weld.enableDevMode();

@@ -18,7 +18,6 @@ import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 
 import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
@@ -28,11 +27,15 @@ import javax.inject.Singleton;
 @SuppressWarnings("unused")
 public class DaoConfig {
 
-    private JdbiHandleFactory jdbiHandleFactory;
+    private final JdbiHandleFactory jdbiHandleFactory;
 
-    @Inject
-    public void setJdbiHandleFactory(JdbiHandleFactory jdbiHandleFactory) {
-        this.jdbiHandleFactory = jdbiHandleFactory;
+    public DaoConfig() {
+        this.jdbiHandleFactory = new JdbiHandleFactory();
+    }
+
+    @Produces
+    public JdbiHandleFactory handleFactory() {
+        return jdbiHandleFactory;
     }
 
     @Produces
