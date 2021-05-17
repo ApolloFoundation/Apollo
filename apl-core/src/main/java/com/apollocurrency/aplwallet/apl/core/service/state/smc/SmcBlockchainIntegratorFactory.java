@@ -79,8 +79,8 @@ public class SmcBlockchainIntegratorFactory {
                 long amount = value.longValueExact();
                 Account sender;
                 Account recipient;
-                /* case 1) from txSenderAccount to txRecipientAccount
-                 * case 2) from txRecipientAccount to arbitrary target account
+                /* case 1) from transaction_SenderAccount to transaction_RecipientAccount
+                 * case 2) from transaction_RecipientAccount to arbitrary target account
                  */
                 AplAddress from = new AplAddress(fromAdr);
                 AplAddress to = new AplAddress(toAdr);

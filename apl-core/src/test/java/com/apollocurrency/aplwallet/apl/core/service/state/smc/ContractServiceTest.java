@@ -28,6 +28,7 @@ import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartSource;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
+import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.persistence.record.log.DevNullLog;
 import com.apollocurrency.smc.polyglot.Languages;
 import org.junit.jupiter.api.BeforeEach;
@@ -247,7 +248,7 @@ class ContractServiceTest {
         var response = contractService.getContractDetailsByTransaction(new AplAddress(TX_ID));
 
         //THEN
-        assertEquals(smartContract.getAddress().getHex(), response.getAddress());
+        assertEquals(convertToString(smartContract.getAddress()), response.getAddress());
         assertEquals(smartContract.getFuel().limit().toString(), response.getFuelLimit());
         assertEquals(smartContract.getFuel().price().toString(), response.getFuelPrice());
     }
@@ -270,8 +271,12 @@ class ContractServiceTest {
         var loadedContracts = contractService.loadContractsByOwner(senderAddress, 0, Integer.MAX_VALUE);
         //THEN
         assertEquals(1, loadedContracts.size());
-        assertEquals(smartContract.getAddress().getHex(), loadedContracts.get(0).getAddress());
-        assertEquals(smartContract.getTxId().getHex(), loadedContracts.get(0).getTransaction());
+        assertEquals(convertToString(smartContract.getAddress()), loadedContracts.get(0).getAddress());
+        assertEquals(convertToString(smartContract.getTxId()), loadedContracts.get(0).getTransaction());
+    }
+
+    static String convertToString(Address address) {
+        return Long.toUnsignedString(new AplAddress(address).getLongId());
     }
 
 }
