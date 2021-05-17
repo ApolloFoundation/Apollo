@@ -75,6 +75,7 @@ public class GenerateBlocksTask implements Runnable {
         try {
             try {
                 globalSync.updateLock();
+                long forgingIterationStart = System.currentTimeMillis();
                 log.trace("Acquire generation lock");
                 try {
                     Block lastBlock = blockchain.getLastBlock();
@@ -134,15 +135,21 @@ public class GenerateBlocksTask implements Runnable {
                         if (suspendForging) {
                             break;
                         }
-                        if (generator.getHitTime() > generationLimit
-                            || generatorService.forge(lastBlock, generationLimit, generator)) {
-                            log.trace("run - generator.forge() = {}", generator);
-                            return;
+                        boolean fastEnough = generator.getHitTime() <= generationLimit;
+                        if (!fastEnough) {
+                            log.trace("Skip {}, Reason: Too slow. Generation limit {} ", generator, generationLimit);
+                            continue;
+                        }
+                        boolean forged = generatorService.forge(lastBlock, generationLimit, generator);
+                        if (!forged) {
+                            log.trace("{} hasn't generated a block. Go to next", generator);
+                        } else {
+                            break;
                         }
                     }
                 } finally {
                     globalSync.updateUnlock();
-                    log.trace("Release generation lock  ({} ms)", (System.currentTimeMillis() - start));
+                    log.trace("Forging job is done in ({} ms), forging time ({} ms)", (System.currentTimeMillis() - start), (System.currentTimeMillis() - forgingIterationStart));
                 }
             } catch (Exception e) {
                 log.error("Error in block generation thread ({} ms)", (System.currentTimeMillis() - start), e);
