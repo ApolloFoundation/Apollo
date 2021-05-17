@@ -207,8 +207,8 @@ public class ContractServiceImpl implements ContractService {
         SmcContractEntity smcContractEntity = loadContractEntity(contractAddress);
 
         ContractDetails contract = new ContractDetails();
-        contract.setAddress(new AplAddress(smcContractEntity.getAddress()).getHex());
-        contract.setTransaction(new AplAddress(smcContractEntity.getTransactionId()).getHex());
+        contract.setAddress(Long.toUnsignedString(smcContractEntity.getAddress()));
+        contract.setTransaction(Long.toUnsignedString(smcContractEntity.getTransactionId()));
         contract.setAmount(Long.toUnsignedString(smcTransaction.getAmountATM()));
         contract.setFee(Long.toUnsignedString(smcTransaction.getFeeATM()));
         contract.setSignature(smcTransaction.getSignature().getHexString());
