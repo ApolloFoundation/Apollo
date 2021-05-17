@@ -7,15 +7,19 @@ package com.apollocurrency.aplwallet.apl.core.rest.v2.impl;
 import com.apollocurrency.aplwallet.api.v2.NotFoundException;
 import com.apollocurrency.aplwallet.api.v2.SmcApiService;
 import com.apollocurrency.aplwallet.api.v2.model.CallContractMethodReqTest;
+import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
+import com.apollocurrency.aplwallet.api.v2.model.ContractListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.PublishContractReqTest;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionArrayResp;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
@@ -32,6 +36,7 @@ import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigInteger;
+import java.util.List;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -42,13 +47,15 @@ public class SmcApiServiceImpl implements SmcApiService {
 
     private final BlockchainConfig blockchainConfig;
     private final AccountService accountService;
+    private final ContractService contractService;
     private final TransactionCreator transactionCreator;
     private final TxBContext txBContext;
 
     @Inject
-    public SmcApiServiceImpl(BlockchainConfig blockchainConfig, AccountService accountService, TransactionCreator transactionCreator) {
+    public SmcApiServiceImpl(BlockchainConfig blockchainConfig, AccountService accountService, ContractService contractService, TransactionCreator transactionCreator) {
         this.blockchainConfig = blockchainConfig;
         this.accountService = accountService;
+        this.contractService = contractService;
         this.transactionCreator = transactionCreator;
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }
@@ -173,5 +180,40 @@ public class SmcApiServiceImpl implements SmcApiService {
     @Override
     public Response createPublishContractTx(PublishContractReqTest body, SecurityContext securityContext) throws NotFoundException {
         return ResponseBuilderV2.apiError(ApiErrors.CUSTOM_ERROR_MESSAGE, "Not implemented yet").build();
+    }
+
+    @Override
+    public Response getSmcByOwnerAccount(String accountStr, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+
+        AplAddress address = new AplAddress(Convert.parseAccountId(accountStr));
+        Account account = accountService.getAccount(address.getLongId());
+        if (account == null) {
+            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "account", accountStr).build();
+        }
+
+        ContractListResponse response = new ContractListResponse();
+
+        List<ContractDetails> contracts = contractService.loadContractsByOwner(address, 0, Integer.MAX_VALUE);
+        response.setContracts(contracts);
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response getSmcByAddress(String addressStr, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+
+        AplAddress address = new AplAddress(Convert.parseAccountId(addressStr));
+        Account account = accountService.getAccount(address.getLongId());
+        if (account == null) {
+            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
+        }
+        ContractListResponse response = new ContractListResponse();
+
+        ContractDetails contract = contractService.getContractDetailsByAddress(address);
+        response.setContracts(List.of(contract));
+
+        return builder.bind(response).build();
     }
 }

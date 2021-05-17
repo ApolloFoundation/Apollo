@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.api.v2.model.TransactionInfoResp;
 import com.apollocurrency.aplwallet.api.v2.model.TxRequest;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
@@ -35,27 +36,28 @@ import java.util.Objects;
 @RequestScoped
 public class TransactionApiServiceImpl implements TransactionApiService {
 
-    private final BlockchainConfig blockchainConfig;
     private final Blockchain blockchain;
     private final TxReceiptMapper txReceiptMapper;
     private final TransactionInfoMapper transactionInfoMapper;
     private final TransactionBuilderFactory transactionBuilderFactory;
     private final MemPool memPool;
     private final TxBContext txBContext;
+    private final TransactionProcessor processor;
 
     @Inject
     public TransactionApiServiceImpl(MemPool memPool,
                                      BlockchainConfig blockchainConfig,
                                      Blockchain blockchain,
                                      TxReceiptMapper txReceiptMapper,
-                                     TransactionInfoMapper transactionInfoMapper, TransactionBuilderFactory transactionBuilderFactory) {
+                                     TransactionInfoMapper transactionInfoMapper, TransactionBuilderFactory transactionBuilderFactory,
+                                     TransactionProcessor processor) {
         this.memPool = Objects.requireNonNull(memPool);
         this.blockchain = Objects.requireNonNull(blockchain);
         this.txReceiptMapper = Objects.requireNonNull(txReceiptMapper);
         this.transactionInfoMapper = Objects.requireNonNull(transactionInfoMapper);
         this.transactionBuilderFactory = transactionBuilderFactory;
-        this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
+        this.processor = processor;
     }
 
     /*
@@ -63,7 +65,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
      */
     public Response broadcastTx(TxRequest body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
-        if (!memPool.canSafelyAcceptTransactions(1)) {
+        if (memPool.pendingProcessingRemainingCapacity() <= 0) {
             return ResponseBuilderV2.apiError(ApiErrors.UNCONFIRMED_TRANSACTION_CACHE_IS_FULL).status(409).build();
         }
         StatusResponse rc = broadcastOneTx(body);
@@ -72,7 +74,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
 
     public Response broadcastTxBatch(List<TxRequest> body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
-        if (!memPool.canSafelyAcceptTransactions(body.size())) {
+        if (memPool.pendingProcessingRemainingCapacity() < body.size()) {
             return ResponseBuilderV2.apiError(ApiErrors.UNCONFIRMED_TRANSACTION_CACHE_IS_FULL).status(409).build();
         }
         ListResponse listResponse = new ListResponse();
@@ -102,16 +104,10 @@ public class TransactionApiServiceImpl implements TransactionApiService {
                 log.trace("Actual {}", Convert.toHexString(signedTxBytes.array()));
             }
 
-            boolean rc = memPool.softBroadcast(newTx);
-            if (rc) {
-                receipt = txReceiptMapper.convert(newTx);
-                if (log.isTraceEnabled()) {
-                    log.trace("API_V2: UnTxReceipt={}", receipt);
-                }
-            } else {
-                receipt = ResponseBuilderV2.createErrorResponse(
-                    ApiErrors.UNCONFIRMED_TRANSACTION_CACHE_IS_FULL, "");
-                status = 409;
+            processor.broadcast(newTx);
+            receipt = txReceiptMapper.convert(newTx);
+            if (log.isTraceEnabled()) {
+                log.trace("API_V2: UnTxReceipt={}", receipt);
             }
         } catch (NumberFormatException e) {
             receipt = ResponseBuilderV2.createErrorResponse(
@@ -141,7 +137,7 @@ public class TransactionApiServiceImpl implements TransactionApiService {
         }
         transaction = blockchain.getTransaction(transactionId);
         if (transaction == null) {
-            transaction = memPool.getUnconfirmedTransaction(transactionId);
+            transaction = memPool.get(transactionId);
         }
         if (transaction == null) {
             throw new NotFoundException("Transaction not found. id=" + transactionIdStr);

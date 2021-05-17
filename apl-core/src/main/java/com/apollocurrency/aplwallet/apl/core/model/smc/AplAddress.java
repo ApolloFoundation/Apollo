@@ -9,6 +9,7 @@ import com.apollocurrency.smc.util.AddressHelper;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 /**
  * Smart contract address
@@ -44,5 +45,18 @@ public class AplAddress implements Address {
     @Override
     public String toString() {
         return id + "(" + getHex() + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AplAddress that = (AplAddress) o;
+        return id == that.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

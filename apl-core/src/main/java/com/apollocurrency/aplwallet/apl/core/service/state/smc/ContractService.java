@@ -4,10 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
+import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
+
+import java.util.List;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -52,4 +55,27 @@ public interface ContractService {
      */
     SmartContract createNewContract(Transaction smcTransaction);
 
+    /**
+     * Returns the list of contracts published by given owner
+     *
+     * @param owner given owner
+     * @return the list of contracts
+     */
+    List<ContractDetails> loadContractsByOwner(Address owner, int from, int limit);
+
+    /**
+     * Returns the details information about contract given transaction id
+     *
+     * @param txAddress the given transaction id
+     * @return the details information about contract
+     */
+    ContractDetails getContractDetailsByTransaction(Address txAddress);
+
+    /**
+     * Returns the details information about contract given address
+     *
+     * @param address the given contract address
+     * @return the details information about contract
+     */
+    ContractDetails getContractDetailsByAddress(Address address);
 }

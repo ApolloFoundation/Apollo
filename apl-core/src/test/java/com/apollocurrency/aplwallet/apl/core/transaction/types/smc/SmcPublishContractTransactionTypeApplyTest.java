@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
+import com.apollocurrency.aplwallet.apl.core.model.smc.SmcTxData;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
@@ -55,7 +56,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
     @Test
     void publishSmcApplyAttachment() throws AplException.NotValidException {
         //GIVEN
-        TxData txData = TxData.builder()
+        SmcTxData txData = SmcTxData.builder()
             .sender("APL-X5JH-TJKJ-DVGC-5T2V8")
             .name("Deal")
             .source("class Deal {}")
@@ -142,7 +143,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             "}";
 
 
-        TxData txData = TxData.builder()
+        SmcTxData txData = SmcTxData.builder()
             .sender("APL-X5JH-TJKJ-DVGC-5T2V8")
             .name("Deal")
             .source("class Deal extends Contract{\n" +
@@ -225,7 +226,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         assertEquals(new AplAddress(newTx.getId()).getHex(), smartContract.getTxId().getHex());
 
         //GIVEN
-        TxData txData2 = TxData.builder()
+        SmcTxData txData2 = SmcTxData.builder()
             .sender("APL-LTR8-GMHB-YG56-4NWSE")
             .recipient(Convert.defaultRsAccount(newTx.getRecipientId()))
             .recipientPublicKey(Convert.toHexString(recipientPublicKey))

@@ -659,6 +659,60 @@ paths:
       security:
         - bearerAuth: [ ]
 
+  /@@smc/owner/{account}:
+    get:
+      tags:
+        - smc
+      summary: Get list of the smartcontract objects given account id.
+      description: Return the list of the smart contracts by account id.
+      operationId: getSmcByOwnerAccount
+      parameters:
+        - name: account
+          in: path
+          description: The account id
+          required: true
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractListResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/{address}:
+    get:
+      tags:
+        - smc
+      summary: Get detail contract information given address.
+      description: Returns detail contract information.
+      operationId: getSmcByAddress
+      parameters:
+        - name: address
+          in: path
+          description: The contract address
+          required: true
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractDetailsResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
 components:
   schemas:
     TransactionInfoArrayResp:
@@ -1284,29 +1338,49 @@ components:
           properties:
             blockchainHeight:
               type: integer
-              format: int16
+              format: int32
               example: 9900345
               description: "Current height of blockchain"
             dbConnectionTotal:
               type: integer
-              format: int16
+              format: int32
               description: "Total connections in the pool"
             dbConnectionActive:
               type: integer
-              format: int16
+              format: int32
               description: "Active connections in the pool"
             dbConnectionIdle:
               type: integer
-              format: int16
+              format: int32
               description: "Idle connections in the pool"
             unconfirmedTxCacheSize:
               type: integer
-              format: int16
-              description: "The waiting transactions cache size"
+              format: int32
+              description: "Current unconfirmed transactions cache size"
             maxUnconfirmedTxCount:
               type: integer
-              format: int16
-              description: "The max count of the unconfirmed transactions"
+              format: int32
+              description: "Max count of the unconfirmed transactions to store into database"
+            unconfirmedTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the unconfirmed transactions saved into database"
+            pendingProcessingTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the pending processing unconfirmed transactions in the mempool"
+            processLaterTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the unconfirmed transactions to process later"
+            removedTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the removed transactions from the mempool"
+            referencedTxCount:
+              type: integer
+              format: int32
+              description: "Current count of the referenced transaction in the mempool"
             isTrimActive:
               type: boolean
               description: "Returns true if the trimming process is active"
@@ -1408,6 +1482,72 @@ components:
               type: string
               format: hex_bytearray
               example: '001047857c04a00539dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152eef5365f2400292d00ca9a3b0000000000c2eb0b000000000000000000000000000000000000000000000000000000000000000000000000920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d5600000000f1da1300fe7062e6fb2fbb37'
+
+    ContractDetailsResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/ContractDetails'
+
+    ContractDetails:
+      type: object
+      properties:
+        address:
+          type: string
+          description: contract address
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        transaction:
+          type: string
+          format: hex_bytearray
+          description: transaction id
+          example: '8330faaeb404178613417'
+        signature:
+          type: string
+          format: hex_bytearray
+          example: 'B98CB1890E76C772A10994B210ED9CF7F9A5488672A5D82C2734BBF9D11505D1'
+        timestamp:
+          type: integer
+          format: int64
+          description: The timestamp of the block that contains contract transaction, Unix timestamp in milliseconds
+          example: 1591696372000
+        amount:
+          type: string
+          format: integer
+          example: '34500000000'
+        fee:
+          type: string
+          format: integer
+          example: '0'
+        status:
+          type: string
+          description: the contract status - REJECTED, CREATED, PUBLISHED, ACTIVE, CLOSED, DISABLED, DESTRUCTED
+          example: ACTIVE
+        name:
+          type: string
+          description: the contract name
+          example: 'Deal'
+        params:
+          type: string
+          description: list of parameters
+        fuelLimit:
+          type: string
+          format: int64
+          description: the fuel value
+          example: '5000'
+        fuelPrice:
+          type: string
+          format: int64
+          description: the fuel price value
+          example: '100'
+
+    ContractListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            contracts:
+              type: array
+              items:
+                $ref: '#/components/schemas/ContractDetails'
 
     BaseResponse:
       type: object

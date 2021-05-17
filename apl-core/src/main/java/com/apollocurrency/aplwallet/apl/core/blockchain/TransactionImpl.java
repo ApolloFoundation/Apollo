@@ -28,7 +28,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptToSelfMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
@@ -73,7 +72,6 @@ public class TransactionImpl implements Transaction {
     private final PrunablePlainMessageAppendix prunablePlainMessage;
     private final PrunableEncryptedMessageAppendix prunableEncryptedMessage;
     private final List<AbstractAppendix> appendages;
-    private final int appendagesSize;
     private volatile byte[] senderPublicKey;
     private volatile long feeATM; // remove final modifier to set fee outside the class TODO get back 'final' modifier
     private volatile Signature signature;
@@ -152,22 +150,10 @@ public class TransactionImpl implements Transaction {
             list.add(this.prunableEncryptedMessage);
         }
         this.appendages = Collections.unmodifiableList(list);
-        int apxSize = 0;
-        for (Appendix appendage : appendages) {
-            apxSize += appendage.getSize();
-        }
-        this.appendagesSize = apxSize;
         this.signature = builder.signature;
     }
 
     final void sign(Signature signature, Result unsignedRawTransaction) {
-        /* Old implementation
-            byte[] data = zeroSignature(getCopyTxBytes());
-            byte[] signatureHash = Crypto.sha256().digest(signature.bytes());
-            MessageDigest digest = Crypto.sha256();
-            digest.update(data);
-            fullHash = digest.digest(signatureHash);
-        */
         this.signature = signature;
         this.fullHash = calculateFullHash(unsignedRawTransaction.array(), signature.bytes());
         this.id = AplIdGenerator.TRANSACTION.getIdByHash(fullHash).longValue();
@@ -337,6 +323,7 @@ public class TransactionImpl implements Transaction {
     public String getFullHashString() {
         return Convert.toHexString(getFullHash());
     }
+
 
     @Override
     public long getSenderId() {

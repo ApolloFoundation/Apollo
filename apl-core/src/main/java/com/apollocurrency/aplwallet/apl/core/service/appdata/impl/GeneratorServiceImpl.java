@@ -5,10 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.service.appdata.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.runnable.GenerateBlocksTask;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
@@ -18,9 +19,12 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxSerializer;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import lombok.extern.slf4j.Slf4j;
@@ -314,29 +318,30 @@ public class GeneratorServiceImpl implements GeneratorService {
     @Override
     public boolean forge(Block lastBlock, int generationLimit, GeneratorMemoryEntity generator)
         throws BlockchainProcessor.BlockNotAcceptedException {
-        long startLog = System.currentTimeMillis();
+        long startLog = timeService.systemTimeMillis();
         int timestamp = generator.getTimestamp(generationLimit);
-        int[] timeoutAndVersion = getBlockTimeoutAndVersion(timestamp, generationLimit, lastBlock);
-        if (timeoutAndVersion == null) {
-            return false;
-        }
-        int timeout = timeoutAndVersion[0];
         if (!verifyHit(generator, lastBlock, timestamp)) {
-            log.debug(this.toString() + " failed to forge at " + (timestamp + timeout) + " height " + lastBlock.getHeight() + " " +
-                "last " +
-                "timestamp " + lastBlock.getTimestamp());
+            log.debug("{} failed to forge at {} height {} last timestamp {}", generator, timestamp, lastBlock.getHeight(), lastBlock.getTimestamp());
             return false;
         }
-        int start = timeService.getEpochTime();
         while (true) {
             try {
-                lookupBlockchainProcessor().generateBlock(generator.getKeySeed(), timestamp + timeout, timeout, timeoutAndVersion[1]);
+                int[] timeoutAndVersion = getBlockTimeoutAndVersion(timestamp, generationLimit, lastBlock);
+                if (timeoutAndVersion == null) {
+                    return false;
+                }
+                int timeout = timeoutAndVersion[0];
+                int blockVersion = timeoutAndVersion[1];
+                lookupBlockchainProcessor().generateBlock(generator.getKeySeed(), timestamp + timeout, timeout, blockVersion);
                 setDelay(propertiesHolder.FORGING_DELAY());
-                log.debug(generator + " stopped forge loop in ({} ms)", (System.currentTimeMillis() - startLog));
+                log.debug("{} stopped forge loop in ({} ms)", generator, (System.currentTimeMillis() - startLog));
                 return true;
+            } catch (BlockchainProcessor.MempoolStateDesyncException e) {
+                log.debug("Mempool desync {}", e.getMessage()); // try another time
             } catch (BlockchainProcessor.TransactionNotAcceptedException e) {
-                // the bad transaction has been expunged, try again
-                if (timeService.getEpochTime() - start > 10) { // give up after trying for 10 s
+                String txJson = txJson(e.getTransaction());
+                log.debug("Transaction not accepted during block generation {} , cause {}", txJson, e.getMessage());
+                if (timeService.systemTimeMillis() - startLog > 20_000) {
                     throw e;
                 }
             }
@@ -363,22 +368,18 @@ public class GeneratorServiceImpl implements GeneratorService {
 //        LOG.debug("Planed blockTime {} - uncg {}, unct {}", planedBlockTime,
 //                noTransactionsAtGenerationLimit, noTransactionsAtTimestamp);
         int adaptiveBlockTime = blockchainConfig.getCurrentConfig().getAdaptiveBlockTime();
-        if (isAdaptiveForging // try to calculate timeout only when adaptive forging enabled
-            && noTransactionsAtTimestamp   // means that if no timeout provided, block will be empty
+        if (// try to calculate timeout only when adaptive forging enabled
+            noTransactionsAtTimestamp   // means that if no timeout provided, block will be empty
             && planedBlockTime < adaptiveBlockTime // calculate timeout only for faster than predefined empty block
         ) {
             int actualBlockTime = generationLimit - lastBlock.getTimestamp();
-            if (actualBlockTime >= adaptiveBlockTime) {
+            int txsAtGenerationLimit = blockchainProcessor.getUnconfirmedTransactions(lastBlock, generationLimit, 1).size();
+            if (actualBlockTime >= adaptiveBlockTime && txsAtGenerationLimit == 0) {
                 // empty block can be generated by timeout
                 version = Block.ADAPTIVE_BLOCK_VERSION;
-            } else if (actualBlockTime >= planedBlockTime) {
-                int txsAtGenerationLimit = blockchainProcessor.getUnconfirmedTransactions(lastBlock, generationLimit, 1).size();
-                if (txsAtGenerationLimit == 1) {
-                    // block with transactions can be generated (unc transactions exist at current time, required timeout)
-                    version = Block.INSTANT_BLOCK_VERSION;
-                } else {
-                    return null;
-                }
+            } else if (actualBlockTime >= planedBlockTime && txsAtGenerationLimit == 1) {
+                // block with transactions can be generated (unc transactions exist at current time, required timeout)
+                version = Block.INSTANT_BLOCK_VERSION;
             } else {
                 return null;
             }
@@ -397,5 +398,12 @@ public class GeneratorServiceImpl implements GeneratorService {
             blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
         }
         return blockchainProcessor;
+    }
+
+    private String txJson(Transaction tx) {
+        TxSerializer serializer = TxBContext.newInstance(blockchainConfig.getChain()).createSerializer(tx.getVersion());
+        PayloadResult jsonBuffer = PayloadResult.createJsonResult();
+        serializer.serialize(tx, jsonBuffer);
+        return new String(jsonBuffer.array());
     }
 }

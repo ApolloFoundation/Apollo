@@ -27,7 +27,7 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public final class DbIterator<T> implements Iterator<T>, Iterable<T>, AutoCloseable {
+public class DbIterator<T> implements Iterator<T>, Iterable<T>, AutoCloseable {
 
     private final Connection con;
     private final PreparedStatement pstmt;

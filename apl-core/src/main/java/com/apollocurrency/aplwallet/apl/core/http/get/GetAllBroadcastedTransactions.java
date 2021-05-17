@@ -44,7 +44,7 @@ public final class GetAllBroadcastedTransactions extends AbstractAPIRequestHandl
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         response.put("transactions", jsonArray);
-        Collection<Transaction> transactions = lookupMemPool().getAllBroadcastedTransactions();
+        Collection<Transaction> transactions = lookupMemPool().getAllBroadcasted();
         for (Transaction transaction : transactions) {
             jsonArray.add(JSONData.unconfirmedTransaction(transaction));
         }

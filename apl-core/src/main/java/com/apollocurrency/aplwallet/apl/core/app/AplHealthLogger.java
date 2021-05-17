@@ -144,16 +144,17 @@ public class AplHealthLogger {
 
     private void printMemPoolStat() {
         StringBuilder sb = new StringBuilder();
-        int memPoolSize = memPool.getUnconfirmedDbCount();
-        int cacheSize = memPool.getCachedUnconfirmedTxCount();
+        int memPoolSize = memPool.getSavedCount();
+        int cacheSize = memPool.getCachedCount();
 
         if(memPoolSize > 0 ) {
             sb.append("MemPool Info:  ");
             sb.append("Txs: ").append(memPoolSize).append(", ");
             sb.append("Cache size: ").append(cacheSize).append(", ");
-            sb.append("Pending broadcast: ").append(memPool.pendingBroadcastQueueSize()).append(", ");
-            sb.append("Process Later Queue: ").append(memPool.processLaterQueueSize()).append(", ");
-            sb.append("Referenced: ").append(memPool.getReferencedTxsNumber());
+            sb.append("Pending processing: ").append(memPool.processingQueueSize()).append(", ");
+            sb.append("Removed txs: ").append(memPool.getRemovedSize()).append(", ");
+            sb.append("Process Later Queue: ").append(memPool.getProcessLaterCount()).append(", ");
+            sb.append("Referenced: ").append(memPool.getReferencedCount());
 
             log.info(sb.toString());
         }

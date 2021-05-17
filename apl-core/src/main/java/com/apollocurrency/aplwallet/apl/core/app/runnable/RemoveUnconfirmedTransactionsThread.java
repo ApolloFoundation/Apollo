@@ -14,8 +14,8 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.enterprise.inject.spi.CDI;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Class makes lookup of BlockchainProcessor
@@ -28,7 +28,8 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
     private final TransactionProcessor transactionProcessor;
     private final TimeService timeService;
     private final MemPool memPool;
-    private volatile int counter = 0;
+
+    private final AtomicInteger counter = new AtomicInteger(0);
 
     public RemoveUnconfirmedTransactionsThread(DatabaseManager databaseManager,
                                                TransactionProcessor transactionProcessor,
@@ -45,14 +46,11 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
     public void run() {
         try {
             try {
-                if (lookupBlockchainProcessor().isDownloading()) {
-                    return;
-                }
-                counter++;
+                int op = counter.incrementAndGet();
                 removeExpiredTransactions();
-                if (counter % 10 == 0) {
+                if (op % 10 == 0) {
                     removeNotValidTransactions();
-                    counter = 0;
+                    counter.set(0);
                 }
             } catch (Exception e) {
                 log.info("Error removing unconfirmed transactions", e);
@@ -66,27 +64,20 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
 
     private void removeNotValidTransactions() {
         DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(),
-            () -> CollectionUtil.forEach(memPool.getAllProcessedStream(), e -> {
+            () -> CollectionUtil.forEach(memPool.getAllStream(), e -> {
             if (!transactionProcessor.isFullyValidTransaction(e)) {
                 transactionProcessor.removeUnconfirmedTransaction(e);
             }
         }));
     }
 
-    private BlockchainProcessor lookupBlockchainProcessor() {
-        if (blockchainProcessor == null) {
-            blockchainProcessor = CDI.current().select(BlockchainProcessor.class).get();
-        }
-        return blockchainProcessor;
-    }
-
     void removeExpiredTransactions() {
         int epochTime = timeService.getEpochTime();
-        int expiredTransactionsCount = memPool.countExpiredTxs(epochTime);
+        int expiredTransactionsCount = memPool.getExpiredCount(epochTime);
         if (expiredTransactionsCount > 0) {
             log.trace("Found {} unc txs to remove", expiredTransactionsCount);
             TransactionalDataSource dataSource = databaseManager.getDataSource();
-            DbTransactionHelper.executeInTransaction(dataSource, () -> CollectionUtil.forEach(memPool.getExpiredTxsStream(epochTime), e -> transactionProcessor.removeUnconfirmedTransaction(e.getTransactionImpl())));
+            DbTransactionHelper.executeInTransaction(dataSource, () -> CollectionUtil.forEach(memPool.getExpiredStream(epochTime), e -> transactionProcessor.removeUnconfirmedTransaction(e.getTransactionImpl())));
         }
     }
 }

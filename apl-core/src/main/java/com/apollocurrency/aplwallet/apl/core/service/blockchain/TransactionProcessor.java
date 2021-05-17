@@ -31,7 +31,7 @@ public interface TransactionProcessor {
 
     void broadcastWhenConfirmed(Transaction transaction, Transaction uncTransaction);
 
-    void broadcast(Collection<Transaction> transactions);
+//    void broadcast(Collection<Transaction> transactions);
 
     void clearUnconfirmedTransactions();
 

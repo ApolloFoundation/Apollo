@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEntityToContractInfoConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
@@ -27,6 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.model.smc.SmcTxData;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
@@ -82,8 +84,6 @@ import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
-import lombok.Builder;
-import lombok.Data;
 import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
@@ -144,7 +144,8 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
         TransactionValidator.class, TransactionApplier.class,
         SmcConfig.class, SmcBlockchainIntegratorFactory.class,
-        SmcContractTable.class, SmcContractStateTable.class, ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
+        SmcContractTable.class, SmcContractStateTable.class,
+        ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class, ContractEntityToContractInfoConverter.class,
         ContractServiceImpl.class
     )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -228,14 +229,14 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         transactionCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor, transactionTypeFactory, transactionBuilderFactory, signerService);
     }
 
-    Transaction createTransaction(TxData body, AbstractSmcAttachment attachment, Account senderAccount, byte[] recipientPublicKey, long recipientId) {
+    Transaction createTransaction(SmcTxData body, AbstractSmcAttachment attachment, Account senderAccount, byte[] recipientPublicKey, long recipientId) {
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
             .version(2)
             .senderAccount(senderAccount)
             .recipientPublicKey(Convert.toHexString(recipientPublicKey))
             .recipientId(recipientId)
             .amountATM(body.getAmountATM())
-            .feeATM(body.fuelLimit * body.fuelPrice)
+            .feeATM(body.getFuelLimit() * body.getFuelPrice())
             .secretPhrase(body.getSecret())
             .deadlineValue(String.valueOf(1440))
             .attachment(attachment)
@@ -250,20 +251,5 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
 
     }
 
-    @Builder
-    @Data
-    static class TxData {
-        String sender;
-        String recipient;
-        String recipientPublicKey;
-        String name;
-        String method;
-        String source;
-        String secret;
-        long amountATM;
-        long fuelLimit;
-        long fuelPrice;
-        List<String> params;
-    }
 }
 

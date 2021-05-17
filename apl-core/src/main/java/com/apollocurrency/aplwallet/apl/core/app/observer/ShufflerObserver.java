@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.app.observer;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflerService;
 import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -22,12 +22,12 @@ import java.util.Set;
 @Singleton
 public class ShufflerObserver {
     private ShufflerService shufflerService;
-    private MemPool memPool;
+    private TransactionProcessor processor;
 
     @Inject
-    public ShufflerObserver(ShufflerService shufflerService, MemPool memPool) {
+    public ShufflerObserver(ShufflerService shufflerService, TransactionProcessor transactionProcessor) {
         this.shufflerService = shufflerService;
-        this.memPool = memPool;
+        this.processor = transactionProcessor;
     }
 
     public void onBlockApplied(@Observes @BlockEvent(BlockEventType.AFTER_BLOCK_APPLY) Block block) {
@@ -49,7 +49,7 @@ public class ShufflerObserver {
         shufflerService.getShufflingsMap().values().forEach(shufflerMap -> shufflerMap.values().forEach(shuffler -> {
             if (shuffler.getFailedTransaction() != null) {
                 try {
-                    memPool.softBroadcast(shuffler.getFailedTransaction());
+                    processor.broadcast(shuffler.getFailedTransaction());
                     shuffler.setFailedTransaction(null);
                     shuffler.setFailureCause(null);
                 } catch (AplException.ValidationException ignore) {
