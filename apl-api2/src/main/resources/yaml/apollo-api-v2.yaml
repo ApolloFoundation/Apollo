@@ -1486,38 +1486,9 @@ components:
     ContractDetailsResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
-        - $ref: '#/components/schemas/ContractInfo'
-        - type: object
-          properties:
-            name:
-              type: string
-              description: the contract name
-              example: 'Deal'
-            params:
-              type: string
-              description: list of parameters
-            fuelLimit:
-              type: string
-              format: int64
-              description: the fuel value
-              example: '5000'
-            fuelPrice:
-              type: string
-              format: int64
-              description: the fuel price value
-              example: '100'
+        - $ref: '#/components/schemas/ContractDetails'
 
-    ContractListResponse:
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-        - type: object
-          properties:
-            contracts:
-              type: array
-              items:
-                $ref: '#/components/schemas/ContractInfo'
-
-    ContractInfo:
+    ContractDetails:
       type: object
       properties:
         address:
@@ -1529,10 +1500,54 @@ components:
           format: hex_bytearray
           description: transaction id
           example: '8330faaeb404178613417'
+        signature:
+          type: string
+          format: hex_bytearray
+          example: 'B98CB1890E76C772A10994B210ED9CF7F9A5488672A5D82C2734BBF9D11505D1'
+        timestamp:
+          type: integer
+          format: int64
+          description: The timestamp of the block that contains contract transaction, Unix timestamp in milliseconds
+          example: 1591696372000
+        amount:
+          type: string
+          format: integer
+          example: '34500000000'
+        fee:
+          type: string
+          format: integer
+          example: '0'
         status:
           type: string
-          description: the contract status, REJECTED, CREATED, PUBLISHED, ACTIVE, CLOSED, DISABLED, DESTRUCTED
+          description: the contract status - REJECTED, CREATED, PUBLISHED, ACTIVE, CLOSED, DISABLED, DESTRUCTED
           example: ACTIVE
+        name:
+          type: string
+          description: the contract name
+          example: 'Deal'
+        params:
+          type: string
+          description: list of parameters
+        fuelLimit:
+          type: string
+          format: int64
+          description: the fuel value
+          example: '5000'
+        fuelPrice:
+          type: string
+          format: int64
+          description: the fuel price value
+          example: '100'
+
+    ContractListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            contracts:
+              type: array
+              items:
+                $ref: '#/components/schemas/ContractDetails'
 
     BaseResponse:
       type: object

@@ -4,8 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 
-import com.apollocurrency.aplwallet.api.v2.model.ContractDetailsResponse;
-import com.apollocurrency.aplwallet.api.v2.model.ContractInfo;
+import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEntityToContractInfoConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
@@ -21,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.smc.blockchain.ContractNotFoundException;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
@@ -40,6 +40,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -172,26 +173,25 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
-    public List<ContractInfo> loadContractsByOwner(Address owner) {
+    public List<ContractDetails> loadContractsByOwner(Address owner, int from, int limit) {
         long id = new AplAddress(owner).getLongId();
-        return contractEntityToContractInfoConverter.convert(CollectionUtil.toList(smcContractTable.getManyBy(new DbClause.LongClause("owner", id), 0, Integer.MAX_VALUE)));
+        List<ContractDetails> result = CollectionUtil.toList(
+            smcContractTable.getManyBy(new DbClause.LongClause("owner", id), from, limit))
+            .stream()
+            .map(value -> getContractDetailsByTransaction(new AplAddress(value.getTransactionId())))
+            .collect(Collectors.toList());
+        return result;
     }
 
     @Override
-    public ContractInfo loadContractInfo(Address contract) {
-        long id = new AplAddress(contract).getLongId();
-        return contractEntityToContractInfoConverter.convert(smcContractTable.get(SmcContractStateTable.KEY_FACTORY.newKey(id)));
-    }
-
-    @Override
-    public ContractDetailsResponse getContractDetailsByAddress(Address address) {
+    public ContractDetails getContractDetailsByAddress(Address address) {
         SmcContractEntity smcEntity = loadContractEntity(address);
         AplAddress txAddress = new AplAddress(smcEntity.getTransactionId());
         return getContractDetailsByTransaction(txAddress);
     }
 
     @Override
-    public ContractDetailsResponse getContractDetailsByTransaction(Address txAddress) {
+    public ContractDetails getContractDetailsByTransaction(Address txAddress) {
         Transaction smcTransaction = blockchain.getTransaction(new AplAddress(txAddress).getLongId());
         if (smcTransaction == null) {
             log.error("Transaction not found, addr={}", txAddress.getHex());
@@ -205,16 +205,20 @@ public class ContractServiceImpl implements ContractService {
         AplAddress contractAddress = new AplAddress(smcTransaction.getRecipientId());
 
         SmcContractEntity smcContractEntity = loadContractEntity(contractAddress);
-        SmcContractStateEntity smContractStateEntity = loadContractStateEntity(contractAddress);
 
-        ContractDetailsResponse contract = new ContractDetailsResponse();
+        ContractDetails contract = new ContractDetails();
         contract.setAddress(new AplAddress(smcContractEntity.getAddress()).getHex());
         contract.setTransaction(new AplAddress(smcContractEntity.getTransactionId()).getHex());
+        contract.setAmount(Long.toUnsignedString(smcTransaction.getAmountATM()));
+        contract.setFee(Long.toUnsignedString(smcTransaction.getFeeATM()));
+        contract.setSignature(smcTransaction.getSignature().getHexString());
+        contract.setTimestamp(Convert2.fromEpochTime(smcTransaction.getBlockTimestamp()));
         contract.setName(smcContractEntity.getContractName());
         contract.setParams(smcContractEntity.getArgs());
         contract.setFuelLimit(attachment.getFuelLimit().toString());
         contract.setFuelPrice(attachment.getFuelPrice().toString());
-        contract.setStatus(smContractStateEntity.getStatus());
+        SmcContractStateEntity smcContractStateEntity = loadContractStateEntity(contractAddress, true);
+        contract.setStatus(smcContractStateEntity != null ? smcContractStateEntity.getStatus() : ContractStatus.CREATED.name());
         log.trace("Transaction details, tx addr={} {}", txAddress, contract);
         return contract;
     }
@@ -242,9 +246,13 @@ public class ContractServiceImpl implements ContractService {
     }
 
     private SmcContractStateEntity loadContractStateEntity(Address address) {
+        return loadContractStateEntity(address, false);
+    }
+
+    private SmcContractStateEntity loadContractStateEntity(Address address, boolean quiet) {
         AplAddress aplAddress = new AplAddress(address);
         SmcContractStateEntity smcStateEntity = smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(aplAddress.getLongId()));
-        if (smcStateEntity == null) {
+        if (smcStateEntity == null && !quiet) {
             log.error("Contract state not found at addr={}", address.getHex());
             throw new ContractNotFoundException("Contract state not found at addr=" + address.getHex());
         }

@@ -4,8 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
-import com.apollocurrency.aplwallet.api.v2.model.ContractDetailsResponse;
-import com.apollocurrency.aplwallet.api.v2.model.ContractInfo;
+import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
@@ -62,17 +61,21 @@ public interface ContractService {
      * @param owner given owner
      * @return the list of contracts
      */
-    List<ContractInfo> loadContractsByOwner(Address owner);
-
-    ContractInfo loadContractInfo(Address contract);
+    List<ContractDetails> loadContractsByOwner(Address owner, int from, int limit);
 
     /**
      * Returns the details information about contract given transaction id
      *
-     * @param address the given transaction id
+     * @param txAddress the given transaction id
      * @return the details information about contract
      */
-    ContractDetailsResponse getContractDetailsByAddress(Address address);
+    ContractDetails getContractDetailsByTransaction(Address txAddress);
 
-    ContractDetailsResponse getContractDetailsByTransaction(Address txAddress);
+    /**
+     * Returns the details information about contract given address
+     *
+     * @param address the given contract address
+     * @return the details information about contract
+     */
+    ContractDetails getContractDetailsByAddress(Address address);
 }

@@ -7,8 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.v2.impl;
 import com.apollocurrency.aplwallet.api.v2.NotFoundException;
 import com.apollocurrency.aplwallet.api.v2.SmcApiService;
 import com.apollocurrency.aplwallet.api.v2.model.CallContractMethodReqTest;
-import com.apollocurrency.aplwallet.api.v2.model.ContractDetailsResponse;
-import com.apollocurrency.aplwallet.api.v2.model.ContractInfo;
+import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.api.v2.model.ContractListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.PublishContractReqTest;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionArrayResp;
@@ -195,7 +194,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         ContractListResponse response = new ContractListResponse();
 
-        List<ContractInfo> contracts = contractService.loadContractsByOwner(address);
+        List<ContractDetails> contracts = contractService.loadContractsByOwner(address, 0, Integer.MAX_VALUE);
         response.setContracts(contracts);
 
         return builder.bind(response).build();
@@ -210,8 +209,10 @@ public class SmcApiServiceImpl implements SmcApiService {
         if (account == null) {
             return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
         }
+        ContractListResponse response = new ContractListResponse();
 
-        ContractDetailsResponse response = contractService.getContractDetailsByAddress(address);
+        ContractDetails contract = contractService.getContractDetailsByAddress(address);
+        response.setContracts(List.of(contract));
 
         return builder.bind(response).build();
     }

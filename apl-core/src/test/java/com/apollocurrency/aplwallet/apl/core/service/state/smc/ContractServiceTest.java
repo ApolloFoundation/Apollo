@@ -16,9 +16,11 @@ import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.model.smc.SmcTxData;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.ContractServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.ContractType;
@@ -52,6 +54,11 @@ import static org.mockito.MockitoAnnotations.initMocks;
 class ContractServiceTest {
     static int HEIGHT = 100;
     static long TX_ID = 100L;
+
+    static {
+        Convert2.init("APL", 1739068987193023818L);
+    }
+
 
     @Mock
     Blockchain blockchain;
@@ -231,6 +238,8 @@ class ContractServiceTest {
         Transaction smcTransaction = mock(Transaction.class);
         when(smcTransaction.getAttachment()).thenReturn(smcPublishContractAttachment);
         when(smcTransaction.getRecipientId()).thenReturn(recipientAddress.getLongId());
+        when(smcTransaction.getSignature()).thenReturn(mock(Signature.class));
+        when(smcTransaction.getBlockTimestamp()).thenReturn(1234567890);
         when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(recipientAddress.getLongId()))).thenReturn(smcContractEntity);
         when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(recipientAddress.getLongId()))).thenReturn(smcContractStateEntity);
         when(blockchain.getTransaction(TX_ID)).thenReturn(smcTransaction);
@@ -248,9 +257,17 @@ class ContractServiceTest {
         //GIVEN
         when(smcContractTable.getManyBy(any(), any(int.class), any(int.class)))
             .thenReturn(CollectionUtil.toDbIterator(List.of(smcContractEntity)));
+        Transaction smcTransaction = mock(Transaction.class);
+        when(smcTransaction.getAttachment()).thenReturn(smcPublishContractAttachment);
+        when(smcTransaction.getRecipientId()).thenReturn(recipientAddress.getLongId());
+        when(smcTransaction.getSignature()).thenReturn(mock(Signature.class));
+        when(smcTransaction.getBlockTimestamp()).thenReturn(1234567890);
+        when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(recipientAddress.getLongId()))).thenReturn(smcContractEntity);
+        when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(recipientAddress.getLongId()))).thenReturn(smcContractStateEntity);
+        when(blockchain.getTransaction(TX_ID)).thenReturn(smcTransaction);
 
         //WHEN
-        var loadedContracts = contractService.loadContractsByOwner(senderAddress);
+        var loadedContracts = contractService.loadContractsByOwner(senderAddress, 0, Integer.MAX_VALUE);
         //THEN
         assertEquals(1, loadedContracts.size());
         assertEquals(smartContract.getAddress().getHex(), loadedContracts.get(0).getAddress());
