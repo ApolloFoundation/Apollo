@@ -35,6 +35,7 @@ import java.util.Map;
 
 import static org.mockito.Mockito.mock;
 
+//TODO Repair DbExtension to maintain the AfterEachCallback + nonstatic usage
 @Slf4j
 public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ AfterAllCallback, BeforeAllCallback {
     private DbManipulator manipulator;

@@ -28,10 +28,13 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDelet
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public final class Shuffling extends VersionedDeletableEntity {
 
     private final long id;
@@ -77,6 +80,21 @@ public final class Shuffling extends VersionedDeletableEntity {
         this.assigneeAccountId = rs.getLong("assignee_account_id");
         this.recipientPublicKeys = DbUtils.get2dByteArray(rs, "recipient_public_keys", Convert.EMPTY_BYTES);
         this.registrantCount = rs.getByte("registrant_count");
+    }
+
+    public Shuffling(Long dbId, long id, long holdingId, HoldingType holdingType, long issuerId, long amount, byte participantCount, short blocksRemaining, byte registrantCount, ShufflingStage stage, long assigneeAccountId, byte[][] recipientPublicKeys, Integer height) {
+        super(dbId, height);
+        this.id = id;
+        this.holdingId = holdingId;
+        this.holdingType = holdingType;
+        this.issuerId = issuerId;
+        this.amount = amount;
+        this.participantCount = participantCount;
+        this.blocksRemaining = blocksRemaining;
+        this.registrantCount = registrantCount;
+        this.stage = stage;
+        this.assigneeAccountId = assigneeAccountId;
+        this.recipientPublicKeys = recipientPublicKeys;
     }
 
     public long getId() {
