@@ -408,10 +408,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 pushBlock(block);
             } else if (peerBlockPreviousBlockId == lastBlock.getPreviousBlockId()) { //peer block is a candidate to replace our last block
                 Block block = blockParser.parseBlock(request, baseTarget);
-                //try to replace our last block by peer block only when timestamp of peer block is less than timestamp of our block or when
-                // timestamps are equal but timeout of peer block is greater, so that peer block is better.
-                if (((block.getTimestamp() < lastBlock.getTimestamp()
-                    || block.getTimestamp() == lastBlock.getTimestamp() && block.getTimeout() > lastBlock.getTimeout()))) {
+                //try to replace our last block by peer block only when real block time of the peer block is less than a real timestamp of our block,
+                // or when block time is equal, but peer's block has better timeout
+                int peerBlockTime = block.getTimestamp() - block.getTimeout();
+                int ourBlockTime = lastBlock.getTimestamp() - lastBlock.getTimeout();
+                if (peerBlockTime < ourBlockTime || (peerBlockTime == ourBlockTime && block.getTimeout() < lastBlock.getTimeout())) {
                     log.debug("Need to replace block");
                     Block lb = blockchain.getLastBlock();
                     if (lastBlock.getId() != lb.getId()) {
