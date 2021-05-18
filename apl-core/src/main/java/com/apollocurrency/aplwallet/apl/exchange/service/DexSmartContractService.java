@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.dex.eth.service.DexBeanProducer;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.dex.eth.web3j.ChainId;
 import com.apollocurrency.aplwallet.apl.dex.eth.web3j.ComparableStaticGasProvider;
 import com.apollocurrency.aplwallet.apl.dex.eth.web3j.DefaultRawTransactionManager;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -40,7 +41,6 @@ import org.web3j.protocol.core.methods.response.Transaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.tuples.generated.Tuple4;
-import org.web3j.tx.ChainId;
 import org.web3j.tx.ClientTransactionManager;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
@@ -79,6 +79,7 @@ public class DexSmartContractService {
     private final DexBeanProducer dexBeanProducer;
     private final TaskDispatchManager taskManager;
     private final KMSService KMSService;
+    private final ChainId chainId;
 
     private Map<String, Object> idLocks = Collections.synchronizedMap(new HashMap<>());
     private Set<String> locksToRemoveLater = ConcurrentHashMap.newKeySet();
@@ -86,7 +87,7 @@ public class DexSmartContractService {
     @Inject
     public DexSmartContractService(PropertiesHolder propertiesHolder, DexEthService dexEthService,
                                    EthereumWalletService ethereumWalletService, DexTransactionDao dexTransactionDao,
-                                   DexBeanProducer dexBeanProducer, TaskDispatchManager taskDispatchManager, KMSService KMSService) {
+                                   DexBeanProducer dexBeanProducer, TaskDispatchManager taskDispatchManager, KMSService KMSService, ChainId chainId) {
         this.smartContractAddress = propertiesHolder.getStringProperty("apl.eth.swap.proxy.contract.address");
         this.paxContractAddress = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
         this.dexEthService = dexEthService;
@@ -95,6 +96,7 @@ public class DexSmartContractService {
         this.taskManager = taskDispatchManager;
         this.dexBeanProducer = dexBeanProducer;
         this.KMSService = KMSService;
+        this.chainId = chainId;
     }
 
     @PostConstruct
@@ -324,7 +326,7 @@ public class DexSmartContractService {
     }
 
     private TransactionManager createTransactionManager(DexTransaction dexTransaction, Credentials credentials) {
-        return new DefaultRawTransactionManager(dexBeanProducer.web3j(), credentials, ChainId.NONE, dexTransaction, dexTransactionDao);
+        return new DefaultRawTransactionManager(dexBeanProducer.web3j(), credentials, chainId.getValid(), dexTransaction, dexTransactionDao);
     }
 
     /**

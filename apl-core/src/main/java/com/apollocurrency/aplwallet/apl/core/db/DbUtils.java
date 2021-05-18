@@ -186,6 +186,9 @@ public final class DbUtils {
         final byte[][] defaultValue
     ) throws SQLException {
         final byte[] resultSetBytes = resultSet.getBytes(columnName);
+        if (resultSetBytes == null) {
+            return defaultValue;
+        }
         return Optional.ofNullable(convertFromBytes(resultSetBytes))
             .map(byte[][].class::cast)
             .orElse(defaultValue);

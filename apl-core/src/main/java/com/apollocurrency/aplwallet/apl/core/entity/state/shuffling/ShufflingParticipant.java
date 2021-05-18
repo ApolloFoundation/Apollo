@@ -68,6 +68,19 @@ public final class ShufflingParticipant extends VersionedDeletableEntity {
         this.dataHash = rs.getBytes("data_hash");
     }
 
+    public ShufflingParticipant(Long dbId, Integer height, long shufflingId, long accountId, int index, long nextAccountId, ShufflingParticipantState state, byte[] dataTransactionFullHash, byte[] dataHash, byte[][] blameData, byte[][] keySeeds) {
+        super(dbId, height);
+        this.shufflingId = shufflingId;
+        this.accountId = accountId;
+        this.index = index;
+        this.nextAccountId = nextAccountId;
+        this.state = state;
+        this.blameData = blameData;
+        this.keySeeds = keySeeds;
+        this.dataTransactionFullHash = dataTransactionFullHash;
+        this.dataHash = dataHash;
+    }
+
     public long getShufflingId() {
         return shufflingId;
     }

@@ -30,6 +30,9 @@ public class ShufflingDataTable extends PrunableDbTable<ShufflingData> {
     public static final LinkKeyFactory<ShufflingData> dbKeyFactory = new LinkKeyFactory<>("shuffling_id", "account_id") {
         @Override
         public DbKey newKey(ShufflingData shufflingData) {
+            if (shufflingData.getDbKey() == null) {
+                shufflingData.setDbKey(newKey(shufflingData.getShufflingId(), shufflingData.getAccountId()));
+            }
             return shufflingData.getDbKey();
         }
     };
