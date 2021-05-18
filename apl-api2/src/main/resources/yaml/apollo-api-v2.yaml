@@ -713,6 +713,33 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /@@smc/state/{address}:
+    get:
+      tags:
+        - smc
+      summary: Get the contract state json given address.
+      description: Returns the contract state json.
+      operationId: getSmcStateByAddress
+      parameters:
+        - name: address
+          in: path
+          description: The contract address
+          required: true
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractStateResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
 components:
   schemas:
     TransactionInfoArrayResp:
@@ -1487,6 +1514,16 @@ components:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
         - $ref: '#/components/schemas/ContractDetails'
+
+    ContractStateResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            state:
+              description: the contract state json
+              type: string
+              example: "{'value': 20000}"
 
     ContractDetails:
       type: object

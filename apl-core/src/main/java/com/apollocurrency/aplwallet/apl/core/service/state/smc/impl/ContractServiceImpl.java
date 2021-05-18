@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEntityToContractInfoConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable;
@@ -54,18 +53,16 @@ public class ContractServiceImpl implements ContractService {
 
     private final ContractModelToEntityConverter contractModelToEntityConverter;
     private final ContractModelToStateEntityConverter contractModelToStateConverter;
-    private final ContractEntityToContractInfoConverter contractEntityToContractInfoConverter;
 
     private HashSumProvider hashSumProvider;
 
     @Inject
-    public ContractServiceImpl(Blockchain blockchain, SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, ContractEntityToContractInfoConverter contractEntityToContractInfoConverter, HashSumProvider hashSumProvider) {
+    public ContractServiceImpl(Blockchain blockchain, SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, HashSumProvider hashSumProvider) {
         this.blockchain = blockchain;
         this.smcContractTable = smcContractTable;
         this.smcContractStateTable = smcContractStateTable;
         this.contractModelToEntityConverter = contractModelToEntityConverter;
         this.contractModelToStateConverter = contractModelToStateConverter;
-        this.contractEntityToContractInfoConverter = contractEntityToContractInfoConverter;
         this.hashSumProvider = hashSumProvider;
     }
 
@@ -207,7 +204,7 @@ public class ContractServiceImpl implements ContractService {
         SmcContractEntity smcContractEntity = loadContractEntity(contractAddress);
 
         ContractDetails contract = new ContractDetails();
-        contract.setAddress(Long.toUnsignedString(smcContractEntity.getAddress()));
+        contract.setAddress(Convert2.rsAccount(smcContractEntity.getAddress()));
         contract.setTransaction(Long.toUnsignedString(smcContractEntity.getTransactionId()));
         contract.setAmount(Long.toUnsignedString(smcTransaction.getAmountATM()));
         contract.setFee(Long.toUnsignedString(smcTransaction.getFeeATM()));

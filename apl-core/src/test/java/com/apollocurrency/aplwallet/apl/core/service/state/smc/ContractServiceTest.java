@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractEntityToContractInfoConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable;
@@ -72,7 +71,6 @@ class ContractServiceTest {
 
     ContractModelToStateEntityConverter contractModelToStateConverter = new ContractModelToStateEntityConverter();
 
-    ContractEntityToContractInfoConverter contractEntityToContractInfoConverter = new ContractEntityToContractInfoConverter();
     @Mock
     HashSumProvider hashSumProvider;
 
@@ -96,7 +94,6 @@ class ContractServiceTest {
             smcContractStateTable,
             contractModelToEntityConverter,
             contractModelToStateConverter,
-            contractEntityToContractInfoConverter,
             hashSumProvider);
 
         smcTxData = SmcTxData.builder()
@@ -248,7 +245,7 @@ class ContractServiceTest {
         var response = contractService.getContractDetailsByTransaction(new AplAddress(TX_ID));
 
         //THEN
-        assertEquals(convertToString(smartContract.getAddress()), response.getAddress());
+        assertEquals(convertToRS(smartContract.getAddress()), response.getAddress());
         assertEquals(smartContract.getFuel().limit().toString(), response.getFuelLimit());
         assertEquals(smartContract.getFuel().price().toString(), response.getFuelPrice());
     }
@@ -271,12 +268,16 @@ class ContractServiceTest {
         var loadedContracts = contractService.loadContractsByOwner(senderAddress, 0, Integer.MAX_VALUE);
         //THEN
         assertEquals(1, loadedContracts.size());
-        assertEquals(convertToString(smartContract.getAddress()), loadedContracts.get(0).getAddress());
+        assertEquals(convertToRS(smartContract.getAddress()), loadedContracts.get(0).getAddress());
         assertEquals(convertToString(smartContract.getTxId()), loadedContracts.get(0).getTransaction());
     }
 
     static String convertToString(Address address) {
         return Long.toUnsignedString(new AplAddress(address).getLongId());
+    }
+
+    static String convertToRS(Address address) {
+        return Convert2.rsAccount(new AplAddress(address).getLongId());
     }
 
 }

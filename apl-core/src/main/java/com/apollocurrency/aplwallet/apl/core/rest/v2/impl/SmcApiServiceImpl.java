@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.api.v2.SmcApiService;
 import com.apollocurrency.aplwallet.api.v2.model.CallContractMethodReqTest;
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.api.v2.model.ContractListResponse;
+import com.apollocurrency.aplwallet.api.v2.model.ContractStateResponse;
 import com.apollocurrency.aplwallet.api.v2.model.PublishContractReqTest;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionArrayResp;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
@@ -209,10 +210,33 @@ public class SmcApiServiceImpl implements SmcApiService {
         if (account == null) {
             return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
         }
+        if (!contractService.isContractExist(address)) {
+            return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
+        }
         ContractListResponse response = new ContractListResponse();
 
         ContractDetails contract = contractService.getContractDetailsByAddress(address);
         response.setContracts(List.of(contract));
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response getSmcStateByAddress(String addressStr, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+
+        AplAddress address = new AplAddress(Convert.parseAccountId(addressStr));
+        Account account = accountService.getAccount(address.getLongId());
+        if (account == null) {
+            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
+        }
+        if (!contractService.isContractExist(address)) {
+            return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
+        }
+        ContractStateResponse response = new ContractStateResponse();
+
+        String contractState = contractService.loadSerializedContract(address);
+        response.setState(contractState);
 
         return builder.bind(response).build();
     }

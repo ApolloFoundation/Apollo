@@ -55,6 +55,7 @@ public enum ApiErrors implements ApiErrorInfo {
     CONTRACT_PROCESSING_ERROR(0, 3101, "Contract processing error: {0}."),
     CONTRACT_VALIDATION_ERROR(0, 3102, "Contract validation error: {0}."),
     CONTRACT_METHOD_VALIDATION_ERROR(0, 3103, "Contract method validation error: {0}."),
+    CONTRACT_NOT_FOUND(0, 3104, "Contract {0} not found.")
     ;
 
     private int oldErrorCode;
