@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.dex.eth.service.DexBeanProducer;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.DexEthService;
 import com.apollocurrency.aplwallet.apl.dex.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.dex.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.dex.eth.web3j.ChainId;
 import com.apollocurrency.aplwallet.apl.dex.eth.web3j.ComparableStaticGasProvider;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -87,6 +88,8 @@ class DexSmartContractServiceTest {
     private DexBeanProducer dexBeanProducer;
     @Mock
     private KMSService KMSService;
+    @Mock
+    private ChainId chainId;
     private DexSmartContractService service;
     private Credentials walletCredentials;
     private EthGasInfo gasInfo;
@@ -101,7 +104,7 @@ class DexSmartContractServiceTest {
         props.setProperty("apl.eth.pax.contract.address", PAX_ETH_ADDRESS);
         PropertiesHolder holder =  new PropertiesHolder(props);
         service = spy(new DexSmartContractService(holder, dexEthService, ethereumWalletService, dexTransactionDao,
-            dexBeanProducer, null, KMSService));
+            dexBeanProducer, null, KMSService, chainId));
         walletCredentials = Credentials.create(ECKeyPair.create(Convert.parseHexString(ALICE_PRIV_KEY)));
         gasInfo = new EthChainGasInfoImpl(100.5, 82.3, 53.9);
     }
@@ -205,6 +208,7 @@ class DexSmartContractServiceTest {
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, amount, 27L, DexCurrency.ETH);
 
         assertEquals("hash", hash);
+        verifyNoChainId();
     }
 
     @Test
@@ -363,6 +367,7 @@ class DexSmartContractServiceTest {
         boolean r = service.refundAndWithdraw(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true) != null;
 
         assertTrue(r);
+        verifyNoChainId();
     }
 
     @Test
@@ -449,4 +454,7 @@ class DexSmartContractServiceTest {
         mockEthSendTransactionWithRespnse(encodedTx, response);
     }
 
+    private void verifyNoChainId() {
+        verifyNoInteractions(chainId);
+    }
 }
