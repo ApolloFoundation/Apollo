@@ -106,10 +106,8 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
     @Test
     void callSmcApplyAttachment() throws AplException.NotValidException {
         //GIVEN
-
-        String aa = "class Deal extends Contract{\n" +
+        String contractSource = "class Deal extends Contract{\n" +
             "  constructor( value, vendor ){\n" +
-            "    console.log(\"--- in constructor ---\", value, vendor);\n" +
             "    super();\n" +
             "    this.value = value;\n" +
             "    this.vendor = vendor;\n" +
@@ -118,96 +116,54 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             "    this.accepted = false;\n" +
             "  }\n" +
             "  pay() {\n" +
-            "      console.log(\"--- in pay msg.getValue()---\", msg.getValue(), typeof msg.getValue());\n" +
-            "      console.log(\"--- in pay this.value ---\", this.value, typeof this.value);\n" +
             "      if ( this.value <= msg.getValue() ){\n" +
-            "         super.transfer( msg.getValue() );\n" +
             "         this.paid = true;\n" +
             "         this.customer = msg.getSender();\n" +
             "      }\n" +
             "  }\n" +
-            "  trace() {\n" +
-            "      console.log(\"--- in trace msg.getValue()---\", msg.getValue(), typeof msg.getValue());\n" +
-            "      console.log(\"--- in trace this.value ---\", this.value, typeof this.value);\n" +
-            "  }\n" +
             "  accept(){\n" +
-            "    console.log(\"--- in accept msg=\", msg.getValue(), \" \", msg.getSender());\n" +
-            "    console.log(\"--- in accept accepted=\", this.accepted);\n" +
-            "    console.log(\"--- in accept paid=\", this.paid);\n" +
-            "    console.log(\"--- in accept customer=\", this.customer);\n" +
-            "    if (!this.accepted && this.paid && this.customer == msg.getSender()){\n" +
-            "      super.send(this.value, this.vendor)\n" +
+            "    if (!this.accepted && this.paid ){\n" +
+            "      super.send(this.value, SMC.createAddress(this.vendor))\n" +
             "      this.accepted = true \n" +
             "    }\n" +
             "  }\n" +
             "}";
 
+        String senderAccount2RS = "APL-LTR8-GMHB-YG56-4NWSE";
+        long senderAccountId2 = Convert.parseAccountId(senderAccount2RS);
 
-        SmcTxData txData = SmcTxData.builder()
+        SmcTxData txData1 = SmcTxData.builder()
             .sender("APL-X5JH-TJKJ-DVGC-5T2V8")
             .name("Deal")
-            .source("class Deal extends Contract{\n" +
-                "  constructor( value, vendor ){\n" +
-                "    console.log('--- in constructor ---', value, vendor);\n" +
-                "    super();\n" +
-                "    this.value = value;\n" +
-                "    this.vendor = vendor;\n" +
-                "    this.customer = '';\n" +
-                "    this.paid = false;\n" +
-                "    this.accepted = false;\n" +
-                "  }\n" +
-                "  pay() {\n" +
-                "      console.log('--- in pay msg.getValue()---', msg.getValue(), typeof msg.getValue());\n" +
-                "      console.log('--- in pay this.value ---', this.value, typeof this.value);\n" +
-                "      if ( this.value <= msg.getValue() ){\n" +
-                "         super.transfer( msg.getValue() );\n" +
-                "         this.paid = true;\n" +
-                "         this.customer = msg.getSender();\n" +
-                "      }\n" +
-                "  }\n" +
-                "  trace() {\n" +
-                "      console.log('--- in trace msg.getValue()---', msg.getValue(), typeof msg.getValue());\n" +
-                "      console.log('--- in trace this.value ---', this.value, typeof this.value);\n" +
-                "  }\n" +
-                "  accept(){\n" +
-                "    console.log('--- in accept msg=', msg.getValue(), ' ', msg.getSender());\n" +
-                "    console.log('--- in accept accepted=', this.accepted);\n" +
-                "    console.log('--- in accept paid=', this.paid);\n" +
-                "    console.log('--- in accept customer=', this.customer);\n" +
-                "    if (!this.accepted && this.paid && this.customer == msg.getSender()){\n" +
-                "      super.send(this.value, this.vendor)\n" +
-                "      this.accepted = true \n" +
-                "    }\n" +
-                "  }\n" +
-                "}")
-            .params(List.of("1400000000", "\"APL-X5JH-TJKJ-DVGC-5T2V8\""))
+            .source(contractSource)
+            .params(List.of("1400000000", "\"" + new AplAddress(senderAccountId2).getHex() + "\""))
             .amountATM(10_00000000L)
             .fuelLimit(50_000_000L)
-            .fuelPrice(10_000L)
+            .fuelPrice(100L)
             .secret("1")
             .build();
 
         SmcPublishContractAttachment attachment = SmcPublishContractAttachment.builder()
-            .contractName(txData.getName())
-            .contractSource(txData.getSource())
-            .constructorParams(String.join(",", txData.getParams()))
+            .contractName(txData1.getName())
+            .contractSource(txData1.getSource())
+            .constructorParams(String.join(",", txData1.getParams()))
             .languageName("javascript")
-            .fuelLimit(BigInteger.valueOf(txData.getFuelLimit()))
-            .fuelPrice(BigInteger.valueOf(txData.getFuelPrice()))
+            .fuelLimit(BigInteger.valueOf(txData1.getFuelLimit()))
+            .fuelPrice(BigInteger.valueOf(txData1.getFuelPrice()))
             .build();
 
-        long senderAccountId = Convert.parseAccountId(txData.getSender());
+        long senderAccountId = Convert.parseAccountId(txData1.getSender());
         Account account = new Account(senderAccountId, 100_000_00000000L, 100_000_00000000L, 100_000_00000000L, 0L, 10);
 
         byte[] recipientPublicKey = AccountService.generatePublicKey(account, attachment.getContractSource());
         long recipientId = AccountService.getId(recipientPublicKey);
 
-        Transaction newTx = createTransaction(txData, attachment, account, recipientPublicKey, recipientId);
+        Transaction newTx = createTransaction(txData1, attachment, account, recipientPublicKey, recipientId);
         assertNotNull(newTx);
         newTx.setBlock(lastBlock);
 
-        doNothing().when(spyAccountService).addToBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(-txData.getAmountATM()), eq(-(txData.getFuelLimit() * txData.getFuelPrice())));
-        doNothing().when(spyAccountService).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(txData.getAmountATM()));
+        doNothing().when(spyAccountService).addToBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(-txData1.getAmountATM()), eq(-(txData1.getFuelLimit() * txData1.getFuelPrice())));
+        doNothing().when(spyAccountService).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx.getId()), eq(txData1.getAmountATM()));
         long senderId = AccountService.getId(newTx.getSenderPublicKey());
         when(publicKeyDao.searchAll(senderId)).thenReturn(new PublicKey(senderId, newTx.getSenderPublicKey(), newTx.getHeight()));
 
@@ -227,25 +183,25 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
 
         //GIVEN
         SmcTxData txData2 = SmcTxData.builder()
-            .sender("APL-LTR8-GMHB-YG56-4NWSE")
+            .sender(senderAccount2RS)
             .recipient(Convert.defaultRsAccount(newTx.getRecipientId()))
             .recipientPublicKey(Convert.toHexString(recipientPublicKey))
-            .method("trace")
+            .method("pay")
             .params(Collections.emptyList())
             .amountATM(14_00000000L)
             .fuelLimit(15_000_000L)
-            .fuelPrice(10_000L)
+            .fuelPrice(100L)
             .secret("2")
             .build();
 
         SmcCallMethodAttachment attachment2 = SmcCallMethodAttachment.builder()
             .methodName(txData2.getMethod())
-            .methodParams("")
+            .methodParams(String.join(",", txData2.getParams()))
             .fuelLimit(BigInteger.valueOf(txData2.getFuelLimit()))
             .fuelPrice(BigInteger.valueOf(txData2.getFuelPrice()))
             .build();
 
-        long senderAccountId2 = Convert.parseAccountId(txData2.getSender());
+
         Account account2 = new Account(senderAccountId2, 10_000_000_00000000L, 10_000_000_00000000L, 1000000000L, 0L, 1);
 
         Transaction newTx2 = createTransaction(txData2, attachment2, account2, Convert.parseHexString(txData2.getRecipientPublicKey()), Convert.parseAccountId(txData2.getRecipient()));
@@ -261,12 +217,54 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx2));
         SmartContract smartContract2 = contractService.loadContract(
             new AplAddress(newTx2.getRecipientId()),
-            new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
+            new ContractFuel(attachment2.getFuelLimit(), attachment2.getFuelPrice())
         );
 
         //THEN
         assertNotNull(smartContract2);
         assertEquals(smartContract.getTxId().getHex(), smartContract2.getTxId().getHex());
+
+        //GIVEN
+        SmcTxData txData3 = SmcTxData.builder()
+            .sender(senderAccount2RS)
+            .recipient(Convert.defaultRsAccount(newTx.getRecipientId()))
+            .recipientPublicKey(Convert.toHexString(recipientPublicKey))
+            .method("accept")
+            .params(Collections.emptyList())
+            .fuelLimit(15_000_000L)
+            .fuelPrice(100L)
+            .secret("2")
+            .build();
+
+        SmcCallMethodAttachment attachment3 = SmcCallMethodAttachment.builder()
+            .methodName(txData3.getMethod())
+            .methodParams(String.join(",", txData3.getParams()))
+            .fuelLimit(BigInteger.valueOf(txData3.getFuelLimit()))
+            .fuelPrice(BigInteger.valueOf(txData3.getFuelPrice()))
+            .build();
+
+        long senderAccountId3 = Convert.parseAccountId(txData3.getSender());
+        Account account3 = new Account(senderAccountId3, 10_000_000_00000000L, 10_000_000_00000000L, 1000000000L, 0L, 1);
+
+        Transaction newTx3 = createTransaction(txData3, attachment3, account3, Convert.parseHexString(txData3.getRecipientPublicKey()), Convert.parseAccountId(txData3.getRecipient()));
+        assertNotNull(newTx3);
+        newTx3.setBlock(lastBlock);
+
+        doNothing().when(spyAccountService).addToBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx3.getId()), eq(-txData3.getAmountATM()), eq(-(txData3.getFuelLimit() * txData3.getFuelPrice())));
+        doNothing().when(spyAccountService).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), any(LedgerEvent.class), eq(newTx3.getId()), eq(txData3.getAmountATM()));
+        long senderId3 = AccountService.getId(newTx3.getSenderPublicKey());
+        when(publicKeyDao.searchAll(senderId3)).thenReturn(new PublicKey(senderId3, newTx3.getSenderPublicKey(), newTx3.getHeight()));
+
+        //WHEN
+        DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx3));
+        SmartContract smartContract3 = contractService.loadContract(
+            new AplAddress(newTx3.getRecipientId()),
+            new ContractFuel(attachment3.getFuelLimit(), attachment3.getFuelPrice())
+        );
+
+        //THEN
+        assertNotNull(smartContract3);
+        assertEquals(smartContract.getTxId().getHex(), smartContract3.getTxId().getHex());
     }
 
 }

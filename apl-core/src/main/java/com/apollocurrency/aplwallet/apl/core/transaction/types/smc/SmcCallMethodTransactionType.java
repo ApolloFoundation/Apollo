@@ -165,7 +165,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        log.debug("SMC: applyAttachment: call method.");
+        log.debug("SMC: applyAttachment: call method. ");
         checkPrecondition(transaction);
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
         Address address = new AplAddress(transaction.getRecipientId());

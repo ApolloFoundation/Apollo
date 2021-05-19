@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.model.smc;
 
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.util.AddressHelper;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -37,6 +38,10 @@ public class AplAddress implements Address {
         return id;
     }
 
+    public String toRS() {
+        return Convert2.rsAccount(id);
+    }
+
     @Override
     public byte[] get() {
         return BigInteger.valueOf(id).toByteArray();
@@ -44,7 +49,7 @@ public class AplAddress implements Address {
 
     @Override
     public String toString() {
-        return id + "(" + getHex() + ")";
+        return id + "(" + getHex() + "," + toRS() + ")";
     }
 
     @Override
