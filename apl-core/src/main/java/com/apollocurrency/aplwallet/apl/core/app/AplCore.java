@@ -163,7 +163,7 @@ public final class AplCore {
             log.info("databaseManager Shutdown...");
         }
         if (kmsKvStorageService != null) {
-            kmsKvStorageService.shutdown();
+            kmsKvStorageService.close();
             log.info("kmsKvStorageService Shutdown...");
         }
 
@@ -221,7 +221,7 @@ public final class AplCore {
             databaseManager = CDI.current().select(DatabaseManager.class).get();
             databaseManager.getDataSource();
             kmsKvStorageService = CDI.current().select(KmsKvStorageService.class).get();
-            kmsKvStorageService.getKmsStorage();
+            kmsKvStorageService.getKmsAccountRepository();
             CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
 //            fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
 //            fullTextSearchService.init(); // first time BEFORE migration
