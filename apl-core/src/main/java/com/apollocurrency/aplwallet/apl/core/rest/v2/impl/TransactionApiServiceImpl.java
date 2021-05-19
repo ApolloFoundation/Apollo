@@ -6,21 +6,21 @@ import com.apollocurrency.aplwallet.api.v2.model.BaseResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionInfoResp;
 import com.apollocurrency.aplwallet.api.v2.model.TxRequest;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
-import com.apollocurrency.aplwallet.apl.util.io.Result;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TransactionInfoMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.TxReceiptMapper;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +65,9 @@ public class TransactionApiServiceImpl implements TransactionApiService {
      */
     public Response broadcastTx(TxRequest body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+        if (body.getTx() == null || body.getTx().isEmpty()) {
+            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_PARAM, "tx", "null").build();
+        }
         if (memPool.pendingProcessingRemainingCapacity() <= 0) {
             return ResponseBuilderV2.apiError(ApiErrors.UNCONFIRMED_TRANSACTION_CACHE_IS_FULL).status(409).build();
         }
