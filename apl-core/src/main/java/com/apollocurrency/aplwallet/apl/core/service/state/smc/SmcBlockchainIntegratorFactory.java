@@ -112,8 +112,8 @@ public class SmcBlockchainIntegratorFactory {
                     if (sender.getUnconfirmedBalanceATM() < amount) {
                         throw new SendMsgException("Insufficient balance.");
                     }
-                    accountService.addToBalanceAndUnconfirmedBalanceATM(txSenderAccount, ledgerEvent, originatorTransactionId, -amount);
-                    accountService.addToBalanceAndUnconfirmedBalanceATM(txRecipientAccount, ledgerEvent, originatorTransactionId, amount);
+                    accountService.addToBalanceAndUnconfirmedBalanceATM(sender, ledgerEvent, originatorTransactionId, -amount);
+                    accountService.addToBalanceAndUnconfirmedBalanceATM(recipient, ledgerEvent, originatorTransactionId, amount);
                     log.debug("--send money ---5: before blockchain tx, receipt={}", txReceiptBuilder.build());
                 } catch (Exception e) {
                     //TODO adjust error code
