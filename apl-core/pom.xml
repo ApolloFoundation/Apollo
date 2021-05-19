@@ -363,7 +363,12 @@
   <repositories>
     <repository>
       <id>binary-repo</id>
-      <url>https://dl.bintray.com/ethereum/maven/</url>
+      <url>https://oss.jfrog.org/artifactory/libs-snapshot/</url>
+    </repository>
+
+    <repository>
+      <id>binary-repo1</id>
+      <url>http://nexus.nuls.center/nexus/content/groups/public/</url>
     </repository>
   </repositories>
 
