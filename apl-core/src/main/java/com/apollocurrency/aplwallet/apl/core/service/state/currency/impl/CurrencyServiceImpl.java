@@ -225,12 +225,12 @@ public class CurrencyServiceImpl implements CurrencyService {
     }
 
     public long getCurrentSupply(Currency currency) {
-        if (!currency.is(RESERVABLE) && !currency.is(MINTABLE)) {
-            return currency.getInitialSupply();
-        }
+//        if (!currency.is(RESERVABLE) && !currency.is(MINTABLE)) {
+//            return currency.getInitialSupply();
+//        }
         CurrencySupply currencySupply = this.loadCurrencySupplyByCurrency(currency);
-        if (currencySupply == null) {
-            return 0;
+        if (currencySupply.getDbId() == 0) {
+            return currency.getInitialSupply();
         }
         return currencySupply.getCurrentSupply();
     }
@@ -250,14 +250,15 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     @Override
     public CurrencySupply loadCurrencySupplyByCurrency(Currency currency) {
-        if (!currency.is(RESERVABLE) && !currency.is(MINTABLE)) {
-            return null;
-        }
+//        if (!currency.is(RESERVABLE) && !currency.is(MINTABLE)) {
+//            return null;
+//        }
         CurrencySupply currencySupply = currency.getCurrencySupply();
         if (currencySupply == null) {
             currencySupply = currencySupplyTable.get(currencyTable.getDbKeyFactory().newKey(currency));
             if (currencySupply == null) {
                 currencySupply = new CurrencySupply(currency, blockChainInfoService.getHeight());
+                currencySupply.setCurrentSupply(currency.getInitialSupply());
             }
             currency.setCurrencySupply(currencySupply);
         }
@@ -315,6 +316,10 @@ public class CurrencyServiceImpl implements CurrencyService {
             throw new IllegalStateException("Currency " + currency.getId() + " not entirely owned by "
                 + senderAccount.getId());
         }
+        doCurrencyDeletion(currency, event, eventId, senderAccount);
+    }
+
+    private void doCurrencyDeletion(Currency currency, LedgerEvent event, long eventId, Account senderAccount) {
         if (currency.is(RESERVABLE)) {
             if (currency.is(CLAIMABLE) && this.isActive(currency)) {
                 accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, event, eventId, currency.getId(),
@@ -353,6 +358,13 @@ public class CurrencyServiceImpl implements CurrencyService {
         int height = blockChainInfoService.getHeight();
         currency.setHeight(height);
         currencyTable.deleteAtHeight(currency, height);
+    }
+
+    @Override
+    public void burn(long currencyId, Account senderAccount, long units, long eventId) {
+        Currency currency = getCurrency(currencyId);
+        increaseSupply(currency, -units);
+        accountCurrencyService.addToCurrencyUnits(senderAccount, LedgerEvent.CURRENCY_BURNING, eventId, currencyId, -units);
     }
 
     @Override
