@@ -9,8 +9,8 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
@@ -28,12 +28,12 @@ import java.math.BigInteger;
  */
 @Slf4j
 public abstract class AbstractSmcTransactionType extends TransactionType {
-    protected ContractService contractService;
+    protected SmcContractService contractService;
     protected final FuelValidator fuelValidator;
     protected final SmcBlockchainIntegratorFactory integratorFactory;
 
     AbstractSmcTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
-                               ContractService contractService,
+                               SmcContractService contractService,
                                FuelValidator fuelValidator,
                                SmcBlockchainIntegratorFactory integratorFactory) {
         super(blockchainConfig, accountService);

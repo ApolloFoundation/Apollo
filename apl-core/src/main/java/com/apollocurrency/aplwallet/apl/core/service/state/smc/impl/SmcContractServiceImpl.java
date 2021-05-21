@@ -15,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Singleton
-public class ContractServiceImpl implements ContractService {
+public class SmcContractServiceImpl implements SmcContractService {
     private final Blockchain blockchain;
     private final SmcContractTable smcContractTable;
     private final SmcContractStateTable smcContractStateTable;
@@ -57,7 +57,7 @@ public class ContractServiceImpl implements ContractService {
     private HashSumProvider hashSumProvider;
 
     @Inject
-    public ContractServiceImpl(Blockchain blockchain, SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, HashSumProvider hashSumProvider) {
+    public SmcContractServiceImpl(Blockchain blockchain, SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, HashSumProvider hashSumProvider) {
         this.blockchain = blockchain;
         this.smcContractTable = smcContractTable;
         this.smcContractStateTable = smcContractStateTable;
@@ -103,6 +103,7 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean isContractExist(Address address) {
         AplAddress aplAddress = new AplAddress(address);
         SmcContractStateEntity smcStateEntity = smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(aplAddress.getLongId()));

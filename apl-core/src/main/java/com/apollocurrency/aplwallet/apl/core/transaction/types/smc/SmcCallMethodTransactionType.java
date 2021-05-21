@@ -10,12 +10,12 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxCallMethodValidationProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SyntaxParseProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodSmcContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxCallMethodValidationProcessorContract;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SyntaxParseProcessorContract;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -55,7 +55,7 @@ import java.util.Map;
 public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     @Inject
     public SmcCallMethodTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
-                                        ContractService contractService,
+                                        SmcContractService contractService,
                                         FuelValidator fuelValidator,
                                         SmcBlockchainIntegratorFactory integratorFactory) {
         super(blockchainConfig, accountService, contractService, fuelValidator, integratorFactory);
@@ -124,7 +124,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .build();
         //syntactical and semantic validation
         BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
-        ContractTxProcessor processor = new SandboxCallMethodValidationProcessor(smartContract, smartMethod, integrator);
+        SmcContractTxProcessor processor = new SandboxCallMethodValidationProcessorContract(smartContract, smartMethod, integrator);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             log.debug("SMC: doStateDependentValidation = INVALID");
@@ -154,7 +154,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         }
         //syntactical validation
         BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
-        ContractTxProcessor processor = new SyntaxParseProcessor(smartMethod.getMethodWithParams(), integrator);
+        SmcContractTxProcessor processor = new SyntaxParseProcessorContract(smartMethod.getMethodWithParams(), integrator);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             log.debug("SMC: doStateIndependentValidation = INVALID");
@@ -180,7 +180,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .build();
         BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
-        ContractTxProcessor processor = new CallMethodContractTxProcessor(smartContract, smartMethod, integrator);
+        SmcContractTxProcessor processor = new CallMethodSmcContractTxProcessor(smartContract, smartMethod, integrator);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             log.error(executionLog.toJsonString());

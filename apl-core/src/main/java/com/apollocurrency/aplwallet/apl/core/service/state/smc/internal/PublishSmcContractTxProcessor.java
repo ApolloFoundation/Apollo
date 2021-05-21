@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
-import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,21 +16,20 @@ import lombok.extern.slf4j.Slf4j;
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class CallMethodContractTxProcessor extends AbstractContractTxProcessor {
-    private final SmartMethod smartMethod;
+public class PublishSmcContractTxProcessor extends AbstractSmcContractTxProcessor {
 
-    public CallMethodContractTxProcessor(SmartContract smartContract, SmartMethod smartMethod, BlockchainIntegrator processor) {
+    public PublishSmcContractTxProcessor(SmartContract smartContract, BlockchainIntegrator processor) {
         super(processor, smartContract);
-        this.smartMethod = smartMethod;
     }
 
     @Override
-    public void executeContract(ExecutionLog executionLog) {
-        log.debug("Smart method={}", smartMethod);
-        validateStatus(ContractStatus.ACTIVE);
-        //call the method and charge the fuel
-        smcMachine.callMethod(getSmartContract(), smartMethod);
+    protected void executeContract(ExecutionLog executionLog) {
+        validateStatus(ContractStatus.CREATED);
+        getSmartContract().setStatus(ContractStatus.PUBLISHED);
+        //call smart contract constructor, charge the fuel
+        smcMachine.publishContract(getSmartContract());
         executionLog.join(smcMachine.getExecutionLog());
+        validateStatus(ContractStatus.ACTIVE);
         smcMachine.resetExecutionLog();
     }
 

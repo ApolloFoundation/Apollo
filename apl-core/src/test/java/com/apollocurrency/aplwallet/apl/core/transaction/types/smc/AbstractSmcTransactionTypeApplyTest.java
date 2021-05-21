@@ -53,9 +53,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountP
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.impl.PhasingPollServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.ContractServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
@@ -145,7 +145,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         SmcConfig.class, SmcBlockchainIntegratorFactory.class,
         SmcContractTable.class, SmcContractStateTable.class,
         ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
-        ContractServiceImpl.class
+        SmcContractServiceImpl.class
     )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
@@ -177,7 +177,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
     @Inject
     AccountService accountService;
     @Inject
-    ContractService contractService;
+    SmcContractService contractService;
     @Inject
     SmcBlockchainIntegratorFactory integratorFactory;
     @Inject

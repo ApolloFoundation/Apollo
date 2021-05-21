@@ -12,7 +12,7 @@ import com.apollocurrency.smc.contract.vm.ExecutionLog;
  * @author andrew.zinchenko@gmail.com
  */
 
-public interface ContractTxProcessor {
+public interface SmcContractTxProcessor {
     /**
      * Validate transaction, perform smart contract and manipulate balances
      *

@@ -20,7 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
@@ -48,12 +48,12 @@ public class SmcApiServiceImpl implements SmcApiService {
 
     private final BlockchainConfig blockchainConfig;
     private final AccountService accountService;
-    private final ContractService contractService;
+    private final SmcContractService contractService;
     private final TransactionCreator transactionCreator;
     private final TxBContext txBContext;
 
     @Inject
-    public SmcApiServiceImpl(BlockchainConfig blockchainConfig, AccountService accountService, ContractService contractService, TransactionCreator transactionCreator) {
+    public SmcApiServiceImpl(BlockchainConfig blockchainConfig, AccountService accountService, SmcContractService contractService, TransactionCreator transactionCreator) {
         this.blockchainConfig = blockchainConfig;
         this.accountService = accountService;
         this.contractService = contractService;

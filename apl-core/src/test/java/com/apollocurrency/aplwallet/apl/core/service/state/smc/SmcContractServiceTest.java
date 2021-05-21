@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEn
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.model.smc.SmcTxData;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.ContractServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
@@ -51,7 +51,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author andrew.zinchenko@gmail.com
  */
 @ExtendWith(MockitoExtension.class)
-class ContractServiceTest {
+class SmcContractServiceTest {
     static int HEIGHT = 100;
     static long TX_ID = 100L;
 
@@ -83,13 +83,13 @@ class ContractServiceTest {
     AplAddress senderAddress;
     AplAddress recipientAddress;
 
-    ContractService contractService;
+    SmcContractService contractService;
 
     @BeforeEach
     void setUp() {
         initMocks(this);
 
-        contractService = new ContractServiceImpl(blockchain,
+        contractService = new SmcContractServiceImpl(blockchain,
             smcContractTable,
             smcContractStateTable,
             contractModelToEntityConverter,

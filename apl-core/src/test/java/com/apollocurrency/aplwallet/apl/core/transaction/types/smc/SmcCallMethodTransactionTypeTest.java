@@ -8,8 +8,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
@@ -51,7 +51,7 @@ class SmcCallMethodTransactionTypeTest {
     @Mock
     private AccountService accountService;
     @Mock
-    ContractService contractService;
+    SmcContractService contractService;
     @Mock
     SmcBlockchainIntegratorFactory integratorFactory;
 
