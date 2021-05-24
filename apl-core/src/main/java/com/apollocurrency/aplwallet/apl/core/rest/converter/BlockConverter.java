@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
@@ -31,17 +30,15 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
     private final Blockchain blockchain;
     private final TransactionConverter transactionConverter;
     private final PhasingPollService phasingPollService;
-    private final AccountService accountService;
     private volatile boolean isAddTransactions = false;
     private volatile boolean isAddPhasedTransactions = false;
 
     @Inject
     public BlockConverter(Blockchain blockchain, TransactionConverter transactionConverter,
-                          PhasingPollService phasingPollService, AccountService accountService) {
+                          PhasingPollService phasingPollService) {
         this.blockchain = blockchain;
         this.transactionConverter = transactionConverter;
         this.phasingPollService = phasingPollService;
-        this.accountService = accountService;
     }
 
     @Override
@@ -52,10 +49,6 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
         dto.setHeight(model.getHeight());
         dto.setGenerator(Long.toUnsignedString(model.getGeneratorId()));
         dto.setGeneratorRS(Convert2.rsAccount(model.getGeneratorId()));
-        if (!model.hasGeneratorPublicKey()) {
-            byte [] generatorPublicKey = accountService.getPublicKeyByteArray(model.getGeneratorId());
-            model.setGeneratorPublicKey(generatorPublicKey);
-        }
         dto.setGeneratorPublicKey(Convert.toHexString(model.getGeneratorPublicKey()));
         dto.setTimestamp(model.getTimestamp());
         dto.setTimeout(model.getTimeout());
@@ -84,7 +77,7 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
 
     public void addTransactions(BlockDTO o, Block model) {
         if (o != null && model != null) {
-            blockchain.getOrLoadTransactions(model);
+            blockchain.loadBlockData(model);
             List<TransactionDTO> transactionDTOList = model.getTransactions().stream().map(transactionConverter).collect(Collectors.toList());
             o.setNumberOfTransactions((long) model.getTransactions().size());
             o.setTotalAmountATM(String.valueOf(transactionDTOList.stream().map(TransactionDTO::getAmountATM).mapToLong(Long::parseLong).sum()));

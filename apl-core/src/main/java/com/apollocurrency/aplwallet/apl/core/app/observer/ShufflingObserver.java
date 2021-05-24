@@ -42,8 +42,7 @@ public class ShufflingObserver {
         log.trace(":accept:ShufflingObserver: START onBlockApplaid AFTER_BLOCK_APPLY, block={}", block.getHeight());
         long startTime = System.currentTimeMillis();
         log.trace("Shuffling observer call at {}", block.getHeight());
-//        if (blockchain.getOrLoadTransactions(block).size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
-        if (blockchain.getBlockTransactionCount(block.getId()) == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
+        if (block.getTransactions().size() == blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()
             || block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() - Constants.MIN_TRANSACTION_SIZE) {
             log.trace("Will not process shufflings at {}", block.getHeight());
             return;

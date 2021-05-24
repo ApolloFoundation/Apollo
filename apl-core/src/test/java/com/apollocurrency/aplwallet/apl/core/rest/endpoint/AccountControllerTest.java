@@ -157,7 +157,7 @@ class AccountControllerTest extends AbstractEndpointTest {
     private TransactionConverter transactionConverter = new TransactionConverter(blockchain, new UnconfirmedTransactionConverter(prunableLoadingService));
     private BlockConverter blockConverter = new BlockConverter(
         blockchain, transactionConverter,
-        mock(PhasingPollService.class), mock(AccountService.class));
+        mock(PhasingPollService.class));
 
     private Block GENESIS_BLOCK, LAST_BLOCK, NEW_BLOCK;
     private Block BLOCK_0, BLOCK_1, BLOCK_2, BLOCK_3;

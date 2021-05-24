@@ -109,9 +109,9 @@ public class ShufflingParticipantTableTest extends DBContainerRootTest {
 
         std.NEW_PARTICIPANT.setDbKey(new LinkKey(std.NEW_PARTICIPANT.getShufflingId(), std.NEW_PARTICIPANT.getAccountId()));
         std.NEW_PARTICIPANT.setHeight(std.NEW_PARTICIPANT.getHeight() + 1);
-        std.NEW_PARTICIPANT.setDbId(std.NEW_PARTICIPANT.getDbId() + 1);
 
         DbUtils.inTransaction(extension, (con) -> table.insert(std.NEW_PARTICIPANT));
+        std.NEW_PARTICIPANT.setDbId(std.NEW_PARTICIPANT.getDbId() + 1);
 
         savedParticipant = table.getParticipant(std.NEW_PARTICIPANT.getShufflingId(), std.NEW_PARTICIPANT.getAccountId());
         assertEquals(std.NEW_PARTICIPANT, savedParticipant);

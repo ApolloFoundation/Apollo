@@ -344,13 +344,15 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
             throw new RuntimeException("DbKey not set");
         }
         try (Connection con = dataSource.getConnection()) {
-            if (multiversion) {
+            // update only entity with existing db_id, assuming that 't'
+            // entity is the latest and exists on the top of the blockchain
+            if (multiversion && !t.isNew()) {
                 try (
                     @DatabaseSpecificDml(DmlMarker.UPDATE_WITH_LIMIT)
                     PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
-                        + " SET latest = FALSE " + keyFactory.getPKClause() + " AND latest = TRUE LIMIT 1")
+                        + " SET latest = FALSE WHERE db_id = ?")
                 ) {
-                    dbKey.setPK(pstmt);
+                    pstmt.setLong(1, t.getDbId());
                     pstmt.executeUpdate();
                 }
             }

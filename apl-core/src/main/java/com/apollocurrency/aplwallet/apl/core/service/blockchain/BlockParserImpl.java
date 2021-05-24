@@ -65,6 +65,7 @@ public class BlockParserImpl implements BlockParser {
             BlockImpl block = new BlockImpl(version, timestamp, previousBlock, totalAmountATM, totalFeeATM,
                 payloadLength, payloadHash, generatorPublicKey,
                 generationSignature, blockSignature, previousBlockHash, timeout, blockTransactions, baseTarget);
+            block.assignBlockData(blockTransactions, generatorPublicKey);
             if (!block.checkSignature()) {
                 throw new AplException.NotValidException("Invalid block signature");
             }

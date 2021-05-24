@@ -20,17 +20,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.blockchain;
 
+import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 public final class BlockImpl implements Block {
     private final int version;
@@ -44,7 +44,7 @@ public final class BlockImpl implements Block {
     private final byte[] payloadHash;
     private final int timeout;
     private volatile byte[] generatorPublicKey;
-    private volatile List<Transaction> blockTransactions;
+    private volatile List<Transaction> blockTransactions = Collections.emptyList();
 
     private byte[] blockSignature;
     private BigInteger cumulativeDifficulty;
@@ -56,6 +56,7 @@ public final class BlockImpl implements Block {
     private volatile long generatorId;
     private volatile byte[] bytes = null;
     private volatile boolean hasValidSignature = false;
+    private volatile boolean hasLoadedData = false;
 
     public BlockImpl(byte[] generatorPublicKey, byte[] generationSignature, long baseTarget) {
         this(-1, 0, 0, 0, 0, 0, new byte[32], generatorPublicKey,
@@ -172,15 +173,6 @@ public final class BlockImpl implements Block {
         return generatorPublicKey != null;
     }
 
-    public void setGeneratorPublicKey(byte[] generatorPublicKey) {
-        if (generatorPublicKey != null && generatorPublicKey.length > 0) {
-            this.generatorPublicKey = generatorPublicKey;
-        } else {
-            String error = "Can't assign empty generatorPublicKey";
-            throw new RuntimeException(error);
-        }
-    }
-
     @Override
     public byte[] getPreviousBlockHash() {
         return previousBlockHash;
@@ -219,11 +211,6 @@ public final class BlockImpl implements Block {
     @Override
     public List<Transaction> getTransactions() {
         return this.blockTransactions;
-    }
-
-    @Override
-    public void setTransactions(List<Transaction> transactions) {
-        this.blockTransactions = Objects.requireNonNull(transactions, "transaction List should not be NULL");
     }
 
     @Override
@@ -353,16 +340,6 @@ public final class BlockImpl implements Block {
         return hasValidSignature;
     }
 
-    public void assignTransactionsIndex() {
-        // important !!! assign transaction index value
-        short index = 0;
-        for (Transaction transaction : this.blockTransactions) {
-            transaction.setBlock(this);
-            transaction.setIndex(index++);
-            transaction.getAppendages();
-        }
-    }
-
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("BlockImpl{");
@@ -381,5 +358,27 @@ public final class BlockImpl implements Block {
         sb.append(", hasValidSignature=").append(hasValidSignature);
         sb.append('}');
         return sb.toString();
+    }
+
+    @Override
+    public boolean hasLoadedData() {
+        return hasLoadedData;
+    }
+
+    @Override
+    public void assignBlockData(List<Transaction> txs, byte[] generatorPublicKey) {
+        this.blockTransactions = new ArrayList<>(txs);
+        this.generatorPublicKey = generatorPublicKey;
+        this.hasLoadedData = true;
+    }
+
+    @Override
+    public void assignTransactionsIndex() {
+        // important !!! assign transaction index value
+        short index = 0;
+        for (Transaction transaction : this.blockTransactions) {
+            transaction.setBlock(this);
+            transaction.setIndex(index++);
+        }
     }
 }

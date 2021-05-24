@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEv
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
@@ -90,7 +91,7 @@ class AccountServiceTest {
     void testGetAccountOnHeight() {
         int height = 10000;
         long accountId = testData.PUBLIC_KEY1.getAccountId();
-        DbKey dbKey = AccountTable.newKey(accountId);
+        DbKey dbKey = AccountTableInterface.newKey(accountId);
         Account newAccount = new Account(accountId, height);
         newAccount.setPublicKey(testData.PUBLIC_KEY1);
         Account account = accountService.getAccount(accountId, height);
@@ -105,7 +106,7 @@ class AccountServiceTest {
     @Test
     void testGetAccount() {
         long accountId = testData.PUBLIC_KEY1.getAccountId();
-        DbKey dbKey = AccountTable.newKey(accountId);
+        DbKey dbKey = AccountTableInterface.newKey(accountId);
         Account newAccount = new Account(((LongKey) dbKey).getId(), dbKey);
         Account account = accountService.getAccount(accountId);
         assertNull(account);
@@ -120,7 +121,7 @@ class AccountServiceTest {
         assertNull(accountService.getAccount(testData.PUBLIC_KEY1.getPublicKey()));
 
         long accountId = AccountService.getId(testData.PUBLIC_KEY1.getPublicKey());
-        DbKey dbKey = AccountTable.newKey(accountId);
+        DbKey dbKey = AccountTableInterface.newKey(accountId);
         Account newAccount = new Account(((LongKey) dbKey).getId(), dbKey);
         doReturn(newAccount).when(accountService).getAccount(accountId);
         assertEquals(newAccount, accountService.getAccount(testData.PUBLIC_KEY1.getPublicKey()));
@@ -134,7 +135,7 @@ class AccountServiceTest {
     void testAddOrGetAccount() {
         assertThrows(IllegalArgumentException.class, () -> accountService.createAccount(0));
         long accountId = testData.PUBLIC_KEY1.getAccountId();
-        DbKey dbKey = AccountTable.newKey(accountId);
+        DbKey dbKey = AccountTableInterface.newKey(accountId);
         Account newAccount = new Account(((LongKey) dbKey).getId(), dbKey);
         Account account = accountService.createAccount(accountId);
         assertEquals(newAccount, account);

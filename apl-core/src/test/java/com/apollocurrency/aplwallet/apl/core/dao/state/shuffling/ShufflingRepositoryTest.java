@@ -176,9 +176,10 @@ public abstract class ShufflingRepositoryTest extends DBContainerRootTest {
     void testInsertExisting() {
         Shuffling existing = copyShuffling(std.SHUFFLING_3_3_APL_REGISTRATION);
         existing.setHeight(existing.getHeight() + 1);
-        existing.setDbId(existing.getDbId() + 1);
         existing.setStage(ShufflingStage.PROCESSING);
+
         shufflingRepository.insert(existing);
+
         Shuffling shuffling = shufflingRepository.get(existing.getId());
         assertEquals(existing, shuffling);
     }

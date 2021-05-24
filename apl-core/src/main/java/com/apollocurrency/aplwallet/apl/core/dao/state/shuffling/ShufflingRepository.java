@@ -4,12 +4,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 
 import java.util.List;
 
 public interface ShufflingRepository {
+    LongKeyFactory<Shuffling> dbKeyFactory = new LongKeyFactory<>("id") {
+        @Override
+        public DbKey newKey(Shuffling shuffling) {
+            if (shuffling.getDbKey() == null) {
+                shuffling.setDbKey(dbKeyFactory.newKey(shuffling.getId()));
+            }
+            return shuffling.getDbKey();
+        }
+    };
+
     int getCount();
 
     int getActiveCount();
@@ -31,4 +43,6 @@ public interface ShufflingRepository {
     void insert(Shuffling shuffling);
 
     boolean delete(Shuffling shuffling);
+
+    List<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to);
 }

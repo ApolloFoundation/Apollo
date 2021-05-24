@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
+import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
@@ -50,6 +51,21 @@ public class ShufflingDbRepositoryTest extends ShufflingRepositoryTest {
     @Test
     void testInsertExisting() {
         DbUtils.inTransaction(extension, (con) -> super.testInsertExisting());
+    }
+
+    @Test
+    void testMerge() {
+        DbUtils.inTransaction(extension, (con)-> {
+            std.SHUFFLING_3_3_APL_REGISTRATION.setStage(ShufflingStage.BLAME);
+            std.SHUFFLING_3_3_APL_REGISTRATION.setHeight(std.SHUFFLING_3_3_APL_REGISTRATION.getHeight()); // set the same height to trigger merge
+            int rowsBefore = repository().getRowCount();
+            repository().insert(std.SHUFFLING_3_3_APL_REGISTRATION);
+
+            Shuffling shuffling = repository().get(std.SHUFFLING_3_3_APL_REGISTRATION.getId());
+            assertEquals(std.SHUFFLING_3_3_APL_REGISTRATION, shuffling);
+            int rowAfter = repository().getRowCount();
+            assertEquals(rowsBefore, rowAfter);
+        });
     }
 
 
