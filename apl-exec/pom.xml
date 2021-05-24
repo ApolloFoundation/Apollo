@@ -126,8 +126,8 @@
             </goals>
             <configuration>
               <excludeTypes>zip</excludeTypes>
-              <excludeArtifactIds>weld-junit5,weld-junit-common,jsonassert</excludeArtifactIds>
-              <excludeGroupIds>org.junit,org.mockito,org.opentest4j,org.hibernate.javax.persistence</excludeGroupIds>
+              <excludeArtifactIds>weld-junit5,weld-junit-common,jsonassert,quarkus-junit5,quarkus-junit5-mockito,rest-assured</excludeArtifactIds>
+              <excludeGroupIds>org.junit,org.junit.jupiter,org.mockito,org.opentest4j,org.hibernate.javax.persistence</excludeGroupIds>
               <outputDirectory>${project.build.directory}/lib</outputDirectory>
             </configuration>
           </execution>

@@ -14,12 +14,12 @@
     <url>https://www.apollocurrency.com/</url>
   </organization>
   <repositories>
-    <!-- arti.firstbridge.work does not chache in apl repo so we have to add Maven Central here -->
+    <!-- arti.firstbridge.work does not cache in apl repo so we have to add Maven Central here -->
     <repository>
       <id>central</id>
       <name>Maven Repository Switchboard</name>
       <layout>default</layout>
-      <url>https://repo1.maven.org/maven2</url>
+      <url>https://repo1.maven.org/maven2/</url>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>

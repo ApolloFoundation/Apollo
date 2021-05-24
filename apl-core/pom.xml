@@ -111,7 +111,7 @@
     </dependency>
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-core</artifactId>
+      <artifactId>resteasy-core-spi</artifactId>
     </dependency>
 
     <dependency>
