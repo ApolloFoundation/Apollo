@@ -12,14 +12,13 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import javax.enterprise.inject.Vetoed;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Singleton
+@Vetoed
 public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityRepository<Shuffling> implements ShufflingRepository {
 
     private static final String RECIPIENTS_PUBLIC_KEYS = "recipient_public_keys";
@@ -49,7 +48,6 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
         return diff;
     };
 
-    @Inject
     public InMemoryShufflingRepository() {
         super(dbKeyFactory, List.of("recipient_public_keys", "blocks_remaining", "assignee_account_id", "registrant_count", "stage"));
     }

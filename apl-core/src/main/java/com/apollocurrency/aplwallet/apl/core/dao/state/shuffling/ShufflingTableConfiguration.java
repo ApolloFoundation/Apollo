@@ -30,9 +30,9 @@ public class ShufflingTableConfiguration {
 
     @Inject
     public ShufflingTableConfiguration(TaskDispatchManager taskManager,
-                                       ShufflingTable shufflingTable,
+                                       ShufflingTableProducer shufflingTableProducer,
                                        @Property(name = "apl.enableShufflingMemTable") boolean cacheEnabled) {
-        this.shufflingTable = shufflingTable;
+        this.shufflingTable = shufflingTableProducer.shufflingTable();
         this.taskManager = taskManager;
         this.cacheEnabled = cacheEnabled;
     }

@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -20,8 +19,6 @@ public class ShufflingTableProducer {
     Event<DeleteOnTrimData> deleteOnTrimDataEvent;
 
 
-    @Produces
-    @Singleton
     public ShufflingTable shufflingTable() {
         return new ShufflingTable(databaseManager, deleteOnTrimDataEvent);
     }

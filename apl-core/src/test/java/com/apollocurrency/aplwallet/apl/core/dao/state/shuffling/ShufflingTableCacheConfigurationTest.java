@@ -33,13 +33,16 @@ class ShufflingTableCacheConfigurationTest {
     TaskDispatcher taskDispatcher;
     @Mock
     ShufflingTable shufflingTable;
+    @Mock
+    ShufflingTableProducer shufflingTableProducer;
 
     ShufflingTableConfiguration configuration;
     ShufflingTestData td;
 
 
     void setUp(boolean enableCache) {
-        configuration = new ShufflingTableConfiguration( taskDispatchManager, shufflingTable, enableCache);
+        doReturn(shufflingTable).when(shufflingTableProducer).shufflingTable();
+        configuration = new ShufflingTableConfiguration( taskDispatchManager, shufflingTableProducer, enableCache);
         td = new ShufflingTestData();
     }
 
