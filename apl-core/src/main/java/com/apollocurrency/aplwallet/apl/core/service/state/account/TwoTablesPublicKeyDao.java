@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account;
 
-import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
@@ -30,7 +30,7 @@ public class TwoTablesPublicKeyDao implements PublicKeyDao {
 
     @Override
     public PublicKey searchAll(long id) {
-        DbKey dbKey = AccountTable.newKey(id);
+        DbKey dbKey = AccountTableInterface.newKey(id);
         PublicKey publicKey = publicKeyTable.get(dbKey);
         if (publicKey == null) {
             publicKey = genesisPublicKeyTable.get(dbKey);
@@ -40,7 +40,7 @@ public class TwoTablesPublicKeyDao implements PublicKeyDao {
 
     @Override
     public PublicKey get(long id) {
-        return publicKeyTable.get(AccountTable.newKey(id));
+        return publicKeyTable.get(AccountTableInterface.newKey(id));
     }
 
     @Override
@@ -61,7 +61,7 @@ public class TwoTablesPublicKeyDao implements PublicKeyDao {
 
     @Override
     public PublicKey getByHeight(long id, int height) {
-        DbKey dbKey = AccountTable.newKey(id);
+        DbKey dbKey = AccountTableInterface.newKey(id);
         PublicKey publicKey = publicKeyTable.get(dbKey, height);
         if (publicKey == null) {
             publicKey = genesisPublicKeyTable.get(dbKey, height);

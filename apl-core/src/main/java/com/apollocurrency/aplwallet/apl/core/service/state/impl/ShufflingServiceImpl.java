@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingDataTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingParticipantTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingRepository;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
@@ -56,7 +56,7 @@ import java.util.Set;
 @Singleton
 public class ShufflingServiceImpl implements ShufflingService {
 
-    private final ShufflingTable shufflingTable;
+    private final ShufflingRepository shufflingRepository;
     private final ShufflingDataTable shufflingDataTable;
     private final ShufflingParticipantTable participantTable;
     private final BlockchainConfig blockchainConfig;
@@ -73,7 +73,7 @@ public class ShufflingServiceImpl implements ShufflingService {
 
     @Inject
     public ShufflingServiceImpl(
-                                ShufflingTable shufflingTable,
+                                ShufflingRepository shufflingRepository,
                                 ShufflingDataTable shufflingDataTable,
                                 ShufflingParticipantTable participantTable,
                                 BlockchainConfig blockchainConfig,
@@ -85,7 +85,7 @@ public class ShufflingServiceImpl implements ShufflingService {
                                 ShardDao shardDao,
                                 PropertiesHolder propertiesHolder
                                 ) {
-        this.shufflingTable = shufflingTable;
+        this.shufflingRepository = shufflingRepository;
         this.shufflingDataTable = shufflingDataTable;
         this.participantTable = participantTable;
         this.blockchainConfig = blockchainConfig;
@@ -204,7 +204,7 @@ public class ShufflingServiceImpl implements ShufflingService {
     @Override
     public void addShuffling(Transaction transaction, ShufflingCreation attachment) {
         Shuffling shuffling = new Shuffling(transaction, attachment, blockchain.getHeight());
-        shufflingTable.insert(shuffling);
+        shufflingRepository.insert(shuffling);
         addParticipant(shuffling.getId(), transaction.getSenderId(), 0);
         shufflingListeners.notify(shuffling, ShufflingEvent.SHUFFLING_CREATED);
     }
@@ -216,12 +216,12 @@ public class ShufflingServiceImpl implements ShufflingService {
 
     @Override
     public int getShufflingCount() {
-        return shufflingTable.getCount();
+        return shufflingRepository.getCount();
     }
 
     @Override
     public int getShufflingActiveCount() {
-        return shufflingTable.getActiveCount();
+        return shufflingRepository.getActiveCount();
     }
 
     @Override
@@ -236,22 +236,22 @@ public class ShufflingServiceImpl implements ShufflingService {
 
     @Override
     public List<Shuffling> getAll(int from, int to) {
-        return shufflingTable.extractAll(from, to);
+        return shufflingRepository.extractAll(from, to);
     }
 
     @Override
     public List<Shuffling> getActiveShufflings(int from, int to) {
-        return shufflingTable.getActiveShufflings(from, to);
+        return shufflingRepository.getActiveShufflings(from, to);
     }
 
     @Override
     public List<Shuffling> getActiveShufflings() {
-        return shufflingTable.getActiveShufflings();
+        return shufflingRepository.getActiveShufflings(0, -1);
     }
 
     @Override
     public List<Shuffling> getFinishedShufflings(int from, int to) {
-        return shufflingTable.getFinishedShufflings(from, to);
+        return shufflingRepository.getFinishedShufflings(from, to);
     }
 
     @Override
@@ -261,13 +261,13 @@ public class ShufflingServiceImpl implements ShufflingService {
 
     @Override
     public Shuffling getShuffling(long shufflingId) {
-        return shufflingTable.getShuffling(shufflingId);
+        return shufflingRepository.get(shufflingId);
     }
 
     @Override
     public Shuffling getShuffling(byte[] fullHash) {
         long shufflingId = Convert.transactionFullHashToId(fullHash);
-        Shuffling shuffling = shufflingTable.getShuffling(shufflingId);
+        Shuffling shuffling = shufflingRepository.get(shufflingId);
         if (shuffling != null && !Arrays.equals(getFullHash(shuffling.getId()), fullHash)) {
             log.debug("Shuffling with different hash {} but same id found for hash {}",
                 Convert.toHexString(getFullHash(shuffling.getId())), Convert.toHexString(fullHash));
@@ -592,22 +592,22 @@ public class ShufflingServiceImpl implements ShufflingService {
 
     @Override
     public int getHoldingShufflingCount(long holdingId, boolean includeFinished) {
-        return shufflingTable.getHoldingShufflingCount(holdingId, includeFinished);
+        return shufflingRepository.getHoldingShufflingCount(holdingId, includeFinished);
     }
 
     @Override
     public List<Shuffling> getHoldingShufflings(long holdingId, ShufflingStage stage, boolean includeFinished, int from, int to) {
-        return shufflingTable.getHoldingShufflings(holdingId, stage, includeFinished, from, to);
+        return shufflingRepository.getHoldingShufflings(holdingId, stage, includeFinished, from, to);
     }
 
     @Override
     public List<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to) {
-        return shufflingTable.getAccountShufflings(accountId, includeFinished, from, to);
+        return shufflingRepository.getAccountShufflings(accountId, includeFinished, from, to);
     }
 
     @Override
     public List<Shuffling> getAssignedShufflings(long assigneeAccountId, int from, int to) {
-        return shufflingTable.getAssignedShufflings(assigneeAccountId, from, to);
+        return shufflingRepository.getAssignedShufflings(assigneeAccountId, from, to);
     }
 
     @Override
@@ -689,7 +689,7 @@ public class ShufflingServiceImpl implements ShufflingService {
 
     private void updateHeightAndInsert(Shuffling shuffling) {
         shuffling.setHeight(blockchain.getHeight());
-        shufflingTable.insert(shuffling);
+        shufflingRepository.insert(shuffling);
     }
 
     private void delete(Shuffling shuffling) {
@@ -698,7 +698,7 @@ public class ShufflingServiceImpl implements ShufflingService {
             delete(participant);
         }
         shuffling.setHeight(blockchain.getHeight());
-        shufflingTable.deleteAtHeight(shuffling, blockchain.getHeight());
+        shufflingRepository.delete(shuffling);
         log.debug("DELETED Shuffling {} entered stage {}, assignee {}, remaining blocks {}",
             Long.toUnsignedString(shuffling.getId()), shuffling.getStage(), Long.toUnsignedString(shuffling.getAssigneeAccountId()), shuffling.getBlocksRemaining());
 

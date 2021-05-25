@@ -251,18 +251,35 @@ public class BlockchainImpl implements Blockchain {
         if (block == null) {
             return null;
         }
-        if (block.getTransactions() == null) {
-            block.setTransactions(getOrLoadTransactions(block));
+        if (block.hasLoadedData()) {
+            return block;
         }
+        List<Transaction> transactions = loadBlockTransactions(block);
+        byte[] generatorPublicKey = loadGeneratorPublicKey(block);
+        block.assignBlockData(transactions, generatorPublicKey);
+        return block;
+    }
+
+    private byte[] loadGeneratorPublicKey(Block block) {
         PublicKey publicKey = publicKeyDao.searchAll(block.getGeneratorId());
         if (publicKey != null) {
-            block.setGeneratorPublicKey(publicKey.getPublicKey());
+            return publicKey.getPublicKey();
         } else {
             //special case when scan was failed and no public keys in db exist
             log.warn("No public key for generator's account {} on block {} at {}", block.getGeneratorId(), block.getId(), block.getHeight());
+            return null;
         }
-        return block;
     }
+
+    private List<Transaction> loadBlockTransactions(Block block) {
+        List<Transaction> blockTransactions = getBlockTransactions(block.getId());
+            List<Transaction> transactions = Collections.unmodifiableList(blockTransactions);
+            for (Transaction transaction : transactions) {
+                prunableService.loadTransactionPrunables(transaction);
+            }
+        return transactions;
+    }
+
     List<Block> loadBlockData(List<Block> blocks) {
         return blocks.stream().map(this::loadBlockData).collect(Collectors.toList());
     }
@@ -322,31 +339,31 @@ public class BlockchainImpl implements Blockchain {
     public void saveBlock(Block block) {
         if (block != null) {
             blockDao.saveBlock(blockModelToEntityConverter.convert(block));
-            transactionService.saveTransactions(this.getOrLoadTransactions(block));
+            transactionService.saveTransactions(block.getTransactions());
         }
     }
 
-    @Override
-    public List<Transaction> getOrLoadTransactions(Block parentBlock) {
-        if (parentBlock.getTransactions() == null || parentBlock.getTransactions().size() == 0) {
-            List<Transaction> blockTransactions = this.getBlockTransactions(parentBlock.getId());
-            if (blockTransactions.size() > 0) {
-                List<Transaction> transactions = Collections.unmodifiableList(blockTransactions);
-                short index = 0;
-                for (Transaction transaction : transactions) {
-                    transaction.setBlock(parentBlock);
-                    transaction.setIndex(index++);
-                    prunableService.loadTransactionPrunables(transaction);
-                }
-                parentBlock.setTransactions(transactions);
-            } else {
-                parentBlock.setTransactions(Collections.emptyList());
-            }
-        } else if (parentBlock.getTransactions() == null) {
-            parentBlock.setTransactions(Collections.emptyList());
-        }
-        return parentBlock.getTransactions();
-    }
+//    @Override
+//    public List<Transaction> getOrLoadTransactions(Block parentBlock) {
+//        if (parentBlock.getTransactions() == null || parentBlock.getTransactions().size() == 0) {
+//            List<Transaction> blockTransactions = this.getBlockTransactions(parentBlock.getId());
+//            if (blockTransactions.size() > 0) {
+//                List<Transaction> transactions = Collections.unmodifiableList(blockTransactions);
+//                short index = 0;
+//                for (Transaction transaction : transactions) {
+//                    transaction.setBlock(parentBlock);
+//                    transaction.setIndex(index++);
+//                    prunableService.loadTransactionPrunables(transaction);
+//                }
+//                parentBlock.setTransactions(transactions);
+//            } else {
+//                parentBlock.setTransactions(Collections.emptyList());
+//            }
+//        } else if (parentBlock.getTransactions() == null) {
+//            parentBlock.setTransactions(Collections.emptyList());
+//        }
+//        return parentBlock.getTransactions();
+//    }
 
     @Transactional
     @Override
@@ -463,7 +480,7 @@ public class BlockchainImpl implements Blockchain {
         } else {
             result = loadBlockDataFromEntities(entityList);//load the generator public key
             for (Block block : result) {
-                List<Transaction> blockTransactions = this.getOrLoadTransactions(block);
+                List<Transaction> blockTransactions = block.getTransactions();
                 if (log.isTraceEnabled()) {
                     log.trace("Block id={} height={} Loaded {} transaction.",
                         block.getId(),

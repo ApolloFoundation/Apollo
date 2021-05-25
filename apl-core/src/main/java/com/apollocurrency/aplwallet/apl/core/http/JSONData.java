@@ -562,10 +562,6 @@ public final class JSONData {
         json.put("height", block.getHeight());
         putAccount(json, "generator", block.getGeneratorId());
         byte[] generatorPublicKey = block.getGeneratorPublicKey();
-        if (generatorPublicKey == null) {
-            generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
-            block.setGeneratorPublicKey(generatorPublicKey);
-        }
         json.put("generatorPublicKey", Convert.toHexString(generatorPublicKey));
         json.put("timestamp", block.getTimestamp());
 
@@ -588,7 +584,7 @@ public final class JSONData {
         json.put("blockSignature", Convert.toHexString(block.getBlockSignature()));
         JSONArray transactions = new JSONArray();
         Long totalAmountATM = 0L;
-        for (Transaction transaction : blockchain.getOrLoadTransactions(block)) {
+        for (Transaction transaction : blockchain.loadBlockData(block).getTransactions()) {
             JSONObject transactionJson = transaction(true, transaction);
             Long amountATM = Long.parseLong((String) transactionJson.get("amountATM"));
             totalAmountATM += amountATM;

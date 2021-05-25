@@ -6,7 +6,6 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
@@ -16,34 +15,21 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
-import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
-import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import javax.enterprise.inject.Vetoed;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
 @Slf4j
-@Singleton
+@Vetoed
 public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> implements ShufflingRepository {
 
-    public static final LongKeyFactory<Shuffling> dbKeyFactory = new LongKeyFactory<>("id") {
-        @Override
-        public DbKey newKey(Shuffling shuffling) {
-            if (shuffling.getDbKey() == null) {
-                shuffling.setDbKey(dbKeyFactory.newKey(shuffling.getId()));
-            }
-            return shuffling.getDbKey();
-        }
-    };
-
-    @Inject
     public ShufflingTable(DatabaseManager databaseManager,
                           Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("shuffling", dbKeyFactory, null,
@@ -52,37 +38,11 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> i
 
     @Override
     public void save(Connection con, Shuffling shuffling) throws SQLException {
-        try (
-            @DatabaseSpecificDml(DmlMarker.MERGE)
-            @DatabaseSpecificDml(DmlMarker.SET_ARRAY)
-            PreparedStatement pstmt = con.prepareStatement("INSERT INTO shuffling (id, holding_id, holding_type, "
-                + "issuer_id, amount, participant_count, blocks_remaining, stage, assignee_account_id, "
-                + "recipient_public_keys, registrant_count, height, latest, deleted) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE) "
-                + "ON DUPLICATE KEY UPDATE id = VALUES(id), holding_id = VALUES(holding_id), holding_type = VALUES(holding_type), "
-                + "issuer_id = VALUES(issuer_id), amount = VALUES(amount), participant_count = VALUES(participant_count), "
-                + "blocks_remaining = VALUES(blocks_remaining), stage = VALUES(stage), assignee_account_id = VALUES(assignee_account_id), "
-                + "recipient_public_keys = VALUES(recipient_public_keys), registrant_count = VALUES(registrant_count), "
-                + "height = VALUES(height), latest = TRUE, deleted = FALSE")
-        ) {
-            int i = 0;
-            pstmt.setLong(++i, shuffling.getId());
-            DbUtils.setLongZeroToNull(pstmt, ++i, shuffling.getHoldingId());
-            pstmt.setByte(++i, shuffling.getHoldingType().getCode());
-            pstmt.setLong(++i, shuffling.getIssuerId());
-            pstmt.setLong(++i, shuffling.getAmount());
-            pstmt.setByte(++i, shuffling.getParticipantCount());
-            DbUtils.setShortZeroToNull(pstmt, ++i, shuffling.getBlocksRemaining());
-            pstmt.setByte(++i, shuffling.getStage().getCode());
-            DbUtils.setLongZeroToNull(pstmt, ++i, shuffling.getAssigneeAccountId());
-            DbUtils.set2dByteArray(pstmt, ++i, shuffling.getRecipientPublicKeys());
-            pstmt.setByte(++i, shuffling.getRegistrantCount());
-            pstmt.setInt(++i, shuffling.getHeight());
-            pstmt.executeUpdate();
+        if (shuffling.requireMerge()) {
+            doUpdate(con, shuffling);
+        } else {
+            doInsert(con, shuffling);
         }
-
-        log.trace("Save shuffling {} - height - {} remaining - {} Trace - {}",
-            shuffling.getId(), shuffling.getHeight(), shuffling.getBlocksRemaining(), ThreadUtils.last3Stacktrace());
     }
 
     @Override
@@ -190,6 +150,62 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> i
     @Override
     public boolean delete(Shuffling shuffling) {
         return deleteAtHeight(shuffling, shuffling.getHeight());
+    }
+
+    private void doInsert(Connection con, Shuffling shuffling) throws SQLException {
+        try (
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO shuffling (id, holding_id, holding_type, "
+                + "issuer_id, amount, participant_count, blocks_remaining, stage, assignee_account_id, "
+                + "recipient_public_keys, registrant_count, height, latest, deleted) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE) ", Statement.RETURN_GENERATED_KEYS)
+        ) {
+            setPstmParams(pstmt, shuffling);
+            pstmt.executeUpdate();
+            try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    shuffling.setDbId(generatedKeys.getLong(1));
+                } else {
+                    throw new IllegalStateException("Unable to retrieve generated primary key for the shuffling " + shuffling);
+                }
+            };
+        }
+        log.trace("Insert shuffling {} - height - {} remaining - {} Trace - {}",
+            shuffling.getId(), shuffling.getHeight(), shuffling.getBlocksRemaining(), ThreadUtils.last3Stacktrace());
+    }
+
+    private void doUpdate(Connection con, Shuffling shuffling) throws SQLException {
+        try (
+            PreparedStatement pstmt = con.prepareStatement("UPDATE shuffling SET id = ?, " +
+                " holding_id = ?, holding_type = ?, "
+                + "issuer_id = ?, amount = ?, participant_count = ?, "
+                + "blocks_remaining = ?, stage = ?, assignee_account_id = ?, "
+                + "recipient_public_keys = ?, registrant_count = ?, "
+                + "height = ?, latest = TRUE, deleted = FALSE WHERE db_id = ?")
+        ) {
+            int index = setPstmParams(pstmt, shuffling);
+            pstmt.setLong(++index, shuffling.getDbId());
+            pstmt.executeUpdate();
+        }
+
+        log.trace("Merge shuffling {} - height - {} remaining - {} Trace - {}",
+            shuffling.getId(), shuffling.getHeight(), shuffling.getBlocksRemaining(), ThreadUtils.last3Stacktrace());
+    }
+
+    private int setPstmParams(PreparedStatement pstmt, Shuffling shuffling) throws SQLException {
+        int i = 0;
+        pstmt.setLong(++i, shuffling.getId());
+        DbUtils.setLongZeroToNull(pstmt, ++i, shuffling.getHoldingId());
+        pstmt.setByte(++i, shuffling.getHoldingType().getCode());
+        pstmt.setLong(++i, shuffling.getIssuerId());
+        pstmt.setLong(++i, shuffling.getAmount());
+        pstmt.setByte(++i, shuffling.getParticipantCount());
+        DbUtils.setShortZeroToNull(pstmt, ++i, shuffling.getBlocksRemaining());
+        pstmt.setByte(++i, shuffling.getStage().getCode());
+        DbUtils.setLongZeroToNull(pstmt, ++i, shuffling.getAssigneeAccountId());
+        DbUtils.set2dByteArray(pstmt, ++i, shuffling.getRecipientPublicKeys());
+        pstmt.setByte(++i, shuffling.getRegistrantCount());
+        pstmt.setInt(++i, shuffling.getHeight());
+        return i;
     }
 
 }

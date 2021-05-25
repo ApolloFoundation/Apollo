@@ -294,7 +294,7 @@ class BlockControllerTest extends AbstractEndpointTest {
             dto.setTransactions(Collections.emptyList());
         }
         dto.setTotalAmountATM(String.valueOf(
-            blockchain.getOrLoadTransactions(model).stream().mapToLong(Transaction::getAmountATM).sum()));
+            model.getTransactions().stream().mapToLong(Transaction::getAmountATM).sum()));
         return dto;
     }
 

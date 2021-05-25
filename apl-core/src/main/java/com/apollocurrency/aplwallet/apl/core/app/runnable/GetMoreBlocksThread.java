@@ -579,7 +579,7 @@ public class GetMoreBlocksThread implements Runnable {
             List<Block> peerPoppedOffBlocks = blockchainProcessor.popOffToCommonBlock(commonBlock);
             pushedForkBlocks = 0;
             for (Block block : peerPoppedOffBlocks) {
-                transactionProcessor.processLater(blockchain.getOrLoadTransactions(block));
+                transactionProcessor.processLater(block.getTransactions());
             }
         }
 
@@ -597,7 +597,7 @@ public class GetMoreBlocksThread implements Runnable {
         } else {
             log.debug("Switched to peer's fork, peer addr: {}", peer.getHost());
             for (Block block : myPoppedOffBlocks) {
-                transactionProcessor.processLater(blockchain.getOrLoadTransactions(block));
+                transactionProcessor.processLater(block.getTransactions());
             }
         }
 

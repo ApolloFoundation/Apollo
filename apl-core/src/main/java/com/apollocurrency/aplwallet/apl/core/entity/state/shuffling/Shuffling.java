@@ -169,4 +169,13 @@ public final class Shuffling extends VersionedDeletableEntity {
     public void setRegistrantCount(byte registrantCount) {
         this.registrantCount = registrantCount;
     }
+
+    public Shuffling deepCopy() {
+        try {
+            return (Shuffling) clone();
+        }
+        catch (CloneNotSupportedException e) {
+            throw new RuntimeException("Clone is not supported for shuffling");
+        }
+    }
 }
