@@ -45,6 +45,7 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
     public BlockDTO apply(Block model) {
 
         BlockDTO dto = new BlockDTO();
+        blockchain.loadBlockData(model);
         dto.setBlock(model.getStringId());
         dto.setHeight(model.getHeight());
         dto.setGenerator(Long.toUnsignedString(model.getGeneratorId()));
@@ -77,7 +78,6 @@ public class BlockConverter implements Converter<Block, BlockDTO> {
 
     public void addTransactions(BlockDTO o, Block model) {
         if (o != null && model != null) {
-            blockchain.loadBlockData(model);
             List<TransactionDTO> transactionDTOList = model.getTransactions().stream().map(transactionConverter).collect(Collectors.toList());
             o.setNumberOfTransactions((long) model.getTransactions().size());
             o.setTotalAmountATM(String.valueOf(transactionDTOList.stream().map(TransactionDTO::getAmountATM).mapToLong(Long::parseLong).sum()));
