@@ -4,7 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.smc;
 
+import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractDetailsRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
@@ -17,10 +19,15 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.testutil.EntityProducer;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.weld.junit.MockBean;
@@ -34,13 +41,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.inject.Inject;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.sql.Connection;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -52,6 +64,10 @@ class SmcContractTableTest extends DbContainerBaseTest {
     @RegisterExtension
     static DbExtension dbExtension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/smc-data.sql", "db/schema.sql");
 
+    static {
+        Convert2.init("APL", 1739068987193023818L);
+    }
+
     @Inject
     SmcContractTable table;
 
@@ -59,6 +75,13 @@ class SmcContractTableTest extends DbContainerBaseTest {
 
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
+
+    TransactionTypeFactory transactionTypeFactory = mock(TransactionTypeFactory.class);
+    TransactionType transactionType = mock(TransactionType.class);
+    SmcPublishContractAttachment attachment = mock(SmcPublishContractAttachment.class);
+
+    SmcContractDetailsRowMapper smcContractDetailsRowMapper = new SmcContractDetailsRowMapper(transactionTypeFactory);
+
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         PropertiesHolder.class, EntityProducer.class, SmcContractTable.class
@@ -67,7 +90,7 @@ class SmcContractTableTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(dbExtension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
-
+        .addBeans(MockBean.of(smcContractDetailsRowMapper, SmcContractDetailsRowMapper.class))
         .addBeans(MockBean.of(mock(FullTextConfig.class), FullTextConfig.class, FullTextConfigImpl.class))
         .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
@@ -134,5 +157,25 @@ class SmcContractTableTest extends DbContainerBaseTest {
         } catch (Throwable e) {
             fail("Unexpected flow.");
         }
+    }
+
+    @Test
+    void getContractsByFilter() throws AplException.NotValidException {
+        //GIVEN
+        when(transactionTypeFactory.findTransactionType(any(byte.class), any(byte.class))).thenReturn(transactionType);
+        when(transactionType.parseAttachment(any(ByteBuffer.class))).thenReturn(attachment);
+        when(attachment.getFuelLimit()).thenReturn(BigInteger.TEN);
+        when(attachment.getFuelPrice()).thenReturn(BigInteger.ONE);
+
+        //WHEN
+        List<ContractDetails> result = table.getContractsByFilter(null, null, null, null, 100, 0, -1);
+
+        //THEN
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        var value = result.get(0);
+        assertEquals(Convert2.rsAccount(contractAddress), value.getAddress());
+        assertEquals("Deal", value.getName());
+        assertEquals(Convert2.fromEpochTime(105502204), value.getTimestamp());//from transaction
     }
 }

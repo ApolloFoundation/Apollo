@@ -1,7 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.converter.db.smc;
 
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
@@ -23,12 +22,10 @@ import java.sql.SQLException;
 @Slf4j
 public class SmcContractDetailsRowMapper implements RowMapper<ContractDetails> {
     private final TransactionTypeFactory factory;
-    private final TransactionBuilderFactory transactionBuilderFactory;
 
     @Inject
-    public SmcContractDetailsRowMapper(TransactionTypeFactory factory, TransactionBuilderFactory transactionBuilderFactory) {
+    public SmcContractDetailsRowMapper(TransactionTypeFactory factory) {
         this.factory = factory;
-        this.transactionBuilderFactory = transactionBuilderFactory;
     }
 
     @Override
