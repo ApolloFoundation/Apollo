@@ -39,7 +39,7 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> i
     @Override
     public void save(Connection con, Shuffling shuffling) throws SQLException {
         if (shuffling.requireMerge()) {
-            doMerge(con, shuffling);
+            doUpdate(con, shuffling);
         } else {
             doInsert(con, shuffling);
         }
@@ -173,7 +173,7 @@ public class ShufflingTable extends VersionedDeletableEntityDbTable<Shuffling> i
             shuffling.getId(), shuffling.getHeight(), shuffling.getBlocksRemaining(), ThreadUtils.last3Stacktrace());
     }
 
-    private void doMerge(Connection con, Shuffling shuffling) throws SQLException {
+    private void doUpdate(Connection con, Shuffling shuffling) throws SQLException {
         try (
             PreparedStatement pstmt = con.prepareStatement("UPDATE shuffling SET id = ?, " +
                 " holding_id = ?, holding_type = ?, "

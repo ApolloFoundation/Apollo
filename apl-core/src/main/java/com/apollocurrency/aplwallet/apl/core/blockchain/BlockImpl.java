@@ -27,11 +27,10 @@ import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
+//TODO RawBlock impl (without consensus data)
 public final class BlockImpl implements Block {
     private final int version;
     private final int timestamp;
@@ -125,14 +124,9 @@ public final class BlockImpl implements Block {
         this.nextBlockId = nextBlockId;
         this.height = height;
         this.id = id;
-        if (generatorPublicKey != null) {
-            this.generatorPublicKey = generatorPublicKey;
-            this.generatorId = Convert.getId(generatorPublicKey);
-        } else {
-            this.generatorId = generatorId;
-        }
+        this.generatorId = generatorId;
         if (blockTransactions != null) {
-            this.blockTransactions = Collections.unmodifiableList(blockTransactions);
+            assignBlockData(blockTransactions, generatorPublicKey);
         }
     }
 
@@ -367,8 +361,11 @@ public final class BlockImpl implements Block {
 
     @Override
     public void assignBlockData(List<Transaction> txs, byte[] generatorPublicKey) {
-        this.blockTransactions = new ArrayList<>(txs);
+        this.blockTransactions = Collections.unmodifiableList(txs);
         this.generatorPublicKey = generatorPublicKey;
+        if (generatorPublicKey != null) {
+            this.generatorId = Convert.getId(generatorPublicKey);
+        }
         this.hasLoadedData = true;
     }
 

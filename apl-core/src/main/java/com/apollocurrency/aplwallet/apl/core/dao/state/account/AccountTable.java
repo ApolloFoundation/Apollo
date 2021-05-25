@@ -67,7 +67,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> imple
 
     private void doUpdate(Connection con, Account account) throws SQLException {
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("UPDATE account SET "
+            final PreparedStatement pstmt = con.prepareStatement("UPDATE account SET "
                 + "parent = ?, is_multi_sig = ?, addr_scope = ?, "
                 + "balance = ?, unconfirmed_balance = ?, forged_balance = ?, "
                 + "active_lessee_id = ?, has_control_phasing = ?, height = ?, latest = true, deleted = false WHERE db_id = ?"

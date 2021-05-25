@@ -38,6 +38,10 @@ public abstract class VersionedDerivedEntity extends DerivedEntity {
         super.setHeight(height);
     }
 
+    /**
+     * Indicates, whether this entity should be merged into the db with previous version or should be simply inserted as new
+     * @return true when this entity exists in db on {2}
+     */
     public boolean requireMerge() {
         return getDbId() != 0 && prevHeight != -1 && prevHeight == super.getHeight();
     }
