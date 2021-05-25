@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.model.smc;
 
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.smc.data.type.Address;
-import com.apollocurrency.smc.util.AddressHelper;
+import com.apollocurrency.smc.util.HexUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigInteger;
@@ -30,7 +30,7 @@ public class AplAddress implements Address {
     }
 
     public AplAddress(String address) {
-        byte[] bytes = AddressHelper.parseHex(address);
+        byte[] bytes = HexUtils.parseHex(address);
         this.id = new BigInteger(bytes).longValueExact();
     }
 

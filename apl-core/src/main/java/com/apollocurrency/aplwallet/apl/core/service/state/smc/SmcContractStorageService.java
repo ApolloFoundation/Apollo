@@ -37,8 +37,9 @@ public interface SmcContractStorageService {
      *
      * @param address the contract address
      * @param key     the mapping key
+     * @return true if entry was deleted
      */
-    void deleteEntry(Address address, Key key);
+    boolean deleteEntry(Address address, Key key);
 
     /**
      * Checks if mapping exists

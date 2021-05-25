@@ -59,8 +59,14 @@ public class SmcContractStorageServiceImpl implements SmcContractStorageService 
     }
 
     @Override
-    public void deleteEntry(Address address, Key key) {
-        throw new UnsupportedOperationException("Delete is not supported");
+    public boolean deleteEntry(Address address, Key key) {
+        boolean rc = false;
+        long id = new AplAddress(address).getLongId();
+        SmcContractMappingEntity smcContractMappingEntity = smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(id, key.key()));
+        if (smcContractMappingEntity != null) {
+            rc = smcContractMappingTable.deleteAtHeight(smcContractMappingEntity, blockchain.getHeight());
+        }
+        return rc;
     }
 
     @Override

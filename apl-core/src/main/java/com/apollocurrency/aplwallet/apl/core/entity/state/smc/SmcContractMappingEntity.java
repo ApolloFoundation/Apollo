@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.smc;
 
-import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,7 +19,7 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString(callSuper = true)
-public class SmcContractMappingEntity extends VersionedDerivedEntity {
+public class SmcContractMappingEntity extends VersionedDeletableEntity {
 
     private long address;//contract address/id
     private byte[] key;//complex key is a SHA256 hash; 32 bytes

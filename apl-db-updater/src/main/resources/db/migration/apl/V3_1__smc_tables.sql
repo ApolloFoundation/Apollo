@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `smc_mapping`
     `key`     tinyblob                                NOT NULL,# key
     `name`    varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,# mapping name
     `object`  LONGTEXT COLLATE utf8mb4_unicode_ci     NOT NULL,# serialized object
+    `deleted` tinyint(1)                              NOT NULL DEFAULT 0,
     `height`  int(11)                                 NOT NULL,
     `latest`  tinyint(1)                              NOT NULL DEFAULT 1,
     UNIQUE KEY `db_id` (`db_id`),
