@@ -27,9 +27,12 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodA
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.api.parameter.FirstLastIndexBeanParam;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
+import com.apollocurrency.smc.contract.ContractStatus;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.context.RequestScoped;
@@ -46,19 +49,23 @@ import java.util.List;
 @RequestScoped
 public class SmcApiServiceImpl implements SmcApiService {
 
-    private final BlockchainConfig blockchainConfig;
     private final AccountService accountService;
     private final ContractService contractService;
     private final TransactionCreator transactionCreator;
     private final TxBContext txBContext;
+    private final int maxAPIrecords;
 
     @Inject
-    public SmcApiServiceImpl(BlockchainConfig blockchainConfig, AccountService accountService, ContractService contractService, TransactionCreator transactionCreator) {
-        this.blockchainConfig = blockchainConfig;
+    public SmcApiServiceImpl(BlockchainConfig blockchainConfig,
+                             AccountService accountService,
+                             ContractService contractService,
+                             TransactionCreator transactionCreator,
+                             @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords) {
         this.accountService = accountService;
         this.contractService = contractService;
         this.transactionCreator = transactionCreator;
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
+        this.maxAPIrecords = maxAPIrecords;
     }
 
     @Override
@@ -217,6 +224,59 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         ContractDetails contract = contractService.getContractDetailsByAddress(address);
         response.setContracts(List.of(contract));
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response getSmcList(String addressStr, String publisherStr, String name, String status, Integer firstIndex, Integer lastIndex, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+
+        FirstLastIndexBeanParam indexBeanParam = new FirstLastIndexBeanParam(firstIndex, lastIndex);
+        indexBeanParam.adjustIndexes(maxAPIrecords);
+        AplAddress address = null;
+        AplAddress publisher = null;
+
+        ContractStatus smcStatus = null;
+        if (status != null) {
+            try {
+                smcStatus = ContractStatus.valueOf(status);
+            } catch (IllegalArgumentException e) {
+                return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "status", addressStr).build();
+            }
+        }
+
+        if (addressStr != null) {
+            address = new AplAddress(Convert.parseAccountId(addressStr));
+            Account account = accountService.getAccount(address.getLongId());
+            if (account == null) {
+                return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
+            }
+            if (!contractService.isContractExist(address)) {
+                return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
+            }
+        }
+
+        if (publisherStr != null) {
+            publisher = new AplAddress(Convert.parseAccountId(publisherStr));
+            Account account = accountService.getAccount(publisher.getLongId());
+            if (account == null) {
+                return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "publisher", publisherStr).build();
+            }
+        }
+        ContractListResponse response = new ContractListResponse();
+
+        List<ContractDetails> contracts = contractService.loadContractsByFilter(
+            address,
+            publisher,
+            name,
+            smcStatus,
+            -1,
+            indexBeanParam.getFirstIndex(),
+            indexBeanParam.getLastIndex()
+        );
+
+        response.setContracts(contracts);
 
         return builder.bind(response).build();
     }

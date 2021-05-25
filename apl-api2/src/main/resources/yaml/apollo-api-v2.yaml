@@ -686,6 +686,58 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /@@smc:
+    get:
+      tags:
+        - smc
+      summary: Get list of detail contract information.
+      description: Returns list of the detail contract information.
+      operationId: getSmcList
+      parameters:
+        - name: address
+          in: query
+          description: The contract address
+          required: false
+          schema:
+            type: string
+            example: 'APL-AEAE-TJKJ-DVGC-UFGH'
+        - name: publisher
+          in: query
+          description: The publisher address
+          required: false
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        - name: name
+          in: query
+          description: The contract name
+          required: false
+          schema:
+            type: string
+            example: 'APL20-1721'
+        - name: status
+          in: query
+          description: The contract status
+          required: false
+          schema:
+            type: string
+            description: the contract status ACTIVE, CLOSED, DESTROYED
+            example: ACTIVE
+        - $ref: '#/components/parameters/FirstIndexParameter'
+        - $ref: '#/components/parameters/LastIndexParameter'
+
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractListResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
   /@@smc/{address}:
     get:
       tags:
@@ -741,6 +793,26 @@ paths:
           $ref: '#/components/responses/ServerError'
 
 components:
+  parameters:
+    FirstIndexParameter:
+      name: firstIndex
+      in: query
+      description: The zero based index to the first data to retrive
+      required: false
+      schema:
+        type: integer
+        default: 0
+        example: 10
+    LastIndexParameter:
+      name: lastIndex
+      in: query
+      description: The zero based index to the last data to retrive
+      required: false
+      schema:
+        type: integer
+        default: -1
+        example: 25
+
   schemas:
     TransactionInfoArrayResp:
       allOf:
@@ -1531,6 +1603,10 @@ components:
         address:
           type: string
           description: contract address
+          example: 'APL-DPPW-2KJT-Z5KR-EZ4ND'
+        owner:
+          type: string
+          description: contract publisher
           example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
         transaction:
           type: string

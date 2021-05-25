@@ -181,6 +181,14 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    public List<ContractDetails> loadContractsByFilter(Address address, Address owner, String name, ContractStatus status, int height, int from, int to) {
+        Long contractId = address != null ? new AplAddress(address).getLongId() : null;
+        Long ownerId = owner != null ? new AplAddress(owner).getLongId() : null;
+        List<ContractDetails> result = smcContractTable.getContractsByFilter(contractId, ownerId, name, status != null ? status.name() : null, height < 0 ? blockchain.getHeight() : height, from, to);
+        return result;
+    }
+
+    @Override
     public ContractDetails getContractDetailsByAddress(Address address) {
         SmcContractEntity smcEntity = loadContractEntity(address);
         AplAddress txAddress = new AplAddress(smcEntity.getTransactionId());
