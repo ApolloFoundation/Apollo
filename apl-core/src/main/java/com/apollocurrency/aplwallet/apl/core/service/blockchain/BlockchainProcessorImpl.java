@@ -666,6 +666,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             block.getHeight(), block.getTransactions().size(), System.currentTimeMillis() - startTime, lockAquireTime);
     }
 
+    //TODO implement cache for the recent blocks/transactions and all shard data
     private void fillInBlockArray(Block previousLastBlock, Shard lastShard, int currentHeight) {
         threeLatestBlocksArray[0] = previousLastBlock;
         if (lastShard == null) {
