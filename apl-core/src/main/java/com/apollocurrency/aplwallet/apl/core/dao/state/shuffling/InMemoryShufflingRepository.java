@@ -5,7 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.InMemoryVersionedDerivedEntityRepository;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableData;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.ChangeUtils;
+import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.model.EntityWithChanges;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
@@ -13,6 +18,10 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingSta
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 
 import javax.enterprise.inject.Vetoed;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -200,4 +209,145 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
                 throw new IllegalArgumentException("Unable to set column '" + columnName + "'");
         }
     }
+
+    @Override
+    public boolean isScanSafe() {
+        throw new UnsupportedOperationException("isScanSafe is not supported for the inmemory shufflings");
+    }
+
+    @Override
+    public void truncate() {
+        clear();
+    }
+
+    @Override
+    public void prune(int time) {
+        throw new UnsupportedOperationException("prune is not supported for the inmemory shufflings");
+    }
+
+    @Override
+    public DerivedTableData<Shuffling> getAllByDbId(long from, int limit, long dbIdLimit) throws SQLException {
+        throw new UnsupportedOperationException("getAllByDbId is not supported for the inmemory shufflings");
+    }
+
+    @Override
+    public boolean deleteAtHeight(Shuffling shuffling, int height) {
+        return delete(shuffling);
+    }
+
+    @Override
+    public ResultSet getRangeByDbId(Connection con, PreparedStatement pstmt, MinMaxValue minMaxValue, int limit) throws SQLException {
+        throw new UnsupportedOperationException("getRangeByDbId is not supported for the inmemory shufflings");
+    }
+
+    @Override
+    public MinMaxValue getMinMaxValue(int height) {
+        throw new UnsupportedOperationException("getMinMaxValue is not supported for the inmemory shufflings");
+    }
+
+    @Override
+    public boolean supportDelete() {
+        throw new UnsupportedOperationException("supportDelete is illegal operation for the inmemory shufflings");
+    }
+
+    @Override
+    public String getName() {
+        return "shuffling";
+    }
+
+    @Override
+    public String getFullTextSearchColumns() {
+        throw new UnsupportedOperationException("fullTextSearch columns are not supported for the inmemory shufflilngs");
+    }
+
+    @Override
+    public void save(Connection con, Shuffling entity) throws SQLException {
+        throw new UnsupportedOperationException("save into db is not supported for the inmemory shufflings");
+    }
+
+    @Override
+    public String defaultSort() {
+        throw new UnsupportedOperationException("defaultSort is not supported for the inmemory shufflings");
+    }
+
+    @Override
+    public Shuffling get(DbKey dbKey, boolean createDbKey) {
+        throw new UnsupportedOperationException("get with DbKey and createDbKey flag is not supported for the inmemory shufflings");
+    }
+
+    @Override
+    public Shuffling get(DbKey dbKey, int height) {
+        throw new UnsupportedOperationException("get with a DbKey and height is not supported for the inmemory shufflings");
+    }
+
+    @Override
+    public Shuffling getBy(DbClause dbClause) {
+        throw new UnsupportedOperationException("getBy is not supported for in memory shufflings using DbClause");
+    }
+
+    @Override
+    public Shuffling get(Connection con, PreparedStatement pstmt, boolean cache) throws SQLException {
+        throw new UnsupportedOperationException("get is not supported for in memory shufflings using db connection");
+    }
+
+    @Override
+    public DbIterator<Shuffling> getManyBy(DbClause dbClause, int from, int to) {
+        throw new UnsupportedOperationException("getManyBy is not supported for in memory shufflings using DbClause");
+    }
+
+    @Override
+    public DbIterator<Shuffling> getManyBy(DbClause dbClause, int from, int to, String sort) {
+        throw new UnsupportedOperationException("getManyBy is not supported for in memory shufflings using DbClause and string sort");
+    }
+
+    @Override
+    public DbIterator<Shuffling> getManyBy(DbClause dbClause, int height, int from, int to) {
+        throw new UnsupportedOperationException("getManyBy is not supported for in memory shufflings using DbClause and height");
+    }
+
+    @Override
+    public DbIterator<Shuffling> getManyBy(DbClause dbClause, int height, int from, int to, String sort) {
+        throw new UnsupportedOperationException("getManyBy is not supported for in memory shufflings using DbClause");
+    }
+
+    @Override
+    public DbIterator<Shuffling> getManyBy(Connection con, PreparedStatement pstmt, boolean cache) {
+        throw new UnsupportedOperationException("getManyBy is not supported for in memory shufflings using db connection");
+    }
+
+    @Override
+    public DbIterator<Shuffling> getAll(int from, int to) {
+        throw new UnsupportedOperationException("Unable to getAll shufflings using DbIterator");
+    }
+
+    @Override
+    public DbIterator<Shuffling> getAll(int from, int to, String sort) {
+        throw new UnsupportedOperationException("Unable to get all shufflings with pagination string sort");
+    }
+
+    @Override
+    public int getCount(DbClause dbClause) {
+        throw new UnsupportedOperationException("Unable to calculate count by the db clause for the in memory shuffling table");
+    }
+
+    @Override
+    public int getCount(DbClause dbClause, int height) {
+        throw new UnsupportedOperationException("Unable to calculate count by the db clause for the in memory shuffling table");
+    }
+
+    @Override
+    public int getRowCount() {
+        return rowCount();
+    }
+
+    @Override
+    public int getCount(PreparedStatement pstmt) throws SQLException {
+        throw new UnsupportedOperationException("Unable to calculate count by the sql statement for the in memory shuffling table");
+    }
+
+    @Override
+    public boolean isMultiversion() {
+        return true;
+    }
+
 }

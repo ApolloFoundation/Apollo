@@ -26,7 +26,7 @@ public class ShufflingDbRepositoryTest extends ShufflingRepositoryTest {
     static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/shuffling.sql", null);
 
     @Override
-    public ShufflingTable repository() {
+    public ShufflingTable createRepository() {
         return new ShufflingTable(extension.getDatabaseManager(), mock(Event.class));
     }
 
@@ -58,12 +58,12 @@ public class ShufflingDbRepositoryTest extends ShufflingRepositoryTest {
         DbUtils.inTransaction(extension, (con)-> {
             std.SHUFFLING_3_3_APL_REGISTRATION.setStage(ShufflingStage.BLAME);
             std.SHUFFLING_3_3_APL_REGISTRATION.setHeight(std.SHUFFLING_3_3_APL_REGISTRATION.getHeight()); // set the same height to trigger merge
-            int rowsBefore = repository().getRowCount();
-            repository().insert(std.SHUFFLING_3_3_APL_REGISTRATION);
+            int rowsBefore = createRepository().getRowCount();
+            createRepository().insert(std.SHUFFLING_3_3_APL_REGISTRATION);
 
-            Shuffling shuffling = repository().get(std.SHUFFLING_3_3_APL_REGISTRATION.getId());
+            Shuffling shuffling = createRepository().get(std.SHUFFLING_3_3_APL_REGISTRATION.getId());
             assertEquals(std.SHUFFLING_3_3_APL_REGISTRATION, shuffling);
-            int rowAfter = repository().getRowCount();
+            int rowAfter = createRepository().getRowCount();
             assertEquals(rowsBefore, rowAfter);
         });
     }
@@ -71,7 +71,7 @@ public class ShufflingDbRepositoryTest extends ShufflingRepositoryTest {
 
     @Test
     void testGetAliceShufflings() {
-        List<Shuffling> aliceShufflings = repository().getAccountShufflings(std.ALICE_ID, true, 0, Integer.MAX_VALUE);
+        List<Shuffling> aliceShufflings = createRepository().getAccountShufflings(std.ALICE_ID, true, 0, Integer.MAX_VALUE);
 
         assertEquals(List.of(std.SHUFFLING_8_1_CURRENCY_PROCESSING, std.SHUFFLING_3_3_APL_REGISTRATION, std.SHUFFLING_7_2_CURRENCY_FINISHED), aliceShufflings);
 
@@ -79,14 +79,14 @@ public class ShufflingDbRepositoryTest extends ShufflingRepositoryTest {
 
     @Test
     void testGetAliceShufflingsWithoutFinished() {
-        List<Shuffling> aliceShufflings = repository().getAccountShufflings(std.ALICE_ID, false, 0, Integer.MAX_VALUE);
+        List<Shuffling> aliceShufflings = createRepository().getAccountShufflings(std.ALICE_ID, false, 0, Integer.MAX_VALUE);
 
         assertEquals(List.of(std.SHUFFLING_8_1_CURRENCY_PROCESSING, std.SHUFFLING_3_3_APL_REGISTRATION), aliceShufflings);
     }
 
     @Test
     void testGetAliceShufflingsWithPagination() {
-        List<Shuffling> aliceShufflings = repository().getAccountShufflings(std.ALICE_ID, true, 1, 1);
+        List<Shuffling> aliceShufflings = createRepository().getAccountShufflings(std.ALICE_ID, true, 1, 1);
 
         assertEquals(List.of(std.SHUFFLING_3_3_APL_REGISTRATION), aliceShufflings);
     }

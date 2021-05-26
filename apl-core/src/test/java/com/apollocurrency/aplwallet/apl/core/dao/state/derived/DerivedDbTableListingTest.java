@@ -47,6 +47,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableP
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
@@ -258,7 +259,7 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
     @DisplayName("Loop over derived table list and get Min/Max/Count values")
     @Test
     void testMinMaxValues() {
-        Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
+        Collection<DerivedTableInterface<? extends DerivedEntity>> result = registry.getDerivedTables(); // extract all derived tables
         assertNotNull(result);
         assertTrue(result.size() > 0); // the real number is higher then initial, it's OK !
         int targetHeight = 8000;
