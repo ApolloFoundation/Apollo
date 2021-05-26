@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountInfoTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
@@ -86,7 +86,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
 
     @Override
     public AccountInfo getAccountInfo(Account account) {
-        return accountInfoTable.get(AccountTable.newKey(account));
+        return accountInfoTable.get(AccountTableInterface.newKey(account));
     }
 
     @Override

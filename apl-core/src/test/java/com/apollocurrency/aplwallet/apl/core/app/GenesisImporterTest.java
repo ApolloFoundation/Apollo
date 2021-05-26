@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableData;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -82,6 +83,7 @@ import org.junit.jupiter.api.function.Executable;
 import org.mockito.Mockito;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
 import javax.enterprise.inject.spi.Bean;
 import javax.inject.Inject;
 import java.io.IOException;
@@ -123,8 +125,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
     AccountPublicKeyService accountPublicKeyService;
     @Inject
     AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
-    @Inject
-    AccountTable accountTable;
+    AccountTable accountTable = new AccountTable(extension.getDatabaseManager(), mock(Event.class));
 
 
     BalancesPublicKeysTestData testData;
@@ -160,8 +161,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
     }
 
     @WeldSetup
-    public WeldInitiator weld = WeldInitiator.from(
-        AccountTable.class, AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
+    public WeldInitiator weld = WeldInitiator.from(AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
         AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
         FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
         ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class,
@@ -189,6 +189,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
         .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(aplAppStatus, AplAppStatus.class))
+        .addBeans(MockBean.of(accountTable, AccountTableInterface.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(envConfig, PropertiesHolder.class))

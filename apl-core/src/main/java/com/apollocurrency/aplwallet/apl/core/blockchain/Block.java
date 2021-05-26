@@ -47,8 +47,6 @@ public interface Block {
 
     boolean hasGeneratorPublicKey();
 
-    void setGeneratorPublicKey(byte[] generatorPublicKey);
-
     long getPreviousBlockId();
 
     byte[] getPreviousBlockHash();
@@ -67,8 +65,6 @@ public interface Block {
 
     List<Transaction> getTransactions();
 
-    void setTransactions(List<Transaction> transactions);
-
     byte[] getGenerationSignature();
 
     byte[] getBlockSignature();
@@ -85,11 +81,11 @@ public interface Block {
 
     boolean checkSignature();
 
-    /**
-     * Optional method
-     */
-    void assignTransactionsIndex();
+    boolean hasLoadedData();
 
     int getTimeout();
 
+    void assignBlockData(List<Transaction> txs, byte[] generatorPublicKey);
+
+    void assignTransactionsIndex();
 }

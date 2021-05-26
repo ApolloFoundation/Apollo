@@ -3,6 +3,7 @@ classes
 classes*
 classes/*.*
 .idea/
+.run/
 addons/classes
 apl_db/
 classes/

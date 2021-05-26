@@ -43,6 +43,17 @@ public class CollectionUtil {
         }
     }
 
+    public static <T> Stream<T> limitStream(Stream<T> stream, int from, int to) {
+        int limit = to >=0 && to >= from && to < Integer.MAX_VALUE ? to - from + 1 : 0;
+        if (from > 0) {
+            stream = stream.skip(from);
+        }
+        if (limit > 0) {
+            stream = stream.limit(limit);
+        }
+        return stream;
+    }
+
     public static boolean isEmpty(Collection collection) {
         return collection == null || collection.size() == 0;
     }

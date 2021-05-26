@@ -60,7 +60,7 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
     void validateAdaptiveBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
         int actualBlockTime = block.getTimestamp() - previousBlock.getTimestamp();
         if (actualBlockTime < blockchainConfig.getCurrentConfig().getAdaptiveBlockTime()
-            && blockchain.getOrLoadTransactions(block).size() <= blockchainConfig.getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock()) {
+            && block.getTransactions().size() <= blockchainConfig.getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock()) {
             throw new BlockchainProcessor.BlockNotAcceptedException(
                 "Invalid adaptive block: time - " + actualBlockTime + " height " + previousBlock.getHeight() + 1
                     + ". Perhaps blockchain config is outdated", null);
@@ -69,7 +69,7 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
 
     @Override
     void validateInstantBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
-        if (blockchain.getOrLoadTransactions(block).size() <= blockchainConfig.getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock()) {
+        if (block.getTransactions().size() <= blockchainConfig.getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock()) {
             throw new BlockchainProcessor.BlockNotAcceptedException(
                 "Incorrect instant block", blockSerializer.getJSONObject(block));
         }
@@ -77,7 +77,7 @@ public class DefaultBlockValidator extends AbstractBlockValidator {
 
     @Override
     void validateRegularBlock(Block block, Block previousBlock) throws BlockchainProcessor.BlockNotAcceptedException {
-        if (blockchain.getOrLoadTransactions(block).size() <= blockchainConfig.getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock() || block.getTimeout() != 0) {
+        if (block.getTransactions().size() <= blockchainConfig.getCurrentConfig().getNumberOfTransactionsInAdaptiveBlock() || block.getTimeout() != 0) {
             throw new BlockchainProcessor.BlockNotAcceptedException(
                 "Incorrect regular block", blockSerializer.getJSONObject(block));
         }
