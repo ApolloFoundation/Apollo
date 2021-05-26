@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
@@ -11,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingSta
 
 import java.util.List;
 
-public interface ShufflingRepository {
+public interface ShufflingRepository extends EntityDbTableInterface<Shuffling> {
     LongKeyFactory<Shuffling> dbKeyFactory = new LongKeyFactory<>("id") {
         @Override
         public DbKey newKey(Shuffling shuffling) {

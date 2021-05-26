@@ -1360,10 +1360,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     if (height == shardInitialHeight) {
                         trimService.resetTrim(height);
                     }
-                    Collection<DerivedTableInterface> derivedTables = dbTables.getDerivedTables();
+                    Collection<DerivedTableInterface<?>> derivedTables = dbTables.getDerivedTables();
                     double percentsPerTable = getPercentsPerEvent(16.0, derivedTables.size());
                     aplAppStatus.durableTaskUpdate(scanTaskId, 4.0, "Rollback " + derivedTables.size() + " tables");
-                    for (DerivedTableInterface table : derivedTables) {
+                    for (DerivedTableInterface<?> table : derivedTables) {
                         aplAppStatus.durableTaskUpdate(scanTaskId,
                             "Rollback table \'" + table.toString() + "\' to height " + height, 0.0);
                         if (table.isScanSafe()) {

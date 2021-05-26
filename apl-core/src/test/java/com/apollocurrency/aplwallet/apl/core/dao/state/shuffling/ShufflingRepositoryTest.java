@@ -23,10 +23,10 @@ public abstract class ShufflingRepositoryTest extends DBContainerRootTest {
     @BeforeEach
     void setUp() {
         std = new ShufflingTestData();
-        shufflingRepository = repository();
+        shufflingRepository = createRepository();
     }
 
-    public abstract ShufflingRepository repository();
+    public abstract ShufflingRepository createRepository();
 
     @Test
     void testGetCount() {

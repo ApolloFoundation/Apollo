@@ -32,8 +32,16 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
     @Override
     public void insert(T entity) {
         super.insert(entity);
-        log.trace("Put into cache {} put  entity {} height={}", table.toString(), entity, entity.getHeight());
+        log.trace("Put into cache {} put  entity {} height={}", getName(), entity, entity.getHeight());
         memTableCache.insert(entity);
+    }
+
+    @Override
+    public void trim(int height) {
+        super.trim(height);
+        log.trace("Trim in memory table {}", getName());
+        memTableCache.trim(height);
+        checkRowConsistency("trim", height);
     }
 
     @Override
@@ -45,13 +53,7 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
     public int rollback(final int height) {
         int rc = super.rollback(height);
         memTableCache.rollback(height);
-        int dbRowCount = super.getRowCount();
-        int memRowCount = memTableCache.rowCount();
-        if (dbRowCount != memRowCount) {
-            throw new IllegalStateException(String.format("After rollback of the mem and db table %s to the height %d, " +
-                    "mem and desync occurred, db rows %d, mem rows %d, db entities: %s, mem entities %s",
-                table.toString(), height, dbRowCount, memRowCount, dumpFromDb(), dumpFromMem()));
-        }
+        checkRowConsistency("rollback", height);
         return rc;
     }
 
@@ -63,12 +65,19 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
             throw new IllegalStateException(
                 String.format("Desync of in-memory cache and the db, for the table %s after deletion of entity %s " +
                         "at height %d, db entities: %s, mem entities: %s"
-                    , table.toString(), t, height, dumpFromDb(), dumpFromMem()));
+                    , getName(), t, height, dumpFromDb(), dumpFromMem()));
         }
         if (res) {
             log.trace("Entity type {}, deleted {} from mem table cache and from db, at height {}", table.toString(), t, height);
         }
         return res;
+    }
+
+    @Override
+    public void truncate() {
+        super.truncate();
+        memTableCache.clear();
+        log.trace("Mem table {} and db table truncated", getName());
     }
 
     private String dumpFromDb() {
@@ -77,7 +86,7 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
             List<T> dbEntities = super.getAllByDbId(minDbId.orElse(0), Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
             return dbEntities.stream().sorted(Comparator.comparingLong(DerivedEntity::getDbId).reversed()).map(Object::toString).collect(Collectors.joining(","));
         } catch (SQLException e) {
-            throw new RuntimeException("Unable to dump db data for table " + table + ": " + e.toString(), e);
+            throw new RuntimeException("Unable to dump db data for table " + getName() + ": " + e.toString(), e);
         }
     }
 
@@ -85,10 +94,17 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
         return memTableCache.getAllRowsStream(0, ERROR_DUMP_COUNT).map(Object::toString).collect(Collectors.joining(","));
     }
 
-    @Override
-    public void truncate() {
-        super.truncate();
-        memTableCache.clear();
-        log.trace("Mem table {} and db table truncated", table.toString());
+    private void checkRowConsistency(String operation, int height) {
+        int dbRowCount = super.getRowCount();
+        int memRowCount = memTableCache.rowCount();
+        if (dbRowCount != memRowCount) {
+            throw new IllegalStateException(createErrorMessage(operation, height, memRowCount, dbRowCount));
+        }
+    }
+
+    private String createErrorMessage(String operation, int height, long memRowCount, long dbRowCount) {
+        return String.format("After %s of the mem and db table %s to the height %d, " +
+                "mem and desync occurred, db rows %d, mem rows %d, db entities: %s, mem entities %s", operation,
+            getName(), height, dbRowCount, memRowCount, dumpFromDb(), dumpFromMem());
     }
 }

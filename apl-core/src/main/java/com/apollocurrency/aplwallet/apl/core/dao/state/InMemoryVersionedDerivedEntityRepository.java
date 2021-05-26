@@ -136,7 +136,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
     protected abstract void setColumn(String columnName, Object value, T entity);
 
     public void clear() {
-        inWriteLock(() -> allEntities.clear());
+        inWriteLock(allEntities::clear);
     }
 
     public void insert(T entity) {
@@ -270,12 +270,13 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                     }
                 }
             });
-            deleteEntirely.forEach(key -> allEntities.remove(key));
+            deleteEntirely.forEach(allEntities::remove);
         });
     }
 
-    public void rollback(int height) {
-        inWriteLock(() -> {
+    public int rollback(int height) {
+        return getInWriteLock(() -> {
+            int removedRecords = 0;
             Set<DbKey> keysToUpdate = new HashSet<>();
             Set<DbKey> keysToDelete = new HashSet<>();
             for (Map.Entry<DbKey, EntityWithChanges<T>> entry : allEntities.entrySet()) {
@@ -284,6 +285,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                 if (entity.getEntity().getHeight() > height) {
                     if (entity.getMinHeight() > height) {
                         keysToDelete.add(key);
+                        removedRecords += entity.getDbIdLatestValues().size();
                     } else {
                         keysToUpdate.add(key);
                         Map<String, List<Change>> allChanges = entity.getChanges();
@@ -294,7 +296,10 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                                 setColumn(columnWithChanges.getKey(), getLastValueOrNull(changes), entity.getEntity());
                             }
                         }
-                        entity.getDbIdLatestValues().removeIf(l -> l.getHeight() > height);
+                        List<DbIdLatestValue> dbIdLatestValues = entity.getDbIdLatestValues();
+                        int initialSize = dbIdLatestValues.size();
+                        dbIdLatestValues.removeIf(l -> l.getHeight() > height);
+                        removedRecords += (initialSize - dbIdLatestValues.size());
                     }
                 }
             }
@@ -310,6 +315,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                         entity.setHeight(lastDbIdLatestValue.getHeight());
                         lastDbIdLatestValue.setLatest(true);
                     });
+            return removedRecords;
         });
     }
 
