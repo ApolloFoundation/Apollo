@@ -328,6 +328,7 @@ public class GeneratorServiceImpl implements GeneratorService {
             try {
                 int[] timeoutAndVersion = getBlockTimeoutAndVersion(timestamp, generationLimit, lastBlock);
                 if (timeoutAndVersion == null) {
+                    log.trace("{} skip turn to generate block", generator);
                     return false;
                 }
                 int timeout = timeoutAndVersion[0];
@@ -381,15 +382,17 @@ public class GeneratorServiceImpl implements GeneratorService {
                 // block with transactions can be generated (unc transactions exist at current time, required timeout)
                 version = Block.INSTANT_BLOCK_VERSION;
             } else {
+                log.trace("Skip generation iteration: tx at generation limit {}, timestamp {}, generation limit {}, actual block time {}, planed block time {}", txsAtGenerationLimit, timestamp, generationLimit, actualBlockTime, planedBlockTime);
                 return null;
             }
             timeout = generationLimit - timestamp;
-            log.trace("Timeout:" + timeout);
+            log.trace("Set block timeout: {}, version {}, timestamp {}, generation limit {}, actual block time {}, planed block time {}", timeout, version, timestamp, generationLimit, actualBlockTime, planedBlockTime);
             return new int[]{timeout, version};
         }
         if (noTransactionsAtTimestamp) {
             version = Block.ADAPTIVE_BLOCK_VERSION;
         }
+        log.trace("Set forging params: timeout {}, version {}, timestamp {}, generation limit {}, planed block time {}", timeout, version, timestamp, generationLimit, planedBlockTime);
         return new int[]{timeout, version};
     }
 

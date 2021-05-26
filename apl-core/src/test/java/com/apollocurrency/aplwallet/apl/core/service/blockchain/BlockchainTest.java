@@ -390,7 +390,7 @@ class BlockchainTest extends DBContainerRootTest {
         newTransactions.forEach(tx -> {
             tx.setBlock(btd.NEW_BLOCK);
         });
-        btd.NEW_BLOCK.setTransactions(newTransactions);
+        btd.NEW_BLOCK.assignBlockData(newTransactions, new byte[32]);
 
         DbUtils.checkAndRunInTransaction(extension, (con) -> {
             blockchain.saveBlock(btd.NEW_BLOCK);
@@ -461,11 +461,11 @@ class BlockchainTest extends DBContainerRootTest {
             Block expectedBlock = expectedBlocks.get(i);
             Block actualBlock = blocks.get(i);
             assertEquals(expectedBlock, actualBlock);
-            List<Transaction> transactions = blockchain.getOrLoadTransactions(expectedBlock);
+            List<Transaction> transactions = blockchain.loadBlockData(expectedBlock).getTransactions();
             if (transactions != null) {
-                assertEquals(transactions, blockchain.getOrLoadTransactions(actualBlock));
+                assertEquals(transactions, blockchain.loadBlockData(actualBlock).getTransactions());
             } else {
-                assertNull(blockchain.getOrLoadTransactions(actualBlock));
+                assertTrue(blockchain.loadBlockData(actualBlock).getTransactions().isEmpty());
             }
         }
     }
@@ -1084,7 +1084,7 @@ class BlockchainTest extends DBContainerRootTest {
     void testGetBlockTransactions() {
         List<Transaction> blockTransactions = blockchain.getBlockTransactions(btd.BLOCK_7.getId());
 
-        assertEquals(blockchain.getOrLoadTransactions(btd.BLOCK_7), blockTransactions);
+        assertEquals(blockchain.loadBlockData(btd.BLOCK_7).getTransactions(), blockTransactions);
     }
 
     @Test

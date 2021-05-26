@@ -3,12 +3,9 @@
  */
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
@@ -20,50 +17,27 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 
 import static com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil.toList;
 
 /**
+ * Initialization is done inside the {@link AccountTableCacheConfiguration}
  * @author al
  */
-@Singleton
 @Slf4j
-public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
-    private static final LongKeyFactory<Account> accountDbKeyFactory = new LongKeyFactory<Account>("id") {
-        @Override
-        public DbKey newKey(Account account) {
-            if (account.getDbKey() == null) {
-                account.setDbKey(super.newKey(account.getId()));
-            }
-            return account.getDbKey();
-        }
-    };
-    private final BlockchainConfig blockchainConfig;
+public class AccountTable extends VersionedDeletableEntityDbTable<Account> implements AccountTableInterface {
 
-    @Inject
-    public AccountTable(BlockchainConfig blockchainConfig/*, @Named("CREATOR_ID")long creatorId*/,
-                        DatabaseManager databaseManager,
+    public AccountTable(DatabaseManager databaseManager,
                         Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("account", accountDbKeyFactory, null,
                 databaseManager, deleteOnTrimDataEvent);
-        this.blockchainConfig = Objects.requireNonNull(blockchainConfig, "blockchainConfig is NULL.");
-    }
-
-    public static DbKey newKey(long id) {
-        return accountDbKeyFactory.newKey(id);
-    }
-
-    public static DbKey newKey(Account a) {
-        return accountDbKeyFactory.newKey(a);
     }
 
     @Override
@@ -73,17 +47,54 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
 
     @Override
     public void save(Connection con, Account account) throws SQLException {
+//        Optional<Account> existingOptional = selectLastExisting(con, account.getId());
+//        if (existingOptional.isEmpty()) {
+//            doInsert(con, account);
+//            return;
+//        }
+//        Account existing = existingOptional.get();
+//        if (existing.getHeight() != account.getHeight()) {
+//            doInsert(con, account);
+//            return;
+//        }
+//        doUpdate(con, account);
+        if (account.requireMerge()) {
+            doUpdate(con, account);
+        } else {
+            doInsert(con, account);
+        }
+    }
+
+    private void doUpdate(Connection con, Account account) throws SQLException {
         try (
-            @DatabaseSpecificDml(DmlMarker.MERGE) final PreparedStatement pstmt = con.prepareStatement("INSERT INTO account (id, "
+            final PreparedStatement pstmt = con.prepareStatement("UPDATE account SET "
+                + "parent = ?, is_multi_sig = ?, addr_scope = ?, "
+                + "balance = ?, unconfirmed_balance = ?, forged_balance = ?, "
+                + "active_lessee_id = ?, has_control_phasing = ?, height = ?, latest = true, deleted = false WHERE db_id = ?"
+            );
+        ) {
+            int i = 0;
+            DbUtils.setLongZeroToNull(pstmt, ++i, account.getParentId());
+            pstmt.setBoolean(++i, account.isMultiSig());
+            pstmt.setByte(++i, account.getAddrScope().getCode());
+            pstmt.setLong(++i, account.getBalanceATM());
+            pstmt.setLong(++i, account.getUnconfirmedBalanceATM());
+            pstmt.setLong(++i, account.getForgedBalanceATM());
+            DbUtils.setLongZeroToNull(pstmt, ++i, account.getActiveLesseeId());
+            pstmt.setBoolean(++i, account.getControls().contains(AccountControlType.PHASING_ONLY));
+            pstmt.setInt(++i, account.getHeight());
+            pstmt.setLong(++i, account.getDbId());
+            pstmt.executeUpdate();
+        }
+    }
+
+    private void doInsert(Connection con, Account account) throws SQLException {
+        try (
+            final PreparedStatement pstmt = con.prepareStatement("INSERT INTO account (id, "
                 + "parent, is_multi_sig, addr_scope, "
                 + "balance, unconfirmed_balance, forged_balance, "
                 + "active_lessee_id, has_control_phasing, height, latest, deleted) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE)"
-                + "ON DUPLICATE KEY UPDATE "
-                + "id = VALUES(id), parent = VALUES(parent), is_multi_sig = VALUES(is_multi_sig), addr_scope = VALUES(addr_scope), "
-                + "balance = VALUES(balance), unconfirmed_balance = VALUES(unconfirmed_balance), "
-                + "forged_balance = VALUES(forged_balance), active_lessee_id = VALUES(active_lessee_id), "
-                + "has_control_phasing = VALUES(has_control_phasing), height = VALUES(height), latest = TRUE, deleted = FALSE"
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, FALSE) ", Statement.RETURN_GENERATED_KEYS
             )
         ) {
             int i = 0;
@@ -98,9 +109,17 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
             pstmt.setBoolean(++i, account.getControls().contains(AccountControlType.PHASING_ONLY));
             pstmt.setInt(++i, account.getHeight());
             pstmt.executeUpdate();
+            try (ResultSet dbIdRs = pstmt.getGeneratedKeys()) {
+                if (!dbIdRs.next()) {
+                    throw new SQLException("Unable to retrieve generated id for the account " + account);
+                }
+                account.setDbId(dbIdRs.getLong(1));
+            }
         }
+
     }
 
+    @Override
     public List<Account> selectAllForKey(Long id) throws SQLException {
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * from account where id = ? order by db_id DESC")) {
@@ -109,15 +128,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         }
     }
 
-
     @Override
-    public void trim(int height) {
-        if (height <= blockchainConfig.getGuaranteedBalanceConfirmations()) {
-            return;
-        }
-        super.trim(height);
-    }
-
     public long getTotalSupply(long creatorId) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -137,6 +148,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         }
     }
 
+    @Override
     public List<Account> getTopHolders(int numberOfTopAccounts) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -151,6 +163,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         }
     }
 
+    @Override
     public long getTotalAmountOnTopAccounts(int numberOfTopAccounts) {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -172,6 +185,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
         }
     }
 
+    @Override
     public long getTotalNumberOfAccounts() {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         try (Connection con = dataSource.getConnection();
@@ -189,8 +203,30 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> {
     }
 
     @Override
-    public MinMaxValue getMinMaxValue(int height) {
-        return super.getMinMaxValue(height, "id");
+    public List<Account> getRecentAccounts(int limit) {
+        TransactionalDataSource dataSource = databaseManager.getDataSource();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement recentPstm = con.prepareStatement("SELECT * from account INNER JOIN " +
+                 "(SELECT id, max(db_id) as max_db_id FROM account WHERE latest=true GROUP BY id ORDER BY height DESC LIMIT " + limit + ") as recent_ids " +
+                 "ON account.db_id = recent_ids.max_db_id")
+        ) {
+            return CollectionUtil.toList(getManyBy(con, recentPstm, false));
+        } catch (SQLException e) {
+            throw new RuntimeException(e.getMessage() + ", limit " + limit, e);
+        }
+
     }
 
+    private Optional<Account> selectLastExisting(Connection connection, long id) throws SQLException {
+        try (PreparedStatement pstm = connection.prepareStatement("SELECT * FROM " + table + " WHERE id = ? ORDER BY db_id DESC LIMIT 1")) {
+            pstm.setLong(1, id);
+            try (ResultSet rs = pstm.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(load(connection, rs, accountDbKeyFactory.newKey(id)));
+                } else {
+                    return Optional.empty();
+                }
+            }
+        }
+    }
 }

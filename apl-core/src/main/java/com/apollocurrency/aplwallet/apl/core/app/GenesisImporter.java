@@ -5,12 +5,12 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
-import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -82,7 +82,7 @@ public class GenesisImporter {
     private String genesisTaskId;
     private byte[] computedDigest;
     private final AccountGuaranteedBalanceTable accountGuaranteedBalanceTable;
-    private final AccountTable accountTable;
+    private final AccountTableInterface accountTable;
     private final ResourceLocator resourceLocator;
 
     @Inject
@@ -91,7 +91,7 @@ public class GenesisImporter {
         BlockchainConfigUpdater blockchainConfigUpdater,
         AplAppStatus aplAppStatus,
         AccountGuaranteedBalanceTable accountGuaranteedBalanceTable,
-        AccountTable accountTable,
+        AccountTableInterface accountTable,
         ApplicationJsonFactory jsonFactory,
         PropertiesHolder propertiesHolder,
         AccountService accountService,

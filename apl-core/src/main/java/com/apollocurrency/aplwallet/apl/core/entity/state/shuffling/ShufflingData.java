@@ -47,4 +47,12 @@ public class ShufflingData extends DerivedEntity {
         this.transactionTimestamp = rs.getInt("transaction_timestamp");
     }
 
+    public ShufflingData(Long dbId, Integer height, long shufflingId, long accountId, byte[][] data, int transactionTimestamp) {
+        super(dbId, height);
+        this.shufflingId = shufflingId;
+        this.accountId = accountId;
+        this.data = data;
+        this.transactionTimestamp = transactionTimestamp;
+    }
+
 }
