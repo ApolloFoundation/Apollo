@@ -23,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import org.jboss.weld.junit5.EnableWeld;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -42,11 +43,10 @@ import static org.mockito.Mockito.when;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-//@Tag("slow")
+@Tag("slow")
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
 class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionTypeApplyTest {
-
 
     @Inject
     ContractModelToEntityConverter contractModelToEntityConverter;

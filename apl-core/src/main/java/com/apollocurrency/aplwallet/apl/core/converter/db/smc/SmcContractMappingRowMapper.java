@@ -17,7 +17,7 @@ public class SmcContractMappingRowMapper extends VersionedDerivedEntityMapper<Sm
     @Override
     public SmcContractMappingEntity doMap(ResultSet rs, StatementContext ctx) throws SQLException {
         long address = rs.getLong("address");
-        byte[] key = rs.getBytes("key");
+        byte[] key = rs.getBytes("entry_key");
         String name = rs.getString("name");
         String serializedObject = rs.getString("object");
 

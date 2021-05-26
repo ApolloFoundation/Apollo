@@ -7,8 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.storage;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractStorageService;
 import com.apollocurrency.smc.blockchain.storage.AddressJsonConverter;
 import com.apollocurrency.smc.blockchain.storage.BigIntegerJsonConverter;
-import com.apollocurrency.smc.blockchain.storage.MappingFactory;
 import com.apollocurrency.smc.blockchain.storage.StringJsonConverter;
+import com.apollocurrency.smc.contract.vm.ContractMappingFactory;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.data.type.AddressMapping;
 import com.apollocurrency.smc.data.type.BigIntegerMapping;
@@ -25,16 +25,26 @@ import java.math.BigInteger;
  */
 @Slf4j
 @Singleton
-public class SmcDbMappingClassFactory {
+public class SmcMappingRepositoryClassFactory {
     private final SmcContractStorageService smcContractStorageService;
 
     @Inject
-    public SmcDbMappingClassFactory(SmcContractStorageService smcContractStorageService) {
+    public SmcMappingRepositoryClassFactory(SmcContractStorageService smcContractStorageService) {
         this.smcContractStorageService = smcContractStorageService;
     }
 
-    MappingFactory createMappingFactory(final Address contract) {
-        return new MappingFactory() {
+    public ContractMappingFactory createMappingFactory(final Address contract) {
+        return new ContractMappingFactory() {
+
+            @Override
+            public Address contract() {
+                return contract;
+            }
+
+            @Override
+            public boolean isMappingExist(String mappingName) {
+                return smcContractStorageService.isMappingExist(contract, mappingName);
+            }
 
             @Override
             public AddressMapping address(String mappingName) {
@@ -68,26 +78,8 @@ public class SmcDbMappingClassFactory {
         }
 
         @Override
-        protected BigInteger getOneKey(Key key) {
-            var v = super.getOneKey(key);
-            if (v == null) {
-                return BigInteger.ZERO;
-            }
-            return v;
-        }
-
-        @Override
-        protected BigInteger putOne(Key key, BigInteger value) {
-            var v = super.putOne(key, value);
-            if (v == null) {
-                return BigInteger.ZERO;
-            }
-            return v;
-        }
-
-        @Override
-        protected BigInteger deleteOne(Key key) {
-            var v = super.deleteOne(key);
+        public BigInteger getOne(Key key) {
+            var v = super.getOne(key);
             if (v == null) {
                 return BigInteger.ZERO;
             }

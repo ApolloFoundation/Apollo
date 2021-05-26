@@ -26,7 +26,7 @@ import java.sql.Statement;
  * @author andrew.zinchenko@gmail.com
  */
 public class SmcContractMappingTable extends VersionedDeletableEntityDbTable<SmcContractMappingEntity> {
-    public static final ComplexKeyFactory<SmcContractMappingEntity> KEY_FACTORY = new ComplexKeyFactory<>("address", "key") {
+    public static final ComplexKeyFactory<SmcContractMappingEntity> KEY_FACTORY = new ComplexKeyFactory<>("address", "entry_key") {
         @Override
         public DbKey newKey(SmcContractMappingEntity mapping) {
             if (mapping.getDbKey() == null) {
@@ -57,10 +57,10 @@ public class SmcContractMappingTable extends VersionedDeletableEntityDbTable<Smc
             @DatabaseSpecificDml(DmlMarker.MERGE)
             @DatabaseSpecificDml(DmlMarker.RESERVED_KEYWORD_USE)
             PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + TABLE_NAME +
-                    "(address, key, name, object, height, latest) " +
+                    "(address, entry_key, name, object, height, latest) " +
                     "VALUES (?, ?, ?, ?, ?, TRUE) " +
                     "ON DUPLICATE KEY UPDATE " +
-                    "address = VALUES(address), key = VALUES(key), name = VALUES(name), object = VALUES(object), height = VALUES(height), latest = TRUE"
+                    "address = VALUES(address), entry_key = VALUES(entry_key), name = VALUES(name), object = VALUES(object), height = VALUES(height), latest = TRUE"
                 , Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             pstmt.setLong(++i, entity.getAddress());

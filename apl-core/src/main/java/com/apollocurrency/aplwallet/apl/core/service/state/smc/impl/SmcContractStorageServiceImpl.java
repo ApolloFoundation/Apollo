@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractMapping
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractStorageService;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.data.type.Key;
@@ -17,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -41,10 +41,11 @@ public class SmcContractStorageServiceImpl implements SmcContractStorageService 
             .address(new AplAddress(address).getLongId())
             .key(key.key())
             .name(name)
+            .serializedObject(jsonObject)
             .height(blockchain.getHeight()) // new height value
             .build();
-        log.debug("Save mapping={}", smcContractMappingEntity);
         smcContractMappingTable.insert(smcContractMappingEntity);
+        log.trace("Saved mapping={}", smcContractMappingEntity);
     }
 
     @Override
@@ -53,8 +54,10 @@ public class SmcContractStorageServiceImpl implements SmcContractStorageService 
         long id = new AplAddress(address).getLongId();
         SmcContractMappingEntity smcContractMappingEntity = smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(id, key.key()));
         if (smcContractMappingEntity != null) {
+            log.trace("Load mapping={}", smcContractMappingEntity);
             return smcContractMappingEntity.getSerializedObject();
         }
+        log.trace("Load: mapping not found, address={} key={}", address.getHex(), Convert.toHexString(key.key()));
         return null;
     }
 
@@ -64,7 +67,11 @@ public class SmcContractStorageServiceImpl implements SmcContractStorageService 
         long id = new AplAddress(address).getLongId();
         SmcContractMappingEntity smcContractMappingEntity = smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(id, key.key()));
         if (smcContractMappingEntity != null) {
-            rc = smcContractMappingTable.deleteAtHeight(smcContractMappingEntity, blockchain.getHeight());
+            int height = blockchain.getHeight();
+            rc = smcContractMappingTable.deleteAtHeight(smcContractMappingEntity, height);
+            log.trace("Delete mapping={} at height={} rc={}", smcContractMappingEntity, height, rc);
+        } else {
+            log.trace("Delete: mapping not found, address={} key={}", address.getHex(), Convert.toHexString(key.key()));
         }
         return rc;
     }
@@ -76,6 +83,7 @@ public class SmcContractStorageServiceImpl implements SmcContractStorageService 
         int count = smcContractMappingTable.getCount(
             new DbClause.LongClause("address", id).and(new DbClause.StringClause("name", name))
         );
+        log.trace("Found {} entries, address={} mapping name={}", count, address.getHex(), name);
         return count > 0;
     }
 }
