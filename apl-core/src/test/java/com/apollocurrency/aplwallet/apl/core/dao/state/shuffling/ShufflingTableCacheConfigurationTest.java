@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableData;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInterface;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.data.ShufflingTestData;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
@@ -57,7 +58,7 @@ class ShufflingTableCacheConfigurationTest {
 
         configuration.init();
 
-        ShufflingRepository table = configuration.getTable();
+        EntityDbTableInterface<Shuffling> table = configuration.getTable();
         assertTrue("Shuffling table should be cacheable, since the cache is enabled", table instanceof ShufflingCachedTable);
         List<Shuffling> actual = ((ShufflingCachedTable) table).getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         assertEquals(allShufflings, actual);
@@ -72,7 +73,7 @@ class ShufflingTableCacheConfigurationTest {
 
         configuration.init();
 
-        ShufflingRepository table = configuration.getTable();
+        EntityDbTableInterface<Shuffling> table = configuration.getTable();
         assertTrue("Expected ShufflingTable type for non-cached shuffling table", table instanceof ShufflingTable);
 
         verifyNoInteractions(taskDispatchManager);

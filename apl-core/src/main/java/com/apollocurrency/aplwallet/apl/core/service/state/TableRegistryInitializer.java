@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
@@ -13,10 +13,9 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
-/**
- * @author silaev-firstbridge
- */
 @Singleton
 @Slf4j
 public class TableRegistryInitializer {
@@ -26,13 +25,19 @@ public class TableRegistryInitializer {
     DerivedTablesRegistry registry;
     @Inject
     FullTextConfig fullTextConfig;
+
     @PostConstruct
     public void registerAllTables() {
+        long count = tables.stream().count();
+        if (count != 55) {
+            throw new IllegalStateException("Should be registered 55 derived tables, got " + count + ", list: " +
+                tables.stream().map(Objects::toString).collect(Collectors.joining(",")));
+        }
         tables.forEach(this::init);
-        log.info("Registered {} derived tables", tables.stream().count());
+        log.info("Registered {} derived tables", count);
     }
 
-    private void init(DerivedTableInterface table) {
+    private void init(DerivedTableInterface<?> table) {
         registry.registerDerivedTable(table);
         log.debug("Register derived class: {}", table.getClass().getName());
         if (table instanceof SearchableTableInterface) {

@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state;
 
-import com.apollocurrency.aplwallet.apl.core.dao.state.InMemoryVersionedDerivedEntityRepository;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
@@ -203,14 +202,18 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
 
     @Test
     void testRollbackAll() {
-        repository.rollback(0);
+        int removed = repository.rollback(0);
+
+        assertEquals(8, removed);
         Map<DbKey, EntityWithChanges<VersionedChangeableDerivedEntity>> allEntities = repository.getAllEntities();
         assertEquals(0, allEntities.size());
     }
 
     @Test
     void testRollbackToFirstEntry() {
-        repository.rollback(data.VCDE_1_1.getHeight());
+        int removed = repository.rollback(data.VCDE_1_1.getHeight());
+
+        assertEquals(7, removed);
         data.VCDE_1_1.setLatest(true);
         EntityWithChanges<VersionedChangeableDerivedEntity> first = new EntityWithChanges<>(
                 data.VCDE_1_1, Map.of("remaining",
@@ -222,8 +225,9 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
 
     @Test
     void testRollbackNothing() {
-        repository.rollback(data.VCDE_4_2.getHeight());
+        int removed = repository.rollback(data.VCDE_4_2.getHeight());
 
+        assertEquals(0, removed);
         Map<DbKey, EntityWithChanges<VersionedChangeableDerivedEntity>> expected = allExpected();
         assertEquals(expected, repository.getAllEntities());
     }
@@ -259,8 +263,10 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
     }
 
     @Test
-    void testRollbackDeleted() throws CloneNotSupportedException {
-        repository.rollback(227);
+    void testRollbackDeleted() {
+        int removed = repository.rollback(227);
+
+        assertEquals(3, removed);
         data.VCDE_1_2.setLatest(true);
         data.VCDE_2_1.setLatest(true);
         data.VCDE_4_1.setLatest(true);

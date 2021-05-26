@@ -50,6 +50,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDa
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
@@ -297,7 +298,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         Set<String> excludeColumnNames = Set.of("DB_ID", "LATEST");
         // init Cvs reader, writer components
 
-        Collection<DerivedTableInterface> result = derivedTablesRegistry.getDerivedTables(); // extract all derived tables
+        Collection<DerivedTableInterface<? extends DerivedEntity>> result = derivedTablesRegistry.getDerivedTables(); // extract all derived tables
 
         assertNotNull(result);
         log.debug("Processing [{}] tables", result.size());
