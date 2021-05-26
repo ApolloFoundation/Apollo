@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMa
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractDetailsRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
@@ -161,7 +162,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(serverInfoService, ServerInfoService.class))
         .addBeans(MockBean.of(mock(TransactionEntityToModelConverter.class), TransactionEntityToModelConverter.class))
         .addBeans(MockBean.of(mock(TransactionEntityRowMapper.class), TransactionEntityRowMapper.class))
-        //.addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
+        .addBeans(MockBean.of(mock(SmcContractDetailsRowMapper.class), SmcContractDetailsRowMapper.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(mock(GeneratorService.class), GeneratorService.class))
         .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))

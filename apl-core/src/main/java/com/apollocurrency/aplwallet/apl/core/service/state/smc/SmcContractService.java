@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
@@ -62,6 +63,19 @@ public interface SmcContractService {
      * @return the list of contracts
      */
     List<ContractDetails> loadContractsByOwner(Address owner, int from, int limit);
+
+    /**
+     * Returns the list of contracts by filter
+     *
+     * @param address given address
+     * @param owner   given owner
+     * @param name    given contract name
+     * @param height  the blockchain height
+     * @param from    the first index
+     * @param to      the last index
+     * @return the list of contracts
+     */
+    List<ContractDetails> loadContractsByFilter(Address address, Address owner, String name, ContractStatus status, int height, int from, int to);
 
     /**
      * Returns the details information about contract given transaction id

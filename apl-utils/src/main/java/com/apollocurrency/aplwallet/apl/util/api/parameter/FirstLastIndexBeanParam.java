@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.util.api.parameter;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,12 +16,11 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.QueryParam;
 
 @NoArgsConstructor
+@AllArgsConstructor
 @Setter
 @Getter
 @ToString
 public class FirstLastIndexBeanParam {
-    public static int maxAPIrecords;
-
     @Parameter(description = "A zero-based index to the first record ID to retrieve (optional).")
     @QueryParam("firstIndex")
     @DefaultValue("0")
