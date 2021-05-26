@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTable;
@@ -69,6 +70,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -99,6 +101,7 @@ public class DGSServiceTest extends DbContainerBaseTest {
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer);
     Blockchain blockchain = mock(Blockchain.class);
+    AccountTable accountTable = new AccountTable(extension.getDatabaseManager(), mock(Event.class));
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
         PropertiesHolder.class,
@@ -112,7 +115,7 @@ public class DGSServiceTest extends DbContainerBaseTest {
         DGSPurchaseTable.class,
         DGSServiceImpl.class,
         DerivedDbTablesRegistryImpl.class,
-        BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class)
+        BlockChainInfoServiceImpl.class, AccountServiceImpl.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class))
@@ -122,6 +125,7 @@ public class DGSServiceTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(FullTextSearchEngine.class), FullTextSearchEngine.class))
         .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
         .addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .addBeans(MockBean.of(accountTable, AccountTableInterface.class))
         .addBeans(MockBean.of(mock(PrunableMessageService.class), PrunableMessageService.class))
         .addBeans(MockBean.of(mock(BlockchainProcessor.class), BlockchainProcessor.class, BlockchainProcessorImpl.class))
         .addBeans(MockBean.of(mock(AccountPublicKeyService.class), AccountPublicKeyServiceImpl.class, AccountPublicKeyService.class))
