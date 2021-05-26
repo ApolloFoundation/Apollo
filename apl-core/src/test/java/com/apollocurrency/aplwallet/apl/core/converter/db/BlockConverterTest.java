@@ -31,13 +31,12 @@ class BlockConverterTest {
     void testModelToEntityToModelConverting() {
         //GIVEN
         Block block = td.BLOCK_1;
-        block.setGeneratorPublicKey(publicKey);
+        block.assignBlockData(block.getTransactions(), publicKey);
         List<Transaction> transactions = block.getTransactions();
         //WHEN
         BlockEntity entity = modelToEntityConverter.convert(block);
         Block model = entityToModelConverter.convert(entity);
-        model.setGeneratorPublicKey(publicKey);
-        model.setTransactions(transactions);
+        model.assignBlockData(transactions, publicKey);
         //THEN
         assertArrayEquals(block.getBytes(), model.getBytes());
     }

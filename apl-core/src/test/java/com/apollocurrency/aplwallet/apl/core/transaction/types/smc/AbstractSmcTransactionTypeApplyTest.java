@@ -18,10 +18,12 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMa
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
+import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractDetailsRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
@@ -45,7 +47,6 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountControlPhasingServiceImpl;
@@ -94,6 +95,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.util.List;
 
@@ -115,6 +117,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
     BlockTestData btd = new BlockTestData();
     ServerInfoService serverInfoService = mock(ServerInfoService.class);
     PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);
+    AccountTable accountTable = new AccountTable(extension.getDatabaseManager(), mock(Event.class));
     PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     Chain chain = mock(Chain.class);
@@ -125,7 +128,6 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
 
     Blockchain blockchain = mock(Blockchain.class);
     FeeCalculator calculator = mock(FeeCalculator.class);
-    AccountPublicKeyService accountPublicKeyService = mock(AccountPublicKeyService.class);
     NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
     TransactionTestData td = new TransactionTestData();
@@ -133,7 +135,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(
         GlobalSyncImpl.class, DaoConfig.class,
-        AccountTable.class, AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
+        AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
         AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
         FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
         DefaultBlockValidator.class, ReferencedTransactionService.class,
@@ -156,12 +158,12 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(propertiesHolder, PropertiesHolder.class))
         .addBeans(MockBean.of(ntpTimeConfig, NtpTimeConfig.class))
         .addBeans(MockBean.of(timeService, TimeService.class))
-        //.addBeans(MockBean.of(mock(NtpTime.class), NtpTime.class))
+        .addBeans(MockBean.of(accountTable, AccountTableInterface.class))
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class, PhasingPollServiceImpl.class))
         .addBeans(MockBean.of(serverInfoService, ServerInfoService.class))
         .addBeans(MockBean.of(mock(TransactionEntityToModelConverter.class), TransactionEntityToModelConverter.class))
         .addBeans(MockBean.of(mock(TransactionEntityRowMapper.class), TransactionEntityRowMapper.class))
-        //.addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
+        .addBeans(MockBean.of(mock(SmcContractDetailsRowMapper.class), SmcContractDetailsRowMapper.class))
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(mock(GeneratorService.class), GeneratorService.class))
         .addBeans(MockBean.of(publicKeyDao, PublicKeyDao.class))

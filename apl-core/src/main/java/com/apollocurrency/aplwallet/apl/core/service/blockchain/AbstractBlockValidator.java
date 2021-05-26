@@ -80,10 +80,11 @@ public abstract class AbstractBlockValidator implements BlockValidator {
                 "Generation signature verification failed, effective balance " + generatorBalance, blockSerializer.getJSONObject(block));
         }
 
-        if (blockchain.getBlockTransactionCount(block.getId()) > blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
+        int txCount = block.getTransactions().size();
+        if (txCount > blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
             throw new BlockchainProcessor.BlockNotAcceptedException(
                 "Invalid block transaction count "
-                + blockchain.getBlockTransactionCount(block.getId()), blockSerializer.getJSONObject(block));
+                + txCount, blockSerializer.getJSONObject(block));
         }
         if (block.getPayloadLength() > blockchainConfig.getCurrentConfig().getMaxPayloadLength() || block.getPayloadLength() < 0) {
             throw new BlockchainProcessor.BlockNotAcceptedException(
@@ -126,11 +127,6 @@ public abstract class AbstractBlockValidator implements BlockValidator {
 
             MessageDigest digest = Crypto.sha256();
             digest.update(previousBlock.getGenerationSignature());
-            byte[] generatorPublicKey = block.getGeneratorPublicKey();
-            if (generatorPublicKey == null) {
-                generatorPublicKey = accountService.getPublicKeyByteArray(block.getGeneratorId());
-                block.setGeneratorPublicKey(generatorPublicKey);
-            }
             byte[] generationSignatureHash = digest.digest(block.getGeneratorPublicKey());
             if (!Arrays.equals(block.getGenerationSignature(), generationSignatureHash)) {
                 LOG.warn("Account: {} Effective ballance: {},  gen. signature: {}, calculated: {}, blockchain.height: {}, verification failed",

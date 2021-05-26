@@ -44,7 +44,7 @@ public class BlockSerializer {
         json.put("timeout", block.getTimeout());
 
         JSONArray transactionsData = new JSONArray();
-        this.blockchain.getOrLoadTransactions(block)
+        this.blockchain.loadBlockData(block).getTransactions()
                 .forEach(transaction -> transactionsData.add(transactionJsonSerializer.toJson(transaction)));
 
         json.put("transactions", transactionsData);

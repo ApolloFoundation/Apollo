@@ -8,12 +8,12 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletabl
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LinkKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipantState;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -24,6 +24,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 @Singleton
 public class ShufflingParticipantTable  extends VersionedDeletableEntityDbTable<ShufflingParticipant> {
@@ -31,9 +32,11 @@ public class ShufflingParticipantTable  extends VersionedDeletableEntityDbTable<
     public static final LinkKeyFactory<ShufflingParticipant> dbKeyFactory = new LinkKeyFactory<>("shuffling_id", "account_id") {
         @Override
         public DbKey newKey(ShufflingParticipant participant) {
+            if (participant.getDbKey() == null) {
+                participant.setDbKey(super.newKey(participant.getShufflingId(), participant.getAccountId()));
+            }
             return participant.getDbKey();
         }
-
     };
 
     @Inject
@@ -76,8 +79,16 @@ public class ShufflingParticipantTable  extends VersionedDeletableEntityDbTable<
         }
     }
 
-    public DbIterator<ShufflingParticipant> getParticipants(long shufflingId) {
-        return getManyBy(new DbClause.LongClause("shuffling_id", shufflingId), 0, -1, " ORDER BY participant_index ");
+    public ShufflingParticipant getByIndex(long shufflingId, int index) {
+        return getBy(new DbClause.LongClause("shuffling_id", shufflingId).and(new DbClause.IntClause("participant_index", index)));
+    }
+
+    public ShufflingParticipant getLast(long shufflingId) {
+        return getBy(new DbClause.LongClause("shuffling_id", shufflingId).and(new DbClause.NullClause("next_account_id")));
+    }
+
+    public List<ShufflingParticipant> getParticipants(long shufflingId) {
+        return CollectionUtil.toList(getManyBy(new DbClause.LongClause("shuffling_id", shufflingId), 0, -1, " ORDER BY participant_index "));
     }
 
     public ShufflingParticipant getParticipant(long shufflingId, long accountId) {
