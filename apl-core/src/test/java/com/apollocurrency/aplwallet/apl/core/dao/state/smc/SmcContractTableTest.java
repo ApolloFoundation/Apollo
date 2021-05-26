@@ -39,6 +39,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import javax.inject.Inject;
 import java.math.BigInteger;
@@ -159,8 +162,15 @@ class SmcContractTableTest extends DbContainerBaseTest {
         }
     }
 
-    @Test
-    void getContractsByFilter() throws AplException.NotValidException {
+    private List<ContractDetails> getMockContractDetailsList() throws AplException.NotValidException {
+        return getMockContractDetailsList(null, null, null, null, 100, 0, -1);
+    }
+
+    private List<ContractDetails> getMockContractDetailsList(Long address, Long owner, String name, String status, int height) throws AplException.NotValidException {
+        return getMockContractDetailsList(address, owner, name, status, height, 0, -1);
+    }
+
+    private List<ContractDetails> getMockContractDetailsList(Long address, Long owner, String name, String status, int height, int from, int to) throws AplException.NotValidException {
         //GIVEN
         when(transactionTypeFactory.findTransactionType(any(byte.class), any(byte.class))).thenReturn(transactionType);
         when(transactionType.parseAttachment(any(ByteBuffer.class))).thenReturn(attachment);
@@ -168,7 +178,13 @@ class SmcContractTableTest extends DbContainerBaseTest {
         when(attachment.getFuelPrice()).thenReturn(BigInteger.ONE);
 
         //WHEN
-        List<ContractDetails> result = table.getContractsByFilter(null, null, null, null, 100, 0, -1);
+        return table.getContractsByFilter(address, owner, name, status, height, from, to);
+    }
+
+    @Test
+    void getContractsByEmptyFilter() throws AplException.NotValidException {
+        //WHEN
+        List<ContractDetails> result = getMockContractDetailsList();
 
         //THEN
         assertNotNull(result);
@@ -178,4 +194,66 @@ class SmcContractTableTest extends DbContainerBaseTest {
         assertEquals("Deal", value.getName());
         assertEquals(Convert2.fromEpochTime(105502204), value.getTimestamp());//from transaction
     }
+
+    @Test
+    void getContractsByEmptyFilterWrongHeight() throws AplException.NotValidException {
+        //WHEN
+        List<ContractDetails> result = getMockContractDetailsList(null, null, null, null, 1);
+
+        //THEN
+        assertNotNull(result);
+        assertEquals(0, result.size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "Deal", "De"})
+    @NullSource
+    void getContractsByName(String contractName) throws AplException.NotValidException {
+        //WHEN
+        List<ContractDetails> result = getMockContractDetailsList(null, null, contractName, null, 100);
+
+        //THEN
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        var value = result.get(0);
+        assertEquals(Convert2.rsAccount(contractAddress), value.getAddress());
+        assertEquals("Deal", value.getName());
+        assertEquals(Convert2.fromEpochTime(105502204), value.getTimestamp());//from transaction
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"2", "Deal2"})
+    void getContractsByNameNoResult(String contractName) throws AplException.NotValidException {
+        //WHEN
+        List<ContractDetails> result = getMockContractDetailsList(null, null, contractName, null, 100);
+
+        //THEN
+        assertNotNull(result);
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    void getContractsByAddress() throws AplException.NotValidException {
+        //WHEN
+        List<ContractDetails> result = getMockContractDetailsList(contractAddress, null, "Deal", null, 100);
+
+        //THEN
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        var value = result.get(0);
+        assertEquals(Convert2.rsAccount(contractAddress), value.getAddress());
+        assertEquals("Deal", value.getName());
+        assertEquals(Convert2.fromEpochTime(105502204), value.getTimestamp());//from transaction
+    }
+
+    @Test
+    void getContractsByAddressNoResult() throws AplException.NotValidException {
+        //WHEN
+        List<ContractDetails> result = getMockContractDetailsList(0L, null, "Deal", null, 100);
+
+        //THEN
+        assertNotNull(result);
+        assertEquals(0, result.size());
+    }
+
 }
