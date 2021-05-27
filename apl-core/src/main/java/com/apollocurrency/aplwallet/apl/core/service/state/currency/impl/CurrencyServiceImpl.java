@@ -306,7 +306,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         }
 
         List<AccountCurrency> accountCurrencies = accountCurrencyService
-            .getCurrenciesByAccount(currency.getId(), 0, -1);
+            .getByCurrency(currency.getId(), 0, -1);
         return accountCurrencies.isEmpty() || accountCurrencies.size() == 1 && accountCurrencies.get(0).getAccountId() == senderAccountId;
     }
 

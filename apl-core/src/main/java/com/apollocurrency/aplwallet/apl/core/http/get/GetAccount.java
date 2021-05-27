@@ -146,7 +146,7 @@ public final class GetAccount extends AbstractAPIRequestHandler {
         }
 
         if (includeCurrencies) {
-            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(account, 0, -1);
+            List<AccountCurrency> accountCurrencies = accountCurrencyService.getByAccount(account, 0, -1);
             JSONArray currencyJSON = new JSONArray();
             accountCurrencies.forEach(accountCurrency -> currencyJSON.add(JSONData.accountCurrency(accountCurrency, false, true)));
             if (currencyJSON.size() > 0) {
