@@ -80,12 +80,18 @@ class FullyCachedTableTest {
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> cachedTable.rollback(2000));
 
-        String errorMessage = exception.toString();
-        boolean containsDump = errorMessage.contains("db rows 2, mem rows 1");
-        if (!containsDump) {
-            fail(exception);
-        }
-        verifyDumpedEntities(exception);
+        verifyError(exception);
+    }
+
+    @Test
+    void trim_desync() throws SQLException {
+        doReturn(1).when(inMemoryRepo).rowCount();
+        doReturn(2).when(dbTable).getRowCount();
+        mockDumpOutput();
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> cachedTable.trim(2000));
+
+        verifyError(exception);
     }
 
     @Test
@@ -102,11 +108,12 @@ class FullyCachedTableTest {
     void deleteAtHeight_desync() throws SQLException {
         doReturn(true).when(dbTable).deleteAtHeight(entity, entity.getHeight());
         doReturn(false).when(inMemoryRepo).delete(entity);
+        doReturn("mock_table").when(dbTable).getName();
         mockDumpOutput();
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> cachedTable.deleteAtHeight(entity, entity.getHeight()));
 
-        verifyDumpedEntities(exception);
+        assertEquals("Desync of in-memory cache and the db, for the table mock_table after deletion of entity "  + entity.toString() + " at height " + entity.getHeight(), exception.getMessage());
     }
 
     @Test
@@ -118,19 +125,15 @@ class FullyCachedTableTest {
     }
 
     private void mockDumpOutput() throws SQLException {
-        doReturn(new DerivedTableData<>(List.of(entity, entity2), 0)).when(dbTable).getAllByDbId(100L, Integer.MAX_VALUE, Long.MAX_VALUE);
-        doAnswer((Answer<Object>) invocation -> List.of(entity).stream()).when(inMemoryRepo).getAllRowsStream(0, 20_000);
+        doReturn(new DerivedTableData<>(List.of(entity, entity2), 0)).when(dbTable).getAllByDbId(0, 100, Long.MAX_VALUE);
+        doAnswer((Answer<Object>) invocation -> List.of(entity).stream()).when(inMemoryRepo).getAllRowsStream(0, -1);
     }
 
-    private void verifyDumpedEntities(IllegalStateException exception) {
+    private void verifyError(IllegalStateException exception) {
         String errorMessage = exception.toString();
-        boolean containsDbEntitiesSorted = errorMessage.substring(errorMessage.indexOf("db entities"), errorMessage.indexOf("mem entities")).contains(entity2 + "," + entity);
-        if (!containsDbEntitiesSorted) {
-            fail("Error message does not contain 2 entities in the db dump message", exception);
-        }
-        boolean containsMemEntitiesSorted = errorMessage.substring(errorMessage.indexOf("mem entities")).contains(entity.toString());
-        if (!containsMemEntitiesSorted) {
-            fail("Error message does not contain entity in the mem table dump message", exception);
+        boolean containsDump = errorMessage.contains("db rows 2, mem rows 1");
+        if (!containsDump) {
+            fail(exception);
         }
     }
 }

@@ -11,6 +11,7 @@ import lombok.Data;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Data
 @AllArgsConstructor
@@ -23,4 +24,12 @@ public class EntityWithChanges<T extends VersionedDerivedEntity> {
     private List<DbIdLatestValue> dbIdLatestValues;
     // min height where entity still exists
     private int minHeight;
+
+    public Optional<Change> getChangesForColumnAtHeight(String column, int height) {
+        List<Change> changes = this.changes.get(column);
+        if (changes == null) {
+            return Optional.empty();
+        }
+        return changes.stream().filter(c -> c.getHeight() == height).findFirst();
+    }
 }

@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.Change;
 import com.apollocurrency.aplwallet.apl.core.db.model.DbIdLatestValue;
 import com.apollocurrency.aplwallet.apl.core.db.model.EntityWithChanges;
 import com.apollocurrency.aplwallet.apl.core.db.model.VersionedChangeableDerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDerivedIdEntity;
+import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDeletableDerivedIdEntity;
 import com.apollocurrency.aplwallet.apl.data.DerivedTestData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,10 +26,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 
 class InMemoryVersionedDerivedEntityRepositoryTest {
     private DerivedTestData data;
+    private List<VersionedChangeableDerivedEntity> insertedIntoRepoData;
 
 
     private InMemoryVersionedDerivedEntityRepository<VersionedChangeableDerivedEntity> repository = new InMemoryVersionedDerivedEntityRepository<>(new LongKeyFactory<VersionedChangeableDerivedEntity>("id") {
@@ -71,32 +71,34 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
     }
 
     private void putTestData() {
-        repository.putAll(data.ALL_VCDE.stream().map(e-> {
-                    try {
-                        return e.clone();
-                    }
-                    catch (CloneNotSupportedException e1) {
-                        throw new RuntimeException(e1);
-                    }
+        insertedIntoRepoData = data.ALL_VCDE.stream().map(e -> {
+                try {
+                    return e.clone();
+                } catch (CloneNotSupportedException e1) {
+                    throw new RuntimeException(e1);
                 }
-        ).collect(Collectors.toList()));
+            }
+        ).collect(Collectors.toList());
+        repository.putAll(insertedIntoRepoData);
     }
 
     @Test
     void testGetDeleted() {
-        VersionedDerivedIdEntity deleted = repository.get(new LongKey(4L));
+        VersionedDeletableDerivedIdEntity deleted = repository.get(new LongKey(4L));
         assertNull(deleted);
     }
 
     @Test
     void testGetEntityWhichNotExist() {
-        VersionedDerivedIdEntity entity = repository.get(new LongKey(5L));
+        VersionedDeletableDerivedIdEntity entity = repository.get(new LongKey(5L));
         assertNull(entity);
     }
 
     @Test
     void testGet() {
         VersionedChangeableDerivedEntity  entity = repository.get(new LongKey(2L));
+
+        assertNotSame(data.VCDE_2_2, entity);
         assertEquals(data.VCDE_2_2, entity);
     }
 
@@ -114,8 +116,9 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         repository.insert(data.NEW_VCDE);
 
         VersionedChangeableDerivedEntity  savedEntity = repository.get(new LongKey(5L));
-        assertSame(savedEntity, data.NEW_VCDE);
+        assertNotSame(savedEntity, data.NEW_VCDE);
         assertTrue(data.NEW_VCDE.isLatest());
+        assertEquals(9, repository.rowCount());
     }
 
     @Test
@@ -128,7 +131,8 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         Change remaining = entityWithChanges.getChanges().get("remaining").get(2);
         assertEquals(new Change(data.VCDE_1_3.getHeight(), 0), remaining);
         DbIdLatestValue dbIdLatestValue = entityWithChanges.getDbIdLatestValues().get(2);
-        assertEquals(new DbIdLatestValue(data.VCDE_1_3.getHeight(), true, data.VCDE_1_3.getDbId()), dbIdLatestValue);
+        assertEquals(new DbIdLatestValue(data.VCDE_1_3.getHeight(), true, false, data.VCDE_1_3.getDbId()), dbIdLatestValue);
+        assertEquals(8, repository.rowCount());
     }
 
     @Test
@@ -139,10 +143,11 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
 
         repository.insert(clone);
 
-        VersionedDerivedIdEntity savedEntity = repository.get(new LongKey(3L));
-        assertSame(savedEntity, clone);
+        VersionedDeletableDerivedIdEntity savedEntity = repository.get(new LongKey(3L));
+        assertNotSame(savedEntity, clone);
         assertTrue(clone.isLatest());
         assertFalse(data.VERSIONED_ENTITY_3_1.isLatest());
+        assertEquals(9, repository.rowCount());
     }
 
     @Test
@@ -152,10 +157,11 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
 
         repository.delete(clone);
 
-        VersionedDerivedIdEntity deleted = repository.get(new LongKey(1L));
+        VersionedDeletableDerivedIdEntity deleted = repository.get(new LongKey(1L));
         assertNull(deleted);
         assertFalse(clone.isLatest());
         assertFalse(data.VERSIONED_ENTITY_3_1.isLatest());
+        assertEquals(9, repository.rowCount());
     }
 
     @Test
@@ -163,6 +169,7 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         boolean delete = repository.delete(data.NEW_VCDE);
 
         assertFalse(delete);
+        assertEquals(8, repository.rowCount());
     }
 
     @Test
@@ -171,16 +178,16 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         EntityWithChanges<VersionedChangeableDerivedEntity> first = new EntityWithChanges<>(
                 data.VCDE_1_3, Map.of("remaining",
                 List.of(new Change(data.VCDE_1_3.getHeight(), data.VCDE_1_3.getRemaining()))),
-                List.of(new DbIdLatestValue(data.VCDE_1_3.getHeight(), true, data.VCDE_1_3.getDbId())), data.VCDE_1_1.getHeight());
+                List.of(new DbIdLatestValue(data.VCDE_1_3.getHeight(), true, false, data.VCDE_1_3.getDbId())), data.VCDE_1_1.getHeight());
         EntityWithChanges<VersionedChangeableDerivedEntity> second = new EntityWithChanges<>(
                 data.VCDE_2_2, Map.of("remaining",
                 List.of(new Change(data.VCDE_2_2.getHeight(), data.VCDE_2_2.getRemaining()))),
-                List.of(new DbIdLatestValue(data.VCDE_2_2.getHeight(), true, data.VCDE_2_2.getDbId())), data.VCDE_2_1.getHeight());
+                List.of(new DbIdLatestValue(data.VCDE_2_2.getHeight(), true, false, data.VCDE_2_2.getDbId())), data.VCDE_2_1.getHeight());
 
         EntityWithChanges<VersionedChangeableDerivedEntity> third = new EntityWithChanges<>(
                 data.VCDE_3_1, Map.of("remaining",
                 List.of(new Change(data.VCDE_3_1.getHeight(), data.VCDE_3_1.getRemaining()))),
-                List.of(new DbIdLatestValue(data.VCDE_3_1.getHeight(), true, data.VCDE_3_1.getDbId())), data.VCDE_3_1.getHeight());
+                List.of(new DbIdLatestValue(data.VCDE_3_1.getHeight(), true, false, data.VCDE_3_1.getDbId())), data.VCDE_3_1.getHeight());
 
 
         Map<DbKey, EntityWithChanges<VersionedChangeableDerivedEntity>> expected = Map.of(
@@ -189,6 +196,7 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
                 new LongKey(3L), third
         );
         assertEquals(expected, repository.getAllEntities());
+        assertEquals(3, repository.rowCount());
     }
 
     @Test
@@ -197,6 +205,7 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
 
         Map<DbKey, EntityWithChanges<VersionedChangeableDerivedEntity>> expected = allExpected();
         assertEquals(expected, repository.getAllEntities());
+        assertEquals(8, repository.rowCount());
     }
 
 
@@ -207,6 +216,7 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         assertEquals(8, removed);
         Map<DbKey, EntityWithChanges<VersionedChangeableDerivedEntity>> allEntities = repository.getAllEntities();
         assertEquals(0, allEntities.size());
+        assertEquals(0, repository.rowCount());
     }
 
     @Test
@@ -218,8 +228,9 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         EntityWithChanges<VersionedChangeableDerivedEntity> first = new EntityWithChanges<>(
                 data.VCDE_1_1, Map.of("remaining",
                 List.of(new Change(data.VCDE_1_1.getHeight(), data.VCDE_1_1.getRemaining()))),
-                List.of(new DbIdLatestValue(data.VCDE_1_1.getHeight(), true, data.VCDE_1_1.getDbId())), data.VCDE_1_1.getHeight());
+                List.of(new DbIdLatestValue(data.VCDE_1_1.getHeight(), true, false, data.VCDE_1_1.getDbId())), data.VCDE_1_1.getHeight());
         assertEquals(Map.of(new LongKey(1L), first), repository.getAllEntities());
+        assertEquals(1, repository.rowCount());
     }
 
 
@@ -230,26 +241,27 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         assertEquals(0, removed);
         Map<DbKey, EntityWithChanges<VersionedChangeableDerivedEntity>> expected = allExpected();
         assertEquals(expected, repository.getAllEntities());
+        assertEquals(8, repository.rowCount());
     }
 
     private Map<DbKey, EntityWithChanges<VersionedChangeableDerivedEntity>> allExpected() {
         EntityWithChanges<VersionedChangeableDerivedEntity> first = new EntityWithChanges<>(
                 data.VCDE_1_3, Map.of("remaining",
                 List.of(new Change(data.VCDE_1_1.getHeight(), data.VCDE_1_1.getRemaining()), new Change(data.VCDE_1_2.getHeight(), data.VCDE_1_2.getRemaining()), new Change(data.VCDE_1_3.getHeight(), data.VCDE_1_3.getRemaining()))),
-                List.of(new DbIdLatestValue(data.VCDE_1_1.getHeight(), false, data.VCDE_1_1.getDbId()), new DbIdLatestValue(data.VCDE_1_2.getHeight(), false, data.VCDE_1_2.getDbId()), new DbIdLatestValue(data.VCDE_1_3.getHeight(), true, data.VCDE_1_3.getDbId())), data.VCDE_1_1.getHeight());
+                List.of(new DbIdLatestValue(data.VCDE_1_1.getHeight(), false, false, data.VCDE_1_1.getDbId()), new DbIdLatestValue(data.VCDE_1_2.getHeight(), false, false, data.VCDE_1_2.getDbId()), new DbIdLatestValue(data.VCDE_1_3.getHeight(), true, false, data.VCDE_1_3.getDbId())), data.VCDE_1_1.getHeight());
         EntityWithChanges<VersionedChangeableDerivedEntity> second = new EntityWithChanges<>(
                 data.VCDE_2_2, Map.of("remaining",
                 List.of(new Change(data.VCDE_2_1.getHeight(), data.VCDE_2_1.getRemaining()), new Change(data.VCDE_2_2.getHeight(), data.VCDE_2_2.getRemaining()))),
-                List.of(new DbIdLatestValue(data.VCDE_2_1.getHeight(), false, data.VCDE_2_1.getDbId()), new DbIdLatestValue(data.VCDE_2_2.getHeight(), true, data.VCDE_2_2.getDbId())), data.VCDE_2_1.getHeight());
+                List.of(new DbIdLatestValue(data.VCDE_2_1.getHeight(), false, false, data.VCDE_2_1.getDbId()), new DbIdLatestValue(data.VCDE_2_2.getHeight(), true, false, data.VCDE_2_2.getDbId())), data.VCDE_2_1.getHeight());
 
         EntityWithChanges<VersionedChangeableDerivedEntity> third = new EntityWithChanges<>(
                 data.VCDE_3_1, Map.of("remaining",
                 List.of(new Change(data.VCDE_3_1.getHeight(), data.VCDE_3_1.getRemaining()))),
-                List.of(new DbIdLatestValue(data.VCDE_3_1.getHeight(), true, data.VCDE_3_1.getDbId())), data.VCDE_3_1.getHeight());
+                List.of(new DbIdLatestValue(data.VCDE_3_1.getHeight(), true, false, data.VCDE_3_1.getDbId())), data.VCDE_3_1.getHeight());
         EntityWithChanges<VersionedChangeableDerivedEntity> fourth = new EntityWithChanges<>(
                 data.VCDE_4_2, Map.of("remaining",
                 List.of(new Change(data.VCDE_4_1.getHeight(), data.VCDE_4_1.getRemaining()))),
-                List.of(new DbIdLatestValue(data.VCDE_4_1.getHeight(), false, data.VCDE_4_1.getDbId()), new DbIdLatestValue(data.VCDE_4_2.getHeight(), false, data.VCDE_4_2.getDbId())), data.VCDE_4_1.getHeight());
+                List.of(new DbIdLatestValue(data.VCDE_4_1.getHeight(), false, true, data.VCDE_4_1.getDbId()), new DbIdLatestValue(data.VCDE_4_2.getHeight(), false,true, data.VCDE_4_2.getDbId())), data.VCDE_4_1.getHeight());
 
 
 
@@ -270,23 +282,24 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         data.VCDE_1_2.setLatest(true);
         data.VCDE_2_1.setLatest(true);
         data.VCDE_4_1.setLatest(true);
+        data.VCDE_4_1.setDeleted(false);
         EntityWithChanges<VersionedChangeableDerivedEntity> first = new EntityWithChanges<>(
                 data.VCDE_1_2, Map.of("remaining",
                 List.of(new Change(data.VCDE_1_1.getHeight(), data.VCDE_1_1.getRemaining()), new Change(data.VCDE_1_2.getHeight(), data.VCDE_1_2.getRemaining()))),
-                List.of(new DbIdLatestValue(data.VCDE_1_1.getHeight(), false, data.VCDE_1_1.getDbId()), new DbIdLatestValue(data.VCDE_1_2.getHeight(), true, data.VCDE_1_2.getDbId())), data.VCDE_1_1.getHeight());
+                List.of(new DbIdLatestValue(data.VCDE_1_1.getHeight(), false, false, data.VCDE_1_1.getDbId()), new DbIdLatestValue(data.VCDE_1_2.getHeight(), true, false, data.VCDE_1_2.getDbId())), data.VCDE_1_1.getHeight());
         EntityWithChanges<VersionedChangeableDerivedEntity> second = new EntityWithChanges<>(
                 data.VCDE_2_1, Map.of("remaining",
                 List.of(new Change(data.VCDE_2_1.getHeight(), data.VCDE_2_1.getRemaining()))),
-                List.of(new DbIdLatestValue(data.VCDE_2_1.getHeight(), true, data.VCDE_2_1.getDbId())), data.VCDE_2_1.getHeight());
+                List.of(new DbIdLatestValue(data.VCDE_2_1.getHeight(), true, false, data.VCDE_2_1.getDbId())), data.VCDE_2_1.getHeight());
 
         EntityWithChanges<VersionedChangeableDerivedEntity> third = new EntityWithChanges<>(
                 data.VCDE_3_1, Map.of("remaining",
                 List.of(new Change(data.VCDE_3_1.getHeight(), data.VCDE_3_1.getRemaining()))),
-                List.of(new DbIdLatestValue(data.VCDE_3_1.getHeight(), true, data.VCDE_3_1.getDbId())), data.VCDE_3_1.getHeight());
+                List.of(new DbIdLatestValue(data.VCDE_3_1.getHeight(), true, false, data.VCDE_3_1.getDbId())), data.VCDE_3_1.getHeight());
         EntityWithChanges<VersionedChangeableDerivedEntity> fourth = new EntityWithChanges<>(
                 data.VCDE_4_1, Map.of("remaining",
                 List.of(new Change(data.VCDE_4_1.getHeight(), data.VCDE_4_1.getRemaining()))),
-                List.of(new DbIdLatestValue(data.VCDE_4_1.getHeight(), true, data.VCDE_4_1.getDbId())), data.VCDE_4_1.getHeight());
+                List.of(new DbIdLatestValue(data.VCDE_4_1.getHeight(), true, false, data.VCDE_4_1.getDbId())), data.VCDE_4_1.getHeight());
 
 
 
@@ -308,14 +321,14 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
 
     @Test
     void testGetAll() {
-        List<VersionedChangeableDerivedEntity> all = repository.getAll(Comparator.comparing(VersionedDerivedIdEntity::getId), 0, Integer.MAX_VALUE);
+        List<VersionedChangeableDerivedEntity> all = repository.getAll(Comparator.comparing(VersionedDeletableDerivedIdEntity::getId), 0, Integer.MAX_VALUE);
 
         assertEquals(List.of(data.VCDE_1_3, data.VCDE_2_2, data.VCDE_3_1), all);
     }
 
     @Test
     void testGetAllWithPagination() {
-        List<VersionedChangeableDerivedEntity> all = repository.getAll(Comparator.comparing(VersionedDerivedIdEntity::getId), 0, 1);
+        List<VersionedChangeableDerivedEntity> all = repository.getAll(Comparator.comparing(VersionedDeletableDerivedIdEntity::getId), 0, 1);
 
         assertEquals(List.of(data.VCDE_1_3, data.VCDE_2_2), all);
     }
@@ -327,4 +340,25 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         assertNull(nonexistentEntity);
     }
 
+    @Test
+    void testGetRowCount() {
+        int count = repository.rowCount();
+
+        assertEquals(8, count);
+    }
+
+    @Test
+    void testGetAllRowsStream_withPagination() {
+        List<VersionedChangeableDerivedEntity> entities = repository.getAllRowsStream(2, 4).collect(Collectors.toList());
+
+        assertEquals(List.of(data.VCDE_2_1, data.VCDE_3_1, data.VCDE_4_1), entities);
+    }
+
+
+    @Test
+    void testGetAllRowsStream() {
+        List<VersionedChangeableDerivedEntity> entities = repository.getAllRowsStream(0, -1).collect(Collectors.toList());
+
+        assertEquals(data.ALL_VCDE, entities);
+    }
 }

@@ -12,5 +12,6 @@ import lombok.Data;
 public class DbIdLatestValue {
     private int height;
     private boolean latest;
+    private boolean deleted;
     private long dbId;
 }

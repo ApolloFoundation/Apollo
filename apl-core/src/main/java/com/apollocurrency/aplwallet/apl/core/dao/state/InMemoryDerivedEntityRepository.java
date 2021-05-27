@@ -76,7 +76,7 @@ public class InMemoryDerivedEntityRepository<T extends DerivedEntity> {
     }
 
     public T get(DbKey dbKey) {
-        return inReadLock(() -> allEntities.get(dbKey));
+        return getCopy(dbKey);
     }
 
     public T getCopy(DbKey dbKey) {

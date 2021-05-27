@@ -6,21 +6,14 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.InMemoryVersionedDerivedEntityRepository;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
+import com.apollocurrency.aplwallet.apl.core.utils.DbTableLoadingIterator;
 import lombok.extern.slf4j.Slf4j;
 
-import java.sql.SQLException;
-import java.util.Comparator;
-import java.util.List;
-import java.util.OptionalLong;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
 public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTableWrapper<T> {
-    private static final int ERROR_DUMP_COUNT = 20_000;
-
 
     protected final InMemoryVersionedDerivedEntityRepository<T> memTableCache;
 
@@ -32,14 +25,14 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
     @Override
     public void insert(T entity) {
         super.insert(entity);
-        log.trace("Put into cache {} put  entity {} height={}", getName(), entity, entity.getHeight());
         memTableCache.insert(entity);
+        log.info("Put into cache {} entity {} height={}", getName(), entity, entity.getHeight());
     }
 
     @Override
     public void trim(int height) {
         super.trim(height);
-        log.trace("Trim in memory table {}", getName());
+        log.info("Trim in memory table {}", getName());
         memTableCache.trim(height);
         checkRowConsistency("trim", height);
     }
@@ -62,10 +55,11 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
         boolean res = super.deleteAtHeight(t, height);
         boolean memDeleted = memTableCache.delete(t);
         if (res != memDeleted) {
+            findInconsistency();
             throw new IllegalStateException(
                 String.format("Desync of in-memory cache and the db, for the table %s after deletion of entity %s " +
-                        "at height %d, db entities: %s, mem entities: %s"
-                    , getName(), t, height, dumpFromDb(), dumpFromMem()));
+                        "at height %d"
+                    , getName(), t, height));
         }
         if (res) {
             log.trace("Entity type {}, deleted {} from mem table cache and from db, at height {}", table.toString(), t, height);
@@ -77,34 +71,36 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
     public void truncate() {
         super.truncate();
         memTableCache.clear();
-        log.trace("Mem table {} and db table truncated", getName());
+        log.info("Mem table {} and db table truncated", getName());
     }
 
-    private String dumpFromDb() {
-        try (Stream<T> memRowsStream = memTableCache.getAllRowsStream(0, ERROR_DUMP_COUNT)) {
-            OptionalLong minDbId = memRowsStream.mapToLong(DerivedEntity::getDbId).min();
-            List<T> dbEntities = super.getAllByDbId(minDbId.orElse(0), Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-            return dbEntities.stream().sorted(Comparator.comparingLong(DerivedEntity::getDbId).reversed()).map(Object::toString).collect(Collectors.joining(","));
-        } catch (SQLException e) {
-            throw new RuntimeException("Unable to dump db data for table " + getName() + ": " + e.toString(), e);
+    private void findInconsistency() {
+        try (Stream<T> memRowsStream = memTableCache.getAllRowsStream(0, -1)) {
+            DbTableLoadingIterator<T> dbTableLoadingIterator = new DbTableLoadingIterator<>(table);
+            memRowsStream.forEach(memEntity -> {
+                if (dbTableLoadingIterator.hasNext()) {
+                    T dbEntity = dbTableLoadingIterator.next();
+                    if (dbEntity.equals(memEntity)) {
+                        return;
+                    }
+                    log.error("Memory entity: {} does not match corresponding db entity: {}", memEntity, dbEntity);
+                }
+            });
         }
-    }
-
-    private String dumpFromMem() {
-        return memTableCache.getAllRowsStream(0, ERROR_DUMP_COUNT).map(Object::toString).collect(Collectors.joining(","));
     }
 
     private void checkRowConsistency(String operation, int height) {
         int dbRowCount = super.getRowCount();
         int memRowCount = memTableCache.rowCount();
         if (dbRowCount != memRowCount) {
+            findInconsistency();
             throw new IllegalStateException(createErrorMessage(operation, height, memRowCount, dbRowCount));
         }
     }
 
     private String createErrorMessage(String operation, int height, long memRowCount, long dbRowCount) {
         return String.format("After %s of the mem and db table %s to the height %d, " +
-                "mem and desync occurred, db rows %d, mem rows %d, db entities: %s, mem entities %s", operation,
-            getName(), height, dbRowCount, memRowCount, dumpFromDb(), dumpFromMem());
+                "mem and desync occurred, db rows %d, mem rows %d", operation,
+            getName(), height, dbRowCount, memRowCount);
     }
 }

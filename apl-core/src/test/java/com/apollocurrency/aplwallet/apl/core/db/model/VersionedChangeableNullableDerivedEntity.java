@@ -12,7 +12,7 @@ public class VersionedChangeableNullableDerivedEntity extends VersionedChangeabl
     private String description;
 
     public VersionedChangeableNullableDerivedEntity(Long dbId, long id, int remaining, Integer height, String name, String description, boolean latest) {
-        super(dbId, id, remaining, height, latest);
+        super(dbId, id, remaining, height, latest, false);
         this.name = name;
         this.description = description;
     }

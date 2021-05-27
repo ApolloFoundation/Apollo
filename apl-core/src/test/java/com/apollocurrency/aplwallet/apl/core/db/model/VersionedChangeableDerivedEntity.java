@@ -6,11 +6,11 @@ package com.apollocurrency.aplwallet.apl.core.db.model;
 
 import java.util.Objects;
 
-public class VersionedChangeableDerivedEntity extends VersionedDerivedIdEntity {
+public class VersionedChangeableDerivedEntity extends VersionedDeletableDerivedIdEntity {
     private int remaining;
 
-    public VersionedChangeableDerivedEntity(Long dbId, long id, int remaining,  Integer height, boolean latest) {
-        super(dbId, height, id, latest);
+    public VersionedChangeableDerivedEntity(Long dbId, long id, int remaining,  Integer height, boolean latest, boolean deleted) {
+        super(dbId, height, id, latest, deleted);
         this.remaining = remaining;
     }
 

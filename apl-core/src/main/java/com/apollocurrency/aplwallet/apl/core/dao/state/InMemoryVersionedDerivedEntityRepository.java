@@ -10,10 +10,11 @@ import com.apollocurrency.aplwallet.apl.core.db.Change;
 import com.apollocurrency.aplwallet.apl.core.db.model.DbIdLatestValue;
 import com.apollocurrency.aplwallet.apl.core.db.model.EntityWithChanges;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.LockUtils;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -22,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -40,12 +42,14 @@ import static java.util.stream.Collectors.toMap;
  *
  * @param <T> versioned derived entity to store
  */
-public abstract class InMemoryVersionedDerivedEntityRepository<T extends VersionedDerivedEntity> {
+@Slf4j
+public abstract class InMemoryVersionedDerivedEntityRepository<T extends VersionedDeletableEntity> {
 
     private final Map<DbKey, EntityWithChanges<T>> allEntities = new HashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final KeyFactory<T> keyFactory;
     private final List<String> changeableColumns;
+    private int rows = 0;
 
     public InMemoryVersionedDerivedEntityRepository(KeyFactory<T> keyFactory, List<String> changeableColumns) {
         this.keyFactory = Objects.requireNonNull(keyFactory);
@@ -92,7 +96,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                 Map<String, List<Change>> changes = changeableColumns.stream().collect(toMap(Function.identity(), s -> new ArrayList<>()));
                 List<DbIdLatestValue> dbIdLatestValues = new ArrayList<>();
                 for (T historicalEntity : historicalEntities) {
-                    dbIdLatestValues.add(new DbIdLatestValue(historicalEntity.getHeight(), historicalEntity.isLatest(), historicalEntity.getDbId()));
+                    dbIdLatestValues.add(new DbIdLatestValue(historicalEntity.getHeight(), historicalEntity.isLatest(), historicalEntity.isDeleted(), historicalEntity.getDbId()));
                     changeableColumns.forEach(name -> {
                         List<Change> columnChanges = changes.get(name);
                         Object prevValue = getLastValueOrNull(columnChanges);
@@ -105,6 +109,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                 EntityWithChanges<T> entityWithChanges = new EntityWithChanges<>(lastValue, changes, dbIdLatestValues, historicalEntities.get(0).getHeight());
                 allEntities.put(dbKey, entityWithChanges);
             }
+            rows += objects.size();
         });
     }
 
@@ -136,7 +141,10 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
     protected abstract void setColumn(String columnName, Object value, T entity);
 
     public void clear() {
-        inWriteLock(allEntities::clear);
+        inWriteLock(() -> {
+            allEntities.clear();
+            rows = 0;
+        });
     }
 
     public void insert(T entity) {
@@ -154,8 +162,10 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                     }
                 });
                 List<DbIdLatestValue> dbIdLatestValues = new ArrayList<>();
-                dbIdLatestValues.add(new DbIdLatestValue(entity.getHeight(), true, entity.getDbId()));
+                dbIdLatestValues.add(new DbIdLatestValue(entity.getHeight(), true, false, entity.getDbId()));
                 allEntities.put(dbKey, new EntityWithChanges<>(entity, changes, dbIdLatestValues, entity.getHeight()));
+                rows++;
+                log.info("Saved new in-memory entity {}, total entities {}", entity, rows);
             } else {
                 if (existingEntity.getEntity().getHeight() == entity.getHeight()) { // do merge
                     Map<String, List<Change>> changes = existingEntity.getChanges();
@@ -172,6 +182,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                         }
                     });
                     existingEntity.setEntity(entity);
+                    log.info("Merge in-memory entity {}, total entities {}", entity, rows);
                 } else { // do insert new value
                     entity.setDbId(entity.getDbId());
                     Map<String, List<Change>> changes = existingEntity.getChanges();
@@ -185,8 +196,10 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                     });
                     List<DbIdLatestValue> dbIdLatestValues = existingEntity.getDbIdLatestValues();
                     last(dbIdLatestValues).setLatest(false);
-                    dbIdLatestValues.add(new DbIdLatestValue(entity.getHeight(), true, entity.getDbId()));
+                    dbIdLatestValues.add(new DbIdLatestValue(entity.getHeight(), true, false, entity.getDbId()));
                     existingEntity.setEntity(entity);
+                    rows++;
+                    log.info("Updated in-memory entity {}, total entities {}", entity, rows);
                 }
             }
         });
@@ -197,16 +210,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
     }
 
     public T get(DbKey dbKey) {
-        return getInReadLock(() -> {
-            EntityWithChanges<T> entity = allEntities.get(dbKey);
-            if (entity != null) {
-                T t = entity.getEntity();
-                if (t.isLatest()) {
-                    return t;
-                }
-            }
-            return null;
-        });
+        return getCopy(dbKey);
     }
 
     public T getCopy(DbKey dbKey) {
@@ -238,9 +242,13 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                 ourEntity.setLatest(false);
                 ourEntity.setHeight(entity.getHeight());
                 ourEntity.setDbId(entity.getDbId());
+                ourEntity.setDeleted(true);
                 List<DbIdLatestValue> dbIdLatestValues = existingEntity.getDbIdLatestValues();
                 last(dbIdLatestValues).setLatest(false);
-                dbIdLatestValues.add(new DbIdLatestValue(entity.getHeight(), false, entity.getDbId()));
+                last(dbIdLatestValues).setDeleted(true);
+                dbIdLatestValues.add(new DbIdLatestValue(entity.getHeight(), false, true, entity.getDbId()));
+                rows++;
+                log.info("Deleted entity {} at height {}", entity, entity.getHeight());
                 return true;
             } else {
                 return false;
@@ -261,12 +269,15 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                             List<Change> changes = columnWithChanges.getValue();
                             changes.removeIf(c -> c.getHeight() < maxHeight);
                         }
+                        int prevRows = l.getDbIdLatestValues().size();
                         l.getDbIdLatestValues().removeIf(s -> s.getHeight() < maxHeight);
+                        rows -= (prevRows - l.getDbIdLatestValues().size());
                     }
                     boolean delete = l.getDbIdLatestValues().stream().noneMatch(s -> s.getHeight() >= height) && !l.getEntity().isLatest();
 
                     if (delete) {
                         deleteEntirely.add(key);
+                        rows -= l.getDbIdLatestValues().size();
                     }
                 }
             });
@@ -279,6 +290,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
             int removedRecords = 0;
             Set<DbKey> keysToUpdate = new HashSet<>();
             Set<DbKey> keysToDelete = new HashSet<>();
+            Set<DbKey> keysToRenewDeleted = new HashSet<>();
             for (Map.Entry<DbKey, EntityWithChanges<T>> entry : allEntities.entrySet()) {
                 EntityWithChanges<T> entity = entry.getValue();
                 DbKey key = entry.getKey();
@@ -298,7 +310,12 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                         }
                         List<DbIdLatestValue> dbIdLatestValues = entity.getDbIdLatestValues();
                         int initialSize = dbIdLatestValues.size();
+                        long deletedEntriesCount = dbIdLatestValues.stream().filter(l -> l.getHeight() > height && l.isDeleted()).count();
+                        if (deletedEntriesCount % 2 != 0) {
+                            keysToRenewDeleted.add(key);
+                        }
                         dbIdLatestValues.removeIf(l -> l.getHeight() > height);
+
                         removedRecords += (initialSize - dbIdLatestValues.size());
                     }
                 }
@@ -315,6 +332,12 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                         entity.setHeight(lastDbIdLatestValue.getHeight());
                         lastDbIdLatestValue.setLatest(true);
                     });
+            keysToRenewDeleted.stream().map(allEntities::get).forEach(e-> {
+                T entity = e.getEntity();
+                entity.setDeleted(false);
+                last(e.getDbIdLatestValues()).setDeleted(false);
+            });
+            rows -= removedRecords;
             return removedRecords;
         });
     }
@@ -332,15 +355,39 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
     }
 
     public int rowCount() {
-        return getInReadLock(allEntities::size);
+        return getInReadLock(()-> rows);
     }
 
     public Stream<T> getAllRowsStream(int from, int to) {
         return getInReadLock(() ->
             CollectionUtil.limitStream(allEntities.values()
                 .stream()
-                .map(EntityWithChanges::getEntity)
-                .sorted(Comparator.comparingLong(DerivedEntity::getDbId).reversed()), from, to));
+                .flatMap(entityWithChanges->reconstructHistoricalEntries(entityWithChanges).stream())
+                .sorted(Comparator.comparingLong(DerivedEntity::getDbId)), from, to));
+    }
+
+    private List<T> reconstructHistoricalEntries(EntityWithChanges<T> entityWithChanges) {
+        List<T> historicalEntities = new ArrayList<>();
+        entityWithChanges.getDbIdLatestValues().forEach(e -> {
+            try {
+                T historicalEntity = (T) entityWithChanges.getEntity().clone();
+                historicalEntity.setDbId(e.getDbId());
+                historicalEntity.setHeight(e.getHeight());
+                historicalEntity.setLatest(e.isLatest());
+                historicalEntity.setDeleted(e.isDeleted());
+                changeableColumns.forEach(column -> {
+                    Optional<Change> changesForColumnAtHeight = entityWithChanges.getChangesForColumnAtHeight(column, e.getHeight());
+                    if (changesForColumnAtHeight.isEmpty()) {
+                        return;
+                    }
+                    setColumn(column, changesForColumnAtHeight.get().getValue(), historicalEntity);
+                });
+                historicalEntities.add(historicalEntity);
+            } catch (CloneNotSupportedException ex) {
+                throw new RuntimeException("Cloning operation should be supported for the in-memory table entity", ex);
+            }
+        });
+        return historicalEntities;
     }
 
     @ToString

@@ -17,7 +17,6 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class InMemoryDerivedEntityRepositoryTest {
@@ -81,7 +80,7 @@ class InMemoryDerivedEntityRepositoryTest {
     @Test
     void testGet() {
         DerivedIdEntity derivedIdEntity = repository.get(new LongKey(1L));
-        assertSame(die1, derivedIdEntity);
+        assertNotSame(die1, derivedIdEntity);
         assertEquals(die1, derivedIdEntity);
     }
 

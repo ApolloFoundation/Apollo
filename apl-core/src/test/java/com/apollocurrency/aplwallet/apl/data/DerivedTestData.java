@@ -86,16 +86,16 @@ public class DerivedTestData {
     );
 
 
-    public final VersionedChangeableDerivedEntity VCDE_1_1 = new VersionedChangeableDerivedEntity(1000L, 1 , 100, 225, false);
-    public final VersionedChangeableDerivedEntity VCDE_1_2 = new VersionedChangeableDerivedEntity(1010L, 1 , 99 , 226, false);
-    public final VersionedChangeableDerivedEntity VCDE_2_1 = new VersionedChangeableDerivedEntity(1020L, 2 , 99 , 226, false);
-    public final VersionedChangeableDerivedEntity VCDE_3_1 = new VersionedChangeableDerivedEntity(1030L, 3 , 0  , 227, true );
-    public final VersionedChangeableDerivedEntity VCDE_4_1 = new VersionedChangeableDerivedEntity(1040L, 4 , 0  , 227, false);
-    public final VersionedChangeableDerivedEntity VCDE_2_2 = new VersionedChangeableDerivedEntity(1050L, 2 , 10 , 228, true );
-    public final VersionedChangeableDerivedEntity VCDE_1_3 = new VersionedChangeableDerivedEntity(1060L, 1 , 97 , 228, true );
-    public final VersionedChangeableDerivedEntity VCDE_4_2 = new VersionedChangeableDerivedEntity(1070L, 4 , 0  , 228, false);
+    public final VersionedChangeableDerivedEntity VCDE_1_1 = new VersionedChangeableDerivedEntity(1000L, 1 , 100, 225, false, false);
+    public final VersionedChangeableDerivedEntity VCDE_1_2 = new VersionedChangeableDerivedEntity(1010L, 1 , 99 , 226, false, false);
+    public final VersionedChangeableDerivedEntity VCDE_2_1 = new VersionedChangeableDerivedEntity(1020L, 2 , 99 , 226, false, false);
+    public final VersionedChangeableDerivedEntity VCDE_3_1 = new VersionedChangeableDerivedEntity(1030L, 3 , 0  , 227, true , false);
+    public final VersionedChangeableDerivedEntity VCDE_4_1 = new VersionedChangeableDerivedEntity(1040L, 4 , 0  , 227, false, true);
+    public final VersionedChangeableDerivedEntity VCDE_2_2 = new VersionedChangeableDerivedEntity(1050L, 2 , 10 , 228, true , false);
+    public final VersionedChangeableDerivedEntity VCDE_1_3 = new VersionedChangeableDerivedEntity(1060L, 1 , 97 , 228, true , false);
+    public final VersionedChangeableDerivedEntity VCDE_4_2 = new VersionedChangeableDerivedEntity(1070L, 4 , 0  , 228, false, true);
 
-    public final VersionedChangeableDerivedEntity NEW_VCDE = new VersionedChangeableDerivedEntity(1071L, 5 , 123  , 229, true);
+    public final VersionedChangeableDerivedEntity NEW_VCDE = new VersionedChangeableDerivedEntity(1071L, 5 , 123  , 229, true, false);
 
     public final List<VersionedChangeableDerivedEntity> ALL_VCDE = List.of(
             VCDE_1_1,

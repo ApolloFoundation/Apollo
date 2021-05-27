@@ -156,11 +156,6 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
         );
     }
 
-    @Override
-    public List<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to) {
-        throw new UnsupportedOperationException("Unable to select account shufflings using in-memory table");
-    }
-
     private Stream<Shuffling> latestStream() {
         return getAllEntities().values()
                 .stream()
@@ -343,6 +338,11 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
     @Override
     public int getCount(PreparedStatement pstmt) throws SQLException {
         throw new UnsupportedOperationException("Unable to calculate count by the sql statement for the in memory shuffling table");
+    }
+
+    @Override
+    public List<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to) {
+        throw new UnsupportedOperationException("Unable to select account shufflings using in-memory table");
     }
 
     @Override

@@ -57,6 +57,7 @@ class InMemoryShufflingRepositoryTest extends ShufflingRepositoryTest {
     @Test
     void testTruncate() {
         InMemoryShufflingRepository repository = createRepository();
+
         repository.truncate();
 
         assertEquals("Expected no shuffling entries after truncate", 0, repository.rowCount());
@@ -81,7 +82,7 @@ class InMemoryShufflingRepositoryTest extends ShufflingRepositoryTest {
     void testGetRowCount() {
         int rowCount = createRepository().getRowCount();
 
-        assertEquals(8, rowCount);
+        assertEquals(14, rowCount);
     }
 
     @Test
@@ -114,7 +115,6 @@ class InMemoryShufflingRepositoryTest extends ShufflingRepositoryTest {
         assertThrows(UnsupportedOperationException.class, () -> createRepository().getCount(DbClause.EMPTY_CLAUSE));
         assertThrows(UnsupportedOperationException.class, () -> createRepository().getCount(DbClause.EMPTY_CLAUSE, 33));
         assertThrows(UnsupportedOperationException.class, () -> createRepository().getCount(mock(PreparedStatement.class)));
+        assertThrows(UnsupportedOperationException.class, () -> createRepository().getAccountShufflings(1L, false, 0, 1));
     }
-
-
 }
