@@ -20,11 +20,11 @@ import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.blockchain.ContractNotFoundException;
 import com.apollocurrency.smc.blockchain.MockIntegrator;
+import com.apollocurrency.smc.blockchain.storage.ContractMappingRepositoryFactory;
 import com.apollocurrency.smc.blockchain.tx.SMCOperationReceipt;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.vm.ContractBlock;
 import com.apollocurrency.smc.contract.vm.ContractBlockchainTransaction;
-import com.apollocurrency.smc.contract.vm.ContractMappingFactory;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.SendMsgException;
 import com.apollocurrency.smc.contract.vm.global.BlockchainInfo;
@@ -170,7 +170,7 @@ public class SmcBlockchainIntegratorFactory {
             }
 
             @Override
-            public ContractMappingFactory createMappingFactory(Address contract) {
+            public ContractMappingRepositoryFactory createMappingFactory(Address contract) {
                 return smcMappingRepositoryClassFactory.createMappingFactory(contract);
             }
 
