@@ -38,17 +38,17 @@ public class SmcMappingRepositoryClassFactory {
             }
 
             @Override
-            public ContractMappingRepository<Address> address(String mappingName) {
+            public ContractMappingRepository<Address> addressRepository(String mappingName) {
                 return new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new AddressJsonConverter());
             }
 
             @Override
-            public ContractMappingRepository<BigInteger> bigNumber(String mappingName) {
+            public ContractMappingRepository<BigInteger> bigIntegerRepository(String mappingName) {
                 return new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new BigIntegerJsonConverter());
             }
 
             @Override
-            public ContractMappingRepository<String> string(String mappingName) {
+            public ContractMappingRepository<String> stringRepository(String mappingName) {
                 return new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new StringJsonConverter());
             }
         };
