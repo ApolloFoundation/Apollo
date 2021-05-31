@@ -48,13 +48,6 @@ class InMemoryShufflingRepositoryTest extends ShufflingRepositoryTest {
     }
 
     @Test
-    void testGetCopy() {
-        Shuffling shufflingCopy = createRepository().getCopy(std.SHUFFLING_8_1_CURRENCY_PROCESSING.getId());
-
-        assertEquals(std.SHUFFLING_8_1_CURRENCY_PROCESSING, shufflingCopy);
-    }
-
-    @Test
     void testTruncate() {
         InMemoryShufflingRepository repository = createRepository();
 
@@ -64,10 +57,15 @@ class InMemoryShufflingRepositoryTest extends ShufflingRepositoryTest {
     }
 
     @Test
-    void testDeleteAtHeight() {
-        createRepository().deleteAtHeight(std.SHUFFLING_8_1_CURRENCY_PROCESSING, std.SHUFFLING_8_1_CURRENCY_PROCESSING.getHeight());
+    void testDeleteAtHeight() throws CloneNotSupportedException {
+        Shuffling shufflingToDelete = (Shuffling) std.SHUFFLING_8_1_CURRENCY_PROCESSING.clone();
+        shufflingToDelete.setHeight(std.SHUFFLING_8_1_CURRENCY_PROCESSING.getHeight() + 1);
+        shufflingToDelete.setDbId(std.NEW_SHUFFLING.getDbId() + 1);
 
-        Shuffling deletedShuffling = createRepository().get(std.SHUFFLING_8_1_CURRENCY_PROCESSING.getId());
+        InMemoryShufflingRepository repository = createRepository();
+        repository.deleteAtHeight(shufflingToDelete, shufflingToDelete.getHeight());
+
+        Shuffling deletedShuffling = repository.get(std.SHUFFLING_8_1_CURRENCY_PROCESSING.getId());
         assertNull("Expected no deleted shuffling existence after deletion procedure", deletedShuffling);
     }
 

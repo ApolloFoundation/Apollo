@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.model.DerivedIdEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.model.DerivedIdEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

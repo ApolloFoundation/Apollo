@@ -76,16 +76,21 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
 
     private void findInconsistency() {
         try (Stream<T> memRowsStream = memTableCache.getAllRowsStream(0, -1)) {
-            DbTableLoadingIterator<T> dbTableLoadingIterator = new DbTableLoadingIterator<>(table);
+            DbTableLoadingIterator<T> dbIterator = new DbTableLoadingIterator<>(table);
             memRowsStream.forEach(memEntity -> {
-                if (dbTableLoadingIterator.hasNext()) {
-                    T dbEntity = dbTableLoadingIterator.next();
+                if (dbIterator.hasNext()) {
+                    T dbEntity = dbIterator.next();
                     if (dbEntity.equals(memEntity)) {
                         return;
                     }
                     log.error("Memory entity: {} does not match corresponding db entity: {}", memEntity, dbEntity);
+                } else {
+                    log.error("Cached entity present in mem, but not in db: {}", memEntity);
                 }
             });
+            if (dbIterator.hasNext()) {
+                log.error("Present in db, but not in in-memory cache: {}", dbIterator.next());
+            }
         }
     }
 
@@ -100,7 +105,7 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
 
     private String createErrorMessage(String operation, int height, long memRowCount, long dbRowCount) {
         return String.format("After %s of the mem and db table %s to the height %d, " +
-                "mem and desync occurred, db rows %d, mem rows %d", operation,
+                "mem and db desync occurred, db rows %d, mem rows %d", operation,
             getName(), height, dbRowCount, memRowCount);
     }
 }

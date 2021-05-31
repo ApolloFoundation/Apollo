@@ -1,6 +1,8 @@
-package com.apollocurrency.aplwallet.apl.core.db;
+/*
+ *  Copyright © 2018-2021 Apollo Foundation
+ */
 
-import com.apollocurrency.aplwallet.apl.core.dao.state.InMemoryVersionedDerivedEntityRepository;
+package com.apollocurrency.aplwallet.apl.core.dao.state;
 
 import java.util.Arrays;
 import java.util.function.BiFunction;

@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.InMemoryVersionedDerivedEntityRepository;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
-import com.apollocurrency.aplwallet.apl.core.db.model.VersionedDeletableIdDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.model.VersionedDeletableIdDerivedEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.utils;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableData;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableInterface;
-import com.apollocurrency.aplwallet.apl.core.db.model.DerivedIdEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.model.DerivedIdEntity;
 import com.apollocurrency.aplwallet.apl.data.DerivedTestData;
 import com.apollocurrency.aplwallet.apl.testutil.MockUtils;
 import org.junit.jupiter.api.Test;
