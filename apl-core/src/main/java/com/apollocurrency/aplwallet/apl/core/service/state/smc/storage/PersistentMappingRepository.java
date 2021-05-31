@@ -19,10 +19,10 @@ public class PersistentMappingRepository<V> extends ContractMappingRepository<V>
 
     private final SmcContractStorageService smcContractStorageService;
 
-    protected PersistentMappingRepository(SmcContractStorageService smcContractStorageService,
-                                          Address contractAddress,
-                                          String mappingName,
-                                          JsonConverter<V> jsonConverter) {
+    public PersistentMappingRepository(SmcContractStorageService smcContractStorageService,
+                                       Address contractAddress,
+                                       String mappingName,
+                                       JsonConverter<V> jsonConverter) {
         super(contractAddress, mappingName, jsonConverter);
         this.smcContractStorageService = Objects.requireNonNull(smcContractStorageService);
     }

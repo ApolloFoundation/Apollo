@@ -13,14 +13,18 @@ import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.storage.SmcMappingRepositoryClassFactory;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.storage.PersistentMappingRepository;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.blockchain.ContractNotFoundException;
 import com.apollocurrency.smc.blockchain.MockIntegrator;
+import com.apollocurrency.smc.blockchain.storage.AddressJsonConverter;
+import com.apollocurrency.smc.blockchain.storage.BigIntegerJsonConverter;
+import com.apollocurrency.smc.blockchain.storage.ContractMappingRepository;
 import com.apollocurrency.smc.blockchain.storage.ContractMappingRepositoryFactory;
+import com.apollocurrency.smc.blockchain.storage.StringJsonConverter;
 import com.apollocurrency.smc.blockchain.tx.SMCOperationReceipt;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.vm.ContractBlock;
@@ -47,15 +51,17 @@ public class SmcBlockchainIntegratorFactory {
     private final Blockchain blockchain;
     private final ServerInfoService serverInfoService;
     private final BlockConverter blockConverter;
+    private final SmcContractStorageService smcContractStorageService;
     private final SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory;
 
     @Inject
-    public SmcBlockchainIntegratorFactory(AccountService accountService, Blockchain blockchain, ServerInfoService serverInfoService, SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory) {
+    public SmcBlockchainIntegratorFactory(AccountService accountService, Blockchain blockchain, ServerInfoService serverInfoService, SmcContractStorageService smcContractStorageService) {
         this.accountService = Objects.requireNonNull(accountService);
         this.blockchain = Objects.requireNonNull(blockchain);
         this.serverInfoService = Objects.requireNonNull(serverInfoService);
         this.blockConverter = new BlockConverter();
-        this.smcMappingRepositoryClassFactory = Objects.requireNonNull(smcMappingRepositoryClassFactory);
+        this.smcContractStorageService = Objects.requireNonNull(smcContractStorageService);
+        this.smcMappingRepositoryClassFactory = new SmcMappingRepositoryClassFactory(smcContractStorageService);
     }
 
     public BlockchainIntegrator createProcessor(final Transaction originator, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
@@ -175,6 +181,39 @@ public class SmcBlockchainIntegratorFactory {
             }
 
         };
+    }
+
+    private static class SmcMappingRepositoryClassFactory {
+        private final SmcContractStorageService smcContractStorageService;
+
+        @Inject
+        public SmcMappingRepositoryClassFactory(SmcContractStorageService smcContractStorageService) {
+            this.smcContractStorageService = smcContractStorageService;
+        }
+
+        public ContractMappingRepositoryFactory createMappingFactory(final Address contract) {
+            return new ContractMappingRepositoryFactory() {
+                @Override
+                public boolean isMappingExist(String mappingName) {
+                    return smcContractStorageService.isMappingExist(contract, mappingName);
+                }
+
+                @Override
+                public ContractMappingRepository<Address> addressRepository(String mappingName) {
+                    return new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new AddressJsonConverter());
+                }
+
+                @Override
+                public ContractMappingRepository<BigInteger> bigIntegerRepository(String mappingName) {
+                    return new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new BigIntegerJsonConverter());
+                }
+
+                @Override
+                public ContractMappingRepository<String> stringRepository(String mappingName) {
+                    return new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new StringJsonConverter());
+                }
+            };
+        }
     }
 
     public BlockchainIntegrator createMockProcessor(final long originatorTransactionId) {
