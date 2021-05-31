@@ -6,25 +6,33 @@ import javax.inject.Singleton;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import io.firstbridge.kms.security.JwtConfigData;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
 /**
  * Properties to be loaded from 'apl-blockchain.properties' file
  */
-@Singleton
 @Setter
 @Getter
 @ToString
+@Singleton
+@NoArgsConstructor
 public class JwtConfigDataPropertiesImpl implements JwtConfigData {
 
+    private String issuer;
+    private String secret;
+    private String accessTokenExpirationTime;
+    private String accessAdminTokenExpirationTime;
+    private String refreshTokenExpirationTime;
+
     @Inject
-    public JwtConfigDataPropertiesImpl(
-        @Property(name = "apl.jwt.issuer", defaultValue = "") String issuer,
-        @Property(name = "apl.jwt.secret", defaultValue = "") String secret,
-        @Property(name = "apl.jwt.access.expiration.time", defaultValue = "") String accessTokenExpirationTime,
-        @Property(name = "apl.jwt.admin.access.expiration.time", defaultValue = "") String accessAdminTokenExpirationTime,
-        @Property(name = "apl.jwt.refresh.expiration.time", defaultValue = "") String refreshTokenExpirationTime
+    public JwtConfigDataPropertiesImpl (
+        @Property(name = "kms.main.jwt.issuer", defaultValue = "") String issuer,
+        @Property(name = "kms.main.jwt.secret", defaultValue = "") String secret,
+        @Property(name = "kms.main.jwt.access.expiration.time", defaultValue = "") String accessTokenExpirationTime,
+        @Property(name = "kms.main.jwt.admin.access.expiration.time", defaultValue = "") String accessAdminTokenExpirationTime,
+        @Property(name = "kms.main.jwt.refresh.expiration.time", defaultValue = "") String refreshTokenExpirationTime
     ) {
         this.issuer = issuer;
         this.secret = secret;
@@ -32,11 +40,5 @@ public class JwtConfigDataPropertiesImpl implements JwtConfigData {
         this.accessAdminTokenExpirationTime = accessAdminTokenExpirationTime;
         this.refreshTokenExpirationTime = refreshTokenExpirationTime;
     }
-
-    private String issuer;
-    private String secret;
-    private String accessTokenExpirationTime;
-    private String accessAdminTokenExpirationTime;
-    private String refreshTokenExpirationTime;
 
 }

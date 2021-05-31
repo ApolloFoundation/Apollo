@@ -19,18 +19,17 @@ import lombok.ToString;
 @ToString
 public class GrpcHostConfigImpl implements GrpcHostConfig {
 
-    //(name = "quarkus.grpc.clients.health.url")
-    private String url;
+    private String host;
 
-    private Optional<InetSocketAddress> inetSocketAddress;
+    private int grpcPort;
 
-    public GrpcHostConfigImpl(String url) {
-        this.url = url;
-    }
+    private Optional<InetSocketAddress> inetSocketAddress = Optional.empty();
 
-    public GrpcHostConfigImpl(InetSocketAddress inetSocketAddress) {
-        Objects.requireNonNull(inetSocketAddress);
-        this.inetSocketAddress = Optional.of(inetSocketAddress);
+    public GrpcHostConfigImpl(
+        String host,
+        int grpcPort) {
+        this.host = host;
+        this.grpcPort = grpcPort;
     }
 
     @Override
@@ -42,15 +41,21 @@ public class GrpcHostConfigImpl implements GrpcHostConfig {
     }
 
     private Optional<InetSocketAddress> validateKmsUrl() {
-        if (url == null || url.strip().isBlank()) return Optional.empty();
+        if (host == null || host.strip().isBlank()) return Optional.empty();
         try {
             // WORKAROUND: add any scheme to make the resulting URI valid.
-            URI uri = new URI("my://" + url); // may throw URISyntaxException
+            URI uri = new URI("dns",
+                null,
+                this.host,
+                this.grpcPort,
+                null,
+                null,
+                null ); // may throw URISyntaxException
             String host = uri.getHost();
             int port = uri.getPort();
 
             if (uri.getHost() == null || uri.getPort() == -1) {
-                System.err.println("Can not assign KMS, URI must have host and port parts: " + url);
+                System.err.println("Can not assign KMS, URI must have host and port parts: " + this.host + ":" + this.grpcPort);
                 return Optional.empty();
             }
             // validation succeeded
@@ -59,8 +64,13 @@ public class GrpcHostConfigImpl implements GrpcHostConfig {
 
         } catch (URISyntaxException ex) {
             // validation failed
-            System.err.println("KMS ip/URI is not valid: " + url);
+            System.err.println("KMS ip/URI is not valid: " + this.host + ":" + this.grpcPort);
         }
         return Optional.empty();
+    }
+
+    @Override
+    public String getHost() {
+        return this.host;
     }
 }

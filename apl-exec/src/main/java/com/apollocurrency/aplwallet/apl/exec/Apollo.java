@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.core.kms.config.GrpcHostConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.kms.config.RemoteKmsConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.utils.LegacyDbUtil;
 import com.apollocurrency.aplwallet.apl.udpater.intfce.UpdaterCore;
@@ -41,6 +42,7 @@ import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.beust.jcommander.JCommander;
 import io.firstbridge.kms.client.grpx.GrpcClient;
 import io.firstbridge.kms.client.grpx.config.GrpcHostConfig;
+import io.firstbridge.kms.security.KmsMainConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -223,16 +225,19 @@ public class Apollo {
      * @param args args with non empty 'kms' field to validate
      * @return Optional InetSocketAddress value or EMPTY
      */
-    private static Optional<InetSocketAddress> validateKmsUrl(CmdLineArgs args) {
+    private static Optional<InetSocketAddress> validateKmsUrl(CmdLineArgs args, KmsMainConfig kmsMainConfig) {
         String ipUrlAsString = args.kms; // KMS standalone server has to be validated
         if (ipUrlAsString.strip().isBlank()) return Optional.empty();
+        if (!ipUrlAsString.contains("://")) {
+            ipUrlAsString = "dns://" + ipUrlAsString;
+        }
         try {
             // WORKAROUND: add any scheme to make the resulting URI valid.
-            URI uri = new URI("my://" + ipUrlAsString); // may throw URISyntaxException
+            URI uri = new URI(ipUrlAsString); // may throw URISyntaxException
             String host = uri.getHost();
-            int port = uri.getPort();
+//            int port = uri.getPort();
 
-            if (uri.getHost() == null || uri.getPort() == -1) {
+            if (uri.getHost() == null /*|| uri.getPort() == -1*/) {
                 System.err.println("Can not assign KMS, URI must have host and port parts: " + args.kms);
                 return Optional.empty();
             }
@@ -240,7 +245,7 @@ public class Apollo {
             // such as presence of path, query, fragment, ...
 
             // validation succeeded
-            return Optional.of(new InetSocketAddress (host, port));
+            return Optional.of(new InetSocketAddress (host, kmsMainConfig.getRemoteKmsConfig().getGrpcPort()));
 
         } catch (URISyntaxException ex) {
             // validation failed
@@ -412,9 +417,18 @@ public class Apollo {
 
         aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
         DbConfig dbConfig = CDI.current().select(DbConfig.class).get();// create proxied cdi component for later use
+        aplCoreRuntime.init(runtimeMode, dirProvider, applicationProperties, chains, dbConfig);
 
+        BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
+        blockchainConfigUpdater.updateChain(aplCoreRuntime.getChainsConfigHolder().getActiveChain(), aplCoreRuntime.getPropertiesHolder());
 
-        Optional<InetSocketAddress> kmsUrl = validateKmsUrl(args);
+        // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
+        SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
+        aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
+        BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
+
+        KmsMainConfig kmsMainConfig = CDI.current().select(KmsMainConfig.class).get(); // KMS
+        Optional<InetSocketAddress> kmsUrl = validateKmsUrl(args, kmsMainConfig);
         if (kmsUrl.isEmpty()) {
             // KMS embedded mode
             dbConfig.setKmsSchemaName(KMS_SCHEMA_NAME);
@@ -423,22 +437,20 @@ public class Apollo {
             // KMS remote server mode via gRPC client
             String hostString = kmsUrl.get().toString();
             log.debug("Checking if KMS server connection is healthy by url = {}...", hostString);
-            GrpcHostConfig grpcHostConfig = new GrpcHostConfigImpl(kmsUrl.get());
+            GrpcHostConfig grpcHostConfig = new GrpcHostConfigImpl(
+                kmsMainConfig.getRemoteKmsConfig().getRemoteAddress(),
+                kmsMainConfig.getRemoteKmsConfig().getGrpcPort()
+            );
             GrpcClient grpcClient = new GrpcClient(grpcHostConfig);
             // check KMS server connectivity
-            log.debug("KMS server connection is {} by url = {}...", grpcClient.isHealthy() ? "HEALTHY !" : "==> BROKEN !", hostString);
+            boolean healthy = grpcClient.isHealthy();
+            log.debug("KMS server connection is {} by gRPC url = {}...", healthy ? "HEALTHY !" : "==> BROKEN !", hostString);
             grpcClient.shutDown();
+            if (healthy) {
+                ((RemoteKmsConfigImpl)kmsMainConfig.getRemoteKmsConfig()).setRemoteServerModeOn(true);
+//                ((RemoteKmsConfigImpl)kmsMainConfig.getRemoteKmsConfig()).setAddress(hostString);
+            }
         }
-        aplCoreRuntime.init(runtimeMode, dirProvider, applicationProperties, chains, dbConfig);
-
-        BlockchainConfigUpdater blockchainConfigUpdater = CDI.current().select(BlockchainConfigUpdater.class).get();
-        blockchainConfigUpdater.updateChain(aplCoreRuntime.getChainsConfigHolder().getActiveChain(), aplCoreRuntime.getPropertiesHolder());
-
-
-        // init secureStorageService instance via CDI for 'ShutdownHook' constructor below
-        SecureStorageService secureStorageService = CDI.current().select(SecureStorageService.class).get();
-        aplCoreRuntime = CDI.current().select(AplCoreRuntime.class).get();
-        BlockchainConfig blockchainConfig = CDI.current().select(BlockchainConfig.class).get();
 
         if (log != null) {
             log.trace("{}",aplCoreRuntime.getPropertiesHolder().dumpAllProperties()); // dumping all properties

@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.addons.AddOns;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.http.API;
 import com.apollocurrency.aplwallet.apl.core.http.APIProxy;
+import io.firstbridge.kms.security.KmsMainConfig;
 import io.firstbridge.kms.security.service.KmsKvStorageService;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
@@ -90,7 +91,8 @@ public final class AplCore {
     private BlockchainProcessor blockchainProcessor;
     private DatabaseManager databaseManager;
     private KmsKvStorageService kmsKvStorageService;
-    //private FullTextSearchService fullTextSearchService;
+    private KmsMainConfig kmsMainConfig;
+
     private API apiServer;
     private IDexMatcherInterface tcs;
     @Inject
@@ -220,8 +222,10 @@ public final class AplCore {
 
             databaseManager = CDI.current().select(DatabaseManager.class).get();
             databaseManager.getDataSource();
-            kmsKvStorageService = CDI.current().select(KmsKvStorageService.class).get();
+            kmsMainConfig = CDI.current().select(KmsMainConfig.class).get(); // KMS
+            kmsKvStorageService = CDI.current().select(KmsKvStorageService.class).get(); // KMS part
             kmsKvStorageService.getKmsAccountRepository();
+
             CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
 //            fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
 //            fullTextSearchService.init(); // first time BEFORE migration
@@ -237,28 +241,24 @@ public final class AplCore {
 
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 50.1, "Apollo core classes initialization");
 
+            GenesisAccounts.init();
 
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 52.5, "Exchange matcher initialization");
-
-            GenesisAccounts.init();
 
             tcs = CDI.current().select(IDexMatcherInterface.class).get();
             tcs.initialize();
 
-
+            aplAppStatus.durableTaskUpdate(initCoreTaskID, 55.0, "Apollo Account ledger initialization");
             bcValidator = CDI.current().select(DefaultBlockValidator.class).get();
             blockchainProcessor = CDI.current().select(BlockchainProcessorImpl.class).get();
             blockchain = CDI.current().select(BlockchainImpl.class).get();
             blockchain.update();
+            aplAppStatus.durableTaskUpdate(initCoreTaskID, 60.0, "Apollo Account ledger initialization done");
+
+            aplAppStatus.durableTaskUpdate(initCoreTaskID, 61.0, "Apollo Peer services initialization started");
             peers.init();
 
-
-            aplAppStatus.durableTaskUpdate(initCoreTaskID, 55.0, "Apollo Account ledger initialization");
-
-            aplAppStatus.durableTaskUpdate(initCoreTaskID, 60.0, "Apollo Account ledger initialization done");
-            aplAppStatus.durableTaskUpdate(initCoreTaskID, 61.0, "Apollo Peer services initialization started");
             APIProxy.init();
-//            Generator.init();
             AddOns.init();
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 70.1, "Apollo core classes initialization done");
             //signal to API that core is ready to serve requests. Should be removed as soon as all API will be on RestEasy
