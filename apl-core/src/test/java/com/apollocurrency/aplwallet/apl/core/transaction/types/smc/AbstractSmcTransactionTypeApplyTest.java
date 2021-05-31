@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteed
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
+import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractMappingTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -57,6 +58,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.impl.PhasingPollServi
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcContractStorageServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.storage.SmcMappingRepositoryClassFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
@@ -135,20 +138,20 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(
         GlobalSyncImpl.class, DaoConfig.class,
-        AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
-        AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
-        FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
-        DefaultBlockValidator.class, ReferencedTransactionService.class,
-        PublicKeyAnnouncementAppendixApplier.class, AppendixApplierRegistry.class,
-        AppendixValidatorRegistry.class, NtpTime.class,
-        //TransactionRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
-        ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
-        TransactionValidator.class, TransactionApplier.class,
-        SmcConfig.class, SmcBlockchainIntegratorFactory.class,
-        SmcContractTable.class, SmcContractStateTable.class,
-        ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
-        SmcContractServiceImpl.class
-    )
+            AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
+            AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
+            FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
+            DefaultBlockValidator.class, ReferencedTransactionService.class,
+            PublicKeyAnnouncementAppendixApplier.class, AppendixApplierRegistry.class,
+            AppendixValidatorRegistry.class, NtpTime.class,
+            //TransactionRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+            ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
+            TransactionValidator.class, TransactionApplier.class,
+            SmcConfig.class, SmcBlockchainIntegratorFactory.class,
+            SmcContractTable.class, SmcContractStateTable.class, SmcContractMappingTable.class,
+            ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
+            SmcContractServiceImpl.class, SmcMappingRepositoryClassFactory.class, SmcContractStorageServiceImpl.class
+        )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))

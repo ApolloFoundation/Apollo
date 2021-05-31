@@ -76,6 +76,7 @@
   <logger name="com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService" level="DEBUG"/>
   <logger name="com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessorImpl" level="debug"/>
   <logger name="com.apollocurrency.aplwallet.apl" level="INFO"/>
+  <logger name="com.apollocurrency.aplwallet.apl.core.service.state.smc" level="TRACE"/>
   <logger name="com.apollocurrency.smc" level="DEBUG"/>
   <!--Uncomment next line to enable trim duration logging-->
   <!--<logger name="com.apollocurrency.aplwallet.apl.db.VersionedDeletableEntityDbTable" level="trace"/>-->

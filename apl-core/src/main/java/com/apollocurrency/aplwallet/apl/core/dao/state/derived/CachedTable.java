@@ -32,13 +32,16 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
     @Override
     public T get(DbKey dbKey) {
         T t = cache.getIfPresent(dbKey);
-         if(t == null){
-             t = super.get(dbKey);
-             if(t != null){
-                 cache.put(dbKey, t);
-             }
-         }
-         return t;
+        log.trace("--cache-- get  dbKey={} value={}", dbKey, t);
+        if (t == null) {
+            log.trace("--cache-- get try to load,  dbKey={}", dbKey);
+            t = super.get(dbKey);
+            if (t != null) {
+                log.trace("--cache-- get  put,  dbKey={} value={}", dbKey, t);
+                cache.put(dbKey, t);
+            }
+        }
+        return t;
     }
 
     @Override
