@@ -29,6 +29,7 @@ class AccountCachedTableTest {
 
     @BeforeEach
     void setUp() {
+        doReturn("account_mock_table").when(accountTable).getName();
         cachedTable = new AccountCachedTable(cache, accountTable);
         td = new AccountTestData();
     }
