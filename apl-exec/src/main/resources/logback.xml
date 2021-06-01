@@ -84,6 +84,7 @@
   <logger name="org.testcontainers" level="DEBUG"/>
   <logger name="com.github.dockerjava" level="DEBUG"/>
   <logger name="io.firstbridge.process" level="DEBUG"/>
+  <logger name="io.firstbridge.kms" level="DEBUG"/>
 
   <logger name="jdbc" level="off"/>
   <logger name="jdbc.connection" level="info"/>

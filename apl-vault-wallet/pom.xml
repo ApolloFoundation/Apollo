@@ -14,13 +14,7 @@
     <name>apl-vault-wallet</name>
     <packaging>jar</packaging>
 
-    <properties>
-        <web3jVersion>5.0.0</web3jVersion>
-    </properties>
-
-
     <dependencies>
-
         <dependency>
             <groupId>com.apollocurrency</groupId>
             <artifactId>apl-utils</artifactId>
@@ -84,18 +78,17 @@
         <artifactId>commons-codec</artifactId>
       </dependency>
 
-        <!--    DEX     -->
-        <dependency>
-            <groupId>org.web3j</groupId>
-            <artifactId>crypto</artifactId>
-            <version>${web3jVersion}</version>
-        </dependency>
+      <!--    DEX     -->
+      <dependency>
+        <groupId>org.web3j</groupId>
+        <artifactId>crypto</artifactId>
+      </dependency>
 
 
-        <dependency>
-            <groupId>com.j256.two-factor-auth</groupId>
-            <artifactId>two-factor-auth</artifactId>
-        </dependency>
+      <dependency>
+        <groupId>com.j256.two-factor-auth</groupId>
+        <artifactId>two-factor-auth</artifactId>
+      </dependency>
 
 
         <!-- unit tests -->

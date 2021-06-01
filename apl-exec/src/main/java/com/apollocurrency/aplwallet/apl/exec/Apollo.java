@@ -235,21 +235,22 @@ public class Apollo {
             // WORKAROUND: add any scheme to make the resulting URI valid.
             URI uri = new URI(ipUrlAsString); // may throw URISyntaxException
             String host = uri.getHost();
-//            int port = uri.getPort();
+            ((RemoteKmsConfigImpl)kmsMainConfig.getRemoteKmsConfig()).setAddress(host);
 
-            if (uri.getHost() == null /*|| uri.getPort() == -1*/) {
+            if (uri.getHost() == null) {
                 System.err.println("Can not assign KMS, URI must have host and port parts: " + args.kms);
                 return Optional.empty();
             }
             // here, additional checks can be performed,
             // such as presence of path, query, fragment, ...
-
             // validation succeeded
-            return Optional.of(new InetSocketAddress (host, kmsMainConfig.getRemoteKmsConfig().getGrpcPort()));
+            return Optional.of(new InetSocketAddress (
+                kmsMainConfig.getRemoteKmsConfig().getAddress(),
+                kmsMainConfig.getRemoteKmsConfig().getGrpcPort()));
 
         } catch (URISyntaxException ex) {
             // validation failed
-            System.err.println("KMS ip/URI is not valid: " + args.kms);
+            System.err.println("KMS ip/host is not valid: " + args.kms);
         }
         return Optional.empty();
     }
@@ -438,7 +439,7 @@ public class Apollo {
             String hostString = kmsUrl.get().toString();
             log.debug("Checking if KMS server connection is healthy by url = {}...", hostString);
             GrpcHostConfig grpcHostConfig = new GrpcHostConfigImpl(
-                kmsMainConfig.getRemoteKmsConfig().getRemoteAddress(),
+                kmsMainConfig.getRemoteKmsConfig().getAddress(),
                 kmsMainConfig.getRemoteKmsConfig().getGrpcPort()
             );
             GrpcClient grpcClient = new GrpcClient(grpcHostConfig);

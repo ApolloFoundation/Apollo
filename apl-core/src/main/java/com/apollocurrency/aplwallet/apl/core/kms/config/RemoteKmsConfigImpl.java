@@ -1,6 +1,9 @@
 package com.apollocurrency.aplwallet.apl.core.kms.config;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
+
+import java.util.Objects;
 
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import io.firstbridge.kms.infrastructure.web.resource.WorkMode;
@@ -15,13 +18,14 @@ import lombok.ToString;
 @ToString
 @Singleton
 @NoArgsConstructor
-public class RemoteKmsConfigImpl  implements RemoteKmsConfig {
+public class RemoteKmsConfigImpl implements RemoteKmsConfig {
 
     private boolean remoteServerModeOn;
     private String address;
     private int grpcPort;
     private int httpPort;
 
+    @Inject
     public RemoteKmsConfigImpl(
         @Property(name = "kms.main.remote.server.mode.on", defaultValue = "false") boolean remoteServerModeOn,
         @Property(name = "kms.main.remote.server.address", defaultValue = "") String address,
@@ -34,17 +38,17 @@ public class RemoteKmsConfigImpl  implements RemoteKmsConfig {
         this.httpPort = httpPort;
     }
 
-    @Override
-    public String getRemoteAddress() {
-        return this.address;
-    }
-
     public void setRemoteServerModeOn(boolean remoteServerModeOn) {
         this.remoteServerModeOn = remoteServerModeOn;
     }
 
     public void setAddress(String address) {
+        Objects.requireNonNull(address, "address is NULL");
+        if (address.isEmpty()) {
+            throw new IllegalArgumentException("host/address is EMPTY");
+        }
         this.address = address;
+        this.remoteServerModeOn = true;
     }
 
     @Override
