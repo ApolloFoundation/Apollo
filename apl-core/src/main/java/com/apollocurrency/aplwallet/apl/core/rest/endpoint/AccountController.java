@@ -458,7 +458,7 @@ public class AccountController {
         BlockConverter blockConverter = blockConverterCreator.create(includeTransaction, false);
         List<Block> blocks = accountService.getAccountBlocks(accountId, indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex(), timestamp);
         if (includeTransaction) {
-            blocks.forEach(block -> blockchain.getOrLoadTransactions(block));
+            blocks.forEach(block -> blockchain.loadBlockData(block));
         }
 
         BlocksResponse dto = new BlocksResponse();

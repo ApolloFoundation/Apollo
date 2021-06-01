@@ -13,7 +13,7 @@ import java.sql.SQLException;
 import java.util.Objects;
 
 @ToString
-public abstract class DerivedEntity implements Comparable {
+public abstract class DerivedEntity implements Comparable<DerivedEntity>, Cloneable {
     protected static final int DEFAULT_HEIGHT = -1;
     private static final long DEFAULT_DB_ID = 0L;
     private DbKey dbKey;
@@ -55,6 +55,10 @@ public abstract class DerivedEntity implements Comparable {
         return dbId;
     }
 
+    public boolean isNew() {
+        return dbId == DEFAULT_DB_ID;
+    }
+
     public void setDbId(long dbId) {
         this.dbId = dbId;
     }
@@ -68,12 +72,14 @@ public abstract class DerivedEntity implements Comparable {
     }
 
     @Override
-    public int compareTo(Object o) {
-        DerivedEntity entity = (DerivedEntity) o;
-        int res = Integer.compare(entity.getHeight(), height);
+    public int compareTo(DerivedEntity o) {
+        int res = Integer.compare(o.getHeight(), height);
         if (res == 0) {
-            res = Long.compare(entity.getDbId(), dbId);
+            res = Long.compare(o.getDbId(), dbId);
         }
         return res;
+    }
+    public DerivedEntity clone() throws CloneNotSupportedException {
+        return (DerivedEntity) super.clone();
     }
 }

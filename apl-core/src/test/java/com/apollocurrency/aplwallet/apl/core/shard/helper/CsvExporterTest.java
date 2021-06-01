@@ -52,6 +52,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableP
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataExtendDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.tagged.TaggedDataTimestampDao;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
@@ -343,7 +344,7 @@ class CsvExporterTest extends DbContainerBaseTest {
 
     @Test
     void exportDerivedTables() throws Exception {
-        Collection<DerivedTableInterface> result = registry.getDerivedTables(); // extract all derived tables
+        Collection<DerivedTableInterface<? extends DerivedEntity>> result = registry.getDerivedTables(); // extract all derived tables
         int targetHeight = 8000;
 //        int targetHeight = 2_000_000; // prod data test
         int batchLimit = 1; // used for pagination and partial commit
