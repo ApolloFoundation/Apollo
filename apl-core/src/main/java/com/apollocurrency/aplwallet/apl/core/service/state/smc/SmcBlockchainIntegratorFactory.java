@@ -194,7 +194,7 @@ public class SmcBlockchainIntegratorFactory {
         public ContractMappingRepositoryFactory createMappingFactory(final Address contract) {
             return new ContractMappingRepositoryFactory() {
                 @Override
-                public boolean isMappingExist(String mappingName) {
+                public boolean hasMapping(String mappingName) {
                     return smcContractStorageService.isMappingExist(contract, mappingName);
                 }
 
