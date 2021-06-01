@@ -1058,13 +1058,19 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             dataSource.commit(false); // should happen definitely otherwise
             log.debug("<< popOffToInTransaction() blocks=[{}] at commonBlockHeight={}", poppedOffBlocks.size(), commonBlockHeight);
         } catch (RuntimeException e) {
-            log.error("Error popping off to {}, cause {}", commonBlockHeight, e.toString());
+            log.error("Error popping off to " + commonBlockHeight, e);
             dataSource.rollback(false);
             if (blockchain != null) { //prevent NPE on shutdown
                 Block lastBlock = blockchain.findLastBlock();
                 if (lastBlock == null) {
                     log.error("Error popping off, lastBlock is NULL.", e);
                 } else {
+                    if (lastBlock.equals(commonBlock)) {
+                        log.error("FATAL ERROR: failed popping off to the current last block: " + commonBlock
+                            + ". Cannot guarantee consistency of the blockchain after that, will not try to popOff to the same lastBlock." +
+                            " Shutdown the node", e);
+                        System.exit(-1);
+                    }
                     blockchain.setLastBlock(lastBlock);
                     popOffToInTransaction(lastBlock, dataSource);
                 }
