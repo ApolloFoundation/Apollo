@@ -59,10 +59,10 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
         synchronized (lock) {
             rc = super.rollback(height);
             final Map<DbKey, T> map = cache.asMap();
-            map.values().forEach(v -> {
-                if (v.getHeight() > height) {
-                    cache.invalidate(v.getDbKey());
-                    removedEntities.add(v);
+            map.forEach((key, value) -> {
+                if (value.getHeight() > height) {
+                    cache.invalidate(key);
+                    removedEntities.add(value);
                 }
             });
         }
