@@ -26,7 +26,7 @@ import static org.mockito.Mockito.mock;
 @Tag("slow")
 public class ShufflingParticipantTableTest extends DBContainerRootTest {
     @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbProps(), "db/shuffling.sql", null);
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbConfig(), "db/shuffling.sql", null);
 
 
     ShufflingParticipantTable table = new ShufflingParticipantTable(extension.getDatabaseManager(), mock(Event.class));
