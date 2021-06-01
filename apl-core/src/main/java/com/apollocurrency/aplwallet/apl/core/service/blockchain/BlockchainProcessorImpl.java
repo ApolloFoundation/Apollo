@@ -123,6 +123,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -1142,62 +1143,67 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             .filter(transaction -> referencedTransactionService.hasAllReferencedTransactions(
                 transaction.getTransactionImpl(), previousBlock.getHeight() + 1)), orderedUnconfirmedTransactions::add);
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
-        int payloadLength = 0;
         int maxPayloadLength = blockchainConfig.getCurrentConfig().getMaxPayloadLength();
         List<UnconfirmedTransaction> removedTxs = new ArrayList<>();
-        TransactionalDataSource.StartedConnection startedConnection = databaseManager.getDataSource().beginTransactionIfNotStarted();
-        try {
-            txSelectLoop:
-            while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
-                int prevNumberOfNewTransactions = sortedTransactions.size();
-                for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
-                    if (memPool.isRemoved(unconfirmedTransaction)) {
-                        continue;
+        DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
+            int payloadLength = 0;
+            RuntimeException selectTxEx = null;
+            try {
+                txSelectLoop:
+                while (payloadLength <= maxPayloadLength && sortedTransactions.size() <= blockchainConfig.getCurrentConfig().getMaxNumberOfTransactions()) {
+                    int prevNumberOfNewTransactions = sortedTransactions.size();
+                    for (UnconfirmedTransaction unconfirmedTransaction : orderedUnconfirmedTransactions) {
+                        if (memPool.isRemoved(unconfirmedTransaction)) {
+                            continue;
+                        }
+                        int transactionLength = unconfirmedTransaction.getFullSize();
+                        if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > maxPayloadLength) {
+                            continue;
+                        }
+                        if (!isValidTransactionVersion(unconfirmedTransaction.getVersion(), previousBlock.getHeight())) {
+                            continue;
+                        }
+                        if (blockTimestamp > 0 && (unconfirmedTransaction.getTimestamp() > blockTimestamp + Constants.MAX_TIMEDRIFT
+                            || unconfirmedTransaction.getExpiration() < blockTimestamp)) {
+                            continue;
+                        }
+                        try {
+                            transactionValidator.validateFully(unconfirmedTransaction.getTransactionImpl());
+                        } catch (AplException.ValidationException e) {
+                            continue;
+                        }
+                        if (!transactionApplier.applyUnconfirmed(unconfirmedTransaction.getTransactionImpl())) { // persist tx changes and validate against updated state
+                            removedTxs.add(unconfirmedTransaction); // remove incorrect transaction and forget about it for 10 minutes
+                            continue;
+                        }
+                        // prefetch data for duplicate validation
+                        Account senderAccount = accountService.getAccount(unconfirmedTransaction.getTransactionImpl().getSenderId());
+                        Set<AccountControlType> senderAccountControls = senderAccount.getControls();
+                        AccountControlPhasing accountControlPhasing = accountControlPhasingService.get(
+                            unconfirmedTransaction.getTransactionImpl().getSenderId());
+                        if (unconfirmedTransaction.getTransactionImpl().attachmentIsDuplicate(
+                            duplicates, true, senderAccountControls, accountControlPhasing)) {
+                            continue;
+                        }
+                        sortedTransactions.add(unconfirmedTransaction);
+                        if (sortedTransactions.size() == limit) {
+                            break txSelectLoop;
+                        }
+                        payloadLength += transactionLength;
                     }
-                    int transactionLength = unconfirmedTransaction.getFullSize();
-                    if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > maxPayloadLength) {
-                        continue;
+                    if (sortedTransactions.size() == prevNumberOfNewTransactions) {
+                        break;
                     }
-                    if (!isValidTransactionVersion(unconfirmedTransaction.getVersion(), previousBlock.getHeight())) {
-                        continue;
-                    }
-                    if (blockTimestamp > 0 && (unconfirmedTransaction.getTimestamp() > blockTimestamp + Constants.MAX_TIMEDRIFT
-                        || unconfirmedTransaction.getExpiration() < blockTimestamp)) {
-                        continue;
-                    }
-                    try {
-                        transactionValidator.validateFully(unconfirmedTransaction.getTransactionImpl());
-                    } catch (AplException.ValidationException e) {
-                        continue;
-                    }
-                    if (!transactionApplier.applyUnconfirmed(unconfirmedTransaction.getTransactionImpl())) { // persist tx changes and validate against updated state
-                        removedTxs.add(unconfirmedTransaction); // remove incorrect transaction and forget about it for 10 minutes
-                        continue;
-                    }
-                    // prefetch data for duplicate validation
-                    Account senderAccount = accountService.getAccount(unconfirmedTransaction.getTransactionImpl().getSenderId());
-                    Set<AccountControlType> senderAccountControls = senderAccount.getControls();
-                    AccountControlPhasing accountControlPhasing = accountControlPhasingService.get(
-                        unconfirmedTransaction.getTransactionImpl().getSenderId());
-                    if (unconfirmedTransaction.getTransactionImpl().attachmentIsDuplicate(
-                        duplicates, true, senderAccountControls, accountControlPhasing)) {
-                        continue;
-                    }
-                    sortedTransactions.add(unconfirmedTransaction);
-                    if (sortedTransactions.size() == limit) {
-                        break txSelectLoop;
-                    }
-                    payloadLength += transactionLength;
                 }
-                if (sortedTransactions.size() == prevNumberOfNewTransactions) {
-                    break;
-                }
+            } catch (RuntimeException e) {
+                selectTxEx = e;
             }
-        } finally {
-            // do not apply changes for applyUnconfirmed
-            databaseManager.getDataSource().rollback(!startedConnection.isAlreadyStarted());
-        }
-        removedTxs.forEach(transactionProcessor::removeUnconfirmedTransaction);
+            revertUnconfirmedChanges(sortedTransactions, selectTxEx);
+            if (selectTxEx != null) {
+                throw selectTxEx;
+            }
+        });
+        removedTxs.forEach(transactionProcessor::removeUnconfirmedTransaction); // commit db transaction for each tx
         return sortedTransactions;
     }
 
@@ -1564,6 +1570,48 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         log.debug("Waiting until blockchain downloading stops.");
         globalSync.updateLock();
         globalSync.updateUnlock();
+    }
+
+
+    private String txToShortString(Transaction tx) {
+        return Long.toUnsignedString(tx.getId()) + ", type " + tx.getType().getSpec() + ", sender " + Long.toUnsignedString(tx.getSenderId());
+    }
+
+    private String txsToString(Collection<? extends Transaction> c) {
+        return "[" + c.stream().map(this::txToShortString).collect(Collectors.joining(",")) + "]";
+    }
+
+    private void revertUnconfirmedChanges(SortedSet<UnconfirmedTransaction> sortedTransactions, RuntimeException selectTxEx) {
+        Set<UnconfirmedTransaction> reverted = new HashSet<>();
+        if (sortedTransactions.isEmpty()) {
+            return;
+        }
+        try {
+            log.info("Revert back unconfirmed changes for the txs: {}", txsToString(sortedTransactions));
+            sortedTransactions.forEach(e-> {
+                transactionApplier.undoUnconfirmed(e);
+                reverted.add(e);
+            });
+        } catch (RuntimeException e) {
+            sortedTransactions.removeAll(reverted);
+            String notRevertedTransactionsString = txsToString(sortedTransactions);
+            int popOffHeight = Math.max(blockchain.getShardInitialBlock().getHeight(), blockchain.getHeight() - 1);
+            log.error("Unable to undo unconfirmed changes for the transactions: " + notRevertedTransactionsString + ". Will do popOff to height " + popOffHeight);
+            rollbackInconsistency(selectTxEx, popOffHeight);
+            if (selectTxEx != null) { // do not lose original ex
+                log.error("Previous error: Failed to select unconfirmed txs at height: " + blockchain.getHeight(), selectTxEx);
+            }
+            throw e;
+        }
+    }
+
+    private void rollbackInconsistency(RuntimeException selectTxEx, int popOffHeight) {
+        try {
+            popOffTo(popOffHeight);
+        } catch (RuntimeException popOffEx) {
+            log.error("Pop off failed to height " + popOffHeight + ", inconsistent state changes may persist. Will perform node shutdown", selectTxEx); // do not lose original ex
+            System.exit(1);
+        }
     }
 
 }
