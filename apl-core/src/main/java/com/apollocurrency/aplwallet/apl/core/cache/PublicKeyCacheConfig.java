@@ -4,21 +4,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.cache;
 
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.util.cache.CacheConfigurator;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
 
 import static com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager.MemoryUsageCalculator.LONG_SIZE;
 
-public class PublicKeyCacheConfig extends CacheConfigurator {
+public class PublicKeyCacheConfig extends CacheConfigurator<LongKey, PublicKey> {
 
     public static final String PUBLIC_KEY_CACHE_NAME = "PUBLIC_KEY_CACHE";
 
     public PublicKeyCacheConfig(int priority) {
         super(PUBLIC_KEY_CACHE_NAME,
             getPublicKeySize(),
-            priority);
-
-        cacheBuilder().initialCapacity(16);
+            priority, null, true);
     }
 
     static int getPublicKeySize() {

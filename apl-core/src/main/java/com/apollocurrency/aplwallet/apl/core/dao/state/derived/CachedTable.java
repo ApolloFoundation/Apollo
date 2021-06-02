@@ -30,7 +30,7 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
         synchronized (lock) {
             super.insert(entity);
             log.info("{} PUT dbKey: {}, height: {}, entity: {}", tableLogHeader(), entity.getDbKey(), entity.getHeight(), entity);
-            cache.put(entity.getDbKey(), entity);
+            cache.put(entity.getDbKey(), (T) entity.deepCopy());
         }
     }
 
@@ -49,7 +49,7 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
                 }
             }
         }
-        return t;
+        return t == null ? null : (T) t.deepCopy();
     }
 
     @Override

@@ -82,4 +82,12 @@ public abstract class DerivedEntity implements Comparable<DerivedEntity>, Clonea
     public DerivedEntity clone() throws CloneNotSupportedException {
         return (DerivedEntity) super.clone();
     }
+
+    public DerivedEntity deepCopy() {
+        try {
+            return clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(getClass().getSimpleName() + " does not support Object.clone() operation");
+        }
+    }
 }

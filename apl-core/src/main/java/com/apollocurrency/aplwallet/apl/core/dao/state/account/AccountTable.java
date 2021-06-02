@@ -47,17 +47,6 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> imple
 
     @Override
     public void save(Connection con, Account account) throws SQLException {
-//        Optional<Account> existingOptional = selectLastExisting(con, account.getId());
-//        if (existingOptional.isEmpty()) {
-//            doInsert(con, account);
-//            return;
-//        }
-//        Account existing = existingOptional.get();
-//        if (existing.getHeight() != account.getHeight()) {
-//            doInsert(con, account);
-//            return;
-//        }
-//        doUpdate(con, account);
         if (account.requireMerge()) {
             doUpdate(con, account);
         } else {
