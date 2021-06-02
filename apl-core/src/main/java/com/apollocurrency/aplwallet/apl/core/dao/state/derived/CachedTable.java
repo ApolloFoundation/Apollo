@@ -39,15 +39,9 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
         T t = cache.getIfPresent(dbKey);
         if (t == null) {
             t = super.get(dbKey);
-            if (t != null) {
-                synchronized (lock) {
-                    t = super.get(dbKey);
-                    if (t != null) {
-                        log.info("{} PUT MISSING FROM THE DB dbKey: {}, height: {}, entity: {}", tableLogHeader(), dbKey, t.getHeight(), t);
-                        cache.put(dbKey, t);
-                    }
-                }
-            }
+            // do not try to put db value in the cache since it may be inconsistent because of db transaction isolation,
+            // you may read not updated value here, but its updated version was committed outside the class (somewhere in BlockchainProcessorImpl) after your read
+            // Possible workaround: attach cache updates to the db transaction commit/rollback
         }
         return t == null ? null : (T) t.deepCopy();
     }
