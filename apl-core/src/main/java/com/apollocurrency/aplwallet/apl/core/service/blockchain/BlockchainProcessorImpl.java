@@ -91,6 +91,7 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Filter;
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -1065,7 +1066,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 if (lastBlock == null) {
                     log.error("Error popping off, lastBlock is NULL.", e);
                 } else {
-                    if (lastBlock.equals(commonBlock)) {
+                    if (!isDeadlockEx(e) && lastBlock.equals(commonBlock)) {
                         log.error("FATAL ERROR: failed popping off to the current last block: " + commonBlock
                             + ". Cannot guarantee consistency of the blockchain after that, will not try to popOff to the same lastBlock." +
                             " Shutdown the node", e);
@@ -1078,6 +1079,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             throw e;
         }
         return poppedOffBlocks;
+    }
+
+    private boolean isDeadlockEx(RuntimeException e) {
+        return StringUtils.isNotBlank(e.getMessage()) && e.getMessage().contains("Deadlock found when trying to get lock");
     }
 
     private Block popLastBlock() {

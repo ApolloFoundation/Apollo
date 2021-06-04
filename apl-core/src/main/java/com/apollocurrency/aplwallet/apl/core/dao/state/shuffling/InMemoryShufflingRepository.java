@@ -99,6 +99,7 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
                                 .filter(s -> s.getBlocksRemaining() <= 0) // include only finished
                                 .sorted(Comparator.comparing(Shuffling::getHeight).reversed().thenComparing(Shuffling::getDbId))
                         , from, to)
+                    .map(Shuffling::deepCopy)
                 .collect(Collectors.toList()));
     }
 

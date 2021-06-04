@@ -16,13 +16,13 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toConcurrentMap;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -43,7 +44,7 @@ import static java.util.stream.Collectors.toMap;
 @Slf4j
 public abstract class InMemoryVersionedDerivedEntityRepository<T extends VersionedDeletableEntity> {
 
-    private final Map<DbKey, EntityWithChanges<T>> allEntities = new HashMap<>();
+    private final Map<DbKey, EntityWithChanges<T>> allEntities = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final KeyFactory<T> keyFactory;
     private final List<String> changeableColumns;
@@ -153,7 +154,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
             EntityWithChanges<T> existingEntity = allEntities.get(dbKey);
             if (existingEntity == null) { // save new
                 entityCopy.setDbId(entityCopy.getDbId());
-                Map<String, List<Change>> changes = changeableColumns.stream().collect(toMap(Function.identity(), e -> new ArrayList<>()));
+                Map<String, List<Change>> changes = changeableColumns.stream().collect(toConcurrentMap(Function.identity(), e -> new ArrayList<>()));
                 changeableColumns.forEach(c -> {
                     Value value = analyzeChanges(c, null, entityCopy);
                     if (value.isChanged()) {
@@ -180,14 +181,9 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
             EntityWithChanges<T> entity = allEntities.get(dbKey);
             if (entity != null) {
                 T lastObject = entity.getEntity();
-                try {
-                    T clone = (T) lastObject.clone();
-                    if (clone.isLatest()) {
-                        return clone;
-                    }
-                }
-                catch (CloneNotSupportedException e) {
-                    throw new RuntimeException(e.toString(), e);
+                T clone = (T) lastObject.deepCopy();
+                if (clone.isLatest()) {
+                    return clone;
                 }
             }
             return null;
@@ -296,6 +292,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
                                 .filter(T::isLatest)
                                 .sorted(comparator)
                         , from, to)
+                    .map(this::copyEntity)
                         .collect(Collectors.toList()));
     }
 
@@ -308,7 +305,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
             CollectionUtil.limitStream(allEntities.values()
                 .stream()
                 .flatMap(entityWithChanges->reconstructHistoricalEntries(entityWithChanges).stream())
-                .sorted(Comparator.comparingLong(DerivedEntity::getDbId)), from, to));
+                .sorted(Comparator.comparingLong(DerivedEntity::getDbId)).map(this::copyEntity), from, to));
     }
 
     protected Stream<T> latestStream() {
@@ -379,11 +376,7 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
     }
 
     private T copyEntity(T entity) {
-        try {
-            return (T) entity.clone();
-        } catch (CloneNotSupportedException ex) {
-            throw new RuntimeException("Cloning operation should be supported for the in-memory table entity", ex);
-        }
+        return (T) entity.deepCopy();
     }
 
     private <V> Optional<V> last(List<V> l) {

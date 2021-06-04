@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.utils;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 
 import java.sql.SQLException;
@@ -16,18 +17,22 @@ public class DbTableLoadingIterator<T extends DerivedEntity> implements Iterator
     private static final int DEFAULT_LIMIT = 100;
     private final int limit;
 
-    private long fromDbId = -1L;
+    private long fromDbId;
+    private long toDbId;
     private List<T> dbEntities;
     private int currentElement = 0;
 
-    public DbTableLoadingIterator(DerivedTableInterface<T> table, int limit) {
+    public DbTableLoadingIterator(DerivedTableInterface<T> table, int limit, int height) {
         this.table = table;
         this.limit = limit;
+        MinMaxValue minMaxValue = table.getMinMaxValue(height);
+        this.toDbId = minMaxValue.getMax().longValueExact();
+        this.fromDbId = minMaxValue.getMin().longValueExact();
         this.dbEntities = getNextEntities();
     }
 
-    public DbTableLoadingIterator(DerivedTableInterface<T> table) {
-        this(table, DEFAULT_LIMIT);
+    public DbTableLoadingIterator(DerivedTableInterface<T> table, int height) {
+        this(table, DEFAULT_LIMIT, height);
     }
 
     @Override
@@ -56,7 +61,7 @@ public class DbTableLoadingIterator<T extends DerivedEntity> implements Iterator
 
     private List<T> getNextEntities() {
         try {
-            return table.getAllByDbId(fromDbId + 1, limit, Long.MAX_VALUE).getValues();
+            return table.getAllByDbId(fromDbId, limit, toDbId).getValues();
         } catch (SQLException e) {
             throw new RuntimeException("Unable to dump db data for table " + table.getName() + ": " + e.toString(), e);
         }

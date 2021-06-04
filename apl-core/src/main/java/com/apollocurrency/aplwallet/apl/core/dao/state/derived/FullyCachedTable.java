@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTableWrapper<T> {
 
     protected final InMemoryVersionedDerivedEntityRepository<T> memTableCache;
+    private final Object lock = new Object();
 
     public FullyCachedTable(InMemoryVersionedDerivedEntityRepository<T> memTableCache, EntityDbTableInterface<T> table) {
         super(table);
@@ -24,17 +25,21 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
 
     @Override
     public void insert(T entity) {
-        super.insert(entity);
-        memTableCache.insert(entity);
-        log.info("Put into cache {} entity {} height={}", getName(), entity, entity.getHeight());
+        synchronized (lock) {
+            super.insert(entity);
+            memTableCache.insert(entity);
+            log.info("Put into cache {} entity {} height={}", getName(), entity, entity.getHeight());
+        }
     }
 
     @Override
     public void trim(int height) {
-        super.trim(height);
-        log.info("Trim in memory table {}", getName());
-        memTableCache.trim(height);
-        checkRowConsistency("trim", height);
+        synchronized (lock) {
+            super.trim(height);
+            log.info("Trim in memory table {}", getName());
+            memTableCache.trim(height);
+            checkRowConsistency("trim", height);
+        }
     }
 
     @Override
@@ -44,39 +49,45 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
 
     @Override
     public int rollback(final int height) {
-        int rc = super.rollback(height);
-        memTableCache.rollback(height);
-        checkRowConsistency("rollback", height);
-        return rc;
+        synchronized (lock) {
+            int rc = super.rollback(height);
+            memTableCache.rollback(height);
+            checkRowConsistency("rollback", height);
+            return rc;
+        }
     }
 
     @Override
     public boolean deleteAtHeight(T t, int height) {
-        boolean res = super.deleteAtHeight(t, height);
-        boolean memDeleted = memTableCache.delete(t);
-        if (res != memDeleted) {
-            findInconsistency();
-            throw new IllegalStateException(
-                String.format("Desync of in-memory cache and the db, for the table %s after deletion of entity %s " +
-                        "at height %d"
-                    , getName(), t, height));
+        synchronized (lock) {
+            boolean res = super.deleteAtHeight(t, height);
+            boolean memDeleted = memTableCache.delete(t);
+            if (res != memDeleted) {
+                findInconsistency(height);
+                throw new IllegalStateException(
+                    String.format("Desync of in-memory cache and the db, for the table %s after deletion of entity %s " +
+                            "at height %d"
+                        , getName(), t, height));
+            }
+            if (res) {
+                log.trace("Entity type {}, deleted {} from mem table cache and from db, at height {}", table.toString(), t, height);
+            }
+            return res;
         }
-        if (res) {
-            log.trace("Entity type {}, deleted {} from mem table cache and from db, at height {}", table.toString(), t, height);
-        }
-        return res;
     }
 
     @Override
     public void truncate() {
-        super.truncate();
-        memTableCache.clear();
-        log.info("Mem table {} and db table truncated", getName());
+        synchronized (lock) {
+            super.truncate();
+            memTableCache.clear();
+            log.info("Mem table {} and db table truncated", getName());
+        }
     }
 
-    private void findInconsistency() {
+    private void findInconsistency(int height) {
         try (Stream<T> memRowsStream = memTableCache.getAllRowsStream(0, -1)) {
-            DbTableLoadingIterator<T> dbIterator = new DbTableLoadingIterator<>(table);
+            DbTableLoadingIterator<T> dbIterator = new DbTableLoadingIterator<>(table, 100, height);
             memRowsStream.forEach(memEntity -> {
                 if (dbIterator.hasNext()) {
                     T dbEntity = dbIterator.next();
@@ -98,7 +109,7 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
         int dbRowCount = super.getRowCount();
         int memRowCount = memTableCache.rowCount();
         if (dbRowCount != memRowCount) {
-            findInconsistency();
+            findInconsistency(height);
             throw new IllegalStateException(createErrorMessage(operation, height, memRowCount, dbRowCount));
         }
     }

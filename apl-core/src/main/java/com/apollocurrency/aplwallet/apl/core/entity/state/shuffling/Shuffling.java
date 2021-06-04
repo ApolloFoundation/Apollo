@@ -172,12 +172,7 @@ public final class Shuffling extends VersionedDeletableEntity {
     }
 
     public Shuffling deepCopy() {
-        try {
-            return (Shuffling) clone();
-        }
-        catch (CloneNotSupportedException e) {
-            throw new RuntimeException("Clone is not supported for shuffling");
-        }
+        return (Shuffling) super.deepCopy();
     }
 
     @Override
