@@ -18,7 +18,7 @@ public class DbTableLoadingIterator<T extends DerivedEntity> implements Iterator
     private final int limit;
 
     private long fromDbId;
-    private long toDbId;
+    private final long toDbId;
     private List<T> dbEntities;
     private int currentElement = 0;
 
@@ -26,7 +26,7 @@ public class DbTableLoadingIterator<T extends DerivedEntity> implements Iterator
         this.table = table;
         this.limit = limit;
         MinMaxValue minMaxValue = table.getMinMaxValue(height);
-        this.toDbId = minMaxValue.getMax().longValueExact();
+        this.toDbId = minMaxValue.getMax().longValueExact() + 1;
         this.fromDbId = minMaxValue.getMin().longValueExact();
         this.dbEntities = getNextEntities();
     }

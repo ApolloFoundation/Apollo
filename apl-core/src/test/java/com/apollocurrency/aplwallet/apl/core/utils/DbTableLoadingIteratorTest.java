@@ -66,7 +66,7 @@ class DbTableLoadingIteratorTest {
         doReturn(new MinMaxValue(BigDecimal.ZERO, BigDecimal.ZERO, "db_id", 0, 0)).when(table).getMinMaxValue(100);
 
 
-        DbTableLoadingIterator<?> iterator = new DbTableLoadingIterator<>(table);
+        DbTableLoadingIterator<?> iterator = new DbTableLoadingIterator<>(table, 10, 100);
 
         assertEquals(List.of(), endIterator(iterator));
         verify(table).getAllByDbId(0, 10,  1);
