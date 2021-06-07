@@ -76,7 +76,11 @@ public class CurrencyServiceImpl implements CurrencyService {
     private final ShufflingService shufflingService;
     private final BlockchainConfig blockchainConfig;
     private final TransactionValidationHelper validationHelper;
-    private final Set<Integer> ISSUANCE_HEIGHTS = Set.of(7_123_321);
+    private final Set<Integer> ISSUANCE_HEIGHTS = Set.of(7_961_831, 7_961_830, 7_945_553, 7_945_552, 7_905_883, 7_905_882,
+        7_882_498, 7_882_497, 7_882_492, 7_882_491, 7_882_486, 7_882_485, 7_882_454, 7_882_453, 7_882_435, 7_882_434,
+        7_882_427, 7_882_426, 7_468_092, 7_468_091, 7_460_076, 7_460_075, 7_452_190, 7_452_189, 7_417_594, 7_417_593,
+        7_400_635, 7_400_634, 7_344_893, 7_344_892, 7_313_652, 7_313_651, 7_312_320, 7_312_319, 7_308_462, 7_308_461,
+        7_308_278, 7_308_277, 7_304_669, 7_304_670);
 
     @Inject
     public CurrencyServiceImpl(CurrencySupplyTable currencySupplyTable,
