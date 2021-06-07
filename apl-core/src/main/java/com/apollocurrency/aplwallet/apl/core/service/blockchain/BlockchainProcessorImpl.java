@@ -1156,6 +1156,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         SortedSet<UnconfirmedTransaction> sortedTransactions = new TreeSet<>(transactionArrivalComparator);
         int maxPayloadLength = blockchainConfig.getCurrentConfig().getMaxPayloadLength();
         List<UnconfirmedTransaction> removedTxs = new ArrayList<>();
+        List<UnconfirmedTransaction> appliedUnconfirmedTxs = new ArrayList<>();
         DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> {
             int payloadLength = 0;
             RuntimeException selectTxEx = null;
@@ -1186,6 +1187,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         if (!transactionApplier.applyUnconfirmed(unconfirmedTransaction.getTransactionImpl())) { // persist tx changes and validate against updated state
                             removedTxs.add(unconfirmedTransaction); // remove incorrect transaction and forget about it for 10 minutes
                             continue;
+                        } else {
+                            appliedUnconfirmedTxs.add(unconfirmedTransaction);
                         }
                         // prefetch data for duplicate validation
                         Account senderAccount = accountService.getAccount(unconfirmedTransaction.getTransactionImpl().getSenderId());
@@ -1209,7 +1212,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } catch (RuntimeException e) {
                 selectTxEx = e;
             }
-            revertUnconfirmedChanges(sortedTransactions, selectTxEx);
+            revertUnconfirmedChanges(appliedUnconfirmedTxs, selectTxEx);
             if (selectTxEx != null) {
                 throw selectTxEx;
             }
@@ -1592,20 +1595,20 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         return "[" + c.stream().map(this::txToShortString).collect(Collectors.joining(",")) + "]";
     }
 
-    private void revertUnconfirmedChanges(SortedSet<UnconfirmedTransaction> sortedTransactions, RuntimeException selectTxEx) {
+    private void revertUnconfirmedChanges(List<UnconfirmedTransaction> txsToRevert, RuntimeException selectTxEx) {
         Set<UnconfirmedTransaction> reverted = new HashSet<>();
-        if (sortedTransactions.isEmpty()) {
+        if (txsToRevert.isEmpty()) {
             return;
         }
         try {
-            log.info("Revert back unconfirmed changes for the txs: {}", txsToString(sortedTransactions));
-            sortedTransactions.forEach(e-> {
+            log.info("Revert back unconfirmed changes for the txs: {}", txsToString(txsToRevert));
+            txsToRevert.forEach(e-> {
                 transactionApplier.undoUnconfirmed(e);
                 reverted.add(e);
             });
         } catch (RuntimeException e) {
-            sortedTransactions.removeAll(reverted);
-            String notRevertedTransactionsString = txsToString(sortedTransactions);
+            txsToRevert.removeAll(reverted);
+            String notRevertedTransactionsString = txsToString(txsToRevert);
             int popOffHeight = Math.max(blockchain.getShardInitialBlock().getHeight(), blockchain.getHeight() - 1);
             log.error("Unable to undo unconfirmed changes for the transactions: " + notRevertedTransactionsString + ". Will do popOff to height " + popOffHeight);
             rollbackInconsistency(selectTxEx, popOffHeight);
