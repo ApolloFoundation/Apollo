@@ -55,7 +55,7 @@ public class DbTableLoadingIterator<T extends DerivedEntity> implements Iterator
     @Override
     public T next() {
         T value = dbEntities.get(currentElement++);
-        fromDbId = value.getDbId();
+        fromDbId = value.getDbId() + 1;
         return value;
     }
 

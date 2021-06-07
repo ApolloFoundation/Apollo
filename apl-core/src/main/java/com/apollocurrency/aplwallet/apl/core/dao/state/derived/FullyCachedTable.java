@@ -36,7 +36,7 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
     public void trim(int height) {
         synchronized (lock) {
             super.trim(height);
-            log.info("Trim in memory table {}", getName());
+            log.info("Trim in memory table {} at height {}", getName(), height);
             memTableCache.trim(height);
             checkRowConsistency("trim", height);
         }
@@ -70,7 +70,7 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
                         , getName(), t, height));
             }
             if (res) {
-                log.trace("Entity type {}, deleted {} from mem table cache and from db, at height {}", table.toString(), t, height);
+                log.info("Entity type {}, deleted {} from mem table cache and from db, at height {}", table.toString(), t, height);
             }
             return res;
         }
@@ -106,8 +106,9 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
     }
 
     private void checkRowConsistency(String operation, int height) {
-        int dbRowCount = super.getRowCount();
-        int memRowCount = memTableCache.rowCount();
+        MinMaxValue minMaxValue = super.getMinMaxValue(height);
+        int dbRowCount = (int) minMaxValue.getCount();
+        int memRowCount = memTableCache.rowCount(height);
         if (dbRowCount != memRowCount) {
             findInconsistency(height);
             throw new IllegalStateException(createErrorMessage(operation, height, memRowCount, dbRowCount));

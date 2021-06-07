@@ -95,6 +95,20 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
     }
 
     @Test
+    void testGetAllRowsCountByHeight() {
+        int allCount = repository.rowCount(data.VCDE_4_2.getHeight());
+
+        assertEquals(8, allCount);
+    }
+
+    @Test
+    void testGetRowsCountByHeightInMiddle() {
+        int count = repository.rowCount(data.VCDE_4_1.getHeight());
+
+        assertEquals(5, count);
+    }
+
+    @Test
     void testGetEntityWhichNotExist() {
         VersionedDeletableDerivedIdEntity entity = repository.get(new LongKey(5L));
         assertNull(entity);
@@ -421,7 +435,7 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         repository.insert(VCDE_3_3);  // do merged insert (revert back deleted)
 
         allRows = repository.getAllRowsStream(0, -1).collect(Collectors.toList());
-        assertEquals(10, repository.rowCount());
+        assertRowsCount(10);
         assertEquals(expected, allRows);
 
         VersionedChangeableNullableDerivedEntity VCDE_3_4 = VCDE_3_3.clone();
@@ -437,14 +451,14 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         repository.insert(VCDE_3_4);   // do insert new versioned entity
 
         allRows = repository.getAllRowsStream(0, -1).collect(Collectors.toList());
-        assertEquals(11, repository.rowCount());
+        assertRowsCount(11);
         expected.add(VCDE_3_4);
         assertEquals(expected, allRows);
 
         int removed = repository.rollback(VCDE_3_3.getHeight());  // rollback last versioned entity
 
         assertEquals(1, removed);
-        assertEquals(10, repository.rowCount());
+        assertRowsCount(10);
         allRows = repository.getAllRowsStream(0, -1).collect(Collectors.toList());
         expected.remove(expected.size() - 1);
         VCDE_3_3.setLatest(true);
@@ -456,5 +470,10 @@ class InMemoryVersionedDerivedEntityRepositoryTest {
         assertEquals(entities.size(), repository.rowCount());
         List<VersionedChangeableNullableDerivedEntity> allRows = repository.getAllRowsStream(0, -1).collect(Collectors.toList());
         assertEquals(entities, allRows);
+    }
+
+    private void assertRowsCount(int count) {
+        assertEquals(count, repository.rowCount());
+        assertEquals(count, repository.rowCount(Integer.MAX_VALUE));
     }
 }

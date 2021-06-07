@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 import com.apollocurrency.aplwallet.apl.core.dao.state.InMemoryVersionedDerivedEntityRepository;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.entity.model.VersionedDeletableIdDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,10 +15,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -63,8 +66,8 @@ class FullyCachedTableTest {
     @Test
     void rollback() {
         doReturn(100).when(dbTable).rollback(2000);
-        doReturn(22).when(inMemoryRepo).rowCount();
-        doReturn(22).when(dbTable).getRowCount();
+        doReturn(22).when(inMemoryRepo).rowCount(2000);
+        mockMinMaxValue(22, 2000);
 
         int count = cachedTable.rollback(2000);
 
@@ -74,9 +77,12 @@ class FullyCachedTableTest {
     @Test
     void rollback_desync() throws SQLException {
         doReturn(100).when(dbTable).rollback(2000);
-        doReturn(1).when(inMemoryRepo).rowCount();
-        doReturn(2).when(dbTable).getRowCount();
-        mockDumpOutput();
+        doReturn(1).when(inMemoryRepo).rowCount(2000);
+        mockMinMaxValue(2, 2000);
+
+        DerivedEntity copy = entity.deepCopy();
+        copy.setHeight(copy.getHeight() + 1);
+        mockDumpOutput(List.of(entity, entity2), List.of(copy));
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> cachedTable.rollback(2000));
 
@@ -85,9 +91,9 @@ class FullyCachedTableTest {
 
     @Test
     void trim_desync() throws SQLException {
-        doReturn(1).when(inMemoryRepo).rowCount();
-        doReturn(2).when(dbTable).getRowCount();
-        mockDumpOutput();
+        doReturn(1).when(inMemoryRepo).rowCount(2000);
+        mockMinMaxValue(2, 2000);
+        mockDumpOutput(List.of(), List.of(entity));
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> cachedTable.trim(2000));
 
@@ -105,11 +111,22 @@ class FullyCachedTableTest {
     }
 
     @Test
+    void deleteAtHeight_notSuccessful() {
+        doReturn(false).when(dbTable).deleteAtHeight(entity, entity.getHeight());
+        doReturn(false).when(inMemoryRepo).delete(entity);
+
+        boolean deleted = cachedTable.deleteAtHeight(entity, entity.getHeight());
+
+        assertFalse(deleted, "Expected deleted=false for the in-mem table and db table failed deletion operation");
+    }
+
+    @Test
     void deleteAtHeight_desync() throws SQLException {
         doReturn(true).when(dbTable).deleteAtHeight(entity, entity.getHeight());
         doReturn(false).when(inMemoryRepo).delete(entity);
         doReturn("mock_table").when(dbTable).getName();
-        mockDumpOutput();
+        mockMinMaxValue(2, entity.getHeight());
+        mockDumpOutput(List.of(entity, entity2), List.of(entity));
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> cachedTable.deleteAtHeight(entity, entity.getHeight()));
 
@@ -124,9 +141,9 @@ class FullyCachedTableTest {
         verify(inMemoryRepo).clear();
     }
 
-    private void mockDumpOutput() throws SQLException {
-        doReturn(new DerivedTableData<>(List.of(entity, entity2), 0)).when(dbTable).getAllByDbId(0, 100, Long.MAX_VALUE);
-        doAnswer((Answer<Object>) invocation -> List.of(entity).stream()).when(inMemoryRepo).getAllRowsStream(0, -1);
+    private void mockDumpOutput(List<DerivedEntity> memEntities, List<DerivedEntity> dbEntities) throws SQLException {
+        doReturn(new DerivedTableData<>(dbEntities, 0)).when(dbTable).getAllByDbId(0, 100, 101);
+        doAnswer((Answer<Object>) invocation -> memEntities.stream()).when(inMemoryRepo).getAllRowsStream(0, -1);
     }
 
     private void verifyError(IllegalStateException exception) {
@@ -135,5 +152,11 @@ class FullyCachedTableTest {
         if (!containsDump) {
             fail(exception);
         }
+    }
+
+    private MinMaxValue mockMinMaxValue(int count, int height) {
+        MinMaxValue minMaxValue = new MinMaxValue(BigDecimal.ZERO, BigDecimal.valueOf(100), "db_id", count, height);
+        doReturn(minMaxValue).when(dbTable).getMinMaxValue(height);
+        return minMaxValue;
     }
 }

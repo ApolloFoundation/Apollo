@@ -299,6 +299,12 @@ public abstract class InMemoryVersionedDerivedEntityRepository<T extends Version
     public int rowCount() {
         return getInReadLock(()-> rows);
     }
+    public int rowCount(int beforeHeight) {
+        return getInReadLock(() -> (int) allEntities.values()
+            .stream()
+            .flatMap(entityWithChanges -> entityWithChanges.getDbIdLatestValues().stream())
+            .filter(e -> e.getHeight() <= beforeHeight).count());
+    }
 
     public Stream<T> getAllRowsStream(int from, int to) {
         return getInReadLock(() ->
