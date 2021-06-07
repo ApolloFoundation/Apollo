@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyType.CLAIMABLE;
@@ -75,6 +76,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     private final ShufflingService shufflingService;
     private final BlockchainConfig blockchainConfig;
     private final TransactionValidationHelper validationHelper;
+    private final Set<Integer> ISSUANCE_HEIGHTS = Set.of(7_123_321);
 
     @Inject
     public CurrencyServiceImpl(CurrencySupplyTable currencySupplyTable,
@@ -304,9 +306,7 @@ public class CurrencyServiceImpl implements CurrencyService {
             && senderAccountId != currency.getAccountId()) {
             return false;
         }
-
-        List<AccountCurrency> accountCurrencies = accountCurrencyService
-            .getByCurrency(currency.getId(), 0, -1);
+        List<AccountCurrency> accountCurrencies = getAccountCurrencies(currency.getId());
         return accountCurrencies.isEmpty() || accountCurrencies.size() == 1 && accountCurrencies.get(0).getAccountId() == senderAccountId;
     }
 
@@ -508,4 +508,16 @@ public class CurrencyServiceImpl implements CurrencyService {
         });
     }
 
+    private List<AccountCurrency> getAccountCurrencies(long currencyId) {
+        int currentHeight = blockChainInfoService.getHeight();
+        List<AccountCurrency> accountCurrencies;
+        if (!ISSUANCE_HEIGHTS.contains(currentHeight)) {
+            accountCurrencies = accountCurrencyService
+                .getByCurrency(currencyId, 0, -1);
+        } else {
+            accountCurrencies = accountCurrencyService
+                .getByAccount(currencyId, 0, -1);
+        }
+        return accountCurrencies;
+    }
 }

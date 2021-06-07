@@ -269,6 +269,21 @@ class CurrencyServiceTest {
         assertTrue(canBeDeleted, "CURRENCY_0 should allow deletion when only the sender's account hold the whole currency allocation");
     }
 
+    @Test
+    void canBeDeleted_atHardcodedHeight_byAnyAccount() {
+        //GIVEN
+        List<AccountCurrency> holders = List.of();
+        // Note, that here is incorrect method invocation, there is no account specified by the currency id, it's an error due to refactoring;
+        // but it is required for the backward compatibility
+        // Such scenario must be avoided when possible
+        doReturn(holders).when(accountCurrencyService).getByAccount(td.CURRENCY_0.getId(), 0, -1);
+        doReturn(7_123_321).when(blockChainInfoService).getHeight();
+        //WHEN
+        boolean canBeDeleted = service.canBeDeletedBy(td.CURRENCY_0, 1L);
+        //THEN
+        assertTrue(canBeDeleted, "CURRENCY_0 should allow deletion for the HARDCODED HEIGHT scenario");
+    }
+
 
     @Test
     void delete() {
