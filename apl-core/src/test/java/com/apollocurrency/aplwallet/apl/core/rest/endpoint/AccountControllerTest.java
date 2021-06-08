@@ -589,7 +589,7 @@ class AccountControllerTest extends AbstractEndpointTest {
     @Test
     void getAccountCurrencies_getList() throws URISyntaxException, IOException {
         endpoint.setAccountCurrencyConverter(new AccountCurrencyConverter());
-        doReturn(List.of(accountCurrency)).when(accountCurrencyService).getCurrenciesByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, 99);
+        doReturn(List.of(accountCurrency)).when(accountCurrencyService).getByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, 99);
 
         MockHttpResponse response = sendGetRequest("/accounts/currencies?account=" + ACCOUNT_ID + "&height=" + CURRENT_HEIGHT);
 
@@ -604,7 +604,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         JsonNode root = mapper.readTree(content);
         assertTrue(root.get("accountCurrencies").isArray());
         assertEquals(Long.toUnsignedString(CURRENCY_ID), root.withArray("accountCurrencies").get(0).get("currency").asText());
-        verify(accountCurrencyService, times(1)).getCurrenciesByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, 99);
+        verify(accountCurrencyService, times(1)).getByAccount(ACCOUNT_ID, CURRENT_HEIGHT, 0, 99);
     }
 
     @Test

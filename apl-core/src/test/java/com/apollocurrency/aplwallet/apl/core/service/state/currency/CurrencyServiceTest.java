@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency;
@@ -17,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencyBuyOffer;
@@ -59,9 +60,13 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -214,12 +219,72 @@ class CurrencyServiceTest {
     }
 
     @Test
-    void canBeDeletedBy() {
+    void canBeDeletedBy_noHolders() {
+        //GIVEN
+        doReturn(Collections.emptyList()).when(accountCurrencyService).getByCurrency(td.CURRENCY_0.getId(), 0, -1);
         //WHEN
-        service.canBeDeletedBy(td.CURRENCY_0, 1L);
+        boolean canBeDeleted = service.canBeDeletedBy(td.CURRENCY_0, 1L);
         //THEN
-        verify(accountCurrencyService).getCurrenciesByAccount(td.CURRENCY_0.getId(), 0, -1);
+        assertTrue(canBeDeleted, "CURRENCY_0 should allow deletion when no holders left");
+        verify(accountCurrencyService).getByCurrency(td.CURRENCY_0.getId(), 0, -1);
     }
+
+    @Test
+    void canNotBeDeleted_manyHolders() {
+        //GIVEN
+        List<AccountCurrency> holders = List.of(
+            new AccountCurrency(1L, td.CURRENCY_0.getId(), 10, 10, td.CURRENCY_0.getHeight() + 10),
+            new AccountCurrency(2L, td.CURRENCY_0.getId(), 30, 15, td.CURRENCY_0.getHeight() + 11)
+            );
+        doReturn(holders).when(accountCurrencyService).getByCurrency(td.CURRENCY_0.getId(), 0, -1);
+        //WHEN
+        boolean canBeDeleted = service.canBeDeletedBy(td.CURRENCY_0, 1L);
+        //THEN
+        assertFalse(canBeDeleted, "CURRENCY_0 should not allow deletion when more than one holder left ()");
+    }
+
+    @Test
+    void canNotBeDeleted_oneNotSenderHolder() {
+        //GIVEN
+        List<AccountCurrency> holders = List.of(
+            new AccountCurrency(2L, td.CURRENCY_0.getId(), 30, 15, td.CURRENCY_0.getHeight() + 11)
+        );
+        doReturn(holders).when(accountCurrencyService).getByCurrency(td.CURRENCY_0.getId(), 0, -1);
+        //WHEN
+        boolean canBeDeleted = service.canBeDeletedBy(td.CURRENCY_0, 1L);
+        //THEN
+        assertFalse(canBeDeleted, "CURRENCY_0 should not allow deletion when sender's account does not hold the whole currency allocation");
+    }
+
+    @Test
+    void canBeDeleted_senderIsOnlyOneHolder() {
+        //GIVEN
+        List<AccountCurrency> holders = List.of(
+            new AccountCurrency(1L, td.CURRENCY_0.getId(), 30, 15, td.CURRENCY_0.getHeight() + 11)
+        );
+        doReturn(holders).when(accountCurrencyService).getByCurrency(td.CURRENCY_0.getId(), 0, -1);
+        //WHEN
+        boolean canBeDeleted = service.canBeDeletedBy(td.CURRENCY_0, 1L);
+        //THEN
+        assertTrue(canBeDeleted, "CURRENCY_0 should allow deletion when only the sender's account hold the whole currency allocation");
+    }
+
+    @Test
+    void canBeDeleted_atHardcodedHeight_byAnyAccount() {
+        //GIVEN
+        List<AccountCurrency> holders = List.of();
+        // Note, that here is incorrect method invocation, there is no account specified by the currency id, it's an error due to refactoring;
+        // but it is required for the backward compatibility
+        // Such scenario must be avoided when possible
+        doReturn(holders).when(accountCurrencyService).getByAccount(td.CURRENCY_0.getId(), 0, -1);
+        doReturn(true).when(blockchainConfig).isCurrencyIssuanceHeight(220);
+        doReturn(220).when(blockChainInfoService).getHeight();
+        //WHEN
+        boolean canBeDeleted = service.canBeDeletedBy(td.CURRENCY_0, 1L);
+        //THEN
+        assertTrue(canBeDeleted, "CURRENCY_0 should allow deletion for the HARDCODED HEIGHT scenario");
+    }
+
 
     @Test
     void delete() {

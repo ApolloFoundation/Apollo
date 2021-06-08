@@ -229,7 +229,7 @@ public class AccountController {
             converter.addAccountAssets(dto, assets);
         }
         if (includeCurrencies) {
-            List<AccountCurrency> currencies = accountCurrencyService.getCurrenciesByAccount(account);
+            List<AccountCurrency> currencies = accountCurrencyService.getByAccount(account);
             converter.addAccountCurrencies(dto, currencies);
         }
 
@@ -509,7 +509,7 @@ public class AccountController {
         indexBeanParam.adjustIndexes(maxAPIFetchRecords);
 
         if (currencyId == null || currencyId.get() == 0) {
-            List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(
+            List<AccountCurrency> accountCurrencies = accountCurrencyService.getByAccount(
                 accountId, height, indexBeanParam.getFirstIndex(), indexBeanParam.getLastIndex());
             List<AccountCurrencyDTO> accountCurrencyDTOList = accountCurrencyConverter.convert(accountCurrencies);
             if (includeCurrencyInfo) {
