@@ -22,6 +22,7 @@
       "dexExpiredContractWithFinishedPhasingHeightAndStep3": 150,
       "transactionV2Height": 150
     },
+    "currencyIssuanceHeights": [],
     "blockchainProperties": [
       {
         "height": 0,

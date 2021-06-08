@@ -22,6 +22,7 @@
       "dexReopenPendingOrdersHeight": 1100000,
       "dexExpiredContractWithFinishedPhasingHeightAndStep3": 1900000
     },
+    "currencyIssuanceHeights": [],
     "blockchainProperties": [
       {
         "height": 0,
