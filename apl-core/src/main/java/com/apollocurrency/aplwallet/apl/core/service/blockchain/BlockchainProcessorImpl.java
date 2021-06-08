@@ -997,6 +997,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     public List<Block> popOffToInTransaction(Block commonBlock, TransactionalDataSource dataSource) {
+        return popOffToInTransaction(commonBlock, dataSource, 0);
+    }
+
+    public List<Block> popOffToInTransaction(Block commonBlock, TransactionalDataSource dataSource, int attempt) {
         int minRollbackHeight = getMinRollbackHeight();
         int commonBlockHeight = commonBlock.getHeight();
         log.debug(">> popOffToInTransaction() to commonBlockHeight = {}, minRollbackHeight={}", commonBlockHeight, minRollbackHeight);
@@ -1067,13 +1071,15 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     log.error("Error popping off, lastBlock is NULL.", e);
                 } else {
                     if (!isDeadlockEx(e) && lastBlock.equals(commonBlock)) {
-                        log.error("FATAL ERROR: failed popping off to the current last block: " + commonBlock
-                            + ". Cannot guarantee consistency of the blockchain after that, will not try to popOff to the same lastBlock." +
-                            " Shutdown the node", e);
-                        System.exit(-1);
+                        if (++attempt > 2) { // shutdown the node only when more than two unsuccessful popOffs are done for the same block
+                            log.error("FATAL ERROR: failed popping off to the current last block: " + commonBlock
+                                + ". Cannot guarantee consistency of the blockchain after that, will not try to popOff to the same lastBlock." +
+                                " Shutdown the node", e);
+                            System.exit(-1);
+                        }
                     }
                     blockchain.setLastBlock(lastBlock);
-                    popOffToInTransaction(lastBlock, dataSource);
+                    popOffToInTransaction(lastBlock, dataSource, attempt);
                 }
             }
             throw e;

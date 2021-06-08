@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.InMemoryVersionedDerivedE
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.entity.model.VersionedDeletableIdDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.testutil.MockUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +19,7 @@ import org.mockito.stubbing.Answer;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -66,8 +68,7 @@ class FullyCachedTableTest {
     @Test
     void rollback() {
         doReturn(100).when(dbTable).rollback(2000);
-        doReturn(22).when(inMemoryRepo).rowCount(2000);
-        mockMinMaxValue(22, 2000);
+        mockConsistentRowsCount(200, 100, 2000);
 
         int count = cachedTable.rollback(2000);
 
@@ -75,10 +76,10 @@ class FullyCachedTableTest {
     }
 
     @Test
-    void rollback_desync() throws SQLException {
+    void rollback_afterOpDesync() throws SQLException {
         doReturn(100).when(dbTable).rollback(2000);
-        doReturn(1).when(inMemoryRepo).rowCount(2000);
-        mockMinMaxValue(2, 2000);
+        mockMinMaxValue(10, 2, 2000);
+        mockMemRowCount(10, 1, 2000);
 
         DerivedEntity copy = entity.deepCopy();
         copy.setHeight(copy.getHeight() + 1);
@@ -90,20 +91,34 @@ class FullyCachedTableTest {
     }
 
     @Test
-    void trim_desync() throws SQLException {
-        doReturn(1).when(inMemoryRepo).rowCount(2000);
-        mockMinMaxValue(2, 2000);
-        mockDumpOutput(List.of(), List.of(entity));
+    void trim_beforeOpDesync() throws SQLException {
+        mockMinMaxValue(9, 2, 2000);
+        mockMemRowCount(10, 1, 2000);
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> cachedTable.trim(2000));
+        // no errors when desync occurred before operation (in-mem table was changed by another db transaction,
+        // which changes are not visible inside the current db transactions, but in-mem table changes are visible due to simplified synchronization technique)
+        cachedTable.trim(2000);
 
-        verifyError(exception);
+        verify(inMemoryRepo).trim(2000);
+        verify(dbTable).trim(2000);
+    }
+
+    @Test
+    void trim_afterOpDesync() throws SQLException {
+        mockMinMaxValue(10, 2, 2000);
+        mockMemRowCount(10, 1, 2000);
+
+        mockDumpOutput(List.of(entity), List.of(entity, entity2));
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> cachedTable.trim(2000));
+
+        verifyError(ex);
     }
 
     @Test
     void deleteAtHeight() {
         doReturn(true).when(dbTable).deleteAtHeight(entity, entity.getHeight());
         doReturn(true).when(inMemoryRepo).delete(entity);
+        mockConsistentRowsCount(10, 9, entity.getHeight());
 
         boolean deleted = cachedTable.deleteAtHeight(entity, entity.getHeight());
 
@@ -114,6 +129,7 @@ class FullyCachedTableTest {
     void deleteAtHeight_notSuccessful() {
         doReturn(false).when(dbTable).deleteAtHeight(entity, entity.getHeight());
         doReturn(false).when(inMemoryRepo).delete(entity);
+        mockConsistentRowsCount(10, 9, entity.getHeight());
 
         boolean deleted = cachedTable.deleteAtHeight(entity, entity.getHeight());
 
@@ -121,11 +137,11 @@ class FullyCachedTableTest {
     }
 
     @Test
-    void deleteAtHeight_desync() throws SQLException {
+    void deleteAtHeight_deletedResultDesync() throws SQLException {
         doReturn(true).when(dbTable).deleteAtHeight(entity, entity.getHeight());
         doReturn(false).when(inMemoryRepo).delete(entity);
         doReturn("mock_table").when(dbTable).getName();
-        mockMinMaxValue(2, entity.getHeight());
+        mockConsistentRowsCount(10, 9, entity.getHeight());
         mockDumpOutput(List.of(entity, entity2), List.of(entity));
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> cachedTable.deleteAtHeight(entity, entity.getHeight()));
@@ -135,6 +151,8 @@ class FullyCachedTableTest {
 
     @Test
     void truncate() {
+        mockConsistentRowsCount(102, 0, 0);
+
         cachedTable.truncate();
 
         verify(dbTable).truncate();
@@ -154,9 +172,18 @@ class FullyCachedTableTest {
         }
     }
 
-    private MinMaxValue mockMinMaxValue(int count, int height) {
-        MinMaxValue minMaxValue = new MinMaxValue(BigDecimal.ZERO, BigDecimal.valueOf(100), "db_id", count, height);
-        doReturn(minMaxValue).when(dbTable).getMinMaxValue(height);
-        return minMaxValue;
+     private void mockMinMaxValue(int beforeCount, int afterCount, int height) {
+        MinMaxValue beforeOpMinMaxValue = new MinMaxValue(BigDecimal.ZERO, BigDecimal.valueOf(100), "db_id", beforeCount, height);
+        MinMaxValue afterOpMinMaxValue = new MinMaxValue(BigDecimal.ZERO, BigDecimal.valueOf(100), "db_id", afterCount, height);
+        MockUtils.doAnswer(Map.of(1, beforeOpMinMaxValue, 2, afterOpMinMaxValue, 3, afterOpMinMaxValue)).when(dbTable).getMinMaxValue(height);
+    }
+
+    private void mockMemRowCount(int beforeCount, int afterCount, int height) {
+        MockUtils.doAnswer(Map.of(1, beforeCount, 2, afterCount)).when(inMemoryRepo).rowCount(height);
+    }
+
+    private void mockConsistentRowsCount(int beforeCount, int afterCount, int height) {
+        mockMemRowCount(beforeCount, afterCount, height);
+        mockMinMaxValue(beforeCount, afterCount, height);
     }
 }
