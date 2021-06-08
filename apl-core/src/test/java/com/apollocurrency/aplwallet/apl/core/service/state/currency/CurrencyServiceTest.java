@@ -277,7 +277,8 @@ class CurrencyServiceTest {
         // but it is required for the backward compatibility
         // Such scenario must be avoided when possible
         doReturn(holders).when(accountCurrencyService).getByAccount(td.CURRENCY_0.getId(), 0, -1);
-        doReturn(7_961_831).when(blockChainInfoService).getHeight();
+        doReturn(true).when(blockchainConfig).isCurrencyIssuanceHeight(220);
+        doReturn(220).when(blockChainInfoService).getHeight();
         //WHEN
         boolean canBeDeleted = service.canBeDeletedBy(td.CURRENCY_0, 1L);
         //THEN
