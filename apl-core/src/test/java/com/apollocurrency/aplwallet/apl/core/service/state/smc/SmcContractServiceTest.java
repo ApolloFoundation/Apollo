@@ -133,7 +133,7 @@ class SmcContractServiceTest {
                 .name(smcPublishContractAttachment.getContractName())
                 .args(smcPublishContractAttachment.getConstructorParams())
                 .languageName(smcPublishContractAttachment.getLanguageName())
-                .languageVersion(Languages.languageVersion(smcPublishContractAttachment.getContractSource()).getVersion())
+                .languageVersion(Languages.languageVersion(smcPublishContractAttachment.getContractSource()))
                 .build()
             )
             .status(ContractStatus.CREATED)

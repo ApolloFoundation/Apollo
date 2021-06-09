@@ -33,6 +33,7 @@ import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.persistence.record.log.ArrayTxLog;
 import com.apollocurrency.smc.persistence.record.log.TxLog;
 import com.apollocurrency.smc.polyglot.Languages;
+import com.apollocurrency.smc.polyglot.SimpleVersion;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -157,7 +158,7 @@ public class SmcContractServiceImpl implements SmcContractService {
                 .name(attachment.getContractName())
                 .args(attachment.getConstructorParams())
                 .languageName(attachment.getLanguageName())
-                .languageVersion(Languages.languageVersion(attachment.getContractSource()).getVersion())
+                .languageVersion(Languages.languageVersion(attachment.getContractSource()))
                 .build()
             )
             .status(ContractStatus.CREATED)
@@ -242,7 +243,7 @@ public class SmcContractServiceImpl implements SmcContractService {
                 .name(smcContractEntity.getContractName())
                 .args(smcContractEntity.getArgs())
                 .languageName(smcContractEntity.getLanguageName())
-                .languageVersion(smcContractEntity.getLanguageVersion())
+                .languageVersion(SimpleVersion.fromString(smcContractEntity.getLanguageVersion()))
                 .build()
             )
             .serializedObject(smcContractStateEntity.getSerializedObject())

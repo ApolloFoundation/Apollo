@@ -22,6 +22,7 @@ import com.apollocurrency.smc.blockchain.ContractNotFoundException;
 import com.apollocurrency.smc.blockchain.MockIntegrator;
 import com.apollocurrency.smc.blockchain.storage.AddressJsonConverter;
 import com.apollocurrency.smc.blockchain.storage.BigIntegerJsonConverter;
+import com.apollocurrency.smc.blockchain.storage.BigNumJsonConverter;
 import com.apollocurrency.smc.blockchain.storage.ContractMappingRepository;
 import com.apollocurrency.smc.blockchain.storage.ContractMappingRepositoryFactory;
 import com.apollocurrency.smc.blockchain.storage.StringJsonConverter;
@@ -36,6 +37,7 @@ import com.apollocurrency.smc.contract.vm.global.SMCBlock;
 import com.apollocurrency.smc.contract.vm.global.SMCTransaction;
 import com.apollocurrency.smc.contract.vm.operation.SMCOperationProcessor;
 import com.apollocurrency.smc.data.type.Address;
+import com.apollocurrency.smc.data.type.BigNum;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -201,6 +203,11 @@ public class SmcBlockchainIntegratorFactory {
                 @Override
                 public ContractMappingRepository<Address> addressRepository(String mappingName) {
                     return new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new AddressJsonConverter());
+                }
+
+                @Override
+                public ContractMappingRepository<BigNum> bigNumRepository(String mappingName) {
+                    return new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new BigNumJsonConverter());
                 }
 
                 @Override
