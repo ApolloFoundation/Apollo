@@ -8,8 +8,10 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.FullyCachedTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 
+import javax.enterprise.inject.Vetoed;
 import java.util.List;
 
+@Vetoed
 public class ShufflingCachedTable extends FullyCachedTable<Shuffling> implements ShufflingRepository {
 
 

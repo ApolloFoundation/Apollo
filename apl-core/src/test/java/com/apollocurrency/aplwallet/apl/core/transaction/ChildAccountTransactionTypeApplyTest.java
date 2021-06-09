@@ -19,6 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ReferencedTransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
@@ -72,6 +73,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.util.List;
 
@@ -122,8 +124,7 @@ class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
 
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(
-        GlobalSyncImpl.class, DaoConfig.class,
-        AccountTable.class, AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
+        GlobalSyncImpl.class, DaoConfig.class, AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
         AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
         FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
         DefaultBlockValidator.class, ReferencedTransactionService.class,
@@ -155,6 +156,7 @@ class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(blockchain, Blockchain.class, BlockchainImpl.class))
         .addBeans(MockBean.of(mock(AccountControlPhasingService.class), AccountControlPhasingService.class, AccountControlPhasingServiceImpl.class))
         .addBeans(MockBean.of(calculator, FeeCalculator.class))
+        .addBeans(MockBean.of(new AccountTable(extension.getDatabaseManager(), mock(Event.class)), AccountTableInterface.class))
         .build();
 
     @Inject

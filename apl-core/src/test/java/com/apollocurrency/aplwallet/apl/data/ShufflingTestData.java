@@ -120,7 +120,9 @@ public class ShufflingTestData {
         SHUFFLING_3_2_APL_REGISTRATION.setLatest(false);
         SHUFFLING_2_1_ASSET_REGISTRATION.setLatest(false);
         SHUFFLING_1_1_APL_VERIF_DELETED.setLatest(false);
+        SHUFFLING_1_1_APL_VERIF_DELETED.setDeleted(true);
         SHUFFLING_1_2_APL_DONE_DELETED.setLatest(false);
+        SHUFFLING_1_2_APL_DONE_DELETED.setDeleted(true);
         ALL_SHUFFLINGS.forEach(e->e.setDbKey(new LongKey(e.getId())));
     }
 }
