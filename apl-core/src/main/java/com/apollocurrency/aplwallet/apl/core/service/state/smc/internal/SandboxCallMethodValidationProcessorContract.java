@@ -5,10 +5,11 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
+import com.apollocurrency.smc.contract.ContractStatus;
+import com.apollocurrency.smc.contract.SmartContract;
+import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Objects;
 
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT_METHOD_VALIDATION_ERROR;
 
@@ -20,17 +21,23 @@ import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class SyntaxParseProcessor extends AbstractContractTxProcessor {
-    private final String script;
+public class SandboxCallMethodValidationProcessorContract extends AbstractSmcContractTxProcessor {
+    private final SmartMethod smartMethod;
 
-    public SyntaxParseProcessor(String script, BlockchainIntegrator processor) {
-        super(processor);
-        this.script = Objects.requireNonNull(script);
+    public SandboxCallMethodValidationProcessorContract(SmartContract smartContract, SmartMethod smartMethod, BlockchainIntegrator processor) {
+        super(processor, smartContract);
+        this.smartMethod = smartMethod;
+    }
+
+    public SmartMethod smartMethod() {
+        return smartMethod;
     }
 
     @Override
     public void executeContract(ExecutionLog executionLog) {
-        boolean isValid = smcMachine.parse(script);
+        boolean isValid;
+        validateStatus(ContractStatus.ACTIVE);
+        isValid = smcMachine.validateMethod(getSmartContract(), smartMethod);
         executionLog.join(smcMachine.getExecutionLog());
         smcMachine.resetExecutionLog();
         if (!isValid) {

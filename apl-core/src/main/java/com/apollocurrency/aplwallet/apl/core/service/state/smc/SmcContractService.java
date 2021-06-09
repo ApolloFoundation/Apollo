@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-public interface ContractService {
+public interface SmcContractService {
 
     /**
      * Save the published contract

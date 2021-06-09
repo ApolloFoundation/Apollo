@@ -10,11 +10,11 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxContractValidationProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishSmcContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxSmcContractValidationProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -52,7 +52,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
 
     @Inject
     public SmcPublishContractTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
-                                             ContractService contractService,
+                                             SmcContractService contractService,
                                              FuelValidator fuelValidator,
                                              SmcBlockchainIntegratorFactory integratorFactory) {
         super(blockchainConfig, accountService, contractService, fuelValidator, integratorFactory);
@@ -127,7 +127,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         }
         //syntactical and semantic validation
         BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
-        ContractTxProcessor processor = new SandboxContractValidationProcessor(smartContract, integrator);
+        SmcContractTxProcessor processor = new SandboxSmcContractValidationProcessor(smartContract, integrator);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             log.debug("SMC: doStateIndependentValidation = INVALID");
@@ -144,7 +144,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
         BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
-        ContractTxProcessor processor = new PublishContractTxProcessor(smartContract, integrator);
+        SmcContractTxProcessor processor = new PublishSmcContractTxProcessor(smartContract, integrator);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             throw new AplException.SMCProcessingException(executionLog.toJsonString());

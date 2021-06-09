@@ -4,8 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <properties>
     <!--    move to BOM -->
-    <mariadb-java-client.version>2.6.1</mariadb-java-client.version>
-    <smc-lib.version>0.1.9</smc-lib.version>
+    <smc-lib.version>0.1.13</smc-lib.version>
   </properties>
 
   <parent>

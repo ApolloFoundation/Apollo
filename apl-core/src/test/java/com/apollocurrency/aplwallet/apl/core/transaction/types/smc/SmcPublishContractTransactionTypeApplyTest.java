@@ -22,7 +22,10 @@ import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
+import com.apollocurrency.smc.util.Utils;
+import lombok.SneakyThrows;
 import org.jboss.weld.junit5.EnableWeld;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -42,11 +45,10 @@ import static org.mockito.Mockito.when;
 /**
  * @author andrew.zinchenko@gmail.com
  */
-//@Tag("slow")
+@Tag("slow")
 @EnableWeld
 @ExtendWith(MockitoExtension.class)
 class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionTypeApplyTest {
-
 
     @Inject
     ContractModelToEntityConverter contractModelToEntityConverter;
@@ -58,8 +60,8 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         //GIVEN
         SmcTxData txData = SmcTxData.builder()
             .sender("APL-X5JH-TJKJ-DVGC-5T2V8")
-            .name("Deal")
-            .source("class Deal {}")
+            .name("TestC")
+            .source("class TestC {}")
             .params(List.of("123"))
             .amountATM(10_00000000L)
             .fuelLimit(20_000_000L)
@@ -103,38 +105,17 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
         assertEquals(new AplAddress(newTx.getId()).getHex(), smartContract.getTxId().getHex());
     }
 
+    @SneakyThrows
     @Test
-    void callSmcApplyAttachment() throws AplException.NotValidException {
+    void callSmcApplyAttachmentInThreeTransaction() throws AplException.NotValidException {
         //GIVEN
-        String contractSource = "class Deal extends Contract{\n" +
-            "  constructor( value, vendor ){\n" +
-            "    super();\n" +
-            "    this.value = value;\n" +
-            "    this.vendor = vendor;\n" +
-            "    this.customer = '';\n" +
-            "    this.paid = false;\n" +
-            "    this.accepted = false;\n" +
-            "  }\n" +
-            "  pay() {\n" +
-            "      if ( this.value <= msg.getValue() ){\n" +
-            "         this.paid = true;\n" +
-            "         this.customer = msg.getSender();\n" +
-            "      }\n" +
-            "  }\n" +
-            "  accept(){\n" +
-            "    if (!this.accepted && this.paid ){\n" +
-            "      super.send(this.value, SMC.createAddress(this.vendor))\n" +
-            "      this.accepted = true \n" +
-            "    }\n" +
-            "  }\n" +
-            "}";
-
+        String contractSource = Utils.readResourceContent("address_mapping_2-contract.js");
         String senderAccount2RS = "APL-LTR8-GMHB-YG56-4NWSE";
         long senderAccountId2 = Convert.parseAccountId(senderAccount2RS);
 
         SmcTxData txData1 = SmcTxData.builder()
             .sender("APL-X5JH-TJKJ-DVGC-5T2V8")
-            .name("Deal")
+            .name("AddressMappingContract")
             .source(contractSource)
             .params(List.of("1400000000", "\"" + new AplAddress(senderAccountId2).getHex() + "\""))
             .amountATM(10_00000000L)
@@ -186,9 +167,9 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             .sender(senderAccount2RS)
             .recipient(Convert.defaultRsAccount(newTx.getRecipientId()))
             .recipientPublicKey(Convert.toHexString(recipientPublicKey))
-            .method("pay")
+            .method("set")
             .params(Collections.emptyList())
-            .amountATM(14_00000000L)
+            .amountATM(0L)
             .fuelLimit(15_000_000L)
             .fuelPrice(100L)
             .secret("2")
@@ -229,7 +210,7 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
             .sender(senderAccount2RS)
             .recipient(Convert.defaultRsAccount(newTx.getRecipientId()))
             .recipientPublicKey(Convert.toHexString(recipientPublicKey))
-            .method("accept")
+            .method("read")
             .params(Collections.emptyList())
             .fuelLimit(15_000_000L)
             .fuelPrice(100L)

@@ -20,7 +20,7 @@ import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
@@ -50,7 +50,7 @@ import java.util.List;
 public class SmcApiServiceImpl implements SmcApiService {
 
     private final AccountService accountService;
-    private final ContractService contractService;
+    private final SmcContractService contractService;
     private final TransactionCreator transactionCreator;
     private final TxBContext txBContext;
     private final int maxAPIrecords;
@@ -58,7 +58,7 @@ public class SmcApiServiceImpl implements SmcApiService {
     @Inject
     public SmcApiServiceImpl(BlockchainConfig blockchainConfig,
                              AccountService accountService,
-                             ContractService contractService,
+                             SmcContractService contractService,
                              TransactionCreator transactionCreator,
                              @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords) {
         this.accountService = accountService;

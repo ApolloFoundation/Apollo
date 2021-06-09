@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.ContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.ContractException;
 import com.apollocurrency.smc.contract.SmartContract;
@@ -21,15 +21,15 @@ import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public abstract class AbstractContractTxProcessor implements ContractTxProcessor {
+public abstract class AbstractSmcContractTxProcessor implements SmcContractTxProcessor {
     protected final ContractVirtualMachine smcMachine;
     private final SmartContract smartContract;
 
-    protected AbstractContractTxProcessor(BlockchainIntegrator integrator) {
+    protected AbstractSmcContractTxProcessor(BlockchainIntegrator integrator) {
         this(integrator, null);
     }
 
-    protected AbstractContractTxProcessor(BlockchainIntegrator integrator, SmartContract smartContract) {
+    protected AbstractSmcContractTxProcessor(BlockchainIntegrator integrator, SmartContract smartContract) {
         this.smcMachine = new AplMachine(LanguageContextFactory.createDefaultLanguageContext(), integrator);
         this.smartContract = smartContract;
     }
