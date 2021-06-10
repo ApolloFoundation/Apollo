@@ -176,12 +176,12 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
     @RegisterExtension
     TemporaryFolderExtension temporaryFolderExtension = new TemporaryFolderExtension();
     @RegisterExtension
-    DbExtension extension = new DbExtension(mariaDBContainer, Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
+    static DbExtension extension = new DbExtension(mariaDBContainer, Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
     @Inject
     Event<DeleteOnTrimData> deleteOnTrimDataEvent;
 
     BlockchainConfig blockchainConfig = mockBlockchainConfig();
-    PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    PropertiesHolder propertiesHolder = mockPropertiesHolder();
     NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
     PeersService peersService = mock(PeersService.class);
@@ -566,5 +566,11 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         return blockchainConfig;
+    }
+
+    private PropertiesHolder mockPropertiesHolder() {
+        PropertiesHolder holder = mock(PropertiesHolder.class);
+        doReturn(21).when(holder).getIntProperty("apl.derivedTablesCount", 55);
+        return holder;
     }
 }

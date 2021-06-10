@@ -217,7 +217,9 @@ class CsvExporterTest extends DbContainerBaseTest {
 
     private Path dataExportPath;
     private BlockchainConfig blockchainConfig = mockBlockchainConfig();
-    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+    private PropertiesHolder propertiesHolder = mockPropertiesHolder();
+
+
     private NtpTimeConfig ntpTimeConfig = new NtpTimeConfig();
     private TimeService timeService = new TimeServiceImpl(ntpTimeConfig.time());
     private PeersService peersService = mock(PeersService.class);
@@ -617,5 +619,11 @@ class CsvExporterTest extends DbContainerBaseTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         return blockchainConfig;
+    }
+
+    private PropertiesHolder mockPropertiesHolder() {
+        PropertiesHolder holder = mock(PropertiesHolder.class);
+        doReturn(23).when(holder).getIntProperty("apl.derivedTablesCount", 55);
+        return holder;
     }
 }
