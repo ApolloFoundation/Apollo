@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.db.table;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.model.DerivedIdEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.model.DerivedIdEntity;
 
 public class DerivedEntityKeyFactory extends LongKeyFactory<DerivedIdEntity> {
     public DerivedEntityKeyFactory() {

@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
+import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
@@ -25,11 +26,14 @@ public class TableRegistryInitializer {
     DerivedTablesRegistry registry;
     @Inject
     FullTextConfig fullTextConfig;
+    @Inject
+    @Property(value = "apl.derivedTablesCount", defaultValue = "55")
+    int requiredTablesCount;
 
     @PostConstruct
     public void registerAllTables() {
         long count = tables.stream().count();
-        if (count != 55) {
+        if (count != requiredTablesCount) {
             throw new IllegalStateException("Should be registered 55 derived tables, got " + count + ", list: " +
                 tables.stream().map(Objects::toString).collect(Collectors.joining(",")));
         }

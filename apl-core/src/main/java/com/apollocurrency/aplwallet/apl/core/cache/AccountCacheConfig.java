@@ -18,7 +18,7 @@ public class AccountCacheConfig extends CacheConfigurator {
     public AccountCacheConfig(int priority) {
         super(CACHE_NAME,
             getAccountSize(),
-            priority);
+            priority, null, true);
     }
 
     static int getAccountSize() {

@@ -6,23 +6,19 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.InMemoryVersionedDerivedEntityRepository;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
+import com.apollocurrency.aplwallet.apl.core.utils.DbTableLoadingIterator;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.sql.SQLException;
-import java.util.Comparator;
-import java.util.List;
-import java.util.OptionalLong;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 @Slf4j
 public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTableWrapper<T> {
-    private static final int ERROR_DUMP_COUNT = 20_000;
-
 
     protected final InMemoryVersionedDerivedEntityRepository<T> memTableCache;
+    private final Object lock = new Object();
 
     public FullyCachedTable(InMemoryVersionedDerivedEntityRepository<T> memTableCache, EntityDbTableInterface<T> table) {
         super(table);
@@ -31,17 +27,22 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
 
     @Override
     public void insert(T entity) {
-        super.insert(entity);
-        log.trace("Put into cache {} put  entity {} height={}", getName(), entity, entity.getHeight());
-        memTableCache.insert(entity);
+        synchronized (lock) {
+            super.insert(entity);
+            memTableCache.insert(entity);
+            log.info("Put into cache {} entity {} height={}", getName(), entity, entity.getHeight());
+        }
     }
 
     @Override
     public void trim(int height) {
-        super.trim(height);
-        log.trace("Trim in memory table {}", getName());
-        memTableCache.trim(height);
-        checkRowConsistency("trim", height);
+        synchronized (lock) {
+            new RowsConsistentOperationExecutor(height, "trim").doOp(() -> {
+                super.trim(height);
+                log.info("Trim in memory table {} at height {}", getName(), height);
+                memTableCache.trim(height);
+            });
+        }
     }
 
     @Override
@@ -51,60 +52,123 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
 
     @Override
     public int rollback(final int height) {
-        int rc = super.rollback(height);
-        memTableCache.rollback(height);
-        checkRowConsistency("rollback", height);
-        return rc;
+        synchronized (lock) {
+            return new RowsConsistentOperationExecutor(height, "rollback").doOp(()-> {
+                int rc = super.rollback(height);
+                memTableCache.rollback(height);
+                return rc;
+            });
+        }
     }
 
     @Override
     public boolean deleteAtHeight(T t, int height) {
-        boolean res = super.deleteAtHeight(t, height);
-        boolean memDeleted = memTableCache.delete(t);
-        if (res != memDeleted) {
-            throw new IllegalStateException(
-                String.format("Desync of in-memory cache and the db, for the table %s after deletion of entity %s " +
-                        "at height %d, db entities: %s, mem entities: %s"
-                    , getName(), t, height, dumpFromDb(), dumpFromMem()));
+        synchronized (lock) {
+            return new RowsConsistentOperationExecutor(height, "deleteAtHeight").doOp(() -> {
+                boolean res = super.deleteAtHeight(t, height);
+                boolean memDeleted = memTableCache.delete(t);
+                if (res != memDeleted) {
+                    findInconsistency(height);
+                    throw new IllegalStateException(
+                        String.format("Desync of in-memory cache and the db, for the table %s after deletion of entity %s " +
+                                "at height %d"
+                            , getName(), t, height));
+                }
+                if (res) {
+                    log.info("Entity type {}, deleted {} from mem table cache and from db, at height {}", table.toString(), t, height);
+                }
+                return res;
+            });
+
         }
-        if (res) {
-            log.trace("Entity type {}, deleted {} from mem table cache and from db, at height {}", table.toString(), t, height);
-        }
-        return res;
     }
 
     @Override
     public void truncate() {
-        super.truncate();
-        memTableCache.clear();
-        log.trace("Mem table {} and db table truncated", getName());
-    }
-
-    private String dumpFromDb() {
-        try (Stream<T> memRowsStream = memTableCache.getAllRowsStream(0, ERROR_DUMP_COUNT)) {
-            OptionalLong minDbId = memRowsStream.mapToLong(DerivedEntity::getDbId).min();
-            List<T> dbEntities = super.getAllByDbId(minDbId.orElse(0), Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
-            return dbEntities.stream().sorted(Comparator.comparingLong(DerivedEntity::getDbId).reversed()).map(Object::toString).collect(Collectors.joining(","));
-        } catch (SQLException e) {
-            throw new RuntimeException("Unable to dump db data for table " + getName() + ": " + e.toString(), e);
+        synchronized (lock) {
+            new RowsConsistentOperationExecutor(0, "truncate").doOp(() -> {
+                super.truncate();
+                memTableCache.clear();
+                log.info("Mem table {} and db table truncated", getName());
+            });
         }
     }
 
-    private String dumpFromMem() {
-        return memTableCache.getAllRowsStream(0, ERROR_DUMP_COUNT).map(Object::toString).collect(Collectors.joining(","));
-    }
-
-    private void checkRowConsistency(String operation, int height) {
-        int dbRowCount = super.getRowCount();
-        int memRowCount = memTableCache.rowCount();
-        if (dbRowCount != memRowCount) {
-            throw new IllegalStateException(createErrorMessage(operation, height, memRowCount, dbRowCount));
+    private void findInconsistency(int height) {
+        try (Stream<T> memRowsStream = FullyCachedTable.this.memTableCache.getAllRowsStream(0, -1)) {
+            DbTableLoadingIterator<T> dbIterator = new DbTableLoadingIterator<>(table, 100, height);
+            memRowsStream.forEach(memEntity -> {
+                if (dbIterator.hasNext()) {
+                    T dbEntity = dbIterator.next();
+                    if (dbEntity.equals(memEntity)) {
+                        return;
+                    }
+                    log.error("Memory entity: {} does not match corresponding db entity: {}", memEntity, dbEntity);
+                } else {
+                    log.error("Cached entity present in mem, but not in db: {}", memEntity);
+                }
+            });
+            if (dbIterator.hasNext()) {
+                log.error("Present in db, but not in in-memory cache: {}", dbIterator.next());
+            }
         }
     }
 
-    private String createErrorMessage(String operation, int height, long memRowCount, long dbRowCount) {
-        return String.format("After %s of the mem and db table %s to the height %d, " +
-                "mem and desync occurred, db rows %d, mem rows %d, db entities: %s, mem entities %s", operation,
-            getName(), height, dbRowCount, memRowCount, dumpFromDb(), dumpFromMem());
+
+    @AllArgsConstructor
+    protected class RowsConsistentOperationExecutor {
+        private final int height;
+        private final String opName;
+
+        protected <V> V doOp(Supplier<V> op) {
+            RowsCount beforeOpRowsCount = new RowsCount(height);
+            V result = op.get();
+            RowsCount afterOpRowsCount = new RowsCount(height);
+            afterOpRowsCount.verifyAgainst(beforeOpRowsCount, opName);
+            return result;
+        }
+
+        protected void doOp(Runnable op) {
+            doOp(() -> {
+                op.run();
+                return null;
+            });
+        }
+    }
+
+    protected class RowsCount {
+        private final int db;
+        private final int mem;
+        private final int height;
+
+        public RowsCount(int height) {
+            MinMaxValue minMaxValue = FullyCachedTable.this.getMinMaxValue(height);
+            this.db = (int) minMaxValue.getCount();
+            this.mem = memTableCache.rowCount(height);
+            this.height = height;
+        }
+
+        protected boolean isConsistent() {
+            return db == mem;
+        }
+
+        protected void verifyAgainst(RowsCount beforeOpRowsCount, String operation) {
+            if (beforeOpRowsCount.isConsistent()) {
+                if (!isConsistent()) {
+                    FullyCachedTable.this.findInconsistency(height);
+                    throw new IllegalStateException(createErrorMessage(operation));
+                }
+            } else {
+                log.warn("Before {} operation for table {} at height {}, db and mem tables are inconsistent by rows, db {}, mem {}. " +
+                        "Maybe this db transaction was started before changes to the mem table applied. Will not verify consistency after this operation",
+                    operation, height, FullyCachedTable.this.getName(), db, mem);
+            }
+        }
+
+        private String createErrorMessage(String operation) {
+            return String.format("After %s of the mem and db table %s to the height %d, " +
+                    "mem and db desync occurred, db rows %d, mem rows %d", operation,
+                getName(), height, db, mem);
+        }
     }
 }

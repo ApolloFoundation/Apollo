@@ -2,26 +2,27 @@
  *  Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.db.model;
+package com.apollocurrency.aplwallet.apl.core.entity.model;
 
-import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
 
 import java.util.Objects;
 
-public class VersionedDerivedIdEntity extends VersionedDerivedEntity {
+public class VersionedDeletableDerivedIdEntity extends VersionedDeletableEntity {
     private Long id;
-    public VersionedDerivedIdEntity(Long dbId, Integer height, Long id, boolean latest) {
+    public VersionedDeletableDerivedIdEntity(Long dbId, Integer height, Long id, boolean latest, boolean deleted) {
         super(dbId, height);
         this.id = id;
         setLatest(latest);
+        setDeleted(deleted);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof VersionedDerivedIdEntity)) return false;
+        if (!(o instanceof VersionedDeletableDerivedIdEntity)) return false;
         if (!super.equals(o)) return false;
-        VersionedDerivedIdEntity that = (VersionedDerivedIdEntity) o;
+        VersionedDeletableDerivedIdEntity that = (VersionedDeletableDerivedIdEntity) o;
         return Objects.equals(id, that.id);
     }
 
