@@ -59,18 +59,15 @@ public class ProcessUnconfirmedTransactionsQueueTask implements Runnable {
             int number = batchSizeCalculator.currentBatchSize();
             List<UnconfirmedTransaction> transactions = collectBatch(number);
             if (!transactions.isEmpty()) {
-                batchSizeCalculator.startTiming(System.currentTimeMillis(), number);
-                log.trace("Processing batch size {}, transactions {}", number, transactions.size());
-                try {
+                return batchSizeCalculator.doTimedOp(batchSize-> {
+                    log.debug("Processing batch size {}, transactions {}", number, transactions.size());
                     return addToMempool(transactions);
-                } finally {
-                    batchSizeCalculator.stopTiming(System.currentTimeMillis());
-                }
+                });
             }
             return Collections.emptyList();
         });
         if (!addedTransactions.isEmpty()) {
-            log.debug("Added to mempool [{}]", addedTransactions.stream().map(WrappedTransaction::getId).map(String::valueOf).collect(Collectors.joining(",")));
+            log.info("Added to mempool [{}]", addedTransactions.stream().map(WrappedTransaction::getId).map(String::valueOf).collect(Collectors.joining(",")));
         }
     }
 

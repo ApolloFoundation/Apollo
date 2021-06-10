@@ -21,9 +21,9 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
+import java.util.function.Function;
+
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -106,12 +106,14 @@ class ProcessingQueueTaskTest {
                 return true;
             }
         }).when(memPool).addProcessed(tx);
+        doAnswer(invocation -> {
+            return ((Function) invocation.getArgument(0)).apply(20); // do call on the argument function
+        }).when(batchSizeCalculator).doTimedOp(any(Function.class));
 
         task.processBatch();
 
         verify(memPool, times(2)).addProcessed(tx);
-        verify(batchSizeCalculator).startTiming(anyLong(), anyInt());
-        verify(batchSizeCalculator).stopTiming(anyLong());
+        verify(batchSizeCalculator).doTimedOp(any(Function.class));
     }
 
     @Test

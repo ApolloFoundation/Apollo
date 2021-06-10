@@ -4,32 +4,33 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.util.BatchSizeCalculator;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
- * Class makes lookup of BlockchainProcessor
+ * Remove not valid and expired transactions from the mempool
  */
 @Slf4j
 public class RemoveUnconfirmedTransactionsThread implements Runnable {
 
-    private BlockchainProcessor blockchainProcessor;
     private final DatabaseManager databaseManager;
     private final TransactionProcessor transactionProcessor;
     private final TimeService timeService;
     private final MemPool memPool;
-
-    private final AtomicInteger counter = new AtomicInteger(0);
+    private final BatchSizeCalculator batchSizeCalculator;
 
     public RemoveUnconfirmedTransactionsThread(DatabaseManager databaseManager,
                                                TransactionProcessor transactionProcessor,
@@ -39,6 +40,7 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
         this.memPool = memPool;
         this.transactionProcessor = Objects.requireNonNull(transactionProcessor);
         this.timeService = Objects.requireNonNull(timeService);
+        this.batchSizeCalculator = new BatchSizeCalculator(100, 5, 1024);
         log.info("Created 'RemoveUnconfirmedTransactionsThread' instance");
     }
 
@@ -46,12 +48,8 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
     public void run() {
         try {
             try {
-                int op = counter.incrementAndGet();
                 removeExpiredTransactions();
-                if (op % 10 == 0) {
-                    removeNotValidTransactions();
-                    counter.set(0);
-                }
+                batchSizeCalculator.doTimedOp(this::removeNotValidTransactions);
             } catch (Exception e) {
                 log.info("Error removing unconfirmed transactions", e);
             }
@@ -62,20 +60,25 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
         }
     }
 
-    private void removeNotValidTransactions() {
+    private void removeNotValidTransactions(int number) {
+        List<Transaction> notValidTxs = new ArrayList<>();
         DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(),
-            () -> CollectionUtil.forEach(memPool.getAllStream(), e -> {
+            () -> CollectionUtil.forEach(memPool.getAllStream(0, number - 1), e -> {
             if (!transactionProcessor.isFullyValidTransaction(e)) {
                 transactionProcessor.removeUnconfirmedTransaction(e);
+                notValidTxs.add(e);
             }
         }));
+        if (!notValidTxs.isEmpty()) {
+            log.info("Removed not valid txs: [{}]", notValidTxs.stream().map(Transaction::getId).map(Objects::toString).collect(Collectors.joining(",")));
+        }
     }
 
-    void removeExpiredTransactions() {
+    private void removeExpiredTransactions() {
         int epochTime = timeService.getEpochTime();
         int expiredTransactionsCount = memPool.getExpiredCount(epochTime);
         if (expiredTransactionsCount > 0) {
-            log.trace("Found {} unc txs to remove", expiredTransactionsCount);
+            log.info("Found {} unc txs to remove", expiredTransactionsCount);
             TransactionalDataSource dataSource = databaseManager.getDataSource();
             DbTransactionHelper.executeInTransaction(dataSource, () -> CollectionUtil.forEach(memPool.getExpiredStream(epochTime), e -> transactionProcessor.removeUnconfirmedTransaction(e.getTransactionImpl())));
         }

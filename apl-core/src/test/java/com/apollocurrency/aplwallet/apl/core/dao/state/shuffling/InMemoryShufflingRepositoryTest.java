@@ -48,25 +48,24 @@ class InMemoryShufflingRepositoryTest extends ShufflingRepositoryTest {
     }
 
     @Test
-    void testGetCopy() {
-        Shuffling shufflingCopy = createRepository().getCopy(std.SHUFFLING_8_1_CURRENCY_PROCESSING.getId());
-
-        assertEquals(std.SHUFFLING_8_1_CURRENCY_PROCESSING, shufflingCopy);
-    }
-
-    @Test
     void testTruncate() {
         InMemoryShufflingRepository repository = createRepository();
+
         repository.truncate();
 
         assertEquals("Expected no shuffling entries after truncate", 0, repository.rowCount());
     }
 
     @Test
-    void testDeleteAtHeight() {
-        createRepository().deleteAtHeight(std.SHUFFLING_8_1_CURRENCY_PROCESSING, std.SHUFFLING_8_1_CURRENCY_PROCESSING.getHeight());
+    void testDeleteAtHeight() throws CloneNotSupportedException {
+        Shuffling shufflingToDelete = (Shuffling) std.SHUFFLING_8_1_CURRENCY_PROCESSING.clone();
+        shufflingToDelete.setHeight(std.SHUFFLING_8_1_CURRENCY_PROCESSING.getHeight() + 1);
+        shufflingToDelete.setDbId(std.NEW_SHUFFLING.getDbId() + 1);
 
-        Shuffling deletedShuffling = createRepository().get(std.SHUFFLING_8_1_CURRENCY_PROCESSING.getId());
+        InMemoryShufflingRepository repository = createRepository();
+        repository.deleteAtHeight(shufflingToDelete, shufflingToDelete.getHeight());
+
+        Shuffling deletedShuffling = repository.get(std.SHUFFLING_8_1_CURRENCY_PROCESSING.getId());
         assertNull("Expected no deleted shuffling existence after deletion procedure", deletedShuffling);
     }
 
@@ -81,7 +80,7 @@ class InMemoryShufflingRepositoryTest extends ShufflingRepositoryTest {
     void testGetRowCount() {
         int rowCount = createRepository().getRowCount();
 
-        assertEquals(8, rowCount);
+        assertEquals(14, rowCount);
     }
 
     @Test
@@ -114,7 +113,6 @@ class InMemoryShufflingRepositoryTest extends ShufflingRepositoryTest {
         assertThrows(UnsupportedOperationException.class, () -> createRepository().getCount(DbClause.EMPTY_CLAUSE));
         assertThrows(UnsupportedOperationException.class, () -> createRepository().getCount(DbClause.EMPTY_CLAUSE, 33));
         assertThrows(UnsupportedOperationException.class, () -> createRepository().getCount(mock(PreparedStatement.class)));
+        assertThrows(UnsupportedOperationException.class, () -> createRepository().getAccountShufflings(1L, false, 0, 1));
     }
-
-
 }

@@ -83,6 +83,7 @@ class AccountTableTest extends DbContainerBaseTest {
     void save_existing() {
         td.ACC_14.setBalanceATM(td.ACC_14.getBalanceATM() + 100);
         td.ACC_14.setHeight(td.ACC_14.getHeight() + 1);
+        long prevDbId = td.ACC_14.getDbId();
 
         DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.ACC_14));
 
@@ -95,6 +96,7 @@ class AccountTableTest extends DbContainerBaseTest {
         // get back old data
         td.ACC_14.setHeight(td.ACC_14.getHeight() - 1);
         td.ACC_14.setBalanceATM(td.ACC_14.getBalanceATM() - 100);
+        td.ACC_14.setDbId(prevDbId);
         assertEquals(td.ACC_14, prev);
     }
 
@@ -189,6 +191,8 @@ class AccountTableTest extends DbContainerBaseTest {
     void testRollback_deleted_no_updated() throws SQLException {
         td.ACC_14.setHeight(td.ACC_14.getHeight() + 1);
         td.ACC_14.setBalanceATM(td.ACC_14.getBalanceATM() - 100);
+        long prevDbId = td.ACC_14.getDbId();
+
         DbUtils.inTransaction(dbExtension, (con) -> table.insert(td.ACC_14));
         DbUtils.inTransaction(dbExtension, (con) -> table.rollback(td.ACC_14.getHeight() - 1));
 
@@ -197,6 +201,7 @@ class AccountTableTest extends DbContainerBaseTest {
         List<Account> existing = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         td.ACC_14.setHeight(td.ACC_14.getHeight() - 1);
         td.ACC_14.setBalanceATM(td.ACC_14.getBalanceATM() + 100);
+        td.ACC_14.setDbId(prevDbId);
         assertEquals(td.ALL_ACCOUNTS, existing);
     }
 
@@ -212,12 +217,11 @@ class AccountTableTest extends DbContainerBaseTest {
         DbUtils.inTransaction(dbExtension, (con) -> table.rollback(newAcc2.getHeight() - 1));
 
         Account account = table.get(new LongKey(td.ACC_14.getId()));
-        account.setDbId(0);
+
         assertEquals(newAcc1, account);
         List<Account> existing = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues();
         ArrayList<Account> expected = new ArrayList<>(td.ALL_ACCOUNTS);
         expected.add(newAcc1);
-        existing.get(16).setDbId(0);
         assertEquals(expected, existing);
     }
 

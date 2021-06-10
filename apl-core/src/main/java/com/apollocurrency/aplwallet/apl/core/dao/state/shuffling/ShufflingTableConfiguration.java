@@ -38,11 +38,15 @@ public class ShufflingTableConfiguration {
     }
 
     @PostConstruct
-    void init() throws SQLException {
+    void init() {
         if (isCacheEnabled()) {
             log.info("'Shuffling cache' is TURNED ON...");
             inMemRepo = new InMemoryShufflingRepository();
-            warmUp();
+            try {
+                warmUp();
+            } catch (SQLException e) {
+                throw new RuntimeException("Shuffling in-memory cached table warm up error: ", e);
+            }
 
             TaskDispatcher taskDispatcher = taskManager.newScheduledDispatcher("ShufflingTableConfiguration-periodics");
             taskDispatcher.schedule(Task.builder()

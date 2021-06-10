@@ -191,6 +191,7 @@ class ShardEngineTest extends DBContainerRootTest {
 
     {
         doReturn(chain).when(blockchainConfig).getChain();
+        doReturn(3).when(propertiesHolder).getIntProperty("apl.derivedTablesCount", 55);
     }
 
     private final PublicKeyDao publicKeyDao = mock(PublicKeyDao.class);

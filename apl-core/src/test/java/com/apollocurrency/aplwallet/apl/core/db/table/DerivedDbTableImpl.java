@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.db.table;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.model.DerivedIdEntity;
+import com.apollocurrency.aplwallet.apl.core.entity.model.DerivedIdEntity;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 
 import java.sql.Connection;

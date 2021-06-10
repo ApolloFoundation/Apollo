@@ -187,4 +187,12 @@ public class Account extends VersionedDeletableEntity {
         return true;
     }
 
+    @Override
+    public Account deepCopy() {
+        Account copy = (Account) super.deepCopy();
+        if (copy.getPublicKey() != null) {
+            copy.setPublicKey(copy.getPublicKey().deepCopy());
+        }
+        return copy;
+    }
 }

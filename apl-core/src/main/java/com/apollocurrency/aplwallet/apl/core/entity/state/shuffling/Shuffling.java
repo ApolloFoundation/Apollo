@@ -20,21 +20,22 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.shuffling;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.shuffling.ShufflingTable;
 import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
 import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCreation;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 @EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
 public final class Shuffling extends VersionedDeletableEntity {
 
     private final long id;
@@ -171,11 +172,27 @@ public final class Shuffling extends VersionedDeletableEntity {
     }
 
     public Shuffling deepCopy() {
-        try {
-            return (Shuffling) clone();
-        }
-        catch (CloneNotSupportedException e) {
-            throw new RuntimeException("Clone is not supported for shuffling");
-        }
+        return (Shuffling) super.deepCopy();
+    }
+
+    @Override
+    public String toString() {
+        return "Shuffling{" +
+            "id=" + id +
+            ", holdingId=" + holdingId +
+            ", holdingType=" + holdingType +
+            ", issuerId=" + issuerId +
+            ", amount=" + amount +
+            ", participantCount=" + participantCount +
+            ", blocksRemaining=" + blocksRemaining +
+            ", registrantCount=" + registrantCount +
+            ", stage=" + stage +
+            ", assigneeAccountId=" + assigneeAccountId +
+            ", recipientPublicKeys=" + Arrays.stream(recipientPublicKeys).map(Convert::toHexString).collect(Collectors.joining(",")) +
+            ", deleted=" + isDeleted() +
+            ", latest=" + isLatest() +
+            ", dbId=" + getDbId() +
+            ", height=" + getHeight() +
+            '}';
     }
 }
