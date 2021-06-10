@@ -114,7 +114,12 @@ public class SmcContractServiceImpl implements SmcContractService {
     @Override
     @Transactional
     public void updateContractState(SmartContract contract) {
-        SmcContractStateEntity smcContractStateEntity = contractModelToStateConverter.convert(contract);
+        SmcContractStateEntity smcContractStateEntity = loadContractStateEntity(contract.getAddress(), true);
+        if (smcContractStateEntity == null) {
+            smcContractStateEntity = contractModelToStateConverter.convert(contract);
+        }
+        smcContractStateEntity.setSerializedObject(contract.getSerializedObject());
+        smcContractStateEntity.setStatus(contract.getStatus().name());
         smcContractStateEntity.setHeight(blockchain.getHeight()); // new height value
         smcContractStateTable.insert(smcContractStateEntity);
     }

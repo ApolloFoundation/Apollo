@@ -36,23 +36,31 @@ public class SmcContractStorageServiceImpl implements SmcContractStorageService 
 
     @Override
     @Transactional
-    public void saveEntry(Address address, Key key, String name, String jsonObject) {
-        SmcContractMappingEntity smcContractMappingEntity = SmcContractMappingEntity.builder()
-            .address(new AplAddress(address).getLongId())
-            .key(key.key())
-            .name(name)
-            .serializedObject(jsonObject)
-            .height(blockchain.getHeight()) // new height value
-            .build();
+    public void saveOrUpdateEntry(Address address, Key key, String name, String jsonObject) {
+        SmcContractMappingEntity smcContractMappingEntity = getContractMappingEntity(address, key);
+        if (smcContractMappingEntity != null) {
+            //update entity
+            smcContractMappingEntity.setSerializedObject(jsonObject);
+            smcContractMappingEntity.setHeight(blockchain.getHeight());
+            log.trace("Update mapping={}", smcContractMappingEntity);
+        } else {
+            //new entity
+            smcContractMappingEntity = SmcContractMappingEntity.builder()
+                .address(new AplAddress(address).getLongId())
+                .key(key.key())
+                .name(name)
+                .serializedObject(jsonObject)
+                .height(blockchain.getHeight()) // new height value
+                .build();
+            log.trace("Save new mapping={}", smcContractMappingEntity);
+        }
         smcContractMappingTable.insert(smcContractMappingEntity);
-        log.trace("Saved mapping={}", smcContractMappingEntity);
     }
 
     @Override
     @Transactional(readOnly = true)
     public String loadEntry(Address address, Key key) {
-        long id = new AplAddress(address).getLongId();
-        SmcContractMappingEntity smcContractMappingEntity = smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(id, key.key()));
+        SmcContractMappingEntity smcContractMappingEntity = getContractMappingEntity(address, key);
         if (smcContractMappingEntity != null) {
             log.trace("Load mapping={}", smcContractMappingEntity);
             return smcContractMappingEntity.getSerializedObject();
@@ -64,8 +72,7 @@ public class SmcContractStorageServiceImpl implements SmcContractStorageService 
     @Override
     public boolean deleteEntry(Address address, Key key) {
         boolean rc = false;
-        long id = new AplAddress(address).getLongId();
-        SmcContractMappingEntity smcContractMappingEntity = smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(id, key.key()));
+        SmcContractMappingEntity smcContractMappingEntity = getContractMappingEntity(address, key);
         if (smcContractMappingEntity != null) {
             int height = blockchain.getHeight();
             rc = smcContractMappingTable.deleteAtHeight(smcContractMappingEntity, height);
@@ -86,4 +93,10 @@ public class SmcContractStorageServiceImpl implements SmcContractStorageService 
         log.trace("Found {} entries, address={} mapping name={}", count, address.getHex(), name);
         return count > 0;
     }
+
+    private SmcContractMappingEntity getContractMappingEntity(Address address, Key key) {
+        long id = new AplAddress(address).getLongId();
+        return smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(id, key.key()));
+    }
+
 }

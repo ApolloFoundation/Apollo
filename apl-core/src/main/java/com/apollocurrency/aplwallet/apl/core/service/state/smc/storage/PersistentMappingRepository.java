@@ -34,7 +34,7 @@ public class PersistentMappingRepository<V> extends ContractMappingRepository<V>
 
     @Override
     public void putOneObject(Key key, String value) {
-        smcContractStorageService.saveEntry(getContract(), key, getName(), value);
+        smcContractStorageService.saveOrUpdateEntry(getContract(), key, getName(), value);
     }
 
     @Override

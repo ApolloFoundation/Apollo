@@ -169,6 +169,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         checkPrecondition(transaction);
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
         Address address = new AplAddress(transaction.getRecipientId());
+
         SmartContract smartContract = contractService.loadContract(
             address,
             new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
