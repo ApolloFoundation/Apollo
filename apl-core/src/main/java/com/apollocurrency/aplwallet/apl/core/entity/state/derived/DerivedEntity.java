@@ -16,7 +16,7 @@ import java.util.Objects;
 public abstract class DerivedEntity implements Comparable<DerivedEntity>, Cloneable {
     protected static final int DEFAULT_HEIGHT = -1;
     private static final long DEFAULT_DB_ID = 0L;
-    private DbKey dbKey;
+    private volatile DbKey dbKey;
     private long dbId;
     private int height;
 
@@ -81,5 +81,13 @@ public abstract class DerivedEntity implements Comparable<DerivedEntity>, Clonea
     }
     public DerivedEntity clone() throws CloneNotSupportedException {
         return (DerivedEntity) super.clone();
+    }
+
+    public DerivedEntity deepCopy() {
+        try {
+            return clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(getClass().getSimpleName() + " does not support Object.clone() operation");
+        }
     }
 }

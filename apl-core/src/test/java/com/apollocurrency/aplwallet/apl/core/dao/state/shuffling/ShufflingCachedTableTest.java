@@ -4,17 +4,21 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.data.ShufflingTestData;
+import com.apollocurrency.aplwallet.apl.testutil.MockUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -114,7 +118,13 @@ class ShufflingCachedTableTest {
     @Test
     void delete() {
         doReturn(true).when(inMemRepo).delete(td.SHUFFLING_3_3_APL_REGISTRATION);
-        doReturn(true).when(dbTable).deleteAtHeight(td.SHUFFLING_3_3_APL_REGISTRATION, td.SHUFFLING_3_3_APL_REGISTRATION.getHeight());
+        int deletionHeight = td.SHUFFLING_3_3_APL_REGISTRATION.getHeight();
+        doReturn(true).when(dbTable).deleteAtHeight(td.SHUFFLING_3_3_APL_REGISTRATION, deletionHeight);
+        MockUtils.doAnswer(Map.of(1, 10, 2, 9)).when(inMemRepo).rowCount(deletionHeight);
+        MinMaxValue beforeOpMinMaxValue = new MinMaxValue(BigDecimal.ZERO, BigDecimal.valueOf(100), "db_id", 10, deletionHeight);
+        MinMaxValue afterOpMinMaxValue = new MinMaxValue(BigDecimal.ZERO, BigDecimal.valueOf(100), "db_id", 9, deletionHeight);
+        MockUtils.doAnswer(Map.of(1, beforeOpMinMaxValue, 2, afterOpMinMaxValue, 3, afterOpMinMaxValue)).when(dbTable).getMinMaxValue(deletionHeight);
+
         boolean deleted = cachedTable.delete(td.SHUFFLING_3_3_APL_REGISTRATION);
 
         assertTrue(deleted, "Expected deleted = false after cache+db successful delete");

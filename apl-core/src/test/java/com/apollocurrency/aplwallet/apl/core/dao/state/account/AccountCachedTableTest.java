@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.google.common.cache.Cache;
@@ -17,6 +18,8 @@ import java.sql.SQLException;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.doReturn;
 @ExtendWith(MockitoExtension.class)
 class AccountCachedTableTest {
@@ -29,9 +32,28 @@ class AccountCachedTableTest {
 
     @BeforeEach
     void setUp() {
+        doReturn("account_mock_table").when(accountTable).getName();
         cachedTable = new AccountCachedTable(cache, accountTable);
         td = new AccountTestData();
     }
+
+    @Test
+    void testGet() {
+        doReturn(td.ACC_0).when(accountTable).get(new LongKey(1L));
+
+        Account account = cachedTable.get(new LongKey(1L));
+
+        assertNotSame(td.ACC_0, account);
+        assertEquals(td.ACC_0, account);
+    }
+
+    @Test
+    void testGet_nothing() {
+        Account account = cachedTable.get(new LongKey(-2L));
+
+        assertNull(account);
+    }
+
     @Test
     void selectAllForKey() throws SQLException {
         doReturn(List.of(td.ACC_0)).when(accountTable).selectAllForKey(1L);

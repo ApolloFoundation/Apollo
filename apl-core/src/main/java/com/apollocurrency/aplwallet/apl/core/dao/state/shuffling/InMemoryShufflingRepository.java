@@ -4,15 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.shuffling;
 
+import com.apollocurrency.aplwallet.apl.core.dao.state.ChangeUtils;
 import com.apollocurrency.aplwallet.apl.core.dao.state.InMemoryVersionedDerivedEntityRepository;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableData;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.ChangeUtils;
 import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.model.EntityWithChanges;
-import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
@@ -61,10 +59,6 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
         super(dbKeyFactory, List.of("recipient_public_keys", "blocks_remaining", "assignee_account_id", "registrant_count", "stage"));
     }
 
-    public Shuffling getCopy(long id) {
-        return getCopy(dbKeyFactory.newKey(id));
-    }
-
     @Override
     public int getCount() {
         return getInReadLock(() -> (int) latestStream().count());
@@ -105,6 +99,7 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
                                 .filter(s -> s.getBlocksRemaining() <= 0) // include only finished
                                 .sorted(Comparator.comparing(Shuffling::getHeight).reversed().thenComparing(Shuffling::getDbId))
                         , from, to)
+                    .map(Shuffling::deepCopy)
                 .collect(Collectors.toList()));
     }
 
@@ -157,19 +152,7 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
     }
 
     @Override
-    public List<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to) {
-        throw new UnsupportedOperationException("Unable to select account shufflings using in-memory table");
-    }
-
-    private Stream<Shuffling> latestStream() {
-        return getAllEntities().values()
-                .stream()
-                .map(EntityWithChanges::getEntity)
-                .filter(VersionedDerivedEntity::isLatest); // skip deleted
-    }
-
-    @Override
-    public Value analyzeChanges(String columnName, Object prevValue, Shuffling entity) {
+    protected Value analyzeChanges(String columnName, Object prevValue, Shuffling entity) {
         switch (columnName) {
             case BLOCKS_REMAINING:
                 return ChangeUtils.getChange(entity.getBlocksRemaining(), prevValue);
@@ -188,7 +171,7 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
 
 
     @Override
-    public void setColumn(String columnName, Object value, Shuffling entity) {
+    protected void setColumn(String columnName, Object value, Shuffling entity) {
         switch (columnName) {
             case BLOCKS_REMAINING:
                 entity.setBlocksRemaining(((short) value));
@@ -343,6 +326,11 @@ public class InMemoryShufflingRepository extends InMemoryVersionedDerivedEntityR
     @Override
     public int getCount(PreparedStatement pstmt) throws SQLException {
         throw new UnsupportedOperationException("Unable to calculate count by the sql statement for the in memory shuffling table");
+    }
+
+    @Override
+    public List<Shuffling> getAccountShufflings(long accountId, boolean includeFinished, int from, int to) {
+        throw new UnsupportedOperationException("Unable to select account shufflings using in-memory table");
     }
 
     @Override

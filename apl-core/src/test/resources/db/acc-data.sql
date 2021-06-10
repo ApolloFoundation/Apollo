@@ -6,6 +6,18 @@ TRUNCATE TABLE account_ledger;
 TRUNCATE TABLE account_property;
 TRUNCATE TABLE account_lease;
 
+ALTER TABLE shuffling AUTO_INCREMENT = 230;
+ALTER TABLE shuffling_participant AUTO_INCREMENT = 1070;
+ALTER TABLE shuffling_data AUTO_INCREMENT = 1000;
+
+ALTER TABLE account AUTO_INCREMENT = 150;
+ALTER TABLE account_asset AUTO_INCREMENT = 28;
+ALTER TABLE account_currency AUTO_INCREMENT = 57;
+ALTER TABLE account_guaranteed_balance AUTO_INCREMENT = 1695307;
+ALTER TABLE account_ledger AUTO_INCREMENT = 68;
+ALTER TABLE account_property AUTO_INCREMENT = 10;
+ALTER TABLE account_lease AUTO_INCREMENT = 7;
+
 
 INSERT INTO account
 (DB_ID  ,ID  	                        ,BALANCE  	             ,UNCONFIRMED_BALANCE  	    ,HAS_CONTROL_PHASING  	,FORGED_BALANCE  	,ACTIVE_LESSEE_ID  	,HEIGHT  	 ,LATEST, DELETED) values

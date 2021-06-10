@@ -28,6 +28,8 @@ public interface CacheConfiguration<K, V> {
 
     CacheBuilder cacheBuilder();
 
+    boolean shouldBeSynchronized();
+
     Optional<CacheLoader<K, V>> getCacheLoader();
 
 }

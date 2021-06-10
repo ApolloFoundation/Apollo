@@ -1,8 +1,8 @@
 /*
- *  Copyright © 2018-2019 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.db;
+package com.apollocurrency.aplwallet.apl.core.dao.state;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

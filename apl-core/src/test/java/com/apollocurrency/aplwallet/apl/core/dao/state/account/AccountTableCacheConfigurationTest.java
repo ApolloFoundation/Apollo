@@ -62,6 +62,7 @@ class AccountTableCacheConfigurationTest {
         doReturn(cache).when(inMemoryCacheManager).acquireCache("ACCOUNT_CACHE");
         doReturn(taskDispatcher).when(taskDispatchManager).newScheduledDispatcher("AccountTableProducer-periodics");
         doReturn(List.of(td.ACC_0, td.ACC_10, td.ACC_9)).when(accountTable).getRecentAccounts(10_000);
+        doReturn("account_mock_table").when(accountTable).getName();
 
         cacheConfigurer.init();
 

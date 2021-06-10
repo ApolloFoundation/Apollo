@@ -63,4 +63,15 @@ public final class PublicKey extends VersionedDerivedEntity {
             ", latest=" + isLatest() +
             "} ";
     }
+
+    @Override
+    public PublicKey deepCopy() {
+        byte[] copiedPublicKey = null;
+        if (publicKey != null) {
+            copiedPublicKey = Arrays.copyOf(publicKey, publicKey.length);
+        }
+        PublicKey copy = (PublicKey) super.deepCopy();
+        copy.setPublicKey(copiedPublicKey);
+        return copy;
+    }
 }
