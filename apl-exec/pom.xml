@@ -35,8 +35,8 @@
     </dependency>
     <dependency>
         <groupId>io.firstbridge</groupId>
-        <artifactId>fbprocess</artifactId>        
-    </dependency>    
+        <artifactId>fbprocess</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>

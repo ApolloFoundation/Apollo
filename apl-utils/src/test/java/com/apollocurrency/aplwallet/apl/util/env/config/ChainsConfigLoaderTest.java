@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -70,7 +71,7 @@ public class ChainsConfigLoaderTest {
         "NOT STABLE testnet for experiments. Don't use it if you don't know what is it", "Apollo",
         "APL", "Apollo",
         30000000000L, 8,
-        BLOCKCHAIN_PROPERTIES1, new FeaturesHeightRequirement());
+        BLOCKCHAIN_PROPERTIES1, new FeaturesHeightRequirement(), Set.of(102,103,105));
     private static UUID chainId2 = UUID.fromString("ff3bfa13-3711-4f23-8f7b-4fccaa87c4c1");
     private static final Chain CHAIN2 = new Chain(chainId2, Arrays.asList("51.15.0.1",
         "51.15.1.0"),
@@ -82,7 +83,7 @@ public class ChainsConfigLoaderTest {
     private static final Chain CHAIN3 = new Chain(chainId2, false, Arrays.asList("51.15.1.1",
         "51.15.0.0"), Collections.emptyList(), Collections.emptyList(), "1", "2", "3", "4", "5",
         100000L, 2,
-        BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150, 150));
+        BLOCKCHAIN_PROPERTIES1.subList(0, 3), new FeaturesHeightRequirement(150, 150, 150), Set.of());
     private Path tempRootPath;
 
     @BeforeEach

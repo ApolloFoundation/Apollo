@@ -27,6 +27,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -61,8 +63,7 @@ public class BlockchainConfigTest {
         "Test",
         10000L, 2,
             //"data.json",
-        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100));
-
+        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100), Set.of(20, 21, 25, 26));
     BlockchainConfig blockchainConfig  = new BlockchainConfig(chain, new PropertiesHolder());
     private BlockDao blockDao = mock(BlockDao.class);
     @Inject
@@ -103,7 +104,11 @@ public class BlockchainConfigTest {
     @Test
     void testCreateBlockchainConfig() {
         BlockchainConfig blockchainConfig = new BlockchainConfig(chain, new PropertiesHolder());
+
         assertEquals(new HeightConfig(bp0, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
+        assertTrue(blockchainConfig.isCurrencyIssuanceHeight(25), "'25' height should belong to the currencyIssuanceHeights");
+        assertFalse(blockchainConfig.isCurrencyIssuanceHeight(24), "'24' height should not belong to the currencyIssuanceHeights");
+
     }
 
     @Test
