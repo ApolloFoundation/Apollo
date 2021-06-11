@@ -34,6 +34,7 @@ import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
 import com.apollocurrency.smc.contract.fuel.FuelCost;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
+import com.apollocurrency.smc.contract.fuel.MemCostFuelCalculator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
 import com.google.common.base.Strings;
@@ -69,7 +70,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     @Override
     public Fee getBaselineFee(Transaction transaction) {
         //TODO calculate the required fuel value by executing the contract
-        FuelCalculator fuelCalculator = FuelCost.F_CALL;
+        FuelCalculator fuelCalculator = new MemCostFuelCalculator(FuelCost.F_CALL);
         if (transaction.getAmountATM() > 0) {
             fuelCalculator.add(FuelCost.F_SEND_MONEY);
         }
