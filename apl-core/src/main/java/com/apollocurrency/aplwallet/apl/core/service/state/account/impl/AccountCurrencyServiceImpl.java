@@ -120,27 +120,27 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
     }
 
     @Override
-    public List<AccountCurrency> getCurrenciesByAccount(Account account) {
-        return getCurrenciesByAccount(account, 0, -1);
+    public List<AccountCurrency> getByAccount(Account account) {
+        return getByAccount(account, 0, -1);
     }
 
     @Override
-    public List<AccountCurrency> getCurrenciesByAccount(Account account, int from, int to) {
-        return getCurrenciesByAccount(account.getId(), from, to);
+    public List<AccountCurrency> getByAccount(Account account, int from, int to) {
+        return getByAccount(account.getId(), from, to);
     }
 
     @Override
-    public List<AccountCurrency> getCurrenciesByAccount(long accountId, int from, int to) {
+    public List<AccountCurrency> getByAccount(long accountId, int from, int to) {
         return toList(accountCurrencyTable.getByAccount(accountId, from, to));
     }
 
     @Override
-    public List<AccountCurrency> getCurrenciesByAccount(Account account, int height, int from, int to) {
-        return getCurrenciesByAccount(account.getId(), height, from, to);
+    public List<AccountCurrency> getByAccount(Account account, int height, int from, int to) {
+        return getByAccount(account.getId(), height, from, to);
     }
 
     @Override
-    public List<AccountCurrency> getCurrenciesByAccount(long accountId, int height, int from, int to) {
+    public List<AccountCurrency> getByAccount(long accountId, int height, int from, int to) {
         if (height < 0) {
             return toList(accountCurrencyTable.getByAccount(accountId, from, to));
         } else {
@@ -149,12 +149,12 @@ public class AccountCurrencyServiceImpl implements AccountCurrencyService {
     }
 
     @Override
-    public List<AccountCurrency> getCurrenciesByCurrency(long currencyId, int from, int to) {
+    public List<AccountCurrency> getByCurrency(long currencyId, int from, int to) {
         return toList(accountCurrencyTable.getByCurrency(currencyId, from, to));
     }
 
     @Override
-    public List<AccountCurrency> getCurrenciesByCurrency(long currencyId, int height, int from, int to) {
+    public List<AccountCurrency> getByCurrency(long currencyId, int height, int from, int to) {
         if (height < 0) {
             return toList(accountCurrencyTable.getByCurrency(currencyId, from, to));
         } else {

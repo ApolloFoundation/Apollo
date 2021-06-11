@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
@@ -304,9 +304,7 @@ public class CurrencyServiceImpl implements CurrencyService {
             && senderAccountId != currency.getAccountId()) {
             return false;
         }
-
-        List<AccountCurrency> accountCurrencies = accountCurrencyService
-            .getCurrenciesByAccount(currency.getId(), 0, -1);
+        List<AccountCurrency> accountCurrencies = getAccountCurrencies(currency.getId());
         return accountCurrencies.isEmpty() || accountCurrencies.size() == 1 && accountCurrencies.get(0).getAccountId() == senderAccountId;
     }
 
@@ -508,4 +506,16 @@ public class CurrencyServiceImpl implements CurrencyService {
         });
     }
 
+    private List<AccountCurrency> getAccountCurrencies(long currencyId) {
+        int currentHeight = blockChainInfoService.getHeight();
+        List<AccountCurrency> accountCurrencies;
+        if (!blockchainConfig.isCurrencyIssuanceHeight(currentHeight)) {
+            accountCurrencies = accountCurrencyService
+                .getByCurrency(currencyId, 0, -1);
+        } else {
+            accountCurrencies = accountCurrencyService
+                .getByAccount(currencyId, 0, -1);
+        }
+        return accountCurrencies;
+    }
 }

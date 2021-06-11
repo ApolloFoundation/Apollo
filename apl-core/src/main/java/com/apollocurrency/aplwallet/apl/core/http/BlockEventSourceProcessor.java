@@ -100,7 +100,7 @@ public class BlockEventSourceProcessor implements Runnable {
         accountAssets.forEach(accountAsset -> assetJson.add(JSONData.accountAsset(accountAsset, false, true)));
 
         JSONArray currencyJSON = new JSONArray();
-        List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(accountId, -1, 0, 2);
+        List<AccountCurrency> accountCurrencies = accountCurrencyService.getByAccount(accountId, -1, 0, 2);
         accountCurrencies.forEach(accountCurrency -> currencyJSON.add(JSONData.accountCurrency(accountCurrency, false, true)));
 
         int messageCount = blockchain.getTransactionCount(accountId, (byte) 1, (byte) 0);

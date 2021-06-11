@@ -11,17 +11,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @JsonPropertyOrder({"chainId", "active", "defaultPeers", "wellKnownPeers", "blacklistedPeers", "name", "description", "symbol",
-    "prefix", "project", "initialSupply", "decimals", "featuresHeightRequirement", "blockchainProperties"})
+    "prefix", "project", "initialSupply", "decimals", "featuresHeightRequirement","currencyIssuanceHeights", "blockchainProperties"})
 public class Chain {
     private UUID chainId;
     private boolean active;
@@ -37,6 +40,7 @@ public class Chain {
     private int decimals;
     private long oneAPL;
     private FeaturesHeightRequirement featuresHeightRequirement;
+    private Set<Integer> currencyIssuanceHeights;
     private Map<Integer, BlockchainProperties> blockchainProperties;
 
     @JsonCreator
@@ -53,7 +57,7 @@ public class Chain {
     ) {
         this(chainId, false, Collections.emptyList(), wellKnownPeers, Collections.emptyList(),
             name, description, symbol, prefix, project, initialSupply, decimals,
-             blockchainProperties, null);
+             blockchainProperties, null, null);
     }
 
     /**
@@ -87,7 +91,8 @@ public class Chain {
                  long initialSupply,
                  int decimals,
                  List<BlockchainProperties> blockchainProperties,
-                 FeaturesHeightRequirement featuresHeightRequirement
+                 FeaturesHeightRequirement featuresHeightRequirement,
+                 Set<Integer> currencyIssuanceHeights
     ) {
         this.chainId = chainId;
         this.active = active;
@@ -109,6 +114,7 @@ public class Chain {
                     Collectors.toMap(BlockchainProperties::getHeight, bp -> bp,
                         (oldValue, newValue) -> oldValue, LinkedHashMap::new));
         this.featuresHeightRequirement = featuresHeightRequirement;
+        this.currencyIssuanceHeights = currencyIssuanceHeights;
     }
 
     public Chain() {
@@ -239,7 +245,8 @@ public class Chain {
             Objects.equals(prefix, chain.prefix) &&
             Objects.equals(project, chain.project) &&
             Objects.equals(blockchainProperties, chain.blockchainProperties) &&
-            Objects.equals(featuresHeightRequirement, chain.featuresHeightRequirement);
+            Objects.equals(featuresHeightRequirement, chain.featuresHeightRequirement) &&
+            Objects.equals(currencyIssuanceHeights, chain.currencyIssuanceHeights);
     }
 
     @Override
@@ -254,7 +261,7 @@ public class Chain {
         List<BlockchainProperties> blockchainPropertiesCopy = blockchainProperties.values().stream().map(BlockchainProperties::copy).collect(Collectors.toList());
         return new Chain(chainId, active, defaultPeersCopy, wellKnownPeersCopy, blacklistedPeersCopy,
             name, description, symbol, prefix, project, initialSupply, decimals,
-             blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null);
+             blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null, currencyIssuanceHeights == null ? null : new HashSet<>(currencyIssuanceHeights));
     }
 
     @Override
@@ -274,7 +281,8 @@ public class Chain {
             ", decimals=" + decimals +
             ", oneAPL=" + oneAPL +
             ", featuresHeightRequirement='" + featuresHeightRequirement + '\'' +
-            ", blockchainProperties=" + blockchainProperties +
+            ", blockchainProperties=" + blockchainProperties + '\'' +
+            ", currencyIssuanceHeights=" + currencyIssuanceHeights +
             '}';
     }
 
@@ -289,5 +297,16 @@ public class Chain {
 
     public void setBlockchainProperties(Map<Integer, BlockchainProperties> blockchainProperties) {
         this.blockchainProperties = blockchainProperties;
+    }
+
+    public Set<Integer> getCurrencyIssuanceHeights() {
+        return currencyIssuanceHeights;
+    }
+
+    public void setCurrencyIssuanceHeights(Collection<Integer> currencyIssuanceHeights) {
+        if (currencyIssuanceHeights == null) {
+            return;
+        }
+        this.currencyIssuanceHeights = new HashSet<>(currencyIssuanceHeights);
     }
 }
