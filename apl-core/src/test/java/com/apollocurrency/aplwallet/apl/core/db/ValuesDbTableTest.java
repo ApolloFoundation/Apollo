@@ -99,7 +99,10 @@ public abstract class ValuesDbTableTest<T extends DerivedEntity> extends BasicDb
         List<T> dataToInsert = dataToInsert();
         T t = dataToInsert.get(0);
         t.setDbKey(INCORRECT_DB_KEY);
-        assertThrows(IllegalArgumentException.class, () -> DbUtils.inTransaction(extension, (con) -> table.insert(dataToInsert)));
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(extension, (con) -> table.insert(dataToInsert)));
+
+        assertTrue(ex.getCause() instanceof IllegalArgumentException);
     }
 
     protected abstract List<T> dataToInsert();

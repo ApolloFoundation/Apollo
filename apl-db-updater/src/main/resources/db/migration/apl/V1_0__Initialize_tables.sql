@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS `account`
   UNIQUE KEY `account_id_height_idx` (`id`,`height`),
   KEY `account_active_lessee_id_idx` (`active_lessee_id`),
   KEY `account_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
 
 
 
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `account_asset`
   KEY `account_asset_quantity_idx` (`quantity`),
   KEY `account_asset_asset_id_idx` (`asset_id`),
   KEY `account_asset_height_id_idx` (`height`,`account_id`,`asset_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS `account_control_phasing`
   UNIQUE KEY `db_id` (`db_id`),
   UNIQUE KEY `account_control_phasing_id_height_idx` (`account_id`,`height`),
   KEY `account_control_phasing_height_id_idx` (`height`,`account_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS `account_currency`
   KEY `account_currency_units_idx` (`units`),
   KEY `account_currency_currency_id_idx` (`currency_id`),
   KEY `account_currency_height_id_idx` (`height`,`account_id`,`currency_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS `account_guaranteed_balance`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `account_guaranteed_balance_id_height_idx` (`account_id`,`height`),
     KEY          `account_guaranteed_balance_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS `account_info`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `account_info_id_height_idx` (`account_id`,`height`),
     KEY           `account_info_height_id_idx` (`height`,`account_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS `account_lease`
   KEY `account_lease_current_leasing_height_from_idx` (`current_leasing_height_from`),
   KEY `account_lease_current_leasing_height_to_idx` (`current_leasing_height_to`),
   KEY `account_lease_height_id_idx` (`height`,`lessor_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS `account_ledger`
   UNIQUE KEY `db_id` (`db_id`),
   KEY `account_ledger_id_idx` (`account_id`,`db_id`),
   KEY `account_ledger_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -172,7 +172,7 @@ CREATE TABLE IF NOT EXISTS `account_property`
   KEY `account_property_height_id_idx` (`height`,`id`),
   KEY `account_property_recipient_height_idx` (`recipient_id`,`height`),
   KEY `account_property_setter_recipient_idx` (`setter_id`,`recipient_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS `alias`
   KEY `alias_account_id_idx` (`account_id`,`height`),
   KEY `alias_name_lower_idx` (`alias_name_lower`(191)),
   KEY `alias_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -209,7 +209,7 @@ CREATE TABLE IF NOT EXISTS `alias_offer`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `alias_offer_id_height_idx` (`id`,`height`),
     KEY        `alias_offer_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -233,7 +233,7 @@ CREATE TABLE IF NOT EXISTS `ask_order`
   KEY `ask_order_asset_id_price_idx` (`asset_id`,`price`),
   KEY `ask_order_creation_idx` (`creation_height`),
   KEY `ask_order_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -254,7 +254,7 @@ CREATE TABLE IF NOT EXISTS `asset`
   UNIQUE KEY `asset_id_height_idx` (`id`,`height`),
   KEY `asset_account_id_idx` (`account_id`),
   KEY `asset_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -272,7 +272,7 @@ CREATE TABLE IF NOT EXISTS `asset_delete`
     KEY          `asset_delete_asset_id_idx` (`asset_id`,`height`),
   KEY `asset_delete_account_id_idx` (`account_id`,`height`),
   KEY `asset_delete_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -291,7 +291,7 @@ CREATE TABLE IF NOT EXISTS `asset_dividend`
   UNIQUE KEY `asset_dividend_id_idx` (`id`),
   KEY `asset_dividend_asset_id_idx` (`asset_id`,`height`),
   KEY `asset_dividend_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -311,7 +311,7 @@ CREATE TABLE IF NOT EXISTS `asset_transfer`
   KEY `asset_transfer_sender_id_idx` (`sender_id`,`height`),
   KEY `asset_transfer_recipient_id_idx` (`recipient_id`,`height`),
   KEY `asset_transfer_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -335,7 +335,7 @@ CREATE TABLE IF NOT EXISTS `bid_order`
   KEY `bid_order_asset_id_price_idx` (`asset_id`,`price`),
   KEY `bid_order_creation_idx` (`creation_height`),
   KEY `bid_order_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -365,7 +365,7 @@ CREATE TABLE IF NOT EXISTS `block`
   UNIQUE KEY `block_timestamp_idx` (`TIMESTAMP`),
   KEY `block_generator_id_idx` (`generator_id`),
   CONSTRAINT `chk_timeout` CHECK (`timeout` >= 0)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -375,7 +375,7 @@ CREATE TABLE IF NOT EXISTS `block_index`
     `block_height` int(11)    NOT NULL,
     UNIQUE KEY `block_index_block_id_idx` (`block_id`),
     UNIQUE KEY `block_index_block_height_idx` (`block_height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -400,7 +400,7 @@ CREATE TABLE IF NOT EXISTS `buy_offer`
   KEY `buy_offer_currency_id_account_id_idx` (`currency_id`,`account_id`,`height`),
   KEY `buy_offer_rate_height_idx` (`rate`,`creation_height`),
   KEY `buy_offer_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -436,7 +436,7 @@ CREATE TABLE IF NOT EXISTS `currency`
   KEY `currency_creation_height_idx` (`creation_height`),
   KEY `currency_issuance_height_idx` (`issuance_height`),
   KEY `currency_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -453,7 +453,7 @@ CREATE TABLE IF NOT EXISTS `currency_founder`
     UNIQUE KEY `currency_founder_currency_id_idx` (`currency_id`,`account_id`,`height`),
     KEY           `currency_founder_account_id_idx` (`account_id`,`height`),
   KEY `currency_founder_height_id_idx` (`height`,`currency_id`,`account_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -469,7 +469,7 @@ CREATE TABLE IF NOT EXISTS `currency_mint`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `currency_mint_currency_id_account_id_idx` (`currency_id`,`account_id`,`height`),
     KEY           `currency_mint_height_id_idx` (`height`,`currency_id`,`account_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -485,7 +485,7 @@ CREATE TABLE IF NOT EXISTS `currency_supply`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `currency_supply_id_height_idx` (`id`,`height`),
     KEY                            `currency_supply_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -505,7 +505,7 @@ CREATE TABLE IF NOT EXISTS `currency_transfer`
   KEY `currency_transfer_sender_id_idx` (`sender_id`,`height`),
   KEY `currency_transfer_recipient_id_idx` (`recipient_id`,`height`),
   KEY `currency_transfer_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -519,7 +519,7 @@ CREATE TABLE IF NOT EXISTS `data_tag`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `data_tag_tag_height_idx` (`tag`,`height`),
     KEY         `data_tag_count_height_idx` (`tag_count`,`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -536,7 +536,7 @@ CREATE TABLE IF NOT EXISTS `dex_candlestick`
     `open_order_timestamp`  int(11)        NOT NULL,
     `close_order_timestamp` int(11)        NOT NULL,
   UNIQUE KEY `dex_candlestick_coin_timestamp_idx` (`coin`,`timestamp`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -558,7 +558,7 @@ CREATE TABLE IF NOT EXISTS `dex_contract`
   `counter_transfer_tx_id` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   UNIQUE KEY `db_id` (`db_id`),
   UNIQUE KEY `dex_contract_id_height_idx` (`id`,`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -581,7 +581,7 @@ CREATE TABLE IF NOT EXISTS `dex_offer`
   UNIQUE KEY `db_id` (`db_id`),
   UNIQUE KEY `dex_offer_id_height_idx` (`id`,`height`),
   KEY `dex_offer_overdue_idx` (`status`,`finish_time`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -596,7 +596,7 @@ CREATE TABLE IF NOT EXISTS `dex_operation`
     `finished`    tinyint(1)   NOT NULL DEFAULT 0,
     `ts`          timestamp(4) NOT NULL DEFAULT current_timestamp(4) ON UPDATE current_timestamp(4),
     UNIQUE KEY `db_id` (`db_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -610,7 +610,7 @@ CREATE TABLE IF NOT EXISTS `dex_transaction`
     `account`   varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     `timestamp` bigint(20) DEFAULT NULL,
     UNIQUE KEY `db_id` (`db_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -634,7 +634,7 @@ CREATE TABLE IF NOT EXISTS `exchange`
   KEY `exchange_buyer_id_idx` (`buyer_id`,`height`),
   KEY `exchange_height_idx` (`height`),
   KEY `exchange_height_db_id_idx` (`height`,`db_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -655,7 +655,7 @@ CREATE TABLE IF NOT EXISTS `exchange_request`
   KEY `exchange_request_currency_idx` (`currency_id`,`height`),
   KEY `exchange_request_height_db_id_idx` (`height`,`db_id`),
   KEY `exchange_request_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -669,7 +669,7 @@ CREATE TABLE IF NOT EXISTS `genesis_public_key`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `genesis_public_key_account_id_height_idx` (`account_id`,`height`),
     KEY          `genesis_public_key_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -694,7 +694,7 @@ CREATE TABLE IF NOT EXISTS `goods`
   KEY `goods_seller_id_name_idx` (`seller_id`,`name`(191)),
   KEY `goods_timestamp_idx` (`TIMESTAMP`,`height`),
   KEY `goods_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -705,7 +705,7 @@ CREATE TABLE IF NOT EXISTS `mandatory_transaction`
     `transaction_bytes` blob       NOT NULL,
     `required_tx_hash`  binary(32) DEFAULT NULL,
     UNIQUE KEY `db_id` (`db_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -714,7 +714,7 @@ CREATE TABLE IF NOT EXISTS `option`
     `name`  varchar(100) COLLATE utf8_bin NOT NULL,
     `VALUE` varchar(150) COLLATE utf8_bin DEFAULT NULL,
     UNIQUE KEY `option_name_value_idx` (`name`,`VALUE`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -723,7 +723,7 @@ CREATE TABLE IF NOT EXISTS `order_scan`
     `coin`       tinyint(4) NOT NULL,
     `last_db_id` bigint(20) NOT NULL,
     UNIQUE KEY `order_scan_coin_idx` (`coin`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -733,7 +733,7 @@ CREATE TABLE IF NOT EXISTS `peer`
     `last_updated` int(11)    DEFAULT NULL,
     `services`     bigint(20) DEFAULT NULL,
     PRIMARY KEY (`address`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -744,7 +744,7 @@ CREATE TABLE IF NOT EXISTS `phasing_approval_tx`
     `approved_tx` bigint(20) NOT NULL,
     `height`      int(11)    NOT NULL,
     UNIQUE KEY `db_id` (`db_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -769,7 +769,7 @@ CREATE TABLE IF NOT EXISTS `phasing_poll`
   KEY `phasing_poll_height_idx` (`height`),
   KEY `phasing_poll_account_id_idx` (`account_id`,`height`),
   KEY `phasing_poll_holding_id_idx` (`holding_id`,`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -784,7 +784,7 @@ CREATE TABLE IF NOT EXISTS `phasing_poll_linked_transaction`
     UNIQUE KEY `phasing_poll_linked_transaction_id_link_idx` (`transaction_id`,`linked_transaction_id`),
     UNIQUE KEY `phasing_poll_linked_transaction_link_id_idx` (`linked_transaction_id`,`transaction_id`),
     KEY                     `phasing_poll_linked_transaction_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -798,7 +798,7 @@ CREATE TABLE IF NOT EXISTS `phasing_poll_result`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `phasing_poll_result_id_idx` (`id`),
     KEY        `phasing_poll_result_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -811,7 +811,7 @@ CREATE TABLE IF NOT EXISTS `phasing_poll_voter`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `phasing_poll_voter_transaction_voter_idx` (`transaction_id`,`voter_id`),
     KEY              `phasing_poll_voter_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -825,7 +825,7 @@ CREATE TABLE IF NOT EXISTS `phasing_vote`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `phasing_vote_transaction_voter_idx` (`transaction_id`,`voter_id`),
     KEY              `phasing_vote_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -853,7 +853,7 @@ CREATE TABLE IF NOT EXISTS `poll`
   KEY `poll_height_idx` (`height`),
   KEY `poll_account_idx` (`account_id`),
   KEY `poll_finish_height_idx` (`finish_height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -867,7 +867,7 @@ CREATE TABLE IF NOT EXISTS `poll_result`
     UNIQUE KEY `db_id` (`db_id`),
     KEY       `poll_result_poll_id_idx` (`poll_id`),
     KEY       `poll_result_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -891,7 +891,7 @@ CREATE TABLE IF NOT EXISTS `prunable_message`
   KEY `prunable_message_sender_idx` (`sender_id`),
   KEY `prunable_message_recipient_idx` (`recipient_id`),
   KEY `prunable_message_block_timestamp_dbid_idx` (`block_timestamp`,`db_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -905,7 +905,7 @@ CREATE TABLE IF NOT EXISTS `public_key`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `public_key_account_id_height_idx` (`account_id`,`height`),
     KEY          `public_key_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -941,7 +941,7 @@ CREATE TABLE IF NOT EXISTS `purchase`
   KEY `purchase_deadline_idx` (`deadline`,`height`),
   KEY `purchase_timestamp_idx` (`TIMESTAMP`,`id`),
   KEY `purchase_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -956,7 +956,7 @@ CREATE TABLE IF NOT EXISTS `purchase_feedback`
     UNIQUE KEY `db_id` (`db_id`),
     KEY              `purchase_feedback_id_height_idx` (`id`,`height`),
     KEY              `purchase_feedback_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -970,7 +970,7 @@ CREATE TABLE IF NOT EXISTS `purchase_public_feedback`
     UNIQUE KEY `db_id` (`db_id`),
     KEY               `purchase_public_feedback_id_height_idx` (`id`,`height`),
     KEY               `purchase_public_feedback_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -982,7 +982,7 @@ CREATE TABLE IF NOT EXISTS `referenced_transaction`
     `height`                    int(11)    NOT NULL DEFAULT -1,
     UNIQUE KEY `db_id` (`db_id`),
     KEY                         `referenced_transaction_referenced_transaction_id_idx` (`referenced_transaction_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -991,7 +991,7 @@ CREATE TABLE IF NOT EXISTS `scan`
     `rescan`   tinyint(1) NOT NULL DEFAULT 0,
     `height`   int(11)    NOT NULL DEFAULT 0,
     `validate` tinyint(1) NOT NULL DEFAULT 0
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1016,7 +1016,7 @@ CREATE TABLE IF NOT EXISTS `sell_offer`
   KEY `sell_offer_currency_id_account_id_idx` (`currency_id`,`account_id`,`height`),
   KEY `sell_offer_rate_height_idx` (`rate`,`creation_height`),
   KEY `sell_offer_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1033,7 +1033,7 @@ CREATE TABLE IF NOT EXISTS `shard`
     `prunable_zip_hash` blob                DEFAULT NULL,
     PRIMARY KEY (`shard_id`),
   UNIQUE KEY `shard_height_index` (`shard_height`,`shard_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1050,7 +1050,7 @@ CREATE TABLE IF NOT EXISTS `shard_recovery`
     PRIMARY KEY (`shard_recovery_id`),
     UNIQUE KEY `shard_recovery_id` (`shard_recovery_id`),
   UNIQUE KEY `shard_recovery_id_state_object_idx` (`shard_recovery_id`,`state`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1077,7 +1077,7 @@ CREATE TABLE IF NOT EXISTS `shuffling`
   KEY `shuffling_assignee_account_id_height_idx` (`assignee_account_id`,`height`),
   KEY `shuffling_height_id_idx` (`height`,`id`),
   KEY `shuffling_blocks_remaining_height_idx` (`blocks_remaining`,`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1092,7 +1092,7 @@ CREATE TABLE IF NOT EXISTS `shuffling_data`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `shuffling_data_id_height_idx` (`shuffling_id`,`height`),
     KEY                     `shuffling_data_transaction_timestamp_idx` (`transaction_timestamp`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1114,7 +1114,7 @@ CREATE TABLE IF NOT EXISTS `shuffling_participant`
   UNIQUE KEY `db_id` (`db_id`),
   UNIQUE KEY `shuffling_participant_shuffling_id_account_id_idx` (`shuffling_id`,`account_id`,`height`),
   KEY `shuffling_participant_height_idx` (`height`,`shuffling_id`,`account_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1130,7 +1130,7 @@ CREATE TABLE IF NOT EXISTS `tag`
     UNIQUE KEY `tag_tag_idx` (`tag`,`height`),
     KEY              `tag_in_stock_count_idx` (`in_stock_count`,`height`),
     KEY              `tag_height_tag_idx` (`height`,`tag`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1158,7 +1158,7 @@ CREATE TABLE IF NOT EXISTS `tagged_data`
   KEY `tagged_data_account_id_height_idx` (`account_id`,`height`),
   KEY `tagged_data_block_timestamp_height_db_id_idx` (`block_timestamp`,`height`,`db_id`),
   KEY `tagged_data_channel_idx` (`channel`(191),`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1172,7 +1172,7 @@ CREATE TABLE IF NOT EXISTS `tagged_data_extend`
     UNIQUE KEY `db_id` (`db_id`),
     KEY         `tagged_data_extend_id_height_idx` (`id`,`height`),
     KEY         `tagged_data_extend_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1186,7 +1186,7 @@ CREATE TABLE IF NOT EXISTS `tagged_data_timestamp`
     UNIQUE KEY `db_id` (`db_id`),
     UNIQUE KEY `tagged_data_timestamp_id_height_idx` (`id`,`height`),
     KEY         `tagged_data_timestamp_height_id_idx` (`height`,`id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1214,7 +1214,7 @@ CREATE TABLE IF NOT EXISTS `trade`
   KEY `trade_ask_idx` (`ask_order_id`,`height`),
   KEY `trade_bid_idx` (`bid_order_id`,`height`),
   KEY `trade_height_db_id_idx` (`height`,`db_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1256,7 +1256,7 @@ CREATE TABLE IF NOT EXISTS `transaction`
   KEY `transaction_recipient_id_idx` (`recipient_id`),
   KEY `transaction_block_timestamp_idx` (`block_timestamp`),
   KEY `transaction_block_id_idx` (`block_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1268,7 +1268,7 @@ CREATE TABLE IF NOT EXISTS `transaction_shard_index`
     `height`                   int(11)     NOT NULL,
     UNIQUE KEY `transaction_shard_index_height_transaction_index_idx` (`height`,`transaction_index`),
     UNIQUE KEY `transaction_shard_index_transaction_id_height_idx` (`transaction_id`,`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1278,7 +1278,7 @@ CREATE TABLE IF NOT EXISTS `trim`
     `height` int(11)    NOT NULL,
     `done`   tinyint(1) NOT NULL DEFAULT 0,
     UNIQUE KEY `db_id` (`db_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1288,7 +1288,7 @@ CREATE TABLE IF NOT EXISTS `two_factor_auth`
     `secret`    blob                DEFAULT NULL,
     `confirmed` tinyint(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (`account`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1307,7 +1307,7 @@ CREATE TABLE IF NOT EXISTS `unconfirmed_transaction`
   UNIQUE KEY `unconfirmed_transaction_id_idx` (`id`),
   KEY `unconfirmed_transaction_height_fee_timestamp_idx` (`transaction_height`,`fee_per_byte`,`arrival_timestamp`),
   KEY `unconfirmed_transaction_expiration_idx` (`expiration`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1317,7 +1317,7 @@ CREATE TABLE IF NOT EXISTS `update_status`
     `transaction_id` bigint(20) NOT NULL,
     `updated`        tinyint(1) NOT NULL DEFAULT 0,
     UNIQUE KEY `db_id` (`db_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1330,14 +1330,14 @@ CREATE TABLE IF NOT EXISTS `user_error_message`
     `details`   varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `timestamp` bigint(20) NOT NULL,
     UNIQUE KEY `db_id` (`db_id`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
 CREATE TABLE IF NOT EXISTS `version`
 (
     `next_update` int(11) NOT NULL
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 
 
@@ -1353,4 +1353,4 @@ CREATE TABLE IF NOT EXISTS `vote`
     UNIQUE KEY `vote_id_idx` (`id`),
     UNIQUE KEY `vote_poll_id_idx` (`poll_id`,`voter_id`),
     KEY          `vote_height_idx` (`height`)
-) ENGINE=ROCKSDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;

@@ -18,9 +18,7 @@ CREATE TABLE IF NOT EXISTS `block`
     `payload_hash`          binary(32)          NOT NULL,
     `generator_id`          bigint(20)          NOT NULL,
     `timeout`               int(11)             NOT NULL DEFAULT 0
-) ENGINE = ROCKSDB
-    DEFAULT CHARSET = utf8mb4
-    COLLATE = utf8mb4_unicode_ci;
+);
 
 CREATE TABLE IF NOT EXISTS `transaction`
 (
@@ -54,16 +52,12 @@ CREATE TABLE IF NOT EXISTS `transaction`
     `has_prunable_message`             tinyint(1)          NOT NULL DEFAULT 0,
     `has_prunable_encrypted_message`   tinyint(1)          NOT NULL DEFAULT 0,
     `has_prunable_attachment`          tinyint(1)          NOT NULL DEFAULT 0
-) ENGINE = ROCKSDB
-    DEFAULT CHARSET = utf8mb4
-    COLLATE = utf8mb4_unicode_ci;
+);
 
 CREATE TABLE IF NOT EXISTS option
 (
     `name`  VARCHAR(100) COLLATE utf8_bin not null,
     `VALUE` VARCHAR(150) COLLATE utf8_bin DEFAULT NULL
-    ) ENGINE = ROCKSDB
-    DEFAULT CHARSET = utf8mb4
-    COLLATE = utf8mb4_unicode_ci;
+    );
 
 CREATE UNIQUE INDEX IF NOT EXISTS option_name_value_idx ON option (name, `VALUE`);

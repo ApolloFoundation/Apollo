@@ -597,10 +597,12 @@ public abstract class EntityDbTableTest<T extends DerivedEntity> extends BasicDb
     public void testInsertAlreadyExist() {
         T value = getAllLatest().get(1);
         DbUtils.inTransaction(extension, (con) -> {
-            value.setDbId(sortByHeightDesc(getAll()).get(0).getDbId() + 1);
             value.setHeight(value.getHeight() + 1);
+
             table.insert(value);
+
             T t = table.get(table.getDbKeyFactory().newKey(value));
+            value.setDbId(sortByHeightDesc(getAll()).get(0).getDbId() + 1);
             assertEquals(t, value);
         });
         T actual = table.get(table.getDbKeyFactory().newKey(value));

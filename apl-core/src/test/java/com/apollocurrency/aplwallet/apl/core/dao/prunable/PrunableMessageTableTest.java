@@ -97,7 +97,9 @@ class PrunableMessageTableTest extends DbContainerBaseTest {
     @Test
     void testInsertWithoutMessages() {
         data.NEW_MESSAGE.setMessage(null);
-        assertThrows(IllegalStateException.class, () -> DbUtils.inTransaction(extension, (con) -> table.insert(data.NEW_MESSAGE)));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(extension, (con) -> table.insert(data.NEW_MESSAGE)));
+
+        assertTrue(ex.getCause() instanceof IllegalStateException);
     }
 
     @Test

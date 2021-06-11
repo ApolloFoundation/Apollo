@@ -317,9 +317,9 @@ class GenesisImporterTest extends DbContainerBaseTest {
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
 
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
-        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME, 230730))
             .thenReturn(10);
-        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME, 84832))
             .thenReturn(10);
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
@@ -379,9 +379,9 @@ class GenesisImporterTest extends DbContainerBaseTest {
 
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
-        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME, 230730))
             .thenReturn(10);
-        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME, 84832))
             .thenReturn(10);
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
@@ -449,9 +449,9 @@ class GenesisImporterTest extends DbContainerBaseTest {
     void loadGenesisAccounts() {
 
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
-        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME, 230730))
             .thenReturn(10);
-        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME, 84832))
             .thenReturn(10);
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
@@ -576,9 +576,9 @@ class GenesisImporterTest extends DbContainerBaseTest {
         when(jsonFactory.createParser(any(InputStream.class))).thenReturn(jsonParser);
         when(jsonParser.nextToken()).thenReturn(JsonToken.END_OBJECT);
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
-        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME, 230730))
             .thenReturn(10);
-        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME, 84832))
             .thenReturn(10);
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,

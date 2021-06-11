@@ -143,8 +143,9 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
 
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer, Map.of("currency", List.of("code", "name", "description"), "tagged_data", List.of("name", "description", "tags")));
-    @Inject
-    private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
+
+    private PropertiesHolder propertiesHolder = mockPropertiesHolder();
+
     @Inject
     DerivedTablesRegistry registry;
     @Inject
@@ -272,7 +273,7 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
         });
     }
 
-    BlockchainConfig mockBlockchainConfig() {
+    private BlockchainConfig mockBlockchainConfig() {
         BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
         HeightConfig config = mock(HeightConfig.class);
         Chain chain = mock(Chain.class);
@@ -280,5 +281,11 @@ class DerivedDbTableListingTest extends DbContainerBaseTest {
         doReturn(chain).when(blockchainConfig).getChain();
         doReturn(UUID.fromString("a2e9b946-290b-48b6-9985-dc2e5a5860a1")).when(chain).getChainId();
         return blockchainConfig;
+    }
+
+    private PropertiesHolder mockPropertiesHolder() {
+        PropertiesHolder holder = mock(PropertiesHolder.class);
+        doReturn(21).when(holder).getIntProperty("apl.derivedTablesCount", 55);
+        return holder;
     }
 }

@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTable;
@@ -45,6 +46,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +75,7 @@ public class DGSServiceSearchTest extends DbContainerBaseTest {
         DGSServiceImpl.class,
         DerivedDbTablesRegistryImpl.class,
         PropertiesHolder.class,
-        BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class
+        BlockChainInfoServiceImpl.class, AccountServiceImpl.class
     )
         .addBeans(MockBean.of(mock(GlobalSync.class), GlobalSync.class, GlobalSyncImpl.class))
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
@@ -87,6 +89,7 @@ public class DGSServiceSearchTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(AccountGuaranteedBalanceTable.class), AccountGuaranteedBalanceTable.class))
         .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class))
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
+        .addBeans(MockBean.of(new AccountTable(extension.getDatabaseManager(), mock(Event.class)), AccountTableInterface.class))
         .build();
     @Inject
     DGSService service;
