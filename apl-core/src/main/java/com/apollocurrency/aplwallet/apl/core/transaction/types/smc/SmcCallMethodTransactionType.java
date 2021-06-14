@@ -115,6 +115,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
                 new AplAddress(transaction.getRecipientId()),
                 new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
             );
+            smartContract.setSender(new AplAddress(transaction.getSenderId()));
         } catch (ContractNotFoundException e) {
             throw new AplException.NotCurrentlyValidException("Contract doesn't exist at address " + address);
         }
@@ -175,6 +176,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             address,
             new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
         );
+        smartContract.setSender(new AplAddress(transaction.getSenderId()));
         SmartMethod smartMethod = SmartMethod.builder()
             .name(attachment.getMethodName())
             .args(attachment.getMethodParams())
