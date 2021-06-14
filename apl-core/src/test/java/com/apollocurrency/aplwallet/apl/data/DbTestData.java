@@ -55,7 +55,8 @@ public class DbTestData {
         10000L, 2,
         //"data.json",
         BLOCKCHAIN_PROPERTIES,
-        new FeaturesHeightRequirement(100, 100, 100));
+        new FeaturesHeightRequirement(100, 100, 100),
+        Collections.emptySet());
 
     private static Properties TEST_PROPERTIES = new Properties();
     private static ChainsConfigHolder testHolder;

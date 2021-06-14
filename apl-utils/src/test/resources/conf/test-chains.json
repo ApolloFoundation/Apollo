@@ -20,6 +20,7 @@
     "decimals": 8,
     "genesisLocation": "conf/data/genesisAccounts-testnet.json",
     "featuresHeightRequirement": {},
+    "currencyIssuanceHeights": [102,103,105],
     "blockchainProperties": [
       {
         "height": 0,

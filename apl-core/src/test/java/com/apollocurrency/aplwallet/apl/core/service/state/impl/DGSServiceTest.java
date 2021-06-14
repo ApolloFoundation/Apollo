@@ -1053,12 +1053,17 @@ public class DGSServiceTest extends DbContainerBaseTest {
 
     @Test
     void testDelistAlreadyDelistedGoods() {
-        assertThrows(IllegalStateException.class, () -> DbUtils.inTransaction(extension, (con) -> service.delistGoods(dtd.GOODS_8.getId())));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(extension, (con) -> service.delistGoods(dtd.GOODS_8.getId())));
+
+        assertTrue(ex.getCause() instanceof IllegalStateException);
     }
 
     @Test
     void testDelistForUnknownTag() {
-        assertThrows(IllegalStateException.class, () -> DbUtils.inTransaction(extension, (con) -> service.delistGoods(dtd.GOODS_11.getId())));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(extension, (con) -> service.delistGoods(dtd.GOODS_11.getId())));
+
+        assertTrue(ex.getCause() instanceof IllegalStateException);
+
     }
 
     @Test

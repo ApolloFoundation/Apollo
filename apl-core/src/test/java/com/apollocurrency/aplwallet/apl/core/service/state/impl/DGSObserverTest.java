@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTable;
@@ -109,7 +110,7 @@ public class DGSObserverTest extends DbContainerBaseTest {
         TimeServiceImpl.class, BlockDaoImpl.class,
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         TransactionDaoImpl.class,
-        BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class)
+        BlockChainInfoServiceImpl.class, AccountServiceImpl.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
         .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
@@ -128,6 +129,7 @@ public class DGSObserverTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
+        .addBeans(MockBean.of(new AccountTable(extension.getDatabaseManager(), mock(Event.class)), AccountTableInterface.class))
         .build();
     @Inject
     DGSService service;

@@ -108,9 +108,9 @@ public class GenesisImporter {
         this.accountPublicKeyService = Objects.requireNonNull(accountPublicKeyService, "accountPublicKeyService is NULL");
         Objects.requireNonNull(propertiesHolder, "propertiesHolder is NULL");
         this.publicKeyNumberTotal =
-            propertiesHolder.getIntProperty(PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME);
+            propertiesHolder.getIntProperty(PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME, 230730);
         this.balanceNumberTotal =
-            propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME);
+            propertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME, 84832);
         this.accountGuaranteedBalanceTable = Objects.requireNonNull(accountGuaranteedBalanceTable, "accountGuaranteedBalanceTable is NULL");
         this.accountTable = Objects.requireNonNull(accountTable, "accountTable is NULL");
         this.resourceLocator = Objects.requireNonNull(resourceLocator);
@@ -133,6 +133,14 @@ public class GenesisImporter {
         }
         //TODO Move it somewhere
         Convert2.init(blockchainConfig.getAccountPrefix(), EPOCH_BEGINNING);
+    }
+
+    public byte[] getCreatorPublicKey() {
+        return CREATOR_PUBLIC_KEY;
+    }
+
+    public byte[] getComputedDigest() {
+        return computedDigest;
     }
 
     public void loadGenesisDataFromIS(InputStream is) {
@@ -215,6 +223,11 @@ public class GenesisImporter {
         traceDumpData("balances = {}", balances);
         log.debug("publicKeys = [{}]", publicKeyCount);
         traceDumpData("publicKeys = {}", publicKeys);
+
+        if (log.isDebugEnabled() || log.isTraceEnabled()) {
+            validateBalanceNumber(balanceCount);
+            validatePublicKeyNumber(publicKeyCount);
+        }
 
         this.computedDigest = updateComputedDigest(digest);
 
@@ -333,6 +346,11 @@ public class GenesisImporter {
 
         log.debug("Saved public keys = [{}] in {} sec", count, (System.currentTimeMillis() - start) / 1000);
 
+        try {
+            validatePublicKeyNumber(count);
+        } catch (GenesisImportException e) {
+            throw new RuntimeException(e);
+        }
         return count;
     }
 
@@ -393,6 +411,11 @@ public class GenesisImporter {
             count,
             (System.currentTimeMillis() - start) / 1000, totalAmount
         );
+        try {
+            validateBalanceNumber(count);
+        } catch (GenesisImportException e) {
+            throw new RuntimeException(e);
+        }
 
         return Pair.of(totalAmount, count);
     }
@@ -405,6 +428,7 @@ public class GenesisImporter {
         final Queue<Map.Entry<String, Long>> sortedEntries = loadGenesisAccountsFromIS(is);
 
         final int balanceNumber = sortedEntries.size();
+        validateBalanceNumber(balanceNumber);
 
         return sortedEntries.stream()
             .skip(1) //skip first account to collect only genesis accounts
@@ -442,11 +466,35 @@ public class GenesisImporter {
         return sortedEntries;
     }
 
-    public byte[] getCreatorPublicKey() {
-        return CREATOR_PUBLIC_KEY;
+    /**
+     * Validates the publicKeyNumberTotal against a publicKeyCount.
+     *
+     * @param publicKeyCount
+     */
+    private void validatePublicKeyNumber(int publicKeyCount) throws GenesisImportException {
+        if (publicKeyNumberTotal != publicKeyCount) {
+            throw new GenesisImportException(
+                String.format(
+                    "A hardcoded public key total number: %d is different to a calculated value: %d",
+                    publicKeyNumberTotal, publicKeyCount
+                )
+            );
+        }
     }
 
-    public byte[] getComputedDigest() {
-        return computedDigest;
+    /**
+     * Validates the balanceNumberTotal against a balanceCount.
+     *
+     * @param balanceCount
+     */
+    private void validateBalanceNumber(int balanceCount) throws GenesisImportException {
+        if (balanceNumberTotal != balanceCount) {
+            throw new GenesisImportException(
+                String.format(
+                    "A hardcoded balance total number: %d is different to a calculated value: %d",
+                    balanceNumberTotal, balanceCount
+                )
+            );
+        }
     }
 }

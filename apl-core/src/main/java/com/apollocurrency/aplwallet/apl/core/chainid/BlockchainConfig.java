@@ -199,6 +199,10 @@ public class BlockchainConfig {
         return maxPrunableLifetime;
     }
 
+    public boolean isCurrencyIssuanceHeight(int height) {
+        return chain.getCurrencyIssuanceHeights() != null && chain.getCurrencyIssuanceHeights().contains(height);
+    }
+
     public Integer getDexPendingOrdersReopeningHeight() {
         if (chain.getFeaturesHeightRequirement() != null) {
             return chain.getFeaturesHeightRequirement().getDexReopenPendingOrdersHeight();
