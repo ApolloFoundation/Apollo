@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
+import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
@@ -24,8 +25,8 @@ import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT
 public class SandboxCallMethodValidationProcessorContract extends AbstractSmcContractTxProcessor {
     private final SmartMethod smartMethod;
 
-    public SandboxCallMethodValidationProcessorContract(SmartContract smartContract, SmartMethod smartMethod, BlockchainIntegrator processor) {
-        super(processor, smartContract);
+    public SandboxCallMethodValidationProcessorContract(SmartContract smartContract, SmartMethod smartMethod, BlockchainIntegrator processor, SmcConfig smcConfig) {
+        super(smcConfig, processor, smartContract);
         this.smartMethod = smartMethod;
     }
 

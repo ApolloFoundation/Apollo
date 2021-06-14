@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 
 import com.apollocurrency.aplwallet.apl.core.app.GenesisImporter;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
@@ -63,7 +64,7 @@ class SmcCallMethodTransactionTypeTest {
         GenesisImporter.CREATOR_ID = 1739068987193023818L;//TN1
         doReturn(UUID.fromString(CHAIN_ID_TN1)).when(chain).getChainId();
         doReturn(chain).when(blockchainConfig).getChain();
-        smcCallMethodTransactionType = new SmcCallMethodTransactionType(blockchainConfig, accountService, contractService, new SmcFuelValidator(blockchainConfig), integratorFactory);
+        smcCallMethodTransactionType = new SmcCallMethodTransactionType(blockchainConfig, accountService, contractService, new SmcFuelValidator(blockchainConfig), integratorFactory, new SmcConfig());
     }
 
     @SneakyThrows

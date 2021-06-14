@@ -6,12 +6,14 @@ package com.apollocurrency.aplwallet.apl.core.rest.v2.impl;
 
 import com.apollocurrency.aplwallet.api.v2.NotFoundException;
 import com.apollocurrency.aplwallet.api.v2.SmcApiService;
-import com.apollocurrency.aplwallet.api.v2.model.CallContractMethodReqTest;
+import com.apollocurrency.aplwallet.api.v2.model.CallContractMethodReq;
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.api.v2.model.ContractListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractStateResponse;
-import com.apollocurrency.aplwallet.api.v2.model.PublishContractReqTest;
+import com.apollocurrency.aplwallet.api.v2.model.PublishContractReq;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionArrayResp;
+import com.apollocurrency.aplwallet.api.v2.model.ValidateCallContractMethodReq;
+import com.apollocurrency.aplwallet.api.v2.model.ValidateContractReq;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -69,17 +71,35 @@ public class SmcApiServiceImpl implements SmcApiService {
     }
 
     @Override
-    public Response createPublishContractTxTest(PublishContractReqTest body, SecurityContext securityContext) throws NotFoundException {
+    public Response createPublishContractTx(PublishContractReq body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
 
-        //return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_PARAM_VALUE, "child_count").build();
         long senderAccountId = Convert.parseAccountId(body.getSender());
         Account account = accountService.getAccount(senderAccountId);
         if (account == null) {
-            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "parent_account", body.getSender()).build();
+            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "sender", body.getSender()).build();
         }
+
         TransactionArrayResp response = new TransactionArrayResp();
 
+        Transaction transaction = createPublishContractTransaction(body, securityContext, account);
+
+        Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
+        response.setTx(Convert.toHexString(signedTxBytes.array()));
+
+        log.debug("Transaction id={} sender={} fee={}", Convert.toHexString(transaction.getId()), Convert.toHexString(senderAccountId), transaction.getFeeATM());
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response validatePublishContractTx(ValidateContractReq body, SecurityContext securityContext) throws NotFoundException {
+
+        return null;
+    }
+
+    private Transaction createPublishContractTransaction(PublishContractReq body, SecurityContext securityContext, Account account) throws NotFoundException {
         BigInteger fuelLimit = new BigInteger(body.getFuelLimit());
         BigInteger fuelPrice = new BigInteger(body.getFuelPrice());
         String valueStr = body.getValue() != null ? body.getValue() : "0";
@@ -96,7 +116,6 @@ public class SmcApiServiceImpl implements SmcApiService {
         byte[] publicKey = AccountService.generatePublicKey(account, attachment.getContractSource());
         long recipientId = AccountService.getId(publicKey);
 
-
         CreateTransactionRequest txRequest = CreateTransactionRequest.builder()
             .version(2)
             .amountATM(Convert.parseLong(valueStr))
@@ -112,18 +131,11 @@ public class SmcApiServiceImpl implements SmcApiService {
             .build();
 
         Transaction transaction = transactionCreator.createTransactionThrowingException(txRequest);
-
-        Result signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
-        txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
-        response.setTx(Convert.toHexString(signedTxBytes.array()));
-
-        log.debug("Transaction id={} sender={} fee={}", Convert.toHexString(transaction.getId()), Convert.toHexString(senderAccountId), transaction.getFeeATM());
-
-        return builder.bind(response).build();
+        return transaction;
     }
 
     @Override
-    public Response createCallContractMethodTxTest(CallContractMethodReqTest body, SecurityContext securityContext) throws NotFoundException {
+    public Response createCallContractMethodTx(CallContractMethodReq body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
 
         long address = Convert.parseAccountId(body.getAddress());
@@ -181,13 +193,8 @@ public class SmcApiServiceImpl implements SmcApiService {
     }
 
     @Override
-    public Response createCallContractMethodTx(CallContractMethodReqTest body, SecurityContext securityContext) throws NotFoundException {
-        return ResponseBuilderV2.apiError(ApiErrors.CUSTOM_ERROR_MESSAGE, "Not implemented yet").build();
-    }
-
-    @Override
-    public Response createPublishContractTx(PublishContractReqTest body, SecurityContext securityContext) throws NotFoundException {
-        return ResponseBuilderV2.apiError(ApiErrors.CUSTOM_ERROR_MESSAGE, "Not implemented yet").build();
+    public Response validateCallContractMethodTx(ValidateCallContractMethodReq body, SecurityContext securityContext) throws NotFoundException {
+        return null;
     }
 
     @Override

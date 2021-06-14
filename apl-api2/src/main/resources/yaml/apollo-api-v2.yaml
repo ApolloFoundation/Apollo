@@ -531,16 +531,16 @@ paths:
     post:
       tags:
         - smc
-      summary: Publish the smart contract
+      summary: Returns signed PublishContract transaction
       description: |
-        Publish the smart contract.
+        Returns signed PublishContract transaction as a byte array.
       operationId: createPublishContractTx
       requestBody:
         description: the contract source and constructor paramters
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PublishContractReqTest'
+              $ref: '#/components/schemas/PublishContractReq'
         required: true
       responses:
         200:
@@ -558,22 +558,22 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
 
-  /@@smc/publish/test:
+  /@@smc/validate:
     post:
       tags:
         - smc
-      summary: Returns signed PublishContract transaction
+      summary: Validate the smart contract
       description: |
-        Returns signed PublishContract transaction as a byte array.
-      operationId: createPublishContractTxTest
+        Validate the smart contract.
+      operationId: validatePublishContractTx
       requestBody:
         description: the contract source and constructor paramters
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PublishContractReqTest'
+              $ref: '#/components/schemas/ValidateContractReq'
         required: true
       responses:
         200:
@@ -581,7 +581,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionArrayResp'
+                $ref: '#/components/schemas/BaseResponse'
         401:
           description: Unauthorized Error
         403:
@@ -593,53 +593,20 @@ paths:
       security:
         - bearerAuth: [ ]
 
-  /@@smc/call:
-    post:
-      tags:
-        - smc
-      summary: Call a method of the smart contract
-      description: |
-        Call a metod of the the smart contract.
-      operationId: createCallContractMethodTx
-      requestBody:
-        description: the contract method and method paramters
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CallContractMethodReqTest'
-        required: true
-      responses:
-        200:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionArrayResp'
-        401:
-          description: Unauthorized Error
-        403:
-          description: Access Forbidden
-        400:
-          $ref: '#/components/responses/BadRequest'
-        500:
-          $ref: '#/components/responses/ServerError'
-      security:
-        - bearerAuth: [ ]
-
-  /@@smc/call/test:
+  /@@smc/method/call:
     post:
       tags:
         - smc
       summary: Returns signed transaction to call the contract method.
       description: |
         Returns signed transaction to call the contract method.
-      operationId: createCallContractMethodTxTest
+      operationId: createCallContractMethodTx
       requestBody:
         description: the contract method and method paramters
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CallContractMethodReqTest'
+              $ref: '#/components/schemas/CallContractMethodReq'
         required: true
       responses:
         200:
@@ -648,6 +615,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionArrayResp'
+        401:
+          description: Unauthorized Error
+        403:
+          description: Access Forbidden
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - bearerAuth: [ ]
+
+  /@@smc/method/validate:
+    post:
+      tags:
+        - smc
+      summary: Validate the method calling
+      description: |
+        Validate the methdo calling.
+      operationId: validateCallContractMethodTx
+      requestBody:
+        description: the contract method and method paramters
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateCallContractMethodReq'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
         401:
           description: Unauthorized Error
         403:
@@ -1484,7 +1484,44 @@ components:
               type: boolean
               description: "Returns true if the trimming process is active"
 
-    PublishContractReqTest:
+    ValidateContractReq:
+      required:
+        - sender
+      type: object
+      properties:
+        sender:
+          type: string
+          description: sender account id
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        source:
+          type: string
+          description: the contract source code
+          example: 'class Deal {}'
+        name:
+          type: string
+          description: the contract name
+          example: 'Deal'
+        params:
+          type: array
+          description: list of constructor parameters
+          maxItems: 128
+          items:
+            type: string
+            example: '\"firstParam\"", "123", "\"0x98765\"'
+        value:
+          type: string
+          description: the scalar value of ATM
+          example: '20_00000000'
+        fuelLimit:
+          type: string
+          description: the fuel value
+          example: '5000'
+        fuelPrice:
+          type: string
+          description: the fuel price value
+          example: '100'
+
+    PublishContractReq:
       required:
         - sender
         - secret
@@ -1526,7 +1563,7 @@ components:
           description: the fuel price value
           example: '100'
 
-    CallContractMethodReqTest:
+    CallContractMethodReq:
       required:
         - address
         - sender
@@ -1545,6 +1582,44 @@ components:
           type: string
           description: sender secret phrase
           example: 'topSecretPhrase'
+        value:
+          type: string
+          description: the scalar value of ATM
+          example: '20_00000000'
+        name:
+          type: string
+          description: the contract method name
+          example: 'purchase'
+        params:
+          type: array
+          description: list of method parameters
+          maxItems: 128
+          items:
+            type: string
+            example: '\"firstParam\"", "123", "\"0x98765\"'
+        fuelLimit:
+          type: string
+          description: the scalar value equal to the maximum amount of fuel; fuel limit
+          example: '5000'
+        fuelPrice:
+          type: string
+          description: the scalar value equal to the number of ATM; fuel price
+          example: '100'
+
+    ValidateCallContractMethodReq:
+      required:
+        - address
+        - sender
+      type: object
+      properties:
+        address:
+          type: string
+          description: the contract address
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        sender:
+          type: string
+          description: sender account id
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
         value:
           type: string
           description: the scalar value of ATM

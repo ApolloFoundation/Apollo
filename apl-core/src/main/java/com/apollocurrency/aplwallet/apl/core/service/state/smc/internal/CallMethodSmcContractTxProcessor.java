@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
+import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
@@ -20,8 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 public class CallMethodSmcContractTxProcessor extends AbstractSmcContractTxProcessor {
     private final SmartMethod smartMethod;
 
-    public CallMethodSmcContractTxProcessor(SmartContract smartContract, SmartMethod smartMethod, BlockchainIntegrator processor) {
-        super(processor, smartContract);
+    public CallMethodSmcContractTxProcessor(SmartContract smartContract, SmartMethod smartMethod, BlockchainIntegrator processor, SmcConfig smcConfig) {
+        super(smcConfig, processor, smartContract);
         this.smartMethod = smartMethod;
     }
 
