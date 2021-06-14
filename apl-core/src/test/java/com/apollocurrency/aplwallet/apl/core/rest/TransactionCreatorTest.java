@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.rest;
 
+import com.apollocurrency.aplwallet.api.v2.model.TransactionCreationResponse;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.EcBlockData;
@@ -12,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionBuilder;
@@ -38,11 +40,15 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -102,12 +108,67 @@ class TransactionCreatorTest {
             .keySeed(Crypto.getKeySeed(secretPhrase))
             .broadcast(true)
             .build();
+        doAnswer(invocation-> {
+            ((Transaction) invocation.getArgument(0)).sign(mock(Signature.class));
+            return null;
+        }).when(transactionSigner).sign(any(Transaction.class), any(byte[].class));
+
+
         Transaction tx = txCreator.createTransactionThrowingException(request);
 
         assertSame(transactionType, tx.getType());
         assertTrue(tx.getAttachment() instanceof EmptyAttachment);
         assertEquals(300, tx.getTimestamp());
         verify(processor).broadcast(tx);
+    }
+
+    @Test
+    void testCreateTransaction_API_V2_signed() throws AplException.ValidationException {
+        EcBlockData ecBlockData = new EcBlockData(121, 100_000);
+        doReturn(ecBlockData).when(blockchain).getECBlock(300);
+        CreateTransactionRequest request = CreateTransactionRequest.builder()
+            .senderAccount(sender)
+            .deadlineValue("1440")
+            .feeATM(blockchainConfig.getOneAPL())
+            .attachment(new CustomAttachment())
+            .timestamp(300)
+            .keySeed(Crypto.getKeySeed(secretPhrase))
+            .broadcast(true)
+            .build();
+        mockSigning();
+
+        TransactionCreationResponse apiV2TransactionResponse = txCreator.createApiV2Transaction(request);
+
+        assertNotNull(apiV2TransactionResponse.getFullHash());
+        assertNotNull(apiV2TransactionResponse.getSignature());
+        assertTrue(apiV2TransactionResponse.isBroadcasted());
+        assertEquals("3277b6e90d0e4826", apiV2TransactionResponse.getId());
+        assertNotNull(apiV2TransactionResponse.getUnsignedTransactionBytes());
+        verify(processor).broadcast(any(Transaction.class));
+    }
+
+    @Test
+    void testCreateTransaction_API_V2_unsigned() throws AplException.ValidationException {
+        EcBlockData ecBlockData = new EcBlockData(121, 100_000);
+        doReturn(ecBlockData).when(blockchain).getECBlock(300);
+        CreateTransactionRequest request = CreateTransactionRequest.builder()
+            .senderAccount(sender)
+            .deadlineValue("1440")
+            .feeATM(blockchainConfig.getOneAPL())
+            .attachment(new CustomAttachment())
+            .timestamp(300)
+            .keySeed(Crypto.getKeySeed(secretPhrase))
+            .broadcast(true)
+            .build();
+
+        TransactionCreationResponse apiV2TransactionResponse = txCreator.createApiV2Transaction(request);
+
+        assertNull(apiV2TransactionResponse.getFullHash());
+        assertNull(apiV2TransactionResponse.getSignature());
+        assertFalse(apiV2TransactionResponse.isBroadcasted());
+        assertNull(apiV2TransactionResponse.getId());
+        assertNotNull(apiV2TransactionResponse.getUnsignedTransactionBytes());
+        verify(processor, never()).broadcast(any(Transaction.class));
     }
 
     @Test
@@ -123,6 +184,11 @@ class TransactionCreatorTest {
             .ecBlockHeight(100)
             .build();
         doReturn(1L).when(blockchain).getBlockIdAtHeight(100);
+        doAnswer(invocation-> {
+            ((Transaction) invocation.getArgument(0)).sign(mock(Signature.class));
+            return null;
+        }).when(transactionSigner).sign(any(Transaction.class), any(byte[].class));
+
         Transaction tx = txCreator.createTransactionThrowingException(request);
 
         assertSame(transactionType, tx.getType());
@@ -144,6 +210,11 @@ class TransactionCreatorTest {
             .ecBlockHeight(100)
             .build();
         doReturn(2L).when(blockchain).getBlockIdAtHeight(100);
+        doAnswer(invocation-> {
+            ((Transaction) invocation.getArgument(0)).sign(mock(Signature.class));
+            return null;
+        }).when(transactionSigner).sign(any(Transaction.class), any(byte[].class));
+
         Transaction tx = txCreator.createTransactionThrowingException(request);
 
         assertSame(transactionType, tx.getType());
@@ -234,6 +305,10 @@ class TransactionCreatorTest {
             .broadcast(true)
             .build();
         doReturn(200_000_000L).when(calculator).getMinimumFeeATM(any(Transaction.class), anyInt());
+        doAnswer(invocation-> {
+            ((Transaction) invocation.getArgument(0)).sign(mock(Signature.class));
+            return null;
+        }).when(transactionSigner).sign(any(Transaction.class), any(byte[].class));
 
         Transaction tx = txCreator.createTransactionThrowingException(request);
 
@@ -281,6 +356,11 @@ class TransactionCreatorTest {
             .broadcast(true)
             .build();
         doThrow(new AplException.InsufficientBalanceException("Test. Not enough funds")).when(processor).broadcast(any(Transaction.class));
+        doAnswer(invocation-> {
+            ((Transaction) invocation.getArgument(0)).sign(mock(Signature.class));
+            return null;
+        }).when(transactionSigner).sign(any(Transaction.class), any(byte[].class));
+
         assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
 
         TransactionCreator.TransactionCreationData data = txCreator.createTransaction(request);
@@ -300,6 +380,11 @@ class TransactionCreatorTest {
             .broadcast(true)
             .build();
         doThrow(new AplException.NotYetEnabledException("Test. Not enabled")).when(processor).broadcast(any(Transaction.class));
+        doAnswer(invocation-> {
+            ((Transaction) invocation.getArgument(0)).sign(mock(Signature.class));
+            return null;
+        }).when(transactionSigner).sign(any(Transaction.class), any(byte[].class));
+
         assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
 
         TransactionCreator.TransactionCreationData data = txCreator.createTransaction(request);
@@ -319,6 +404,11 @@ class TransactionCreatorTest {
             .broadcast(true)
             .build();
         doThrow(new AplException.NotValidException("Test. Not valid")).when(processor).broadcast(any(Transaction.class));
+        doAnswer(invocation-> {
+            ((Transaction) invocation.getArgument(0)).sign(mock(Signature.class));
+            return null;
+        }).when(transactionSigner).sign(any(Transaction.class), any(byte[].class));
+
         assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
 
         TransactionCreator.TransactionCreationData data = txCreator.createTransaction(request);
@@ -423,5 +513,15 @@ class TransactionCreatorTest {
         public String getName() {
             return "CustomTestType";
         }
+    }
+
+    private void mockSigning() throws AplException.NotValidException {
+        doAnswer(invocation-> {
+            Signature sig = mock(Signature.class);
+            doReturn(Convert.parseHexString("6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443")).when(sig).bytes();
+            doReturn("6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443").when(sig).getHexString();
+            ((Transaction) invocation.getArgument(0)).sign(sig);
+            return null;
+        }).when(transactionSigner).sign(any(Transaction.class), any(byte[].class));
     }
 }

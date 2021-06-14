@@ -6,10 +6,11 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
-
+@EqualsAndHashCode(callSuper = true)
 public class MonetarySystemCurrencyBurningAttachment extends AbstractAttachment implements MonetarySystemAttachment {
     final long currencyId;
     final long units;

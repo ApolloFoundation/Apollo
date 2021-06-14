@@ -4,8 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
@@ -14,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyBurningAttachment;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
@@ -70,7 +70,7 @@ public class MSCurrencyBurningTransactionType extends MonetarySystemTransactionT
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         MonetarySystemCurrencyBurningAttachment attachment = (MonetarySystemCurrencyBurningAttachment) transaction.getAttachment();
         if (attachment.getUnits() <= 0) {
-            throw new AplException.NotValidException("Invalid currency transfer: " + attachment.getJSONObject());
+            throw new AplException.NotValidException("Positive number of units should be specified for the currency burn, got: " + attachment.getJSONObject());
         }
     }
 
@@ -87,10 +87,7 @@ public class MSCurrencyBurningTransactionType extends MonetarySystemTransactionT
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemCurrencyBurningAttachment attachment = (MonetarySystemCurrencyBurningAttachment) transaction.getAttachment();
-        Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
-        if (currency != null) {
-            accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getUnits());
-        }
+        accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), attachment.getUnits());
     }
 
     @Override
