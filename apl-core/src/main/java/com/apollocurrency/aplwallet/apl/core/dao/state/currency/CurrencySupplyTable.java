@@ -49,6 +49,10 @@ public class CurrencySupplyTable extends VersionedDeletableEntityDbTable<Currenc
         return new CurrencySupply(rs, dbKey);
     }
 
+    public CurrencySupply get(long currencyId) {
+        return get(currencySupplyDbKeyFactory.newKey(currencyId));
+    }
+
     @Override
     public void save(Connection con, CurrencySupply currencySupply) throws SQLException {
         try (

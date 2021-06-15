@@ -57,6 +57,10 @@ public class CurrencyTable extends VersionedDeletableEntityDbTable<Currency> imp
         return new Currency(rs, dbKey);
     }
 
+    public Currency get(long id) {
+        return get(currencyDbKeyFactory.newKey(id));
+    }
+
     @Override
     public void save(Connection con, Currency currency) throws SQLException {
         try (
