@@ -174,7 +174,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
         String json = response.getContentAsString();
 //        System.out.println("json = \n" + json);
 
-        JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified.\"}", json, JSONCompareMode.LENIENT);
+        JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified\"}", json, JSONCompareMode.LENIENT);
         verify(processor, never()).broadcast(any(Transaction.class));
     }
 
@@ -193,7 +193,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
             "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
         String json = response.getContentAsString();
 
-        JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified.\"}", json, JSONCompareMode.LENIENT);
+        JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified\"}", json, JSONCompareMode.LENIENT);
         verify(processor, never()).broadcast(any(Transaction.class));
     }
 

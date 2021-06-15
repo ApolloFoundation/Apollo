@@ -1542,7 +1542,7 @@ components:
           properties:
             id:
               type: string
-              format: hex_bytearray
+              format: integer
               description: id of the created transaction (if signed)
               example: '1a0feb1306043151604016701'
             fullHash:

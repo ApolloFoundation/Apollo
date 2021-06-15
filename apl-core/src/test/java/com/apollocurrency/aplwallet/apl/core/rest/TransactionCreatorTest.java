@@ -142,7 +142,7 @@ class TransactionCreatorTest {
         assertNotNull(apiV2TransactionResponse.getFullHash());
         assertNotNull(apiV2TransactionResponse.getSignature());
         assertTrue(apiV2TransactionResponse.isBroadcasted());
-        assertEquals("3277b6e90d0e4826", apiV2TransactionResponse.getId());
+        assertEquals("3636576336187639846", apiV2TransactionResponse.getId());
         assertNotNull(apiV2TransactionResponse.getUnsignedTransactionBytes());
         verify(processor).broadcast(any(Transaction.class));
     }
@@ -169,6 +169,12 @@ class TransactionCreatorTest {
         assertNull(apiV2TransactionResponse.getId());
         assertNotNull(apiV2TransactionResponse.getUnsignedTransactionBytes());
         verify(processor, never()).broadcast(any(Transaction.class));
+    }
+
+    @Test
+    void tt() {
+        long id = Convert.bytesToLong(Convert.parseHexString("3277b6e90d0e4826"));
+        System.out.println(Long.toUnsignedString(id));
     }
 
     @Test

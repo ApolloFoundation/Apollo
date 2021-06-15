@@ -12,11 +12,13 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyBurningAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,10 +26,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 import javax.ws.rs.core.Response;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -51,67 +55,126 @@ class CurrenciesApiServiceImplTest {
     long senderId         ;
     String rsAccount      ;
     Account senderAccount ;
+    byte[] publicKey;
+    private String secretPhrase;
+    private String passphrase;
 
     @BeforeEach
     void setUp() {
         doReturn("APL").when(blockchainConfig).getAccountPrefix();
         Convert2.init(blockchainConfig);
-        senderId = AccountService.getId(Crypto.getPublicKey("123"));
+        secretPhrase = "123";
+        passphrase = "12345";
+        publicKey = Crypto.getPublicKey(secretPhrase);
+        senderId = AccountService.getId(publicKey);
         rsAccount = Convert2.rsAccount(senderId);
         senderAccount = new Account(senderId, 0);
     }
 
     @Test
-    void currencyBurningTx_OK() {
+    void currencyBurningTx_StandardOK() {
 
-        CurrencyBurningTxCreationRequest request = getCurrencyBurningTxCreationRequest(rsAccount, 1L, 20_000L);
-        doReturn(senderAccount).when(accountService).getAccount(senderId);
+        CurrencyBurningTxCreationRequest request = secretPhraseRequest(rsAccount, 1L, 20_000L);
+        doReturn(senderAccount).when(accountService).getAccount(publicKey);
         doReturn(new AccountCurrency(senderId, 1L, 20_100, 20_000, 10)).when(accountCurrencyService).getAccountCurrency(senderId, 1L);
         TransactionCreationResponse response = getTransactionCreationResponse();
-        doReturn(response).when(creator).createApiV2Transaction(newTxCreatorRequest(senderAccount));
+        doReturn(response).when(creator).createApiV2Transaction(newStandardTxCreatorRequest(senderAccount));
 
         Response result = apiService.currencyBurningTx(request, null);
 
         assertEquals(200, result.getStatus());
         assertEquals(response, result.getEntity());
-        verify(helper2FA).verify2FA(rsAccount, null, "123", null, 239_123);
+        verify(helper2FA).verify2FA(rsAccount, null, secretPhrase, null, 239_123);
+    }
+
+    @Test
+    void currencyBurningTx_VaultOK() {
+
+        CurrencyBurningTxCreationRequest request = passphraseRequest(rsAccount, 1L, 20_000L);
+        doReturn(secretPhrase.getBytes()).when(helper2FA).findAplSecretBytes(senderId, passphrase);
+        doReturn(senderAccount).when(accountService).getAccount(publicKey);
+        doReturn(new AccountCurrency(senderId, 1L, 20_100, 20_000, 10)).when(accountCurrencyService).getAccountCurrency(senderId, 1L);
+        TransactionCreationResponse response = getTransactionCreationResponse();
+        CreateTransactionRequest creationRequest = newVaultTxCreatorRequest();
+        doReturn(response).when(creator).createApiV2Transaction(creationRequest);
+
+        Response result = apiService.currencyBurningTx(request, null);
+
+        assertEquals(200, result.getStatus());
+        assertEquals(response, result.getEntity());
+        verify(helper2FA).verify2FA(rsAccount, passphrase, null, null, 239_123);
+    }
+
+    @Test
+    void currencyBurningTx_VaultNoSender() {
+
+        CurrencyBurningTxCreationRequest request = passphraseRequest(rsAccount, 1L, 20_000L);
+        request.setSender(null);
+
+        doFailingExCurrencyBurning("At least one of [secretPhrase,publicKey,passphrase] must be specified", request);
+    }
+
+    @Test
+    void currencyBurningTx_PublicKeyOK() {
+
+        CurrencyBurningTxCreationRequest request = publicKeyRequest(rsAccount, 1L, 20_000L);
+        doReturn(senderAccount).when(accountService).getAccount(publicKey);
+        doReturn(new AccountCurrency(senderId, 1L, 20_100, 20_000, 10)).when(accountCurrencyService).getAccountCurrency(senderId, 1L);
+        TransactionCreationResponse response = getTransactionCreationResponse();
+        CreateTransactionRequest creationRequest = newPublicKeyTxCreatorRequest();
+        doReturn(response).when(creator).createApiV2Transaction(creationRequest);
+
+        Response result = apiService.currencyBurningTx(request, null);
+
+        assertEquals(200, result.getStatus());
+        assertEquals(response, result.getEntity());
+        verify(helper2FA).verify2FA(rsAccount, null, null, Convert.toHexString(publicKey), 239_123);
+    }
+
+    @Test
+    void currencyBurningTx_PublicKeyIsNotCanonical() {
+
+        CurrencyBurningTxCreationRequest request = publicKeyRequest(rsAccount, 1L, 20_000L);
+        request.setPublicKey(Convert.toHexString(new byte[3]));
+
+        doFailingExCurrencyBurning("Incorrect 'publicKey'", request);
     }
 
     @Test
     void currencyBurningTx_noSendersAccount() {
-        CurrencyBurningTxCreationRequest request = getCurrencyBurningTxCreationRequest(rsAccount, 1L, 20_000L);
+        CurrencyBurningTxCreationRequest request = secretPhraseRequest(rsAccount, 1L, 20_000L);
 
-        doFailingCurrencyBurning("Incorrect senderAccount, APL-AWXM-L3EK-DTT7-6HM7U is not exist", request);
+        doFailingCurrencyBurning("Unknown 'sender' : Sender specified by the public key: f8bed2de2b8b2799902e864761c3987557a82280c31e276bce084d58968f5624 is not found", request);
     }
 
     @Test
     void currencyBurningTx_missingCurrencyIdParameter() {
-        CurrencyBurningTxCreationRequest request = getCurrencyBurningTxCreationRequest(rsAccount, null, 20_000L);
-        doReturn(senderAccount).when(accountService).getAccount(senderId);
+        CurrencyBurningTxCreationRequest request = secretPhraseRequest(rsAccount, null, 20_000L);
+        doReturn(senderAccount).when(accountService).getAccount(publicKey);
 
-        doFailingCurrencyBurning("The mandatory parameter 'currencyId' is not specified.", request);
+        doFailingCurrencyBurning("The mandatory parameter 'currencyId' is not specified", request);
     }
 
     @Test
     void currencyBurningTx_missingBurningAmountParameter() {
-        CurrencyBurningTxCreationRequest request = getCurrencyBurningTxCreationRequest(rsAccount, 1L, null);
-        doReturn(senderAccount).when(accountService).getAccount(senderId);
+        CurrencyBurningTxCreationRequest request = secretPhraseRequest(rsAccount, 1L, null);
+        doReturn(senderAccount).when(accountService).getAccount(publicKey);
 
-        doFailingCurrencyBurning("The mandatory parameter 'burningAmount' is not specified.", request);
+        doFailingCurrencyBurning("The mandatory parameter 'burningAmount' is not specified", request);
     }
 
     @Test
     void currencyBurningTx_absentCurrencyBalance() {
-        CurrencyBurningTxCreationRequest request = getCurrencyBurningTxCreationRequest(rsAccount, 1L, 20_000L);
-        doReturn(senderAccount).when(accountService).getAccount(senderId);
+        CurrencyBurningTxCreationRequest request = secretPhraseRequest(rsAccount, 1L, 20_000L);
+        doReturn(senderAccount).when(accountService).getAccount(publicKey);
 
         doFailingCurrencyBurning("Not enough currency funds", request);
     }
 
     @Test
     void currencyBurningTx_notEnoughCurrencyBalance() {
-        CurrencyBurningTxCreationRequest request = getCurrencyBurningTxCreationRequest(rsAccount, 1L, 20_000L);
-        doReturn(senderAccount).when(accountService).getAccount(senderId);
+        CurrencyBurningTxCreationRequest request = secretPhraseRequest(rsAccount, 1L, 20_000L);
+        doReturn(senderAccount).when(accountService).getAccount(publicKey);
         doReturn(new AccountCurrency(senderId, 1L, 20_100, 19999, 10)).when(accountCurrencyService).getAccountCurrency(senderId, 1L);
 
         doFailingCurrencyBurning("Not enough currency funds", request);
@@ -126,10 +189,17 @@ class CurrenciesApiServiceImplTest {
         verifyNoInteractions(creator);
     }
 
+    private void doFailingExCurrencyBurning(String errorMessage, CurrencyBurningTxCreationRequest request) {
+        RestParameterException ex = assertThrows(RestParameterException.class, () -> apiService.currencyBurningTx(request, null));
 
-    private CurrencyBurningTxCreationRequest getCurrencyBurningTxCreationRequest(String rsAccount, Long currencyId, Long burningAmount) {
+        JSONAssert.assertEquals("{\"errorDescription\":\"" + errorMessage + "\"}", ex.getMessage(), false);
+        verifyNoInteractions(creator);
+    }
+
+
+    private CurrencyBurningTxCreationRequest secretPhraseRequest(String rsAccount, Long currencyId, Long burningAmount) {
         CurrencyBurningTxCreationRequest request = new CurrencyBurningTxCreationRequest();
-        request.setSecretPhrase("123");
+        request.setSecretPhrase(secretPhrase);
         request.setSender(rsAccount);
         request.setBroadcast(true);
         request.setCode2FA(239_123);
@@ -137,6 +207,19 @@ class CurrenciesApiServiceImplTest {
         request.setBurningAmount(burningAmount);
         request.setFee(1_000_000L);
         request.setCurrencyId(currencyId == null ? null : currencyId.toString());
+        return request;
+    }
+
+    private CurrencyBurningTxCreationRequest passphraseRequest(String rsAccount, Long currencyId, Long burningAmount) {
+        CurrencyBurningTxCreationRequest request = secretPhraseRequest(rsAccount, currencyId, burningAmount);
+        request.setSecretPhrase(null);
+        request.setPassphrase("12345");
+        return request;
+    }
+    private CurrencyBurningTxCreationRequest publicKeyRequest(String rsAccount, Long currencyId, Long burningAmount) {
+        CurrencyBurningTxCreationRequest request = secretPhraseRequest(rsAccount, currencyId, burningAmount);
+        request.setSecretPhrase(null);
+        request.setPublicKey(Convert.toHexString(publicKey));
         return request;
     }
 
@@ -151,7 +234,7 @@ class CurrenciesApiServiceImplTest {
         return response;
     }
 
-    private CreateTransactionRequest newTxCreatorRequest(Account senderAccount) {
+    private CreateTransactionRequest newStandardTxCreatorRequest(Account senderAccount) {
         return CreateTransactionRequest.builder()
             .senderAccount(senderAccount)
             .recipientId(0)
@@ -160,9 +243,23 @@ class CurrenciesApiServiceImplTest {
             .attachment(new MonetarySystemCurrencyBurningAttachment(1, 20_000))
             .deadlineValue("2223")
             .broadcast(true)
-            .secretPhrase("123")
+            .secretPhrase(secretPhrase)
             .validate(true)
             .version(1)
             .build();
+    }
+
+    private CreateTransactionRequest newVaultTxCreatorRequest() {
+        CreateTransactionRequest request = newStandardTxCreatorRequest(senderAccount);
+        request.setSecretPhrase(null);
+        request.setPassphrase(passphrase);
+        return request;
+    }
+
+    private CreateTransactionRequest newPublicKeyTxCreatorRequest() {
+        CreateTransactionRequest request = newStandardTxCreatorRequest(senderAccount);
+        request.setSecretPhrase(null);
+        request.setPublicKey(publicKey);
+        return request;
     }
 }

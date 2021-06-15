@@ -359,6 +359,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         Currency currency = getCurrency(currencyId);
         increaseSupply(currency, -units);
         accountCurrencyService.addToCurrencyUnits(senderAccount, LedgerEvent.CURRENCY_BURNING, eventId, currencyId, -units);
+        log.info("Currency burning of {} units was performed for {} by event {}", units, currency, eventId);
     }
 
     @Override

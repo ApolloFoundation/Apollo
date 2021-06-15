@@ -223,7 +223,7 @@ public class TransactionCreator {
         boolean signed = tx.getSignature() != null;
         response.setBroadcasted(request.isBroadcast() && signed);
         if (signed) {
-            response.setId(Convert.toHexString(Convert.longToBytes(tx.getId())));
+            response.setId(tx.getStringId());
             response.setSignature(tx.getSignature().getHexString());
             response.setFullHash(tx.getFullHashString());
             response.setTransactionBytes(Convert.toHexString(tx.getCopyTxBytes()));
