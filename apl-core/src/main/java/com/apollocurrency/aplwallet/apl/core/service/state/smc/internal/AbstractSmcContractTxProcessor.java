@@ -11,6 +11,7 @@ import com.apollocurrency.smc.contract.ContractException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.ContractVirtualMachine;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
+import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT_PROCESSING_ERROR;
@@ -25,6 +26,7 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
     protected final SmcConfig smcConfig;
     protected final ContractVirtualMachine smcMachine;
     private final SmartContract smartContract;
+    private final ExecutionEnv executionEnv;
 
     protected AbstractSmcContractTxProcessor(SmcConfig smcConfig, BlockchainIntegrator integrator) {
         this(smcConfig, integrator, null);
@@ -33,7 +35,8 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
     protected AbstractSmcContractTxProcessor(SmcConfig smcConfig, BlockchainIntegrator integrator, SmartContract smartContract) {
         this.smartContract = smartContract;
         this.smcConfig = smcConfig;
-        this.smcMachine = new AplMachine(smcConfig.createLanguageContext(), smcConfig.createExecutionEnv(), integrator);
+        this.executionEnv = smcConfig.createExecutionEnv();
+        this.smcMachine = new AplMachine(smcConfig.createLanguageContext(), executionEnv, integrator);
     }
 
     @Override
@@ -42,6 +45,11 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
             throw new IllegalStateException("SmartContract is null");
         }
         return smartContract;
+    }
+
+    @Override
+    public ExecutionEnv getExecutionEnv() {
+        return executionEnv;
     }
 
     @Override

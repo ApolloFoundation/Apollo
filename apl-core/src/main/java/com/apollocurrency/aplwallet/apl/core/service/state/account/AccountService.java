@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.exception.DoubleSpendingException;
 import com.apollocurrency.aplwallet.apl.core.model.Balances;
 import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
@@ -133,6 +134,8 @@ public interface AccountService {
     Balances getAccountBalances(Account account, boolean includeEffectiveBalance, int height);
 
     //Delegated from  AccountPublicKeyService
+    PublicKey getPublicKey(long id);
+
     byte[] getPublicKeyByteArray(long id);
 
     /**

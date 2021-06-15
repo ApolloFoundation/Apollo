@@ -502,6 +502,10 @@ public class AccountServiceImpl implements AccountService {
     }
 
     //Delegated from AccountPublicKeyService
+    @Override
+    public PublicKey getPublicKey(long id) {
+        return accountPublicKeyService.getPublicKey(id);
+    }
 
     @Override
     public byte[] getPublicKeyByteArray(long id) {

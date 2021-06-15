@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.48.6</version>
+    <version>1.48.7</version>
   </parent>
 
   <artifactId>apl-api2</artifactId>
@@ -134,7 +134,7 @@
               <generateSupportingFiles>false</generateSupportingFiles>
               <supportingFilesToGenerate>ApiException.java,NotFoundException.java</supportingFilesToGenerate>
               <modelsToGenerate>
-                AccountInfo,AccountInfoResp,AccountReq,AccountReqTest,AccountReqSendMoney,BlockchainInfo,BlockInfo,BlockchainState,CountResponse,CreateChildAccountResp,EmptyResponse,HealthResponse,ListResponse,QueryCountResult,QueryObject,QueryResult,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,TxReceipt,TxRequest,ValidateContractReq,PublishContractReq,ValidateCallContractMethodReq,CallContractMethodReq,ContractListResponse,ContractDetails,ContractDetailsResponse,ContractStateResponse,TransactionArrayResp
+                AccountInfo,AccountInfoResp,AccountReq,AccountReqTest,AccountReqSendMoney,BlockchainInfo,BlockInfo,BlockchainState,CountResponse,CreateChildAccountResp,EmptyResponse,HealthResponse,ListResponse,QueryCountResult,QueryObject,QueryResult,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,TxReceipt,TxRequest,PublishContractReq,CallContractMethodReq,ContractListResponse,ContractDetails,ContractDetailsResponse,ContractStateResponse,TransactionArrayResp
               </modelsToGenerate>
               <configHelp>false</configHelp>
               <configOptions>

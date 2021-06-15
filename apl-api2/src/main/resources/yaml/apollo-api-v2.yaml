@@ -573,7 +573,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ValidateContractReq'
+              $ref: '#/components/schemas/PublishContractReq'
         required: true
       responses:
         200:
@@ -639,7 +639,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ValidateCallContractMethodReq'
+              $ref: '#/components/schemas/CallContractMethodReq'
         required: true
       responses:
         200:
@@ -1484,43 +1484,6 @@ components:
               type: boolean
               description: "Returns true if the trimming process is active"
 
-    ValidateContractReq:
-      required:
-        - sender
-      type: object
-      properties:
-        sender:
-          type: string
-          description: sender account id
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        source:
-          type: string
-          description: the contract source code
-          example: 'class Deal {}'
-        name:
-          type: string
-          description: the contract name
-          example: 'Deal'
-        params:
-          type: array
-          description: list of constructor parameters
-          maxItems: 128
-          items:
-            type: string
-            example: '\"firstParam\"", "123", "\"0x98765\"'
-        value:
-          type: string
-          description: the scalar value of ATM
-          example: '20_00000000'
-        fuelLimit:
-          type: string
-          description: the fuel value
-          example: '5000'
-        fuelPrice:
-          type: string
-          description: the fuel price value
-          example: '100'
-
     PublishContractReq:
       required:
         - sender
@@ -1582,44 +1545,6 @@ components:
           type: string
           description: sender secret phrase
           example: 'topSecretPhrase'
-        value:
-          type: string
-          description: the scalar value of ATM
-          example: '20_00000000'
-        name:
-          type: string
-          description: the contract method name
-          example: 'purchase'
-        params:
-          type: array
-          description: list of method parameters
-          maxItems: 128
-          items:
-            type: string
-            example: '\"firstParam\"", "123", "\"0x98765\"'
-        fuelLimit:
-          type: string
-          description: the scalar value equal to the maximum amount of fuel; fuel limit
-          example: '5000'
-        fuelPrice:
-          type: string
-          description: the scalar value equal to the number of ATM; fuel price
-          example: '100'
-
-    ValidateCallContractMethodReq:
-      required:
-        - address
-        - sender
-      type: object
-      properties:
-        address:
-          type: string
-          description: the contract address
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
-        sender:
-          type: string
-          description: sender account id
-          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
         value:
           type: string
           description: the scalar value of ATM
