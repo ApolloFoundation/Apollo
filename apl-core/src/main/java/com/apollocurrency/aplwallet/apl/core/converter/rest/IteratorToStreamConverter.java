@@ -26,9 +26,10 @@ import java.util.stream.StreamSupport;
 public class IteratorToStreamConverter<T> implements Converter<DbIterator<T>, Stream<T>> {
     @Override
     public Stream<T> apply(DbIterator<T> dbIterator) {
+        Spliterator<T> spliterator = Spliterators.spliteratorUnknownSize(dbIterator, Spliterator.ORDERED);
         return StreamSupport.stream(
-            Spliterators.spliteratorUnknownSize(dbIterator, Spliterator.ORDERED),
+            spliterator,
             false
-        );
+        ).onClose(dbIterator::close);
     }
 }

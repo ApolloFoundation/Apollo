@@ -39,6 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.JSON;
@@ -50,7 +51,6 @@ import org.slf4j.Logger;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
-import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -125,7 +125,7 @@ public final class ScheduleCurrencyBuy extends CreateTransaction {
                     response.put("broadcasted", true);
                     return response;
                 }
-                for (UnconfirmedTransaction unconfirmedTransaction : lookupMemPool().getAllProcessedStream().collect(Collectors.toList())) {
+                for (UnconfirmedTransaction unconfirmedTransaction : CollectionUtil.toList(lookupMemPool().getAllProcessedStream())) {
                     if (filter.test(unconfirmedTransaction)) {
                         LOG.debug("Exchange offer found in unconfirmed pool, broadcasting transaction " + transaction.getStringId());
                         try {

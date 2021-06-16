@@ -33,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingAttac
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingCancellationAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingRegistration;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ShufflingVerificationAttachment;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -49,7 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * The Shuffler service
@@ -524,7 +524,7 @@ public class ShufflerServiceImpl implements ShufflerService {
     }
 
     private boolean hasUnconfirmedTransaction(Shuffler shuffler, ShufflingAttachment shufflingAttachment) {
-        List<UnconfirmedTransaction> list = memPool.getAllProcessedStream().collect(Collectors.toList());
+        List<UnconfirmedTransaction> list = CollectionUtil.toList(memPool.getAllProcessedStream());
         for (UnconfirmedTransaction unconfirmedTransaction : list) {
             if (unconfirmedTransaction.getSenderId() != shuffler.getAccountId()) {
                 continue;
