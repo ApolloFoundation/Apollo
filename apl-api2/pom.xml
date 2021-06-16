@@ -16,7 +16,7 @@
   <properties>
     <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
     <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
-    <swagger-core-version>2.0.0</swagger-core-version>
+    <swagger-core-version>2.1.6</swagger-core-version>
     <jetty-version>9.2.9.v20150224</jetty-version>
     <resteasy-version>4.5.9.Final</resteasy-version>
     <slf4j-version>1.6.3</slf4j-version>
