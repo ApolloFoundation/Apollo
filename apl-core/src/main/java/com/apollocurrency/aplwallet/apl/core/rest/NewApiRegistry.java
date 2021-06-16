@@ -9,7 +9,9 @@ import java.util.Map;
 /**
  * Registry for implemented endpoints of new API.
  * Should be removed along with ApiSplitFilter after
- *
+ * IMPORTANT NOTE! All the OLD API ENDPOINTS with a GET HTTP method supports both GET & POST calls,
+ * so that refactored endpoints should also comply with this behavior to provide full backward compatibility
+ * TODO Review all the refactored GET endpoints to find missing POST implementation
  * @author alukin@gmail.com
  */
 public class NewApiRegistry {
@@ -38,7 +40,7 @@ public class NewApiRegistry {
         apis.put("blacklistAPIProxyPeer", "/rest/networking/peer/proxyblacklist"); //POST
         apis.put("setAPIProxyPeer", "/rest/networking/peer/setproxy"); //POST
 
-        apis.put("getAccount", "/rest/accounts/account"); //GET
+        apis.put("getAccount", "/rest/accounts/account"); //GET + POST
         apis.put("generateAccount", "/rest/accounts"); //POST
         apis.put("enable2FA", "/rest/accounts/enable2fa"); //POST
         apis.put("disable2FA", "/rest/accounts/disable2fa"); //POST
