@@ -9,6 +9,7 @@ import io.firstbridge.cryptolib.CryptoParams;
 import io.firstbridge.cryptolib.ElGamalCrypto;
 import io.firstbridge.cryptolib.ElGamalKeyPair;
 import io.firstbridge.cryptolib.impl.ecc.ElGamalCryptoImpl;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -262,6 +263,16 @@ public class CryptoTest extends TestsCommons {
     @Test
     public void testIsCanonicalPublicKey() {
         byte[] publicKey = Crypto.getPublicKey(secretPhraseA);
+        boolean expResult = true;
+        boolean result = Crypto.isCanonicalPublicKey(publicKey);
+        assertEquals(expResult, result);
+    }
+
+    @Test
+    @Disabled
+    void testIsCanonicalPublicKey_from_peer() {
+
+        byte[] publicKey = Convert.parseHexString("2b6b769ac39c788e846599323d6bfcd50eaa9024233355b3552bb007eed40299");
         boolean expResult = true;
         boolean result = Crypto.isCanonicalPublicKey(publicKey);
         assertEquals(expResult, result);

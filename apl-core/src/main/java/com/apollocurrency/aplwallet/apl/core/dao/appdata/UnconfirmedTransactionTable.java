@@ -112,7 +112,11 @@ public class UnconfirmedTransactionTable extends EntityDbTable<UnconfirmedTransa
         }
     }
 
-        @Override
+    public UnconfirmedTransaction getById(long id) {
+        return get(getTransactionKeyFactory().newKey(id));
+    }
+
+    @Override
     public String defaultSort() {
         return " ORDER BY transaction_height ASC, fee_per_byte DESC, arrival_timestamp ASC, id ASC ";
     }
