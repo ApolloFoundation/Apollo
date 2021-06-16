@@ -31,6 +31,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UserErrorMessageContr
 import com.apollocurrency.aplwallet.apl.core.rest.endpoint.UtilsController;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexMatcherServiceImpl;
 import io.firstbridge.kms.infrastructure.web.resource.AuthorizationController;
+import io.firstbridge.kms.infrastructure.web.resource.KmsRegistrationController;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 
 import javax.ws.rs.ApplicationPath;
@@ -75,6 +76,7 @@ public class RestEasyApplication extends Application {
         set.add(UnconfirmedTransactionController.class);
         // KMS part
         set.add(AuthorizationController.class);
+        set.add(KmsRegistrationController.class);
 
         //API V2
         set.add(AccountApi.class);
