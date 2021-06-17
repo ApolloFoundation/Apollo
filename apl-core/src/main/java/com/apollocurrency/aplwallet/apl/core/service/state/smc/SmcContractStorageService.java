@@ -21,7 +21,7 @@ public interface SmcContractStorageService {
      * @param name       the mapping name
      * @param jsonObject the serialized object
      */
-    void saveEntry(Address address, Key key, String name, String jsonObject);
+    void saveOrUpdateEntry(Address address, Key key, String name, String jsonObject);
 
     /**
      * Load the serialized object by the given address or null if the given key doesn't match the value

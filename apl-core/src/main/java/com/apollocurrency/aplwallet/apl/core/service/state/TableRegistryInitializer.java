@@ -27,7 +27,7 @@ public class TableRegistryInitializer {
     @Inject
     FullTextConfig fullTextConfig;
     @Inject
-    @Property(value = "apl.derivedTablesCount", defaultValue = "55")
+    @Property(value = "apl.derivedTablesCount", defaultValue = "58")
     int requiredTablesCount;
 
     @PostConstruct

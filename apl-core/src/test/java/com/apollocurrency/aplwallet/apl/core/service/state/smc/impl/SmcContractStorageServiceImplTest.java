@@ -66,7 +66,7 @@ class SmcContractStorageServiceImplTest {
             .height(blockchain.getHeight()) // new height value
             .build();
         //WHEN
-        smcContractStorageService.saveEntry(contractAddress, key, name, json);
+        smcContractStorageService.saveOrUpdateEntry(contractAddress, key, name, json);
         //THEN
         verify(smcContractMappingTable, times(1)).insert(smcContractMappingEntity);
     }

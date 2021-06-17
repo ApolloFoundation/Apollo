@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
@@ -15,7 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodSmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxCallMethodValidationProcessorContract;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SyntaxParseProcessorContract;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SyntaxParseProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -32,7 +33,6 @@ import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
-import com.apollocurrency.smc.contract.fuel.FuelCost;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
@@ -57,8 +57,9 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     public SmcCallMethodTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
                                         SmcContractService contractService,
                                         FuelValidator fuelValidator,
-                                        SmcBlockchainIntegratorFactory integratorFactory) {
-        super(blockchainConfig, accountService, contractService, fuelValidator, integratorFactory);
+                                        SmcBlockchainIntegratorFactory integratorFactory,
+                                        SmcConfig smcConfig) {
+        super(blockchainConfig, accountService, contractService, fuelValidator, integratorFactory, smcConfig);
     }
 
     @Override
@@ -69,10 +70,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     @Override
     public Fee getBaselineFee(Transaction transaction) {
         //TODO calculate the required fuel value by executing the contract
-        FuelCalculator fuelCalculator = FuelCost.F_CALL;
-        if (transaction.getAmountATM() > 0) {
-            fuelCalculator.add(FuelCost.F_SEND_MONEY);
-        }
+        FuelCalculator fuelCalculator = getExecutionEnv().getPrice().forMethodCalling(BigInteger.valueOf(transaction.getAmountATM()));
         return new SmcFuelBasedFee(fuelCalculator);
     }
 
@@ -114,6 +112,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
                 new AplAddress(transaction.getRecipientId()),
                 new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
             );
+            smartContract.setSender(new AplAddress(transaction.getSenderId()));
         } catch (ContractNotFoundException e) {
             throw new AplException.NotCurrentlyValidException("Contract doesn't exist at address " + address);
         }
@@ -123,8 +122,12 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
         //syntactical and semantic validation
-        BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
-        SmcContractTxProcessor processor = new SandboxCallMethodValidationProcessorContract(smartContract, smartMethod, integrator);
+        SmcContractTxProcessor processor = new SandboxCallMethodValidationProcessorContract(
+            smartContract,
+            smartMethod,
+            integratorFactory.createMockProcessor(transaction.getId()),
+            smcConfig
+        );
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             log.debug("SMC: doStateDependentValidation = INVALID");
@@ -153,8 +156,11 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
                 + calculatedFuel + " but actual=" + actualFuel);
         }
         //syntactical validation
-        BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
-        SmcContractTxProcessor processor = new SyntaxParseProcessorContract(smartMethod.getMethodWithParams(), integrator);
+        SmcContractTxProcessor processor = new SyntaxParseProcessor(
+            smartMethod.getMethodWithParams(),
+            integratorFactory.createMockProcessor(transaction.getId()),
+            smcConfig
+        );
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             log.debug("SMC: doStateIndependentValidation = INVALID");
@@ -169,18 +175,21 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         checkPrecondition(transaction);
         SmcCallMethodAttachment attachment = (SmcCallMethodAttachment) transaction.getAttachment();
         Address address = new AplAddress(transaction.getRecipientId());
+
         SmartContract smartContract = contractService.loadContract(
             address,
             new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
         );
+        smartContract.setSender(new AplAddress(transaction.getSenderId()));
         SmartMethod smartMethod = SmartMethod.builder()
             .name(attachment.getMethodName())
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
+
         BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
-        SmcContractTxProcessor processor = new CallMethodSmcContractTxProcessor(smartContract, smartMethod, integrator);
+        SmcContractTxProcessor processor = new CallMethodSmcContractTxProcessor(smartContract, smartMethod, integrator, smcConfig);
         ExecutionLog executionLog = processor.process();
         if (executionLog.isError()) {
             log.error(executionLog.toJsonString());

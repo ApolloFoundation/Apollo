@@ -205,6 +205,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
     Block lastBlock = btd.BLOCK_12;
 
     FuelValidator fuelValidator = new SmcFuelValidator(blockchainConfig);
+    SmcConfig smcConfig = new SmcConfig();
 
     @BeforeAll
     static void beforeAll() {
@@ -225,8 +226,8 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
         spyAccountService = spy(accountService);
         context = TxBContext.newInstance(chain);
         transactionTypeFactory = new CachedTransactionTypeFactory(List.of(
-            new SmcPublishContractTransactionType(blockchainConfig, spyAccountService, contractService, fuelValidator, integratorFactory),
-            new SmcCallMethodTransactionType(blockchainConfig, spyAccountService, contractService, fuelValidator, integratorFactory)
+            new SmcPublishContractTransactionType(blockchainConfig, spyAccountService, contractService, fuelValidator, integratorFactory, smcConfig),
+            new SmcCallMethodTransactionType(blockchainConfig, spyAccountService, contractService, fuelValidator, integratorFactory, smcConfig)
         ));
         transactionBuilderFactory = new TransactionBuilderFactory(transactionTypeFactory, blockchainConfig);
         transactionCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor, transactionTypeFactory, transactionBuilderFactory, signerService);

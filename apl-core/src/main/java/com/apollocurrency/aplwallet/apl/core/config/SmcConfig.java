@@ -10,6 +10,9 @@ import com.apollocurrency.smc.blockchain.crypt.CryptoLibProvider;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.polyglot.LanguageContext;
 import com.apollocurrency.smc.polyglot.LanguageContextFactory;
+import com.apollocurrency.smc.polyglot.config.JsLimitsConfig;
+import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
+import com.apollocurrency.smc.polyglot.engine.ExecutionModeHelper;
 import com.apollocurrency.smc.polyglot.security.AllowFullHostAccessPolicy;
 import com.apollocurrency.smc.polyglot.security.AllowHostClassLoadingPolicy;
 import com.apollocurrency.smc.polyglot.security.DenyGlobalObjectsPolicy;
@@ -25,11 +28,21 @@ import javax.inject.Singleton;
 public class SmcConfig {
 
     @Produces
-    public static LanguageContext createLanguageContext() {
+    public LanguageContext createLanguageContext() {
         return LanguageContextFactory.createJSContext(
             new DenyGlobalObjectsPolicy(),
             new AllowFullHostAccessPolicy(),
             new AllowHostClassLoadingPolicy());
+    }
+
+    @Produces
+    public ExecutionEnv createExecutionEnv() {
+        return ExecutionEnv.builder()
+            .mode(ExecutionModeHelper.createProdExecutionMode())
+            //TODO: set price
+            //.price( ... )
+            .config(new JsLimitsConfig())
+            .build();
     }
 
     @Produces

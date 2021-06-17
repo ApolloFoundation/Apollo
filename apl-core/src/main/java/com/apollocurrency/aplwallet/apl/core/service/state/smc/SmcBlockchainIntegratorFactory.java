@@ -71,7 +71,7 @@ public class SmcBlockchainIntegratorFactory {
         return SMCOperationProcessor.createProcessor(integrator, new ExecutionLog());
     }
 
-    BlockchainIntegrator createIntegrator(final Transaction transaction, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
+    private BlockchainIntegrator createIntegrator(final Transaction transaction, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
         final long originatorTransactionId = transaction.getId();
         final ContractBlock currentBlock = blockConverter.apply(transaction.getBlock());
         Address trAddr = new AplAddress(transaction.getId());
@@ -147,8 +147,7 @@ public class SmcBlockchainIntegratorFactory {
 
             @Override
             public BigInteger getBalance(Address address) {
-                AplAddress aplAddress = new AplAddress(address);
-                Account account = accountService.getAccount(aplAddress.getLongId());
+                Account account = accountService.getAccount(new AplAddress(address).getLongId());
                 if (account == null) {
                     throw new ContractNotFoundException("Address not found, address=" + address.getHex());
                 }
@@ -157,14 +156,12 @@ public class SmcBlockchainIntegratorFactory {
 
             @Override
             public ContractBlock getBlock(int height) {
-                Block block = blockchain.getBlockAtHeight(height);
-                return blockConverter.apply(block);
+                return blockConverter.apply(blockchain.getBlockAtHeight(height));
             }
 
             @Override
             public ContractBlock getBlock(Address address) {
-                AplAddress adr = new AplAddress(address);
-                return blockConverter.apply(blockchain.getBlock(adr.getLongId()));
+                return blockConverter.apply(blockchain.getBlock(new AplAddress(address).getLongId()));
             }
 
             @Override
@@ -224,12 +221,10 @@ public class SmcBlockchainIntegratorFactory {
     }
 
     public BlockchainIntegrator createMockProcessor(final long originatorTransactionId) {
-        return SMCOperationProcessor.createProcessor(createMockIntegrator(originatorTransactionId), ExecutionLog.EMPTY_LOG);
-    }
-
-    BlockchainIntegrator createMockIntegrator(final long originatorTransactionId) {
-        AplAddress address = new AplAddress(originatorTransactionId);
-        return new MockIntegrator(address);
+        var transaction = new AplAddress(originatorTransactionId);
+        return SMCOperationProcessor.createProcessor(
+            new MockIntegrator(transaction)
+            , ExecutionLog.EMPTY_LOG);
     }
 
     private static class BlockConverter implements Converter<Block, ContractBlock> {

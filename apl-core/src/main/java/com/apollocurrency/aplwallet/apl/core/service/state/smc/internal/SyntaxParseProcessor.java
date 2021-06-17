@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
+import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import lombok.extern.slf4j.Slf4j;
@@ -20,11 +21,11 @@ import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class SyntaxParseProcessorContract extends AbstractSmcContractTxProcessor {
+public class SyntaxParseProcessor extends AbstractSmcContractTxProcessor {
     private final String script;
 
-    public SyntaxParseProcessorContract(String script, BlockchainIntegrator processor) {
-        super(processor);
+    public SyntaxParseProcessor(String script, BlockchainIntegrator processor, SmcConfig smcConfig) {
+        super(smcConfig, processor);
         this.script = Objects.requireNonNull(script);
     }
 

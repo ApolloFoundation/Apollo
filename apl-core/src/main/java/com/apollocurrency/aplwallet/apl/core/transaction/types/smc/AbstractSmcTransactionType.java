@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -19,6 +20,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
+import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
@@ -31,15 +33,22 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     protected SmcContractService contractService;
     protected final FuelValidator fuelValidator;
     protected final SmcBlockchainIntegratorFactory integratorFactory;
+    protected final SmcConfig smcConfig;
 
     AbstractSmcTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
                                SmcContractService contractService,
                                FuelValidator fuelValidator,
-                               SmcBlockchainIntegratorFactory integratorFactory) {
+                               SmcBlockchainIntegratorFactory integratorFactory,
+                               SmcConfig smcConfig) {
         super(blockchainConfig, accountService);
         this.contractService = contractService;
         this.fuelValidator = fuelValidator;
         this.integratorFactory = integratorFactory;
+        this.smcConfig = smcConfig;
+    }
+
+    protected ExecutionEnv getExecutionEnv() {
+        return smcConfig.createExecutionEnv();
     }
 
     @Override
