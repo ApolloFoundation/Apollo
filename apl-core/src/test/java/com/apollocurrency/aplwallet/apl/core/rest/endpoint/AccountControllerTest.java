@@ -49,6 +49,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.jboss.resteasy.mock.MockHttpRequest;
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -234,6 +235,7 @@ class AccountControllerTest extends AbstractEndpointTest {
     }
 
     @Test
+    @Disabled // waiting for impl decision
     void getAccountPOST_byAccountID_withoutIncludingAdditionalInformation() throws URISyntaxException, IOException {
         prepareGetAccountCall();
 
@@ -249,7 +251,7 @@ class AccountControllerTest extends AbstractEndpointTest {
         WalletKeysInfo info = createWalletKeysInfo(pass);
         doReturn(info).when(account2FAHelper).generateUserWallet(pass);
 
-        MockHttpResponse response = sendPostRequest("/accounts", pass == null ? "wrong=value" : "passphrase=" + pass);
+        MockHttpResponse response = sendPostRequest("/accounts/account", pass == null ? "wrong=value" : "passphrase=" + pass);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         String content = response.getContentAsString();

@@ -196,36 +196,39 @@ public class AccountController {
         return getAccountResponse(accountIdParameter, includeLessors, includeAssets, includeCurrencies, includeEffectiveBalance);
     }
 
-    @Path("/account")
-    @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Operation(
-        summary = "Returns account information",
-        description = "Returns account information by account id, same as GET /account",
-        tags = {"accounts"},
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Successful execution",
-                content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = AccountDTO.class)))
-        })
-    @PermitAll
-    public Response getAccountPost(
-        @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
-        @FormParam("account") @NotNull AccountIdParameter accountIdParameter,
-        @Parameter(description = "include additional lessors, lessorsRS and lessorsInfo (optional)")
-        @FormParam("includeLessors") @DefaultValue("false") boolean includeLessors,
-        @Parameter(description = "include additional assetBalances and unconfirmedAssetBalances (optional)")
-        @FormParam("includeAssets") @DefaultValue("false") boolean includeAssets,
-        @Parameter(description = "include accountCurrencies (optional)")
-        @FormParam("includeCurrencies") @DefaultValue("false") boolean includeCurrencies,
-        @Parameter(description = "include effectiveBalanceAPL and guaranteedBalanceATM (optional)")
-        @FormParam("includeEffectiveBalance") @DefaultValue("false") boolean includeEffectiveBalance
-    ) {
-        return getAccountResponse(accountIdParameter, includeLessors, includeAssets, includeCurrencies, includeEffectiveBalance);
-    }
+//    TODO Waiting for getAccount POST integrators usage response
+//    @Path("/account")
+//    @POST
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+//    @Operation(
+//        summary = "Returns account information",
+//        description = "Returns account information by account id, same as GET /account",
+//        tags = {"accounts"},
+//        responses = {
+//            @ApiResponse(responseCode = "200", description = "Successful execution",
+//                content = @Content(mediaType = "application/json",
+//                    schema = @Schema(implementation = AccountDTO.class)))
+//        })
+//    @PermitAll
+//    public Response getAccountPost(
+//        @Parameter(description = "The account ID.", required = true, schema = @Schema(implementation = String.class))
+//        @FormParam("account") @NotNull AccountIdParameter accountIdParameter,
+//        @Parameter(description = "include additional lessors, lessorsRS and lessorsInfo (optional)")
+//        @FormParam("includeLessors") @DefaultValue("false") boolean includeLessors,
+//        @Parameter(description = "include additional assetBalances and unconfirmedAssetBalances (optional)")
+//        @FormParam("includeAssets") @DefaultValue("false") boolean includeAssets,
+//        @Parameter(description = "include accountCurrencies (optional)")
+//        @FormParam("includeCurrencies") @DefaultValue("false") boolean includeCurrencies,
+//        @Parameter(description = "include effectiveBalanceAPL and guaranteedBalanceATM (optional)")
+//        @FormParam("includeEffectiveBalance") @DefaultValue("false") boolean includeEffectiveBalance
+//    ) {
+//        return getAccountResponse(accountIdParameter, includeLessors, includeAssets, includeCurrencies, includeEffectiveBalance);
+//    }
 
+    //TODO Should without @Path("/account") after getAccount POST integrators usage response
     @POST
+    @Path("/account")
     @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Operation(

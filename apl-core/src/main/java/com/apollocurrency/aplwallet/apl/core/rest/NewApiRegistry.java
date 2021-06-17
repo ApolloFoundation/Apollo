@@ -40,8 +40,8 @@ public class NewApiRegistry {
         apis.put("blacklistAPIProxyPeer", "/rest/networking/peer/proxyblacklist"); //POST
         apis.put("setAPIProxyPeer", "/rest/networking/peer/setproxy"); //POST
 
-        apis.put("getAccount", "/rest/accounts/account"); //GET + POST
-        apis.put("generateAccount", "/rest/accounts"); //POST
+        apis.put("getAccount", "/rest/accounts/account"); //GET
+        apis.put("generateAccount", "/rest/accounts/account"); //POST TODO getAccount POST will generate account from the API console '/test'
         apis.put("enable2FA", "/rest/accounts/enable2fa"); //POST
         apis.put("disable2FA", "/rest/accounts/disable2fa"); //POST
         apis.put("confirm2FA", "/rest/accounts/confirm2fa"); //POST
