@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.filters;
 import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
 import org.jboss.resteasy.core.Headers;
 import org.jboss.resteasy.core.ServerResponse;
+import org.jboss.resteasy.core.interception.jaxrs.PostMatchContainerRequestContext;
 
 import javax.annotation.Priority;
 import javax.annotation.security.DenyAll;
@@ -20,6 +21,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
@@ -82,6 +84,13 @@ public class SecurityInterceptor implements ContainerRequestFilter {
 
         if (apw.isDisabledAdminPassword()) {
             //Access allowed for all
+            return;
+        }
+
+        boolean isKmsController = ((PostMatchContainerRequestContext) requestContext).getResourceMethod().getResourceClass().getCanonicalName().contains(".kms.");
+        String authorizationHeader = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
+        if (isKmsController && authorizationHeader != null && !authorizationHeader.isEmpty()) {
+            // skip that security check for KMS Controller call here. JWT will be checked by controller itself
             return;
         }
 
