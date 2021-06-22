@@ -5,15 +5,13 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.core.dao.DBContainerRootTest;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
-import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +56,7 @@ class DatabaseManagerTest extends DBContainerRootTest {
     public void setUp() throws IOException {
         baseDbProperties = DbTestData.getDbFileProperties(mariaDBContainer);
         baseDbProperties.setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
-        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder, new JdbiHandleFactory());
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder, dbAdminFactory);
         DbPopulator dbPopulator = new DbPopulator(null, "db/db-manager-data.sql");
         dbPopulator.initDb(databaseManager.getDataSource());
         dbPopulator.populateDb(databaseManager.getDataSource());
@@ -74,7 +72,6 @@ class DatabaseManagerTest extends DBContainerRootTest {
 
     @Test
     void init() {
-        assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
     }
@@ -82,7 +79,6 @@ class DatabaseManagerTest extends DBContainerRootTest {
 
     @Test
     void createShardInitTableSchemaVersion() throws Exception {
-        assertNotNull(databaseManager.getJdbi());
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         assertNotNull(dataSource);
         TransactionalDataSource newShardDb = ((ShardManagement) databaseManager).createOrUpdateShard(1L, new ShardInitDBUpdater());

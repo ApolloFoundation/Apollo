@@ -18,6 +18,7 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -44,7 +45,7 @@ public class JdbiInterceptorTest extends DbContainerBaseTest {
     @RegisterExtension
     static DbExtension extension = new DbExtension(mariaDBContainer);
 
-    JdbiHandleFactory factory = spy(new JdbiHandleFactory());
+    JdbiHandleFactory factory = spy(new JdbiHandleFactory(Jdbi.create(extension.getDatabaseManager().getDataSource().original())));
     private Weld weld = AbstractWeldInitiator.createWeld();
     @WeldSetup
     public WeldInitiator weldInitiator = WeldInitiator.from(weld)
@@ -53,7 +54,6 @@ public class JdbiInterceptorTest extends DbContainerBaseTest {
     private TransactionTestClass testClass;
 
     {
-        factory.setJdbi(extension.getDatabaseManager().getJdbi());
         weld.addInterceptor(JdbiTransactionalInterceptor.class);
 
         weld.addBeanClasses(JdbiTransactionalInterceptor.class, TransactionTestClass.class, AnotherTransactionTestClass.class);

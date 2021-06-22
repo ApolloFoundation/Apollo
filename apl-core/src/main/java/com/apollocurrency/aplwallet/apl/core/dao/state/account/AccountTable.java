@@ -3,17 +3,16 @@
  */
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
-import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
@@ -113,7 +112,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> imple
         try (Connection con = getDatabaseManager().getDataSource().getConnection();
              PreparedStatement pstmt = con.prepareStatement("SELECT * from account where id = ? order by db_id DESC")) {
             pstmt.setLong(1, id);
-            return CollectionUtil.toList(getManyBy(con, pstmt, false));
+            return toList(getManyBy(con, pstmt, false));
         }
     }
 
@@ -199,7 +198,7 @@ public class AccountTable extends VersionedDeletableEntityDbTable<Account> imple
                  "(SELECT id, max(db_id) as max_db_id FROM account WHERE latest=true GROUP BY id ORDER BY height DESC LIMIT " + limit + ") as recent_ids " +
                  "ON account.db_id = recent_ids.max_db_id")
         ) {
-            return CollectionUtil.toList(getManyBy(con, recentPstm, false));
+            return toList(getManyBy(con, recentPstm, false));
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage() + ", limit " + limit, e);
         }

@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
+import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
@@ -17,6 +18,8 @@ import java.util.UUID;
 @Builder
 @Data
 public class DbProperties implements Cloneable {
+    private static final String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s%s";
+    private static final String passwordlessUrlString = "jdbc:%s://%s:%d/%s?user=%s%s"; // skip password for 'password less mode' (in docker container)
     //TODO APL-1714
     @Deprecated
     public static final String DB_EXTENSION = "mv.db";
@@ -55,6 +58,10 @@ public class DbProperties implements Cloneable {
         return this;
     }
 
+    public boolean isH2() {
+        return StringUtils.isNotBlank(dbUrl) && dbUrl.startsWith("jdbc:h2:");
+    }
+
     public DbProperties deepCopy() {
         try {
             return (DbProperties) super.clone();
@@ -62,7 +69,7 @@ public class DbProperties implements Cloneable {
             throw new RuntimeException(e);
         }
     }
-    
+
     public String formatJdbcUrlString(boolean isSystemDb) {
         String finalDbUrl;
         String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s%s";
@@ -95,5 +102,19 @@ public class DbProperties implements Cloneable {
             );
         }
         return finalDbUrl;
-    }    
+    }
+
+
+    public String formatEmbeddedJdbcUrlString() {
+        String finalDbUrl;
+        String fullUrlString = "jdbc:%s:%s/%s;%s";
+        finalDbUrl = String.format(
+            fullUrlString,
+            getDbType(),
+            getDbDir(),
+            getDbName(),
+            getDbParams() != null ? getDbParams() : ""
+        );
+        return finalDbUrl;
+    }
 }

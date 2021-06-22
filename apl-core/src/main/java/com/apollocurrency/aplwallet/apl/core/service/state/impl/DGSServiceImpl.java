@@ -4,7 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTable;
@@ -14,11 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.dbclause.LongDGSPurch
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.dbclause.SellerBuyerDGSPurchasesClause;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.dbclause.SellerDbClause;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSFeedback;
@@ -37,12 +33,17 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsLi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.core.utils.DGSPurchasesClause;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -415,16 +416,19 @@ public class DGSServiceImpl implements DGSService {
         return goodsTable.get(goodsId);
     }
 
-    public DbIterator<DGSGoods> getAllGoods(int from, int to) {
-        return goodsTable.getAll(from, to);
+    @Override
+    public List<DGSGoods> getAllGoods(int from, int to) {
+        return CollectionUtil.toList(goodsTable.getAll(from, to));
     }
 
-    public DbIterator<DGSGoods> getGoodsInStock(int from, int to) {
-        return goodsTable.getManyBy(inStockClause, from, to);
+    @Override
+    public List<DGSGoods> getGoodsInStock(int from, int to) {
+        return CollectionUtil.toList(goodsTable.getManyBy(inStockClause, from, to));
     }
 
-    public DbIterator<DGSGoods> getSellerGoods(final long sellerId, final boolean inStockOnly, int from, int to) {
-        return goodsTable.getManyBy(new SellerDbClause(sellerId, inStockOnly), from, to, " ORDER BY name ASC, timestamp DESC, id ASC ");
+    @Override
+    public List<DGSGoods> getSellerGoods(final long sellerId, final boolean inStockOnly, int from, int to) {
+        return CollectionUtil.toList(goodsTable.getManyBy(new SellerDbClause(sellerId, inStockOnly), from, to, " ORDER BY name ASC, timestamp DESC, id ASC "));
     }
 
     public int getSellerGoodsCount(long sellerId, boolean inStockOnly) {

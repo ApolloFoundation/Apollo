@@ -4,7 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.dgs.dbclause;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
+
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;

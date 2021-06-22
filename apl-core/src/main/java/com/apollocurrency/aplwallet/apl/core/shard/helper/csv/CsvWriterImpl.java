@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.shard.helper.csv;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.CsvExportData;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.jdbc.ColumnMetaData;
 import com.apollocurrency.aplwallet.apl.core.shard.model.ArrayColumn;
