@@ -5,6 +5,13 @@
 package com.apollocurrency.aplwallet.apl.core.rest.filters;
 
 import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import io.firstbridge.kms.security.KmsMainConfig;
+import io.firstbridge.kms.security.TokenProvider;
+import io.firstbridge.kms.security.context.JWTSecurityContext;
+import io.firstbridge.kms.security.provider.JwtTokenProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.resteasy.core.Headers;
 import org.jboss.resteasy.core.ServerResponse;
 import org.jboss.resteasy.core.interception.jaxrs.PostMatchContainerRequestContext;
@@ -13,6 +20,7 @@ import javax.annotation.Priority;
 import javax.annotation.security.DenyAll;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
@@ -33,6 +41,7 @@ import java.util.Set;
 
 import static com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier.ADMIN_ROLE;
 
+@Slf4j
 @Provider
 @Priority(Priorities.AUTHORIZATION)
 public class SecurityInterceptor implements ContainerRequestFilter {
@@ -51,6 +60,26 @@ public class SecurityInterceptor implements ContainerRequestFilter {
     @Inject
     @Named("excludeProtection")
     private RequestUriMatcher excludeProtectionUriMatcher;
+
+    private TokenProvider tokenProvider;
+    private KmsMainConfig kmsMainConfig;
+
+/*    @Inject
+    public SecurityInterceptor(@Context ResourceInfo info,
+                               @Context UriInfo uriInfo,
+                               @Context HttpServletRequest request,
+                               AdminPasswordVerifier apw,
+                               @Named("excludeProtection") RequestUriMatcher excludeProtectionUriMatcher,
+                               TokenProvider tokenProvider,
+                               KmsMainConfig kmsMainConfig) {
+//        this.info = info;
+//        this.uriInfo = uriInfo;
+//        this.request = request;
+        this.apw = apw;
+        this.excludeProtectionUriMatcher = excludeProtectionUriMatcher;
+        this.tokenProvider = tokenProvider;
+        this.kmsMainConfig = kmsMainConfig;
+    }*/
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
@@ -90,7 +119,19 @@ public class SecurityInterceptor implements ContainerRequestFilter {
         boolean isKmsController = ((PostMatchContainerRequestContext) requestContext).getResourceMethod().getResourceClass().getCanonicalName().contains(".kms.");
         String authorizationHeader = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
         if (isKmsController && authorizationHeader != null && !authorizationHeader.isEmpty()) {
+            if (tokenProvider == null) {
+                this.kmsMainConfig = CDI.current().select(KmsMainConfig.class).get(); // KMS
+                this.tokenProvider = new JwtTokenProvider(this.kmsMainConfig);
+            }
             // skip that security check for KMS Controller call here. JWT will be checked by controller itself
+            String token = authorizationHeader.substring(tokenProvider.authSchema().length() + 1);//including one extra space symbol
+            try {
+                DecodedJWT decodedJWT = tokenProvider.verify(token);
+                requestContext.setSecurityContext(new JWTSecurityContext(decodedJWT, tokenProvider, request.isSecure()));
+            } catch (JWTVerificationException ex) {
+                log.warn("{}, wrong/unverified token. Exception: {}", ACCESS_DENIED.getEntity().toString(), ex.getMessage());
+                requestContext.abortWith(ACCESS_DENIED);
+            }
             return;
         }
 
