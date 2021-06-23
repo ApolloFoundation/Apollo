@@ -48,7 +48,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -559,7 +558,7 @@ public class DGSServiceImpl implements DGSService {
         FullTextOperationData operationData = new FullTextOperationData(
             DEFAULT_SCHEMA, goodsTable.getTableName(), Thread.currentThread().getName());
         operationData.setOperationType(operationType);
-        operationData.setDbIdValue(BigInteger.valueOf(goods.getDbId()));
+        operationData.setDbIdValue(goods.getDbId());
         operationData.addColumnData(goods.getName()).addColumnData(goods.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);

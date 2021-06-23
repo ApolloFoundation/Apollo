@@ -13,7 +13,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -255,8 +254,8 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                     DEFAULT_SCHEMA, tableName, Thread.currentThread().getName());
                 operationData.setOperationType(FullTextOperationData.OperationType.INSERT_UPDATE);
                 int i = 0;
-                Object dbId = rs.getObject(i + 1); // put DB_ID value
-                operationData.setDbIdValue((BigInteger) dbId);
+                Long dbId = rs.getLong(i + 1); // put DB_ID value, LONG VALUE FOR H2/MARIA compatibility
+                operationData.setDbIdValue(dbId);
                 i++;
                 Iterator it = tableData.getIndexColumns().iterator();
                 while (it.hasNext()) {

@@ -1,4 +1,4 @@
-id(-5|20|0),balance(-5|20|0),unconfirmed_balance(-5|20|0),has_control_phasing(-7|1|0),forged_balance(-5|20|0),active_lessee_id(-5|20|0),parent(-5|20|0),is_multi_sig(-7|1|0),addr_scope(-6|4|0)
+id,balance,unconfirmed_balance,has_control_phasing,forged_balance,active_lessee_id,parent,is_multi_sig,addr_scope
 -9223274947204531845,1108608366,1108608366,0,0,null,null,0,0
 -9222872263969854231,2036242359,2036242359,0,0,null,null,0,0
 -9222706367223107447,600661462,600661462,0,0,null,null,0,0

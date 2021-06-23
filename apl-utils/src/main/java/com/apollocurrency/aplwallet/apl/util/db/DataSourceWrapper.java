@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.util.db;
 
 import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.MigrationParams;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.DbException;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -32,16 +33,14 @@ public class DataSourceWrapper implements DataSource {
 
     private HikariDataSource dataSource;
     private HikariPoolMXBean jmxBean;
-    private final DbProperties dbProperties;
-    private final DatabaseAdministrator databaseAdministrator;
+    protected final DbProperties dbProperties;
 
     private volatile boolean initialized = false;
     private volatile boolean shutdown = false;
 
 
-    public DataSourceWrapper(@NonNull DbProperties dbProperties, @NonNull DatabaseAdministrator databaseAdministrator) {
+    public DataSourceWrapper(@NonNull DbProperties dbProperties) {
         this.dbProperties = dbProperties;
-        this.databaseAdministrator = databaseAdministrator;
     }
 
     @Override
@@ -107,13 +106,11 @@ public class DataSourceWrapper implements DataSource {
         shutdown = false;
     }
 
-    private void initDatasource(DBUpdater dbUpdater) {
-        databaseAdministrator.startDatabase();
-        databaseAdministrator.createDatabase();
+    private void initDatasource() {
         HikariConfig config = new HikariConfig();
         String dbUrl = dbProperties.getDbUrl();
         if (StringUtils.isBlank(dbUrl)) {
-            throw new IllegalStateException("Db url was not assigned in db properties, possibly databaseAdministrator error: " + dbProperties);
+            throw new IllegalStateException("Db url was not assigned in db properties, possibly datasource creation flow is violated : " + dbProperties);
         }
         log.debug("Database jdbc url set to {} username {}", dbUrl, dbProperties.getDbUsername());
         config.setJdbcUrl(dbUrl);
@@ -130,16 +127,15 @@ public class DataSourceWrapper implements DataSource {
         log.debug("Creating DataSource pool '{}', path = {}", dbProperties.getDbName(), dbProperties.getDbUrl());
         dataSource = new HikariDataSource(config);
         jmxBean = dataSource.getHikariPoolMXBean();
-        databaseAdministrator.migrateDatabase(dbUpdater);
     }
 
-    public void init(DBUpdater updater) {
-        initDatasource(updater);
+    public void init() {
+        initDatasource();
         setInitialzed();
     }
 
     public void update(DBUpdater dbUpdater) {
-        dbUpdater.update(dbProperties.getDbUrl(), dbProperties.getDbUsername(), dbProperties.getDbPassword());
+        dbUpdater.update(new MigrationParams(dbProperties.getDbUrl(), dbProperties.getDbType(), dbProperties.getDbUsername(), dbProperties.getDbPassword()));
     }
 
     public void shutdown() {

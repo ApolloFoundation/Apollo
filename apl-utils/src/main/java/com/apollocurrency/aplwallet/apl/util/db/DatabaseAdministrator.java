@@ -12,7 +12,7 @@ public interface DatabaseAdministrator {
 
     void deleteDatabase();
 
-    void createDatabase();
+    String createDatabase();
 
     void migrateDatabase(DBUpdater dbUpdater);
 

@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
+import com.apollocurrency.aplwallet.apl.util.db.SimpleDataSourceCreator;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -119,7 +120,7 @@ public class ShardServiceIntegrationTest extends DbContainerBaseTest {
         dbProperties.setDatabaseHost(mariaDBContainer.getHost());
         dbProperties.setDbName(((MariaDBContainer<?>) mariaDBContainer).getDatabaseName());
         dbProperties.setSystemDbUrl(dbProperties.formatJdbcUrlString(true));
-        DatabaseManagerImpl databaseManager = new DatabaseManagerImpl(dbProperties, new PropertiesHolder(), dbAdminFactory);
+        DatabaseManagerImpl databaseManager = new DatabaseManagerImpl(dbProperties, new SimpleDataSourceCreator(propertiesHolder));
 //        Chain mockChain = mock(Chain.class);
 //        doReturn(mockChain).when(blockchainConfig).getChain();
 //        doReturn(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5")).when(mockChain).getChainId();

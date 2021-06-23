@@ -4,6 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.util.db;
 
-public class DataSourceCreator {
+import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 
+public interface DataSourceCreator {
+    TransactionalDataSource createDataSource(DbProperties dbProperties, DBUpdater dbUpdater);
 }

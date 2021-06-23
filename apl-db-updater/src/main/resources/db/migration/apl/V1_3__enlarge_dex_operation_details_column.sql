@@ -1,1 +1,0 @@
-ALTER TABLE `dex_operation` MODIFY COLUMN `details` VARCHAR(5000) DEFAULT NULL;

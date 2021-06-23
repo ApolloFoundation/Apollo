@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
@@ -35,7 +34,7 @@ public class DbConfig {
         DirProvider dp = RuntimeEnvironment.getInstance().getDirProvider();
         UUID chainId = chainsConfigHolder.getActiveChain().getChainId();
 
-        DbProperties dbProperties =  DbProperties.builder()
+        return DbProperties.builder()
             .dbType(propertiesHolder.getStringProperty("apl.dbType"))
             .dbUrl(propertiesHolder.getStringProperty("apl.dbUrl"))
             .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "./unit-test-db") // for unit tests
@@ -51,11 +50,5 @@ public class DbConfig {
             .databaseHost(propertiesHolder.getStringProperty("apl.databaseHost"))
             .databasePort(propertiesHolder.getIntProperty("apl.databasePort"))
             .build();
-        if (StringUtils.isBlank(dbProperties.getSystemDbUrl())) {
-            String systemDbUrl = dbProperties.formatJdbcUrlString( true);
-            dbProperties.setSystemDbUrl(systemDbUrl);
-        }
-
-        return dbProperties;
     }
 }

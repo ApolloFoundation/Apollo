@@ -71,12 +71,12 @@ public class AccountInfoServiceImpl implements AccountInfoService {
             accountInfoTable.insert(accountInfo);
             // put relevant data into Event instance
             operationData.setOperationType(FullTextOperationData.OperationType.INSERT_UPDATE);
-            operationData.setDbIdValue(BigInteger.valueOf(accountInfo.getDbId()));
+            operationData.setDbIdValue(accountInfo.getDbId());
             operationData.addColumnData(accountInfo.getName()).addColumnData(accountInfo.getDescription());
             log.debug("2. {}", accountInfo);
         } else {
             accountInfoTable.deleteAtHeight(accountInfo, blockchain.getHeight());
-            operationData.setDbIdValue(BigInteger.valueOf(accountInfo.getDbId()));
+            operationData.setDbIdValue(accountInfo.getDbId());
             operationData.setOperationType(FullTextOperationData.OperationType.DELETE);
         }
         // send data into Lucene index component

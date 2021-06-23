@@ -232,8 +232,8 @@ public final class AplCore {
 
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 52.5, "Exchange matcher initialization");
 
-            GenesisAccounts.init();
-
+            GenesisAccounts genesisAccounts = CDI.current().select(GenesisAccounts.class).get();
+            genesisAccounts.init();
             tcs = CDI.current().select(IDexMatcherInterface.class).get();
             tcs.initialize();
 

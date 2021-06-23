@@ -172,8 +172,8 @@ CREATE TABLE IF NOT EXISTS `alias`
     `db_id`            bigint(20) unsigned NOT NULL AUTO_INCREMENT primary key,
     `id`               bigint(20) NOT NULL,
     `account_id`       bigint(20) NOT NULL,
-    `alias_name`       varchar(255) NOT NULL,
-    `alias_name_lower` varchar(255) NOT NULL,
+    `alias_name`       varchar(191) NOT NULL,
+    `alias_name_lower` varchar(191) NOT NULL,
     `alias_uri`        varchar(255) NOT NULL,
     `TIMESTAMP`        int(11)    NOT NULL,
     `height`           int(11)    NOT NULL,
@@ -390,9 +390,9 @@ CREATE TABLE IF NOT EXISTS `currency`
     `db_id`                  bigint(20) unsigned NOT NULL AUTO_INCREMENT primary key,
     `id`                     bigint(20) NOT NULL,
     `account_id`             bigint(20) NOT NULL,
-    `name`                   varchar(255)  NOT NULL,
-    `name_lower`             varchar(255)  NOT NULL,
-    `code`                   varchar(255)  NOT NULL,
+    `name`                   varchar(191)  NOT NULL,
+    `name_lower`             varchar(191)  NOT NULL,
+    `code`                   varchar(191)  NOT NULL,
     `description`            varchar(1000)  DEFAULT NULL,
     `type`                   int(11)    NOT NULL,
     `initial_supply`         bigint(20) NOT NULL DEFAULT 0,
@@ -565,7 +565,7 @@ CREATE TABLE IF NOT EXISTS `dex_operation`
     `stage`       tinyint(4)   NOT NULL,
     `eid`         varchar(255)  NOT NULL,
     `description` varchar(1000)  DEFAULT NULL,
-    `details`     varchar(255)  DEFAULT NULL,
+    `details`     varchar(5000)  DEFAULT NULL,
     `finished`    tinyint(1)   NOT NULL DEFAULT 0,
     `ts`          timestamp(4) NOT NULL DEFAULT current_timestamp(4) ON UPDATE current_timestamp(4)
 ) ;
@@ -646,7 +646,7 @@ CREATE TABLE IF NOT EXISTS `goods`
     `db_id`       bigint(20) unsigned NOT NULL AUTO_INCREMENT primary key,
     `id`          bigint(20) NOT NULL,
     `seller_id`   bigint(20) NOT NULL,
-    `name`        varchar(255)  NOT NULL,
+    `name`        varchar(191)  NOT NULL,
     `description` varchar(1000)  DEFAULT NULL,
     `parsed_tags` longtext DEFAULT NULL,
     `has_image`   tinyint(1) NOT NULL,
@@ -942,7 +942,10 @@ CREATE TABLE IF NOT EXISTS `scan`
 (
     `rescan`   tinyint(1) NOT NULL DEFAULT 0,
     `height`   int(11)    NOT NULL DEFAULT 0,
-    `validate` tinyint(1) NOT NULL DEFAULT 0
+    `validate` tinyint(1) NOT NULL DEFAULT 0,
+    `shutdown` tinyint(1) NOT NULL DEFAULT 0,
+    `current_height` int(11)  NOT NULL DEFAULT 0,
+    `preparation_done` tinyint(1) NOT NULL DEFAULT 0
 ) ;
 
 
@@ -1092,7 +1095,7 @@ CREATE TABLE IF NOT EXISTS `tagged_data`
     `type`                varchar(255)  DEFAULT NULL,
     `data`                blob       NOT NULL,
     `is_text`             tinyint(1) NOT NULL,
-  `channel` varchar(255)  DEFAULT NULL,
+  `channel` varchar(191)  DEFAULT NULL,
   `filename` varchar(255)  DEFAULT NULL,
   `block_timestamp` int(11) NOT NULL,
   `transaction_timestamp` int(11) NOT NULL,
@@ -1241,7 +1244,7 @@ CREATE TABLE IF NOT EXISTS `unconfirmed_transaction`
     `fee_per_byte`       bigint(20) NOT NULL,
     `arrival_timestamp`  bigint(20) NOT NULL,
     `transaction_bytes`  blob       NOT NULL,
-    `prunable_json`      text  DEFAULT NULL,
+    `prunable_json`      longtext  DEFAULT NULL,
     `height`             int(11)    NOT NULL,
   UNIQUE KEY `unconfirmed_transaction_id_idx` (`id`),
   KEY `unconfirmed_transaction_height_fee_timestamp_idx` (`transaction_height`,`fee_per_byte`,`arrival_timestamp`),

@@ -28,7 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -143,7 +142,7 @@ public class CrowdFundingObserver {
         FullTextOperationData operationData = new FullTextOperationData(
             DEFAULT_SCHEMA, currencyTable.getTableName(), Thread.currentThread().getName());
         operationData.setOperationType(operationType);
-        operationData.setDbIdValue(BigInteger.valueOf(currency.getDbId()));
+        operationData.setDbIdValue(currency.getDbId());
         operationData.addColumnData(currency.getName()).addColumnData(currency.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);

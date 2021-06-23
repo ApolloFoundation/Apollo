@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.util.db;
 
 import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
+import com.apollocurrency.aplwallet.apl.db.updater.MigrationParams;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -47,7 +48,10 @@ public class MariadbDatabaseAdministrator implements DatabaseAdministrator {
     }
 
     @Override
-    public synchronized void createDatabase() {
+    public synchronized String createDatabase() {
+        if (StringUtils.isNotBlank(dbProperties.getDbUrl())) {
+            return dbProperties.getDbUrl(); // assuming database created already
+        }
         HikariConfig sysDBConf = new HikariConfig();
         String systemDbUrl = dbProperties.formatJdbcUrlString(true);
         sysDBConf.setJdbcUrl(systemDbUrl);
@@ -71,12 +75,12 @@ public class MariadbDatabaseAdministrator implements DatabaseAdministrator {
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        dbProperties.setDbUrl(dbProperties.formatJdbcUrlString(false));
+        return dbProperties.formatJdbcUrlString(false);
     }
 
     @Override
     public synchronized void migrateDatabase(DBUpdater dbUpdater) {
-        dbUpdater.update(dbProperties.formatJdbcUrlString(false), dbProperties.getDbUsername(), dbProperties.getDbPassword());
+        dbUpdater.update(new MigrationParams(dbProperties.formatJdbcUrlString(false), dbProperties.getDbType(), dbProperties.getDbUsername(), dbProperties.getDbPassword()));
     }
 
     @Override

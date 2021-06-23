@@ -56,8 +56,8 @@ CREATE TABLE IF NOT EXISTS `transaction`
 
 CREATE TABLE IF NOT EXISTS option
 (
-    `name`  VARCHAR(100) COLLATE utf8_bin not null,
-    `VALUE` VARCHAR(150) COLLATE utf8_bin DEFAULT NULL
+    `name`  VARCHAR(100) not null,
+    `VALUE` VARCHAR(150) DEFAULT NULL
     );
 
 CREATE UNIQUE INDEX IF NOT EXISTS option_name_value_idx ON option (name, `VALUE`);

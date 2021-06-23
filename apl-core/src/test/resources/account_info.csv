@@ -1,4 +1,4 @@
-account_id(-5|20|0),name(12|1020|0),description(12|4000|0),height(4|11|0)
+account_id,name,description,height
 -1210507342774171425,'Madan Reddy','Apollo Community tokens',2331
 -1814762826801103091,'Haisam',null,70868
 -1873267300248892835,'阿波罗0530','描述什么',78957

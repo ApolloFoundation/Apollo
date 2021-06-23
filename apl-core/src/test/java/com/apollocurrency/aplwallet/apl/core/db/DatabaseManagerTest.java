@@ -9,9 +9,13 @@ import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
+import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbPopulator;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.db.DatabaseAdministratorFactoryImpl;
+import com.apollocurrency.aplwallet.apl.util.db.SelfInitializableDataSourceCreator;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +23,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -47,16 +55,21 @@ import static org.mockito.Mockito.verify;
 
 @Slf4j
 @Tag("slow")
+@ExtendWith(MockitoExtension.class)
 class DatabaseManagerTest extends DBContainerRootTest {
     private static PropertiesHolder propertiesHolder = new PropertiesHolder();
     private DbProperties baseDbProperties;
     private DatabaseManagerImpl databaseManager;
+    @RegisterExtension
+    TemporaryFolderExtension tempFolder = new TemporaryFolderExtension();
+    @Mock
+    DirProvider dirProvider;
 
     @BeforeEach
     public void setUp() throws IOException {
         baseDbProperties = DbTestData.getDbFileProperties(mariaDBContainer);
         baseDbProperties.setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
-        databaseManager = new DatabaseManagerImpl(baseDbProperties, propertiesHolder, dbAdminFactory);
+        databaseManager = new DatabaseManagerImpl(baseDbProperties, new SelfInitializableDataSourceCreator(new DatabaseAdministratorFactoryImpl(dirProvider), propertiesHolder));
         DbPopulator dbPopulator = new DbPopulator(null, "db/db-manager-data.sql");
         dbPopulator.initDb(databaseManager.getDataSource());
         dbPopulator.populateDb(databaseManager.getDataSource());

@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.util.injectable;
 
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
@@ -58,10 +57,6 @@ public class DbProperties implements Cloneable {
         return this;
     }
 
-    public boolean isH2() {
-        return StringUtils.isNotBlank(dbUrl) && dbUrl.startsWith("jdbc:h2:");
-    }
-
     public DbProperties deepCopy() {
         try {
             return (DbProperties) super.clone();
@@ -107,9 +102,9 @@ public class DbProperties implements Cloneable {
 
     public String formatEmbeddedJdbcUrlString() {
         String finalDbUrl;
-        String fullUrlString = "jdbc:%s:%s/%s;%s";
+        String embeddedUrlTemplate = "jdbc:%s:%s/%s;%s";
         finalDbUrl = String.format(
-            fullUrlString,
+            embeddedUrlTemplate,
             getDbType(),
             getDbDir(),
             getDbName(),

@@ -3,17 +3,16 @@
  */
 package com.apollocurrency.aplwallet.apl.core.shard.helper;
 
-import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.shard.MigrateState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.Objects;
 import java.util.Set;
 
@@ -126,7 +125,7 @@ public class SecondaryIndexInsertHelper extends AbstractHelper {
                         // we don't need it for INSERT, only for next SELECT
                         if (i + 1 != numColumns) {
                             Object object = rs.getObject(i + 1);
-                            if (isTransactionTable && columnTypes[i] == Types.VARBINARY) { // extract and shorten hash (id + shortened hash = full_hash)
+                            if (isTransactionTable && rs.getMetaData().getColumnName(i + 1).equalsIgnoreCase("full_hash")) { // extract and shorten hash (id + shortened hash = full_hash)
                                 byte[] fullHash = (byte[]) object;
                                 object = Convert.toPartialHash(fullHash);
                             }

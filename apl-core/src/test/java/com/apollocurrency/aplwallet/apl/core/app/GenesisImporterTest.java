@@ -466,7 +466,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
         genesisImporter.GENESIS_ACCOUNTS_JSON = "data/genesisAccounts-testnet.json";
         List<Map.Entry<String, Long>> result = genesisImporter.loadGenesisAccounts();
         assertNotNull(result);
-        assertEquals(9, result.size()); // genesis is skipped
+        assertEquals(10, result.size()); // genesis is not skipped
     }
 
     @Test

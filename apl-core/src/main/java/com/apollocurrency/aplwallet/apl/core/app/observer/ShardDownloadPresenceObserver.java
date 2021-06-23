@@ -84,7 +84,7 @@ public class ShardDownloadPresenceObserver {
                 shardImporter.importShardByFileId(shardPresentData);
                 fullTextSearchService.reindexAll(con);
             } catch (Exception e) {
-                log.error("Error on Shard # {}. Zip/CSV importing...", shardPresentData);
+                log.error("Error on Shard IMPORTING # " + shardPresentData, e);
                 log.error("Node has encountered serious error and import CSV shard data. " +
                     "Somethings wrong with processing fileId =\n'{}'\n >>> FALL BACK to Genesis importing....", shardPresentData);
             // truncate all partial data potentially imported into database
