@@ -9,5 +9,6 @@
   </decorators>
   <weld:scan>
     <weld:exclude name="org.jboss.weld.**" />
+    <weld:exclude name="io.swagger.**" />
   </weld:scan>
 </beans>
