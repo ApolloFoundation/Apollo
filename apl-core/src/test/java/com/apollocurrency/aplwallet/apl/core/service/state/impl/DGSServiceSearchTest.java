@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
+import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
@@ -76,7 +77,7 @@ public class DGSServiceSearchTest extends DbContainerBaseTest {
         DGSServiceImpl.class,
         DerivedDbTablesRegistryImpl.class,
         PropertiesHolder.class,
-        BlockChainInfoServiceImpl.class, AccountServiceImpl.class, JdbiHandleFactory.class, JdbiConfiguration.class
+        BlockChainInfoServiceImpl.class, AccountServiceImpl.class, GenesisAccounts.class, JdbiHandleFactory.class, JdbiConfiguration.class
     )
         .addBeans(MockBean.of(mock(GlobalSync.class), GlobalSync.class, GlobalSyncImpl.class))
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))

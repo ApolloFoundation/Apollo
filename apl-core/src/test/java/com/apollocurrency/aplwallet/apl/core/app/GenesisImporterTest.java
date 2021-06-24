@@ -162,7 +162,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
-        AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
+        AccountServiceImpl.class, GenesisAccounts.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
         FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
         ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,

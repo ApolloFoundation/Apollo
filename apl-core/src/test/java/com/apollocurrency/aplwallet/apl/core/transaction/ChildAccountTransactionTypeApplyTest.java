@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
+import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
@@ -125,7 +126,7 @@ class ChildAccountTransactionTypeApplyTest extends DbContainerBaseTest {
     @WeldSetup
     WeldInitiator weldInitiator = WeldInitiator.from(
         GlobalSyncImpl.class, DaoConfig.class, AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
-        AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
+        AccountServiceImpl.class, GenesisAccounts.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
         FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
         DefaultBlockValidator.class, ReferencedTransactionService.class,
         AppendixApplierRegistry.class,
