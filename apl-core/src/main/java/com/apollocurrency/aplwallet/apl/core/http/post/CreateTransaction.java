@@ -73,7 +73,7 @@ public abstract class CreateTransaction extends AbstractAPIRequestHandler {
         "phasingLinkedFullHash", "phasingLinkedFullHash", "phasingLinkedFullHash",
         "phasingHashedSecret", "phasingHashedSecretAlgorithm",
         "recipientPublicKey",
-        "ecBlockId", "ecBlockHeight"};
+        "ecBlockId", "ecBlockHeight", "validate"};
     protected TimeService timeService = CDI.current().select(TimeService.class).get();
     private TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
     private TransactionSigner signer = CDI.current().select(TransactionSigner.class).get();

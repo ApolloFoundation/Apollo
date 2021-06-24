@@ -54,6 +54,7 @@ public class HttpRequestToCreateTransactionRequestConverter {
 
             .ecBlockHeight(HttpParameterParserUtil.getInt(req, "ecBlockHeight", 0, Integer.MAX_VALUE, false))
             .ecBlockId(Convert.parseUnsignedLong(req.getParameter("ecBlockId")))
+            .validate(!"false".equalsIgnoreCase(req.getParameter("validate")))
 
             .build();
 

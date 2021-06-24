@@ -396,7 +396,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 transactionValidator.validateFully(tx);
                 isValid = true;
             } catch (AplException.ValidationException e) {
-                log.trace("Tx {} is not valid", tx.getId());
+                log.debug("Tx {} is not valid, reason: {}", tx.getId(), e.getMessage());
             }
         return isValid;
     }

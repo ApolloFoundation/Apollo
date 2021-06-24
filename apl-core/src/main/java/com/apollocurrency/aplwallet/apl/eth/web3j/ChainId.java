@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.response.NetVersion;
+import org.web3j.protocol.exceptions.ClientConnectionException;
 import org.web3j.tx.ChainIdLong;
 
 import javax.annotation.PostConstruct;
@@ -64,7 +65,7 @@ public class ChainId {
         NetVersion netVersionResponse;
         try {
             netVersionResponse = netVersionRequest.send();
-        } catch (IOException e) {
+        } catch (IOException | ClientConnectionException e) {
             log.error("Unable to get chain id for the Ethereum network", e);
             failed = true;
             return;
