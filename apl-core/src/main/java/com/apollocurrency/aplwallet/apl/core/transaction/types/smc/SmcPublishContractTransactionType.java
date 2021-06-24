@@ -14,8 +14,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishSmcContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxPublishContractValidationProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -128,9 +128,10 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         }
         //syntactical and semantic validation
         BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
-        SmcContractTxProcessor processor = new SandboxPublishContractValidationProcessor(smartContract, integrator, smcConfig);
-        ExecutionLog executionLog = processor.process();
-        if (executionLog.isError()) {
+        SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, integrator, smcConfig);
+        var executionLog = new ExecutionLog();
+        processor.process(executionLog);
+        if (executionLog.hasError()) {
             log.debug("SMC: doStateIndependentValidation = INVALID");
             throw new AplException.NotCurrentlyValidException(executionLog.toJsonString());
         }
@@ -145,9 +146,10 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
         BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
-        SmcContractTxProcessor processor = new PublishSmcContractTxProcessor(smartContract, integrator, smcConfig);
-        ExecutionLog executionLog = processor.process();
-        if (executionLog.isError()) {
+        SmcContractTxProcessor processor = new PublishContractTxProcessor(smartContract, integrator, smcConfig);
+        var executionLog = new ExecutionLog();
+        processor.process(executionLog);
+        if (executionLog.hasError()) {
             throw new AplException.SMCProcessingException(executionLog.toJsonString());
         }
         @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})

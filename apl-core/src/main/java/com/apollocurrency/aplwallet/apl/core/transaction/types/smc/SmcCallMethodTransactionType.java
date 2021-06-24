@@ -14,9 +14,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodSmcContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxCallMethodValidationProcessorContract;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SyntaxParseProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodTxValidator;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallPayableMethodTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SyntaxValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -122,14 +122,15 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
         //syntactical and semantic validation
-        SmcContractTxProcessor processor = new SandboxCallMethodValidationProcessorContract(
+        SmcContractTxProcessor processor = new CallMethodTxValidator(
             smartContract,
             smartMethod,
             integratorFactory.createMockProcessor(transaction.getId()),
             smcConfig
         );
-        ExecutionLog executionLog = processor.process();
-        if (executionLog.isError()) {
+        var executionLog = new ExecutionLog();
+        processor.process(executionLog);
+        if (executionLog.hasError()) {
             log.debug("SMC: doStateDependentValidation = INVALID");
             throw new AplException.NotCurrentlyValidException(executionLog.toJsonString());
         }
@@ -156,13 +157,14 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
                 + calculatedFuel + " but actual=" + actualFuel);
         }
         //syntactical validation
-        SmcContractTxProcessor processor = new SyntaxParseProcessor(
+        SmcContractTxProcessor processor = new SyntaxValidator(
             smartMethod.getMethodWithParams(),
             integratorFactory.createMockProcessor(transaction.getId()),
             smcConfig
         );
-        ExecutionLog executionLog = processor.process();
-        if (executionLog.isError()) {
+        var executionLog = new ExecutionLog();
+        processor.process(executionLog);
+        if (executionLog.hasError()) {
             log.debug("SMC: doStateIndependentValidation = INVALID");
             throw new AplException.NotCurrentlyValidException("Syntax error: " + executionLog.toJsonString());
         }
@@ -189,9 +191,10 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
 
         BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
-        SmcContractTxProcessor processor = new CallMethodSmcContractTxProcessor(smartContract, smartMethod, integrator, smcConfig);
-        ExecutionLog executionLog = processor.process();
-        if (executionLog.isError()) {
+        SmcContractTxProcessor processor = new CallPayableMethodTxProcessor(smartContract, smartMethod, integrator, smcConfig);
+        var executionLog = new ExecutionLog();
+        processor.process(executionLog);
+        if (executionLog.hasError()) {
             log.error(executionLog.toJsonString());
             throw new AplException.SMCProcessingException(executionLog.toJsonString());
         }

@@ -10,30 +10,34 @@ import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
+import com.apollocurrency.smc.contract.vm.ResultValue;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+
 /**
- * Validate transaction, perform smart contract and manipulate balances
+ * Call @view method of the given smart contract
  *
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class CallMethodSmcContractTxProcessor extends AbstractSmcContractTxProcessor {
-    private final SmartMethod smartMethod;
+public class CallViewMethodTxProcessor extends AbstractSmcContractTxProcessor {
+    private final List<SmartMethod> smartMethods;
 
-    public CallMethodSmcContractTxProcessor(SmartContract smartContract, SmartMethod smartMethod, BlockchainIntegrator processor, SmcConfig smcConfig) {
+    public CallViewMethodTxProcessor(SmartContract smartContract, List<SmartMethod> smartMethods, BlockchainIntegrator processor, SmcConfig smcConfig) {
         super(smcConfig, processor, smartContract);
-        this.smartMethod = smartMethod;
+        this.smartMethods = smartMethods;
     }
 
     @Override
-    public void executeContract(ExecutionLog executionLog) {
-        log.debug("Smart method={}", smartMethod);
+    public List<ResultValue> batchExecuteContract(ExecutionLog executionLog) {
+        log.debug("Smart method={}", smartMethods);
         validateStatus(ContractStatus.ACTIVE);
         //call the method and charge the fuel
-        smcMachine.callMethod(getSmartContract(), smartMethod);
+        var result = smcMachine.callMethod(getSmartContract(), smartMethods);
         executionLog.join(smcMachine.getExecutionLog());
         smcMachine.resetExecutionLog();
+        return result;
     }
 
 }

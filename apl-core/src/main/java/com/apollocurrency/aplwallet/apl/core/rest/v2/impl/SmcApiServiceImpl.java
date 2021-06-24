@@ -7,10 +7,12 @@ package com.apollocurrency.aplwallet.apl.core.rest.v2.impl;
 import com.apollocurrency.aplwallet.api.v2.NotFoundException;
 import com.apollocurrency.aplwallet.api.v2.SmcApiService;
 import com.apollocurrency.aplwallet.api.v2.model.CallContractMethodReq;
+import com.apollocurrency.aplwallet.api.v2.model.CallViewMethodReq;
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.api.v2.model.ContractListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractStateResponse;
 import com.apollocurrency.aplwallet.api.v2.model.PublishContractReq;
+import com.apollocurrency.aplwallet.api.v2.model.ResultValueResponse;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionArrayResp;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -20,12 +22,15 @@ import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
+import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.CallMethodResultMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.SmartMethodMapper;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxCallMethodValidationProcessorContract;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxPublishContractValidationProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodTxValidator;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallViewMethodTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.core.signature.MultiSigCredential;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
@@ -67,7 +72,9 @@ public class SmcApiServiceImpl implements SmcApiService {
     private final TxBContext txBContext;
     private final SmcBlockchainIntegratorFactory integratorFactory;
     private final SmcConfig smcConfig;
-    private final int maxAPIrecords;
+    private final int maxAPIRecords;
+    private final SmartMethodMapper methodMapper;
+    private final CallMethodResultMapper methodResultMapper;
 
     @Inject
     public SmcApiServiceImpl(BlockchainConfig blockchainConfig,
@@ -76,14 +83,18 @@ public class SmcApiServiceImpl implements SmcApiService {
                              TransactionCreator transactionCreator,
                              SmcBlockchainIntegratorFactory integratorFactory,
                              SmcConfig smcConfig,
-                             @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIrecords) {
+                             SmartMethodMapper methodMapper,
+                             CallMethodResultMapper methodResultMapper,
+                             @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIRecords) {
         this.accountService = accountService;
         this.contractService = contractService;
         this.transactionCreator = transactionCreator;
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
         this.integratorFactory = integratorFactory;
         this.smcConfig = smcConfig;
-        this.maxAPIrecords = maxAPIrecords;
+        this.methodMapper = methodMapper;
+        this.methodResultMapper = methodResultMapper;
+        this.maxAPIRecords = maxAPIRecords;
     }
 
     @Override
@@ -113,7 +124,7 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         //syntactical and semantic validation
         BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
-        SmcContractTxProcessor processor = new SandboxPublishContractValidationProcessor(smartContract, integrator, smcConfig);
+        SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, integrator, smcConfig);
 
         BigInteger calculatedFuel = processor.getExecutionEnv().getPrice().forContractPublishing().calc(smartContract);
         if (!smartContract.getFuel().tryToCharge(calculatedFuel)) {
@@ -121,8 +132,9 @@ public class SmcApiServiceImpl implements SmcApiService {
             return builder.error(ApiErrors.CONTRACT_VALIDATION_ERROR, "Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel()).build();
         }
 
-        ExecutionLog executionLog = processor.process();
-        if (executionLog.isError()) {
+        ExecutionLog executionLog = new ExecutionLog();
+        processor.process(executionLog);
+        if (executionLog.hasError()) {
             log.debug("smart contract validation = INVALID");
             return builder.error(ApiErrors.CONTRACT_VALIDATION_ERROR, executionLog.toJsonString()).build();
         }
@@ -195,6 +207,51 @@ public class SmcApiServiceImpl implements SmcApiService {
     }
 
     @Override
+    public Response callViewMethod(CallViewMethodReq body, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+        //validate params
+        if (body.getMembers().isEmpty()) {
+            return builder.error(ApiErrors.INCORRECT_VALUE, "members").build();
+        }
+
+        long addressId = Convert.parseAccountId(body.getAddress());
+        Account contractAccount = accountService.getAccount(addressId);
+        if (contractAccount == null) {
+            return builder.error(ApiErrors.INCORRECT_VALUE, "address", body.getAddress()).build();
+        }
+        if (contractAccount.getPublicKey() == null) {
+            contractAccount.setPublicKey(accountService.getPublicKey(contractAccount.getId()));
+        }
+        AplAddress contractAddress = new AplAddress(contractAccount.getId());
+        SmartContract smartContract;
+        try {
+            smartContract = contractService.loadContract(
+                contractAddress,
+                new ContractFuel(BigInteger.ZERO, BigInteger.ONE)
+            );
+            //smartContract.setSender(new AplAddress(transaction.getSenderId()));
+        } catch (ContractNotFoundException e) {
+            return builder.error(ApiErrors.CONTRACT_NOT_FOUND, contractAddress.getHex()).build();
+        }
+
+        var response = new ResultValueResponse();
+        var methods = methodMapper.convert(body.getMembers());
+        SmcContractTxProcessor processor = new CallViewMethodTxProcessor(
+            smartContract,
+            methods,
+            integratorFactory.createMockProcessor(0),
+            smcConfig
+        );
+        var executionLog = new ExecutionLog();
+        var result = processor.batchProcess(executionLog);
+        if (executionLog.hasError()) {
+            return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), contractAddress.getHex()).build();
+        }
+        response.setResults(methodResultMapper.convert(result));
+        return builder.bind(response).build();
+    }
+
+    @Override
     public Response createCallContractMethodTx(CallContractMethodReq body, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
         Transaction transaction = createCallContractMethodTransaction(body, builder);
@@ -230,7 +287,7 @@ public class SmcApiServiceImpl implements SmcApiService {
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
         //syntactical and semantic validation
-        SmcContractTxProcessor processor = new SandboxCallMethodValidationProcessorContract(
+        SmcContractTxProcessor processor = new CallMethodTxValidator(
             smartContract,
             smartMethod,
             integratorFactory.createMockProcessor(transaction.getId()),
@@ -243,8 +300,9 @@ public class SmcApiServiceImpl implements SmcApiService {
             return builder.error(ApiErrors.CONTRACT_VALIDATION_ERROR, "Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel()).build();
         }
 
-        ExecutionLog executionLog = processor.process();
-        if (executionLog.isError()) {
+        ExecutionLog executionLog = new ExecutionLog();
+        processor.process(executionLog);
+        if (executionLog.hasError()) {
             log.debug("method smart contract validation = INVALID");
             return builder.error(ApiErrors.CONTRACT_METHOD_VALIDATION_ERROR, executionLog.toJsonString()).build();
         }
@@ -360,7 +418,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
 
         FirstLastIndexBeanParam indexBeanParam = new FirstLastIndexBeanParam(firstIndex, lastIndex);
-        indexBeanParam.adjustIndexes(maxAPIrecords);
+        indexBeanParam.adjustIndexes(maxAPIRecords);
         AplAddress address = null;
         AplAddress publisher = null;
 

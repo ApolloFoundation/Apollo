@@ -47,16 +47,17 @@ public enum ApiErrors implements ApiErrorInfo {
     CUSTOM_ERROR_MESSAGE(8, 2030, "{0}"),
 
     //KMS
-    EXPORT_KEY_READ_WALLET(0, 2201, "Can't read wallet."),
-    NOT_FOUND_WALLET(0, 2202, "Incorrect account id or passphrase"),
-    NOT_FOUND_ETH_ACCOUNT(0, 2203, "Incorrect ethereum address"),
+    EXPORT_KEY_READ_WALLET(-1, 2201, "Can't read wallet."),
+    NOT_FOUND_WALLET(-1, 2202, "Incorrect account id or passphrase"),
+    NOT_FOUND_ETH_ACCOUNT(-1, 2203, "Incorrect ethereum address"),
 
     //SMC
-    CONTRACT_PROCESSING_ERROR(0, 3101, "Contract processing error: {0}."),
-    CONTRACT_VALIDATION_ERROR(0, 3102, "Contract validation error: {0}."),
-    CONTRACT_METHOD_VALIDATION_ERROR(0, 3103, "Contract method validation error: {0}."),
-    CONTRACT_NOT_FOUND(0, 3104, "Contract {0} not found.")
-    ;
+    CONTRACT_PROCESSING_ERROR(-1, 3101, "Contract processing error: {0}."),
+    CONTRACT_VALIDATION_ERROR(-1, 3102, "Contract validation error: {0}."),
+    CONTRACT_METHOD_VALIDATION_ERROR(-1, 3103, "Contract method validation error: {0}."),
+    CONTRACT_NOT_FOUND(-1, 3104, "Contract {0} not found."),
+    CONTRACT_READ_METHOD_ERROR(-1, 3105, "Call @view method error: {0}."),
+    CONTRACT_SYNTAX_VALIDATION_ERROR(-1, 3106, "Contract syntax validation error: {0}.");
 
     private int oldErrorCode;
     private int errorCode;
