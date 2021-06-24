@@ -31,7 +31,6 @@ public class JwtConfigDataPropertiesImpl implements JwtConfigData {
     @Inject
     public JwtConfigDataPropertiesImpl (
         @Property(name = "kms.main.jwt.issuer", defaultValue = "") String issuer,
-//        @Property(name = "kms.main.jwt.secret", defaultValue = "") String secret,
         @Property(name = "kms.main.jwt.private.key.file.name") String privateKeyFileName,
         @Property(name = "kms.main.jwt.public.key.file.name") String publicKeyFileName,
         @Property(name = "kms.main.jwt.access.expiration.time", defaultValue = "") String accessTokenExpirationTime,
@@ -39,7 +38,6 @@ public class JwtConfigDataPropertiesImpl implements JwtConfigData {
         @Property(name = "kms.main.jwt.refresh.expiration.time", defaultValue = "") String refreshTokenExpirationTime
     ) {
         this.issuer = issuer;
-//        this.secret = secret;
         this.privateKeyFileName = privateKeyFileName;
         this.publicKeyFileName = publicKeyFileName;
         this.accessTokenExpirationTime = accessTokenExpirationTime;
