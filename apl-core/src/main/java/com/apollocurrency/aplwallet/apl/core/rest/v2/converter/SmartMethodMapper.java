@@ -19,12 +19,16 @@ public class SmartMethodMapper implements Converter<ContractMethod, SmartMethod>
 
     @Override
     public SmartMethod apply(ContractMethod dto) {
-        return SmartMethod.builder()
+        var modelBuilder = SmartMethod.builder()
             .name(dto.getFunction())
             .name(dto.getFunction())
-            .args(String.join(",", dto.getInput()))
-            .value(BigInteger.ZERO)
-            .build();
+            .value(BigInteger.ZERO);
+        if (dto.getInput() != null) {
+            modelBuilder.args(String.join(",", dto.getInput()));
+        } else {
+            modelBuilder.args("");
+        }
+        return modelBuilder.build();
     }
 
 }

@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.storage.PersistentMappingRepository;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.storage.ReadonlyMappingRepository;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
@@ -71,115 +72,175 @@ public class SmcBlockchainIntegratorFactory {
         return SMCOperationProcessor.createProcessor(integrator, new ExecutionLog());
     }
 
+    public BlockchainIntegrator createMockProcessor(final long originatorTransactionId) {
+        var transaction = new AplAddress(originatorTransactionId);
+        return SMCOperationProcessor.createProcessor(
+            new MockIntegrator(transaction)
+            , ExecutionLog.EMPTY_LOG);
+    }
+
+    public BlockchainIntegrator createReadonlyProcessor() {
+        return SMCOperationProcessor.createProcessor(new ReadonlyIntegrator(), new ExecutionLog());
+    }
+
     private BlockchainIntegrator createIntegrator(final Transaction transaction, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
         final long originatorTransactionId = transaction.getId();
         final ContractBlock currentBlock = blockConverter.apply(transaction.getBlock());
         Address trAddr = new AplAddress(transaction.getId());
         final ContractBlockchainTransaction currentTransaction = new SMCTransaction(trAddr.get(), trAddr, attachment.getFuelPrice());
 
-        return new BlockchainIntegrator() {
-            @Override
-            public SMCOperationReceipt sendMessage(Address from, Address to, SmartMethod data) {
-                throw new UnsupportedOperationException("Not implemented yet.");
-            }
+        return new FullIntegrator(originatorTransactionId, txSenderAccount, txRecipientAccount, ledgerEvent, currentBlock, currentTransaction);
+    }
 
-            @Override
-            public SMCOperationReceipt sendMoney(final Address fromAdr, Address toAdr, BigInteger value) {
-                log.debug("--send money ---1: from={} to={} value={}", fromAdr, toAdr, value);
-                SMCOperationReceipt.SMCOperationReceiptBuilder txReceiptBuilder = SMCOperationReceipt.builder()
-                    .transactionId(Long.toUnsignedString(originatorTransactionId));
-                long amount = value.longValueExact();
-                Account sender;
-                Account recipient;
-                /* case 1) from transaction_SenderAccount to transaction_RecipientAccount
-                 * case 2) from transaction_RecipientAccount to arbitrary target account
-                 */
-                AplAddress from = new AplAddress(fromAdr);
-                AplAddress to = new AplAddress(toAdr);
-                log.debug("--send money ---2: from={} to={} amount={}", from, to, amount);
-                try {
-                    if (from.getLongId() == txSenderAccount.getId()) {//case 1
-                        log.debug("--send money ---2.1: ");
-                        if (to.getLongId() != txRecipientAccount.getId()) {
-                            throw new SendMsgException("Wrong recipient address");
-                        }
-                        sender = txSenderAccount;
-                        recipient = txRecipientAccount;
-                    } else if (from.getLongId() == txRecipientAccount.getId()) {//case 2
-                        log.debug("--send money ---2.2: ");
-                        sender = txRecipientAccount; //contract address
-                        recipient = accountService.getAccount(to.getLongId());
-                        if (recipient == null) {
-                            throw new ContractNotFoundException("Recipient not found, recipient=" + to.getLongId());
-                        }
-                    } else {
-                        throw new SendMsgException("Wrong sender address");
+    private class ReadonlyIntegrator implements BlockchainIntegrator {
+
+        private static final String READONLY_INTEGRATOR = "Readonly integrator.";
+
+        @Override
+        public SMCOperationReceipt sendMessage(Address from, Address to, SmartMethod data) {
+            throw new UnsupportedOperationException(READONLY_INTEGRATOR);
+        }
+
+        @Override
+        public SMCOperationReceipt sendMoney(final Address fromAdr, Address toAdr, BigInteger value) {
+            throw new UnsupportedOperationException(READONLY_INTEGRATOR);
+        }
+
+        @Override
+        public BlockchainInfo getBlockchainInfo() {
+            BlockchainStatusDto blockchainStatus = serverInfoService.getBlockchainStatus();
+            return BlockchainInfo.builder()
+                .chainId(blockchainStatus.getChainId().toString())
+                .height(blockchainStatus.getNumberOfBlocks())
+                .blockId(blockchainStatus.getLastBlock())
+                .timestamp(blockchainStatus.getTime())
+                .build();
+        }
+
+        @Override
+        public BigInteger getBalance(Address address) {
+            Account account = accountService.getAccount(new AplAddress(address).getLongId());
+            if (account == null) {
+                throw new ContractNotFoundException("Address not found, address=" + address.getHex());
+            }
+            return BigInteger.valueOf(account.getBalanceATM());
+        }
+
+        @Override
+        public ContractBlock getBlock(int height) {
+            return blockConverter.convert(blockchain.getBlockAtHeight(height));
+        }
+
+        @Override
+        public ContractBlock getBlock(Address address) {
+            return blockConverter.convert(blockchain.getBlock(new AplAddress(address).getLongId()));
+        }
+
+        @Override
+        public ContractBlock getCurrentBlock() {
+            return blockConverter.convert(blockchain.getLastBlock());
+        }
+
+        @Override
+        public ContractBlockchainTransaction getBlockchainTransaction() {
+            throw new UnsupportedOperationException(READONLY_INTEGRATOR);
+        }
+
+        @Override
+        public ContractMappingRepositoryFactory createMappingFactory(Address contract) {
+            return smcMappingRepositoryClassFactory.createReadonlyMappingFactory(contract);
+        }
+    }
+
+    private class FullIntegrator extends ReadonlyIntegrator {
+
+        final long originatorTransactionId;
+        final Account txSenderAccount;
+        final Account txRecipientAccount;
+        final LedgerEvent ledgerEvent;
+        final ContractBlockchainTransaction currentTransaction;
+        final ContractBlock currentBlock;
+
+        public FullIntegrator(long originatorTransactionId, Account txSenderAccount, Account txRecipientAccount, LedgerEvent ledgerEvent, ContractBlock currentBlock, ContractBlockchainTransaction currentTransaction) {
+            this.originatorTransactionId = originatorTransactionId;
+            this.txSenderAccount = txSenderAccount;
+            this.txRecipientAccount = txRecipientAccount;
+            this.ledgerEvent = ledgerEvent;
+            this.currentTransaction = currentTransaction;
+            this.currentBlock = currentBlock;
+        }
+
+        @Override
+        public SMCOperationReceipt sendMessage(Address from, Address to, SmartMethod data) {
+            throw new UnsupportedOperationException("Not implemented yet.");
+        }
+
+        @Override
+        public SMCOperationReceipt sendMoney(final Address fromAdr, Address toAdr, BigInteger value) {
+            log.debug("--send money ---1: from={} to={} value={}", fromAdr, toAdr, value);
+            SMCOperationReceipt.SMCOperationReceiptBuilder txReceiptBuilder = SMCOperationReceipt.builder()
+                .transactionId(Long.toUnsignedString(originatorTransactionId));
+            long amount = value.longValueExact();
+            Account sender;
+            Account recipient;
+            /* case 1) from transaction_SenderAccount to transaction_RecipientAccount
+             * case 2) from transaction_RecipientAccount to arbitrary target account
+             */
+            AplAddress from = new AplAddress(fromAdr);
+            AplAddress to = new AplAddress(toAdr);
+            log.debug("--send money ---2: from={} to={} amount={}", from, to, amount);
+            try {
+                if (from.getLongId() == txSenderAccount.getId()) {//case 1
+                    log.debug("--send money ---2.1: ");
+                    if (to.getLongId() != txRecipientAccount.getId()) {
+                        throw new SendMsgException("Wrong recipient address");
                     }
-                    log.debug("--send money ---3: sender={} recipient={}", sender, recipient);
-                    txReceiptBuilder
-                        .senderId(Long.toUnsignedString(sender.getId()))
-                        .recipientId(Long.toUnsignedString(recipient.getId()));
-                    log.debug("--send money ---4: before blockchain tx, receipt={}", txReceiptBuilder.build());
-
-                    if (sender.getUnconfirmedBalanceATM() < amount) {
-                        throw new SendMsgException("Insufficient balance.");
+                    sender = txSenderAccount;
+                    recipient = txRecipientAccount;
+                } else if (from.getLongId() == txRecipientAccount.getId()) {//case 2
+                    log.debug("--send money ---2.2: ");
+                    sender = txRecipientAccount; //contract address
+                    recipient = accountService.getAccount(to.getLongId());
+                    if (recipient == null) {
+                        throw new ContractNotFoundException("Recipient not found, recipient=" + to.getLongId());
                     }
-                    accountService.addToBalanceAndUnconfirmedBalanceATM(sender, ledgerEvent, originatorTransactionId, -amount);
-                    accountService.addToBalanceAndUnconfirmedBalanceATM(recipient, ledgerEvent, originatorTransactionId, amount);
-                    log.debug("--send money ---5: before blockchain tx, receipt={}", txReceiptBuilder.build());
-                } catch (Exception e) {
-                    //TODO adjust error code
-                    txReceiptBuilder.errorCode(1L).errorDescription(e.getMessage()).errorDetails(ThreadUtils.last5Stacktrace());
+                } else {
+                    throw new SendMsgException("Wrong sender address");
                 }
-                return txReceiptBuilder.build();
-            }
+                log.debug("--send money ---3: sender={} recipient={}", sender, recipient);
+                txReceiptBuilder
+                    .senderId(Long.toUnsignedString(sender.getId()))
+                    .recipientId(Long.toUnsignedString(recipient.getId()));
+                log.debug("--send money ---4: before blockchain tx, receipt={}", txReceiptBuilder.build());
 
-            @Override
-            public BlockchainInfo getBlockchainInfo() {
-                BlockchainStatusDto blockchainStatus = serverInfoService.getBlockchainStatus();
-                return BlockchainInfo.builder()
-                    .chainId(blockchainStatus.getChainId().toString())
-                    .height(blockchainStatus.getNumberOfBlocks())
-                    .blockId(blockchainStatus.getLastBlock())
-                    .timestamp(blockchainStatus.getTime())
-                    .build();
-            }
-
-            @Override
-            public BigInteger getBalance(Address address) {
-                Account account = accountService.getAccount(new AplAddress(address).getLongId());
-                if (account == null) {
-                    throw new ContractNotFoundException("Address not found, address=" + address.getHex());
+                if (sender.getUnconfirmedBalanceATM() < amount) {
+                    throw new SendMsgException("Insufficient balance.");
                 }
-                return BigInteger.valueOf(account.getBalanceATM());
+                accountService.addToBalanceAndUnconfirmedBalanceATM(sender, ledgerEvent, originatorTransactionId, -amount);
+                accountService.addToBalanceAndUnconfirmedBalanceATM(recipient, ledgerEvent, originatorTransactionId, amount);
+                log.debug("--send money ---5: before blockchain tx, receipt={}", txReceiptBuilder.build());
+            } catch (Exception e) {
+                //TODO adjust error code
+                txReceiptBuilder.errorCode(1L).errorDescription(e.getMessage()).errorDetails(ThreadUtils.last5Stacktrace());
             }
+            return txReceiptBuilder.build();
+        }
 
-            @Override
-            public ContractBlock getBlock(int height) {
-                return blockConverter.apply(blockchain.getBlockAtHeight(height));
-            }
+        @Override
+        public ContractBlock getCurrentBlock() {
+            return currentBlock;
+        }
 
-            @Override
-            public ContractBlock getBlock(Address address) {
-                return blockConverter.apply(blockchain.getBlock(new AplAddress(address).getLongId()));
-            }
+        @Override
+        public ContractBlockchainTransaction getBlockchainTransaction() {
+            return currentTransaction;
+        }
 
-            @Override
-            public ContractBlock getCurrentBlock() {
-                return currentBlock;
-            }
+        @Override
+        public ContractMappingRepositoryFactory createMappingFactory(Address contract) {
+            return smcMappingRepositoryClassFactory.createMappingFactory(contract);
+        }
 
-            @Override
-            public ContractBlockchainTransaction getBlockchainTransaction() {
-                return currentTransaction;
-            }
-
-            @Override
-            public ContractMappingRepositoryFactory createMappingFactory(Address contract) {
-                return smcMappingRepositoryClassFactory.createMappingFactory(contract);
-            }
-
-        };
     }
 
     private static class SmcMappingRepositoryClassFactory {
@@ -218,13 +279,35 @@ public class SmcBlockchainIntegratorFactory {
                 }
             };
         }
-    }
 
-    public BlockchainIntegrator createMockProcessor(final long originatorTransactionId) {
-        var transaction = new AplAddress(originatorTransactionId);
-        return SMCOperationProcessor.createProcessor(
-            new MockIntegrator(transaction)
-            , ExecutionLog.EMPTY_LOG);
+        public ContractMappingRepositoryFactory createReadonlyMappingFactory(final Address contract) {
+            return new ContractMappingRepositoryFactory() {
+                @Override
+                public boolean hasMapping(String mappingName) {
+                    return smcContractStorageService.isMappingExist(contract, mappingName);
+                }
+
+                @Override
+                public ContractMappingRepository<Address> addressRepository(String mappingName) {
+                    return new ReadonlyMappingRepository<>(smcContractStorageService, contract, mappingName, new AddressJsonConverter());
+                }
+
+                @Override
+                public ContractMappingRepository<BigNum> bigNumRepository(String mappingName) {
+                    return new ReadonlyMappingRepository<>(smcContractStorageService, contract, mappingName, new BigNumJsonConverter());
+                }
+
+                @Override
+                public ContractMappingRepository<BigInteger> bigIntegerRepository(String mappingName) {
+                    return new ReadonlyMappingRepository<>(smcContractStorageService, contract, mappingName, new BigIntegerJsonConverter());
+                }
+
+                @Override
+                public ContractMappingRepository<String> stringRepository(String mappingName) {
+                    return new ReadonlyMappingRepository<>(smcContractStorageService, contract, mappingName, new StringJsonConverter());
+                }
+            };
+        }
     }
 
     private static class BlockConverter implements Converter<Block, ContractBlock> {

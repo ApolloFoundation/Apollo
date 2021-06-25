@@ -32,7 +32,6 @@ import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
-import com.apollocurrency.smc.contract.fuel.FuelCalculator;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
@@ -65,13 +64,6 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     @Override
     public TransactionTypes.TransactionTypeSpec getSpec() {
         return TransactionTypes.TransactionTypeSpec.SMC_CALL_METHOD;
-    }
-
-    @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        //TODO calculate the required fuel value by executing the contract
-        FuelCalculator fuelCalculator = getExecutionEnv().getPrice().forMethodCalling(BigInteger.valueOf(transaction.getAmountATM()));
-        return new SmcFuelBasedFee(fuelCalculator);
     }
 
     @Override
@@ -149,7 +141,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
-        BigInteger calculatedFuel = ((Fee.FuelBasedFee) getBaselineFee(transaction)).calcFuel(smartMethod);
+        BigInteger calculatedFuel = getFuelBasedFee(transaction).calcFuel(smartMethod);
         Fuel actualFuel = new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice());
         if (!actualFuel.tryToCharge(calculatedFuel)) {
             log.error("Needed fuel={} but actual={}", calculatedFuel, actualFuel);
@@ -203,5 +195,10 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         log.debug("After processing Address={} Fuel={}", smartContract.getAddress(), fuel);
         refundRemaining(transaction, senderAccount, fuel);
         contractService.updateContractState(smartContract);
+    }
+
+    private Fee.FuelBasedFee getFuelBasedFee(Transaction transaction) {
+        var fuelCalculator = getExecutionEnv().getPrice().forMethodCalling(BigInteger.valueOf(transaction.getAmountATM()));
+        return new SmcFuelBasedFee(fuelCalculator);
     }
 }

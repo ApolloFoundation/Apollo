@@ -820,6 +820,33 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /@@smc/r/spec/{address}:
+    get:
+      tags:
+        - smc
+      summary: Get the contract specification.
+      description: Returns the contract specification.
+      operationId: getSmcSpecificationByAddress
+      parameters:
+        - name: address
+          in: path
+          description: The contract address
+          required: true
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractSpecResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
 
 components:
   parameters:
@@ -1624,11 +1651,11 @@ components:
         input:
           type: array
           description: list of parameters
-          example: '\"firstParam\"", 123, "\"0x98765\"'
+          example: '["firstParam", 123, "0x98765"]'
           maxItems: 128
           items:
             type: string
-            example: '\"firstParam\"", 123, "\"0x98765\"'
+            example: '"firstParam"'
 
     TransactionArrayResp:
       required:
@@ -1657,6 +1684,76 @@ components:
               description: the contract state json
               type: string
               example: "{'value': 20000}"
+
+    ContractSpecResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            overview:
+              description: the contract overview
+              type: array
+              items:
+                $ref: '#/components/schemas/PropertySpec'
+            members:
+              description: the contract public functions
+              type: array
+              items:
+                $ref: '#/components/schemas/MethodSpec'
+
+    PropertySpec:
+      type: object
+      properties:
+        name:
+          description: the propery name
+          type: string
+          example: "totalSupply"
+        type:
+          description: property type
+          type: string
+          example: uint
+        value:
+          description: property value
+          type: string
+          example: 25000000000
+
+    ArgSpec:
+      type: object
+      properties:
+        name:
+          description: the propery name
+          type: string
+          example: "totalSupply"
+        type:
+          description: property type
+          type: string
+          example: uint
+
+    MethodSpec:
+      type: object
+      properties:
+        name:
+          description: the method/function name
+          type: string
+          example: balanceOf
+        inputs:
+          description: input params
+          type: array
+          items:
+            $ref: '#/components/schemas/ArgSpec'
+        outputs:
+          description: output value
+          type: array
+          items:
+            $ref: '#/components/schemas/PropertySpec'
+        stateMutability:
+          description: "a string with one of the following values: view, nonpayable, payable, pure"
+          type: string
+          example: view
+        value:
+          description: output value
+          type: string
+          example: '24999000000'
 
     ResultValueResponse:
       allOf:

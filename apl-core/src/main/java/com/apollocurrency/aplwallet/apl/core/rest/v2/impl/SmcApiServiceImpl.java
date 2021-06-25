@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.api.v2.model.CallContractMethodReq;
 import com.apollocurrency.aplwallet.api.v2.model.CallViewMethodReq;
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.api.v2.model.ContractListResponse;
+import com.apollocurrency.aplwallet.api.v2.model.ContractSpecResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractStateResponse;
 import com.apollocurrency.aplwallet.api.v2.model.PublishContractReq;
 import com.apollocurrency.aplwallet.api.v2.model.ResultValueResponse;
@@ -239,7 +240,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         SmcContractTxProcessor processor = new CallViewMethodTxProcessor(
             smartContract,
             methods,
-            integratorFactory.createMockProcessor(0),
+            integratorFactory.createReadonlyProcessor(),
             smcConfig
         );
         var executionLog = new ExecutionLog();
@@ -467,16 +468,35 @@ public class SmcApiServiceImpl implements SmcApiService {
     }
 
     @Override
+    public Response getSmcSpecificationByAddress(String addressStr, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+
+        AplAddress address = new AplAddress(Convert.parseAccountId(addressStr));
+        Account account = accountService.getAccount(address.getLongId());
+        if (account == null) {
+            return builder.error(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
+        }
+        if (!contractService.isContractExist(address)) {
+            return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
+        }
+        var response = new ContractSpecResponse();
+        String contractState = contractService.loadSerializedContract(address);
+        //response.setOverview();
+
+        return builder.bind(response).build();
+    }
+
+    @Override
     public Response getSmcStateByAddress(String addressStr, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
 
         AplAddress address = new AplAddress(Convert.parseAccountId(addressStr));
         Account account = accountService.getAccount(address.getLongId());
         if (account == null) {
-            return ResponseBuilderV2.apiError(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
+            return builder.error(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
         }
         if (!contractService.isContractExist(address)) {
-            return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
+            return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
         }
         ContractStateResponse response = new ContractStateResponse();
 

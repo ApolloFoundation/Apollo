@@ -9,7 +9,7 @@ package com.apollocurrency.aplwallet.apl.util.exception;
 //TODO Move to api module.
 public enum ApiErrors implements ApiErrorInfo {
 
-    INTERNAL_SERVER_EXCEPTION(0, 100, "Internal error, root cause: %s"),
+    INTERNAL_SERVER_EXCEPTION(-1, 100, "Internal error, root cause: %s"),
     BLOCKCHAIN_NOT_INITIALIZED(-1, 101, "Blockchain is not initialized."),
     UNCONFIRMED_TRANSACTION_CACHE_IS_FULL(-1, 102, "Blockchain is busy, the unconfirmed transaction cache is full."),
 
