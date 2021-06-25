@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.service.fulltext;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -24,7 +23,7 @@ public class FullTextOperationData {
     private String schema; // schema name
     private String tableName; // table name
     private String thread;
-    private BigInteger dbIdValue;
+    private Long dbIdValue;
     StringBuffer buffer = new StringBuffer();
 
     public FullTextOperationData(String schema, String tableName, String threadName) {

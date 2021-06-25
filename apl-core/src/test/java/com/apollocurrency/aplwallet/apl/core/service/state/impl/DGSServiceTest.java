@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
@@ -17,6 +18,8 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSTagTable;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSFeedback;
@@ -24,7 +27,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPublicFeedback;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSTag;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -56,6 +58,7 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.ConfigDirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -63,7 +66,6 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -115,9 +117,8 @@ public class DGSServiceTest extends DbContainerBaseTest {
         DGSPurchaseTable.class,
         DGSServiceImpl.class,
         DerivedDbTablesRegistryImpl.class,
-        BlockChainInfoServiceImpl.class, AccountServiceImpl.class)
+        BlockChainInfoServiceImpl.class, AccountServiceImpl.class, GenesisAccounts.class, JdbiHandleFactory.class, JdbiConfiguration.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class))
         .addBeans(MockBean.of(mock(ConfigDirProvider.class), ConfigDirProvider.class))
         .addBeans(MockBean.of(mock(AplAppStatus.class), AplAppStatus.class))
@@ -1326,50 +1327,50 @@ public class DGSServiceTest extends DbContainerBaseTest {
 
     @Test
     void testGetAllGoods() {
-        List<DGSGoods> dgsGoods = CollectionUtil.toList(service.getAllGoods(0, Integer.MAX_VALUE));
+        List<DGSGoods> dgsGoods = service.getAllGoods(0, Integer.MAX_VALUE);
         assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_2, dtd.GOODS_5, dtd.GOODS_10, dtd.GOODS_8, dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_13), dgsGoods);
     }
 
     @Test
     void testGetAllGoodsWithPagination() {
-        List<DGSGoods> dgsGoods = CollectionUtil.toList(service.getAllGoods(3, 5));
+        List<DGSGoods> dgsGoods = service.getAllGoods(3, 5);
         assertEquals(List.of(dtd.GOODS_5, dtd.GOODS_10, dtd.GOODS_8), dgsGoods);
     }
 
     @Test
     void testGetGoodsInStock() {
-        List<DGSGoods> dgsGoods = CollectionUtil.toList(service.getGoodsInStock(0, Integer.MAX_VALUE));
+        List<DGSGoods> dgsGoods = service.getGoodsInStock(0, Integer.MAX_VALUE);
         assertEquals(List.of(dtd.GOODS_12, dtd.GOODS_10, dtd.GOODS_11, dtd.GOODS_13), dgsGoods);
     }
 
     @Test
     void testGetGoodsInStockWithPagination() {
-        List<DGSGoods> dgsGoods = CollectionUtil.toList(service.getGoodsInStock(1, 2));
+        List<DGSGoods> dgsGoods = service.getGoodsInStock(1, 2);
         assertEquals(List.of(dtd.GOODS_10, dtd.GOODS_11), dgsGoods);
     }
 
     @Test
     void testGetSellerGoods() {
-        List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, false, 0, Integer.MAX_VALUE));
-        assertIterableEquals(List.of(dtd.GOODS_5, dtd.GOODS_12, dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_10, dtd.GOODS_8), goods);
-        goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, false, 0, Integer.MAX_VALUE));
+        List<DGSGoods> goods = service.getSellerGoods(SELLER_0_ID, false, 0, Integer.MAX_VALUE);
+        assertIterableEquals(List.of(dtd.GOODS_5, dtd.GOODS_12, dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_10, dtd.GOODS_8, dtd.GOODS_4), goods);
+        goods = service.getSellerGoods(SELLER_1_ID, false, 0, Integer.MAX_VALUE);
         assertIterableEquals(List.of(dtd.GOODS_2), goods);
     }
 
     @Test
     void testGetSellerGoodsInStock() {
-        List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, true, 0, Integer.MAX_VALUE));
+        List<DGSGoods> goods = service.getSellerGoods(SELLER_0_ID, true, 0, Integer.MAX_VALUE);
         assertIterableEquals(List.of(dtd.GOODS_12, dtd.GOODS_11, dtd.GOODS_10), goods);
-        goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, true, 0, Integer.MAX_VALUE));
+        goods = service.getSellerGoods(SELLER_1_ID, true, 0, Integer.MAX_VALUE);
         assertIterableEquals(List.of(), goods);
     }
 
     @Test
     void testGetSellerGoodsWithPagination() {
-        List<DGSGoods> goods = CollectionUtil.toList(service.getSellerGoods(SELLER_0_ID, false, 2, 4));
-        List<DGSGoods> expected = List.of(dtd.GOODS_4, dtd.GOODS_9, dtd.GOODS_11);
+        List<DGSGoods> goods = service.getSellerGoods(SELLER_0_ID, false, 2, 4);
+        List<DGSGoods> expected = List.of(dtd.GOODS_9, dtd.GOODS_11, dtd.GOODS_10);
         assertIterableEquals(expected, goods);
-        goods = CollectionUtil.toList(service.getSellerGoods(SELLER_1_ID, false, 0, 0));
+        goods = service.getSellerGoods(SELLER_1_ID, false, 0, 0);
         assertIterableEquals(List.of(dtd.GOODS_2), goods);
     }
 

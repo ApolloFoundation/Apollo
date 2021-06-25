@@ -46,7 +46,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -430,9 +429,7 @@ public class GenesisImporter {
         final int balanceNumber = sortedEntries.size();
         validateBalanceNumber(balanceNumber);
 
-        return sortedEntries.stream()
-            .skip(1) //skip first account to collect only genesis accounts
-            .collect(Collectors.toList());
+        return new ArrayList<>(sortedEntries);
     }
 
     private Queue<Map.Entry<String, Long>> loadGenesisAccountsFromIS(InputStream is) throws GenesisImportException {

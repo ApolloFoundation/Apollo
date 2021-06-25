@@ -4,9 +4,11 @@
 
 package com.apollocurrency.aplwallet.apl.testutil;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 
 import java.sql.Connection;
 import java.util.function.Consumer;
@@ -79,5 +81,11 @@ public class DbUtils {
             dataSource.rollback();
             throw new RuntimeException(e);
         }
+    }
+
+    public static JdbiHandleFactory createJdbiHandleFactory(DatabaseManager databaseManager) {
+        JdbiConfiguration jdbiConfiguration = new JdbiConfiguration(databaseManager);
+        jdbiConfiguration.init();
+        return new JdbiHandleFactory(jdbiConfiguration.jdbi());
     }
 }

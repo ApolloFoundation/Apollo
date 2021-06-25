@@ -9,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.DexOperationTestData;
 import com.apollocurrency.aplwallet.apl.dex.core.model.DexOperation;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -38,8 +39,8 @@ class DexOperationDaoTest extends DbContainerBaseTest {
 
     @BeforeEach
     void setUp() {
-        dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(
-            extension.getDatabaseManager().getJdbiHandleFactory(), DexOperationDao.class);
+
+        dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(DbUtils.createJdbiHandleFactory(extension.getDatabaseManager()), DexOperationDao.class);
         td = new DexOperationTestData();
     }
 
