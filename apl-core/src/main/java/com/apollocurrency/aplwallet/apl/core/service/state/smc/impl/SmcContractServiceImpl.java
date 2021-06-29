@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable;
@@ -34,6 +35,8 @@ import com.apollocurrency.smc.persistence.record.log.ArrayTxLog;
 import com.apollocurrency.smc.persistence.record.log.TxLog;
 import com.apollocurrency.smc.polyglot.Languages;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
+import com.apollocurrency.smc.polyglot.lib.ContractSpec;
+import com.apollocurrency.smc.polyglot.lib.LibraryProvider;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -55,16 +58,20 @@ public class SmcContractServiceImpl implements SmcContractService {
     private final ContractModelToEntityConverter contractModelToEntityConverter;
     private final ContractModelToStateEntityConverter contractModelToStateConverter;
 
-    private HashSumProvider hashSumProvider;
+    protected final SmcConfig smcConfig;
+    private final HashSumProvider hashSumProvider;
+    private final LibraryProvider libraryProvider;
 
     @Inject
-    public SmcContractServiceImpl(Blockchain blockchain, SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, HashSumProvider hashSumProvider) {
+    public SmcContractServiceImpl(Blockchain blockchain, SmcContractTable smcContractTable, SmcContractStateTable smcContractStateTable, ContractModelToEntityConverter contractModelToEntityConverter, ContractModelToStateEntityConverter contractModelToStateConverter, SmcConfig smcConfig) {
         this.blockchain = blockchain;
         this.smcContractTable = smcContractTable;
         this.smcContractStateTable = smcContractStateTable;
         this.contractModelToEntityConverter = contractModelToEntityConverter;
         this.contractModelToStateConverter = contractModelToStateConverter;
-        this.hashSumProvider = hashSumProvider;
+        this.smcConfig = smcConfig;
+        hashSumProvider = smcConfig.createHashSumProvider();
+        libraryProvider = smcConfig.createLanguageContext().getLibraryProvider();
     }
 
     @Override
@@ -101,6 +108,24 @@ public class SmcContractServiceImpl implements SmcContractService {
         log.debug("Loaded contract={}", contract);
 
         return contract;
+    }
+
+    /**
+     * Load the contract specification by the given address or null if the given address doesn't correspond the smart contract
+     *
+     * @param address given contract address
+     * @return loaded smart contract specification or throw {@link com.apollocurrency.smc.blockchain.ContractNotFoundException}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public ContractSpec loadContractSpec(Address address) {
+        SmcContractEntity smcEntity = loadContractEntity(address);
+        //TODO: move contract type determining routine to Save procedure and persist it to smc_contract table
+        var item = libraryProvider.parseContractType(smcEntity.getData());
+        var contractSpec = libraryProvider.loadSpecification(item.getType());
+        log.trace("Loaded specification for contract name={} type={}, spec={}", item.getName(), item.getType(), contractSpec);
+
+        return contractSpec;
     }
 
     @Override

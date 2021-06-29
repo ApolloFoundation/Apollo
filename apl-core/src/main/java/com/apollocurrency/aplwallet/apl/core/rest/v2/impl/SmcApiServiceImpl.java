@@ -10,8 +10,11 @@ import com.apollocurrency.aplwallet.api.v2.model.CallContractMethodReq;
 import com.apollocurrency.aplwallet.api.v2.model.CallViewMethodReq;
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.api.v2.model.ContractListResponse;
+import com.apollocurrency.aplwallet.api.v2.model.ContractMethod;
 import com.apollocurrency.aplwallet.api.v2.model.ContractSpecResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractStateResponse;
+import com.apollocurrency.aplwallet.api.v2.model.MethodSpec;
+import com.apollocurrency.aplwallet.api.v2.model.PropertySpec;
 import com.apollocurrency.aplwallet.api.v2.model.PublishContractReq;
 import com.apollocurrency.aplwallet.api.v2.model.ResultValueResponse;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionArrayResp;
@@ -24,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.CallMethodResultMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.MethodSpecMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.SmartMethodMapper;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
@@ -50,6 +54,9 @@ import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
+import com.apollocurrency.smc.contract.vm.ResultValue;
+import com.apollocurrency.smc.data.type.Address;
+import com.apollocurrency.smc.polyglot.lib.ContractSpec;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 
@@ -58,7 +65,11 @@ import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -66,6 +77,8 @@ import java.util.List;
 @Slf4j
 @RequestScoped
 public class SmcApiServiceImpl implements SmcApiService {
+
+    private static final String UNDEFINED = "undefined";
 
     private final AccountService accountService;
     private final SmcContractService contractService;
@@ -76,6 +89,8 @@ public class SmcApiServiceImpl implements SmcApiService {
     private final int maxAPIRecords;
     private final SmartMethodMapper methodMapper;
     private final CallMethodResultMapper methodResultMapper;
+    private final MethodSpecMapper methodSpecMapper;
+
 
     @Inject
     public SmcApiServiceImpl(BlockchainConfig blockchainConfig,
@@ -86,6 +101,7 @@ public class SmcApiServiceImpl implements SmcApiService {
                              SmcConfig smcConfig,
                              SmartMethodMapper methodMapper,
                              CallMethodResultMapper methodResultMapper,
+                             MethodSpecMapper methodSpecMapper,
                              @Property(name = "apl.maxAPIRecords", defaultValue = "100") int maxAPIRecords) {
         this.accountService = accountService;
         this.contractService = contractService;
@@ -95,6 +111,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         this.smcConfig = smcConfig;
         this.methodMapper = methodMapper;
         this.methodResultMapper = methodResultMapper;
+        this.methodSpecMapper = methodSpecMapper;
         this.maxAPIRecords = maxAPIRecords;
     }
 
@@ -224,32 +241,128 @@ public class SmcApiServiceImpl implements SmcApiService {
             contractAccount.setPublicKey(accountService.getPublicKey(contractAccount.getId()));
         }
         AplAddress contractAddress = new AplAddress(contractAccount.getId());
-        SmartContract smartContract;
-        try {
-            smartContract = contractService.loadContract(
-                contractAddress,
-                new ContractFuel(BigInteger.ZERO, BigInteger.ONE)
-            );
-            //smartContract.setSender(new AplAddress(transaction.getSenderId()));
-        } catch (ContractNotFoundException e) {
-            return builder.error(ApiErrors.CONTRACT_NOT_FOUND, contractAddress.getHex()).build();
+
+        var executionLog = new ExecutionLog();
+
+        var result = processAllMethods(contractAddress, body.getMembers(), executionLog);
+
+        if (executionLog.hasError()) {
+            return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), contractAddress.getHex()).build();
+        }
+        var response = new ResultValueResponse();
+        response.setResults(methodResultMapper.convert(result));
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response getSmcSpecificationByAddress(String addressStr, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+
+        AplAddress address = new AplAddress(Convert.parseAccountId(addressStr));
+        Account account = accountService.getAccount(address.getLongId());
+        if (account == null) {
+            return builder.error(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
+        }
+        if (!contractService.isContractExist(address)) {
+            return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
+        }
+        var response = new ContractSpecResponse();
+        var contractSpec = contractService.loadContractSpec(address);
+
+        var viewMethods = contractSpec.getMembers().stream()
+            .filter(member -> member.getStateMutability() == ContractSpec.StateMutability.VIEW && member.getVisibility() == ContractSpec.Visibility.PUBLIC)
+            .collect(Collectors.toList());
+
+        List<ContractMethod> methodsToCall = new ArrayList<>();
+
+        viewMethods.forEach(member -> {
+            ContractMethod m = new ContractMethod();
+            m.setFunction(member.getName());
+            if (member.getInputs() == null || member.getInputs().isEmpty()) {
+                methodsToCall.add(m);
+            }
+        });
+
+        var executionLog = new ExecutionLog();
+        var result = processAllMethods(address, methodsToCall, executionLog);
+
+        if (executionLog.hasError()) {
+            return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), address.getHex()).build();
         }
 
-        var response = new ResultValueResponse();
-        var methods = methodMapper.convert(body.getMembers());
+        var resultMap = toMap(result);
+        var property = new PropertySpec();
+        property.setName("Contract");
+        property.setType("address");
+        property.setValue(address.getHex());
+        var overviewProperties = new ArrayList<PropertySpec>();
+        overviewProperties.add(property);
+        overviewProperties.addAll(createOverview(resultMap));
+        response.setOverview(overviewProperties);
+
+        response.setMembers(methodSpecMapper.convert(viewMethods));
+        matchResults(response.getMembers(), resultMap);
+
+        return builder.bind(response).build();
+    }
+
+    private Map<String, String> toMap(List<ResultValue> result) {
+        Map<String, String> resultMap = new HashMap<>();
+        result.forEach(resultValue -> {
+                var value = (resultValue.getOutput().isEmpty()) ? UNDEFINED : resultValue.getOutput().get(0).toString();
+                resultMap.put(resultValue.getMethod(), value);
+            }
+        );
+        return resultMap;
+    }
+
+    private void matchResults(List<MethodSpec> methods, Map<String, String> resultMap) {
+        methods.forEach(methodSpec -> {
+            if (methodSpec.getInputs() == null || methodSpec.getInputs().isEmpty()) {
+                methodSpec.setValue(resultMap.getOrDefault(methodSpec.getName(), UNDEFINED));
+            }
+        });
+    }
+
+    private List<PropertySpec> createOverview(Map<String, String> resultMap) {
+        //TODO: move Overview info to ContractSpec
+        var properties = List.of(
+            new String[]{"name", "string"},
+            new String[]{"symbol", "string"},
+            new String[]{"decimals", "uint"},
+            new String[]{"totalSupply", "uint"});
+
+        var propertySpec = new ArrayList<PropertySpec>();
+
+        properties.forEach(s -> {
+            var prop = new PropertySpec();
+            prop.setName(s[0]);
+            prop.setType(s[1]);
+            prop.setValue(resultMap.getOrDefault(s[0], UNDEFINED));
+            propertySpec.add(prop);
+        });
+        return propertySpec;
+    }
+
+    private List<ResultValue> processAllMethods(Address contractAddress, List<ContractMethod> members, ExecutionLog executionLog) {
+        SmartContract smartContract = contractService.loadContract(
+            contractAddress,
+            new ContractFuel(BigInteger.ZERO, BigInteger.ONE)
+        );
+        //smartContract.setSender(new AplAddress(transaction.getSenderId()));
+
+        var methods = methodMapper.convert(members);
         SmcContractTxProcessor processor = new CallViewMethodTxProcessor(
             smartContract,
             methods,
             integratorFactory.createReadonlyProcessor(),
             smcConfig
         );
-        var executionLog = new ExecutionLog();
+
         var result = processor.batchProcess(executionLog);
-        if (executionLog.hasError()) {
-            return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), contractAddress.getHex()).build();
-        }
-        response.setResults(methodResultMapper.convert(result));
-        return builder.bind(response).build();
+
+        return result;
     }
 
     @Override
@@ -463,25 +576,6 @@ public class SmcApiServiceImpl implements SmcApiService {
         );
 
         response.setContracts(contracts);
-
-        return builder.bind(response).build();
-    }
-
-    @Override
-    public Response getSmcSpecificationByAddress(String addressStr, SecurityContext securityContext) throws NotFoundException {
-        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
-
-        AplAddress address = new AplAddress(Convert.parseAccountId(addressStr));
-        Account account = accountService.getAccount(address.getLongId());
-        if (account == null) {
-            return builder.error(ApiErrors.INCORRECT_VALUE, "address", addressStr).build();
-        }
-        if (!contractService.isContractExist(address)) {
-            return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
-        }
-        var response = new ContractSpecResponse();
-        String contractState = contractService.loadSerializedContract(address);
-        //response.setOverview();
 
         return builder.bind(response).build();
     }
