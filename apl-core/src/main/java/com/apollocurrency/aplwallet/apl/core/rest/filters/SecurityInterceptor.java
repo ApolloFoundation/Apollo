@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.filters;
 import com.apollocurrency.aplwallet.apl.core.http.AdminPasswordVerifier;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import io.firstbridge.kms.infrastructure.web.resource.WorkMode;
 import io.firstbridge.kms.security.KmsMainConfig;
 import io.firstbridge.kms.security.TokenProvider;
 import io.firstbridge.kms.security.context.JWTSecurityContext;
@@ -63,6 +64,7 @@ public class SecurityInterceptor implements ContainerRequestFilter {
 
     private TokenProvider tokenProvider;
     private KmsMainConfig kmsMainConfig;
+    private boolean isRemoteServerMode;
 
 /*    @Inject
     public SecurityInterceptor(@Context ResourceInfo info,
@@ -122,8 +124,9 @@ public class SecurityInterceptor implements ContainerRequestFilter {
             if (tokenProvider == null) {
                 this.kmsMainConfig = CDI.current().select(KmsMainConfig.class).get(); // KMS
                 this.tokenProvider = new JwtTokenProvider(this.kmsMainConfig);
+                this.isRemoteServerMode = kmsMainConfig.getRemoteKmsConfig().getRemoteServerModeOn().equals(WorkMode.REMOTE_SERVER);
             }
-            // skip that security check for KMS Controller call here. JWT will be checked by controller itself
+            // skip token check for remote KMS server
             String token = authorizationHeader.substring(tokenProvider.authSchema().length() + 1);//including one extra space symbol
             try {
                 DecodedJWT decodedJWT = tokenProvider.verify(token);

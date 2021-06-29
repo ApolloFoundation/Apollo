@@ -68,7 +68,6 @@ public class DatabaseKVStorageConfigParametersImpl implements KVStorageConfigPro
             this.dbType = dbProperties.getDbType();
             this.dbDir = dbProperties.getDbDir();
             this.dbName = dbProperties.getDbName();
-//            dbProperties.setDbName(KMS_SCHEMA_NAME); // update value
             this.dbParams = dbProperties.getDbParams();
             this.dbUsername = dbProperties.getDbUsername();
             this.dbPassword = dbProperties.getDbPassword();
@@ -77,7 +76,6 @@ public class DatabaseKVStorageConfigParametersImpl implements KVStorageConfigPro
             this.loginTimeout = dbProperties.getLoginTimeout();
             this.defaultLockTimeout = dbProperties.getDefaultLockTimeout();
             this.maxMemoryRows = dbProperties.getMaxMemoryRows();
-//            this.dbIdentity = KMS_SCHEMA_NAME;
 
             this.databaseHost = dbProperties.getDatabaseHost();
             this.databasePort = dbProperties.getDatabasePort();
