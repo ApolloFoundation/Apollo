@@ -10,6 +10,7 @@ import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
+import com.apollocurrency.smc.polyglot.lib.ContractSpec;
 
 import java.util.List;
 
@@ -33,6 +34,8 @@ public interface SmcContractService {
      * @return loaded smart contract or null
      */
     SmartContract loadContract(Address address, Fuel contractFuel);
+
+    ContractSpec loadContractSpec(Address address);
 
     /**
      * Checks if contract already exists

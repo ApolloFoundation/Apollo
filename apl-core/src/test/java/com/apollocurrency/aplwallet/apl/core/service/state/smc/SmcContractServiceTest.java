@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable;
@@ -20,7 +21,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishCont
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
-import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.ContractType;
 import com.apollocurrency.smc.contract.SmartContract;
@@ -29,6 +29,7 @@ import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.persistence.record.log.DevNullLog;
+import com.apollocurrency.smc.polyglot.LanguageContext;
 import com.apollocurrency.smc.polyglot.Languages;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,7 +73,9 @@ class SmcContractServiceTest {
     ContractModelToStateEntityConverter contractModelToStateConverter = new ContractModelToStateEntityConverter();
 
     @Mock
-    HashSumProvider hashSumProvider;
+    SmcConfig smcConfig;
+    @Mock
+    LanguageContext languageContext;
 
     SmcPublishContractAttachment smcPublishContractAttachment;
     SmcTxData smcTxData;
@@ -88,13 +91,13 @@ class SmcContractServiceTest {
     @BeforeEach
     void setUp() {
         initMocks(this);
-
+        when(smcConfig.createLanguageContext()).thenReturn(languageContext);
         contractService = new SmcContractServiceImpl(blockchain,
             smcContractTable,
             smcContractStateTable,
             contractModelToEntityConverter,
             contractModelToStateConverter,
-            hashSumProvider);
+            smcConfig);
 
         smcTxData = SmcTxData.builder()
             .address("APL-632K-TWX3-2ALQ-973CU")
