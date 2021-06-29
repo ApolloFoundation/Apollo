@@ -134,7 +134,7 @@
               <generateSupportingFiles>false</generateSupportingFiles>
               <supportingFilesToGenerate>ApiException.java,NotFoundException.java</supportingFilesToGenerate>
               <modelsToGenerate>
-                AccountInfo,AccountInfoResp,AccountReq,AccountReqTest,AccountReqSendMoney,BlockchainInfo,BlockInfo,BlockchainState,CountResponse,CreateChildAccountResp,EmptyResponse,HealthResponse,ListResponse,QueryCountResult,QueryObject,QueryResult,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,TxReceipt,TxRequest,PublishContractReq,CallContractMethodReq,ContractListResponse,ContractDetails,ContractDetailsResponse,ContractStateResponse,TransactionArrayResp
+                AccountInfo,AccountInfoResp,AccountReq,AccountReqTest,AccountReqSendMoney,BlockchainInfo,BlockInfo,BlockchainState,CountResponse,CreateChildAccountResp,EmptyResponse,HealthResponse,ListResponse,QueryCountResult,QueryObject,QueryResult,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,TxReceipt,TxRequest,PublishContractReq,CallContractMethodReq,ContractListResponse,ContractDetails,ContractDetailsResponse,ContractStateResponse,ContractMethod,CallMethodResult,TransactionArrayResp,CallViewMethodReq,ResultValueResponse,MethodSpec,PropertySpec,ArgSpec,ContractSpecResponse
               </modelsToGenerate>
               <configHelp>false</configHelp>
               <configOptions>

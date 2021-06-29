@@ -31,24 +31,33 @@ import java.math.BigInteger;
 @Slf4j
 public abstract class AbstractSmcTransactionType extends TransactionType {
     protected SmcContractService contractService;
-    protected final FuelValidator fuelValidator;
+    protected final FuelValidator fuelMinMaxValidator;
     protected final SmcBlockchainIntegratorFactory integratorFactory;
     protected final SmcConfig smcConfig;
 
     AbstractSmcTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
                                SmcContractService contractService,
-                               FuelValidator fuelValidator,
+                               FuelValidator fuelMinMaxValidator,
                                SmcBlockchainIntegratorFactory integratorFactory,
                                SmcConfig smcConfig) {
         super(blockchainConfig, accountService);
         this.contractService = contractService;
-        this.fuelValidator = fuelValidator;
+        this.fuelMinMaxValidator = fuelMinMaxValidator;
         this.integratorFactory = integratorFactory;
         this.smcConfig = smcConfig;
     }
 
     protected ExecutionEnv getExecutionEnv() {
         return smcConfig.createExecutionEnv();
+    }
+
+    @Override
+    public Fee getBaselineFee(Transaction transaction) {
+        //TODO calculate the required fuel value by executing the contract
+        //currently use: fee = fuelPrice * fuelLimit
+        AbstractSmcAttachment attachment = (AbstractSmcAttachment) transaction.getAttachment();
+        var fee = attachment.getFuelPrice().multiply(attachment.getFuelLimit()).longValueExact();
+        return new Fee.ConstantFee(fee);
     }
 
     @Override
@@ -84,10 +93,10 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     public final void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         checkPrecondition(transaction);
         AbstractSmcAttachment attachment = (AbstractSmcAttachment) transaction.getAttachment();
-        if (!fuelValidator.validateLimitValue(attachment.getFuelLimit())) {
+        if (!fuelMinMaxValidator.validateLimitValue(attachment.getFuelLimit())) {
             throw new AplException.NotCurrentlyValidException("Fuel limit value doesn't correspond to the MIN or MAX values.");
         }
-        if (!fuelValidator.validatePriceValue(attachment.getFuelPrice())) {
+        if (!fuelMinMaxValidator.validatePriceValue(attachment.getFuelPrice())) {
             throw new AplException.NotCurrentlyValidException("Fuel price value doesn't correspond to the MIN or MAX values.");
         }
 

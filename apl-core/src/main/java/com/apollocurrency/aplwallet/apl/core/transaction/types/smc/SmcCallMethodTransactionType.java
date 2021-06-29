@@ -14,9 +14,9 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodSmcContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxCallMethodValidationProcessorContract;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SyntaxParseProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodTxValidator;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallPayableMethodTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SyntaxValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -32,7 +32,6 @@ import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
-import com.apollocurrency.smc.contract.fuel.FuelCalculator;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
@@ -65,13 +64,6 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
     @Override
     public TransactionTypes.TransactionTypeSpec getSpec() {
         return TransactionTypes.TransactionTypeSpec.SMC_CALL_METHOD;
-    }
-
-    @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        //TODO calculate the required fuel value by executing the contract
-        FuelCalculator fuelCalculator = getExecutionEnv().getPrice().forMethodCalling(BigInteger.valueOf(transaction.getAmountATM()));
-        return new SmcFuelBasedFee(fuelCalculator);
     }
 
     @Override
@@ -122,14 +114,15 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
         //syntactical and semantic validation
-        SmcContractTxProcessor processor = new SandboxCallMethodValidationProcessorContract(
+        SmcContractTxProcessor processor = new CallMethodTxValidator(
             smartContract,
             smartMethod,
             integratorFactory.createMockProcessor(transaction.getId()),
             smcConfig
         );
-        ExecutionLog executionLog = processor.process();
-        if (executionLog.isError()) {
+        var executionLog = new ExecutionLog();
+        processor.process(executionLog);
+        if (executionLog.hasError()) {
             log.debug("SMC: doStateDependentValidation = INVALID");
             throw new AplException.NotCurrentlyValidException(executionLog.toJsonString());
         }
@@ -148,7 +141,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .args(attachment.getMethodParams())
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
-        BigInteger calculatedFuel = ((Fee.FuelBasedFee) getBaselineFee(transaction)).calcFuel(smartMethod);
+        BigInteger calculatedFuel = getFuelBasedFee(transaction).calcFuel(smartMethod);
         Fuel actualFuel = new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice());
         if (!actualFuel.tryToCharge(calculatedFuel)) {
             log.error("Needed fuel={} but actual={}", calculatedFuel, actualFuel);
@@ -156,13 +149,14 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
                 + calculatedFuel + " but actual=" + actualFuel);
         }
         //syntactical validation
-        SmcContractTxProcessor processor = new SyntaxParseProcessor(
+        SmcContractTxProcessor processor = new SyntaxValidator(
             smartMethod.getMethodWithParams(),
             integratorFactory.createMockProcessor(transaction.getId()),
             smcConfig
         );
-        ExecutionLog executionLog = processor.process();
-        if (executionLog.isError()) {
+        var executionLog = new ExecutionLog();
+        processor.process(executionLog);
+        if (executionLog.hasError()) {
             log.debug("SMC: doStateIndependentValidation = INVALID");
             throw new AplException.NotCurrentlyValidException("Syntax error: " + executionLog.toJsonString());
         }
@@ -189,9 +183,10 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
 
         BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
-        SmcContractTxProcessor processor = new CallMethodSmcContractTxProcessor(smartContract, smartMethod, integrator, smcConfig);
-        ExecutionLog executionLog = processor.process();
-        if (executionLog.isError()) {
+        SmcContractTxProcessor processor = new CallPayableMethodTxProcessor(smartContract, smartMethod, integrator, smcConfig);
+        var executionLog = new ExecutionLog();
+        processor.process(executionLog);
+        if (executionLog.hasError()) {
             log.error(executionLog.toJsonString());
             throw new AplException.SMCProcessingException(executionLog.toJsonString());
         }
@@ -200,5 +195,10 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         log.debug("After processing Address={} Fuel={}", smartContract.getAddress(), fuel);
         refundRemaining(transaction, senderAccount, fuel);
         contractService.updateContractState(smartContract);
+    }
+
+    private Fee.FuelBasedFee getFuelBasedFee(Transaction transaction) {
+        var fuelCalculator = getExecutionEnv().getPrice().forMethodCalling(BigInteger.valueOf(transaction.getAmountATM()));
+        return new SmcFuelBasedFee(fuelCalculator);
     }
 }

@@ -14,9 +14,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishSmcContractTxProcessor;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SandboxPublishContractValidationProcessor;
-import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
@@ -48,7 +47,7 @@ import java.util.Map;
 @Slf4j
 @Singleton
 public class SmcPublishContractTransactionType extends AbstractSmcTransactionType {
-    protected final SmcFuelBasedFee PUBLISH_CONTRACT_FEE = new SmcFuelBasedFee(getExecutionEnv().getPrice().forContractPublishing());
+    protected final SmcFuelBasedFee publishContractFee = new SmcFuelBasedFee(getExecutionEnv().getPrice().forContractPublishing());
 
     @Inject
     public SmcPublishContractTransactionType(BlockchainConfig blockchainConfig, AccountService accountService,
@@ -62,12 +61,6 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     @Override
     public TransactionTypes.TransactionTypeSpec getSpec() {
         return TransactionTypes.TransactionTypeSpec.SMC_PUBLISH;
-    }
-
-    @Override
-    public Fee getBaselineFee(Transaction transaction) {
-        //TODO calculate the required fuel value by executing the contract
-        return PUBLISH_CONTRACT_FEE;
     }
 
     @Override
@@ -121,16 +114,17 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             throw new AplException.NotCurrentlyValidException("Empty contract language name.");
         }
         SmartContract smartContract = contractService.createNewContract(transaction);
-        BigInteger calculatedFuel = PUBLISH_CONTRACT_FEE.calcFuel(smartContract);
+        BigInteger calculatedFuel = publishContractFee.calcFuel(smartContract);
         if (!smartContract.getFuel().tryToCharge(calculatedFuel)) {
             log.error("Needed fuel={} but actual={}", calculatedFuel, smartContract.getFuel());
             throw new AplException.NotCurrentlyValidException("Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel());
         }
         //syntactical and semantic validation
         BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
-        SmcContractTxProcessor processor = new SandboxPublishContractValidationProcessor(smartContract, integrator, smcConfig);
-        ExecutionLog executionLog = processor.process();
-        if (executionLog.isError()) {
+        SmcContractTxProcessor processor = new PublishContractTxValidator(smartContract, integrator, smcConfig);
+        var executionLog = new ExecutionLog();
+        processor.process(executionLog);
+        if (executionLog.hasError()) {
             log.debug("SMC: doStateIndependentValidation = INVALID");
             throw new AplException.NotCurrentlyValidException(executionLog.toJsonString());
         }
@@ -145,9 +139,10 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
         BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
-        SmcContractTxProcessor processor = new PublishSmcContractTxProcessor(smartContract, integrator, smcConfig);
-        ExecutionLog executionLog = processor.process();
-        if (executionLog.isError()) {
+        SmcContractTxProcessor processor = new PublishContractTxProcessor(smartContract, integrator, smcConfig);
+        var executionLog = new ExecutionLog();
+        processor.process(executionLog);
+        if (executionLog.hasError()) {
             throw new AplException.SMCProcessingException(executionLog.toJsonString());
         }
         @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})

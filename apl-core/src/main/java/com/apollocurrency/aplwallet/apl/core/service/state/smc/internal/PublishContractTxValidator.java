@@ -8,11 +8,12 @@ import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
-import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import lombok.extern.slf4j.Slf4j;
 
-import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT_METHOD_VALIDATION_ERROR;
+import java.util.Optional;
+
+import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT_VALIDATION_ERROR;
 
 /**
  * Validate the smart contract - create and initialize the smart contract and manipulate balances in sandbox.
@@ -22,27 +23,22 @@ import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class SandboxCallMethodValidationProcessorContract extends AbstractSmcContractTxProcessor {
-    private final SmartMethod smartMethod;
+public class PublishContractTxValidator extends AbstractSmcContractTxProcessor {
 
-    public SandboxCallMethodValidationProcessorContract(SmartContract smartContract, SmartMethod smartMethod, BlockchainIntegrator processor, SmcConfig smcConfig) {
+    public PublishContractTxValidator(SmartContract smartContract, BlockchainIntegrator processor, SmcConfig smcConfig) {
         super(smcConfig, processor, smartContract);
-        this.smartMethod = smartMethod;
-    }
-
-    public SmartMethod smartMethod() {
-        return smartMethod;
     }
 
     @Override
-    public void executeContract(ExecutionLog executionLog) {
+    public Optional<Object> executeContract(ExecutionLog executionLog) {
         boolean isValid;
-        validateStatus(ContractStatus.ACTIVE);
-        isValid = smcMachine.validateMethod(getSmartContract(), smartMethod);
+        validateStatus(ContractStatus.CREATED);
+        isValid = smcMachine.validateContract(getSmartContract());
         executionLog.join(smcMachine.getExecutionLog());
         smcMachine.resetExecutionLog();
         if (!isValid) {
-            executionLog.setErrorCode(CONTRACT_METHOD_VALIDATION_ERROR.getErrorCode());
+            executionLog.setErrorCode(CONTRACT_VALIDATION_ERROR.getErrorCode());
         }
+        return Optional.empty();
     }
 }

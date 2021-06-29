@@ -792,6 +792,62 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /@@smc/r/method:
+    post:
+      tags:
+        - smc
+      summary: call view method of the smartcontract
+      description: call view method of the smartcontract and return value.
+      operationId: callViewMethod
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CallViewMethodReq'
+      responses:
+        200:
+          description: Returns the result of evaluating the given method of the smart contract
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultValueResponse'
+        401:
+          description: Unauthorized Error
+        403:
+          description: Access Forbidden
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/r/spec/{address}:
+    get:
+      tags:
+        - smc
+      summary: Get the contract specification.
+      description: Returns the contract specification.
+      operationId: getSmcSpecificationByAddress
+      parameters:
+        - name: address
+          in: path
+          description: The contract address
+          required: true
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractSpecResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+
 components:
   parameters:
     FirstIndexParameter:
@@ -1569,6 +1625,38 @@ components:
           description: the scalar value equal to the number of ATM; fuel price
           example: '100'
 
+    CallViewMethodReq:
+      required:
+        - address
+      type: object
+      properties:
+        address:
+          type: string
+          description: the contract address
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        members:
+          type: array
+          description: list of function
+          maxItems: 64
+          items:
+            $ref: '#/components/schemas/ContractMethod'
+
+    ContractMethod:
+      type: object
+      properties:
+        function:
+          type: string
+          description: the contract function/method name
+          example: 'purchase'
+        input:
+          type: array
+          description: list of parameters
+          example: '["firstParam", 123, "0x98765"]'
+          maxItems: 128
+          items:
+            type: string
+            example: '"firstParam"'
+
     TransactionArrayResp:
       required:
         - tx
@@ -1596,6 +1684,114 @@ components:
               description: the contract state json
               type: string
               example: "{'value': 20000}"
+
+    ContractSpecResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            overview:
+              description: the contract overview
+              type: array
+              items:
+                $ref: '#/components/schemas/PropertySpec'
+            members:
+              description: the contract public functions
+              type: array
+              items:
+                $ref: '#/components/schemas/MethodSpec'
+
+    PropertySpec:
+      type: object
+      properties:
+        name:
+          description: the propery name
+          type: string
+          example: "totalSupply"
+        type:
+          description: property type
+          type: string
+          example: uint
+        value:
+          description: property value
+          type: string
+          example: 25000000000
+
+    ArgSpec:
+      type: object
+      properties:
+        name:
+          description: the propery name
+          type: string
+          example: "totalSupply"
+        type:
+          description: property type
+          type: string
+          example: uint
+
+    MethodSpec:
+      type: object
+      properties:
+        name:
+          description: the method/function name
+          type: string
+          example: balanceOf
+        inputs:
+          description: input params
+          type: array
+          items:
+            $ref: '#/components/schemas/ArgSpec'
+        outputs:
+          description: output value
+          type: array
+          items:
+            $ref: '#/components/schemas/PropertySpec'
+        stateMutability:
+          description: "a string with one of the following values: view, nonpayable, payable, pure"
+          type: string
+          example: view
+        value:
+          description: output value
+          type: string
+          example: '24999000000'
+
+    ResultValueResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/CallMethodResult'
+
+    CallMethodResult:
+      type: object
+      properties:
+        method:
+          description: the view method name
+          type: string
+          example: "balanceOf"
+        signature:
+          description: the view method signature
+          type: string
+          example: "balanceOf('0x1234567890');"
+        output:
+          description: the result
+          type: array
+          items:
+            type: string
+            format: json
+            description: the JSON stringified value; simple value or object
+            example: '"1234"  or  {"value":"99012345678"}'
+        errorCode:
+          description: error code
+          type: integer
+          example: 10002
+        errorDescription:
+          description: error description
+          type: string
+          example: "Can't call method [pay] on contract [APL20_B1]"
 
     ContractDetails:
       type: object
