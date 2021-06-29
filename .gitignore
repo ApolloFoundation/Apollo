@@ -2,7 +2,7 @@ classes/*
 classes
 classes*
 classes/*.*
-.idea/
+**/.idea/
 addons/classes
 apl_db/
 classes/
@@ -11,7 +11,7 @@ target/
 sources.tmp
 Apollo.jar
 Apolloservice.jar
-*.iml
+**/*.iml
 *.log
 /lib
 logs
