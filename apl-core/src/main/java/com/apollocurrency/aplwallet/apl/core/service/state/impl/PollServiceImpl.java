@@ -20,16 +20,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.Vote;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
@@ -44,12 +40,15 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollC
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -309,7 +308,7 @@ public class PollServiceImpl implements PollService {
         FullTextOperationData operationData = new FullTextOperationData(
             DEFAULT_SCHEMA, pollTable.getTableName(), Thread.currentThread().getName());
         operationData.setOperationType(operationType);
-        operationData.setDbIdValue(BigInteger.valueOf(poll.getDbId()));
+        operationData.setDbIdValue(poll.getDbId());
         operationData.addColumnData(poll.getName()).addColumnData(poll.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);

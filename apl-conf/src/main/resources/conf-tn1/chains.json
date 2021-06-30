@@ -31,7 +31,11 @@
         "blockTime": 60,
         "maxBlockTimeLimit": 67,
         "minBlockTimeLimit": 53,
-        "maxBalance": 30000000000
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 500
+        }
       },
       {
         "height": 2000,
@@ -46,6 +50,10 @@
             "enabled": "true",
             "adaptiveBlockTime": 60
           }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 500
         }
       },
       {
@@ -61,6 +69,10 @@
             "enabled": "true",
             "adaptiveBlockTime": 10
           }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 500
         }
       },
       {
@@ -70,7 +82,11 @@
         "blockTime": 60,
         "maxBlockTimeLimit": 70,
         "minBlockTimeLimit": 50,
-        "maxBalance": 30000000000
+        "maxBalance": 30000000000,
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 500
+        }
       },
       {
         "height": 624999,
@@ -89,7 +105,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 655000
+          "frequency": 500
         }
       },
       {
@@ -109,7 +125,7 @@
         },
         "shardingSettings": {
           "enabled": true,
-          "frequency": 655000
+          "frequency": 500
         },
         "transactionFeeSettings": {
           "feeRates": [

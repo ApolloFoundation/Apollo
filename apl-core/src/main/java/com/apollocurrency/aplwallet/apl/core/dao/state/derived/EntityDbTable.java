@@ -20,18 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
-import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
-import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import org.slf4j.Logger;
 
 import javax.enterprise.event.Event;
@@ -348,7 +346,6 @@ public abstract class EntityDbTable<T extends DerivedEntity> extends BasicDbTabl
             // entity is the latest and exists on the top of the blockchain
             if (multiversion && !t.isNew()) {
                 try (
-                    @DatabaseSpecificDml(DmlMarker.UPDATE_WITH_LIMIT)
                     PreparedStatement pstmt = con.prepareStatement("UPDATE " + table
                         + " SET latest = FALSE WHERE db_id = ?")
                 ) {

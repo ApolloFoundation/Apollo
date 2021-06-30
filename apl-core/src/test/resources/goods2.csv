@@ -1,4 +1,4 @@
-id(-5|20|0),seller_id(-5|20|0),name(12|1020|0),description(12|1020|0),parsed_tags(-1|-1|0),has_image(-7|1|0),tags(12|1020|0),TIMESTAMP(4|11|0),quantity(4|11|0),price(-5|20|0),delisted(-7|1|0),height(4|11|0)
+id,seller_id,name,description,parsed_tags,has_image,tags,timestamp,quantity,price,delisted,height
 -2435273303773642125,7821792282123976600,'ProductForSale','description of product for Sale','[\"auto\"]',0,'auto',45688038,10,10,0,534
 4778260210959939816,7821792282123976600,'ProductForSale','','[]',0,'',45688053,0,10000000000,0,541
 8929676543941298806,7821792282123976600,'ProductForSale','','[]',0,'',45689287,0,10000000000,0,631

@@ -6,18 +6,16 @@ package com.apollocurrency.aplwallet.apl.core.shard;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDaoJdbc;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.ShardDataSourceCreateHelper;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.commands.CommandParamInfo;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.AbstractHelper;
@@ -39,6 +37,7 @@ import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import org.slf4j.Logger;
 
@@ -48,7 +47,6 @@ import java.io.FilenameFilter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
@@ -74,7 +72,6 @@ import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCH
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.SHARD_SCHEMA_FULL;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_FINISHED;
 import static com.apollocurrency.aplwallet.apl.core.shard.MigrateState.ZIP_ARCHIVE_STARTED;
-import static com.apollocurrency.aplwallet.apl.core.shard.ShardConstants.DB_BACKUP_FORMAT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -139,37 +136,7 @@ public class ShardEngineImpl implements ShardEngine {
      */
     @Override
     public MigrateState createBackup() {
-        long start = System.currentTimeMillis();
-        durableTaskUpdateByState(state, 0.0, "Backup main database...");
-        ShardDataSourceCreateHelper shardDataSourceCreateHelper =
-            new ShardDataSourceCreateHelper(databaseManager);
-        TransactionalDataSource sourceDataSource = databaseManager.getDataSource();
-        String nextShardName = shardDataSourceCreateHelper.createUninitializedDataSource().checkGenerateShardName();
-        Path dbDir = dirProvider.getDbDir();
-        String backupName = String.format(DB_BACKUP_FORMAT, nextShardName);
-        Path backupPath = dbDir.resolve(backupName);
-        String sql = String.format("BACKUP TO '%s'", backupPath.toAbsolutePath().toString());
-        try (Connection con = sourceDataSource.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.executeUpdate();
-            if (!Files.exists(backupPath)) {
-                state = FAILED;
-                log.error("BACKUP main db has FAILED, SQL={}, shard = {}, backup was not found in path = {}",
-                    sql, shardDataSourceCreateHelper.getShardId(), backupPath);
-                durableTaskUpdateByState(state, null, null);
-            }
-            log.debug("BACKUP by SQL={} was successful, shard = {}", sql, shardDataSourceCreateHelper.getShardId());
-            state = MigrateState.MAIN_DB_BACKUPED;
-            durableTaskUpdateByState(state, 3.0, "Backed up");
-            loadAndRefreshRecovery(sourceDataSource);
-        } catch (SQLException e) {
-            log.error("ERROR on backup db before sharding, sql = " + sql, e);
-            state = FAILED;
-            durableTaskUpdateByState(state, null, null);
-        }
-        log.debug("BACKUP db before shard ({}) in {} sec", state.name(),
-            (System.currentTimeMillis() - start) / 1000);
-        return state;
+        throw new UnsupportedOperationException("Backup shard operation is not supported");
     }
 
     /**

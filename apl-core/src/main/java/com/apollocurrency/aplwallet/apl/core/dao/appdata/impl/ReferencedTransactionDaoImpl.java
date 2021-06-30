@@ -5,12 +5,11 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMa
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import org.jdbi.v3.core.Jdbi;
 
@@ -21,12 +20,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Singleton
 public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransaction> implements ReferencedTransactionDao {
-    private static final KeyFactory<ReferencedTransaction> KEY_FACTORY = new LongKeyFactory<ReferencedTransaction>("transaction_id") {
+    private static final LongKeyFactory<ReferencedTransaction> KEY_FACTORY = new LongKeyFactory<ReferencedTransaction>("transaction_id") {
         @Override
         public DbKey newKey(ReferencedTransaction referencedTransaction) {
             return new LongKey(referencedTransaction.getTransactionId());
@@ -39,7 +39,7 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
     @Inject
     public ReferencedTransactionDaoImpl(DatabaseManager databaseManager,
                                         TransactionEntityRowMapper transactionRowMapper,
-                                        Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                                        Event<DeleteOnTrimData> deleteOnTrimDataEvent, Jdbi jdbi) {
         super(TABLE, KEY_FACTORY, false, null, databaseManager, deleteOnTrimDataEvent);
         this.transactionRowMapper = transactionRowMapper;
     }
@@ -61,50 +61,57 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
 
     @Override
     public Optional<Long> getReferencedTransactionIdFor(long transactionId) {
-        Jdbi jdbi = getDatabaseManager().getJdbi();
-        return jdbi.withHandle(handle ->
-            handle.createQuery("SELECT referenced_transaction_id FROM referenced_transaction where transaction_id = :transactionId")
-                .bind("transactionId", transactionId)
-                .mapTo(Long.class)
-                .findFirst()
-        );
+        return Optional.ofNullable(get(KEY_FACTORY.newKey(transactionId)))
+            .flatMap(e -> Optional.of(e.getReferencedTransactionId()));
     }
 
     @Override
     public List<Long> getAllReferencedTransactionIds() {
-        Jdbi jdbi = getDatabaseManager().getJdbi();
-        return jdbi.withHandle(handle ->
-            handle.createQuery("SELECT referenced_transaction_id FROM referenced_transaction")
-                .mapTo(Long.class)
-                .list()
-        );
+        try (Connection con = databaseManager.getDataSource().getConnection();
+             PreparedStatement pstm = con.prepareStatement("SELECT referenced_transaction_id FROM referenced_transaction")) {
+
+            List<Long> referencedTransactionIds = new ArrayList<>();
+            try (ResultSet rs = pstm.executeQuery()) {
+                while (rs.next()) {
+                    referencedTransactionIds.add(rs.getLong(1));
+                }
+            }
+            return referencedTransactionIds;
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     @Override
     public int save(ReferencedTransaction referencedTransaction) {
-        Jdbi jdbi = getDatabaseManager().getJdbi();
-        return jdbi.withHandle(handle ->
-            handle.inTransaction(h ->
-                h.createUpdate("INSERT INTO referenced_transaction (transaction_id, referenced_transaction_id, height) VALUES (:transactionId, :referencedTransactionId, :height)")
-                    .bindBean(referencedTransaction)
-                    .execute()
-            ));
+        try (Connection con = databaseManager.getDataSource().getConnection()) {
+            save(con, referencedTransaction);
+            return 1;
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 
     @Override
     public List<TransactionEntity> getReferencingTransactions(long transactionId, int from, Integer limit) {
-        Jdbi jdbi = getDatabaseManager().getJdbi();
-        return jdbi.withHandle(handle ->
-                handle.createQuery("SELECT transaction.* FROM transaction, referenced_transaction "
-                        + "WHERE referenced_transaction.referenced_transaction_id = :transactionId "
-                        + "AND referenced_transaction.transaction_id = transaction.id "
-                        + "ORDER BY transaction.block_timestamp DESC, transaction.transaction_index DESC "
-                        + "LIMIT :limit OFFSET :from")
-                        .bind("transactionId", transactionId)
-                        .bind("from", from)
-                        .bind("limit", limit)
-                .map(transactionRowMapper)
-                .list()
-        );
+        try (Connection con = databaseManager.getDataSource().getConnection();
+             PreparedStatement pstm = con.prepareStatement("SELECT transaction.* FROM transaction, referenced_transaction "
+                 + "WHERE referenced_transaction.referenced_transaction_id = ? "
+                 + "AND referenced_transaction.transaction_id = transaction.id "
+                 + "ORDER BY transaction.block_timestamp DESC, transaction.transaction_index DESC "
+                 + "LIMIT ? OFFSET ?")) {
+            pstm.setLong(1, transactionId);
+            pstm.setInt(2, limit);
+            pstm.setInt(3, from);
+            List<TransactionEntity> referencingTransactions = new ArrayList<>();
+            try (ResultSet rs = pstm.executeQuery()) {
+                while (rs.next()) {
+                    referencingTransactions.add(transactionRowMapper.map(rs, null));
+                }
+            }
+            return referencingTransactions;
+        } catch (SQLException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
     }
 }
