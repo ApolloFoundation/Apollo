@@ -165,10 +165,6 @@ public class TransactionValidator {
         boolean validatingAtFinish = transaction.getPhasing() != null && transaction.getSignature() != null && phasingPollService.getPoll(transaction.getId()) != null;
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             prunableService.loadPrunable(transaction, appendage, false);
-            //TODO Why does it need? Take a look how to use it.
-            //if (! appendage.verifyVersion()) {
-            //    throw new AplException.NotValidException("Invalid attachment version " + appendage.getVersion());
-            //}
             AppendixValidator<AbstractAppendix> validator = validatorRegistry.getValidatorFor(appendage);
             doAppendixFullValidation(validatingAtFinish, validator, transaction, appendage);
         }

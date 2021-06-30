@@ -1228,7 +1228,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     }
 
     public SortedSet<UnconfirmedTransaction> getUnconfirmedTransactions(Block previousBlock, int blockTimestamp, int limit) {
-        //TODo What is duplicates list for?
         Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates = new HashMap<>();
         List<Transaction> phasedTransactions = phasingPollService.getFinishingTransactions(blockchain.getHeight() + 1);
         phasedTransactions.addAll(phasingPollService.getFinishingTransactionsByTime(previousBlock.getTimestamp(), blockTimestamp));
@@ -1244,7 +1243,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } catch (AplException.ValidationException ignore) {
             }
         }
-//        validate and insert in unconfirmed_transaction db table all waiting transaction
         SortedSet<UnconfirmedTransaction> sortedTransactions = selectUnconfirmedTransactions(duplicates, previousBlock, blockTimestamp, limit);
         return sortedTransactions;
     }
