@@ -6,11 +6,13 @@ package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollLinkedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingPollVoterTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingVoteTable;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
@@ -73,12 +75,14 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     private AccountControlPhasingService accountControlPhasingService; // lazy initalization only!
     private final CurrencyService currencyService;
     private final AppendixApplierRegistry appendixApplierRegistry;
+    private final TransactionEntityToModelConverter txConverter;
 
     @Inject
     public PhasingPollServiceImpl(PhasingPollResultTable resultTable, PhasingPollTable phasingPollTable,
                                   PhasingPollVoterTable voterTable, PhasingPollLinkedTransactionTable linkedTransactionTable,
                                   PhasingVoteTable phasingVoteTable, Blockchain blockchain, Event<Transaction> event,
-                                  AccountService accountService, CurrencyService currencyService, AppendixApplierRegistry appendixApplierRegistry) {
+                                  AccountService accountService, CurrencyService currencyService, AppendixApplierRegistry appendixApplierRegistry,
+                                  TransactionEntityToModelConverter txConverter) {
         this.resultTable = resultTable;
         this.phasingPollTable = phasingPollTable;
         this.voterTable = voterTable;
@@ -89,6 +93,7 @@ public class PhasingPollServiceImpl implements PhasingPollService {
         this.accountService = Objects.requireNonNull(accountService, "accountService is null");
         this.currencyService = currencyService;
         this.appendixApplierRegistry = appendixApplierRegistry;
+        this.txConverter = txConverter;
     }
 
     private AccountControlPhasingService lookupAccountControlPhasingService() {
@@ -112,7 +117,8 @@ public class PhasingPollServiceImpl implements PhasingPollService {
     @Override
     public List<Long> getApprovedTransactionIds(int height) {
         List<Long> transactionIdList = new ArrayList<>();
-        try (DbIterator<PhasingPollResult> result = resultTable.getManyBy(new DbClause.IntClause("height", height).and(new DbClause.BooleanClause("approved", true)),
+        try (DbIterator<PhasingPollResult> result = resultTable.getManyBy(
+            new DbClause.IntClause("height", height).and(new DbClause.BooleanClause("approved", true)),
             0, -1, " ORDER BY db_id ASC ")) {
             result.forEach(phasingPollResult -> transactionIdList.add(phasingPollResult.getId()));
         }
@@ -140,40 +146,30 @@ public class PhasingPollServiceImpl implements PhasingPollService {
 
     @Override
     public List<Transaction> getFinishingTransactions(int height) {
-        return blockchain.loadPrunables(phasingPollTable.getFinishingTransactions(height));
+        return blockchain.loadPrunables(txConverter.convert(phasingPollTable.getFinishingTransactions(height)));
     }
 
     @Override
     public List<Transaction> getFinishingTransactionsByTime(int startTime, int finishTime) {
-        return blockchain.loadPrunables(phasingPollTable.getFinishingTransactionsByTime(startTime, finishTime));
+        return convertFromEntities(phasingPollTable.getFinishingTransactionsByTime(startTime, finishTime));
     }
 
     @Override
     public List<Transaction> getVoterPhasedTransactions(long voterId, int from, int to) {
-        try {
-            return blockchain.loadPrunables(voterTable.getVoterPhasedTransactions(voterId, from, to, blockchain.getHeight()));
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return convertFromEntities(voterTable.getVoterPhasedTransactions(voterId, from, to, blockchain.getHeight()));
     }
 
     @Override
     public List<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
-                                                                long accountId, boolean withoutWhitelist, int from, int to) {
-        try {
-            return blockchain.loadPrunables(phasingPollTable.getHoldingPhasedTransactions(holdingId, votingModel, accountId, withoutWhitelist, from, to, blockchain.getHeight()));
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+                                                          long accountId, boolean withoutWhitelist, int from, int to) {
+        return convertFromEntities(phasingPollTable.getHoldingPhasedTransactions(holdingId, votingModel, accountId,
+            withoutWhitelist, from, to, blockchain.getHeight()));
     }
 
     @Override
     public List<Transaction> getAccountPhasedTransactions(long accountId, int from, int to) {
-        try {
-            return blockchain.loadPrunables(phasingPollTable.getAccountPhasedTransactions(accountId, from, to, blockchain.getHeight()));
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
+        return convertFromEntities(phasingPollTable.getAccountPhasedTransactions(accountId, from, to, blockchain.getHeight()));
+
     }
 
     @Override
@@ -520,5 +516,9 @@ public class PhasingPollServiceImpl implements PhasingPollService {
             && currencyService.getCurrency(voteWeighting.getHoldingId()) == null) {
             throw new AplException.NotCurrentlyValidException("Currency " + Long.toUnsignedString(voteWeighting.getHoldingId()) + " not found");
         }
+    }
+
+    private List<Transaction> convertFromEntities(List<TransactionEntity> entities) {
+        return blockchain.loadPrunables(txConverter.convert(entities));
     }
 }

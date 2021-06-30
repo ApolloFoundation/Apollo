@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.PublicKeyAnnou
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class SimpleTransaction implements Transaction {
     private long id;
@@ -269,6 +270,21 @@ public class SimpleTransaction implements Transaction {
 
     @Override
     public boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec) {
+        return false;
+    }
+
+    @Override
+    public Optional<String> getErrorMessage() {
+        return Optional.empty();
+    }
+
+    @Override
+    public void fail(String message) {
+
+    }
+
+    @Override
+    public boolean isFailed() {
         return false;
     }
 

@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactor
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
@@ -56,7 +56,7 @@ class CreateTransactionHandlerTest {
     public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
         PropertiesHolder.class,
         TransactionDaoImpl.class, TransactionProcessor.class,
-        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionBuilderFactory.class,
         TransactionalDataSource.class)
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))

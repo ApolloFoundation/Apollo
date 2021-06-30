@@ -22,12 +22,12 @@ import lombok.NonNull;
  * </p>
  *
  * @author Andrii Boiarskyi
- * @see AplCoreException
+ * @see AplCoreLogicException
  * @see AplTransactionExecutionException
  * @see AplAcceptableTransactionValidationException
  * @since 1.48.4
  */
-public abstract class AplTransactionException extends AplCoreException {
+public abstract class AplTransactionException extends AplCoreLogicException {
     @Getter
     private final Transaction tx;
     public AplTransactionException(String message, @NonNull Transaction tx) {

@@ -403,7 +403,7 @@ class TransactionDaoTest extends DbContainerBaseTest {
     }
 
     private void insertMockMessageTx(long id, long sender, long recipient, int timestamp) {
-        TransactionEntity transactionEntity = new TransactionEntity(0L, id, (short) 12, recipient, (short) 0, 0L, 100_000_000, new byte[32], 100000, 1L, 100000, 1, new byte[64], timestamp, (byte) 1, (byte) 0, sender, new byte[32], 650, new byte[32], (byte) 1, false, false, false, false, false, false, false, false, new byte[0]);
+        TransactionEntity transactionEntity = new TransactionEntity(0L, id, (short) 12, recipient, (short) 0, 0L, 100_000_000, new byte[32], 100000, 1L, 100000, 1, new byte[64], timestamp, (byte) 1, (byte) 0, sender, new byte[32], 650, new byte[32], (byte) 1, false, false, false, false, false, false, false, false, null, new byte[0]);
         dao.saveTransactions(List.of(transactionEntity));
     }
 

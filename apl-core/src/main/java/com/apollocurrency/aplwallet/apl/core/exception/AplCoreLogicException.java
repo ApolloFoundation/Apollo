@@ -18,13 +18,13 @@ package com.apollocurrency.aplwallet.apl.core.exception;
  * @see com.apollocurrency.aplwallet.apl.util.exception.AplException
  * @since 1.48.4
  */
-public class AplCoreException extends RuntimeException {
+public class AplCoreLogicException extends RuntimeException {
 
-    public AplCoreException(String message) {
+    public AplCoreLogicException(String message) {
         super(message);
     }
 
-    public AplCoreException(String message, Throwable cause) {
+    public AplCoreLogicException(String message, Throwable cause) {
         super(message, cause);
     }
 }

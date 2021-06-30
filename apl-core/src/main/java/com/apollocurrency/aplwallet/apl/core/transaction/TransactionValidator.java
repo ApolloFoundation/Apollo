@@ -337,7 +337,7 @@ public class TransactionValidator {
                 byteArrayTx.array(), transaction.getSignature(), signatureCredential
             );
             if (verifiedOk) {
-                ((TransactionImpl) transaction.getTransactionImpl()).withValidSignature(verifiedOk);
+                ((TransactionImpl) transaction.getTransactionImpl()).withValidSignature(true);
             }
             return verifiedOk;
         }

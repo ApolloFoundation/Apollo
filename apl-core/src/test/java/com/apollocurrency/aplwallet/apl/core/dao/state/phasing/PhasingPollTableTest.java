@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.phasing;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.DaoConfig;
@@ -17,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
@@ -25,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTableTest;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
@@ -93,6 +92,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     TransactionTestData ttd = new TransactionTestData();
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     Chain chain = mock(Chain.class);
+    private TransactionModelToEntityConverter txToEntityConverter = new TransactionModelToEntityConverter();
 
     {
         doReturn(chain).when(blockchainConfig).getChain();
@@ -111,7 +111,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
         TransactionBuilderFactory.class,
         FullTextConfigImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         DerivedDbTablesRegistryImpl.class,
         BlockDaoImpl.class,
@@ -203,15 +203,15 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
     @Test
     void testGetFinishingTransactions() {
-        List<Transaction> finishingTransactions = table.getFinishingTransactions(ptd.POLL_2.getFinishHeight());
+        List<TransactionEntity> finishingTransactions = table.getFinishingTransactions(ptd.POLL_2.getFinishHeight());
 
-        assertEquals(Arrays.asList(ttd.TRANSACTION_7), finishingTransactions);
+        assertEquals(Collections.singletonList(txToEntityConverter.apply(ttd.TRANSACTION_7)), finishingTransactions);
     }
 
 
     @Test
     void testGetFinishingTransactionsWhenNoTransactionsAtHeight() {
-        List<Transaction> finishingTransactions = table.getFinishingTransactions(ttd.TRANSACTION_0.getHeight() - 1);
+        List<TransactionEntity> finishingTransactions = table.getFinishingTransactions(ttd.TRANSACTION_0.getHeight() - 1);
 
         assertTrue(finishingTransactions.isEmpty(), "No transactions should be found at height");
     }
@@ -219,24 +219,28 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     @Test
     void testGetActivePhasingDbIds() throws SQLException {
         List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(ttd.TRANSACTION_8.getHeight() + 1);
+
         assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_8, ttd.TRANSACTION_8.getId()), new TransactionDbInfo(ttd.DB_ID_7, ttd.TRANSACTION_7.getId())), transactionDbInfoList);
     }
 
     @Test
     void testGetActivePhasingDbIdWhenHeightIsMax() throws SQLException {
         List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(Integer.MAX_VALUE);
+
         assertEquals(Arrays.asList(new TransactionDbInfo(ttd.DB_ID_12, ttd.TRANSACTION_12.getId()), new TransactionDbInfo(ttd.DB_ID_11, ttd.TRANSACTION_11.getId()), new TransactionDbInfo(ttd.DB_ID_13, ttd.TRANSACTION_13.getId())), transactionDbInfoList);
     }
 
     @Test
     void testGetActivePhasingDbIdAllPollsFinished() throws SQLException {
         List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(ptd.POLL_0.getHeight() - 1);
+
         assertEquals(Collections.emptyList(), transactionDbInfoList);
     }
 
     @Test
     void testGetActivePhasingDbIdsWhenNoPollsAtHeight() throws SQLException {
         List<TransactionDbInfo> transactionDbInfoList = table.getActivePhasedTransactionDbIds(ttd.TRANSACTION_0.getHeight());
+
         assertEquals(Collections.emptyList(), transactionDbInfoList);
     }
 
@@ -270,13 +274,15 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
 
     @Test
     void testGetByHoldingId() throws SQLException {
-        List<Transaction> transactions = table.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100, ptd.POLL_5.getHeight());
-        assertEquals(List.of(ttd.TRANSACTION_13), transactions);
+        List<TransactionEntity> transactions = table.getHoldingPhasedTransactions(ptd.POLL_5.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ASSET, 0, false, 0, 100, ptd.POLL_5.getHeight());
+
+        assertEquals(List.of(txToEntityConverter.apply(ttd.TRANSACTION_13)), transactions);
     }
 
     @Test
     void testGetByHoldingIdNotExist() throws SQLException {
-        List<Transaction> transactions = table.getHoldingPhasedTransactions(ptd.POLL_4.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ACCOUNT, 0, false, 0, 100, ptd.POLL_5.getHeight());
+        List<TransactionEntity> transactions = table.getHoldingPhasedTransactions(ptd.POLL_4.getVoteWeighting().getHoldingId(), VoteWeighting.VotingModel.ACCOUNT, 0, false, 0, 100, ptd.POLL_5.getHeight());
+
         assertTrue(transactions.isEmpty());
     }
 
@@ -302,21 +308,22 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
     }
 
     @Test
-    void testGetAccountPhasedTransactionsWithPaginationSkipFirstAtLastBlockHeight() throws SQLException {
-        List<Transaction> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, ptd.POLL_5.getHeight() - 1);
+    void testGetAccountPhasedTransactionsWithPaginationSkipFirstAtLastBlockHeight() {
+        List<TransactionEntity> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, ptd.POLL_5.getHeight() - 1);
+
         assertTrue(transactions.isEmpty());
     }
 
     @Test
-    void testGetAccountPhasedTransactionsWithPaginationSkipFirstAtGenesisBlockHeight() throws SQLException {
-        List<Transaction> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, 0);
-        assertEquals(List.of(ttd.TRANSACTION_12, ttd.TRANSACTION_11), transactions);
+    void testGetAccountPhasedTransactionsWithPaginationSkipFirstAtGenesisBlockHeight() {
+        List<TransactionEntity> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 1, 2, 0);
+        assertEquals(txToEntityConverter.convert(List.of(ttd.TRANSACTION_12, ttd.TRANSACTION_11)), transactions);
     }
 
     @Test
-    void testGetAllAccountPhasedTransactionsWithPagination() throws SQLException {
-        List<Transaction> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 0, 100, 0);
-        assertEquals(List.of(ttd.TRANSACTION_13, ttd.TRANSACTION_12, ttd.TRANSACTION_11), transactions);
+    void testGetAllAccountPhasedTransactionsWithPagination() {
+        List<TransactionEntity> transactions = table.getAccountPhasedTransactions(ptd.POLL_0.getAccountId(), 0, 100, 0);
+        assertEquals(txToEntityConverter.convert(List.of(ttd.TRANSACTION_13, ttd.TRANSACTION_12, ttd.TRANSACTION_11)), transactions);
     }
 
     @Test

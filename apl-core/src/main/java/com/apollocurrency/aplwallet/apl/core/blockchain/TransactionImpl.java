@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.SET_PHASING_ONLY;
@@ -70,18 +71,19 @@ public class TransactionImpl implements Transaction {
     private final PrunablePlainMessageAppendix prunablePlainMessage;
     private final PrunableEncryptedMessageAppendix prunableEncryptedMessage;
     private final List<AbstractAppendix> appendages;
-    private volatile byte[] senderPublicKey;
+    private final byte[] senderPublicKey;
     private volatile long feeATM; // remove final modifier to set fee outside the class TODO get back 'final' modifier
     private volatile Signature signature;
     private volatile int height;
     private volatile long blockId;
     private volatile Block block;
-    private volatile int blockTimestamp = -1;
-    private volatile short index = -1;
+    private volatile int blockTimestamp;
+    private volatile short index;
     private volatile long id;
     private volatile String stringId;
     private volatile long senderId;
     private volatile byte[] fullHash;
+    private volatile String errorMessage;
     private volatile boolean hasValidSignature = false;
 
     TransactionImpl(BuilderImpl builder) {
@@ -400,6 +402,21 @@ public class TransactionImpl implements Transaction {
     }
 
     @Override
+    public Optional<String> getErrorMessage() {
+        return Optional.ofNullable(errorMessage);
+    }
+
+    @Override
+    public void fail(String message) {
+        this.errorMessage = message;
+    }
+
+    @Override
+    public boolean isFailed() {
+        return errorMessage != null;
+    }
+
+    @Override
     public boolean equals(Object o) {
         return o instanceof TransactionImpl && this.getId() == ((Transaction) o).getId();
     }
@@ -527,12 +544,12 @@ public class TransactionImpl implements Transaction {
                 '}';
         }
 
-        private short deadline;
-        private byte[] senderPublicKey;
-        private long amountATM;
-        private long feeATM;
-        private TransactionType type;
-        private byte version;
+        private final short deadline;
+        private final byte[] senderPublicKey;
+        private final long amountATM;
+        private final long feeATM;
+        private final TransactionType type;
+        private final byte version;
         private AbstractAttachment attachment;
 
         private long recipientId;

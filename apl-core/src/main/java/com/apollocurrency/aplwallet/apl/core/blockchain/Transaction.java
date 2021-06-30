@@ -38,6 +38,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public interface Transaction {
@@ -141,6 +142,22 @@ public interface Transaction {
     boolean ofType(TransactionTypes.TransactionTypeSpec spec);
 
     boolean isNotOfType(TransactionTypes.TransactionTypeSpec spec);
+
+    /**
+     * @return optional transaction error message, will be non-empty for failed transactions
+     */
+    Optional<String> getErrorMessage();
+
+    /**
+     * Fail transaction with the given message
+     * @param message not blank message to fail this transaction with
+     */
+    void fail(String message);
+
+    /**
+     * @return true, if transaction is failed, otherwise - false
+     */
+    boolean isFailed();
 
     /**
      * @deprecated see method with longer parameters list below

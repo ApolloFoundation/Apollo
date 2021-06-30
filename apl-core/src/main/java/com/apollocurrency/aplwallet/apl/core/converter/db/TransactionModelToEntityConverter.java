@@ -56,6 +56,7 @@ public class TransactionModelToEntityConverter implements Converter<Transaction,
             .hasPrunableMessage(model.hasPrunablePlainMessage())
             .hasPrunableEencryptedMessage(model.hasPrunableEncryptedMessage())
             .hasPrunableAttachment(model.getAttachment() instanceof Prunable)
+            .errorMessage(model.getErrorMessage().orElse(null))
 
             .build();
 

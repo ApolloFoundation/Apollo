@@ -19,7 +19,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.UnconfirmedTransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
@@ -197,7 +197,7 @@ class CsvWriterReaderDerivedTablesTest extends DbContainerBaseTest {
         BlockchainImpl.class, DaoConfig.class,
         PropertyProducer.class, TransactionApplier.class, ServiceModeDirProvider.class, PublicKeyTableProducer.class,
         TaggedDataServiceImpl.class, TransactionValidator.class, TransactionProcessorImpl.class, TransactionEntityRowMapper.class,
-        GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class, TransactionModelToEntityConverter.class, ShardDbExplorerImpl.class, PrunableTxRowMapper.class, TransactionEntityToModelConverter.class, UnconfirmedTransactionEntityRowMapper.class, TxReceiptRowMapper.class, TransactionServiceImpl.class, TransactionRowMapper.class,
+        GlobalSyncImpl.class, DefaultBlockValidator.class, ReferencedTransactionService.class, TransactionModelToEntityConverter.class, ShardDbExplorerImpl.class, PrunableTxRowMapper.class, TransactionEntityToModelConverter.class, UnconfirmedTransactionEntityRowMapper.class, TxReceiptRowMapper.class, TransactionServiceImpl.class, TransactionEntityRowMapper.class,
         ReferencedTransactionDaoImpl.class,
         TaggedDataTable.class, PropertyBasedFileConfig.class,
         DGSGoodsTable.class,
