@@ -10,6 +10,6 @@ import org.json.simple.JSONObject;
 
 public interface BlockParser {
 
-    BlockImpl parseBlock(JSONObject blockData, long baseTarget) throws AplException.NotValidException, AplException.NotCurrentlyValidException;
+    BlockImpl parseBlock(JSONObject blockData, long baseTarget) throws AplException.NotValidException;
 
 }

@@ -287,7 +287,7 @@ class TransactionCreatorTest {
             .feeATM(1000000)
             .broadcast(true)
             .build();
-        doThrow(new AplException.InsufficientBalanceException("Test. Not enough funds")).when(processor).broadcast(any(Transaction.class));
+        doThrow(new AplException.NotCurrentlyValidException("Test. Not enough funds")).when(processor).broadcast(any(Transaction.class));
         assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
 
         TransactionCreator.TransactionCreationData data = txCreator.createTransaction(request);

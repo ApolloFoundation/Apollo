@@ -33,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 
 import java.math.BigDecimal;
@@ -43,6 +44,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 
 @Getter
+@Slf4j
 public abstract class TransactionType {
     private final BlockchainConfig blockchainConfig;
     private final AccountService accountService;
@@ -59,11 +61,7 @@ public abstract class TransactionType {
     }
 
     public static boolean isDuplicate(TransactionTypes.TransactionTypeSpec uniqueType, String key, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, int maxCount) {
-        Map<String, Integer> typeDuplicates = duplicates.get(uniqueType);
-        if (typeDuplicates == null) {
-            typeDuplicates = new HashMap<>();
-            duplicates.put(uniqueType, typeDuplicates);
-        }
+        Map<String, Integer> typeDuplicates = duplicates.computeIfAbsent(uniqueType, k -> new HashMap<>());
         Integer currentCount = typeDuplicates.get(key);
         if (currentCount == null) {
             typeDuplicates.put(key, maxCount > 0 ? 1 : 0);
@@ -87,25 +85,34 @@ public abstract class TransactionType {
 
     public abstract AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException;
 
-    public abstract void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException;
 
-    public abstract void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException;
+    public final void validateStateDependent(Transaction transaction) throws AplException.ValidationException {
+        TransactionAmounts amounts = new TransactionAmounts(transaction);
+        Account account = accountService.getAccount(transaction.getSenderId());
+        if (account == null) {
+            throw new AplException.NotCurrentlyValidException("Transaction's sender not found, tx: " + transaction.getId() + ", sender: " + transaction.getSenderId());
+        }
+        if (account.getUnconfirmedBalanceATM() < amounts.getTotalAmountATM()) {
+            throw new AplException.NotCurrentlyValidException("Not enough apl balance on account: " + transaction.getSenderId() + ", required at least " + amounts.getTotalAmountATM()
+                + ", but only got " + account.getUnconfirmedBalanceATM());
+        }
+        doStateDependentValidation(transaction);
+    }
+
+    public final void validateStateIndependent(Transaction transaction) throws AplException.ValidationException {
+        doStateIndependentValidation(transaction);
+    }
 
     // return false if double spending
     @TransactionFee(FeeMarker.UNCONFIRMED_BALANCE)
     public final boolean applyUnconfirmed(Transaction transaction, Account senderAccount) {
-        long amountATM = transaction.getAmountATM();
-        long feeATM = transaction.getFeeATM();
-        if (transaction.referencedTransactionFullHash() != null) {
-            feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
-        }
-        long totalAmountATM = Math.addExact(amountATM, feeATM);
-        if (senderAccount.getUnconfirmedBalanceATM() < totalAmountATM) {
+        TransactionAmounts amounts = new TransactionAmounts(transaction);
+        if (senderAccount.getUnconfirmedBalanceATM() < amounts.getTotalAmountATM()) {
             return false;
         }
-        accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -amountATM, -feeATM);
+        accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -amounts.amountATM, -amounts.feeATM);
         if (!applyAttachmentUnconfirmed(transaction, senderAccount)) {
-            accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), amountATM, feeATM);
+            accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), amounts.amountATM, amounts.feeATM);
             return false;
         }
         return true;
@@ -127,6 +134,7 @@ public abstract class TransactionType {
                 recipientAccount.setBalanceATM(senderAccount.getBalanceATM());
             }
             accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, getLedgerEvent(), transactionId, amount);
+            log.info("{} transferred {} ATM to the recipient {}", senderAccount.balanceString(), transaction.getAmountATM(), recipientAccount.balanceString());
         }
         applyAttachment(transaction, senderAccount, recipientAccount);
     }
@@ -239,5 +247,29 @@ public abstract class TransactionType {
             return (feeCalc::apply);
         }
 
+    }
+
+    protected abstract void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException;
+
+    protected abstract void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException;
+
+    @Getter
+    private class TransactionAmounts {
+        private final long feeATM;
+        private final long amountATM;
+
+        public TransactionAmounts(Transaction transaction) {
+            long amountATM = transaction.getAmountATM();
+            long feeATM = transaction.getFeeATM();
+            if (transaction.referencedTransactionFullHash() != null) {
+                feeATM = Math.addExact(feeATM, blockchainConfig.getUnconfirmedPoolDepositAtm());
+            }
+            this.feeATM = feeATM;
+            this.amountATM = amountATM;
+        }
+
+        public long getTotalAmountATM() {
+            return Math.addExact(amountATM, feeATM);
+        }
     }
 }

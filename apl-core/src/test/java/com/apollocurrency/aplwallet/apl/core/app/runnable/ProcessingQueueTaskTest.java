@@ -83,7 +83,7 @@ class ProcessingQueueTaskTest {
                 }
                 return null;
             }
-        }).when(validator).validateLightly(tx);
+        }).when(validator).validateSufficiently(tx);
         doReturn(tx).when(memPool).nextPendingProcessing();
         doAnswer(new Answer<UnconfirmedTxValidationResult>() {
             int iter;

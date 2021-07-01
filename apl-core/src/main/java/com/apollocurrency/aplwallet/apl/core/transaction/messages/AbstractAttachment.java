@@ -42,13 +42,6 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
         this.transactionType = transactionType;
     }
 
-    private TransactionType transactionType() {
-        if (this.transactionType == null) {
-            throw new IllegalStateException("Transaction type was not set");
-        }
-        return this.transactionType;
-    }
-
     @Override
     public String getAppendixName() {
         return getTransactionTypeSpec().getCompatibleName();
@@ -56,13 +49,13 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
 
     @Override
     public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        transactionType().doStateIndependentValidation(transaction);
-        transactionType().doStateDependentValidation(transaction);
+        transactionType().validateStateIndependent(transaction);
+        transactionType().validateStateDependent(transaction);
     }
 
     @Override
-    public void performLightweightValidation(Transaction transaction, int blockcHeight) throws AplException.ValidationException {
-        transactionType().doStateIndependentValidation(transaction);
+    public void performLightweightValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        transactionType().validateStateIndependent(transaction);
     }
 
     @Override
@@ -85,4 +78,10 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
         return "Attachment[" + getClass().getSimpleName() + ", type = " + getTransactionTypeSpec()  + "]";
     }
 
+    private TransactionType transactionType() {
+        if (this.transactionType == null) {
+            throw new IllegalStateException("Transaction type was not set");
+        }
+        return this.transactionType;
+    }
 }

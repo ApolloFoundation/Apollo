@@ -145,10 +145,7 @@ public abstract class CreateTransactionHandler extends AbstractAPIRequestHandler
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
 
         response.put("transactionJSON", transactionJSON);
-        try {
-            response.put("unsignedTransactionBytes", Convert.toHexString(unsignedTxBytes.array()));
-        } catch (AplException.NotYetEncryptedException ignore) {
-        }
+        response.put("unsignedTransactionBytes", Convert.toHexString(unsignedTxBytes.array()));
         if (createTransactionRequest.getKeySeed() != null) {
             response.put("transaction", transaction.getStringId());
             response.put("fullHash", transactionJSON.get("fullHash"));
@@ -269,10 +266,7 @@ public abstract class CreateTransactionHandler extends AbstractAPIRequestHandler
             }
         } catch (AplException.NotYetEnabledException e) {
             throw new AplException.NotValidException(FEATURE_NOT_AVAILABLE);
-        } catch (AplException.InsufficientBalanceException e) {
-            throw e;
         }
-
         return transaction;
     }
 

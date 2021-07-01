@@ -39,17 +39,15 @@ public interface TransactionProcessor {
 
     void removeUnconfirmedTransaction(Transaction transaction);
 
-    void validateBeforeBroadcast(Transaction transaction) throws AplException.ValidationException;
-
-    void broadcast(Transaction transaction) throws AplException.ValidationException;
+    void broadcast(Transaction transaction);
 
     void processDelayedTxs(int number);
 
     void processLater(Collection<Transaction> transactions);
 
-    void processPeerTransactions(List<Transaction> transactions) throws AplException.NotValidException;
+    void processPeerTransactions(List<Transaction> transactions);
 
-    boolean isFullyValidTransaction(Transaction tx);
+    boolean isSufficientlyValidTransaction(Transaction tx);
 
     List<Transaction> restorePrunableData(JSONArray transactions) throws AplException.NotValidException;
 

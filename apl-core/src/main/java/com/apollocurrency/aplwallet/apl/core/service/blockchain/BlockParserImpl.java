@@ -37,7 +37,7 @@ public class BlockParserImpl implements BlockParser {
     }
 
     @Override
-    public BlockImpl parseBlock(JSONObject blockData, long baseTarget) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
+    public BlockImpl parseBlock(JSONObject blockData, long baseTarget) throws AplException.NotValidException {
         try {
             int version = ((Number) blockData.get("version")).intValue();
             int timestamp = ((Number) blockData.get("timestamp")).intValue();
@@ -75,7 +75,7 @@ public class BlockParserImpl implements BlockParser {
         }
     }
 
-    private Transaction parseTransaction(JSONObject jsonObject) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
+    private Transaction parseTransaction(JSONObject jsonObject) throws AplException.NotValidException {
         Transaction tx = transactionBuilderFactory.newTransaction(jsonObject);
         if (!transactionValidator.checkSignature(null, tx)) {
             throw new AplException.NotValidException("Invalid signature of tx: " + tx.getStringId());

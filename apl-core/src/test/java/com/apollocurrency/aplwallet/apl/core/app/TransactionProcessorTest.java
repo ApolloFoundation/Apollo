@@ -164,8 +164,7 @@ class TransactionProcessorTest {
 
         //THEN
         verify(blockchain, times(1)).hasTransaction(anyLong());
-        verify(transactionValidator).validateLightly(any(Transaction.class));
-        verify(transactionValidator).validateSignatureWithTxFee(any(Transaction.class));
+        verify(transactionValidator).validateSufficiently(any(Transaction.class));
     }
 
     @Test
@@ -191,8 +190,7 @@ class TransactionProcessorTest {
         service.processPeerTransactions(List.of(transaction));
 
         //THEN
-        verify(transactionValidator).validateLightly(transaction);
-        verify(transactionValidator).validateSignatureWithTxFeeLessStrict(transaction);
+        verify(transactionValidator).validateSufficiently(transaction);
         verify(memPool).addPendingProcessing(unconfirmedTransaction);
     }
 

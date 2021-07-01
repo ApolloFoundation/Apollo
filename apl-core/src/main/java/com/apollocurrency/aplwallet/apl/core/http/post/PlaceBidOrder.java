@@ -32,8 +32,6 @@ import org.json.simple.JSONStreamAware;
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_APL;
-
 @Vetoed
 public final class PlaceBidOrder extends CreateTransactionHandler {
 
@@ -50,11 +48,6 @@ public final class PlaceBidOrder extends CreateTransactionHandler {
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
         Attachment attachment = new ColoredCoinsBidOrderPlacement(asset.getId(), quantityATU, priceATM);
-        try {
-            return createTransaction(req, account, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return NOT_ENOUGH_APL;
-        }
+        return createTransaction(req, account, attachment);
     }
-
 }

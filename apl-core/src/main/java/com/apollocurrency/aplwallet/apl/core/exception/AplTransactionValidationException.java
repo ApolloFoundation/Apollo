@@ -10,8 +10,7 @@ import lombok.NonNull;
 /**
  * <p>
  *     General transaction validation exception, indicating that transaction validation failed for some reason.
- *     Derived classes should clarify validation cases: invalid transaction by data, invalid transaction by system,
- *     invalid transaction by state
+ *     Derived classes should clarify validation cases: invalid transaction by data, by system, by state
  * </p>
  *
  * <p>

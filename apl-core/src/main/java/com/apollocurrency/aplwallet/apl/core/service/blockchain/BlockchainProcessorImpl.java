@@ -41,6 +41,9 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
+import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ScanDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
@@ -511,7 +514,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         && filter.test(phasedTransaction)) {
                         result.add(phasedTransaction);
                     }
-                } catch (AplException.ValidationException ignore) {
+                } catch (AplTransactionValidationException ignore) {
                 }
             }
 
@@ -578,7 +581,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
      * Pushes the new last block into blockchain fully validating all the transactions
      * This method uses the full blockchain lock {@link GlobalSync#writeLock()}
      * @param block block to add into blockchain
-     * @throws com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper.DbTransactionExecutionException which wraps
+     * @throws com.apollocurrency.aplwallet.apl.util.db.DbTransactionHelper.DbTransactionExecutionException which wraps
      * a real exception cause, this type of exceptions is rare and usually should not be handled, since something wrong
      * with the running environment: database deadlocks, timeout locking table, too many connections and so on
      * @throws com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor.BlockNotAcceptedException in case of the block validation failure
@@ -657,7 +660,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 Convert2.rsAccount(block.getGeneratorId()));
             try {
                 peersService.sendToSomePeers(block);
-            } catch (RejectedExecutionException e) {
+            } catch (RejectedExecutionException ignored) {
 
             }
         }
@@ -706,7 +709,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         transactions.addAll(phasingPollService.getFinishingTransactionsByTime(prevBlock.getTimestamp(), currentBlock.getTimestamp()));
 
         for (Transaction phasedTransaction : transactions) {
-            //TODO check it in the sql.
             if (phasingPollService.getResult(phasedTransaction.getId()) != null) {
                 continue;
             }
@@ -722,24 +724,12 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     log.debug("At height " + height + " phased transaction " + phasedTransaction.getStringId() + " is duplicate, will not apply");
                     invalidPhasedTransactions.add(phasedTransaction);
                 }
-            } catch (AplException.ValidationException e) {
+            } catch (AplTransactionValidationException e) {
                 log.debug("At height " + height + " phased transaction " + phasedTransaction.getStringId() + " no longer passes validation: "
                     + e.getMessage() + ", will not apply");
                 invalidPhasedTransactions.add(phasedTransaction);
             }
         }
-    }
-
-    private int getPhasingStartTime(Block lastBlock) {
-        int startTime;
-        if (lastBlock.getHeight() == 0) {
-            startTime = 0;
-        } else if (blockchain.getShardInitialBlock().getHeight() == lastBlock.getHeight()) {
-            startTime = shardDao.getLastShard().getBlockTimestamps()[0];
-        } else {
-            startTime = blockchain.getBlock(lastBlock.getPreviousBlockId()).getTimestamp();
-        }
-        return startTime;
     }
 
     private void validateTransactions(Block block, Block previousLastBlock, int curTime, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
@@ -754,7 +744,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 throw new BlockOutOfOrderException("Invalid transaction timestamp: " + transaction.getTimestamp()
                     + ", current time is " + curTime, blockSerializer.getJSONObject(block));
             }
-            //if (!transaction.verifySignature()) {
             if (!transactionValidator.verifySignature(transaction)){
                 throw new TransactionNotAcceptedException("Transaction signature verification failed at height " + previousLastBlock.getHeight(), transaction, blockSerializer.getJSONObject(block));
             }
@@ -775,19 +764,17 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         + transaction.getReferencedTransactionFullHash(),
                         transaction, blockSerializer.getJSONObject(block));
                 }
-                if (!isValidTransactionVersion(transaction.getVersion(), previousLastBlock.getHeight())) {
-                    throw new TransactionNotAcceptedException("Invalid transaction version " + transaction.getVersion()
-                        + " at height " + previousLastBlock.getHeight(), transaction, blockSerializer.getJSONObject(block));
-                }
                 if (transaction.getId() == 0L) {
                     throw new TransactionNotAcceptedException(
                         "Invalid transaction id 0", transaction, blockSerializer.getJSONObject(block));
                 }
                 try {
                     transactionValidator.validateFully(transaction);
-                } catch (AplException.ValidationException e) {
-                    throw new TransactionNotAcceptedException(e.getMessage(),
+                } catch (AplUnacceptableTransactionValidationException e) {
+                    throw new TransactionNotAcceptedException(e,
                         transaction, blockSerializer.getJSONObject(block));
+                } catch (AplAcceptableTransactionValidationException e) {
+                    transaction.fail(e.getMessage());
                 }
             }
             // prefetch data for duplicate validation
@@ -929,7 +916,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 try {
                     transactionValidator.validateFully(transaction);
                     phasingPollService.tryCountVotes(transaction, duplicates);
-                } catch (AplException.ValidationException e) {
+                } catch (AplTransactionValidationException e) {
                     log.debug("At height " + block.getHeight() + " phased transaction " + transaction.getStringId()
                         + " no longer passes validation: " + e.getMessage() + ", cannot finish early");
                 }
@@ -1148,10 +1135,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         log.debug("<< popOffWithRescan to height = " + height);
     }
 
-    private boolean isValidTransactionVersion(int transactionVersion, int previousBlockHeight) {
-        return transactionValidator.isValidVersion(transactionVersion);
-    }
-
     public SortedSet<UnconfirmedTransaction> selectUnconfirmedTransactions(
         Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, Block previousBlock, int blockTimestamp, int limit) {
 
@@ -1178,16 +1161,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         if (sortedTransactions.contains(unconfirmedTransaction) || payloadLength + transactionLength > maxPayloadLength) {
                             continue;
                         }
-                        if (!isValidTransactionVersion(unconfirmedTransaction.getVersion(), previousBlock.getHeight())) {
-                            continue;
-                        }
                         if (blockTimestamp > 0 && (unconfirmedTransaction.getTimestamp() > blockTimestamp + Constants.MAX_TIMEDRIFT
                             || unconfirmedTransaction.getExpiration() < blockTimestamp)) {
                             continue;
                         }
                         try {
-                            transactionValidator.validateFully(unconfirmedTransaction.getTransactionImpl());
-                        } catch (AplException.ValidationException e) {
+                            transactionValidator.validateSufficiently(unconfirmedTransaction.getTransactionImpl());
+                        } catch (AplUnacceptableTransactionValidationException e) {
                             continue;
                         }
                         if (!transactionApplier.applyUnconfirmed(unconfirmedTransaction.getTransactionImpl())) { // persist tx changes and validate against updated state
@@ -1240,7 +1220,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 AccountControlPhasing accountControlPhasing = accountControlPhasingService.get(phasedTransaction.getSenderId());
                 phasedTransaction.attachmentIsDuplicate(
                     duplicates, false, senderAccountControls, accountControlPhasing); // pre-populate duplicates map
-            } catch (AplException.ValidationException ignore) {
+            } catch (AplTransactionValidationException ignore) {
             }
         }
         SortedSet<UnconfirmedTransaction> sortedTransactions = selectUnconfirmedTransactions(duplicates, previousBlock, blockTimestamp, limit);

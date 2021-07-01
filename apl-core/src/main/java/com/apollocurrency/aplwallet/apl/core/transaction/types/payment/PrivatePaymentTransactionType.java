@@ -50,13 +50,6 @@ public class PrivatePaymentTransactionType extends PaymentTransactionType {
     }
 
     @Override
-    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-    }
-
-    @Override
-    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
-            throw new AplException.NotValidException("Invalid private payment");
-        }
+    protected void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
     }
 }

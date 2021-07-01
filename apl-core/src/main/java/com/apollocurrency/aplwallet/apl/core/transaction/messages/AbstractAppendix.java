@@ -39,6 +39,16 @@ public abstract class AbstractAppendix implements Appendix {
         this.version = getVersion() > 0 ? getVersion() : 1;
     }
 
+    public abstract void apply(Transaction transaction, Account senderAccount, Account recipientAccount);
+
+    public abstract void putMyBytes(ByteBuffer buffer);
+
+    public abstract void putMyJSON(JSONObject json);
+
+    public abstract int getMySize();
+
+    public abstract boolean isPhasable();
+
     public abstract String getAppendixName();
 
     @Override
@@ -51,7 +61,6 @@ public abstract class AbstractAppendix implements Appendix {
         return getMyFullSize() + (version > 0 ? 1 : 0);
     }
 
-    public abstract int getMySize();
 
     public int getMyFullSize() {
         return getMySize();
@@ -77,7 +86,6 @@ public abstract class AbstractAppendix implements Appendix {
         putMyBytes(buffer);
     }
 
-    public abstract void putMyBytes(ByteBuffer buffer);
 
     @Override
     public final JSONObject getJSONObject() {
@@ -87,7 +95,6 @@ public abstract class AbstractAppendix implements Appendix {
         return json;
     }
 
-    public abstract void putMyJSON(JSONObject json);
 
     @Override
     public byte getVersion() {
@@ -109,10 +116,6 @@ public abstract class AbstractAppendix implements Appendix {
         }
         performFullValidation(transaction, blockHeight);
     }
-
-    public abstract void apply(Transaction transaction, Account senderAccount, Account recipientAccount);
-
-    public abstract boolean isPhasable();
 
     @Override
     public final boolean isPhased(Transaction transaction) {

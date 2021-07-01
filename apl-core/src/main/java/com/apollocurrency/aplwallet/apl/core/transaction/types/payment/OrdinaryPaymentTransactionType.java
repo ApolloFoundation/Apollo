@@ -30,7 +30,6 @@ public class OrdinaryPaymentTransactionType extends PaymentTransactionType {
         return TransactionTypes.TransactionTypeSpec.ORDINARY_PAYMENT;
     }
 
-
     @Override
     public final LedgerEvent getLedgerEvent() {
         return LedgerEvent.ORDINARY_PAYMENT;
@@ -52,13 +51,6 @@ public class OrdinaryPaymentTransactionType extends PaymentTransactionType {
     }
 
     @Override
-    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-    }
-
-    @Override
-    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
-            throw new AplException.NotValidException("Invalid ordinary payment");
-        }
+    protected void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
     }
 }

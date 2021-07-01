@@ -29,7 +29,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
     protected BlockchainConfig blockchainConfig;
     protected Blockchain blockchain;
     protected AccountService accountService;
-    private static GeneratorService generatorService;
+    private final GeneratorService generatorService;
     protected final BlockSerializer blockSerializer;
     protected final AccountPublicKeyService accountPublicKeyService;
 

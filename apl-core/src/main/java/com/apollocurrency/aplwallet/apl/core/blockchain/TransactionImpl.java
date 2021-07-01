@@ -467,8 +467,8 @@ public class TransactionImpl implements Transaction {
             return false;
         }
         if (atAcceptanceHeight) {
-            if (this.isBlockDuplicate(
-                this, duplicates, senderAccountControls, accountControlPhasing)) {
+            // verify transaction uniqueness for PHASING_ONLY account within the block
+            if (this.isBlockDuplicate(this, duplicates, senderAccountControls, accountControlPhasing)) {
                 return true;
             }
             // all are checked at acceptance height for block duplicates

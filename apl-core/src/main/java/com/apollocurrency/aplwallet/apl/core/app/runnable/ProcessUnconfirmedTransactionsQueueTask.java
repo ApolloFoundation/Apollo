@@ -78,8 +78,7 @@ public class ProcessUnconfirmedTransactionsQueueTask implements Runnable {
             UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(transaction);
             if (validationResult.isOk()) {
                 try {
-                    validator.validateSignatureWithTxFeeLessStrict(transaction);
-                    validator.validateLightly(transaction);
+                    validator.validateSufficiently(transaction);
                     boolean added = memPool.addProcessed(transaction);
                     if (!added) {
                         log.warn("Unable to add new unconfirmed transaction {}, mempool is full", transaction.getId());

@@ -32,8 +32,6 @@ import org.json.simple.JSONStreamAware;
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_ASSETS;
-
 @Vetoed
 public final class DeleteAssetShares extends CreateTransactionHandler {
 
@@ -49,11 +47,7 @@ public final class DeleteAssetShares extends CreateTransactionHandler {
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
         Attachment attachment = new ColoredCoinsAssetDelete(asset.getId(), quantityATU);
-        try {
-            return createTransaction(req, account, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return NOT_ENOUGH_ASSETS;
-        }
+        return createTransaction(req, account, attachment);
     }
 
 }

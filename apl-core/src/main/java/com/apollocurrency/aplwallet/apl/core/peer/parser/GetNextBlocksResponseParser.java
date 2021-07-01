@@ -56,7 +56,7 @@ public class GetNextBlocksResponseParser implements JsonReqRespParser<GetNextBlo
                 BlockImpl parsedBlock = blockParser.parseBlock(blockData, blockchainConfig.getCurrentConfig().getInitialBaseTarget());
                 blockList.add(parsedBlock);
             }
-        } catch (AplException.NotValidException | RuntimeException | AplException.NotCurrentlyValidException e) {
+        } catch (AplException.NotValidException | RuntimeException e) {
             log.debug("Failed to parse block(s): " + e.toString(), e);
             GetNextBlocksResponse nextBlocksResponse = new GetNextBlocksResponse(blockList);
             nextBlocksResponse.setErrorCode(1);

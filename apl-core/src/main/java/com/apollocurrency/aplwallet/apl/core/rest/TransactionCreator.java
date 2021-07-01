@@ -183,8 +183,6 @@ public class TransactionCreator {
             tcd.setTx(transaction);
         } catch (AplException.NotYetEnabledException e) {
             tcd.setErrorType(TransactionCreationData.ErrorType.FEATURE_NOT_AVAILABLE);
-        } catch (AplException.InsufficientBalanceException e) {
-            tcd.setErrorType(TransactionCreationData.ErrorType.INSUFFICIENT_BALANCE_ON_APPLY_UNCONFIRMED);
         } catch (AplException.ValidationException e) {
             tcd.setErrorType(TransactionCreationData.ErrorType.VALIDATION_FAILED);
             tcd.setError(e.getMessage());
@@ -210,8 +208,6 @@ public class TransactionCreator {
                     throw new RestParameterException(ApiErrors.FEATURE_NOT_ENABLED);
                 case MISSING_SECRET_PHRASE:
                     throw new RestParameterException(ApiErrors.MISSING_PARAM_LIST, "secretPhrase,passphrase");
-                case INSUFFICIENT_BALANCE_ON_APPLY_UNCONFIRMED:
-                    throw new RestParameterException(ApiErrors.TX_VALIDATION_FAILED, " not enough funds (APL,ASSET,CURRENCY)");
                 default:
                     throw new RuntimeException("For " + transaction.getErrorType() + " no error throwing mappings was found");
             }
@@ -231,8 +227,7 @@ public class TransactionCreator {
 
         public enum ErrorType {
             INCORRECT_DEADLINE, MISSING_DEADLINE, MISSING_SECRET_PHRASE,
-            INCORRECT_EC_BLOCK, FEATURE_NOT_AVAILABLE, NOT_ENOUGH_APL,
-            INSUFFICIENT_BALANCE_ON_APPLY_UNCONFIRMED, VALIDATION_FAILED
+            INCORRECT_EC_BLOCK, FEATURE_NOT_AVAILABLE, NOT_ENOUGH_APL, VALIDATION_FAILED
         }
     }
 }
