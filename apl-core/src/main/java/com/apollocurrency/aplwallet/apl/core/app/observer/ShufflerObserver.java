@@ -6,8 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.app.observer;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.AplMemPoolFullException;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.ShufflerService;
 import com.apollocurrency.aplwallet.apl.core.shard.DbHotSwapConfig;
@@ -52,7 +53,8 @@ public class ShufflerObserver {
                     processor.broadcast(shuffler.getFailedTransaction());
                     shuffler.setFailedTransaction(null);
                     shuffler.setFailureCause(null);
-                } catch (AplTransactionValidationException ignore) {
+                } catch (AplTransactionValidationException | AplMemPoolFullException ignore) {
+                    log.debug("");
                 }
             }
         }));

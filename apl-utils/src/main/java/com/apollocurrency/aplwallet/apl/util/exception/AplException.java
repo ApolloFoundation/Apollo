@@ -90,18 +90,6 @@ public abstract class AplException extends Exception {
 
     }
 
-    public static final class NotYetEnabledException extends NotCurrentlyValidException {
-
-        public NotYetEnabledException(String message) {
-            super(message);
-        }
-
-        public NotYetEnabledException(String message, Throwable throwable) {
-            super(message, throwable);
-        }
-
-    }
-
     public static final class NotValidException extends ValidationException {
 
         public NotValidException(String message) {

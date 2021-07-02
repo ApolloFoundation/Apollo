@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.cache.DexOrderFreezingCacheConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.state.phasing.PhasingApprovedResultTable;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingApprovalResult;
@@ -499,11 +499,7 @@ public class DexService {
     }
 
     public void broadcast(Transaction transaction) {
-        try {
-            transactionProcessor.broadcast(transaction);
-        } catch (AplException.ValidationException e) {
-            throw new RuntimeException(e);
-        }
+        transactionProcessor.broadcast(transaction);
     }
 
     /**
@@ -544,7 +540,7 @@ public class DexService {
                 String txId = transaction != null ? Long.toUnsignedString(transaction.getId()) : null;
                 result.setTransaction(transaction);
                 result.setTxId(txId);
-            } catch (AplException.ValidationException | ParameterException e) {
+            } catch (AplException.ValidationException e) {
                 LOG.error(e.getMessage(), e);
                 throw new AplException.ExecutiveProcessException(e.getMessage());
             }

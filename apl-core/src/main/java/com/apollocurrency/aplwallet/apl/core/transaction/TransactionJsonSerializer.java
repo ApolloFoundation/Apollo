@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import org.json.simple.JSONObject;
 
 public interface TransactionJsonSerializer {

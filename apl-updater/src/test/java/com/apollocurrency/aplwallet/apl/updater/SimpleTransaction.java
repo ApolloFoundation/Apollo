@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.updater;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -286,6 +286,16 @@ public class SimpleTransaction implements Transaction {
     @Override
     public boolean isFailed() {
         return false;
+    }
+
+    @Override
+    public boolean canFailDuringExecution() {
+        return false;
+    }
+
+    @Override
+    public void resetFail() {
+
     }
 
 }

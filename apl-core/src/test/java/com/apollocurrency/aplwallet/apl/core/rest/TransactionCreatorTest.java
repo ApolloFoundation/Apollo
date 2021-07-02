@@ -1,8 +1,11 @@
 package com.apollocurrency.aplwallet.apl.core.rest;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
@@ -12,8 +15,8 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProce
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSigner;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -276,7 +279,7 @@ class TransactionCreatorTest {
     }
 
     @Test
-    void testCreateTransaction_not_valid_on_unconfirmed() throws AplException.ValidationException {
+    void testCreateTransaction_not_valid_on_unconfirmed() {
         EcBlockData ecBlockData = new EcBlockData(121, 100_000);
         doReturn(ecBlockData).when(blockchain).getECBlock(0);
         CreateTransactionRequest request = CreateTransactionRequest.builder()
@@ -287,11 +290,11 @@ class TransactionCreatorTest {
             .feeATM(1000000)
             .broadcast(true)
             .build();
-        doThrow(new AplException.NotCurrentlyValidException("Test. Not enough funds")).when(processor).broadcast(any(Transaction.class));
+        doThrow(new AplAcceptableTransactionValidationException("Test. Not enough funds", mock(Transaction.class))).when(processor).broadcast(any(Transaction.class));
         assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
 
         TransactionCreator.TransactionCreationData data = txCreator.createTransaction(request);
-        assertEquals(TransactionCreator.TransactionCreationData.ErrorType.INSUFFICIENT_BALANCE_ON_APPLY_UNCONFIRMED, data.getErrorType());
+        assertEquals(TransactionCreator.TransactionCreationData.ErrorType.VALIDATION_FAILED, data.getErrorType());
     }
 
     @Test
@@ -306,7 +309,7 @@ class TransactionCreatorTest {
             .feeATM(1000000)
             .broadcast(true)
             .build();
-        doThrow(new AplException.NotYetEnabledException("Test. Not enabled")).when(processor).broadcast(any(Transaction.class));
+        doThrow(new AplTransactionFeatureNotEnabledException("Test. Not enabled", mock(Transaction.class))).when(processor).broadcast(any(Transaction.class));
         assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
 
         TransactionCreator.TransactionCreationData data = txCreator.createTransaction(request);
@@ -325,7 +328,7 @@ class TransactionCreatorTest {
             .feeATM(1000000)
             .broadcast(true)
             .build();
-        doThrow(new AplException.NotValidException("Test. Not valid")).when(processor).broadcast(any(Transaction.class));
+        doThrow(new AplUnacceptableTransactionValidationException("Test. Not valid", mock(Transaction.class))).when(processor).broadcast(any(Transaction.class));
         assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
 
         TransactionCreator.TransactionCreationData data = txCreator.createTransaction(request);

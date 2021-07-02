@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.exception;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 
 /**
  * Exception, that may be thrown during transaction execution indicating that it's acceptable and expected  behavior,

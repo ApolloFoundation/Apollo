@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.api.v2.model.AccountReqSendMoney;
 import com.apollocurrency.aplwallet.api.v2.model.AccountReqTest;
 import com.apollocurrency.aplwallet.api.v2.model.CreateChildAccountResp;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AddressScope;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;

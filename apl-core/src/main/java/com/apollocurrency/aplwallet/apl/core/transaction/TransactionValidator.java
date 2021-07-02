@@ -5,8 +5,8 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.antifraud.AntifraudValidator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
@@ -114,6 +114,7 @@ public class TransactionValidator {
      * @param transaction transaction to validate
      * @throws AplAcceptableTransactionValidationException when transaction's appendix/attachment verification failed and transaction may be accepted
      * @throws AplUnacceptableTransactionValidationException when transaction general verification failed and transaction is not valid at all
+     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException when transaction is not allowed yet
      */
     public void validateFully(Transaction transaction) {
        validateLightlyWithoutAppendices(transaction);
@@ -135,7 +136,7 @@ public class TransactionValidator {
         }
         int blockchainHeight = blockchain.getHeight();
         if (!validatingAtFinish) {
-            validateFeeSufficiency(transaction, blockchainHeight);
+            validateFee(sender, transaction, blockchainHeight);
             long ecBlockId = transaction.getECBlockId();
             int ecBlockHeight = transaction.getECBlockHeight();
             if (ecBlockId != 0) {

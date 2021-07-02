@@ -6,9 +6,9 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.MandatoryTransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.MandatoryTransactionModelToEntityConverter;
-import com.apollocurrency.aplwallet.apl.core.blockchain.MandatoryTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransactionEntity;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;

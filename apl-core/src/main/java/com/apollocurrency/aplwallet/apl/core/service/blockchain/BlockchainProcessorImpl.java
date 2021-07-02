@@ -31,12 +31,11 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEvent
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksThread;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.BlockImpl;
-import com.apollocurrency.aplwallet.apl.core.blockchain.BlockchainProcessorState;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
-import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.model.BlockchainProcessorState;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -732,7 +731,8 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         }
     }
 
-    private void validateTransactions(Block block, Block previousLastBlock, int curTime, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
+    private void validateTransactions(Block block, Block previousLastBlock, int curTime,
+                                      Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates,
                                       boolean fullValidation) throws BlockNotAcceptedException {
         long payloadLength = 0;
         long calculatedTotalAmount = 0;
@@ -777,19 +777,21 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     transaction.fail(e.getMessage());
                 }
             }
-            // prefetch data for duplicate validation
-            Account senderAccount = accountService.getAccount(transaction.getSenderId());
-            Set<AccountControlType> senderAccountControls = senderAccount.getControls();
-            AccountControlPhasing accountControlPhasing = accountControlPhasingService.get(transaction.getSenderId());
-            if (transaction.attachmentIsDuplicate(duplicates, true, senderAccountControls, accountControlPhasing)) {
-                throw new TransactionNotAcceptedException(
-                    "Transaction is a duplicate", transaction, blockSerializer.getJSONObject(block));
-            }
-            if (!hasPrunedTransactions) {
-                for (Appendix appendage : transaction.getAppendages()) {
-                    if ((appendage instanceof Prunable) && !((Prunable) appendage).hasPrunableData()) {
-                        hasPrunedTransactions = true;
-                        break;
+            if (!transaction.isFailed()) {
+                // prefetch data for duplicate validation
+                Account senderAccount = accountService.getAccount(transaction.getSenderId());
+                Set<AccountControlType> senderAccountControls = senderAccount.getControls();
+                AccountControlPhasing accountControlPhasing = accountControlPhasingService.get(transaction.getSenderId());
+                if (transaction.attachmentIsDuplicate(duplicates, true, senderAccountControls, accountControlPhasing)) {
+                    throw new TransactionNotAcceptedException(
+                        "Transaction is a duplicate", transaction, blockSerializer.getJSONObject(block));
+                }
+                if (!hasPrunedTransactions) {
+                    for (Appendix appendage : transaction.getAppendages()) {
+                        if ((appendage instanceof Prunable) && !((Prunable) appendage).hasPrunableData()) {
+                            hasPrunedTransactions = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -845,12 +847,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             for (Transaction transaction : block.getTransactions()) {
                 try {
                     transactionApplier.apply(transaction);
-                    if (transaction.getTimestamp() > fromTimestamp) {
+                    if (!transaction.isFailed() && transaction.getTimestamp() > fromTimestamp) {
                         for (AbstractAppendix appendage : transaction.getAppendages()) {
                             prunableService.loadPrunable(transaction, appendage, true);
                             if ((appendage instanceof Prunable) &&
                                 !((Prunable) appendage).hasPrunableData()) {
-                                // TODO: YL check correct work with prunables
                                 Set<Long> prunableTransactions = prunableRestorationService.getPrunableTransactions();
                                 synchronized (prunableTransactions) {
                                     prunableTransactions.add(transaction.getId());
@@ -868,7 +869,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             }
             SortedSet<Transaction> possiblyApprovedTransactions = new TreeSet<>(finishingTransactionsComparator);
             log.trace(":accept: validate all block transactions");
-            block.getTransactions().forEach(transaction -> {
+            block.getTransactions().stream().filter(tx -> !tx.isFailed()).forEach(transaction -> {
                 phasingPollService.getLinkedPhasedTransactions(transaction.getFullHash()).forEach(phasedTransaction -> {
                     if ((phasedTransaction.getPhasing().getFinishHeight() > block.getHeight()
                         || phasedTransaction.getPhasing().getClass() == PhasingAppendixV2.class
@@ -1165,25 +1166,32 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                             || unconfirmedTransaction.getExpiration() < blockTimestamp)) {
                             continue;
                         }
+                        Transaction tx = unconfirmedTransaction.getTransactionImpl();
                         try {
-                            transactionValidator.validateSufficiently(unconfirmedTransaction.getTransactionImpl());
+                            transactionValidator.validateFully(tx);
                         } catch (AplUnacceptableTransactionValidationException e) {
+                            log.debug("Skip not valid transaction {} during selection: {}", tx.getStringId(), e.getMessage());
                             continue;
+                        } catch (AplAcceptableTransactionValidationException e) {
+                            log.info("Selected acceptable failed transaction {}: {}", tx.getStringId(), e.getMessage());
+                            tx.fail(e.getMessage());
                         }
-                        if (!transactionApplier.applyUnconfirmed(unconfirmedTransaction.getTransactionImpl())) { // persist tx changes and validate against updated state
+                        if (!transactionApplier.applyUnconfirmed(tx)) { // persist tx changes and validate against updated state
                             removedTxs.add(unconfirmedTransaction); // remove incorrect transaction and forget about it for 10 minutes
                             continue;
                         } else {
                             appliedUnconfirmedTxs.add(unconfirmedTransaction);
                         }
-                        // prefetch data for duplicate validation
-                        Account senderAccount = accountService.getAccount(unconfirmedTransaction.getTransactionImpl().getSenderId());
-                        Set<AccountControlType> senderAccountControls = senderAccount.getControls();
-                        AccountControlPhasing accountControlPhasing = accountControlPhasingService.get(
-                            unconfirmedTransaction.getTransactionImpl().getSenderId());
-                        if (unconfirmedTransaction.getTransactionImpl().attachmentIsDuplicate(
-                            duplicates, true, senderAccountControls, accountControlPhasing)) {
-                            continue;
+                        if (!tx.isFailed()) {
+                            // prefetch data for duplicate validation
+                            Account senderAccount = accountService.getAccount(tx.getSenderId());
+                            Set<AccountControlType> senderAccountControls = senderAccount.getControls();
+                            AccountControlPhasing accountControlPhasing = accountControlPhasingService.get(
+                                tx.getSenderId());
+                            if (tx.attachmentIsDuplicate(
+                                duplicates, true, senderAccountControls, accountControlPhasing)) {
+                                continue;
+                            }
                         }
                         sortedTransactions.add(unconfirmedTransaction);
                         if (sortedTransactions.size() == limit) {
@@ -1588,6 +1596,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             log.info("Revert back unconfirmed changes for the txs: {}", txsToString(txsToRevert));
             txsToRevert.forEach(e-> {
                 transactionApplier.undoUnconfirmed(e);
+                e.resetFail();
                 reverted.add(e);
             });
         } catch (RuntimeException e) {
