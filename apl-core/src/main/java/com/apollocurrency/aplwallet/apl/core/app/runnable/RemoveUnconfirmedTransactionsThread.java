@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.inject.spi.CDI;
@@ -64,7 +65,8 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
     }
 
     private void removeNotValidTransactions() {
-        TransactionHelper.executeInTransaction(databaseManager.getDataSource(), () -> memPool.getAllProcessedStream().forEach(e -> {
+        TransactionHelper.executeInTransaction(databaseManager.getDataSource(),
+            () -> CollectionUtil.forEach(memPool.getAllProcessedStream(), e -> {
             if (!transactionProcessor.isFullyValidTransaction(e)) {
                 transactionProcessor.removeUnconfirmedTransaction(e);
             }
@@ -84,7 +86,8 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
         if (expiredTransactionsCount > 0) {
             log.trace("Found {} unc txs to remove", expiredTransactionsCount);
             TransactionalDataSource dataSource = databaseManager.getDataSource();
-            TransactionHelper.executeInTransaction(dataSource, () -> memPool.getExpiredTxsStream(epochTime).forEach(e-> transactionProcessor.removeUnconfirmedTransaction(e.getTransaction())));
+            TransactionHelper.executeInTransaction(dataSource, () -> CollectionUtil.forEach(
+                memPool.getExpiredTxsStream(epochTime), e -> transactionProcessor.removeUnconfirmedTransaction(e.getTransaction())));
         }
     }
 }

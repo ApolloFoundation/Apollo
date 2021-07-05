@@ -1,15 +1,17 @@
 package com.apollocurrency.aplwallet.apl.exchange.service;
 
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.model.AplWalletKey;
 import com.apollocurrency.aplwallet.apl.core.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.eth.contracts.DexContract;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.service.EthereumWalletService;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
+import com.apollocurrency.aplwallet.apl.eth.web3j.ChainId;
 import com.apollocurrency.aplwallet.apl.eth.web3j.ComparableStaticGasProvider;
 import com.apollocurrency.aplwallet.apl.exchange.dao.DexTransactionDao;
 import com.apollocurrency.aplwallet.apl.exchange.model.DepositedOrderDetails;
@@ -21,7 +23,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.EthStationGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderStatus;
 import com.apollocurrency.aplwallet.apl.exchange.model.OrderType;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +62,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
@@ -88,6 +90,9 @@ class DexSmartContractServiceTest {
     private TransactionReceiptProcessor receiptProcessor;
     @Mock
     private DexBeanProducer dexBeanProducer;
+
+    @Mock
+    private ChainId chainId;
     private DexSmartContractService service;
     private EthWalletKey aliceWalletKey;
     private WalletKeysInfo aliceWalletKeysInfo;
@@ -103,7 +108,7 @@ class DexSmartContractServiceTest {
         props.setProperty("apl.eth.pax.contract.address", PAX_ETH_ADDRESS);
         PropertiesHolder holder = new PropertiesHolder();
         holder.init(props);
-        service = spy(new DexSmartContractService(holder, keyStoreService, dexEthService, ethereumWalletService, dexTransactionDao, dexBeanProducer, null));
+        service = spy(new DexSmartContractService(holder, keyStoreService, dexEthService, ethereumWalletService, dexTransactionDao, dexBeanProducer, null, chainId));
         aliceWalletKey = new EthWalletKey(Credentials.create(ECKeyPair.create(Crypto.getPrivateKey(Convert.parseHexString(ALICE_PRIV_KEY)))));
         ApolloFbWallet apolloFbWallet = new ApolloFbWallet();
         apolloFbWallet.addAplKey(new AplWalletKey(Convert.parseHexString(ALICE_PRIV_KEY)));
@@ -211,6 +216,7 @@ class DexSmartContractServiceTest {
         String hash = service.deposit(ALICE_PASS, 100L, ALICE_ID, ALICE_ETH_ADDRESS, amount, 27L, DexCurrency.ETH);
 
         assertEquals("hash", hash);
+        verifyNoChainId();
     }
 
     @Test
@@ -369,6 +375,7 @@ class DexSmartContractServiceTest {
         boolean r = service.refundAndWithdraw(secretHash, ALICE_PASS, ALICE_ETH_ADDRESS, ALICE_ID, true) != null;
 
         assertTrue(r);
+        verifyNoChainId();
     }
 
     @Test
@@ -455,4 +462,7 @@ class DexSmartContractServiceTest {
         mockEthSendTransactionWithRespnse(encodedTx, response);
     }
 
+    private void verifyNoChainId() {
+        verifyNoInteractions(chainId);
+    }
 }

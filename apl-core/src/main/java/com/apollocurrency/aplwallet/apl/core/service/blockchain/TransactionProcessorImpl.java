@@ -234,7 +234,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         List<UnconfirmedTransaction> unconfirmedTransactions = TransactionHelper.executeInTransaction(dataSource, () -> {
             List<UnconfirmedTransaction> txs = new ArrayList<>();
-            memPool.getAllProcessedStream().forEach(txs::add);
+            CollectionUtil.forEach(memPool.getAllProcessedStream(), txs::add);
             memPool.clear();
             log.info("Unc txs cleared");
             return txs;
@@ -396,7 +396,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 transactionValidator.validateFully(tx);
                 isValid = true;
             } catch (AplException.ValidationException e) {
-                log.trace("Tx {} is not valid", tx.getId());
+                log.debug("Tx {} is not valid, reason: {}", tx.getId(), e.getMessage());
             }
         return isValid;
     }

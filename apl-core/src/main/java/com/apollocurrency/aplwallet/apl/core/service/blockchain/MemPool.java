@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.config.Property;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.MemPoolUnconfirmedTransactionTable;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UnconfirmedTransactionTable;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
@@ -26,10 +26,8 @@ import java.util.stream.Stream;
 @Slf4j
 @Singleton
 public class MemPool {
-
-
-    private final IteratorToStreamConverter<UnconfirmedTransaction> streamConverter = new IteratorToStreamConverter<>();;
-    private final MemPoolUnconfirmedTransactionTable table;
+    private final IteratorToStreamConverter<UnconfirmedTransaction> streamConverter = new IteratorToStreamConverter<>();
+    private final UnconfirmedTransactionTable table;
     private final MemPoolInMemoryState memoryState;
     private final GlobalSync globalSync;
     private final TransactionValidator validator;
@@ -37,7 +35,7 @@ public class MemPool {
     private final int maxUnconfirmedTransactions;
 
     @Inject
-    public MemPool(MemPoolUnconfirmedTransactionTable table,
+    public MemPool(UnconfirmedTransactionTable table,
                    MemPoolInMemoryState memoryState,
                    GlobalSync globalSync,
                    TransactionValidator validator,
@@ -106,7 +104,7 @@ public class MemPool {
 
 
     public Stream<UnconfirmedTransaction> getAllProcessedStream() {
-        return table.getAllUnconfirmedTransactionsStream();
+        return table.getAllUnconfirmedTransactions();
     }
 
     public int allProcessedCount() {
@@ -164,7 +162,7 @@ public class MemPool {
     }
 
     public void rebroadcastAllUnconfirmedTransactions() {
-        getAllProcessedStream().forEach(e -> {
+        CollectionUtil.forEach(getAllProcessedStream(), e -> {
             if (enableRebroadcasting) {
                 memoryState.addToBroadcasted(e.getTransaction());
             }
@@ -176,9 +174,9 @@ public class MemPool {
     }
 
     public boolean removeProcessedTransaction(long id) {
-        boolean deleted = table.deleteById(id);
+        int deleted = table.deleteById(id);
         memoryState.removeFromCache(id);
-        return deleted;
+        return deleted > 0;
     }
 
     public void rebroadcast(Transaction tx) {

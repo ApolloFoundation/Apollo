@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.rest.exception;
 
 import com.apollocurrency.aplwallet.apl.core.rest.ErrorInfo;
+import com.apollocurrency.aplwallet.apl.core.rest.utils.ResponseBuilder;
 
 /**
  * Exception with dedicated mapper {@link RestParameterExceptionMapper}, can be thrown directly from REST endpoint
@@ -44,7 +45,7 @@ public class RestParameterException extends RuntimeException {
     }
 
     public RestParameterException(ErrorInfo errorInfo, Object... args) {
-        super(errorInfo.getErrorDescription());
+        super(ResponseBuilder.apiError(errorInfo, args).build().getEntity().toString());
         this.errorInfo = errorInfo;
         this.args = args;
     }

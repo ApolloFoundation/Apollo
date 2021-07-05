@@ -524,6 +524,33 @@ paths:
                 $ref: '#/components/schemas/BlockchainInfo'
         500:
           $ref: '#/components/responses/ServerError'
+  /@@currencies/burnings:
+    post:
+      tags:
+        - currencies
+      summary: Create currency burning transaction with options to validate, sign and broadcast created transaction.
+      description: Create transaction designated for the currency burning operation, transaction may be created as unsigned (when only sender's `publicKey` specified), then verified by the client, signed and sent using `/transaction` broadcast endpoint. When the `passphrase` or `secretPhrase` and `broadcast` is omitted or is true, then transaction will be created, signed and broadcasted to the network by the node,  set `broadcast` to false to get already signed and fully validated transaction without sending transaction to peers
+      operationId: currencyBurningTx
+      requestBody:
+        description: Set of parameters (most are optional, more important are higher) for the transaction creation, secretPhrase or publicKey or passphrase, deadline, fee, currencyId, burningAmount, sender parameters are mandatory
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurrencyBurningTxCreationRequest'
+        required: true
+      responses:
+        200:
+          description: Transaction is successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionCreationResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        409:
+          $ref: '#/components/responses/ConflictResource'
+        500:
+          $ref: '#/components/responses/ServerError'
 
 components:
   schemas:
@@ -663,6 +690,101 @@ components:
           format: int32
           description: the order of the transaction in the block
           example: 1
+    UnconfirmedTransactionInfo:
+      type: object
+      properties:
+        id:
+          description: The transaction ID
+          type: string
+          format: hex_bytearray
+          example: '1a0feb1306043151604016701'
+        type:
+          description: Transaction type
+          type: string
+          format: int8
+          example: '2'
+        subtype:
+          description: Transaction subtype
+          type: string
+          format: int8
+          example: '1'
+        phased:
+          description: is true if the transaction is phased
+          type: boolean
+          example: false
+        timestamp:
+          type: integer
+          format: int64
+          description: Transaction timestamp, Unix timestamp in milliseconds
+          example: 1591696372000
+        deadline:
+          description: the deadline for the transaction to be confirmed in minutes,ex.1440=24h
+          type: integer
+          format: int32
+          example: 1440
+        senderPublicKey:
+          type: string
+          format: hex_bytearray
+          description: The public key of the sending account for the transaction
+        recipient:
+          type: string
+          description: The account Id of the recipient
+          example: 'APL-FXHG-6KHM-23LE-42ACU'
+        amount:
+          type: string
+          format: integer
+          description: The amount of the transaction
+          example: 34500000000
+        fee:
+          type: string
+          format: integer
+          example: 200000000
+          description: The fee of the transaction
+        referencedTransactionFullHash:
+          type: string
+          format: hex_bytearray
+          description: The full hash of a transaction referenced by this one
+          example: '5424ca4dd976a873839c7d5c9952fa15ae619f678365e8ebbc73f967142eb40d'
+        signature:
+          type: string
+          format: hex_bytearray
+          example: '920173ae606d36c1c77fc5bdf294bd048d04f85c46535525771b524dbb1ed20b73311900d4a409c293a10d8a5ab987430be4bd7478fb16a41cf775afa33c4d56'
+          description: The digital signature of the transaction
+        signatureHash:
+          type: string
+          format: hex_bytearray
+          description: SHA-256 hash of the transaction signature
+          example: '2fc1883e9b76fdc67fabee0a3def5f4b7fc2de9cd65bc8bb6d39eaf5e99498d8'
+        fullHash:
+          type: string
+          format: hex_bytearray
+          description: The full hash of the transaction
+          example: '39dc2e813bb45ff063a376e316b10cd0addd7306555ca0dd2890194d37960152'
+        attachment:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: object
+          description: An object containong any additional data needed for the transaction
+        sender:
+          type: string
+          description: The sender account
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        version:
+          type: string
+          format: int8
+          example: '1'
+          description: The transaction version number
+        ecBlockId:
+          type: string
+          format: hex_bytearray
+          description: The economic clustering block ID
+          example: '40faaeb15856251679437054'
+        ecBlockHeight:
+          type: integer
+          format: int64
+          description: The economic clustering block height
+          example: 3301233
     BlockInfo:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
@@ -1209,6 +1331,244 @@ components:
               items:
                 $ref: '#/components/schemas/BaseResponse'
               nullable: true
+    TransactionCreationRequest:
+      type: object
+      properties:
+        sender:
+          type: string
+          description: The sender's account
+          example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        recipient:
+          type: string
+          description: The account Id of the recipient
+          example: 'APL-FXHG-6KHM-23LE-42ACU'
+        amount:
+          type: integer
+          format: int64
+          description: The amount of the transaction in ATMs (1 APL = 100_000_000 ATM)
+          example: 34500000000
+        fee:
+          type: integer
+          format: int64
+          example: 200000000
+          description: The fee of the transaction in ATMs (1 APL = 100_000_000 ATM)
+        deadline:
+          description: the deadline for the transaction to be confirmed in minutes,ex.1440=24h
+          type: integer
+          format: int16
+          example: 1440
+        publicKey:
+          type: string
+          format: hex_bytearray
+          description: The public key of the sending account, required for the transaction composistion
+        secretPhrase:
+          type: string
+          description: Sender's secret phrase to sign created transaction. If omitted along with passphrase - transaction will be unsigned and senderPublicKey will be mandatory
+          example: My super secret phrase
+        passphrase:
+          type: string
+          description: Sender's secret phrase for the vault wallet to sign created transaction. If omitted along with secretPhrase - transaction will be unsigned and senderPublicKey will be mandatory
+          example: My super passphrase
+        code2FA:
+          type: integer
+          format: uint32
+          description: Sender's six digit code for the two-factor authentication (if enabled). Default is 0 (not enabled)
+          example: 204123
+        recipientPublicKey:
+          type: string
+          format: hex_bytearray
+          description: The public key of the recipient account to assign, optional
+          example: '19efbaa811e5f2259fda253b48b5d3e3403654ebec7e64f80a5b6aeb01fb054a'
+        broadcast:
+          description: whether broadcast created and signed transaction to peers or not, optional, default is true
+          type: boolean
+          example: true
+        referencedTransactionFullHash:
+          type: string
+          format: hex_bytearray
+          description: The full hash of a transaction referenced by this one
+          example: '5424ca4dd976a873839c7d5c9952fa15ae619f678365e8ebbc73f967142eb40d'
+        ecBlockId:
+          type: integer
+          format: uint64
+          description: The economic clustering block ID, optional
+          example: '7911424905508915728'
+        ecBlockHeight:
+          type: integer
+          format: int32
+          description: The economic clustering block height, optional
+          example: 3301233
+        message:
+          type: string
+          description: Plain message to attach to the transaction
+          example: Hello, recipient. Here is unencrypted plain message
+        messageIsText:
+          type: boolean
+          description: Whether the value specified in the message parameter is in text or hex format
+          example: true
+        messageIsPrunable:
+          type: boolean
+          description: Whether the message from the `message` parameter should prunable or not
+          example: false
+        messageToEncrypt:
+          type: string
+          description: Message to encrypt and attach to the created transaction, required assigned public key for the recipient's account, recipient will be able to view the message content
+          example: My super message to encrypt
+        messageToEncryptIsText:
+          type: boolean
+          description: Whether the value specified in the messageToEncrypt parameter is in text or hex format
+          example: true
+        compressMessageToEncrypt:
+          type: boolean
+          description: Whether compress  messageToEncrypt parameter value or not
+          example: true
+        encryptedMessageData:
+          type: string
+          format: hex_bytearray
+          description: Already encrypted message data
+          example: 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3'
+        encryptedMessageNonce:
+          type: string
+          format: hex_bytearray
+          description: Encrypted message nonce used for the encryption
+          example: '7b52009b64fd0a2a49e6d8a939753077792b0554'
+        encryptedMessageIsPrunable:
+          type: boolean
+          description: Whether the encrypted message from the `encryptedMessageData` + `encryptedMessageNonce` or `messageToEncrypt` parameters should prunable or not
+          example: true
+        messageToEncryptToSelf:
+          type: string
+          description:  Note to encrypt using senders public and private keys and attach to the created transaction, no one will be able to view the note content
+          example: My secure note to encrypt
+        messageToEncryptToSelfIsText:
+          type: boolean
+          description: Whether the value specified in the `messageToEncryptToSelf` parameter is in text or hex format
+          example: true
+        encryptToSelfMessageData:
+          type: string
+          format: hex_bytearray
+          description: Already encrypted note data
+          example: 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3'
+        encryptToSelfMessageNonce:
+          type: string
+          format: hex_bytearray
+          description: Encrypted note nonce used for the encryption
+          example: '7b52009b64fd0a2a49e6d8a939753077792b0554'
+        compressMessageToEncryptToSelf:
+          type: boolean
+          description: Whether compress  messageToEncryptToSelf parameter value or not
+          example: true
+        phased:
+          description: Whether transaction should be phased or not
+          type: boolean
+          example: false
+        phasingFinishHeight:
+          type: integer
+          format: int32
+          description: Future blockchain height for the phasing transaction to finish, should be specified when phasingFinishTime is omitted
+        phasingFinishTime:
+          type: integer
+          format: int32
+          description: Phasing transaction duration in seconds to finish, should be specified when phasingFinishHeight is omitted
+        phasingVotingModel:
+          type: integer
+          format: int8
+          description: Type of voting for the phasing transaction approval, -1 - No restrictions, 0 - vote acconts whitelist, 1 - APL min balance restriction, 2 - Any asset balance restriction, 3 - Any currency balance restriction, 4 - linked transaction should be confirmed for the phasing transaction approval, 5 - phaasing transaction may be approved only by revealing secret value
+          example: -1
+        phasingQuorum:
+          type: integer
+          format: int64
+          description: Number of whitelisted accounts, voted for the phasing transaction, approved linked transactions, total currency/apl/asset amount voted for the phasing transaction to make it approved, default is 0, optional
+          example: 0
+        phasingMinBalance:
+          type: integer
+          format: uint64
+          description: Min balance of the APL/currency/asset to be counted when voting for the phasing transaction, should be used with phasingVotingModel=0..3, default is 0, optional
+          example: 1000
+        phasingMinBalanceModel:
+          type: integer
+          format: uint8
+          description: Algorithm for a min balance calculation of the voting account to be counted as a voter, 0 - NONE (default), 1 - APL  (only when phasingMinBalance > 0 and phasingVotingModel = 0..1), 2 - ASSET (only when phasingMinBalance > 0 and phasingVotingModel = 0,2), 3 - CURRENCY (only when phasingMinBalance > 0 and phasingVotingModel = 0,3)
+          example: 1
+        phasingHolding:
+          type: integer
+          format: uint64
+          description: Currency (phasingVotingModel = 3) or asset (phasingVotingModel = 2) specified by the id to be used for voters balance verification and accounting when voting for the phasing transaction, default is 0, which refers both to the APL balance verification (phasingVotingModel = 0..1) and no verification at all
+          example: 10230252222270645544
+        phasingWhitelisted:
+          type: array
+          items:
+            type: string
+            description: Whitelisted account to vote for the phasing transaction, any other account vote will not be counted
+            example: APL-HUGX-P62R-PKFR-6SD87
+        phasingLinkedFullHash:
+          type: array
+          items:
+            type: string
+            format: hex_bytearray
+            description: Linked transaction full hash (32 bytes), which should be confirmed in a blockchain to finish the phasing transaction. Required only for the phasingVotingModel = 4
+            example: d70e4489828b0b08ecf087b1a07fc051e9fa1ad2801f4e550a8a99b0f7e79e95
+        phasingHashedSecret:
+          type: string
+          format: hex_bytearray
+          description: Hash of the secret, which should be revealed to finish the phasing transaction. Required only for the phasingVotingModel = 5
+          example: e3e18f8d188c6a256ccab3d4e7a525128044c255cda5d529830510c974141733
+        phasingHashedSecretAlgorithm:
+          type: integer
+          format: uint8
+          description: Hashing algorithm used for obtaining phasingHashedSecret from the original secret value. Possible values  2 - SHA256, 6 - RIPEMD160, 62 - RIPEMD160_SHA256
+          example: 2
+    CurrencyBurningTxParams:
+      type: object
+      properties:
+        currencyId:
+          type: string
+          format: integer
+          description: Id of the currency to burn
+          example: '12074128708093990729'
+        burningAmount:
+          type: integer
+          format: int64
+          description: Amount of the currency to burn in ATUs (minimal atomic currency unit)
+          example: 100000
+    CurrencyBurningTxCreationRequest:
+      allOf:
+        - $ref: '#/components/schemas/CurrencyBurningTxParams'
+        - $ref: '#/components/schemas/TransactionCreationRequest'
+    TransactionCreationResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: integer
+              description: id of the created transaction (if signed)
+              example: '1a0feb1306043151604016701'
+            fullHash:
+              type: string
+              format: hex_bytearray
+              description: Hash of the transaction (if signed)
+              example: '36db8508369882a2d4b6e9b386bf1c39f8fb89c342b376f9f2a0cdb4e94066e6'
+            signature:
+              type: string
+              format: hex_bytearray
+              description: Signature of the transaction (if signed)
+              example: 'a88d4df7401d5c3d33d31be4c275b2067fb6a59c70cfb37d2440bd991e806d043bcf1494d4b53a46794fa1c411546bbb671b6c25e616f12380f80bc21c2449f8'
+            unsignedTransactionBytes:
+              type: string
+              format: hex_bytearray
+              description: Created transaction's unsigned bytes
+              example: '0010f2f66b06a005bf0ced0472d8ba3df9e21808e98e61b34404aad737e2bae1778cebc698b40f372f7ecaee9f86d67f00c3cdea1e01000000e1f5050000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001a51f385ecc580fe'
+            transactionBytes:
+              type: string
+              format: hex_bytearray
+              description: Created transaction's signed bytes (if transaction is signed)
+              example: '0010f2f66b06a005bf0ced0472d8ba3df9e21808e98e61b34404aad737e2bae1778cebc698b40f372f7ecaee9f86d67f00c3cdea1e01000000e1f505000000000000000000000000000000000000000000000000000000000000000000000000a88d4df7401d5c3d33d31be4c275b2067fb6a59c70cfb37d2440bd991e806d043bcf1494d4b53a46794fa1c411546bbb671b6c25e616f12380f80bc21c2449f800000000000000001a51f385ecc580fe'
+            broadcasted:
+              type: boolean
+              description: whether transaction broadcasted to peers or not
+              example: true
 
     ErrorResponse:
       type: object
