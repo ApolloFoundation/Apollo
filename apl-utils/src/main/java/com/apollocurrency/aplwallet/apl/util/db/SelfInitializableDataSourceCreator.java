@@ -6,21 +6,18 @@ package com.apollocurrency.aplwallet.apl.util.db;
 
 import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 public class SelfInitializableDataSourceCreator implements DataSourceCreator {
     private final DatabaseAdministratorFactory dbAdminFactory;
-//    private final PropertiesHolder propertiesHolder;
 
-    public SelfInitializableDataSourceCreator(DatabaseAdministratorFactory dbAdminFactory/*, PropertiesHolder propertiesHolder*/) {
+    public SelfInitializableDataSourceCreator(DatabaseAdministratorFactory dbAdminFactory) {
         this.dbAdminFactory = dbAdminFactory;
-//        this.propertiesHolder = propertiesHolder;
     }
 
     @Override
     public TransactionalDataSource createDataSource(DbProperties dbProperties, DBUpdater dbUpdater) {
         DatabaseAdministrator dbAdmin = dbAdminFactory.createDbAdmin(dbProperties);
-        SelfInitializableTransactionalDataSource dataSource = new SelfInitializableTransactionalDataSource(dbProperties, dbAdmin/*, propertiesHolder*/);
+        SelfInitializableTransactionalDataSource dataSource = new SelfInitializableTransactionalDataSource(dbProperties, dbAdmin);
         dataSource.init();
         dataSource.update(dbUpdater);
         return dataSource;
@@ -29,8 +26,8 @@ public class SelfInitializableDataSourceCreator implements DataSourceCreator {
     private static class SelfInitializableTransactionalDataSource extends TransactionalDataSource {
         private final DatabaseAdministrator databaseAdministrator;
 
-        public SelfInitializableTransactionalDataSource(DbProperties dbProperties, DatabaseAdministrator administrator/*, PropertiesHolder propertiesHolder*/) {
-            super(dbProperties/*, propertiesHolder*/);
+        public SelfInitializableTransactionalDataSource(DbProperties dbProperties, DatabaseAdministrator administrator) {
+            super(dbProperties);
             this.databaseAdministrator = administrator;
         }
 

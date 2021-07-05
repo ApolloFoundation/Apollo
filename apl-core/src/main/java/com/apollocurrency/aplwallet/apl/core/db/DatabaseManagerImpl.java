@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardManagement;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardNameHelper;
@@ -13,7 +12,6 @@ import com.apollocurrency.aplwallet.apl.db.updater.DBUpdater;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardAllScriptsDBUpdater;
 import com.apollocurrency.aplwallet.apl.db.updater.ShardInitDBUpdater;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
-import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.db.DataSourceCreator;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
@@ -120,7 +118,6 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         waitAvailability();
         if (currentTransactionalDataSource == null || currentTransactionalDataSource.isShutdown()) {
             initDatasource();
-//            initMainDatasource();
         }
         return currentTransactionalDataSource;
     }
@@ -129,59 +126,6 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         this.available = available;
     }
 
-/*
-    private void initMainDatasource() {
-        currentTransactionalDataSource = new TransactionalDataSource(this.dbConfig.getDbProperties());
-        jdbi = currentTransactionalDataSource.initWithJdbi(new AplDBUpdater());
-        jdbiHandleFactory.setJdbi(jdbi);
-    }
-
-    private void waitAvailability() {
-        while (!available) {
-            ThreadUtils.sleep(100);
-        }
-    }
-
-    @Override
-    @Produces
-    public Jdbi getJdbi() {
-        return jdbi;
-    }
-
-    @Override
-    public JdbiHandleFactory getJdbiHandleFactory() {
-        return jdbiHandleFactory;
-    }
-
-    private Set<Long> findAllFullShardId() {
-        Set<Long> result = new HashSet<>();
-        try (Connection con = getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT shard_id from shard where shard_state=? order by shard_height desc")) {
-            pstmt.setLong(1, ShardState.FULL.getValue()); // full state shard db only
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    result.add(rs.getLong("shard_id"));
-                }
-            }
-        } catch (SQLException e) {
-            log.error("Error retrieve full shard Ids...", e);
-        }
-        return result;
-    }
-
-    private TransactionalDataSource createAndAddShard(Long shardId) {
-        long start = System.currentTimeMillis();
-        waitAvailability();
-        ShardDataSourceCreateHelper shardDataSourceCreateHelper =
-            new ShardDataSourceCreateHelper(this, shardId).createUninitializedDataSource();
-        TransactionalDataSource shardDb = shardDataSourceCreateHelper.getShardDb();
-        //TODO shard
-        shardDb.init(new ShardInitDBUpdater());
-        connectedShardDataSourceMap.put(shardDataSourceCreateHelper.getShardId(), shardDb);
-        log.debug("new SHARD '{}' is CREATED in {} ms", shardDataSourceCreateHelper.getShardName(), System.currentTimeMillis() - start);
-        return shardDb;
-    }
-*/
     /**
      * {@inheritDoc}
      */
@@ -387,14 +331,5 @@ public class DatabaseManagerImpl implements ShardManagement, DatabaseManager {
         }
         return result;
     }
-
-//    private TransactionalDataSource createAndAddShard(Long shardId) {
-//        long start = System.currentTimeMillis();
-//        waitAvailability();
-//        TransactionalDataSource shardDataSource = createShardDataSource(shardId, new ShardInitDBUpdater());
-//        connectedShardDataSourceMap.put(shardId, shardDataSource);
-//        log.debug("new SHARD '{}' is CREATED in {} ms", shardDataSource.getUrl(), System.currentTimeMillis() - start);
-//        return shardDataSource;
-//    }
 
 }

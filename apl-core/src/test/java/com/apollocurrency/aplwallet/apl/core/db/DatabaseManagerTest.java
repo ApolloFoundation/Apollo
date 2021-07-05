@@ -72,8 +72,7 @@ class DatabaseManagerTest extends DBContainerRootTest {
         baseDbProperties = dbConfig.getDbProperties();
         baseDbProperties.setDbParams("&TC_DAEMON=true&TC_REUSABLE=true");
         databaseManager = new DatabaseManagerImpl(dbConfig,
-            new SelfInitializableDataSourceCreator(new DatabaseAdministratorFactoryImpl(dirProvider)/*, propertiesHolder*/));
-//        databaseManager = new DatabaseManagerImpl(dbConfig, new JdbiHandleFactory());
+            new SelfInitializableDataSourceCreator(new DatabaseAdministratorFactoryImpl(dirProvider)));
         DbPopulator dbPopulator = new DbPopulator(null, "db/db-manager-data.sql");
         dbPopulator.initDb(databaseManager.getDataSource());
         dbPopulator.populateDb(databaseManager.getDataSource());

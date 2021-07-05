@@ -46,7 +46,8 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
     private Path indexDir;
     private LuceneFullTextSearchEngine luceneFullTextSearchEngine;
 
-    public DbExtension(GenericContainer jdbcDatabaseContainer, DbConfig dbConfig,
+    public DbExtension(GenericContainer jdbcDatabaseContainer,
+                       DbConfig dbConfig,
                        String schemaScriptPath,
                        String dataScriptPath) {
         assert dbConfig.getDbProperties() != null;

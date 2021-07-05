@@ -37,8 +37,6 @@ public class MariaDbProcess {
         confFileTemplate = dbInstallDir.resolve("conf").resolve(DB_CONF_FILE_TEMPLATE);
         String dbUser = conf.getDbUsername();
         String dbPassword = conf.getDbPassword();
-//        String dbUser = conf.getDbProperties().getDbUsername();
-//        String dbPassword = conf.getDbProperties().getDbPassword();
 
         Map<String,String> vars = new HashMap<>();
         vars.put("apl_db_dir", dbDataDir.toAbsolutePath().toString());

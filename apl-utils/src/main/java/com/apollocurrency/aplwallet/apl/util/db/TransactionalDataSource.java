@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.util.db;
 
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.Data;
 import net.sf.log4jdbc.ConnectionSpy;
 import org.slf4j.Logger;
@@ -47,11 +46,6 @@ public class TransactionalDataSource extends DataSourceWrapper implements Transa
      *
      * @param dbProperties     main db properties
      */
-//    @Inject
-//    public TransactionalDataSource(DbProperties dbProperties, PropertiesHolder propertiesHolder) {
-//        this(dbProperties);
-//    }
-
     @Inject
     public TransactionalDataSource(DbProperties dbProperties) {
         super(dbProperties);

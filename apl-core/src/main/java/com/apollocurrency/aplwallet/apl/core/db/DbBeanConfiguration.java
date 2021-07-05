@@ -9,7 +9,6 @@ import com.apollocurrency.aplwallet.apl.util.db.DatabaseAdministratorFactory;
 import com.apollocurrency.aplwallet.apl.util.db.DatabaseAdministratorFactoryImpl;
 import com.apollocurrency.aplwallet.apl.util.db.SelfInitializableDataSourceCreator;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
@@ -18,12 +17,10 @@ import javax.inject.Singleton;
 @Singleton
 public class DbBeanConfiguration {
     private final DirProvider dirProvider;
-//    private final PropertiesHolder propertiesHolder;
 
     @Inject
-    public DbBeanConfiguration(DirProvider dirProvider/*, PropertiesHolder propertiesHolder*/) {
+    public DbBeanConfiguration(DirProvider dirProvider) {
         this.dirProvider = dirProvider;
-//        this.propertiesHolder = propertiesHolder;
     }
 
 
@@ -36,6 +33,6 @@ public class DbBeanConfiguration {
     @Produces
     @Singleton
     public DataSourceCreator dataSourceCreator() {
-        return new SelfInitializableDataSourceCreator(dbAdminFactory()/*, propertiesHolder*/);
+        return new SelfInitializableDataSourceCreator(dbAdminFactory());
     }
 }

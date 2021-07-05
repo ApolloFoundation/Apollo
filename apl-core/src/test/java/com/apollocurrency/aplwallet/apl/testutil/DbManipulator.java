@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.db.DatabaseAdministratorFactoryImpl;
 import com.apollocurrency.aplwallet.apl.util.db.SelfInitializableDataSourceCreator;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
-import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import org.slf4j.Logger;
 
 import java.util.Objects;
@@ -29,15 +28,12 @@ public class DbManipulator {
     private DbPopulator populator;
 
 
-//    public DbManipulator(DbProperties dbProperties, String dataScriptPath, String schemaScriptPath) {
         public DbManipulator(DbConfig dbConfig, String dataScriptPath, String schemaScriptPath) {
         Objects.requireNonNull(dbConfig, "dbConfig is NULL");
         Objects.requireNonNull(dbConfig.getDbProperties(), "dbProperties is NULL");
-//        Objects.requireNonNull(dbProperties, "dbProperties is NULL");
-//        PropertiesHolder propertiesHolderParam = propertiesHolder == null ? new PropertiesHolder() : propertiesHolder;
         // assuming database is already running
         SelfInitializableDataSourceCreator dataSourceCreator = new SelfInitializableDataSourceCreator(
-            new DatabaseAdministratorFactoryImpl(mock(DirProvider.class))/*, propertiesHolderParam*/);
+            new DatabaseAdministratorFactoryImpl(mock(DirProvider.class)));
         this.databaseManager = new DatabaseManagerImpl(dbConfig, dataSourceCreator);
 
         dataScriptPath = StringUtils.isBlank(dataScriptPath) ? DEFAULT_DATA_SCRIPT_PATH : dataScriptPath;
