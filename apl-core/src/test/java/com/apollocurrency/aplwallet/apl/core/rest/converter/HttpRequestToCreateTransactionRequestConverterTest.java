@@ -90,12 +90,4 @@ class HttpRequestToCreateTransactionRequestConverterTest {
         assertTrue(convert.isValidate());
         assertTrue(convert.isBroadcast());
     }
-
-    @Test
-    void testConvert() {
-    }
-
-    @Test
-    void testConvert1() {
-    }
 }

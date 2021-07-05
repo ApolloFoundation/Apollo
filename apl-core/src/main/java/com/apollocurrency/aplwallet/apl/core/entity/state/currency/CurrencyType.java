@@ -176,7 +176,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                 }
             }
             if (transaction.getType().getSpec() == MS_CURRENCY_BURNING) {
-                throw new AplException.NotCurrentlyValidException("Cannot burn Claimable currency, use claimReserve instead");
+                throw new AplException.NotValidException("Cannot burn Claimable currency, use claimReserve instead");
             }
         }
 
@@ -218,7 +218,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                 }
             }
             if (transaction.getType().getSpec() == MS_CURRENCY_BURNING) {
-                throw new AplException.NotCurrentlyValidException("Cannot burn Mintable currency");
+                throw new AplException.NotValidException("Cannot burn Mintable currency");
             }
         }
 

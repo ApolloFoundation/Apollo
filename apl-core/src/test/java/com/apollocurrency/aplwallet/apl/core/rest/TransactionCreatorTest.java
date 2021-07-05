@@ -172,12 +172,6 @@ class TransactionCreatorTest {
     }
 
     @Test
-    void tt() {
-        long id = Convert.bytesToLong(Convert.parseHexString("3277b6e90d0e4826"));
-        System.out.println(Long.toUnsignedString(id));
-    }
-
-    @Test
     void testCreateTransaction_setEcBlock() throws AplException.ValidationException {
         CreateTransactionRequest request = CreateTransactionRequest.builder()
             .senderAccount(sender)
