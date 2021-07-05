@@ -88,7 +88,7 @@ public class TransactionValidator {
      * @throws AplUnacceptableTransactionValidationException if transaction's verification failed and transaction should be cared as fully invalid
      */
     public void validateLightly(Transaction transaction) {
-        validateLightlyWithoutAppendices(transaction);
+        validateLightlyWithoutAppendages(transaction);
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             AppendixValidator<AbstractAppendix> validatorFor = validatorRegistry.getValidatorFor(appendage);
             verifyAppendageVersion(transaction, appendage);
@@ -122,7 +122,7 @@ public class TransactionValidator {
      * @throws com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException when transaction is not allowed yet
      */
     public void validateFully(Transaction transaction) {
-       validateLightlyWithoutAppendices(transaction);
+       validateLightlyWithoutAppendages(transaction);
 
         if (!antifraudValidator.validate(blockchain.getHeight(), blockchainConfig.getChain().getChainId(), transaction.getSenderId(),
             transaction.getRecipientId())) {
@@ -330,7 +330,7 @@ public class TransactionValidator {
      * @param transaction transaction to validate
      * @throws AplUnacceptableTransactionValidationException when transaction does not pass validation
      */
-    private void validateLightlyWithoutAppendices(Transaction transaction) {
+    private void validateLightlyWithoutAppendages(Transaction transaction) {
         if (!transactionVersionValidator.isValidVersion(transaction)) {
             throw new AplUnacceptableTransactionValidationException("Unsupported transaction version:" + transaction.getVersion() + " at height " + blockchain.getHeight(), transaction);
         }

@@ -54,7 +54,6 @@ public class UnconfirmedTransactionDTO extends BaseDTO {
 
     private String ecBlockId;
     private Integer ecBlockHeight;
-    private String errorMessage;
 
     public UnconfirmedTransactionDTO(UnconfirmedTransactionDTO o) {
         this.type = o.type;

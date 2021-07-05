@@ -29,6 +29,7 @@ public class TransactionConverter implements Converter<Transaction, TransactionD
         dto.setConfirmations(blockchain.getHeight() - model.getHeight());
         dto.setBlockTimestamp(model.getBlockTimestamp());
         dto.setTransactionIndex(model.getIndex());
+        dto.setErrorMessage(model.getErrorMessage().orElse(null));
         return dto;
     }
 

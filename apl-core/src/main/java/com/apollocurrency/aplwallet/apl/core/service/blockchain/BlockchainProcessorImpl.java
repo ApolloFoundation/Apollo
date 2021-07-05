@@ -771,8 +771,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 try {
                     transactionValidator.validateFully(transaction);
                 } catch (AplUnacceptableTransactionValidationException e) {
-                    throw new TransactionNotAcceptedException(e,
-                        transaction, blockSerializer.getJSONObject(block));
+                    throw new TransactionNotAcceptedException(e, transaction, blockSerializer.getJSONObject(block));
                 } catch (AplAcceptableTransactionValidationException e) {
                     transaction.fail(e.getMessage());
                 }
@@ -806,8 +805,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 "Total amount or fee don't match transaction totals", blockSerializer.getJSONObject(block));
         }
         if (!Arrays.equals(digest.digest(), block.getPayloadHash())) {
-            throw new BlockNotAcceptedException(
-                "Payload hash doesn't match", blockSerializer.getJSONObject(block));
+            throw new BlockNotAcceptedException("Payload hash doesn't match", blockSerializer.getJSONObject(block));
         }
         if (hasPrunedTransactions ? payloadLength > block.getPayloadLength() : payloadLength != block.getPayloadLength()) {
             throw new BlockNotAcceptedException(
