@@ -123,10 +123,7 @@ public class TransactionBuilderFactory {
         if (id != null && Long.parseUnsignedLong(id) != transaction.getId()) {
             PayloadResult unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
             txBContext.createSerializer(transaction.getVersion())
-                .serialize(
-                    TransactionWrapperHelper.createUnsignedTransaction(transaction)
-                    , unsignedTxBytes
-                );
+                .serialize(TransactionWrapperHelper.createUnsignedTransaction(transaction), unsignedTxBytes);
             // incorrect deserialization case
             throw new AplException.NotValidException("Transaction " + builder.toString() + ", unsigned bytes - " + Convert.toHexString(unsignedTxBytes.getBuffer().toByteArray()) +" has different id " + transaction.getId() + ", id from peer " + id + ", peer data " + transactionData.toJSONString());
         }

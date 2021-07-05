@@ -1,14 +1,14 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
-import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
 import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
@@ -114,7 +114,8 @@ public abstract class AbstractAppendix implements Appendix {
         if (!isPhased(transaction)) {
             return;
         }
-        performFullValidation(transaction, blockHeight);
+        performStateIndependentValidation(transaction, blockHeight);
+        performStateDependentValidation(transaction, blockHeight);
     }
 
     @Override

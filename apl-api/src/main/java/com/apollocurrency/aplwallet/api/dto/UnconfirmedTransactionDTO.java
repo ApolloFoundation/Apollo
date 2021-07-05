@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2021 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.api.dto;
 
 import com.apollocurrency.aplwallet.api.dto.utils.JacksonUtil;
@@ -50,6 +54,7 @@ public class UnconfirmedTransactionDTO extends BaseDTO {
 
     private String ecBlockId;
     private Integer ecBlockHeight;
+    private String errorMessage;
 
     public UnconfirmedTransactionDTO(UnconfirmedTransactionDTO o) {
         this.type = o.type;

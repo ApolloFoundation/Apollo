@@ -1,16 +1,16 @@
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.antifraud.AntifraudValidator;
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.core.model.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountControlPhasingService;
@@ -91,11 +91,16 @@ public class TransactionValidator {
         validateLightlyWithoutAppendices(transaction);
         for (AbstractAppendix appendage : transaction.getAppendages()) {
             AppendixValidator<AbstractAppendix> validatorFor = validatorRegistry.getValidatorFor(appendage);
-            try {
-                doAppendixLightValidation(validatorFor, transaction, appendage);
-            } catch (AplException.ValidationException e) {
-                throw new AplUnacceptableTransactionValidationException(e.getMessage(), e, transaction);
-            }
+            verifyAppendageVersion(transaction, appendage);
+            doAppendixLightValidationRethrowing(transaction, appendage, validatorFor);
+        }
+    }
+
+    private void doAppendixLightValidationRethrowing(Transaction transaction, AbstractAppendix appendage, AppendixValidator<AbstractAppendix> validatorFor) {
+        try {
+            doAppendixLightValidation(validatorFor, transaction, appendage);
+        } catch (AplException.ValidationException e) {
+            throw new AplUnacceptableTransactionValidationException(e.getMessage(), e, transaction);
         }
     }
 
@@ -157,13 +162,14 @@ public class TransactionValidator {
             }
         }
         for (AbstractAppendix appendage : transaction.getAppendages()) {
+            verifyAppendageVersion(transaction, appendage);
             prunableService.loadPrunable(transaction, appendage, false);
             AppendixValidator<AbstractAppendix> validator = validatorRegistry.getValidatorFor(appendage);
-            try {
-                doAppendixFullValidation(validatingAtFinish, validator, transaction, appendage);
-            } catch (AplException.ValidationException e) {
-                throw new AplAcceptableTransactionValidationException(e.getMessage(), e, transaction);
+            if (validatingAtFinish) {
+                validateAtFinishRethrowing(transaction, appendage, validator);
             }
+            doAppendixLightValidationRethrowing(transaction, appendage, validator);
+            doAppendixStateDependentValidationRethrowing(transaction, appendage, validator);
         }
     }
 
@@ -258,6 +264,30 @@ public class TransactionValidator {
         }
     }
 
+    private void validateAtFinish(AppendixValidator<AbstractAppendix> validator, Transaction transaction, AbstractAppendix appendix) throws AplException.ValidationException {
+        if (validator != null) {
+            validator.validateAtFinish(transaction, appendix, blockchain.getHeight());
+        } else {
+            appendix.validateAtFinish(transaction, blockchain.getHeight());
+        }
+    }
+
+    private void doAppendixStateDependentValidationRethrowing(Transaction transaction, AbstractAppendix appendage, AppendixValidator<AbstractAppendix> validator) {
+        try {
+            doAppendixStateDependentValidation(validator, transaction, appendage);
+        } catch (AplException.ValidationException e) {
+            throw new AplAcceptableTransactionValidationException(e.getMessage(), e, transaction);
+        }
+    }
+
+    private void validateAtFinishRethrowing(Transaction transaction, AbstractAppendix appendage, AppendixValidator<AbstractAppendix> validator) {
+        try {
+            validateAtFinish(validator, transaction, appendage);
+        } catch (AplException.ValidationException e) {
+            throw new AplUnacceptableTransactionValidationException(e.getMessage(), transaction);
+        }
+    }
+
     /**
      * Performs sender's transaction fee payability verification
      * @param account sender's account, may be null
@@ -339,20 +369,11 @@ public class TransactionValidator {
         }
     }
 
-    private void doAppendixFullValidation(boolean validatingAtFinish, AppendixValidator<AbstractAppendix> validator, Transaction transaction, AbstractAppendix appendage) throws AplException.ValidationException {
-        if (validatingAtFinish) {
-            if (validator != null) {
-                validator.validateAtFinish(transaction, appendage, blockchain.getHeight());
-            } else {
-                appendage.validateAtFinish(transaction, blockchain.getHeight());
-            }
+    private void doAppendixStateDependentValidation(AppendixValidator<AbstractAppendix> validator, Transaction transaction, AbstractAppendix appendage) throws AplException.ValidationException {
+        if (validator != null) {
+            validator.validateStateDependent(transaction, appendage, blockchain.getHeight());
         } else {
-            if (validator != null) {
-                validator.validateStateDependent(transaction, appendage, blockchain.getHeight());
-                validator.validateStateIndependent(transaction, appendage, blockchain.getHeight());
-            } else {
-                appendage.performFullValidation(transaction, blockchain.getHeight());
-            }
+            appendage.performStateDependentValidation(transaction, blockchain.getHeight());
         }
     }
 
@@ -360,7 +381,7 @@ public class TransactionValidator {
         if (validator != null) {
             validator.validateStateIndependent(transaction, appendage, blockchain.getHeight());
         } else {
-            appendage.performLightweightValidation(transaction, blockchain.getHeight());
+            appendage.performStateIndependentValidation(transaction, blockchain.getHeight());
         }
     }
 
@@ -390,6 +411,12 @@ public class TransactionValidator {
                 throw new AplUnacceptableTransactionValidationException("The parent account for sender and recipient must be the same;" +
                     "sender.parentId=" + sender.getParentId() + ", recipient.parentId=" + recipient.getParentId(), transaction);
             }
+        }
+    }
+
+    private void verifyAppendageVersion(Transaction transaction, AbstractAppendix appendage) {
+        if (!appendage.verifyVersion()) {
+            throw new AplUnacceptableTransactionValidationException(appendage.getAppendixName() + " appendage version '" + appendage.getVersion() + " is not supported", transaction);
         }
     }
 

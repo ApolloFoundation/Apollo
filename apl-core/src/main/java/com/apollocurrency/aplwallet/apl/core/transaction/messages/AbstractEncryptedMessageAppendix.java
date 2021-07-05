@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 
@@ -19,9 +19,9 @@ import java.util.Map;
 
 public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix {
 
-    private EncryptedData encryptedData;
-    private boolean isText;
-    private boolean isCompressed;
+    private final EncryptedData encryptedData;
+    private final boolean isText;
+    private final boolean isCompressed;
 
     public AbstractEncryptedMessageAppendix(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
@@ -86,7 +86,7 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
     }
 
     @Override
-    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+    public void performStateDependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
         throw new UnsupportedOperationException("Validation for encrypted message appendix is not supported");
     }
 
@@ -101,10 +101,6 @@ public abstract class AbstractEncryptedMessageAppendix extends AbstractAppendix 
 
     public final EncryptedData getEncryptedData() {
         return encryptedData;
-    }
-
-    final void setEncryptedData(EncryptedData encryptedData) {
-        this.encryptedData = encryptedData;
     }
 
     int getEncryptedDataLength() {

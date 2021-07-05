@@ -505,7 +505,7 @@ public class GetMoreBlocksThread implements Runnable {
 
         }
         if (slowestPeer != null && connectedPublicPeers.size() >= PeersService.maxNumberOfConnectedPublicPeers && chainBlockIds.size() > Constants.MAX_AUTO_ROLLBACK / 2) {
-            log.debug("Solwest peer {} took {} ms, disconnecting", slowestPeer.getHost(), maxResponseTime);
+            log.debug("Slowest peer {} took {} ms, disconnecting", slowestPeer.getHost(), maxResponseTime);
             slowestPeer.deactivate("This peer is slowest");
         }
         //

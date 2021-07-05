@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
@@ -59,9 +59,9 @@ public interface Appendix {
 
     void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException;
 
-    void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException;
+    void performStateDependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException;
 
-    void performLightweightValidation(Transaction transaction, int blockcHeight) throws AplException.ValidationException;
+    void performStateIndependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException;
 
     default String getAppendixName() {
         return null;
