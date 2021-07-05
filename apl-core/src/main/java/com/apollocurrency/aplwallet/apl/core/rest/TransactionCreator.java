@@ -1,18 +1,22 @@
 package com.apollocurrency.aplwallet.apl.core.rest;
 
+import com.apollocurrency.aplwallet.api.v2.model.TransactionCreationResponse;
 import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSigner;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionWrapperHelper;
+import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
@@ -26,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import lombok.Data;
 
 import javax.inject.Inject;
@@ -44,9 +49,11 @@ public class TransactionCreator {
     private final TransactionTypeFactory typeFactory;
     private final TransactionBuilderFactory transactionBuilderFactory;
     private final TransactionSigner signerService;
+    private final BlockchainConfig blockchainConfig;
+    private final TxBContext txBContext;
 
     @Inject
-    public TransactionCreator(TransactionValidator validator, PropertiesHolder propertiesHolder, TimeService timeService, FeeCalculator feeCalculator, Blockchain blockchain, TransactionProcessor processor, TransactionTypeFactory typeFactory, TransactionBuilderFactory transactionBuilderFactory, TransactionSigner signer) {
+    public TransactionCreator(TransactionValidator validator, PropertiesHolder propertiesHolder, TimeService timeService, FeeCalculator feeCalculator, Blockchain blockchain, TransactionProcessor processor, TransactionTypeFactory typeFactory, TransactionBuilderFactory transactionBuilderFactory, TransactionSigner signer, BlockchainConfig blockchainConfig) {
         this.validator = validator;
         this.propertiesHolder = propertiesHolder;
         this.timeService = timeService;
@@ -56,6 +63,8 @@ public class TransactionCreator {
         this.typeFactory = typeFactory;
         this.transactionBuilderFactory = transactionBuilderFactory;
         this.signerService = signer;
+        this.blockchainConfig = blockchainConfig;
+        txBContext = TxBContext.newInstance(this.blockchainConfig.getChain());
     }
 
     public TransactionCreationData createTransaction(CreateTransactionRequest txRequest) {
@@ -228,10 +237,23 @@ public class TransactionCreator {
             response.setId(tx.getStringId());
             response.setSignature(tx.getSignature().getHexString());
             response.setFullHash(tx.getFullHashString());
-            response.setTransactionBytes(Convert.toHexString(tx.getCopyTxBytes()));
+            response.setTransactionBytes(Convert.toHexString(getSignedTxBytes(tx)));
         }
-        response.setUnsignedTransactionBytes(Convert.toHexString(tx.getUnsignedBytes()));
+        response.setUnsignedTransactionBytes(Convert.toHexString(getUnsignedTxBytes(tx)));
         return response;
+    }
+
+    private byte[] getUnsignedTxBytes(Transaction tx) {
+        PayloadResult unsignedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(tx.getVersion())
+            .serialize(TransactionWrapperHelper.createUnsignedTransaction(tx) , unsignedTxBytes);
+        return unsignedTxBytes.array();
+    }
+
+    private byte[] getSignedTxBytes(Transaction tx) {
+        PayloadResult signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        txBContext.createSerializer(tx.getVersion()).serialize(tx, signedTxBytes);
+        return signedTxBytes.array();
     }
 
     @Data

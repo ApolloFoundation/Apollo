@@ -11,17 +11,18 @@ import com.apollocurrency.aplwallet.api.v2.model.TransactionCreationResponse;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
-import com.apollocurrency.aplwallet.apl.core.rest.ApiErrors;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyBurningAttachment;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -34,15 +35,17 @@ public class CurrenciesApiServiceImpl implements CurrenciesApiService {
     private final TransactionCreator transactionCreator;
     private final AccountService accountService;
     private final AccountCurrencyService accountCurrencyService;
-    private final Account2FAHelper account2FAHelper;
+    private final Account2FAService account2FAService;
+    private final KMSService kmsService;
 
 
     @Inject
-    public CurrenciesApiServiceImpl(AccountService accountService, TransactionCreator transactionCreator, AccountCurrencyService accountCurrencyService, Account2FAHelper account2FAHelper) {
+    public CurrenciesApiServiceImpl(AccountService accountService, TransactionCreator transactionCreator, AccountCurrencyService accountCurrencyService, Account2FAService account2FAService, KMSService kmsService) {
         this.transactionCreator = Objects.requireNonNull(transactionCreator);
         this.accountService = accountService;
         this.accountCurrencyService = accountCurrencyService;
-        this.account2FAHelper = account2FAHelper;
+        this.account2FAService = account2FAService;
+        this.kmsService = kmsService;
     }
 
     @Override
@@ -55,7 +58,7 @@ public class CurrenciesApiServiceImpl implements CurrenciesApiService {
         if (senderAccount == null) {
             return builder.error(ApiErrors.UNKNOWN_VALUE, "sender", "Sender specified by the public key: " + Convert.toHexString(publicKey) + " is not found").build();
         }
-        account2FAHelper.verify2FA(Convert2.rsAccount(senderAccount.getId()), body.getPassphrase(), body.getSecretPhrase(), body.getPublicKey(), body.getCode2FA());
+        account2FAService.verify2FA(Convert2.rsAccount(senderAccount.getId()), body.getPassphrase(), body.getSecretPhrase(), body.getPublicKey(), body.getCode2FA());
 
         String currencyId = body.getCurrencyId();
         if (currencyId == null) {
@@ -106,7 +109,7 @@ public class CurrenciesApiServiceImpl implements CurrenciesApiService {
             if (accountId == 0 || passphrase == null) {
                 throw new RestParameterException(ApiErrors.MISSING_PARAM_LIST, String.join(",", "secretPhrase", "publicKey", "passphrase"));
             } else {
-                byte[] secretBytes = account2FAHelper.findAplSecretBytes(accountId, passphrase);
+                byte[] secretBytes = kmsService.getAplSecretBytes(accountId, passphrase);
                 return Crypto.getPublicKey(Crypto.getKeySeed(secretBytes));
             }
         } else {

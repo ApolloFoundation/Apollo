@@ -12,21 +12,21 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
-import com.apollocurrency.aplwallet.apl.core.rest.exception.RestParameterException;
-import com.apollocurrency.aplwallet.apl.core.rest.utils.Account2FAHelper;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyBurningAttachment;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.exception.RestParameterException;
+import com.apollocurrency.aplwallet.vault.service.KMSService;
+import com.apollocurrency.aplwallet.vault.service.auth.Account2FAService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.skyscreamer.jsonassert.JSONAssert;
 
 import javax.ws.rs.core.Response;
 
@@ -43,7 +43,9 @@ class CurrenciesApiServiceImplTest {
     @Mock
     AccountCurrencyService accountCurrencyService;
     @Mock
-    Account2FAHelper helper2FA;
+    Account2FAService account2FAService;
+    @Mock
+    KMSService kmsService;
     @Mock
     AccountService accountService;
     @Mock
@@ -61,8 +63,7 @@ class CurrenciesApiServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        doReturn("APL").when(blockchainConfig).getAccountPrefix();
-        Convert2.init(blockchainConfig);
+        Convert2.init("APL", 0);
         secretPhrase = "123";
         passphrase = "12345";
         publicKey = Crypto.getPublicKey(secretPhrase);
@@ -84,14 +85,14 @@ class CurrenciesApiServiceImplTest {
 
         assertEquals(200, result.getStatus());
         assertEquals(response, result.getEntity());
-        verify(helper2FA).verify2FA(rsAccount, null, secretPhrase, null, 239_123);
+        verify(account2FAService).verify2FA(rsAccount, null, secretPhrase, null, 239_123);
     }
 
     @Test
     void currencyBurningTx_VaultOK() {
 
         CurrencyBurningTxCreationRequest request = passphraseRequest(rsAccount, 1L, 20_000L);
-        doReturn(secretPhrase.getBytes()).when(helper2FA).findAplSecretBytes(senderId, passphrase);
+        doReturn(secretPhrase.getBytes()).when(kmsService).getAplSecretBytes(senderId, passphrase);
         doReturn(senderAccount).when(accountService).getAccount(publicKey);
         doReturn(new AccountCurrency(senderId, 1L, 20_100, 20_000, 10)).when(accountCurrencyService).getAccountCurrency(senderId, 1L);
         TransactionCreationResponse response = getTransactionCreationResponse();
@@ -102,7 +103,7 @@ class CurrenciesApiServiceImplTest {
 
         assertEquals(200, result.getStatus());
         assertEquals(response, result.getEntity());
-        verify(helper2FA).verify2FA(rsAccount, passphrase, null, null, 239_123);
+        verify(account2FAService).verify2FA(rsAccount, passphrase, null, null, 239_123);
     }
 
     @Test
@@ -128,7 +129,7 @@ class CurrenciesApiServiceImplTest {
 
         assertEquals(200, result.getStatus());
         assertEquals(response, result.getEntity());
-        verify(helper2FA).verify2FA(rsAccount, null, null, Convert.toHexString(publicKey), 239_123);
+        verify(account2FAService).verify2FA(rsAccount, null, null, Convert.toHexString(publicKey), 239_123);
     }
 
     @Test
@@ -200,7 +201,7 @@ class CurrenciesApiServiceImplTest {
     private void doFailingExCurrencyBurning(String errorMessage, CurrencyBurningTxCreationRequest request) {
         RestParameterException ex = assertThrows(RestParameterException.class, () -> apiService.currencyBurningTx(request, null));
 
-        JSONAssert.assertEquals("{\"errorDescription\":\"" + errorMessage + "\"}", ex.getMessage(), false);
+        assertEquals(errorMessage, ex.getMessage());
         verifyNoInteractions(creator);
     }
 

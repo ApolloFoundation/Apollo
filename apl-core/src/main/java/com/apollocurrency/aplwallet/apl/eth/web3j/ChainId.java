@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.eth.web3j;
 
-import com.apollocurrency.aplwallet.apl.exchange.service.DexBeanProducer;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.DexBeanProducer;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.web3j.protocol.core.Request;

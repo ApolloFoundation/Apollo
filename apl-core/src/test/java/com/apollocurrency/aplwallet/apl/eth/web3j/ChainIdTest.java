@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.eth.web3j;
 
-import com.apollocurrency.aplwallet.apl.exchange.service.DexBeanProducer;
+import com.apollocurrency.aplwallet.apl.dex.eth.service.DexBeanProducer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

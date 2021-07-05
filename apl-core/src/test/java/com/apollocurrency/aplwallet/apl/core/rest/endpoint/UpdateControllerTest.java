@@ -1,9 +1,11 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSignerImpl;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSignerImpl;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
@@ -16,7 +18,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.UpdateV2TransactionType;
@@ -28,6 +29,7 @@ import com.apollocurrency.aplwallet.apl.util.api.converter.PlatformSpecConverter
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.vault.service.KMSService;
@@ -50,6 +52,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -57,6 +60,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UpdateControllerTest extends AbstractEndpointTest {
+    private final TransactionSignerImpl transactionSigner = mock(TransactionSignerImpl.class);
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     Chain chain = mock(Chain.class);
 
@@ -89,7 +93,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
         v2Transaction = new UpdateV2TransactionType(blockchainConfig, accountService);
         UnconfirmedTransactionConverter converter = new UnconfirmedTransactionConverter(mock(PrunableLoadingService.class));
         CachedTransactionTypeFactory txTypeFactory = new CachedTransactionTypeFactory(List.of(v2Transaction));
-        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(mock(PrunableLoadingService.class), blockchainConfig), blockchain, processor, txTypeFactory, new TransactionBuilderFactory(txTypeFactory, blockchainConfig), mock(TransactionSignerImpl.class));
+        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(mock(PrunableLoadingService.class), blockchainConfig), blockchain, processor, txTypeFactory, new TransactionBuilderFactory(txTypeFactory, blockchainConfig), transactionSigner, blockchainConfig);
         dispatcher.getProviderFactory()
             .register(ByteArrayConverterProvider.class)
             .register(LegacyParameterExceptionMapper.class)
@@ -200,10 +204,14 @@ class UpdateControllerTest extends AbstractEndpointTest {
     }
 
     private void mockSigning() throws AplException.NotValidException {
+        String transactionUnsignedBytes = "6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f4436f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f4436f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443";
+        PayloadResult signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        signedTxBytes.getBuffer().write(Convert.parseHexString(transactionUnsignedBytes));
         doAnswer(invocation-> {
             Signature sig = mock(Signature.class);
             doReturn(Convert.parseHexString("6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443")).when(sig).bytes();
-            ((Transaction) invocation.getArgument(0)).sign(sig);
+            lenient().doReturn("6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443").when(sig).getHexString();
+            ((TransactionImpl) invocation.getArgument(0)).sign(sig, signedTxBytes);
             return null;
         }).when(transactionSigner).sign(any(Transaction.class), any(byte[].class));
     }

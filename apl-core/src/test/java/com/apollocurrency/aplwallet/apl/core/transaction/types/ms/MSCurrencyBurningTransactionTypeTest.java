@@ -4,10 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountCurrencyService;
@@ -15,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyBurningAttachment;
+import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -32,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -69,6 +71,9 @@ class MSCurrencyBurningTransactionTypeTest {
     @Test
     void verifyFee() {
         doReturn(100L).when(blockchainConfig).getOneAPL();
+        HeightConfig heightConfig = mock(HeightConfig.class);
+        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        doReturn(BigDecimal.ONE).when(heightConfig).getBaseFee(TransactionTypes.TransactionTypeSpec.MS_CURRENCY_BURNING, BigDecimal.ONE);
 
         assertEquals(100, type.getBaselineFee(transaction).getFee(transaction, new MonetarySystemCurrencyBurningAttachment(1, 20)));
     }

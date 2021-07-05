@@ -790,7 +790,7 @@ public class AccountController {
                     "account", accountId));
             accountErrorResponse.setAccount(Long.toUnsignedString(accountId));
             accountErrorResponse.setAccountRS(Convert2.rsAccount(accountId));
-            accountErrorResponse.set2FA(account2FAHelper.isEnabled2FA(accountId));
+            accountErrorResponse.set2FA(account2FAService.isEnabled2FA(accountId));
             return response.error(accountErrorResponse).build();
         }
 
