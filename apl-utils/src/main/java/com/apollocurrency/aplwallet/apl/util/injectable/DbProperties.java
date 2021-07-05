@@ -17,6 +17,8 @@ import java.util.UUID;
 @Builder
 @Data
 public class DbProperties implements Cloneable {
+    private static final String fullUrlString = "jdbc:%s://%s:%d/%s?user=%s&password=%s%s";
+    private static final String passwordlessUrlString = "jdbc:%s://%s:%d/%s?user=%s%s"; // skip password for 'password less mode' (in docker container)
     //TODO APL-1714
     @Deprecated
     public static final String DB_EXTENSION = "mv.db";
@@ -95,6 +97,20 @@ public class DbProperties implements Cloneable {
                 getDbParams() != null ? getDbParams() : ""
             );
         }
+        return finalDbUrl;
+    }
+
+
+    public String formatEmbeddedJdbcUrlString() {
+        String finalDbUrl;
+        String embeddedUrlTemplate = "jdbc:%s:%s/%s;%s";
+        finalDbUrl = String.format(
+            embeddedUrlTemplate,
+            getDbType(),
+            getDbDir(),
+            getDbName(),
+            getDbParams() != null ? getDbParams() : ""
+        );
         return finalDbUrl;
     }
 

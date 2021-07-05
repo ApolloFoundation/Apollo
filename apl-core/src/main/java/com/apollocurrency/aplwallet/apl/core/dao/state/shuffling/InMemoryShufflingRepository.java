@@ -9,11 +9,11 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.InMemoryVersionedDerivedE
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableData;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.MinMaxValue;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
 import javax.enterprise.inject.Vetoed;
 import java.sql.Connection;

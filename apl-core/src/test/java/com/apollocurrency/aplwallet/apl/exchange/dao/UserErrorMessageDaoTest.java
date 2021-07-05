@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.dex.core.dao.UserErrorMessageDao;
 import com.apollocurrency.aplwallet.apl.dex.core.model.UserErrorMessage;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
-import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -33,9 +33,7 @@ public class UserErrorMessageDaoTest extends DbContainerBaseTest {
 
     @BeforeEach
     void setUp() {
-        JdbiHandleFactory jdbiHandleFactory = new JdbiHandleFactory();
-        jdbiHandleFactory.setJdbi(extension.getDatabaseManager().getJdbi());
-        dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(jdbiHandleFactory, UserErrorMessageDao.class);
+        dao = JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(DbUtils.createJdbiHandleFactory(extension.getDatabaseManager()), UserErrorMessageDao.class);
     }
 
     @Test

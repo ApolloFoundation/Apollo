@@ -1,16 +1,16 @@
 /*
- * Copyright © 2018 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.db;
 
 import com.apollocurrency.aplwallet.apl.util.Constants;
-import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.ChainsConfigHolder;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import io.firstbridge.kms.infrastructure.utils.StringUtils;
 import lombok.ToString;
 
 import javax.enterprise.inject.Produces;
@@ -41,7 +41,24 @@ public class DbConfig {
         DirProvider dp = RuntimeEnvironment.getInstance().getDirProvider();
         UUID chainId = chainsConfigHolder.getActiveChain().getChainId();
 
-        if (this.dbProperties == null) {
+        return DbProperties.builder()
+            .dbType(propertiesHolder.getStringProperty("apl.dbType"))
+            .dbUrl(propertiesHolder.getStringProperty("apl.dbUrl"))
+            .dbDir(dp != null ? dp.getDbDir().toAbsolutePath().toString() : "./unit-test-db") // for unit tests
+            .dbName(dbName.concat("_".concat(chainId.toString().substring(0, 6))))
+            .chainId(chainId)
+            .dbParams(propertiesHolder.getStringProperty("apl.dbParams"))
+            .dbUsername(propertiesHolder.getStringProperty("apl.dbUsername"))
+            .dbPassword(propertiesHolder.getStringProperty("apl.dbPassword", null, true))
+            .maxConnections(propertiesHolder.getIntProperty("apl.maxDbConnections"))
+            .loginTimeout(propertiesHolder.getIntProperty("apl.dbLoginTimeout"))
+            .defaultLockTimeout(propertiesHolder.getIntProperty("apl.dbDefaultLockTimeout") * 1000)
+            .maxMemoryRows(propertiesHolder.getIntProperty("apl.dbMaxMemoryRows"))
+            .databaseHost(propertiesHolder.getStringProperty("apl.databaseHost"))
+            .databasePort(propertiesHolder.getIntProperty("apl.databasePort"))
+            .build();
+
+/*        if (this.dbProperties == null) {
             this.dbProperties = DbProperties.builder()
                 .dbType(propertiesHolder.getStringProperty("apl.dbType"))
                 .dbUrl(propertiesHolder.getStringProperty("apl.dbUrl"))
@@ -72,7 +89,7 @@ public class DbConfig {
             this.dbProperties.setSystemDbUrl(systemDbUrl);
         }
 
-        return this.dbProperties;
+        return this.dbProperties;*/
     }
 
     public PropertiesHolder getPropertiesHolder() {

@@ -30,7 +30,7 @@ import io.firstbridge.kms.security.service.KmsKvStorageService;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.service.TransportInteractionService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.AbstractBlockValidator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -224,7 +224,6 @@ public final class AplCore {
             databaseManager.getDataSource();
             kmsMainConfig = CDI.current().select(KmsMainConfig.class).get(); // KMS
             kmsKvStorageService = CDI.current().select(KmsKvStorageService.class).get(); // KMS part
-            kmsKvStorageService.getKmsAccountRepository();
 
             CDI.current().select(BlockchainConfigUpdater.class).get().updateToLatestConfig();
 //            fullTextSearchService = CDI.current().select(FullTextSearchService.class).get();
@@ -241,10 +240,8 @@ public final class AplCore {
 
             aplAppStatus.durableTaskUpdate(initCoreTaskID, 50.1, "Apollo core classes initialization");
 
-            GenesisAccounts.init();
-
-            aplAppStatus.durableTaskUpdate(initCoreTaskID, 52.5, "Exchange matcher initialization");
-
+            GenesisAccounts genesisAccounts = CDI.current().select(GenesisAccounts.class).get();
+            genesisAccounts.init();
             tcs = CDI.current().select(IDexMatcherInterface.class).get();
             tcs.initialize();
 

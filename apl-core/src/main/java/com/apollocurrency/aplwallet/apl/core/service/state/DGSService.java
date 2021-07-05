@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
@@ -18,6 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsLi
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
 import java.util.List;
 
@@ -103,11 +103,11 @@ public interface DGSService {
 
     DGSGoods getGoods(long goodsId);
 
-    DbIterator<DGSGoods> getAllGoods(int from, int to);
+    List<DGSGoods> getAllGoods(int from, int to);
 
-    DbIterator<DGSGoods> getGoodsInStock(int from, int to);
+    List<DGSGoods> getGoodsInStock(int from, int to);
 
-    DbIterator<DGSGoods> getSellerGoods(final long sellerId, final boolean inStockOnly, int from, int to);
+    List<DGSGoods> getSellerGoods(final long sellerId, final boolean inStockOnly, int from, int to);
 
     int getSellerGoodsCount(long sellerId, boolean inStockOnly);
 

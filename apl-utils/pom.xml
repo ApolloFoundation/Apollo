@@ -137,6 +137,28 @@
           <artifactId>jdbi3-sqlobject</artifactId>
       </dependency>
 
+    <dependency>
+      <groupId>p6spy</groupId>
+      <artifactId>p6spy</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.googlecode.log4jdbc</groupId>
+      <artifactId>log4jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.apollocurrency</groupId>
+      <artifactId>apl-db-updater</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.firstbridge</groupId>
+      <artifactId>fbprocess</artifactId>
+    </dependency>
+
       <!-- unit tests -->
       <dependency>
           <groupId>org.junit.platform</groupId>

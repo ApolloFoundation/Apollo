@@ -4,9 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.extension;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.LuceneFullTextSearchEngine;
@@ -14,6 +13,9 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.testutil.DbManipulator;
 import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
+import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -44,8 +46,7 @@ public class DbExtension implements BeforeEachCallback, /*AfterEachCallback,*/ A
     private Path indexDir;
     private LuceneFullTextSearchEngine luceneFullTextSearchEngine;
 
-    public DbExtension(GenericContainer jdbcDatabaseContainer,
-                       DbConfig dbConfig,
+    public DbExtension(GenericContainer jdbcDatabaseContainer, DbConfig dbConfig,
                        String schemaScriptPath,
                        String dataScriptPath) {
         assert dbConfig.getDbProperties() != null;
