@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Set;
 
+import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.MS_CURRENCY_BURNING;
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.MS_CURRENCY_ISSUANCE;
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.MS_CURRENCY_MINTING;
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.MS_RESERVE_CLAIM;
@@ -174,6 +175,9 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                     throw new AplException.NotCurrentlyValidException("Cannot claim reserve since currency is not yet active");
                 }
             }
+            if (transaction.getType().getSpec() == MS_CURRENCY_BURNING) {
+                throw new AplException.NotValidException("Cannot burn Claimable currency, use claimReserve instead");
+            }
         }
 
         @Override
@@ -191,7 +195,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
     MINTABLE(0x10) {
         @Override
         public void validate(Currency currency, Transaction transaction,
-                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency, int finishValidationHeight) throws AplException.NotValidException {
+                             Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency, int finishValidationHeight) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
             log.trace("MINTABLE 1 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType().getSpec() == MS_CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
@@ -212,6 +216,9 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                 if (issuanceAttachment.getMaxSupply() <= issuanceAttachment.getReserveSupply()) {
                     throw new AplException.NotValidException("Max supply for mintable currency must exceed reserve supply");
                 }
+            }
+            if (transaction.getType().getSpec() == MS_CURRENCY_BURNING) {
+                throw new AplException.NotValidException("Cannot burn Mintable currency");
             }
         }
 

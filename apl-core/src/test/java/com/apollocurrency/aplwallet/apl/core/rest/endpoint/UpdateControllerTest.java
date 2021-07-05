@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.utils.AccountParametersParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
@@ -121,13 +122,14 @@ class UpdateControllerTest extends AbstractEndpointTest {
             }
             return "";
         }).when(req).getParameter(anyString());
+        mockSigning();
 
         MockHttpResponse response = sendPostRequest("/updates", "secretPhrase=" + SECRET + "&manifestUrl=https://test11.com&level=CRITICAL&platformSpec=WINDOWS-X86_32,NoOS-ARM" +
             "&version=1.23.4&cn=https://cn345.com&serialNumber=1&signature=111100ff");
         String json = response.getContentAsString();
 //        System.out.println("json = \n" + json);
 
-        JSONAssert.assertEquals("{\"timestamp\": 0, \"attachment\" : {\"level\": 0, \"manifestUrl\":\"https://test11.com\", \"platforms\": [{\"platform\": 1, \"architecture\": 0},{\"platform\": -1, \"architecture\": 3}]}, \"type\" : 8, \"subtype\": 3}", json, JSONCompareMode.LENIENT);
+        JSONAssert.assertEquals(json, "{\"timestamp\": 0, \"signature\": \"6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443\", \"attachment\" : {\"level\": 0, \"manifestUrl\":\"https://test11.com\", \"platforms\": [{\"platform\": 1, \"architecture\": 0},{\"platform\": -1, \"architecture\": 3}]}, \"type\" : 8, \"subtype\": 3}", json, JSONCompareMode.LENIENT);
         verify(processor).broadcast(any(Transaction.class));
     }
 
@@ -153,6 +155,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
             }
             return "";
         }).when(req).getParameter(anyString());
+       mockSigning();
 
         MockHttpResponse response = sendPostRequest("/updates", "passphrase=" + SECRET + "&account=" + ACCOUNT_ID_WITH_SECRET + "&manifestUrl=https://test11.com&level=CRITICAL&platformSpec=WINDOWS-X86_64,NoOS-ARM64" +
             "&version=1.23.4&cn=https://cn345.com&serialNumber=1&signature=111100ff");
@@ -173,7 +176,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
         String json = response.getContentAsString();
 //        System.out.println("json = \n" + json);
 
-        JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified.\"}", json, JSONCompareMode.LENIENT);
+        JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified\"}", json, JSONCompareMode.LENIENT);
         verify(processor, never()).broadcast(any(Transaction.class));
     }
 
@@ -192,7 +195,16 @@ class UpdateControllerTest extends AbstractEndpointTest {
             "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
         String json = response.getContentAsString();
 
-        JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified.\"}", json, JSONCompareMode.LENIENT);
+        JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified\"}", json, JSONCompareMode.LENIENT);
         verify(processor, never()).broadcast(any(Transaction.class));
+    }
+
+    private void mockSigning() throws AplException.NotValidException {
+        doAnswer(invocation-> {
+            Signature sig = mock(Signature.class);
+            doReturn(Convert.parseHexString("6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443")).when(sig).bytes();
+            ((Transaction) invocation.getArgument(0)).sign(sig);
+            return null;
+        }).when(transactionSigner).sign(any(Transaction.class), any(byte[].class));
     }
 }

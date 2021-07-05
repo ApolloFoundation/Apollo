@@ -175,7 +175,7 @@ public class TransactionCreator {
                 }
             }
 
-            if (txRequest.isBroadcast()) {
+            if (txRequest.isBroadcast() && transaction.getSignature() != null) {
                 processor.broadcast(transaction);
             } else if (txRequest.isValidate()) {
                 validator.validateFully(transaction);
@@ -217,6 +217,21 @@ public class TransactionCreator {
             }
         }
         return transaction.getTx();
+    }
+
+    public TransactionCreationResponse createApiV2Transaction(CreateTransactionRequest request) {
+        Transaction tx = createTransactionThrowingException(request);
+        TransactionCreationResponse response = new TransactionCreationResponse();
+        boolean signed = tx.getSignature() != null;
+        response.setBroadcasted(request.isBroadcast() && signed);
+        if (signed) {
+            response.setId(tx.getStringId());
+            response.setSignature(tx.getSignature().getHexString());
+            response.setFullHash(tx.getFullHashString());
+            response.setTransactionBytes(Convert.toHexString(tx.getCopyTxBytes()));
+        }
+        response.setUnsignedTransactionBytes(Convert.toHexString(tx.getUnsignedBytes()));
+        return response;
     }
 
     @Data

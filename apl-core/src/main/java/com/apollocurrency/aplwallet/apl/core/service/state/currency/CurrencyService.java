@@ -80,6 +80,8 @@ public interface CurrencyService {
 
     void delete(Currency currency, LedgerEvent event, long eventId, Account senderAccount);
 
+    void burn(long currencyId, Account senderAccount, long units, long eventId);
+
     void validate(Currency currency, Transaction transaction) throws AplException.ValidationException;
 
     void validate(int type, Transaction transaction) throws AplException.ValidationException;

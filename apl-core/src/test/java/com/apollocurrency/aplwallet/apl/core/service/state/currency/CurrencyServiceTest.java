@@ -69,12 +69,14 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @EnableWeld
@@ -174,7 +176,7 @@ class CurrencyServiceTest {
         Transaction tr = mock(Transaction.class);
         Account account = mock(Account.class);
         doReturn(td.CURRENCY_0.getAccountId()).when(account).getId();
-        doReturn(td.CURRENCY_0).when(currencyTable).get(any(DbKey.class));
+        doReturn(td.CURRENCY_0).when(currencyTable).get(anyLong());
 
         //WHEN
         service.increaseReserve(LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), account, td.CURRENCY_0.getId(), 0L);
@@ -190,7 +192,7 @@ class CurrencyServiceTest {
         //GIVEN
         Transaction tr = mock(Transaction.class);
         Account account = mock(Account.class);
-        doReturn(td.CURRENCY_0).when(currencyTable).get(any(DbKey.class));
+        doReturn(td.CURRENCY_0).when(currencyTable).get(anyLong());
 
         //WHEN
         service.claimReserve(LedgerEvent.CURRENCY_ISSUANCE, tr.getId(), account, td.CURRENCY_0.getId(), -1L);
@@ -215,17 +217,48 @@ class CurrencyServiceTest {
     }
 
     @Test
-    void loadCurrencySupplyByCurrency() {
+    void loadCurrencySupplyByCurrency_forCurrencyWithAlreadyLoadedSupply() {
         CurrencySupply result = service.loadCurrencySupplyByCurrency(td.CURRENCY_0);
+
         assertEquals(td.CURRENCY_0.getCurrencySupply(), result);
     }
 
     @Test
-    void increaseSupply() {
+    void loadCurrencySupplyByCurrency_forCurrencyWithoutLoadedAndStoredSupply() {
+        CurrencySupply result = service.loadCurrencySupplyByCurrency(td.CURRENCY_2);
+
+        assertEquals(td.CURRENCY_2.getMaxSupply(), result.getCurrentSupply());
+    }
+
+    @Test
+    void loadCurrencySupplyByCurrency_forCurrencyWithoutLoadedSupplyButWithStored() {
+        CurrencySupply savedSupply = new CurrencySupply(td.CURRENCY_2.getId(), 1000, 0, 200, true, false);
+        doReturn(savedSupply).when(currencySupplyTable).get(td.CURRENCY_2.getId());
+
+        CurrencySupply result = service.loadCurrencySupplyByCurrency(td.CURRENCY_2);
+
+        assertEquals(savedSupply, result);
+        assertEquals(savedSupply, td.CURRENCY_2.getCurrencySupply());
+    }
+
+
+    @Test
+    void increaseSupply_burnAll() {
         //WHEN
-        service.increaseSupply(td.CURRENCY_0, 1L);
+        service.increaseSupply(td.CURRENCY_2, -td.CURRENCY_2.getInitialSupply());
         //THEN
-        verify(currencySupplyTable).insert(any(CurrencySupply.class));
+        verify(currencySupplyTable).insert(new CurrencySupply(td.CURRENCY_2.getId(), 0L, 0, 0, true, false));
+    }
+
+    @Test
+    void increaseSupply_exceedLimits() {
+        // exceed by 1 unit
+        assertThrows(IllegalArgumentException.class, ()-> service.increaseSupply(td.CURRENCY_2, 1));
+        // burn more than max supply
+        assertThrows(IllegalArgumentException.class, ()-> service.increaseSupply(td.CURRENCY_2, -td.CURRENCY_2.getMaxSupply() - 1));
+
+        assertEquals(td.CURRENCY_2.getInitialSupply(), td.CURRENCY_2.getCurrencySupply().getCurrentSupply());
+        verify(currencySupplyTable, never()).insert(any(CurrencySupply.class));
     }
 
     @Test
@@ -357,7 +390,7 @@ class CurrencyServiceTest {
         doReturn(accountTestData.ACC_4.getId()).when(account).getId();
         doReturn(currencyMintTestData.CURRENCY_MINT_3).when(currencyMintTable).get(any(DbKey.class));
         td.CURRENCY_3.setType(20);
-        doReturn(td.CURRENCY_3).when(currencyTable).get(new LongKey(td.CURRENCY_3.getId()));
+        doReturn(td.CURRENCY_3).when(currencyTable).get(td.CURRENCY_3.getId());
         doReturn(true).when(monetaryCurrencyMintingService).meetsTarget(
             anyLong(), any(Currency.class), any(MonetarySystemCurrencyMinting.class));
         LedgerEvent ledgerEvent = mock(LedgerEvent.class);
@@ -401,5 +434,18 @@ class CurrencyServiceTest {
 
         //THEN
         verify(currencyMintTable).getManyBy(any(DbClause.LongClause.class), anyInt(), anyInt());
+    }
+
+    @Test
+    void burn_currencyWithFullNotStoredSupply() {
+        td.CURRENCY_3.setCurrencySupply(null);
+        doReturn(td.CURRENCY_3).when(currencyTable).get(td.CURRENCY_3.getId());
+        Account sender = new Account(1222L, 1000L, 800L, 0L, 0L, 0);
+        doReturn(200).when(blockChainInfoService).getHeight();
+
+        service.burn(td.CURRENCY_3.getId(), sender, 100, -1);
+
+        verify(currencySupplyTable).insert(new CurrencySupply(td.CURRENCY_3.getId(), 2099999900, 0, 200, true, false));
+        verify(accountCurrencyService).addToCurrencyUnits(sender, LedgerEvent.CURRENCY_BURNING, -1, td.CURRENCY_3.getId(), -100);
     }
 }
