@@ -64,6 +64,9 @@ public class CurrenciesApiServiceImpl implements CurrenciesApiService {
         if (body.getBurningAmount() == null) {
             return builder.error(ApiErrors.MISSING_PARAM, "burningAmount").build();
         }
+        if (body.getBurningAmount() <= 0) {
+            return builder.error(ApiErrors.OUT_OF_RANGE, "burningAmount", 1, Long.MAX_VALUE).build();
+        }
         long currencyIdLong = Long.parseUnsignedLong(currencyId);
         AccountCurrency accountCurrency = accountCurrencyService.getAccountCurrency(senderAccount.getId(), currencyIdLong);
         if (accountCurrency == null || accountCurrency.getUnconfirmedUnits() < body.getBurningAmount()) {

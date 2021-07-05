@@ -164,6 +164,14 @@ class CurrenciesApiServiceImplTest {
     }
 
     @Test
+    void currencyBurningTx_notValidBurningAmountParameter() {
+        CurrencyBurningTxCreationRequest request = secretPhraseRequest(rsAccount, 1L, 0L);
+        doReturn(senderAccount).when(accountService).getAccount(publicKey);
+
+        doFailingCurrencyBurning("burningAmount is not in range [1..9,223,372,036,854,775,807]", request);
+    }
+
+    @Test
     void currencyBurningTx_absentCurrencyBalance() {
         CurrencyBurningTxCreationRequest request = secretPhraseRequest(rsAccount, 1L, 20_000L);
         doReturn(senderAccount).when(accountService).getAccount(publicKey);
