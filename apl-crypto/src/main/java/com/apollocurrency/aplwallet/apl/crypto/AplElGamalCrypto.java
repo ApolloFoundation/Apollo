@@ -81,7 +81,8 @@ public class AplElGamalCrypto {
             BigInteger restored = BigInteger.ZERO;
 
             restored = instanceOfAlice.decrypt(pKey, cryptogram1);
-            String keyStr = normalizeByLen(restored.toString(16), 64);// cut the vector restored.toString(16);
+            // cut the vector restored.toString(16);
+            String keyStr = normalizeByLen(restored.toString(16), 64);
 
             byte[] IVC = null;
             byte[] key = null;
@@ -89,9 +90,10 @@ public class AplElGamalCrypto {
             key = Convert.parseHexString(keyStr);
 
             byte[] plain = aesGCMDecrypt(IVC, key);
-            //TODO:
-            // Add passphrase encryption verification bolow
-
+            
+            String cryptogramBody = cryptogram.substring(0, 393);
+            
+            
             return new String(plain);
         } catch (Exception e) {
             LOG.trace(e.getMessage());
