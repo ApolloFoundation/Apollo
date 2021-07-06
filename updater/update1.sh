@@ -92,13 +92,6 @@ then
 	notify "Waiting more time to stop Apollo Wallet..."
     done
     
-# it is always good idea to backup everything before removing
-#NOW=`date +%Y-%m-%dT%H:%m:%S`
-#BKP_NAME=${1}/../ApolloWallet-BKP-${NOW}.tar.gz 
-#tar -czf ${BKP_NAME} ${1}
-
-# we sould remove "conf" dir because default configs are in resources now
-# and user's configs are in ~/.apl_blockchain
     if [ -f $1/conf/apl.properties ]; then
 	rm -rf $1/conf/apl-default.properties
         rm -rf $1/conf/testnet.properties
@@ -143,18 +136,9 @@ then
     notify "Removing old version..."
     
     notify "Moving extra files..."
-#    cp -Rfv $1/* $1/..
     cd $1/..
-#    rm -rfv $1
     cp -Rfv $2/* .
 
-#    cd $1/
-#    cp -vRa conf* apollo-blockchain
-#    cp -vRa conf/* apollo-blockchain/conf
-#    ./replace_dbdir.sh
-    
-#    notify "Creating symlinks..."
-#    ln -s apollo-blockchain/bin bin
  
 
     chmod 755 apollo-blockchain/bin/*.sh
@@ -168,9 +152,6 @@ then
 	chmod 755 "ApolloWallet+Tor.app/Contents/MacOS/apl"
 	chmod 755 "ApolloWallet+Tor.app/tor/bin/tor"
 	chmod 755 "ApolloWallet.app/Contents/MacOS/apl"
-#	rm -rf "$1/ApolloWallet+Secure Transport.app"
-#	rm -rf "$1/ApolloWallet+Tor.app"
-#	rm -rf "$1/ApolloWallet.app"
 
     fi
 
@@ -181,24 +162,7 @@ then
 	chmod 755 secureTransport/runClient.sh
     fi
 
-#    rm -rf apollo-wallet-deps-${VERSION}.tar.gz
-#    rm -rf apollo-wallet-deps-*
     echo Version = ${VERSION}
-#    notify "Downloading deps...."
-# Commented downloading deps
-#    wget https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz || curl --retry 100  https://s3.amazonaws.com/updates.apollowallet.org/libs/apollo-wallet-deps-${VERSION}.tar.gz -o apollo-wallet-deps-${VERSION}.tar.gz
-#    tar -zxvf apollo-wallet-deps-${VERSION}.tar.gz
-#    cp apollo-wallet-deps-${VERSION}/* $1/lib
-    
-#    rm -rf apollo-wallet-deps-${VERSION}*
-
-# Install JRE
-#    notify "Installing Java Runtime..."
-#    bash ./update2.sh $1
-
-#determine, if shrding was performed or not
-
-    
     
     
 
