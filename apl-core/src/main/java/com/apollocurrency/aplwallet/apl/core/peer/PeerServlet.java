@@ -26,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.AddPeers;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.Errors;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetCumulativeDifficulty;
-import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFailedTransactions;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileChunk;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetFileDownloadInfo;
 import com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetInfo;
@@ -157,9 +156,6 @@ public final class PeerServlet extends WebSocketServlet {
                 break;
             case "getShardingInfo":
                 res = CDI.current().select(GetShardingInfo.class).get();
-                break;
-            case "getFailedTransactions":
-                res = CDI.current().select(GetFailedTransactions.class).get();
                 break;
         }
         return res;

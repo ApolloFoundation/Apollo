@@ -2,7 +2,7 @@
  * Copyright © 2020-2021 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.api.p2p.respons;
+package com.apollocurrency.aplwallet.api.p2p.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

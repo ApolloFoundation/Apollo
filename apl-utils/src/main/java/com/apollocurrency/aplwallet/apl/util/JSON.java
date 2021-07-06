@@ -331,4 +331,8 @@ public final class JSON {
         ObjectWriter writer = mapper.writer(new DefaultPrettyPrinter());
         writer.writeValue(file, object);
     }
+
+    public static <T> JSONStreamAware objectToJson(T obj) {
+        return out -> getMapper().writeValue(out, obj);
+    }
 }

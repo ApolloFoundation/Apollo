@@ -22,7 +22,7 @@ package com.apollocurrency.aplwallet.apl.core.peer;
 
 import com.apollocurrency.aplwallet.api.p2p.PeerInfo;
 import com.apollocurrency.aplwallet.api.p2p.request.BaseP2PRequest;
-import com.apollocurrency.aplwallet.api.p2p.respons.BaseP2PResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.BaseP2PResponse;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.http.API;

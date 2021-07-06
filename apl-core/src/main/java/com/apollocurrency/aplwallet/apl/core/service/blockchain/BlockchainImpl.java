@@ -55,6 +55,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -795,6 +796,15 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public List<Block> getBlocksAfter(int height, int limit) {
         return loadBlockDataFromEntities(blockDao.getBlocksAfter(height, limit));
+    }
+
+    @Override
+    public List<Transaction> getTransactionsByIds(Set<Long> ids) {
+        return ids.stream()
+            .map(e-> transactionService.findTransactionCrossSharding(e, Integer.MAX_VALUE))
+            .map(this::loadPrunable)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
     }
 
 }

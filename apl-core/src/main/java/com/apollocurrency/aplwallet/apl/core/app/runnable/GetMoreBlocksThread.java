@@ -7,9 +7,9 @@ package com.apollocurrency.aplwallet.apl.core.app.runnable;
 import com.apollocurrency.aplwallet.api.p2p.request.GetCumulativeDifficultyRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.GetMilestoneBlockIdsRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.GetNextBlockIdsRequest;
-import com.apollocurrency.aplwallet.api.p2p.respons.GetCumulativeDifficultyResponse;
-import com.apollocurrency.aplwallet.api.p2p.respons.GetMilestoneBlockIdsResponse;
-import com.apollocurrency.aplwallet.api.p2p.respons.GetNextBlockIdsResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.GetCumulativeDifficultyResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.GetMilestoneBlockIdsResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.GetNextBlockIdsResponse;
 import com.apollocurrency.aplwallet.apl.core.app.GetNextBlocksTask;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
@@ -215,8 +215,7 @@ public class GetMoreBlocksThread implements Runnable {
                 log.info("Blockchain download in progress, set blockchain state isDownloading=true.");
                 blockchainProcessorState.setDownloading(true);
             }
-//TODO: check do we need lock here
-// Maybe better to find another sync solution
+// TODO Maybe better to find another sync solution
             globalSync.updateLock();
             try {
                 if (peerCumulativeDifficulty.compareTo(blockchain.getLastBlock().getCumulativeDifficulty()) <= 0) {

@@ -1,10 +1,10 @@
 /*
- * Copyright © 2019-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.peer.respons;
 
-import com.apollocurrency.aplwallet.api.p2p.respons.BaseP2PResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.BaseP2PResponse;
 import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
 import lombok.Getter;
 

@@ -10,6 +10,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.util.StringJoiner;
 import java.util.UUID;
 
@@ -25,7 +27,9 @@ import java.util.UUID;
 public class BaseP2PRequest {
 
     public final Integer protocol = 1;
+    @NotBlank
     public String requestType;
+    @NotNull
     private UUID chainId;
 
     public BaseP2PRequest(String requestType, UUID chainId) {

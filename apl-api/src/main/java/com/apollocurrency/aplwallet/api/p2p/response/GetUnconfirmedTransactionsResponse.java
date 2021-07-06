@@ -1,4 +1,4 @@
-package com.apollocurrency.aplwallet.api.p2p.respons;
+package com.apollocurrency.aplwallet.api.p2p.response;
 
 import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
 import lombok.Getter;

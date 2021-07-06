@@ -1,7 +1,7 @@
 /*
  * Copyright © 2018 Apollo Foundation
  */
-package com.apollocurrency.aplwallet.api.p2p.respons;
+package com.apollocurrency.aplwallet.api.p2p.response;
 
 import com.apollocurrency.aplwallet.api.p2p.FileChunk;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

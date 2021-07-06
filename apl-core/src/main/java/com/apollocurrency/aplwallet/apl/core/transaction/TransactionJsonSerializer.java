@@ -15,7 +15,5 @@ public interface TransactionJsonSerializer {
 
     JSONObject toJson(Transaction transaction);
 
-    JSONObject toJsonOld(Transaction transaction);
-
     JSONObject getPrunableAttachmentJSON(Transaction transaction);
 }

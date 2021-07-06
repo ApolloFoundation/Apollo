@@ -184,4 +184,6 @@ public interface Blockchain {
     List<Transaction> loadPrunables(List<Transaction> transactions);
 
     List<Block> getBlocksAfter(int height, int limit);
+
+    List<Transaction> getTransactionsByIds(Set<Long> ids);
 }

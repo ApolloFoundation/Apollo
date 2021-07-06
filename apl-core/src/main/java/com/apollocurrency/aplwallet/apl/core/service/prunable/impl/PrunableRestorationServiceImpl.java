@@ -6,12 +6,12 @@ package com.apollocurrency.aplwallet.apl.core.service.prunable.impl;
 
 import com.apollocurrency.aplwallet.api.p2p.request.GetTransactionsRequest;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
@@ -28,7 +28,6 @@ import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -116,10 +115,7 @@ public class PrunableRestorationServiceImpl implements PrunableRestorationServic
             return null;
         }
 
-        List<String> transactionIds = new ArrayList<>();
-        transactionIds.add(Long.toUnsignedString(transactionId));
-
-        GetTransactionsRequest req = new GetTransactionsRequest(transactionIds, blockchainConfig.getChain().getChainId());
+        GetTransactionsRequest req = new GetTransactionsRequest(Set.of(transactionId), blockchainConfig.getChain().getChainId());
         for (Peer peer : peersList) {
             if (peer.getState() != PeerState.CONNECTED) {
                 peersService.connectPeer(peer);
