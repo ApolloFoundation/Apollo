@@ -23,7 +23,7 @@ public class PeerDTO extends BaseDTO {
     private Integer state;
     private String announcedAddress;
     private Boolean sharedAddress;
-    private String halmark;
+    private String hallmark;
     private Integer weight;
     private Long downloadedVolume;
     private Long uploadedVolume;

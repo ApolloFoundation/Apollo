@@ -1,0 +1,109 @@
+openapi: 3.0.1
+info:
+  title: Apollo Auth API V2
+  description: |
+    Apollo Auth API V2 work in progress.
+
+    JSON Web Token (JWT) is an open standard (RFC 7519) that defines a compact and self-contained way for securely transmitting information between parties as a JSON object. This information can be verified and trusted because it is digitally signed. JWTs can be signed using a secret (with the HMAC algorithm) or a public/private key pair using RSA or ECDSA.
+
+    Required payload:
+     - User ID
+     - Application/Service ID
+     - Role
+
+    *User ID* - authenticates the user identity for personal responsibility
+
+    *Service ID* - the uniq ID of particular application or service
+
+    *Role* - the granular role to manage access to the different groups of the API methods
+
+  contact:
+    email: authapiteam@firstbridge.io
+  version: 2.0.0
+
+externalDocs:
+    description: Introduction to JSON Web Tokens
+    url: https://jwt.io/introduction/
+
+servers:
+- url: http://localhost:8080/api/v2
+
+tags:
+- name: auth
+  description: System authorisation
+
+paths:
+  /auth/login:
+    post:
+      tags:
+      - auth
+      summary: user login routine
+      description: basic routine in order to obtain a token
+      operationId: authLogin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        200:
+          description: Return the access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        401:
+          description: Unauthorized Error, cause bad credentials
+
+  /auth/refresh:
+    post:
+      tags:
+      - auth
+      summary: refresh token
+      description: Refresh the access token
+      operationId: authRefresh
+      responses:
+        200:
+          description: Return refreshed access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        401:
+          description: Unauthorized Error
+        403:
+          description: Access Forbidden
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    AuthRequest:
+      type: object
+      properties:
+        login:
+          description: The login name
+          type: string
+          example: 'manager1'
+        password:
+          description: Top secret password
+          type: string
+    AuthResponse:
+      type: object
+      properties:
+        login:
+          type: string
+          example: 'manager1'
+        accessToken:
+          type: string
+          description: The access token carry the necessary information to access a resource directly
+          example: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJiMjBlYjIxMzkxZGMyOTg1OWY5NTcwOTM4MTEzNjM1ODc2MDhmNzZmIiwic2NvcGUiOlsiVVNFUl9ST0xFIl0sImlzcyI6Imh0dHBzOi8vYXBvbGxvY3VycmVuY3kub3JnIiwiY29tcGxlbWVudGFyeS1zdWJzY3JpcHRpb24iOiI0NDNmNDY1ZS1lYmVhLTRiYTUtOTA5NS04OGE1YTFhZTY0MDUiLCJleHAiOjE1OTE1Mzc1OTgsImlhdCI6MTU5MTUzMzk5OH0.dBdP7HjNo5DeWUlvlz_K2-lSI0zp6pgyLRU8ADjiDlsMw03_yT4BQxzd3PR5j108jRdiBwdUQo64q0XfIvZc7w'
+        refreshToken:
+          type: string
+          description: The refresh token carry the information necessary to get a new access token
+          example: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJiMjBlYjIxMzkxZGMyOTg1OWY5NTcwOTM4MTEzNjM1ODc2MDhmNzZmIiwic2NvcGUiOlsiUkVGUkVTSF9UT0tFTl9ST0xFIl0sImlzcyI6Imh0dHBzOi8vYXBvbGxvY3VycmVuY3kub3JnIiwiY29tcGxlbWVudGFyeS1zdWJzY3JpcHRpb24iOiJmZTQ0NzY3MS1jNjAwLTRlMTItYjIxMS0wZmU0ZjRkNzg2ZDQiLCJleHAiOjE1OTE1Mzk2MTEsImlhdCI6MTU5MTUzNDIxMX0.r276DFiH1ghvgYyYY68i_HWUHJabOSKcZRD3o_fdOsEBldq3xAOTyBHDGHZWSKSGN89lLJwohu9uJp2XNdhSBA'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
