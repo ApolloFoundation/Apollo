@@ -2,6 +2,7 @@
 # This script is used to install jre on client machines, because update package with jre is too large
 unamestr=`uname`
 #
+#TODO Replace jdk to jre
 OPENJDK_URL_Linux="https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz"
 OPENJDK_URL_Darwin="https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_osx-x64_bin.tar.gz"
 OPENJDK_DIR="jdk-11.0.2"
