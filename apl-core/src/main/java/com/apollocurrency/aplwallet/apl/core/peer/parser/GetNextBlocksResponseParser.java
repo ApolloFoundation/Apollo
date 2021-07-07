@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.peer.parser;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.respons.GetNextBlocksResponse;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockParser;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -54,6 +55,7 @@ public class GetNextBlocksResponseParser implements JsonReqRespParser<GetNextBlo
         try {
             for (JSONObject blockData : nextBlocks) {
                 BlockImpl parsedBlock = blockParser.parseBlock(blockData, blockchainConfig.getCurrentConfig().getInitialBaseTarget());
+                parsedBlock.getTransactions().forEach(Transaction::resetFail); // error messages should be obtained node independently
                 blockList.add(parsedBlock);
             }
         } catch (AplException.NotValidException | RuntimeException e) {

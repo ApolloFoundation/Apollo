@@ -31,24 +31,16 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEvent
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksThread;
-import com.apollocurrency.aplwallet.apl.core.model.Block;
-import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
-import com.apollocurrency.aplwallet.apl.core.model.BlockchainProcessorState;
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
-import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
-import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationException;
-import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
-import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ScanDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
-import com.apollocurrency.aplwallet.apl.util.db.DbTransactionHelper;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ScanEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -56,16 +48,23 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControl
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollResult;
+import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.files.shards.ShardsDownloadService;
 import com.apollocurrency.aplwallet.apl.core.files.statcheck.FileDownloadDecision;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.model.BlockchainProcessorState;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksResponseParser;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.GetTransactionsResponseParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableRestorationService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
@@ -94,6 +93,8 @@ import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.FileUtils;
 import com.apollocurrency.aplwallet.apl.util.Filter;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.db.DbTransactionHelper;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.env.RuntimeEnvironment;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -185,7 +186,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final FullTextSearchService fullTextSearchProvider;
     private final TaskDispatchManager taskDispatchManager;
     private final Blockchain blockchain;
-    private final BlockEntityRowMapper blockEntityRowMapper;
     private final TransactionProcessor transactionProcessor;
     private final TimeService timeService;
     private final PrunableRestorationService prunableRestorationService;
@@ -199,9 +199,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
     private final BlockSerializer blockSerializer;
     private final ConsensusManager consensusManager;
     private final MemPool memPool;
-    private Map<String, String> fullTextSearchIndexedTables;
     private TxBContext txBContext;
     private final ScanDao scanDao;
+    private final GetTransactionsResponseParser getTransactionsResponseParser;
 
     /**
      * Three blocks are used for internal calculations on assigning previous block
@@ -238,8 +238,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    BlockSerializer blockSerializer,
                                    ConsensusManager consensusManager,
                                    MemPool memPool,
+                                   GetTransactionsResponseParser getTransactionsResponseParser,
                                    @Named(value = "fullTextTables") Map<String, String> fullTextSearchIndexedTables,
-                                    ScanDao scanDao) {
+                                   ScanDao scanDao) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = blockchainConfig;
         this.validator = validator;
@@ -275,7 +276,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.prunableRestorationService = prunableRestorationService;
 
         this.blockchain = blockchain;
-        this.blockEntityRowMapper = blockEntityRowMapper;
         this.peersService = peersService;
         this.transactionProcessor = transactionProcessor;
         this.fullTextSearchProvider = fullTextSearchProvider;
@@ -285,10 +285,9 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         this.getNextBlocksResponseParser = getNextBlocksResponseParser;
         this.blockSerializer = blockSerializer;
         this.consensusManager = consensusManager;
-        this.fullTextSearchIndexedTables = fullTextSearchIndexedTables;
 
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
-
+        this.getTransactionsResponseParser = getTransactionsResponseParser;
         configureBackgroundTasks();
     }
 
@@ -344,7 +343,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     blockchainConfig, blockchain, peersService,
                     globalSync, timeService, prunableRestorationService,
                     networkService, propertiesHolder, transactionProcessor, getNextBlocksResponseParser,
-                    blockSerializer)
+                    blockSerializer, getTransactionsResponseParser)
                 )
                 .build();
 
@@ -409,9 +408,11 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             if (peerBlockPreviousBlockId == lastBlock.getId()) {
                 log.debug("push peer last block");
                 Block block = blockParser.parseBlock(request, baseTarget);
+                block.getTransactions().forEach(Transaction::resetFail); // error messages should be obtained node independently
                 pushBlock(block);
             } else if (peerBlockPreviousBlockId == lastBlock.getPreviousBlockId()) { //peer block is a candidate to replace our last block
                 Block block = blockParser.parseBlock(request, baseTarget);
+                block.getTransactions().forEach(Transaction::resetFail); // error messages should be obtained node independently
                 //try to replace our last block by peer block only when real block time of the peer block is less than a real timestamp of our block,
                 // or when block time is equal, but peer's block has better timeout
                 int peerBlockTime = block.getTimestamp() - block.getTimeout();

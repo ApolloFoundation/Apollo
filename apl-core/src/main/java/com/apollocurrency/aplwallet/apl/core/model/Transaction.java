@@ -213,5 +213,7 @@ public interface Transaction {
         Builder blockTimestamp(int blockTimestamp);
 
         Builder index(short index);
+
+        Builder errorMessage(String errorMessage);
     }
 }

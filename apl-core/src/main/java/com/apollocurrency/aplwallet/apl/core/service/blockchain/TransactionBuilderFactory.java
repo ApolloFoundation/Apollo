@@ -300,6 +300,7 @@ public class TransactionBuilderFactory {
             long amountATM = transactionData.containsKey("amountATM") ? Convert.parseLong(transactionData.get("amountATM")) : Convert.parseLong(transactionData.get("amountNQT"));
             long feeATM = transactionData.containsKey("feeATM") ? Convert.parseLong(transactionData.get("feeATM")) : Convert.parseLong(transactionData.get("feeNQT"));
             String referencedTransactionFullHash = (String) transactionData.get("referencedTransactionFullHash");
+            String errorMessage = (String) transactionData.get("errorMessage");
             Number versionValue = (Number) transactionData.get("version");
             byte version = versionValue == null ? 0 : versionValue.byteValue();
 
@@ -322,11 +323,11 @@ public class TransactionBuilderFactory {
             AbstractAttachment attachment = transactionType.parseAttachment(attachmentData);
             attachment.bindTransactionType(transactionType);
             TransactionImpl.BuilderImpl builder = new TransactionImpl.BuilderImpl(version, senderPublicKey,
-                amountATM, feeATM, deadline,
-                attachment, timestamp, transactionType)
+                amountATM, feeATM, deadline, attachment, timestamp, transactionType)
                 .referencedTransactionFullHash(referencedTransactionFullHash)
                 .ecBlockHeight(ecBlockHeight)
-                .ecBlockId(ecBlockId);
+                .ecBlockId(ecBlockId)
+                .errorMessage(errorMessage);
             if (transactionType.canHaveRecipient()) {
                 long recipientId = Convert.parseUnsignedLong((String) transactionData.get("recipient"));
                 builder.recipientId(recipientId);

@@ -4,18 +4,24 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
+import com.apollocurrency.aplwallet.api.dto.TransactionDTO;
+import com.apollocurrency.aplwallet.api.dto.UnconfirmedTransactionDTO;
 import com.apollocurrency.aplwallet.api.p2p.request.GetCumulativeDifficultyRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.GetMilestoneBlockIdsRequest;
 import com.apollocurrency.aplwallet.api.p2p.request.GetNextBlockIdsRequest;
+import com.apollocurrency.aplwallet.api.p2p.request.GetTransactionsRequest;
 import com.apollocurrency.aplwallet.api.p2p.response.GetCumulativeDifficultyResponse;
 import com.apollocurrency.aplwallet.api.p2p.response.GetMilestoneBlockIdsResponse;
 import com.apollocurrency.aplwallet.api.p2p.response.GetNextBlockIdsResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.GetTransactionsResponse;
 import com.apollocurrency.aplwallet.apl.core.app.GetNextBlocksTask;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.exception.AplCoreLogicException;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.model.BlockchainProcessorState;
 import com.apollocurrency.aplwallet.apl.core.model.PeerBlock;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
@@ -24,6 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.peer.parser.GetCumulativeDifficulty
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetMilestoneBlockIdsResponseParser;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlockIdsResponseParser;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksResponseParser;
+import com.apollocurrency.aplwallet.apl.core.peer.parser.GetTransactionsResponseParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockSerializer;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -34,19 +41,28 @@ import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableRestoratio
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class GetMoreBlocksThread implements Runnable {
@@ -66,6 +82,7 @@ public class GetMoreBlocksThread implements Runnable {
     private final GetCumulativeDifficultyRequest getCumulativeDifficultyRequest;
     private final GetNextBlocksResponseParser getNextBlocksResponseParser;
     private final BlockSerializer blockSerializer;
+    private final GetTransactionsResponseParser getTransactionsResponseParser;
 
     private boolean peerHasMore;
     private List<Peer> connectedPublicPeers;
@@ -80,7 +97,7 @@ public class GetMoreBlocksThread implements Runnable {
                                ExecutorService networkService, PropertiesHolder propertiesHolder,
                                TransactionProcessor transactionProcessor,
                                GetNextBlocksResponseParser getNextBlocksResponseParser,
-                               BlockSerializer blockSerializer) {
+                               BlockSerializer blockSerializer, GetTransactionsResponseParser getTransactionsResponseParser) {
         this.blockchainProcessor = blockchainProcessor;
         this.blockchainProcessorState = blockchainProcessorState;
 
@@ -96,6 +113,7 @@ public class GetMoreBlocksThread implements Runnable {
         this.getNextBlocksResponseParser = getNextBlocksResponseParser;
         this.getCumulativeDifficultyRequest = new GetCumulativeDifficultyRequest(blockchainConfig.getChain().getChainId());
         this.blockSerializer = blockSerializer;
+        this.getTransactionsResponseParser = getTransactionsResponseParser;
     }
 
     @Override
@@ -223,6 +241,7 @@ public class GetMoreBlocksThread implements Runnable {
                 }
                 long lastBlockId = blockchain.getLastBlock().getId();
                 downloadBlockchain(peer, commonBlock, commonBlock.getHeight());
+                verifyFailedTransaction(commonBlock);
                 if (blockchain.getHeight() - commonBlock.getHeight() <= 10) {
                     return;
                 }
@@ -338,6 +357,163 @@ public class GetMoreBlocksThread implements Runnable {
         }
 
     }
+
+    private void verifyFailedTransaction(Block commonBlock) {
+        List<Block> downloadedBlocks = blockchain.getBlocksAfter(commonBlock.getHeight(), Integer.MAX_VALUE);
+        Map<Long, VerifiedError> failedTxs = downloadedBlocks.stream()
+            .flatMap(e -> e.getTransactions().stream())
+            .filter(e -> e.getErrorMessage().isPresent())
+            .collect(Collectors.toConcurrentMap(Transaction::getId, e -> new VerifiedError(e.getErrorMessage().get())));
+        if (failedTxs.isEmpty()) {
+            log.info("No failed transactions downloaded to validate starting from height {} to current height {} ", commonBlock.getHeight(), blockchain.getHeight());
+            return;
+        }
+        String allFailedTxsString = failedTxs.entrySet()
+            .stream()
+            .map(e -> Long.toUnsignedString(e.getKey()) + ":" + e.getValue().getError())
+            .collect(Collectors.joining(","));
+        log.info("Selected {} failed transactions to verify failure cause, [{}]", failedTxs.size(), allFailedTxsString);
+        List<GetTransactionsRequest> requests = getTransactionsRequestDivided(new ArrayList<>(failedTxs.keySet()));
+        List<Future<?>> verificationJobs = new ArrayList<>();
+        for (GetTransactionsRequest request : requests) {
+            Future<?> transactionVerificationJob = networkService.submit(() -> verifyForRequest(failedTxs, request));
+            verificationJobs.add(transactionVerificationJob);
+        }
+        for (Future<?> verificationJob : verificationJobs) {
+            try {
+                verificationJob.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new AplCoreLogicException(e.toString(), e);
+            }
+        }
+    }
+
+    private void verifyForRequest(Map<Long, VerifiedError> failedTxs, GetTransactionsRequest request) {
+        while (true) {
+            if (request.getTransactionIds().stream().allMatch(e -> failedTxs.get(e).count >= 3)) {
+                log.info("Failed transactions are verified for request: {}", request);
+                return;
+            }
+            Set<Peer> alreadyUsedPeers = new HashSet<>();
+            Optional<PeerGetTransactionsResponse> peerResponseOptional = sendToAnother(request, alreadyUsedPeers);
+            if (peerResponseOptional.isEmpty()) {
+                log.warn("Not enough peers to get failed transaction statuses, connected peers {}, already used peers [{}]", connectedPublicPeers.size(), alreadyUsedPeers.stream().map(Peer::getAnnouncedAddress).collect(Collectors.joining(",")));
+                return;
+            }
+            GetTransactionsResponse response = peerResponseOptional.get().getResponse();
+            Peer peer = peerResponseOptional.get().getPeer();
+            alreadyUsedPeers.add(peer);
+            Set<Long> requestedIds = request.getTransactionIds();
+            if (response.getTransactions().size() > requestedIds.size()) {
+                peer.blacklist("Too many transactions supplied for failed transactions validation");
+                continue;
+            }
+            if (response.getTransactions().size() < requestedIds.size()) {
+                Set<Long> receivedIds = response.getTransactions()
+                    .stream()
+                    .map(UnconfirmedTransactionDTO::getTransaction)
+                    .map(Long::parseUnsignedLong)
+                    .collect(Collectors.toSet());
+                receivedIds.removeAll(requestedIds);
+                log.debug("Peer {} is missing {} transactions for validation: {}", peer.getHostWithPort(), receivedIds.size(), receivedIds);
+            }
+            for (TransactionDTO tx : response.getTransactions()) {
+                VerifiedError verifiedError = failedTxs.get(Long.parseUnsignedLong(tx.getTransaction()));
+                if (verifiedError == null) {
+                    peer.blacklist("Peer returned not expected transaction: " + tx.getTransaction());
+                    break;
+                }
+                if (!verifiedError.verify(tx.getErrorMessage())) {
+                    log.warn("Blockchain inconsistency may occur. Transaction {} validation & execution results into error message '{}', " +
+                        "which does not match to {} peer's result '{}'", tx.getTransaction(), verifiedError.getError(), tx.getErrorMessage(), peer.getHost());
+                }
+            }
+        }
+    }
+
+
+    @Data
+    private static class VerifiedError {
+        private String error;
+        private int count;
+
+        public VerifiedError(String error) {
+            this.error = error;
+        }
+
+        public synchronized boolean verify(String error) {
+            boolean errEquals = this.error.equals(error);
+            if (errEquals) {
+                count++;
+            }
+            return errEquals;
+        }
+
+
+    }
+
+    private Optional<PeerGetTransactionsResponse> sendToAnother(GetTransactionsRequest request, Set<Peer> excludedPeers) {
+        HashSet<Peer> excludedPeersCopy = new HashSet<>(excludedPeers);
+        while (true) {
+            Optional<Peer> additionalPeerOpt = selectConnectedPeer(excludedPeersCopy);
+            if (additionalPeerOpt.isEmpty()) {
+                break;
+            }
+            Peer peer = additionalPeerOpt.get();
+            try {
+                GetTransactionsResponse response = peer.send(request, getTransactionsResponseParser);
+                if (response == null) {
+                    excludedPeersCopy.add(peer);
+                    continue;
+                }
+                return Optional.of(new PeerGetTransactionsResponse(peer, response));
+            } catch (PeerNotConnectedException e) {
+                excludedPeersCopy.add(peer);
+            }
+        }
+        return Optional.empty();
+    }
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    private static class PeerGetTransactionsResponse {
+        private Peer peer;
+        private GetTransactionsResponse response;
+    }
+
+    private List<GetTransactionsRequest> getTransactionsRequestDivided(List<Long> ids) {
+        List<GetTransactionsRequest> requests = new ArrayList<>();
+        for (int i = 0; i < ids.size(); i += 100) {
+            HashSet<Long> requestTransactionIds = new HashSet<>(ids.subList(i, Math.min(i + 100, ids.size())));
+            GetTransactionsRequest request = new GetTransactionsRequest(requestTransactionIds, blockchainConfig.getChain().getChainId());
+            requests.add(request);
+        }
+        return requests;
+    }
+
+    private Set<Peer> selectConnectedPeers(int number) {
+        Set<Peer> selected = new HashSet<>();
+        Optional<Peer> peerOpt = selectConnectedPeer(selected);
+        while (peerOpt.isPresent() && selected.size() < number) {
+            selected.add(peerOpt.get());
+            peerOpt = selectConnectedPeer(selected);
+        }
+        return selected;
+    }
+
+    private Optional<Peer> selectConnectedPeer(Set<Peer> exclude) {
+        Random random = new Random();
+        ArrayList<Peer> connectedNotExcludedPeers = new ArrayList<>(connectedPublicPeers);
+        connectedNotExcludedPeers.removeAll(exclude);
+        if (connectedNotExcludedPeers.isEmpty()) {
+            return Optional.empty();
+        }
+        Peer selectedPeer = connectedNotExcludedPeers.get(random.nextInt(connectedNotExcludedPeers.size()));
+        return Optional.ofNullable(selectedPeer);
+    }
+
+
 
     private List<Long> getBlockIdsAfterCommon(final Peer peer, final long startBlockId, final boolean countFromStart) {
         long matchId = startBlockId;
@@ -595,6 +771,5 @@ public class GetMoreBlocksThread implements Runnable {
                 transactionProcessor.processLater(block.getTransactions());
             }
         }
-
     }
 }

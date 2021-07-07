@@ -568,6 +568,7 @@ public class TransactionImpl implements Transaction {
         private int ecBlockHeight;
         private long ecBlockId;
         private short index = -1;
+        private String errorMessage;
 
         public BuilderImpl(byte version, byte[] senderPublicKey, long amountATM, long feeATM, short deadline,
                            AbstractAttachment attachment, int timestamp, TransactionType transactionType) {
@@ -730,6 +731,12 @@ public class TransactionImpl implements Transaction {
         @Override
         public BuilderImpl index(short index) {
             this.index = index;
+            return this;
+        }
+
+        @Override
+        public BuilderImpl errorMessage(String errorMessage) {
+            this.errorMessage = errorMessage;
             return this;
         }
     }

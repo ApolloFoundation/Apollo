@@ -2,9 +2,8 @@
  *  Copyright © 2018-2021 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl;
+package com.apollocurrency.aplwallet.api.p2p.request;
 
-import com.apollocurrency.aplwallet.api.p2p.request.GetTransactionsRequest;
 import org.junit.jupiter.api.Test;
 
 import javax.validation.ConstraintViolation;
@@ -12,10 +11,12 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GetTransactionsRequestTest {
 
@@ -57,12 +58,16 @@ class GetTransactionsRequestTest {
 
     @Test
     void createRequestOk() {
-        GetTransactionsRequest request = new GetTransactionsRequest(Set.of(1L), UUID.randomUUID());
+        GetTransactionsRequest request = new GetTransactionsRequest(Set.of(1L, -1L), UUID.randomUUID());
 
         Set<ConstraintViolation<GetTransactionsRequest>> constraintViolations = validate(request);
 
         assertEquals(0, constraintViolations.size());
-        assertEquals(Set.of(1L), request.getTransactionIds());
+        assertEquals(Set.of(1L, -1L), request.getTransactionIds());
+        List<String> expectedStringIds = List.of("1", Long.toUnsignedString(-1));
+        assertTrue(expectedStringIds.containsAll(request.getStringTransactionIds()), "expected string ids: " + expectedStringIds + " should contain all the actual string ids: " + request.getStringTransactionIds());
+        request.setTransactionIds(List.of(Long.toUnsignedString(Long.MIN_VALUE), Long.toUnsignedString(-1)));
+        assertEquals(Set.of(Long.MIN_VALUE, -1L), request.getTransactionIds());
     }
 
     private Set<ConstraintViolation<GetTransactionsRequest>> validate(GetTransactionsRequest request) {
