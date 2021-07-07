@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONData;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -42,11 +43,11 @@ public final class GetPrivateUnconfirmedTransactions extends AbstractAPIRequestH
             limit = Integer.MAX_VALUE;
         }
         JSONArray transactions = new JSONArray();
-        lookupMemPool()
+        CollectionUtil.forEach(lookupMemPool()
             .getAllProcessedStream()
             .filter(transaction -> data.getAccountId() == transaction.getSenderId() || data.getAccountId() == transaction.getRecipientId())
             .skip(firstIndex)
-            .limit(limit).forEach(e-> {
+            .limit(limit) ,e-> {
             if (data.isEncrypt() && ((Transaction) e).getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
                     transactions.add(JSONData.encryptedUnconfirmedTransaction(e, data.getSharedKey()));
                 } else {

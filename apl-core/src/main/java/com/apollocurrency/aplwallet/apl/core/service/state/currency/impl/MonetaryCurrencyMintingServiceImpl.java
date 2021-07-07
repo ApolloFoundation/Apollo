@@ -5,7 +5,6 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
-import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
@@ -47,10 +46,7 @@ public class MonetaryCurrencyMintingServiceImpl implements MonetaryCurrencyMinti
     }
 
     private Currency localSupplyDependency(Currency currency) {
-        CurrencySupply currencySupply = lookupCurrencyService().loadCurrencySupplyByCurrency(currency); // load dependency
-        if (currencySupply != null) {
-            currency.setCurrencySupply(currencySupply);
-        }
+        lookupCurrencyService().loadCurrencySupplyByCurrency(currency); // load dependency
         return currency;
     }
 

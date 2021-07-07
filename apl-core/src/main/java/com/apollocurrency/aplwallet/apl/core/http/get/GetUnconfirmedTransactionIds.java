@@ -26,6 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.ParameterException;
+import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -59,13 +60,10 @@ public final class GetUnconfirmedTransactionIds extends AbstractAPIRequestHandle
             if (limit == 0) {
                 limit = Integer.MAX_VALUE;
             }
-                lookupMemPool().getAllProcessedStream()
+                CollectionUtil.forEach(lookupMemPool().getAllProcessedStream()
                 .filter(transaction -> accountIds.contains(transaction.getSenderId()) || accountIds.contains(transaction.getRecipientId()))
                 .limit(limit)
-                .skip(firstIndex)
-                .forEach(e-> {
-                    transactionIds.add(e.getStringId());
-                });
+                .skip(firstIndex), e-> transactionIds.add(e.getStringId()));
         }
 
         JSONObject response = new JSONObject();

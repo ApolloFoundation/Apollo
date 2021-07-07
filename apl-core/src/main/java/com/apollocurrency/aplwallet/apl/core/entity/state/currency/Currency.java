@@ -11,14 +11,12 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDelet
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @Getter
 @Setter
-@ToString(callSuper = true)
 public class Currency extends VersionedDeletableEntity {
 
     private long id;
@@ -120,4 +118,33 @@ public class Currency extends VersionedDeletableEntity {
         return (this.type & type.getCode()) != 0;
     }
 
+    @Override
+    public String toString() {
+        return "Currency{" +
+            "id=" + id +
+            ", accountId=" + accountId +
+            ", name='" + name + '\'' +
+            ", nameLower='" + nameLower + '\'' +
+            ", code='" + code + '\'' +
+            ", description='" + description + '\'' +
+            ", type=" + type +
+            ", initialSupply=" + initialSupply +
+            ", reserveSupply=" + reserveSupply +
+            ", maxSupply=" + maxSupply +
+            ", creationHeight=" + creationHeight +
+            ", issuanceHeight=" + issuanceHeight +
+            ", minReservePerUnitATM=" + minReservePerUnitATM +
+            ", minDifficulty=" + minDifficulty +
+            ", maxDifficulty=" + maxDifficulty +
+            ", ruleset=" + ruleset +
+            ", algorithm=" + algorithm +
+            ", decimals=" + decimals +
+            ", currencySupply=" + currencySupply +
+            ", deleted=" + isDeleted() +
+            ", latest=" + isLatest() +
+            ", dbKey=" + getDbKey() +
+            ", dbId=" + getDbId() +
+            ", height=" + getHeight() +
+            '}';
+    }
 }

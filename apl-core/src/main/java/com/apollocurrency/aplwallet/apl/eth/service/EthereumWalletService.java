@@ -1,11 +1,13 @@
 package com.apollocurrency.aplwallet.apl.eth.service;
 
-import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
+import com.apollocurrency.aplwallet.apl.core.app.AplException;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.UserErrorMessageDao;
 import com.apollocurrency.aplwallet.apl.core.model.WalletKeysInfo;
+import com.apollocurrency.aplwallet.apl.core.service.appdata.KeyStoreService;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletBalanceInfo;
 import com.apollocurrency.aplwallet.apl.eth.model.EthWalletKey;
 import com.apollocurrency.aplwallet.apl.eth.utils.EthUtil;
-import com.apollocurrency.aplwallet.apl.core.dao.appdata.UserErrorMessageDao;
+import com.apollocurrency.aplwallet.apl.eth.web3j.ChainId;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotSufficientFundsException;
 import com.apollocurrency.aplwallet.apl.exchange.exception.NotValidTransactionException;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
@@ -13,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.exchange.model.EthGasInfo;
 import com.apollocurrency.aplwallet.apl.exchange.model.UserErrorMessage;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexBeanProducer;
 import com.apollocurrency.aplwallet.apl.exchange.service.DexEthService;
-import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -72,14 +73,16 @@ public class EthereumWalletService {
     private final UserErrorMessageDao userErrorMessageDao;
     private final DexBeanProducer dexBeanProducer;
     private Web3j web3j;
+    private final ChainId chainId;
 
     @Inject
     public EthereumWalletService(PropertiesHolder propertiesHolder, KeyStoreService keyStoreService, DexEthService dexEthService, UserErrorMessageDao userErrorMessageDao,
-                                 DexBeanProducer dexBeanProducer) {
+                                 DexBeanProducer dexBeanProducer, ChainId chainId) {
         this.dexBeanProducer = dexBeanProducer;
         this.keyStoreService = keyStoreService;
         this.dexEthService = dexEthService;
         this.userErrorMessageDao = userErrorMessageDao;
+        this.chainId = chainId;
 
         this.PAX_CONTRACT_ADDRESS = propertiesHolder.getStringProperty("apl.eth.pax.contract.address");
     }
@@ -266,6 +269,7 @@ public class EthereumWalletService {
      */
     private String sendApproveTransaction(Credentials credentials, String spenderAddress, Long gasPrice, BigInteger value) {
         String tx = null;
+        chainId.validate();
         try {
             Function function = approve(spenderAddress, value);
             tx = execute(credentials, function, PAX_CONTRACT_ADDRESS, gasPrice);
@@ -339,6 +343,7 @@ public class EthereumWalletService {
      */
     public String transferEth(Credentials credentials, String toAddress, BigInteger amountWei, Long gasPrice) throws AplException.ExecutiveProcessException {
         // step 1: get the nonce (tx count for sending address)
+        chainId.validate();
         BigInteger nonce;
         try {
             nonce = getNonce(credentials.getAddress());
@@ -357,7 +362,7 @@ public class EthereumWalletService {
                 amountWei
             );
 
-        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
+        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, chainId.get(), credentials);
         String hexValue = Numeric.toHexString(signedMessage);
 
         EthSendTransaction ethSendTransaction;
@@ -382,6 +387,7 @@ public class EthereumWalletService {
      * @return String - transaction Hash.
      */
     private String transferERC20(String erc20Address, Credentials recipientCredentials, String toAddress, BigInteger amountWei, Long gasPrice) throws AplException.ExecutiveProcessException {
+        chainId.validate();
         Function function = transfer(toAddress, amountWei);
         String transactionHash;
         try {
@@ -425,7 +431,7 @@ public class EthereumWalletService {
             contractToAddress,
             encodedFunction);
 
-        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
+        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, chainId.get(), credentials);
         String hexValue = Numeric.toHexString(signedMessage);
 
         EthSendTransaction transactionResponse = web3j.ethSendRawTransaction(hexValue).sendAsync().get();
@@ -538,5 +544,4 @@ public class EthereumWalletService {
                 new TypeReference<Uint256>() {
                 }));
     }
-
 }
