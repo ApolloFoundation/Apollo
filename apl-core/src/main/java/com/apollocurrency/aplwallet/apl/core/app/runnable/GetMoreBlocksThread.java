@@ -77,6 +77,7 @@ public class GetMoreBlocksThread implements Runnable {
     private final ExecutorService networkService;
     private final TransactionProcessor transactionProcessor;
     private final Integer defaultNumberOfForkConfirmations;
+    private final int numberOfFailedTransactionConfirmations;
 
     private final BlockchainProcessorState blockchainProcessorState;
     private final GetCumulativeDifficultyRequest getCumulativeDifficultyRequest;
@@ -114,6 +115,7 @@ public class GetMoreBlocksThread implements Runnable {
         this.getCumulativeDifficultyRequest = new GetCumulativeDifficultyRequest(blockchainConfig.getChain().getChainId());
         this.blockSerializer = blockSerializer;
         this.getTransactionsResponseParser = getTransactionsResponseParser;
+        this.numberOfFailedTransactionConfirmations = propertiesHolder.getIntProperty("apl.numberOfFailedTransactionConfirmations", 3);
     }
 
     @Override
@@ -154,15 +156,13 @@ public class GetMoreBlocksThread implements Runnable {
                     )
                 );
             }
-        } catch (InterruptedException e) {
-            log.debug("Blockchain download thread interrupted");
         } catch (Throwable t) {
             log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n" + t.toString(), t);
             System.exit(1);
         }
     }
 
-    private void downloadPeer() throws InterruptedException {
+    private void downloadPeer() {
         try {
             long startTime = System.currentTimeMillis();
             int numberOfForkConfirmations = blockchain.getHeight() > Constants.LAST_CHECKSUM_BLOCK - Constants.MAX_AUTO_ROLLBACK ?
@@ -355,7 +355,6 @@ public class GetMoreBlocksThread implements Runnable {
                 lastMilestoneBlockId = milestoneBlockId;
             }
         }
-
     }
 
     private void verifyFailedTransaction(Block commonBlock) {
@@ -390,21 +389,28 @@ public class GetMoreBlocksThread implements Runnable {
 
     private void verifyForRequest(Map<Long, VerifiedError> failedTxs, GetTransactionsRequest request) {
         while (true) {
-            if (request.getTransactionIds().stream().allMatch(e -> failedTxs.get(e).count >= 3)) {
+            Set<Long> notFullyConfirmedTxs = request.getTransactionIds()
+                .stream()
+                .filter(e -> failedTxs.get(e).count < numberOfFailedTransactionConfirmations)
+                .collect(Collectors.toSet());
+            if (notFullyConfirmedTxs.isEmpty()) {
                 log.info("Failed transactions are verified for request: {}", request);
                 return;
             }
+            GetTransactionsRequest correctedRequest = request.clone();
+            correctedRequest.setTransactionIds(notFullyConfirmedTxs);
             Set<Peer> alreadyUsedPeers = new HashSet<>();
-            Optional<PeerGetTransactionsResponse> peerResponseOptional = sendToAnother(request, alreadyUsedPeers);
+            Optional<PeerGetTransactionsResponse> peerResponseOptional = sendToAnother(correctedRequest, alreadyUsedPeers);
             if (peerResponseOptional.isEmpty()) {
-                log.warn("Not enough peers to get failed transaction statuses, connected peers {}, already used peers [{}]", connectedPublicPeers.size(), alreadyUsedPeers.stream().map(Peer::getAnnouncedAddress).collect(Collectors.joining(",")));
+                log.warn("Not enough peers to get failed transaction statuses, connected peers {}, already used peers [{}], request: {}", connectedPublicPeers.size(), alreadyUsedPeers.stream().map(Peer::getHostWithPort).collect(Collectors.joining(",")), correctedRequest);
                 return;
             }
             GetTransactionsResponse response = peerResponseOptional.get().getResponse();
             Peer peer = peerResponseOptional.get().getPeer();
             alreadyUsedPeers.add(peer);
-            Set<Long> requestedIds = request.getTransactionIds();
+            Set<Long> requestedIds = correctedRequest.getTransactionIds();
             if (response.getTransactions().size() > requestedIds.size()) {
+                log.warn("Possibly malicious {} peer detected: received too many transactions {} instead of {} ", peer.getHostWithPort(), response.getTransactions().size(), requestedIds.size());
                 peer.blacklist("Too many transactions supplied for failed transactions validation");
                 continue;
             }
@@ -420,6 +426,7 @@ public class GetMoreBlocksThread implements Runnable {
             for (TransactionDTO tx : response.getTransactions()) {
                 VerifiedError verifiedError = failedTxs.get(Long.parseUnsignedLong(tx.getTransaction()));
                 if (verifiedError == null) {
+                    log.warn("Possibly malicious {} peer detected at height {}: {} is not expected transaction from GetTransactions request: {}", peer.getHostWithPort(), blockchain.getHeight(), tx.getTransaction(), correctedRequest);
                     peer.blacklist("Peer returned not expected transaction: " + tx.getTransaction());
                     break;
                 }

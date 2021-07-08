@@ -24,7 +24,7 @@ import java.util.UUID;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode
-public class BaseP2PRequest {
+public class BaseP2PRequest implements Cloneable {
 
     public final Integer protocol = 1;
     @NotBlank
@@ -44,5 +44,10 @@ public class BaseP2PRequest {
             .add("requestType='" + requestType + "'")
             .add("chainId=" + chainId)
             .toString();
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }

@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.api.p2p.request;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -34,6 +35,24 @@ public class GetTransactionsRequest extends BaseP2PRequest {
         this.transactionIds = transactionIds;
     }
 
+    public void setTransactionIds(Set<Long> transactionIds) {
+        this.transactionIds = transactionIds;
+    }
+
+    public Set<Long> getTransactionIds() {
+        return transactionIds;
+    }
+
+    @Override
+    public GetTransactionsRequest clone() {
+        try {
+            return (GetTransactionsRequest) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new IllegalStateException("Cloning operation should be supported for GetTransactionsRequest");
+        }
+    }
+
+    @JsonSetter
     void setTransactionIds(List<String> transactionIds) {
         this.transactionIds = transactionIds.stream().map(Long::parseUnsignedLong).collect(Collectors.toSet());
     }
@@ -42,9 +61,4 @@ public class GetTransactionsRequest extends BaseP2PRequest {
     List<String> getStringTransactionIds() {
         return transactionIds.stream().map(Long::toUnsignedString).collect(Collectors.toList());
     }
-
-    public Set<Long> getTransactionIds() {
-        return transactionIds;
-    }
-
 }
