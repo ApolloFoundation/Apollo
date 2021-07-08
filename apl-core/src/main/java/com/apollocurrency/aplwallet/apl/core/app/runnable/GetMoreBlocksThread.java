@@ -78,7 +78,6 @@ public class GetMoreBlocksThread implements Runnable {
     private final TransactionProcessor transactionProcessor;
     private final Integer defaultNumberOfForkConfirmations;
     private final int numberOfFailedTransactionConfirmations;
-
     private final BlockchainProcessorState blockchainProcessorState;
     private final GetCumulativeDifficultyRequest getCumulativeDifficultyRequest;
     private final GetNextBlocksResponseParser getNextBlocksResponseParser;
