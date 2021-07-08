@@ -305,8 +305,7 @@ public class AccountControlController {
 
         SetPhasingOnly attachment = new SetPhasingOnly(phasingParams, maxFees, controlMinDuration.shortValue(), controlMaxDuration.shortValue());
         CreateTransactionRequest txRequest = HttpRequestToCreateTransactionRequestConverter.convert(
-            servletRequest, senderAccount, 0, 0, attachment,
-            broadcast != null ? broadcast : false, feeATM != null ? feeATM : blockchainConfig.getOneAPL());
+            servletRequest, senderAccount, 0, 0, attachment, true, true, feeATM != null ? feeATM : blockchainConfig.getOneAPL());
         log.trace("txRequest = {}", txRequest);
 
         Transaction transaction = txCreator.createTransactionThrowingException(txRequest);
@@ -431,7 +430,7 @@ public class AccountControlController {
         Attachment attachment = new AccountControlEffectiveBalanceLeasing(period);
 
         CreateTransactionRequest txRequest = HttpRequestToCreateTransactionRequestConverter.convert(
-            servletRequest, senderAccount, recipientAccount, recipientAccountId, 0, feeATM, attachment, broadcast);
+            servletRequest, senderAccount, recipientAccount, recipientAccountId, 0, feeATM, attachment, broadcast, true);
         log.trace("txRequest = {}", txRequest);
 
         Transaction transaction = txCreator.createTransactionThrowingException(txRequest);
