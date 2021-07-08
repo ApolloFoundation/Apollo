@@ -2,7 +2,7 @@
 # This script is used to install jre on client machines, because update package with jre is too large
 unamestr=`uname`
 #
-#TODO Replace jdk to jre
+#TODO Replace jdk to jre in macOS
 OPENJDK_URL_Linux="https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz"
 OPENJDK_URL_Darwin="https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_osx-x64_bin.tar.gz"
 OPENJDK_DIR="jdk-11.0.2"
@@ -29,12 +29,12 @@ then
     APOLLO_LIBS_SHA256=${APOLLO_LIBS_FILE}.sha256
     APOLLO_LIBS_SHA256_URL=${APOLLO_LIBS_URL_PREFIX}${APOLLO_LIBS_SHA256}
     
-#    notify "Preparing..."
+    notify "Preparing..."
     
     rm -rf $1/jre
     rm -rf $1/lib
 
-#    notify "Updating Java runtime..."
+    notify "Updating Java runtime..."
         
     if [[ "$unamestr" == 'Linux' ]]; then
 	wget $OPENJDK_URL_Linux -o jre.tar.gz|| curl -o $1/jre.tar.gz $OPENJDK_URL_Linux
@@ -59,12 +59,6 @@ then
 	chmod 755 $1/jre/bin/*
     fi
     
-#    curl -o $1/libs.tar.gz.sha256 $APOLLO_LIBS_SHA256_URL
-#    tar -C $1 -zxvf $1/libs.tar.gz
-    
-#    mv $1/${APOLLO_LIBS_DIR} $1/lib
-#    rm -f $1/${APOLLO_LIBS_FILE}
-#    rm -f $1/${APOLLO_LIBS_FILE}.sha256
 else
     echo Invalid input parameters $1
     exit 2
