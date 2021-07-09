@@ -628,18 +628,18 @@ public class GetMoreBlocksThread implements Runnable {
             //
             for (GetNextBlocksTask nextBlocks : getList) {
                 Peer peer;
-                if (nextBlocks.getRequestCount() > 1) {
+                if (nextBlocks.getRequestCount() > 1) { // request sent two times
                     break download;
                 }
                 if (nextBlocks.getStart() == 0 || nextBlocks.getRequestCount() != 0) {
-                    peer = feederPeer;
+                    peer = feederPeer; // first segment or already sent request
                 } else {
-                    if (nextPeerIndex >= connectedPublicPeers.size()) {
+                    if (nextPeerIndex >= connectedPublicPeers.size()) { // round robin from the randomly selected position
                         nextPeerIndex = 0;
                     }
                     peer = connectedPublicPeers.get(nextPeerIndex++);
                 }
-                if (nextBlocks.getPeer() == peer) {
+                if (nextBlocks.getPeer() == peer) { // feederPeer failed to return all its blocks or there is only one public peer
                     break download;
                 }
                 nextBlocks.setPeer(peer);
@@ -676,7 +676,7 @@ public class GetMoreBlocksThread implements Runnable {
                 if (index > nextBlocks.getStop()) {
                     it.remove();
                 } else {
-                    nextBlocks.setStart(index - 1);
+                    nextBlocks.setStart(index - 1); // download the rest of blocks in the next iteration
                 }
                 if (nextBlocks.getResponseTime() > maxResponseTime) {
                     maxResponseTime = nextBlocks.getResponseTime();
@@ -694,8 +694,6 @@ public class GetMoreBlocksThread implements Runnable {
         // a missing block (this will happen if an invalid block is encountered
         // when downloading the blocks)
         //
-//TODO: check do we need this lock
-// Maybe better to find another sync solution
         globalSync.writeLock();
         try {
             List<Block> forkBlocks = new ArrayList<>();

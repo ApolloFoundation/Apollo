@@ -95,7 +95,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
 
         GetNextBlocksRequest request = new GetNextBlocksRequest(
             idList,
-            Long.toUnsignedString(blockIds.get(start)),
+            Long.toUnsignedString(blockIds.get(start)), // common block (skipped during peer block fetch)
             blockchainConfig.getChain().getChainId()
         );
 

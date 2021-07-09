@@ -480,15 +480,6 @@ public class BlockchainImpl implements Blockchain {
             result = Collections.EMPTY_LIST;
         } else {
             result = loadBlockDataFromEntities(entityList);//load the generator public key
-            for (Block block : result) {
-                List<Transaction> blockTransactions = block.getTransactions();
-                if (log.isTraceEnabled()) {
-                    log.trace("Block id={} height={} Loaded {} transaction.",
-                        block.getId(),
-                        block.getHeight(),
-                        blockTransactions != null ? blockTransactions.size() : 0);
-                }
-            }
         }
         if (log.isTraceEnabled()) {
             log.trace("getBlocksAfter time {}", System.currentTimeMillis() - time);

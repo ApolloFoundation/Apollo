@@ -34,7 +34,7 @@ public class GetNextBlocksResponseParser implements JsonReqRespParser<GetNextBlo
 
     @Override
     public GetNextBlocksResponse parse(JSONObject json) {
-        List<BlockImpl> blockList = new ArrayList();
+        List<BlockImpl> blockList = new ArrayList<>();
         //
         // Get the list of blocks.  We will stop parsing blocks if we encounter
         // an invalid block.  We will return the valid blocks and reset the stop
