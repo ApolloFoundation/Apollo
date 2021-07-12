@@ -853,10 +853,4 @@ public class DexOrderProcessor {
             }
         }
     }
-
-    private void validateAndBroadcast(Transaction tx) throws AplException.ValidationException {
-        validator.validateFully(tx);
-        dexService.broadcast(tx);
-    }
-
 }
