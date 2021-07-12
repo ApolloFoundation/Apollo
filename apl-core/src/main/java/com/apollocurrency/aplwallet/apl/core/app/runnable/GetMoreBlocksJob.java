@@ -168,7 +168,7 @@ public class GetMoreBlocksJob implements Runnable {
             long startTime = System.currentTimeMillis();
             int numberOfForkConfirmations = blockchain.getHeight() > Constants.LAST_CHECKSUM_BLOCK - Constants.MAX_AUTO_ROLLBACK ?
                 defaultNumberOfForkConfirmations : Math.min(1, defaultNumberOfForkConfirmations);
-            connectedPublicPeers = peersService.getPublicPeers(PeerState.CONNECTED, true);
+            connectedPublicPeers = Collections.synchronizedList(new ArrayList<>(peersService.getPublicPeers(PeerState.CONNECTED, true)));
             if (connectedPublicPeers.size() <= numberOfForkConfirmations) {
                 log.trace("downloadPeer connected = {} <= numberOfForkConfirmations = {}",
                     connectedPublicPeers.size(), numberOfForkConfirmations);
@@ -398,7 +398,7 @@ public class GetMoreBlocksJob implements Runnable {
                 .filter(e -> failedTxs.get(e).count < numberOfFailedTransactionConfirmations)
                 .collect(Collectors.toSet());
             if (notFullyConfirmedTxs.isEmpty()) {
-                log.info("Failed transactions are verified for request: {}", request);
+                log.info("Transaction's statuses are verified for request: {}", request);
                 return;
             }
             GetTransactionsRequest correctedRequest = request.clone();
@@ -412,10 +412,11 @@ public class GetMoreBlocksJob implements Runnable {
             GetTransactionsResponse response = peerResponseOptional.get().getResponse();
             Peer peer = peerResponseOptional.get().getPeer();
             alreadyUsedPeers.add(peer);
-            Set<Long> requestedIds = correctedRequest.getTransactionIds();
+            Set<Long> requestedIds = new HashSet<>(correctedRequest.getTransactionIds());
             if (response.getTransactions().size() > requestedIds.size()) {
-                log.warn("Possibly malicious {} peer detected: received too many transactions {} instead of {} ", peer.getHostWithPort(), response.getTransactions().size(), requestedIds.size());
+                log.error("Possibly malicious {} peer detected: received too many transactions {} instead of {} ", peer.getHostWithPort(), response.getTransactions().size(), requestedIds.size());
                 peer.blacklist("Too many transactions supplied for failed transactions validation");
+                connectedPublicPeers.remove(peer);
                 continue;
             }
             if (response.getTransactions().size() < requestedIds.size()) {
@@ -424,18 +425,19 @@ public class GetMoreBlocksJob implements Runnable {
                     .map(UnconfirmedTransactionDTO::getTransaction)
                     .map(Long::parseUnsignedLong)
                     .collect(Collectors.toSet());
-                receivedIds.removeAll(requestedIds);
-                log.debug("Peer {} is missing {} transactions for validation: {}", peer.getHostWithPort(), receivedIds.size(), receivedIds);
+                requestedIds.removeAll(receivedIds);
+                log.debug("Peer {} is missing {} transactions for validation: {}", peer.getHostWithPort(), requestedIds.size(), requestedIds);
             }
             for (TransactionDTO tx : response.getTransactions()) {
                 VerifiedError verifiedError = failedTxs.get(Long.parseUnsignedLong(tx.getTransaction()));
                 if (verifiedError == null) {
-                    log.warn("Possibly malicious {} peer detected at height {}: {} is not expected transaction from GetTransactions request: {}", peer.getHostWithPort(), blockchain.getHeight(), tx.getTransaction(), correctedRequest);
+                    log.error("Possibly malicious {} peer detected at height {}: {} is not expected transaction from GetTransactions request: {}", peer.getHostWithPort(), blockchain.getHeight(), tx.getTransaction(), correctedRequest);
                     peer.blacklist("Peer returned not expected transaction: " + tx.getTransaction());
+                    connectedPublicPeers.remove(peer);
                     break;
                 }
                 if (!verifiedError.verify(tx.getErrorMessage())) {
-                    log.warn("Blockchain inconsistency may occur. Transaction {} validation & execution results into error message '{}', " +
+                    log.warn("Blockchain inconsistency may occur. Transaction's {} validation & execution results into an error message '{}', " +
                         "which does not match to {} peer's result '{}'", tx.getTransaction(), verifiedError.getError(), tx.getErrorMessage(), peer.getHost());
                 }
             }
@@ -477,6 +479,7 @@ public class GetMoreBlocksJob implements Runnable {
                 }
                 return Optional.of(new PeerGetTransactionsResponse(peer, response));
             } catch (PeerNotConnectedException e) {
+                connectedPublicPeers.remove(peer);
                 excludedPeersCopy.add(peer);
             }
         }
