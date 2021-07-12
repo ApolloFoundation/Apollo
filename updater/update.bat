@@ -22,7 +22,7 @@ del /S /F /Q %1\..\apollo-desktop
 robocopy %2 %1\.. /S
 
 
-
+%1\..\update_jdk.bat
 
 
 
