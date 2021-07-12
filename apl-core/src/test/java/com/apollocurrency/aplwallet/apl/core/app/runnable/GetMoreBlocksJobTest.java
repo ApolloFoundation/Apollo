@@ -60,10 +60,11 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
@@ -136,10 +137,13 @@ class GetMoreBlocksJobTest {
         doReturn(chainId).when(chain).getChainId();
         job = new GetMoreBlocksJob(blockchainProcessor, state, blockchainConfig, blockchain, peersService
             , globalSync, timeService, prunableRestorationService, networkService, propertiesHolder, transactionProcessor, getNextBlocksResponseParser, blockSerializer, getTransactionsResponseParser);
-        job.setFailedTransactionsPerRequest(2);
+        job.setFailedTransactionsPerRequest(25);
         lenient().doReturn("peer1IP:1111").when(peer1).getHostWithPort();
         lenient().doReturn("peer2IP:1111").when(peer2).getHostWithPort();
         lenient().doReturn("peer3IP:1111").when(peer3).getHostWithPort();
+        lenient().doReturn("peer4IP:1111").when(peer4).getHostWithPort();
+        lenient().doReturn("peer5IP:1111").when(peer5).getHostWithPort();
+        lenient().doReturn("peer6IP:1111").when(peer6).getHostWithPort();
     }
 
     @AfterEach
@@ -153,8 +157,11 @@ class GetMoreBlocksJobTest {
         // processing failed transactions mocks
         mockTransactionsForBlocks(blocks);
         doAnswer(this::returnAllRequestedCorrectTxs).when(peer1).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
-        doAnswer(this::returnErrorTxsResponse).when(peer2).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
+        doAnswer(this::returnAcceptableNotFullTxsResponse).when(peer2).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
         doAnswer(this::returnAllRequestedCorrectTxs).when(peer3).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
+        doAnswer(this::returnTooManyTxs).when(peer4).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
+        doAnswer(invocation -> throwNotConnectedException()).when(peer5).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
+        doAnswer(this::returnIncorrectTxByIdsResponse).when(peer6).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
 
         job.run();
 
@@ -168,8 +175,11 @@ class GetMoreBlocksJobTest {
         // processing failed transactions mocks
         mockTransactionsForBlocks(blocks);
         doAnswer(invocation -> null).when(peer1).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
-        doAnswer(this::returnErrorTxsResponse).when(peer2).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
-        doAnswer(this::returnErrorTxsResponse).when(peer3).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
+        doAnswer(this::returnAcceptableNotFullTxsResponse).when(peer2).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
+        doAnswer(this::returnAcceptableNotFullTxsResponse).when(peer3).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
+        doAnswer(invocation ->  throwNotConnectedException()).when(peer4).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
+        doAnswer(invocation -> throwNotConnectedException()).when(peer5).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
+        doAnswer(invocation -> throwNotConnectedException()).when(peer6).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
 
         job.run();
 
@@ -196,14 +206,22 @@ class GetMoreBlocksJobTest {
 
     private void verifyFailedTxsProcessing() {
         verify(peer1, never()).blacklist(anyString());
-        verify(peer2, atLeast(1)).blacklist(anyString());
+        verify(peer2, never()).blacklist(anyString());
         verify(peer3, never()).blacklist(anyString());
+        verify(peer4, atLeastOnce()).blacklist(anyString());
+        verify(peer5, never()).blacklist(anyString());
+        verify(peer6, atLeastOnce()).blacklist(anyString());
     }
 
     private void verifyUnsuccessfulFailedTxsProcessing() {
-        verify(peer1, never()).blacklist(anyString());
-        verify(peer2, atLeast(1)).blacklist(anyString());
-        verify(peer3, atLeast(1)).blacklist(anyString());
+        List.of(peer1, peer2, peer3, peer4, peer5, peer6).forEach(e-> {
+            verify(e, never()).blacklist(anyString());
+            try {
+                verify(e, atLeastOnce()).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
+            } catch (PeerNotConnectedException peerNotConnectedException) {
+                fail(peerNotConnectedException);
+            }
+        });
     }
 
     private void verifyNoFailedTxsProcessing() throws PeerNotConnectedException {
@@ -249,9 +267,9 @@ class GetMoreBlocksJobTest {
         doAnswer(invocation -> returnAllRequestedPeerBlocks(returnedBlockIds, invocation)).when(peer1).send(any(GetNextBlocksRequest.class), any(GetNextBlocksResponseParser.class));
         doAnswer(invocation -> returnAllRequestedPeerBlocks(returnedBlockIds, invocation)).when(peer2).send(any(GetNextBlocksRequest.class), any(GetNextBlocksResponseParser.class));
         doAnswer(invocation -> returnRequestedPeerBlocksPartially(returnedBlockIds, invocation)).when(peer3).send(any(GetNextBlocksRequest.class), any(GetNextBlocksResponseParser.class));
-        doAnswer(invocation -> returnRequestedPeerBlocksPartially(returnedBlockIds, invocation)).when(peer4).send(any(GetNextBlocksRequest.class), any(GetNextBlocksResponseParser.class));
-        doAnswer(invocation -> returnRequestedPeerBlocksPartially(returnedBlockIds, invocation)).when(peer5).send(any(GetNextBlocksRequest.class), any(GetNextBlocksResponseParser.class));
-        doAnswer(invocation -> returnRequestedPeerBlocksPartially(returnedBlockIds, invocation)).when(peer6).send(any(GetNextBlocksRequest.class), any(GetNextBlocksResponseParser.class));
+        doAnswer(invocation -> returnNullBlocksResponse()).when(peer4).send(any(GetNextBlocksRequest.class), any(GetNextBlocksResponseParser.class));
+        doAnswer(this::returnDifferentBlocksResponse).when(peer5).send(any(GetNextBlocksRequest.class), any(GetNextBlocksResponseParser.class));
+        doAnswer(invocation -> returnNoPeerBlocks(returnedBlockIds, invocation)).when(peer6).send(any(GetNextBlocksRequest.class), any(GetNextBlocksResponseParser.class));
         List<Block> pushedBlocks = new ArrayList<>();
         mockPushBlock(pushedBlocks);
         doAnswer(invocation-> {
@@ -277,33 +295,45 @@ class GetMoreBlocksJobTest {
         return new GetTransactionsResponse(txsToReturn);
     }
 
-    private GetTransactionsResponse returnErrorTxsResponse(InvocationOnMock invocation) throws PeerNotConnectedException {
+    private GetTransactionsResponse returnAcceptableNotFullTxsResponse(InvocationOnMock invocation) {
         int value = peerSendingRequestCounter.incrementAndGet();
-        int decisionValue = value % 6;
+        int decisionValue = value % 3;
         if (decisionValue == 1 ) {
             return null;
         }
-        if (decisionValue == 2) {
-            throw new PeerNotConnectedException("Peer is not connected test error");
-        }
         List<TransactionDTO> txsToReturn = new ArrayList<>();
         GetTransactionsRequest request = invocation.getArgument(0);
-
-        if (decisionValue == 3) {
-            int requestedNumber = request.getTransactionIds().size();
-            for (int i = 0; i < requestedNumber + 1; i++) { // overload peer with malicious data
-                txsToReturn.add(createTransactionDTO(String.valueOf(i), ""));
-            }
-        } else if (decisionValue == 4 ) { // part is ok, another part is fake
-            request.getTransactionIds().stream().skip(request.getTransactionIds().size() / 2).forEach(e -> txsToReturn.add(createTransactionDTOFromTxId(e)));
-            request.getTransactionIds().stream().limit(request.getTransactionIds().size() / 2).forEach(e -> txsToReturn.add(createTransactionDTO(String.valueOf(txIdCounter.incrementAndGet()), "fake error")));
-        } else if (decisionValue == 5) { // peer contains not all txs
+        if (decisionValue == 2) { // peer contains not all txs
             request.getTransactionIds().stream().limit(request.getTransactionIds().size() / 2).forEach(e -> txsToReturn.add(createTransactionDTOFromTxId(e)));
         } else if (decisionValue == 0) { // peer has failed transactions but with different error message
             request.getTransactionIds().forEach(e -> txsToReturn.add(createTransactionDTO(String.valueOf(e), "another peer error")));
         }
         return new GetTransactionsResponse(txsToReturn);
     }
+
+    private GetTransactionsResponse returnIncorrectTxByIdsResponse(InvocationOnMock invocation) {
+        List<TransactionDTO> txsToReturn = new ArrayList<>();
+        GetTransactionsRequest request = invocation.getArgument(0);
+        request.getTransactionIds().stream().skip(request.getTransactionIds().size() / 2).forEach(e -> txsToReturn.add(createTransactionDTOFromTxId(e)));
+        request.getTransactionIds().stream().limit(request.getTransactionIds().size() / 2).forEach(e -> txsToReturn.add(createTransactionDTO(String.valueOf(txIdCounter.incrementAndGet()), "fake error")));
+        return new GetTransactionsResponse(txsToReturn);
+    }
+
+    private GetTransactionsResponse throwNotConnectedException() throws PeerNotConnectedException {
+        throw new PeerNotConnectedException("Peer is not connected test error");
+    }
+
+    private GetTransactionsResponse returnTooManyTxs(InvocationOnMock invocation) {
+        List<TransactionDTO> txsToReturn = new ArrayList<>();
+        GetTransactionsRequest request = invocation.getArgument(0);
+        int requestedNumber = request.getTransactionIds().size();
+        for (int i = 0; i < requestedNumber + 1; i++) { // overload peer with malicious data
+            txsToReturn.add(createTransactionDTO(String.valueOf(i), ""));
+        }
+        return new GetTransactionsResponse(txsToReturn);
+    }
+
+
 
     private TransactionDTO createTransactionDTO(String id, String error) {
         TransactionDTO txDto = mock(TransactionDTO.class);
@@ -380,13 +410,12 @@ class GetMoreBlocksJobTest {
         return null;
     }
 
-    private Object returnDifferentBlocksResponse(List<String> returnedBlockIds, InvocationOnMock invocation) {
+    private Object returnDifferentBlocksResponse(InvocationOnMock invocation) {
         GetNextBlocksRequest request = invocation.getArgument(0);
-        assertTrue(returnedBlockIds.containsAll(request.getBlockIds()), "returned block ids list should contain all the requested block ids from peer");
         List<Block> respondedBlocks = new ArrayList<>();
         Random random = new Random();
-        for (int i = 0; i < request.getBlockIds().subList(0, random.nextInt(request.getBlockIds().size() + 1)).size(); i++) {
-            respondedBlocks.add(mockIdBlock(request.getBlockIds().get(i), i == 0 ? request.getBlockId() : request.getBlockIds().get(i - 1)));
+        for (int i = 1; i < request.getBlockIds().size(); i++) {
+            respondedBlocks.add(mockIdBlock(request.getBlockIds().get(i), request.getBlockIds().get(i - 1)));
         }
         return new GetNextBlocksResponse(respondedBlocks);
     }

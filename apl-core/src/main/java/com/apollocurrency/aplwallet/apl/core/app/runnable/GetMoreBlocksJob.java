@@ -392,6 +392,7 @@ public class GetMoreBlocksJob implements Runnable {
     }
 
     private void verifyForRequest(Map<Long, VerifiedError> failedTxs, GetTransactionsRequest request) {
+        Set<Peer> alreadyUsedPeers = new HashSet<>();
         while (true) {
             Set<Long> notFullyConfirmedTxs = request.getTransactionIds()
                 .stream()
@@ -403,7 +404,6 @@ public class GetMoreBlocksJob implements Runnable {
             }
             GetTransactionsRequest correctedRequest = request.clone();
             correctedRequest.setTransactionIds(notFullyConfirmedTxs);
-            Set<Peer> alreadyUsedPeers = new HashSet<>();
             Optional<PeerGetTransactionsResponse> peerResponseOptional = sendToAnother(correctedRequest, alreadyUsedPeers);
             if (peerResponseOptional.isEmpty()) {
                 log.warn("Not enough peers to get failed transaction statuses, connected peers {}, already used peers [{}], request: {}", connectedPublicPeers.size(), alreadyUsedPeers.stream().map(Peer::getHostWithPort).collect(Collectors.joining(",")), correctedRequest);
