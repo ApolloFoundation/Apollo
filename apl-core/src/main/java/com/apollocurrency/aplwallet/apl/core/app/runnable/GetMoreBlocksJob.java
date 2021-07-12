@@ -18,7 +18,6 @@ import com.apollocurrency.aplwallet.apl.core.app.GetNextBlocksTask;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.exception.AplCoreLogicException;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
-import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.model.BlockchainProcessorState;
 import com.apollocurrency.aplwallet.apl.core.model.PeerBlock;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
@@ -45,6 +44,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
@@ -65,7 +65,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class GetMoreBlocksThread implements Runnable {
+public class GetMoreBlocksJob implements Runnable {
 
     private final BlockchainProcessor blockchainProcessor;
     private final BlockchainConfig blockchainConfig;
@@ -83,6 +83,8 @@ public class GetMoreBlocksThread implements Runnable {
     private final GetNextBlocksResponseParser getNextBlocksResponseParser;
     private final BlockSerializer blockSerializer;
     private final GetTransactionsResponseParser getTransactionsResponseParser;
+    @Setter
+    private volatile int failedTransactionsPerRequest = 100;
 
     private boolean peerHasMore;
     private List<Peer> connectedPublicPeers;
@@ -91,13 +93,13 @@ public class GetMoreBlocksThread implements Runnable {
     private int totalBlocks;
 
 
-    public GetMoreBlocksThread(BlockchainProcessor blockchainProcessor, BlockchainProcessorState blockchainProcessorState,
-                               BlockchainConfig blockchainConfig, Blockchain blockchain, PeersService peersService,
-                               GlobalSync globalSync, TimeService timeService, PrunableRestorationService prunableRestorationService,
-                               ExecutorService networkService, PropertiesHolder propertiesHolder,
-                               TransactionProcessor transactionProcessor,
-                               GetNextBlocksResponseParser getNextBlocksResponseParser,
-                               BlockSerializer blockSerializer, GetTransactionsResponseParser getTransactionsResponseParser) {
+    public GetMoreBlocksJob(BlockchainProcessor blockchainProcessor, BlockchainProcessorState blockchainProcessorState,
+                            BlockchainConfig blockchainConfig, Blockchain blockchain, PeersService peersService,
+                            GlobalSync globalSync, TimeService timeService, PrunableRestorationService prunableRestorationService,
+                            ExecutorService networkService, PropertiesHolder propertiesHolder,
+                            TransactionProcessor transactionProcessor,
+                            GetNextBlocksResponseParser getNextBlocksResponseParser,
+                            BlockSerializer blockSerializer, GetTransactionsResponseParser getTransactionsResponseParser) {
         this.blockchainProcessor = blockchainProcessor;
         this.blockchainProcessorState = blockchainProcessorState;
 
@@ -240,7 +242,7 @@ public class GetMoreBlocksThread implements Runnable {
                 }
                 long lastBlockId = blockchain.getLastBlock().getId();
                 downloadBlockchain(peer, commonBlock, commonBlock.getHeight());
-                verifyFailedTransaction(commonBlock);
+                verifyFailedTransactions(commonBlock);
                 if (blockchain.getHeight() - commonBlock.getHeight() <= 10) {
                     return;
                 }
@@ -356,21 +358,17 @@ public class GetMoreBlocksThread implements Runnable {
         }
     }
 
-    private void verifyFailedTransaction(Block commonBlock) {
-        List<Block> downloadedBlocks = blockchain.getBlocksAfter(commonBlock.getHeight(), Integer.MAX_VALUE);
+    private void verifyFailedTransactions(Block fromBlock) {
+        List<Block> downloadedBlocks = blockchain.getBlocksAfter(fromBlock.getHeight(), Integer.MAX_VALUE);
         Map<Long, VerifiedError> failedTxs = downloadedBlocks.stream()
             .flatMap(e -> e.getTransactions().stream())
             .filter(e -> e.getErrorMessage().isPresent())
             .collect(Collectors.toConcurrentMap(Transaction::getId, e -> new VerifiedError(e.getErrorMessage().get())));
         if (failedTxs.isEmpty()) {
-            log.info("No failed transactions downloaded to validate starting from height {} to current height {} ", commonBlock.getHeight(), blockchain.getHeight());
+            log.info("No failed transactions downloaded to validate starting from height {} to current height {} ", fromBlock.getHeight(), blockchain.getHeight());
             return;
         }
-        String allFailedTxsString = failedTxs.entrySet()
-            .stream()
-            .map(e -> Long.toUnsignedString(e.getKey()) + ":" + e.getValue().getError())
-            .collect(Collectors.joining(","));
-        log.info("Selected {} failed transactions to verify failure cause, [{}]", failedTxs.size(), allFailedTxsString);
+        log.info("Selected {} failed transactions to verify failure cause, [{}]", failedTxs.size(), failedTxToString(failedTxs));
         List<GetTransactionsRequest> requests = getTransactionsRequestDivided(new ArrayList<>(failedTxs.keySet()));
         List<Future<?>> verificationJobs = new ArrayList<>();
         for (GetTransactionsRequest request : requests) {
@@ -384,6 +382,13 @@ public class GetMoreBlocksThread implements Runnable {
                 throw new AplCoreLogicException(e.toString(), e);
             }
         }
+    }
+
+    private String failedTxToString(Map<Long, VerifiedError> failedTxs) {
+        return failedTxs.entrySet()
+            .stream()
+            .map(e -> Long.toUnsignedString(e.getKey()) + ":" + e.getValue().getError())
+            .collect(Collectors.joining(","));
     }
 
     private void verifyForRequest(Map<Long, VerifiedError> failedTxs, GetTransactionsRequest request) {
@@ -454,8 +459,6 @@ public class GetMoreBlocksThread implements Runnable {
             }
             return errEquals;
         }
-
-
     }
 
     private Optional<PeerGetTransactionsResponse> sendToAnother(GetTransactionsRequest request, Set<Peer> excludedPeers) {
@@ -490,22 +493,12 @@ public class GetMoreBlocksThread implements Runnable {
 
     private List<GetTransactionsRequest> getTransactionsRequestDivided(List<Long> ids) {
         List<GetTransactionsRequest> requests = new ArrayList<>();
-        for (int i = 0; i < ids.size(); i += 100) {
-            HashSet<Long> requestTransactionIds = new HashSet<>(ids.subList(i, Math.min(i + 100, ids.size())));
+        for (int i = 0; i < ids.size(); i += failedTransactionsPerRequest) {
+            HashSet<Long> requestTransactionIds = new HashSet<>(ids.subList(i, Math.min(i + failedTransactionsPerRequest, ids.size())));
             GetTransactionsRequest request = new GetTransactionsRequest(requestTransactionIds, blockchainConfig.getChain().getChainId());
             requests.add(request);
         }
         return requests;
-    }
-
-    private Set<Peer> selectConnectedPeers(int number) {
-        Set<Peer> selected = new HashSet<>();
-        Optional<Peer> peerOpt = selectConnectedPeer(selected);
-        while (peerOpt.isPresent() && selected.size() < number) {
-            selected.add(peerOpt.get());
-            peerOpt = selectConnectedPeer(selected);
-        }
-        return selected;
     }
 
     private Optional<Peer> selectConnectedPeer(Set<Peer> exclude) {
@@ -643,7 +636,7 @@ public class GetMoreBlocksThread implements Runnable {
                     break download;
                 }
                 nextBlocks.setPeer(peer);
-                Future<List<BlockImpl>> future = networkService.submit(nextBlocks);
+                Future<List<Block>> future = networkService.submit(nextBlocks);
                 nextBlocks.setFuture(future);
             }
             //
@@ -653,7 +646,7 @@ public class GetMoreBlocksThread implements Runnable {
             Iterator<GetNextBlocksTask> it = getList.iterator();
             while (it.hasNext()) {
                 GetNextBlocksTask nextBlocks = it.next();
-                List<BlockImpl> blockList;
+                List<Block> blockList;
                 try {
                     blockList = nextBlocks.getFuture().get();
                 } catch (ExecutionException exc) {
@@ -749,7 +742,7 @@ public class GetMoreBlocksThread implements Runnable {
         }
 
         if (pushedForkBlocks > 0 && blockchain.getLastBlock().getCumulativeDifficulty().compareTo(curCumulativeDifficulty) < 0) {
-            log.debug("Pop off caused by peer {}, blacklisting", peer.getHost());
+            log.debug("Pop off caused by peer {}, blacklisting", peer.getHostWithPort());
             peer.blacklist("Pop off");
             List<Block> peerPoppedOffBlocks = blockchainProcessor.popOffToCommonBlock(commonBlock);
             pushedForkBlocks = 0;
@@ -770,7 +763,7 @@ public class GetMoreBlocksThread implements Runnable {
                 }
             }
         } else {
-            log.debug("Switched to peer's fork, peer addr: {}", peer.getHost());
+            log.debug("Switched to peer's fork, peer addr: {}", peer.getHostWithPort());
             for (Block block : myPoppedOffBlocks) {
                 transactionProcessor.processLater(block.getTransactions());
             }

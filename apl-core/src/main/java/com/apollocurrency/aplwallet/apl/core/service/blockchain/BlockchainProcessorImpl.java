@@ -30,7 +30,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockchainEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.ScanValidate;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.TxEventType;
-import com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksThread;
+import com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksJob;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -339,7 +339,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 .name("GetMoreBlocks")
                 .delay(250)
                 .initialDelay(250)
-                .task(new GetMoreBlocksThread(this, blockchainProcessorState,
+                .task(new GetMoreBlocksJob(this, blockchainProcessorState,
                     blockchainConfig, blockchain, peersService,
                     globalSync, timeService, prunableRestorationService,
                     networkService, propertiesHolder, transactionProcessor, getNextBlocksResponseParser,

@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.peer.parser;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.peer.respons.GetNextBlocksResponse;
@@ -34,7 +35,7 @@ public class GetNextBlocksResponseParser implements JsonReqRespParser<GetNextBlo
 
     @Override
     public GetNextBlocksResponse parse(JSONObject json) {
-        List<BlockImpl> blockList = new ArrayList<>();
+        List<Block> blockList = new ArrayList<>();
         //
         // Get the list of blocks.  We will stop parsing blocks if we encounter
         // an invalid block.  We will return the valid blocks and reset the stop

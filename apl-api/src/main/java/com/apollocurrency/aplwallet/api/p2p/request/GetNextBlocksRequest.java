@@ -4,6 +4,7 @@
 
 package com.apollocurrency.aplwallet.api.p2p.request;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.StringJoiner;
 import java.util.UUID;
 
 @Getter
+@EqualsAndHashCode
 public class GetNextBlocksRequest extends BaseP2PRequest {
     private static final String REQUEST_TYPE = "getNextBlocks";
 

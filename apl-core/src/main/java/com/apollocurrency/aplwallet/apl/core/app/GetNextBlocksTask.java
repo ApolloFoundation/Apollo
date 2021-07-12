@@ -5,7 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.p2p.request.GetNextBlocksRequest;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.model.BlockImpl;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.parser.GetNextBlocksResponseParser;
@@ -21,7 +21,7 @@ import java.util.concurrent.Future;
  * Callable method to get the next block segment from the selected peer
  */
 @Slf4j
-public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
+public class GetNextBlocksTask implements Callable<List<Block>> {
     /**
      * Block identifier list
      */
@@ -31,7 +31,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
     /**
      * Callable future
      */
-    private Future<List<BlockImpl>> future;
+    private Future<List<Block>> future;
     /**
      * Peer
      */
@@ -83,7 +83,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
      * @return List of blocks or null if an error occurred
      */
     @Override
-    public List<BlockImpl> call() {
+    public List<Block> call() {
         requestCount++;
         //
         // Build the block request list
@@ -133,7 +133,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
      *
      * @return Callable future
      */
-    public Future<List<BlockImpl>> getFuture() {
+    public Future<List<Block>> getFuture() {
         return future;
     }
 
@@ -142,7 +142,7 @@ public class GetNextBlocksTask implements Callable<List<BlockImpl>> {
      *
      * @param future Callable future
      */
-    public void setFuture(Future<List<BlockImpl>> future) {
+    public void setFuture(Future<List<Block>> future) {
         this.future = future;
     }
 

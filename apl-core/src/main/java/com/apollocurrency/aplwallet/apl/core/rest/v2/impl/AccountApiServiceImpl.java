@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 @RequestScoped
 public class AccountApiServiceImpl implements AccountApiService {
 
-    private final BlockchainConfig blockchainConfig;
     private final AccountService accountService;
     private final AccountInfoMapper accountInfoMapper;
     private final TransactionCreator transactionCreator;
@@ -49,7 +48,6 @@ public class AccountApiServiceImpl implements AccountApiService {
         this.accountService = Objects.requireNonNull(accountService);
         this.accountInfoMapper = Objects.requireNonNull(accountInfoMapper);
         this.transactionCreator = Objects.requireNonNull(transactionCreator);
-        this.blockchainConfig = Objects.requireNonNull(blockchainConfig);
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }
 
