@@ -7,12 +7,14 @@ import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
-import org.jdbi.v3.sqlobject.config.RegisterArgumentFactory;
+
+/*import org.jdbi.v3.sqlobject.config.RegisterArgumentFactory;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+*/
 
 import java.util.List;
 
@@ -57,6 +59,8 @@ public interface ShardDao {
     @SqlUpdate("UPDATE shard SET shard_hash =:shardHash, shard_state =:shardState, shard_height =:shardHeight, " +
         "zip_hash_crc =:coreZipHash, prunable_zip_hash =:prunableZipHash, generator_ids =:generatorIds, block_timeouts =:blockTimeouts, block_timestamps =:blockTimestamps " +
         "where shard_id =:shardId")
+
+
     @RegisterArgumentFactory(LongArrayArgumentFactory.class)
     @RegisterArgumentFactory(IntArrayArgumentFactory.class)
     int updateShard(@BindBean Shard shard);
