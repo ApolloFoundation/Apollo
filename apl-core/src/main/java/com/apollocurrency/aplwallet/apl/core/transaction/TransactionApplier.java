@@ -106,6 +106,9 @@ public class TransactionApplier {
             try {
                 applyAppendage(transaction, senderAccount, recipientAccount, appendage);
             } catch (AplTransactionExecutionException e) {
+                if (!blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(transaction.getHeight())) {
+                    throw new AplTransactionExecutionException("Acceptance of the failed transactions is not active at height: " + transaction.getHeight() + " but transaction " + transaction.getStringId() + " failed during execution with message: " + e.getMessage(), e, transaction);
+                }
                 if (transaction.canFailDuringExecution()) {
                     log.info("Transaction {} failed during execution: {}", transaction.getStringId(), e.getMessage());
                     transaction.fail(e.getMessage());

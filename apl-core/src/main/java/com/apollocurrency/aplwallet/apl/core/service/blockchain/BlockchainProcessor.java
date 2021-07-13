@@ -133,6 +133,7 @@ public interface BlockchainProcessor {
             this.transaction = transaction;
         }
 
+
         public TransactionNotAcceptedException(Throwable cause, Transaction transaction, JSONObject jsonBlock) {
             super(cause, jsonBlock);
             this.transaction = transaction;

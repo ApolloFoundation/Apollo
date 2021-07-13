@@ -62,7 +62,7 @@ public class BlockchainConfigTest {
         "Test",
         10000L, 2,
             //"data.json",
-        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100), Set.of(20, 21, 25, 26));
+        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, 1), Set.of(20, 21, 25, 26));
     BlockchainConfig blockchainConfig  = new BlockchainConfig(chain, new PropertiesHolder());
     private BlockDao blockDao = mock(BlockDao.class);
     @Inject
@@ -92,12 +92,16 @@ public class BlockchainConfigTest {
     void testInitBlockchainConfigForFeatureHeightRequirement() {
         blockchainConfig.updateChain(chain);
         assertEquals(100, blockchainConfig.getDexPendingOrdersReopeningHeight());
+        assertTrue(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1), "Acceptance of the failed transactions should be enabled on '1' height");
+        assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(0), "Acceptance of the failed transactions should be not enabled until '1' height");
 
         chain.setFeaturesHeightRequirement(null);
         assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
+        assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1), "Feature config is not present, failed transaction acceptance cannot be active");
 
         chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement());
         assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
+        assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1), "Feature config is empty, failed transaction acceptance cannot be active");
     }
 
     @Test
