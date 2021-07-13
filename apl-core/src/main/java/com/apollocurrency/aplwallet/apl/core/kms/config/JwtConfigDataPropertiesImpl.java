@@ -21,7 +21,6 @@ import lombok.ToString;
 public class JwtConfigDataPropertiesImpl implements JwtConfigData {
 
     private String issuer;
-//    private String secret;
     private String privateKeyFileName;
     private String publicKeyFileName;
     private String accessTokenExpirationTime;
