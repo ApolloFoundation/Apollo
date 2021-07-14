@@ -26,7 +26,7 @@ public class RemoteKmsConfigImpl implements RemoteKmsConfig {
     private int httpPort;
     private String httpSchema;
 
-    @Inject
+    @Inject // mandatory annotation
     public RemoteKmsConfigImpl(
         @Property(name = "kms.main.remote.server.mode.on", defaultValue = "false") boolean remoteServerModeOn,
         @Property(name = "kms.main.remote.server.address", defaultValue = "") String address,

@@ -27,7 +27,7 @@ public class JwtConfigDataPropertiesImpl implements JwtConfigData {
     private String accessAdminTokenExpirationTime;
     private String refreshTokenExpirationTime;
 
-    @Inject
+    @Inject // mandatory annotation
     public JwtConfigDataPropertiesImpl (
         @Property(name = "kms.main.jwt.issuer", defaultValue = "") String issuer,
         @Property(name = "kms.main.jwt.private.key.file.name") String privateKeyFileName,

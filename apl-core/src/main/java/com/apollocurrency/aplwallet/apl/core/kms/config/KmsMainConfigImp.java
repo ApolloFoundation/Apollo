@@ -25,7 +25,7 @@ public class KmsMainConfigImp implements KmsMainConfig {
     public KmsMainConfigImp(
         JwtConfigDataPropertiesImpl jwtConfigDataProperties,
         RemoteKmsConfigImpl remoteKmsConfig,
-        PasswordConfig passwordConfig
+        PasswordConfigImpl passwordConfig
     ) {
         this.jwtConfigDataProperties = jwtConfigDataProperties;
         this.remoteKmsConfig = remoteKmsConfig;

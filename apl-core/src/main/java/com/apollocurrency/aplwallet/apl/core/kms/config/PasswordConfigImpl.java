@@ -1,5 +1,6 @@
 package com.apollocurrency.aplwallet.apl.core.kms.config;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
@@ -20,10 +21,12 @@ public class PasswordConfigImpl implements PasswordConfig {
     private String secretKey;
     private int cost;
 
+    @Inject // mandatory annotation
     public PasswordConfigImpl(
         @Property(name = "kms.main.password.config.hmac.name") String HMacName,
         @Property(name = "kms.main.password.config.secret.key") String secretKey,
-        @Property(name = "kms.main.password.config.cost", defaultValue = "-1") int cost) {
+        @Property(name = "kms.main.password.config.cost", defaultValue = "-1") int cost
+    ) {
         this.HMacName = HMacName;
         this.secretKey = secretKey;
         this.cost = cost;

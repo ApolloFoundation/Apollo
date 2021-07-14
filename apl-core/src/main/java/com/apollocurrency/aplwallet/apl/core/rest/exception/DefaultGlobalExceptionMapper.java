@@ -27,6 +27,9 @@ public class DefaultGlobalExceptionMapper implements ExceptionMapper<Exception> 
         if (exception instanceof com.fasterxml.jackson.core.JsonParseException) {
             return ResponseBuilder.apiError(ApiErrors.REST_API_SERVER_ERROR, exception.getClass().getSimpleName() + ": " + message).build();
         }
+        if (exception instanceof io.firstbridge.kms.exception.KmsRemoteClientApiException) {
+            return ResponseBuilder.apiError(ApiErrors.REST_API_SERVER_ERROR, exception.getMessage()).build();
+        }
         log.debug("GlobalErrorHandler stacktrace = {}", stacktrace);
         return ResponseBuilder.detailedApiError(ApiErrors.UNKNOWN_SERVER_ERROR, stacktrace, message).build();
     }

@@ -37,7 +37,7 @@ public enum ApiErrors implements ApiErrorInfo {
     DEX_NOT_ENOUGH_AMOUNT(6, 2020, "Not enough %s"),
     DEX_NOT_ENOUGH_FEE(6, 2021, "Not enough {0} for a fee. Min value is {1} {0}"),
     OUT_OF_RANGE_NAME_VALUE(4, 2022, "param ''{0}'' with value ''{1}'' is not within range [{2}..{3}]"),
-    REST_API_SERVER_ERROR(1, 2023, "REST API error: ''%s'', see server's log for details"),
+    REST_API_SERVER_ERROR(1, 2023, "REST API error: '%s', see server's log for details"),
     OVERFLOW(11, 2024, "Overflow for value ''{0}''"),
     OVERFLOW_PARAM(11, 2025, "Overflow in param name ''{0}'' for value ''{1}''"),
     BAD_CREDENTIALS(4, 2026, "Unable to extract valid account credentials, '{0}'"),
