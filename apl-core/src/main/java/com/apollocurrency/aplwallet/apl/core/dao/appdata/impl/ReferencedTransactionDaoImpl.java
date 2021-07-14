@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
-import org.jdbi.v3.core.Jdbi;
+//import org.jdbi.v3.core.Jdbi;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -35,7 +35,7 @@ public class ReferencedTransactionDaoImpl extends EntityDbTable<ReferencedTransa
     private static final String TABLE = "referenced_transaction";
     private static final ReferencedTransactionRowMapper REFERENCED_ROW_MAPPER = new ReferencedTransactionRowMapper();
     private final TransactionEntityRowMapper transactionRowMapper;
-
+#TODO: Replace JDBI to JDBC
     @Inject
     public ReferencedTransactionDaoImpl(DatabaseManager databaseManager,
                                         TransactionEntityRowMapper transactionRowMapper,

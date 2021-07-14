@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+//#TODO Replace JDBI to JDBC
 import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
@@ -39,6 +40,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
+//#TODO: Replace JDBI to JDBC
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -93,6 +95,7 @@ class ShardDaoTest extends DbContainerBaseTest {
         DerivedDbTablesRegistryImpl.class,
         BlockDaoImpl.class,
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
+//Replace JDBI to JDBC
         TransactionDaoImpl.class, JdbiHandleFactory.class, JdbiConfiguration.class)
         .addBeans(MockBean.of(mock(PhasingPollService.class), PhasingPollService.class))
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
