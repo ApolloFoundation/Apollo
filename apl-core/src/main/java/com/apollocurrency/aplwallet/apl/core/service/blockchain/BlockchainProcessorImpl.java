@@ -34,7 +34,6 @@ import com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksJob;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
-import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ScanDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
@@ -115,7 +114,6 @@ import org.json.simple.JSONValue;
 import javax.enterprise.event.Event;
 import javax.enterprise.util.AnnotationLiteral;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -228,7 +226,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    BlockchainConfigUpdater blockchainConfigUpdater,
                                    PrunableRestorationService prunableRestorationService,
                                    Blockchain blockchain,
-                                   BlockEntityRowMapper blockEntityRowMapper,
                                    PeersService peersService,
                                    TransactionProcessor transactionProcessor,
                                    FullTextSearchService fullTextSearchProvider,
@@ -239,7 +236,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                                    ConsensusManager consensusManager,
                                    MemPool memPool,
                                    GetTransactionsResponseParser getTransactionsResponseParser,
-                                   @Named(value = "fullTextTables") Map<String, String> fullTextSearchIndexedTables,
                                    ScanDao scanDao) {
         this.propertiesHolder = Objects.requireNonNull(propertiesHolder);
         this.blockchainConfig = blockchainConfig;
@@ -658,7 +654,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             if (log.isTraceEnabled()) {
                 log.trace("popOffToInTransaction rollback: {}", dbTables.toString());
             }
-            for (DerivedTableInterface table : dbTables.getDerivedTables()) {
+            for (DerivedTableInterface<?> table : dbTables.getDerivedTables()) {
                 long start = System.currentTimeMillis();
                 table.rollback(commonBlockHeight);
                 if (log.isTraceEnabled()) {
@@ -789,8 +785,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             } catch (AplTransactionValidationException ignore) {
             }
         }
-        SortedSet<UnconfirmedTransaction> sortedTransactions = selectUnconfirmedTransactions(duplicates, previousBlock, blockTimestamp, limit);
-        return sortedTransactions;
+        return selectUnconfirmedTransactions(duplicates, previousBlock, blockTimestamp, limit);
     }
 
     public void generateBlock(byte[] keySeed, int blockTimestamp, int timeout, int blockVersion) throws BlockNotAcceptedException, MempoolStateDesyncException {
@@ -1244,7 +1239,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                 log.debug("popOffWithRescan blockIdAtHeight={}", blockIdAtHeight);
                 Block lastBLock = blockchain.deleteBlocksFrom(blockIdAtHeight);
                 log.debug("popOffWithRescan lastBLock={}", lastBLock);
-                for (DerivedTableInterface derivedTable : dbTables.getDerivedTables()) {
+                for (DerivedTableInterface<?> derivedTable : dbTables.getDerivedTables()) {
                     // rollback not scan safe, 'prunable tables' only
                     if (!derivedTable.isScanSafe()) {
                         long start = System.currentTimeMillis();

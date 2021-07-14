@@ -199,12 +199,17 @@ public class BlockchainConfig {
     }
 
     public boolean isFailedTransactionsAcceptanceActiveAtHeight(int height) {
+        Optional<Integer> activationHeightOpt = getFailedTransactionsAcceptanceActivationHeight();
+        return activationHeightOpt.isPresent() && height >= activationHeightOpt.get();
+    }
+
+    public Optional<Integer> getFailedTransactionsAcceptanceActivationHeight() {
         FeaturesHeightRequirement heightRequirement = chain.getFeaturesHeightRequirement();
         if (heightRequirement != null) {
             Integer activationHeight = heightRequirement.getFailedTransactionsAcceptanceHeight();
-            return activationHeight != null && height >= activationHeight;
+            return Optional.ofNullable(activationHeight);
         } else {
-            return false;
+            return Optional.empty();
         }
     }
 
