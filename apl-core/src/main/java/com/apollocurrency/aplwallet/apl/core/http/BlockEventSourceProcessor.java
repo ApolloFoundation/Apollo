@@ -80,7 +80,7 @@ public class BlockEventSourceProcessor implements Runnable {
         List<Transaction> list = blockchain.getTransactions(accountId,
             0, (byte) -1, (byte) -1, 0, false,
             false, false, 0, 9, false,
-            false, false);
+            false, false, false, false);
         for (Transaction transaction : list) {
             transactionsArray.add(JSONData.transaction(false, transaction));
         }

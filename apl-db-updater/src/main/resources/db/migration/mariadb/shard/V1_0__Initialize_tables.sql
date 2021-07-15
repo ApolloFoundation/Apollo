@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS `transaction`
     `has_prunable_message`             tinyint(1)          NOT NULL DEFAULT 0,
     `has_prunable_encrypted_message`   tinyint(1)          NOT NULL DEFAULT 0,
     `has_prunable_attachment`          tinyint(1)          NOT NULL DEFAULT 0,
-    `error_message` varchar(1000) DEFAULT NULL,
+    `error_message` varchar(1000) DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS option

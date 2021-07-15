@@ -1224,6 +1224,7 @@ public final class JSONData {
         json.put("confirmations", blockchain.getHeight() - transaction.getHeight());
         json.put("blockTimestamp", transaction.getBlockTimestamp());
         json.put("transactionIndex", transaction.getIndex());
+        json.put("errorMessage", transaction.getErrorMessage().orElse(null));
         return json;
     }
 

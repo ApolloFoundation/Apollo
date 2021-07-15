@@ -477,7 +477,7 @@ public class BlockchainImpl implements Blockchain {
         }
         List<Block> result;
         if (entityList.isEmpty()) {
-            result = Collections.EMPTY_LIST;
+            result = Collections.emptyList();
         } else {
             result = loadBlockDataFromEntities(entityList);//load the generator public key
         }
@@ -692,11 +692,12 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                              int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                             int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
+                                             int from, int to, boolean includeExpiredPrunable, boolean executedOnly,
+                                             boolean includePrivate,  boolean failedOnly, boolean nonFailedOnly) {
 
         return transactionService.getTransactionsCrossShardingByAccount(accountId, getHeight(), numberOfConfirmations, type, subtype,
             blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-            from, to, includeExpiredPrunable, executedOnly, includePrivate);
+            from, to, includeExpiredPrunable, executedOnly, includePrivate, failedOnly, nonFailedOnly);
     }
 
     @Transactional(readOnly = true)

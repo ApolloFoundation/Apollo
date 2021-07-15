@@ -157,7 +157,8 @@ public interface Blockchain {
 
     List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                       int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                      int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate);
+                                      int from, int to, boolean includeExpiredPrunable, boolean executedOnly,
+                                      boolean includePrivate,  boolean failedOnly, boolean nonFailedOnly);
 
     List<Transaction> getBlockTransactions(long blockId);
 

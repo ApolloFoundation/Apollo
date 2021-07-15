@@ -252,43 +252,43 @@ class TransactionDaoTest extends DbContainerBaseTest {
 
     @Test
     void testGetTransactionsByAccountId() {
-        List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 8, (byte) -1, 0, false, false, false, 0, Integer.MAX_VALUE, false, false, true, Integer.MAX_VALUE, 0);
+        List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), (byte) 8, (byte) -1, 0, false, false, false, 0, Integer.MAX_VALUE, false, true, Integer.MAX_VALUE, 0, false, false);
         assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11), toModelConverter.convert(transactions));
     }
 
     @Test
     void testGetTransactionsWithPhasingOnlyAndNonPhasedOnly() {
-        assertThrows(IllegalArgumentException.class, () -> dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 8, (byte) -1, 0, false, true, true, 0, Integer.MAX_VALUE, false, false, true, Integer.MAX_VALUE, 0));
+        assertThrows(IllegalArgumentException.class, () -> dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), (byte) 8, (byte) -1, 0, false, true, true, 0, Integer.MAX_VALUE, false, true, Integer.MAX_VALUE, 0, false, false));
     }
 
     @Test
     void testGetPrivateTransactionsWhenIncludePrivateIsFalse() {
-        assertThrows(RuntimeException.class, () -> dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 0, (byte) 1, 0, false, true, false, 0, Integer.MAX_VALUE, false, false, false, Integer.MAX_VALUE, 0));
+        assertThrows(RuntimeException.class, () -> dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(),  (byte) 0, (byte) 1, 0, false, true, false, 0, Integer.MAX_VALUE, false, false, Integer.MAX_VALUE, 0, false, false));
     }
 
     @Test
     void testGetPhasedTransactions() {
-        List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 0, (byte) 0, 0, false, true, false, 0, Integer.MAX_VALUE, false, false, true, Integer.MAX_VALUE, 0);
+        List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), (byte) 0, (byte) 0, 0, false, true, false, 0, Integer.MAX_VALUE, false, true, Integer.MAX_VALUE, 0, false, false);
         assertEquals(List.of(td.TRANSACTION_13), toModelConverter.convert(transactions));
     }
 
     @Test
     void testGetAllNotPhasedTransactionsWithPagination() {
-        List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 0, (byte) 0, 0, false, false, true, 1, 3, false, false, true, td.TRANSACTION_7.getHeight() - 1, 0);
+        List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(),  (byte) 0, (byte) 0, 0, false, false, true, 1, 3, false, true, td.TRANSACTION_7.getHeight() - 1, 0, false, fail());
         assertEquals(List.of(td.TRANSACTION_5, td.TRANSACTION_4, td.TRANSACTION_3), toModelConverter.convert(transactions));
     }
 
     @Test
     void testGetExecutedOnlyTransactions() {
-        List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 0, (byte) 0, td.TRANSACTION_3.getBlockTimestamp() + 1, false, false, false, 0, Integer.MAX_VALUE, false, true, false, Integer.MAX_VALUE, 0);
+        List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), (byte) 0, (byte) 0, td.TRANSACTION_3.getBlockTimestamp() + 1, false, false, false, 0, Integer.MAX_VALUE, false, false, Integer.MAX_VALUE, 0, false, false);
         assertEquals(List.of(td.TRANSACTION_9, td.TRANSACTION_8, td.TRANSACTION_7, td.TRANSACTION_6, td.TRANSACTION_5, td.TRANSACTION_4), toModelConverter.convert(transactions));
     }
 
     @Test
     void testGetTransactionsWithMessage() {
-        List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 0, (byte) 0, 0, true, false, false, 0, Integer.MAX_VALUE, false, false, true, Integer.MAX_VALUE, 0);
+        List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), (byte) 0, (byte) 0, 0, true, false, false, 0, Integer.MAX_VALUE, false, true, Integer.MAX_VALUE, 0, false, false);
         assertEquals(List.of(td.TRANSACTION_13), toModelConverter.convert(transactions));
-        transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_14.getSenderId(), 0, (byte) -1, (byte) -1, 0, true, false, false, 0, Integer.MAX_VALUE, false, false, false, Integer.MAX_VALUE, 0);
+        transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_14.getSenderId(), (byte) -1, (byte) -1, 0, true, false, false, 0, Integer.MAX_VALUE, false, false, Integer.MAX_VALUE, 0, false, false);
         assertEquals(List.of(td.TRANSACTION_14), toModelConverter.convert(transactions));
     }
 
@@ -313,7 +313,7 @@ class TransactionDaoTest extends DbContainerBaseTest {
 
     @Test
     void testGetTransactionCountFoAccountInDataSource() {
-        int count = dao.getTransactionCountByFilter(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), 0, (byte) 0, (byte) 0, td.TRANSACTION_3.getBlockTimestamp() + 1, false, false, false, false, true, false, Integer.MAX_VALUE, 0);
+        int count = dao.getTransactionCountByFilter(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), (byte) 0, (byte) 0, td.TRANSACTION_3.getBlockTimestamp() + 1, false, false, false, false, false, Integer.MAX_VALUE, 0, false, false);
         assertEquals(6, count);
     }
 

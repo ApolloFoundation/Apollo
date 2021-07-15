@@ -184,7 +184,7 @@ public class TransactionDaoImpl implements TransactionDao {
     @Override
     @Transactional(readOnly = true)
     public List<TransactionEntity> findBlockTransactions(long blockId, TransactionalDataSource dataSource) {
-        return queryExecutionHelper.executeListQuery((con) -> {
+        return new JdbcQueryExecutionHelper<>(dataSource, (rs) -> entityRowMapper.map(rs, null)).executeListQuery((con) -> {
             PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE block_id = ? ORDER BY transaction_index");
             pstmt.setLong(1, blockId);
             pstmt.setFetchSize(50);
@@ -327,16 +327,17 @@ public class TransactionDaoImpl implements TransactionDao {
     @Override
     public List<TransactionEntity> getTransactions(
         TransactionalDataSource dataSource,
-        long accountId, int numberOfConfirmations, byte type, byte subtype,
+        long accountId, byte type, byte subtype,
         int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-        int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
-        int height, int prunableExpiration) {
+        int from, int to, boolean executedOnly, boolean includePrivate,
+        int height, int prunableExpiration, boolean failedOnly, boolean nonFailedOnly) {
         validatePhaseAndNonPhasedTransactions(phasedOnly, nonPhasedOnly);
+        validateFailedAndNonFailedTransactions(failedOnly, nonFailedOnly);
 
         StringBuilder buf = new StringBuilder();
         buf.append("SELECT transaction.* FROM transaction ");
         createTransactionSelectSqlWithOrder(buf, "transaction.*", type, subtype,
-            blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height);
+            blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height, failedOnly, nonFailedOnly);
         buf.append(DbUtils.limitsClause(from, to)); // append 'limit offset' clause
         try (Connection con = dataSource.getConnection()) {
             String sql = buf.toString();
@@ -355,14 +356,14 @@ public class TransactionDaoImpl implements TransactionDao {
     @Override
     public int getTransactionCountByFilter(
         TransactionalDataSource dataSource, long accountId,
-        int numberOfConfirmations, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly,
-        boolean nonPhasedOnly, boolean includeExpiredPrunable, boolean executedOnly,
-        boolean includePrivate, int height, int prunableExpiration) {
+        byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly,
+        boolean nonPhasedOnly, boolean executedOnly,
+        boolean includePrivate, int height, int prunableExpiration, boolean failedOnly, boolean nonFailedOnly) {
         validatePhaseAndNonPhasedTransactions(phasedOnly, nonPhasedOnly);
         @DatabaseSpecificDml(DmlMarker.NAMED_SUB_SELECT)
         StringBuilder buf = new StringBuilder();
         buf.append("SELECT count(*) FROM (SELECT transaction.id FROM transaction ");
-        createTransactionSelectSqlNoOrder(buf, "transaction.id", type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height);
+        createTransactionSelectSqlNoOrder(buf, "transaction.id", type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height, failedOnly, nonFailedOnly);
         buf.append(") AS tr_id_count");
         String sql = buf.toString();
         log.trace(sql);
@@ -739,7 +740,7 @@ public class TransactionDaoImpl implements TransactionDao {
         return i;
     }
 
-    private StringBuilder createTransactionSelectSqlNoOrder(StringBuilder buf, String selectString, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean executedOnly, boolean includePrivate, int height) {
+    private void createTransactionSelectSqlNoOrder(StringBuilder buf, String selectString, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean executedOnly, boolean includePrivate, int height, boolean failedOnly, boolean nonFailedOnly) {
         if (executedOnly && !nonPhasedOnly) {
             buf.append(" LEFT JOIN phasing_poll_result ON transaction.id = phasing_poll_result.id ");
         }
@@ -755,6 +756,12 @@ public class TransactionDaoImpl implements TransactionDao {
             if (subtype >= 0) {
                 buf.append("AND subtype = ? ");
             }
+        }
+        if (failedOnly) {
+            buf.append("AND error_message IS NOT NULL ");
+        }
+        if (nonFailedOnly) {
+            buf.append("AND error_message IS NULL");
         }
         if (!includePrivate) {
             buf.append("AND (`type` <> ? ");
@@ -793,6 +800,12 @@ public class TransactionDaoImpl implements TransactionDao {
             buf.append("AND (`type` <> ? ");
             buf.append("OR subtype <> ? ) ");
         }
+        if (failedOnly) {
+            buf.append("AND error_message IS NOT NULL ");
+        }
+        if (nonFailedOnly) {
+            buf.append("AND error_message IS NULL");
+        }
         if (height < Integer.MAX_VALUE) {
             buf.append("AND transaction.height <= ? ");
         }
@@ -808,11 +821,10 @@ public class TransactionDaoImpl implements TransactionDao {
         if (executedOnly && !nonPhasedOnly) {
             buf.append("AND (phased = FALSE OR approved = TRUE) ");
         }
-        return buf;
     }
 
-    private StringBuilder createTransactionSelectSqlWithOrder(StringBuilder buf, String selectString, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean executedOnly, boolean includePrivate, int height) {
-        createTransactionSelectSqlNoOrder(buf, selectString, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height);
+    private StringBuilder createTransactionSelectSqlWithOrder(StringBuilder buf, String selectString, byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly, boolean executedOnly, boolean includePrivate, int height, boolean failedOnly, boolean nonFailedOnly) {
+        createTransactionSelectSqlNoOrder(buf, selectString, type, subtype, blockTimestamp, withMessage, phasedOnly, nonPhasedOnly, executedOnly, includePrivate, height, failedOnly, nonFailedOnly);
         buf.append("ORDER BY block_timestamp DESC, transaction_index DESC");
         return buf;
     }
@@ -820,6 +832,12 @@ public class TransactionDaoImpl implements TransactionDao {
     private void validatePhaseAndNonPhasedTransactions(boolean phasedOnly, boolean nonPhasedOnly) {
         if (phasedOnly && nonPhasedOnly) {
             throw new IllegalArgumentException("At least one of phasedOnly or nonPhasedOnly must be false");
+        }
+    }
+
+    private void validateFailedAndNonFailedTransactions(boolean failedOnly, boolean nonFailedOnly) {
+        if (failedOnly && nonFailedOnly) {
+            throw new IllegalArgumentException("At least one of failedOnly or nonFailedOnly must be false");
         }
     }
 
