@@ -28,6 +28,6 @@ public class AplTransactionNotFoundException extends AplCoreLogicException {
     }
 
     private static String notFoundTransaction(long id, String additionalInfo) {
-        return "Transaction with id '" + id + "' was not found" + (StringUtils.isNotBlank(additionalInfo) ? ", details: " + additionalInfo : "");
+        return "Transaction with id '" + Long.toUnsignedString(id) + "' was not found" + (StringUtils.isNotBlank(additionalInfo) ? ", details: '" + additionalInfo + "'": "");
     }
 }

@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.peer.parser;
 
 import com.apollocurrency.aplwallet.api.p2p.response.GetTransactionsResponse;
 import com.apollocurrency.aplwallet.apl.util.JSON;
+import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 /**
@@ -14,6 +15,7 @@ import org.json.simple.JSONObject;
  * @see com.apollocurrency.aplwallet.apl.core.peer.endpoint.GetTransactions
  * @since 1.48.4
  */
+@EqualsAndHashCode
 public class GetTransactionsResponseParser implements JsonReqRespParser<GetTransactionsResponse> {
     @Override
     public GetTransactionsResponse parse(JSONObject json) {

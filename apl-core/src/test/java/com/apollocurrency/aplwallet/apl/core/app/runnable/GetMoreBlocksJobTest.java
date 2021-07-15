@@ -48,7 +48,6 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -65,8 +64,6 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class GetMoreBlocksJobTest {
-    AtomicInteger txIdCounter = new AtomicInteger(0);
-    AtomicInteger peerSendingRequestCounter = new AtomicInteger(0);
     private final UUID chainId = UUID.randomUUID();
     @Mock
     BlockchainProcessor blockchainProcessor;
@@ -187,7 +184,7 @@ class GetMoreBlocksJobTest {
         doAnswer(invocation -> returnRequestedPeerBlocksPartially(returnedBlockIds, invocation)).when(peer3).send(any(GetNextBlocksRequest.class), any(GetNextBlocksResponseParser.class));
         doAnswer(invocation -> returnNullBlocksResponse()).when(peer4).send(any(GetNextBlocksRequest.class), any(GetNextBlocksResponseParser.class));
         doAnswer(this::returnDifferentBlocksResponse).when(peer5).send(any(GetNextBlocksRequest.class), any(GetNextBlocksResponseParser.class));
-        doAnswer(invocation -> returnNoPeerBlocks(returnedBlockIds, invocation)).when(peer6).send(any(GetNextBlocksRequest.class), any(GetNextBlocksResponseParser.class));
+        doAnswer(invocation -> returnNoPeerBlocks()).when(peer6).send(any(GetNextBlocksRequest.class), any(GetNextBlocksResponseParser.class));
         List<Block> pushedBlocks = new ArrayList<>();
         mockPushBlock(pushedBlocks);
         doAnswer(invocation-> {
@@ -231,7 +228,7 @@ class GetMoreBlocksJobTest {
         return new GetNextBlocksResponse(respondedBlocks);
     }
 
-    private Object returnNoPeerBlocks(List<String> returnedBlockIds, InvocationOnMock invocation) {
+    private Object returnNoPeerBlocks() {
         return new GetNextBlocksResponse(List.of());
     }
 

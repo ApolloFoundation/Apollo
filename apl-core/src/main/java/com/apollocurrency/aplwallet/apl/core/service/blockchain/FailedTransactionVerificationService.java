@@ -11,9 +11,10 @@ import com.apollocurrency.aplwallet.api.p2p.response.GetTransactionsResponse;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
 import com.apollocurrency.aplwallet.apl.core.app.runnable.GetMoreBlocksJob;
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.OptionDAO;
+import com.apollocurrency.aplwallet.apl.core.exception.AplCoreContractViolationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplCoreLogicException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplFeatureNotEnabledException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
@@ -49,7 +50,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -69,50 +70,157 @@ public class FailedTransactionVerificationService {
     private final ExecutorService executor;
     private final Blockchain blockchain;
     private final PeersService peersService;
-    private final BlockchainConfig blockchainConfig;
     private final OptionDAO optionDAO;
     private final TaskDispatchManager taskDispatchManager;
+    private final FailedTransactionVerificationConfig config;
 
-    private FailedTransactionVerificationConfig config;
     @Setter
     private volatile int failedTransactionsPerRequest = 100;
 
-    private volatile TransactionVerificationResult lastVerificationResult;
-
-    @Getter
-    private volatile boolean backgroundVerificationEnabled = true;
+    private volatile Result lastVerificationResult;
 
     @Inject
     public FailedTransactionVerificationService(
         Blockchain blockchain,
         PeersService peersService,
-        BlockchainConfig blockchainConfig,
         OptionDAO optionDAO, TaskDispatchManager taskDispatchManager, FailedTransactionVerificationConfig config) {
-        this.blockchainConfig = blockchainConfig;
         this.optionDAO = optionDAO;
         this.taskDispatchManager = taskDispatchManager;
         if (config.isEnabled()) {
             this.executor = new ThreadPoolExecutor(1, config.getThreads(),
-                30_000L, TimeUnit.MILLISECONDS, new SynchronousQueue<>(),
+                30_000L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(),
                 new NamedThreadFactory("GetFailedTransactionsPeerSendingPool", true));
         } else {
             this.executor = null;
         }
         this.blockchain = blockchain;
         this.peersService = peersService;
+        this.config = config;
         init(); // cannot be called during @PostConstruct because TaskDispatchManager will be already launched
     }
 
-    private void init() {
-        int lastVerifiedBlockHeight = getLastVerifiedBlockHeight();
-        Optional<Integer> failedTxsActivationHeightOpt = blockchainConfig.getFailedTransactionsAcceptanceActivationHeight();
-        backgroundVerificationEnabled = failedTxsActivationHeightOpt.isPresent();
-        if (lastVerifiedBlockHeight == 0 && backgroundVerificationEnabled) {
-            Integer failedTxsActivationHeight = failedTxsActivationHeightOpt.get();
-            log.info("Failed transactions verification will be started from {} height", failedTxsActivationHeight);
-            saveLastVerifiedBlockHeight(failedTxsActivationHeight);
+
+    public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block poppedBlock) {
+        if (getLastVerifiedBlockHeight() >= poppedBlock.getHeight()) {
+            log.info("Failed transaction verification gone higher than current blockchain height, will set to {} height for popped off block {}", poppedBlock.getHeight() - 1, poppedBlock.getStringId());
+            saveLastVerifiedBlockHeight(poppedBlock.getHeight() - 1);
         }
-        if (backgroundVerificationEnabled) {
+    }
+
+    public Optional<Result> getLastVerificationResult() {
+        return Optional.ofNullable(lastVerificationResult);
+    }
+
+    /**
+     * Verifies failed transaction by the given id
+     * @param id transaction id to verify
+     * @return empty {@link Result} when transaction is not failed or filled with verification results
+     * @throws AplFeatureNotEnabledException when failed transaction acceptance is not enabled or transaction verification was disabled by node config
+     * @throws AplTransactionNotFoundException when transaction by given id was not found in a blockchain
+     */
+    public synchronized Result verifyTransaction(long id) {
+        if (!config.isEnabled()) {
+            throw new AplFeatureNotEnabledException("Failed transactions processing", "txId= " + Long.toUnsignedString(id));
+        }
+        Transaction transaction = blockchain.getTransaction(id);
+        if (transaction == null) {
+            throw new AplTransactionNotFoundException(id, "Verify transaction op");
+        }
+        if (!transaction.isFailed()) {
+            return new Result();
+        }
+        Verifier verifier = new Verifier(Map.of(id, transaction.getErrorMessage().orElseThrow(() -> new AplCoreContractViolationException("Failed transaction should have error message, id = " + transaction.getStringId()))));
+        return verifier.verify();
+    }
+
+    public int getLastVerifiedBlockHeight() {
+        String value = optionDAO.get(LAST_VERIFIED_BLOCK_KEY);
+        if (value == null) {
+            return 0;
+        } else {
+            return Integer.parseInt(value);
+        }
+    }
+
+    public boolean isEnabled() {
+        return config.isEnabled();
+    }
+
+    @EqualsAndHashCode
+    public static class Result {
+        private final Map<Long, VerifiedTransaction> verified;
+        private final Map<Long, VerifiedTransaction> notVerified;
+
+        public Result(Map<Long, VerifiedTransaction> failedTxs) {
+            this.verified = failedTxs.entrySet()
+                .stream()
+                .filter(e -> e.getValue().isVerified())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            this.notVerified = failedTxs.entrySet()
+                .stream()
+                .filter(e -> !e.getValue().isVerified())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        }
+
+        public boolean isVerified(long id) {
+            return this.verified.get(id) != null;
+        }
+
+        public Set<Long> allVerified() {
+            return new HashSet<>(verified.keySet());
+        }
+
+        public Set<Long> allNotVerified() {
+            return new HashSet<>(notVerified.keySet());
+        }
+
+        public Optional<VerifiedTransaction> get(long id) {
+            if (verified.containsKey(id)) {
+                return Optional.of(verified.get(id));
+            }
+            return Optional.ofNullable(notVerified.get(id));
+        }
+
+        public Result() {
+            this.notVerified = Map.of();
+            this.verified = Map.of();
+        }
+
+        public boolean isEmpty() {
+            return verified.isEmpty() && notVerified.isEmpty();
+        }
+    }
+
+
+    @AllArgsConstructor
+    public static class VerifiedTransaction {
+        @Getter
+        private final long id;
+        private final VerifiedError error;
+
+        public int getCount() {
+            return error.getCount();
+        }
+
+        public boolean verify(String error) {
+            return this.error.verify(error);
+        }
+
+        public String getError() {
+            return error.getError();
+        }
+
+        public boolean isVerified() {
+            return error.isVerified();
+        }
+
+        public int verifications() {
+            return error.count;
+        }
+    }
+
+    private void init() {
+        if (config.isEnabled()) {
             TaskDispatcher taskDispatcher = taskDispatchManager.newScheduledDispatcher(getClass().getSimpleName());
             taskDispatcher.schedule(Task.builder()
                 .name("FailedTransactionVerificationTask")
@@ -121,14 +229,7 @@ public class FailedTransactionVerificationService {
                 .delay(10_000)
                 .build());
         }
-        log.info("Background failed transactions verification is {} from height {}", backgroundVerificationEnabled ? "ENABLED" : "DISABLED", getLastVerifiedBlockHeight());
-    }
-
-    public void onBlockPopped(@Observes @BlockEvent(BlockEventType.BLOCK_POPPED) Block poppedBlock) {
-        if (getLastVerifiedBlockHeight() >= poppedBlock.getHeight()) {
-            log.info("Failed transaction verification gone higher than current blockchain height, will set to {} height for popped off block {}", poppedBlock.getHeight() - 1, poppedBlock.getStringId());
-            saveLastVerifiedBlockHeight(poppedBlock.getHeight() - 1);
-        }
+        log.info("Background failed transactions verification is {} from height {}", config.isEnabled() ? "ENABLED" : "DISABLED", getLastVerifiedBlockHeight());
     }
 
     private void verifyFailedTransactionsCatchingExceptions() {
@@ -140,50 +241,26 @@ public class FailedTransactionVerificationService {
     }
 
     private synchronized void verifyFailedTransactions() {
-        int lastVerifiedBlockHeight = getLastVerifiedBlockHeight();
+        int fromHeight = Math.max(config.getFailedTxsActivationHeight().orElseThrow(()-> new IllegalStateException("")), getLastVerifiedBlockHeight());
         int blockLimit = Constants.MAX_AUTO_ROLLBACK * 2;
-        List<Block> downloadedBlocks = blockchain.getBlocksAfter(lastVerifiedBlockHeight, blockLimit);
-        if (downloadedBlocks.size() < blockLimit) {
-            log.debug("Not enough blocks to validate failed transactions, got only {} after height {}, required at least {}", downloadedBlocks.size(), lastVerifiedBlockHeight, blockLimit);
+        if (blockchain.getHeight() < fromHeight + blockLimit) {
+            log.debug("Not enough blocks to validate failed transactions, minimum height for verification is {}, but current is {}", fromHeight + blockLimit, blockchain.getHeight());
             return;
         }
+        List<Block> downloadedBlocks = blockchain.getBlocksAfter(fromHeight, blockLimit);
         Map<Long, String> txErrorMap = downloadedBlocks.stream()
             .limit(blockLimit / 2) // process only half of blocks to avoid duplicate processing for small forks
             .flatMap(e -> e.getTransactions().stream())
             .filter(e -> e.getErrorMessage().isPresent())
             .collect(Collectors.toMap(Transaction::getId, e -> e.getErrorMessage().get()));
         if (txErrorMap.isEmpty()) {
-            log.info("No failed transactions downloaded to validate starting from height {} to current height {} ", lastVerifiedBlockHeight, blockchain.getHeight());
+            log.info("No failed transactions downloaded to validate starting from height {} to current height {} ", fromHeight, blockchain.getHeight());
             return;
         }
         log.info("Selected {} failed transactions to verify failure cause, [{}]", txErrorMap.size(), failedTxToString(txErrorMap));
         Verifier verifier = new Verifier(txErrorMap);
         lastVerificationResult = verifier.verify();
-    }
-
-    public Optional<TransactionVerificationResult> getLastVerificationResult() {
-        return Optional.ofNullable(lastVerificationResult);
-    }
-
-    public synchronized TransactionVerificationResult verifyTransaction(long id) {
-        Transaction transaction = blockchain.getTransaction(id);
-        if (transaction == null) {
-            throw new AplTransactionNotFoundException(id, "Verify transaction op");
-        }
-        if (transaction.getErrorMessage().isEmpty()) {
-            return new TransactionVerificationResult();
-        }
-        Verifier verifier = new Verifier(Map.of(id, transaction.getErrorMessage().get()));
-        return verifier.verify();
-    }
-
-    public int getLastVerifiedBlockHeight() {
-        String value = optionDAO.get(LAST_VERIFIED_BLOCK_KEY);
-        if (value == null) {
-            return 0;
-        } else {
-            return Integer.parseInt(value);
-        }
+        saveLastVerifiedBlockHeight(fromHeight + blockLimit / 2);
     }
 
     private void saveLastVerifiedBlockHeight(int height) {
@@ -214,7 +291,7 @@ public class FailedTransactionVerificationService {
          * returning list of fully verified transactions
          * @return results of the transaction's verification including fully verified and partially verified transactions
          */
-        public TransactionVerificationResult verify() {
+        public Result verify() {
             List<GetTransactionsRequest> requests = getTransactionsRequestDivided(new ArrayList<>(failedTxs.keySet()));
             log.debug("Created {} getTransactions requests for {} failed txs verification", requests.size(), failedTxs.size());
             List<Future<?>> verificationJobs = new ArrayList<>();
@@ -229,7 +306,7 @@ public class FailedTransactionVerificationService {
                     throw new AplCoreLogicException(e.toString(), e);
                 }
             }
-            return new TransactionVerificationResult(failedTxs);
+            return new Result(failedTxs);
         }
 
         private void verifyForRequest(GetTransactionsRequest request) {
@@ -313,7 +390,7 @@ public class FailedTransactionVerificationService {
             List<GetTransactionsRequest> requests = new ArrayList<>();
             for (int i = 0; i < ids.size(); i += failedTransactionsPerRequest) {
                 HashSet<Long> requestTransactionIds = new HashSet<>(ids.subList(i, Math.min(i + failedTransactionsPerRequest, ids.size())));
-                GetTransactionsRequest request = new GetTransactionsRequest(requestTransactionIds, blockchainConfig.getChain().getChainId());
+                GetTransactionsRequest request = new GetTransactionsRequest(requestTransactionIds, config.getChainId());
                 requests.add(request);
             }
             return requests;
@@ -360,60 +437,5 @@ public class FailedTransactionVerificationService {
     private static class PeerGetTransactionsResponse {
         private Peer peer;
         private GetTransactionsResponse response;
-    }
-
-    @Getter
-    @EqualsAndHashCode
-    static class TransactionVerificationResult {
-        private final Map<Long, VerifiedTransaction> verified;
-        private final Map<Long, VerifiedTransaction> notVerified;
-
-        public TransactionVerificationResult(Map<Long, VerifiedTransaction> failedTxs) {
-            this.verified = failedTxs.entrySet()
-                .stream()
-                .filter(e -> e.getValue().isVerified())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            this.notVerified = failedTxs.entrySet()
-                .stream()
-                .filter(e -> !e.getValue().isVerified())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        }
-
-        public boolean isVerified(long id) {
-            return this.verified.get(id) != null;
-        }
-
-//        public Map<Long, VerifiedError> partiallyVerifiedTx() {
-//            return notVerified.entrySet().stream().filter(ve)
-//        }
-
-        public TransactionVerificationResult() {
-            this.notVerified = Map.of();
-            this.verified = Map.of();
-        }
-
-        public boolean isEmpty() {
-            return verified.isEmpty() && notVerified.isEmpty();
-        }
-    }
-
-
-    @AllArgsConstructor
-    @Getter
-    static class VerifiedTransaction {
-        private final long id;
-        private final VerifiedError error;
-
-        public int getCount() {
-            return getError().getCount();
-        }
-
-        public boolean verify(String error) {
-            return this.error.verify(error);
-        }
-
-        public boolean isVerified() {
-            return getError().isVerified();
-        }
     }
 }
