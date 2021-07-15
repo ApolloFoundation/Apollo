@@ -59,6 +59,7 @@ import java.util.stream.Collectors;
  *  Verifies downloaded failed transactions against these transaction's statuses received from peers
  * @author Andrii Boiarskyi
  * @see GetMoreBlocksJob
+ * @see FailedTransactionVerificationConfig
  * @see com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl
  * @since 1.48.4
  */
@@ -212,10 +213,6 @@ public class FailedTransactionVerificationService {
 
         public boolean isVerified() {
             return error.isVerified();
-        }
-
-        public int verifications() {
-            return error.count;
         }
     }
 

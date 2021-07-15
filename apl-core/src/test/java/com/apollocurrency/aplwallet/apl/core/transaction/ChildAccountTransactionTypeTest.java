@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.appdata.ReferencedTransactionDa
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AddressScope;
 import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
@@ -269,7 +270,7 @@ public class ChildAccountTransactionTypeTest {
         try {
             txValidator.validateFully(tx);
             fail("Unexpected flow.");
-        } catch (AplAcceptableTransactionValidationException e) {
+        } catch (AplUnacceptableTransactionValidationException e) {
             //THEN
             assertTrue(e.getMessage().contains("Wrong value of the transaction amount"), "Unexpected exception message.");
         }
@@ -309,7 +310,7 @@ public class ChildAccountTransactionTypeTest {
         try {
             txValidator.validateFully(tx);
             fail("Unexpected flow.");
-        } catch (AplAcceptableTransactionValidationException e) {
+        } catch (AplUnacceptableTransactionValidationException e) {
             //THEN
             assertTrue(e.getMessage().contains("Wrong value of the child count, count=3"), "Unexpected exception message.");
         }
@@ -347,7 +348,7 @@ public class ChildAccountTransactionTypeTest {
         try {
             txValidator.validateFully(tx);
             fail("Unexpected flow.");
-        } catch (AplAcceptableTransactionValidationException e) {
+        } catch (AplUnacceptableTransactionValidationException e) {
             //THEN
             assertTrue(e.getMessage().contains("a child can't simultaneously be a parent"), "Unexpected exception message.");
         }
