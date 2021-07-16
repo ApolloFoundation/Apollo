@@ -11,7 +11,6 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEnt
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
@@ -22,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishCont
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.smc.blockchain.ContractNotFoundException;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.contract.ContractStatus;

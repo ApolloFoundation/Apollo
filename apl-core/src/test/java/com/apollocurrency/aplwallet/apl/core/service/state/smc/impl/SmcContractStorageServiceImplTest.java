@@ -5,13 +5,13 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.impl;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractMappingTable;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractMappingEntity;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractStorageService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.smc.data.type.Key;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

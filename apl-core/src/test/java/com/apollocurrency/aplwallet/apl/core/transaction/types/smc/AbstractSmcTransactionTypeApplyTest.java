@@ -28,12 +28,12 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableP
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractMappingTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.model.smc.SmcTxData;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
@@ -81,7 +81,6 @@ import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.NtpTime;
 import com.apollocurrency.aplwallet.apl.util.cache.InMemoryCacheManager;
-import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
@@ -90,7 +89,6 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -142,18 +140,18 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
             FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
             DefaultBlockValidator.class, ReferencedTransactionService.class,
             PublicKeyAnnouncementAppendixApplier.class, AppendixApplierRegistry.class,
-            AppendixValidatorRegistry.class, NtpTime.class,
-            //TransactionRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
-            ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
-            TransactionValidator.class, TransactionApplier.class,
-            SmcConfig.class, SmcBlockchainIntegratorFactory.class,
-            SmcContractTable.class, SmcContractStateTable.class, SmcContractMappingTable.class,
-            ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
-            SmcContractServiceImpl.class, SmcContractStorageServiceImpl.class
-        )
+        AppendixValidatorRegistry.class, NtpTime.class,
+        //TransactionRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        ReferencedTransactionDaoImpl.class, TransactionSignerImpl.class,
+        TransactionValidator.class, TransactionApplier.class,
+        SmcConfig.class, SmcBlockchainIntegratorFactory.class,
+        SmcContractTable.class, SmcContractStateTable.class, SmcContractMappingTable.class,
+        ContractModelToEntityConverter.class, ContractModelToStateEntityConverter.class,
+        SmcContractServiceImpl.class, SmcContractStorageServiceImpl.class
+    )
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
+        //.addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
+        //.addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
         .addBeans(MockBean.of(mock(TaskDispatchManager.class), TaskDispatchManager.class))
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
@@ -230,7 +228,7 @@ abstract class AbstractSmcTransactionTypeApplyTest extends DbContainerBaseTest {
             new SmcCallMethodTransactionType(blockchainConfig, spyAccountService, contractService, fuelValidator, integratorFactory, smcConfig)
         ));
         transactionBuilderFactory = new TransactionBuilderFactory(transactionTypeFactory, blockchainConfig);
-        transactionCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor, transactionTypeFactory, transactionBuilderFactory, signerService);
+        transactionCreator = new TransactionCreator(validator, propertiesHolder, timeService, calculator, blockchain, processor, transactionTypeFactory, transactionBuilderFactory, signerService, blockchainConfig);
     }
 
     Transaction createTransaction(SmcTxData body, AbstractSmcAttachment attachment, Account senderAccount, byte[] recipientPublicKey, long recipientId) {
