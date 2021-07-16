@@ -66,9 +66,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -77,8 +77,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequestScoped
 public class SmcApiServiceImpl implements SmcApiService {
-
-    private static final String UNDEFINED = "undefined";
 
     private final AccountService accountService;
     private final SmcContractService contractService;
@@ -269,9 +267,11 @@ public class SmcApiServiceImpl implements SmcApiService {
         }
         var response = new ContractSpecResponse();
         var contractSpec = contractService.loadContractSpec(address);
-
+        var notViewMethods = contractSpec.getMembers().stream()
+            .filter(member -> member.getStateMutability() != ContractSpec.StateMutability.VIEW && (member.getVisibility() == ContractSpec.Visibility.PUBLIC || member.getVisibility() == ContractSpec.Visibility.EXTERNAL))
+            .collect(Collectors.toList());
         var viewMethods = contractSpec.getMembers().stream()
-            .filter(member -> member.getStateMutability() == ContractSpec.StateMutability.VIEW && member.getVisibility() == ContractSpec.Visibility.PUBLIC)
+            .filter(member -> member.getStateMutability() == ContractSpec.StateMutability.VIEW && (member.getVisibility() == ContractSpec.Visibility.PUBLIC || member.getVisibility() == ContractSpec.Visibility.EXTERNAL))
             .collect(Collectors.toList());
 
         List<ContractMethod> methodsToCall = new ArrayList<>();
@@ -301,31 +301,28 @@ public class SmcApiServiceImpl implements SmcApiService {
         overviewProperties.addAll(createOverview(resultMap));
         response.setOverview(overviewProperties);
 
-        response.setMembers(methodSpecMapper.convert(viewMethods));
+        response.getMembers().addAll(methodSpecMapper.convert(viewMethods));
         matchResults(response.getMembers(), resultMap);
+        response.getMembers().addAll(methodSpecMapper.convert(notViewMethods));
 
         return builder.bind(response).build();
     }
 
-    private Map<String, String> toMap(List<ResultValue> result) {
-        Map<String, String> resultMap = new HashMap<>();
-        result.forEach(resultValue -> {
-                var value = (resultValue.getOutput().isEmpty()) ? UNDEFINED : resultValue.getOutput().get(0).toString();
-                resultMap.put(resultValue.getMethod(), value);
-            }
-        );
-        return resultMap;
+    private Map<String, ResultValue> toMap(List<ResultValue> result) {
+        return result.stream().collect(Collectors.toMap(ResultValue::getMethod, Function.identity()));
     }
 
-    private void matchResults(List<MethodSpec> methods, Map<String, String> resultMap) {
+    private void matchResults(List<MethodSpec> methods, Map<String, ResultValue> resultMap) {
         methods.forEach(methodSpec -> {
             if (methodSpec.getInputs() == null || methodSpec.getInputs().isEmpty()) {
-                methodSpec.setValue(resultMap.getOrDefault(methodSpec.getName(), UNDEFINED));
+                var res = resultMap.getOrDefault(methodSpec.getName(), ResultValue.UNDEFINED_RESULT);
+                methodSpec.setValue(res.getStringResult());
+                methodSpec.setSignature(res.getSignature());
             }
         });
     }
 
-    private List<PropertySpec> createOverview(Map<String, String> resultMap) {
+    private List<PropertySpec> createOverview(Map<String, ResultValue> resultMap) {
         //TODO: move Overview info to ContractSpec
         var properties = List.of(
             new String[]{"name", "string"},
@@ -339,7 +336,7 @@ public class SmcApiServiceImpl implements SmcApiService {
             var prop = new PropertySpec();
             prop.setName(s[0]);
             prop.setType(s[1]);
-            prop.setValue(resultMap.getOrDefault(s[0], UNDEFINED));
+            prop.setValue(resultMap.getOrDefault(s[0], ResultValue.UNDEFINED_RESULT).getStringResult());
             propertySpec.add(prop);
         });
         return propertySpec;

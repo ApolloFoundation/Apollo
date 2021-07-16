@@ -122,6 +122,9 @@ public class SmcContractServiceImpl implements SmcContractService {
         SmcContractEntity smcEntity = loadContractEntity(address);
         //TODO: move contract type determining routine to Save procedure and persist it to smc_contract table
         var item = libraryProvider.parseContractType(smcEntity.getData());
+        if (item == null) {
+            throw new ContractNotFoundException("Can't determine the contract type, address=" + address.getHex());
+        }
         var contractSpec = libraryProvider.loadSpecification(item.getType());
         log.trace("Loaded specification for contract name={} type={}, spec={}", item.getName(), item.getType(), contractSpec);
 

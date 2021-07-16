@@ -24,6 +24,7 @@ public class MethodSpecMapper implements Converter<ContractSpec.Member, MethodSp
         var dto = new MethodSpec();
         dto.setName(model.getName());
         dto.setValue(model.getValue());
+        dto.setSignature(model.getSignature());
         dto.setStateMutability(model.getStateMutability().name().toLowerCase(Locale.ROOT));
         var inputs = dto.getInputs();
         if (model.getInputs() != null) {

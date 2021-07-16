@@ -1754,6 +1754,10 @@ components:
           description: output value
           type: string
           example: '24999000000'
+        signature:
+          description: real method arguments
+          type: string
+          example: "balanceOf('0x7d2825cf3a120411');"
 
     ResultValueResponse:
       allOf:
