@@ -27,8 +27,9 @@ public class MessageAppendixValidator extends AbstractAppendixValidator<MessageA
     @Override
     public void validateStateIndependent(Transaction transaction, MessageAppendix appendix, int validationHeight) throws AplException.ValidationException {
         int length = appendix.getMessage().length;
-        if (length > config.getCurrentConfig().getMaxArbitraryMessageLength()) {
-            throw new AplException.NotValidException("Invalid arbitrary message length: " + length);
+        int maxLength = config.getCurrentConfig().getMaxArbitraryMessageLength();
+        if (length > maxLength) {
+            throw new AplException.NotValidException("Invalid arbitrary message length: " + length + ", max allowed length is " + maxLength);
         }
     }
 

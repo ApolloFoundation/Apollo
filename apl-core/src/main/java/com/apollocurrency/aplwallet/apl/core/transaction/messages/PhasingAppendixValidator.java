@@ -6,9 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.model.Block;
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.PhasingPollService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -104,8 +103,7 @@ public class PhasingAppendixValidator implements AppendixValidator<PhasingAppend
 
 
     public void validateFinishHeight(Integer finishHeight, PhasingAppendix appendix) throws AplException.NotCurrentlyValidException {
-        Block lastBlock = blockchain.getLastBlock();
-        int currentHeight = lastBlock.getHeight();
+        int currentHeight = blockchain.getHeight();
         int appendixFinishHeight = appendix.getFinishHeight();
         if (appendixFinishHeight <= currentHeight + (appendix.getParams().getVoteWeighting().acceptsVotes() ? 2 : 1)
             || appendixFinishHeight >= currentHeight + Constants.MAX_PHASING_DURATION) {

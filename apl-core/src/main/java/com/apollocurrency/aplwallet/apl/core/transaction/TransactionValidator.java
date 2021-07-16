@@ -96,14 +96,6 @@ public class TransactionValidator {
         }
     }
 
-    private void doAppendixLightValidationRethrowing(Transaction transaction, AbstractAppendix appendage, AppendixValidator<AbstractAppendix> validatorFor) {
-        try {
-            doAppendixLightValidation(validatorFor, transaction, appendage);
-        } catch (AplException.ValidationException e) {
-            throw new AplUnacceptableTransactionValidationException(e.getMessage(), e, transaction);
-        }
-    }
-
     /**
      * Validate transaction's signature, sender's fee payability and transaction's data validity without state fetch
      * @param transaction transaction to validate
@@ -115,7 +107,8 @@ public class TransactionValidator {
     }
 
     /**
-     * Fully validate transaction against the current blockchain state
+     * Fully validate transaction against the current blockchain state,
+     * Note the signature verification is performed by separate method {@link TransactionValidator#verifySignature(Transaction)}
      * @param transaction transaction to validate
      * @throws AplAcceptableTransactionValidationException when transaction's appendix/attachment verification failed and transaction may be accepted
      * @throws AplUnacceptableTransactionValidationException when transaction general verification failed and transaction is not valid at all
@@ -256,6 +249,14 @@ public class TransactionValidator {
 
     public boolean verifySignature(Transaction transaction) {
         return checkSignature(transaction) && accountPublicKeyService.setOrVerifyPublicKey(transaction.getSenderId(), transaction.getSenderPublicKey());
+    }
+
+    private void doAppendixLightValidationRethrowing(Transaction transaction, AbstractAppendix appendage, AppendixValidator<AbstractAppendix> validatorFor) {
+        try {
+            doAppendixLightValidation(validatorFor, transaction, appendage);
+        } catch (AplException.ValidationException e) {
+            throw new AplUnacceptableTransactionValidationException(e.getMessage(), e, transaction);
+        }
     }
 
     private void checkSignatureThrowingEx(Transaction transaction, Account account) {
