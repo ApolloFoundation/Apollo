@@ -148,6 +148,7 @@ public final class JSONData {
     private static FundingMonitorService fundingMonitorService = CDI.current().select(FundingMonitorService.class).get();
     private static PrunableLoadingService prunableLoadingService = CDI.current().select(PrunableLoadingService.class).get();
     private static TransactionJsonSerializer transactionJsonSerializer = CDI.current().select(TransactionJsonSerializer.class).get();
+    private static GenesisAccounts genesisAccounts = CDI.current().select(GenesisAccounts.class).get();
 
     private JSONData() {
     } // never
@@ -442,7 +443,7 @@ public final class JSONData {
 
     public static JSONObject genesisBalancesJson(int firstIndex, int lastIndex) {
         JSONObject result = new JSONObject();
-        List<Map.Entry<String, Long>> genesisBalances = GenesisAccounts.getGenesisBalances(firstIndex, lastIndex);
+        List<Map.Entry<String, Long>> genesisBalances = genesisAccounts.getGenesisBalances(firstIndex, lastIndex);
         JSONArray accountArray = new JSONArray();
         for (int i = 0; i < genesisBalances.size(); i++) {
             Map.Entry<String, Long> accountBalanceEntry = genesisBalances.get(i);
@@ -452,7 +453,7 @@ public final class JSONData {
             accountArray.add(accountBalanceJson);
         }
         result.put("accounts", accountArray);
-        result.put("total", GenesisAccounts.getGenesisBalancesNumber());
+        result.put("total", genesisAccounts.getGenesisBalancesNumber());
         return result;
     }
 

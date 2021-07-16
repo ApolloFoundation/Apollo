@@ -20,11 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;

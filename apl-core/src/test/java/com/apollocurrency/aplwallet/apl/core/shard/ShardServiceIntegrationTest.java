@@ -9,10 +9,10 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardRecoveryDao;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TrimService;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.DatabaseManagerImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
@@ -20,10 +20,12 @@ import com.apollocurrency.aplwallet.apl.data.DbTestData;
 import com.apollocurrency.aplwallet.apl.data.ShardTestData;
 import com.apollocurrency.aplwallet.apl.extension.DbExtension;
 import com.apollocurrency.aplwallet.apl.extension.TemporaryFolderExtension;
+import com.apollocurrency.aplwallet.apl.testutil.DbUtils;
 import com.apollocurrency.aplwallet.apl.util.Zip;
 import com.apollocurrency.aplwallet.apl.util.ZipImpl;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiHandleFactory;
 import com.apollocurrency.aplwallet.apl.util.cdi.transaction.JdbiTransactionalSqlObjectDaoProxyInvocationHandler;
+import com.apollocurrency.aplwallet.apl.util.db.SimpleDataSourceCreator;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.injectable.DbProperties;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -45,7 +47,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Slf4j
-
 @Tag("slow")
 @ExtendWith(MockitoExtension.class)
 public class ShardServiceIntegrationTest extends DbContainerBaseTest {
@@ -80,9 +81,7 @@ public class ShardServiceIntegrationTest extends DbContainerBaseTest {
     GlobalSync globalSync;
 
     private ShardDao createShardDao() {
-        JdbiHandleFactory jdbiHandleFactory = new JdbiHandleFactory();
-        jdbiHandleFactory.setJdbi(extension.getDatabaseManager().getJdbi());
-        return JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(jdbiHandleFactory, ShardDao.class);
+        return JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(DbUtils.createJdbiHandleFactory(extension.getDatabaseManager()), ShardDao.class);
     }
 
     @Test
@@ -121,14 +120,16 @@ public class ShardServiceIntegrationTest extends DbContainerBaseTest {
         dbProperties.setDatabaseHost(mariaDBContainer.getHost());
         dbProperties.setDbName(((MariaDBContainer<?>) mariaDBContainer).getDatabaseName());
         dbProperties.setSystemDbUrl(dbProperties.formatJdbcUrlString(true));
-        DatabaseManagerImpl databaseManager = new DatabaseManagerImpl(dbProperties, new PropertiesHolder(), new JdbiHandleFactory());
+        DatabaseManagerImpl databaseManager = new DatabaseManagerImpl(dbProperties, new SimpleDataSourceCreator(propertiesHolder));
 //        Chain mockChain = mock(Chain.class);
 //        doReturn(mockChain).when(blockchainConfig).getChain();
 //        doReturn(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5")).when(mockChain).getChainId();
 //        Event firedEvent = mock(Event.class);
 //        doReturn(firedEvent).when(trimEvent).select(new AnnotationLiteral<TrimConfigUpdated>() {
 //        });
-        shardService = new ShardService(createShardDao(databaseManager.getJdbiHandleFactory()), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, globalSync, trimService, dbEvent);
+
+
+        shardService = new ShardService(createShardDao(DbUtils.createJdbiHandleFactory(databaseManager)), blockchainProcessor, blockchain, dirProvider, zip, databaseManager, blockchainConfig, shardRecoveryDao, shardMigrationExecutor, aplAppStatus, propertiesHolder, globalSync, trimService, dbEvent);
 
 //        Files.createFile(dbDir.resolve("apl-blockchain-shard-2-chain." + DbProperties.DB_EXTENSION)); // to be deleted
 //        Files.createFile(dbDir.resolve("apl-blockchain-shard-1-chain." + DbProperties.DB_EXTENSION)); // to be replaced
@@ -179,7 +180,6 @@ public class ShardServiceIntegrationTest extends DbContainerBaseTest {
     }
 
     private ShardDao createShardDao(JdbiHandleFactory jdbiHandleFactory) {
-        jdbiHandleFactory.setJdbi(extension.getDatabaseManager().getJdbi());
         return JdbiTransactionalSqlObjectDaoProxyInvocationHandler.createProxy(jdbiHandleFactory, ShardDao.class);
     }
 

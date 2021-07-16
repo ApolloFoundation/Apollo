@@ -5,9 +5,9 @@
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.db.DbTransactionHelper;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;

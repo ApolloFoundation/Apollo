@@ -138,4 +138,25 @@ public class DGSGoods extends VersionedDerivedEntity {
         result = 31 * result + Arrays.hashCode(parsedTags);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "DGSGoods{" +
+            "id=" + id +
+            ", sellerId=" + sellerId +
+            ", name='" + name + '\'' +
+            ", description='" + description + '\'' +
+            ", tags='" + tags + '\'' +
+            ", parsedTags=" + Arrays.toString(parsedTags) +
+            ", timestamp=" + timestamp +
+            ", hasImage=" + hasImage +
+            ", quantity=" + quantity +
+            ", priceATM=" + priceATM +
+            ", delisted=" + delisted +
+            ", latest=" + isLatest() +
+            ", dbKey=" + getDbKey() +
+            ", dbId=" + getDbId() +
+            ", height=" + getHeight() +
+            '}';
+    }
 }

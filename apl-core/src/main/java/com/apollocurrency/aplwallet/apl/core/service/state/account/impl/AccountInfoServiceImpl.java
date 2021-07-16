@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountInfoTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountInfo;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -71,12 +71,12 @@ public class AccountInfoServiceImpl implements AccountInfoService {
             accountInfoTable.insert(accountInfo);
             // put relevant data into Event instance
             operationData.setOperationType(FullTextOperationData.OperationType.INSERT_UPDATE);
-            operationData.setDbIdValue(BigInteger.valueOf(accountInfo.getDbId()));
+            operationData.setDbIdValue(accountInfo.getDbId());
             operationData.addColumnData(accountInfo.getName()).addColumnData(accountInfo.getDescription());
             log.debug("2. {}", accountInfo);
         } else {
             accountInfoTable.deleteAtHeight(accountInfo, blockchain.getHeight());
-            operationData.setDbIdValue(BigInteger.valueOf(accountInfo.getDbId()));
+            operationData.setDbIdValue(accountInfo.getDbId());
             operationData.setOperationType(FullTextOperationData.OperationType.DELETE);
         }
         // send data into Lucene index component

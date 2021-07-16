@@ -133,8 +133,9 @@
               <generateApiTests>true</generateApiTests>
               <generateSupportingFiles>false</generateSupportingFiles>
               <supportingFilesToGenerate>ApiException.java,NotFoundException.java</supportingFilesToGenerate>
+<!--              IMPORTANT! NO SPACES ALLOWED BETWEEN modelsToGenerate values-->
               <modelsToGenerate>
-                AccountInfo,AccountInfoResp,AccountReq,AccountReqTest,AccountReqSendMoney,BlockchainInfo,BlockInfo,BlockchainState,CountResponse,CreateChildAccountResp,EmptyResponse,HealthResponse,ListResponse,QueryCountResult,QueryObject,QueryResult,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,TxReceipt,TxRequest,PublishContractReq,CallContractMethodReq,ContractListResponse,ContractDetails,ContractDetailsResponse,ContractStateResponse,ContractMethod,CallMethodResult,TransactionArrayResp,CallViewMethodReq,ResultValueResponse,MethodSpec,PropertySpec,ArgSpec,ContractSpecResponse
+                AccountInfo,AccountInfoResp,AccountReq,AccountReqTest,AccountReqSendMoney,BlockchainInfo,BlockInfo,BlockchainState,CountResponse,CreateChildAccountResp,EmptyResponse,HealthResponse,ListResponse,QueryCountResult,QueryObject,QueryResult,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,TxReceipt,TxRequest,PublishContractReq,CallContractMethodReq,ContractListResponse,ContractDetails,ContractDetailsResponse,ContractStateResponse,ContractMethod,CallMethodResult,TransactionArrayResp,CallViewMethodReq,ResultValueResponse,MethodSpec,PropertySpec,ArgSpec,ContractSpecResponse,CurrencyBurningTxCreationRequest,TransactionCreationRequest,TransactionCreationResponse,UnconfirmedTransactionInfo,CurrencyBurningTxParams
               </modelsToGenerate>
               <configHelp>false</configHelp>
               <configOptions>

@@ -4,8 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
@@ -22,6 +20,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencySell
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemPublishExchangeOffer;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;

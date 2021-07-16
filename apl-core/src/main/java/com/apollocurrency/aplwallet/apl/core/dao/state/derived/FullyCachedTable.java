@@ -116,7 +116,7 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
 
 
     @AllArgsConstructor
-    protected class RowsConsistentOperationExecutor {
+    class RowsConsistentOperationExecutor {
         private final int height;
         private final String opName;
 
@@ -136,7 +136,7 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
         }
     }
 
-    protected class RowsCount {
+    class RowsCount {
         private final int db;
         private final int mem;
         private final int height;

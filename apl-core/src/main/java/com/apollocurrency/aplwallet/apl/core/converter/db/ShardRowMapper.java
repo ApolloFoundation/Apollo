@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.converter.db;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;

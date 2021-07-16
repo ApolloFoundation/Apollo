@@ -1,4 +1,4 @@
-id(-5|20|0),sender_id(-5|20|0),recipient_id(-5|20|0),message(-3|65535|0),message_is_text(-7|1|0),is_compressed(-7|1|0),encrypted_message(-3|65535|0),encrypted_is_text(-7|1|0),block_timestamp(4|11|0),transaction_timestamp(4|11|0),height(4|11|0)
+id,sender_id,recipient_id,message,message_is_text,is_compressed,encrypted_message,encrypted_is_text,block_timestamp,transaction_timestamp,height
 10,-6004096130734886685,4882266200596627944,null,0,1,b'tj+Anw3wtS9GIltwKFXCcEZT6IrpbNPf4sUM8uMPdHkHy7BiZ2FiQao6pVwr+QRXsfJ16cltQsfMc82yKaT+0FWtVSRciTSMDQXHV+dxmW2NWXElqrtHG7Jc0tblJPG7mBHED4JZ7/LK3x9I31wG8w==',1,128,120,10
 20,4882266200596627944,-6004096130734886685,b'SGksIEFsaWNlIQ==',1,1,b'esXGVxt2ggjfYu5I0+nIFRq+sPEYWMZtAb3wuBcLB0G1ltooUACUsl7Qu5gaQfTf5IkSjEATY41cjrFDlGtq93tk2ok1YDdECYZrDbU5/0VrvlbeWDGB2zrJDWfubxa8C+P6pADgPvJWFrRXif3iqw==',1,140,130,12
 30,-6004096130734886685,4882266200596627944,b'R29vZGJ5ZSwgQm9iIQ==',1,0,b'3TkoK3JiuTaXc7aKhRSRu+ysH5t6bsB4OBlisSmHLC317hG0ie8XM+eMbFT7b7z5kgcf24PE5A9QG4EBr3ba6cYcNybYZJDEOVVkSmSqAE1PpFGE43BgJHqaU1rNxjis',1,158,155,14

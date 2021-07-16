@@ -8,12 +8,12 @@ import org.flywaydb.core.api.output.MigrateResult;
 @Slf4j
 public class AplDBUpdater implements DBUpdater {
 
-    public void update(String url, String user, String password) {
+    public void update(MigrationParams params) {
         Flyway flyway =
-                Flyway.configure()
-                        .dataSource(url, user, password)
-                        .locations("classpath:db/migration/apl")
-                        .load();
+            Flyway.configure()
+                .dataSource(params.getDbUrl(), params.getUser(), params.getPassword())
+                .locations("classpath:db/migration/" + params.getDbType().toLowerCase() + "/apl")
+                .load();
 
         MigrateResult migrateResult = flyway.migrate();
 

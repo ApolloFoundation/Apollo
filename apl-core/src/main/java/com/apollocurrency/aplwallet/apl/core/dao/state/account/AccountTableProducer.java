@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.account;
 
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 
 import javax.enterprise.event.Event;

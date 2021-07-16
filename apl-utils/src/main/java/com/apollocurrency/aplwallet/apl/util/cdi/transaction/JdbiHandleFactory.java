@@ -2,24 +2,26 @@ package com.apollocurrency.aplwallet.apl.util.cdi.transaction;
 
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
-import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Holds opened connection {@link Handle} for current thread.
  */
 @Singleton
 public class JdbiHandleFactory {
-    private static final Logger log = getLogger(JdbiHandleFactory.class);
 
     private final static ThreadLocal<Handle> currentHandleThreadLocal = new ThreadLocal<>();
 
     private volatile Jdbi jdbi;
 
     public void setJdbi(Jdbi jdbi) {
+        this.jdbi = jdbi;
+    }
+
+    @Inject
+    public JdbiHandleFactory(Jdbi jdbi) {
         this.jdbi = jdbi;
     }
 

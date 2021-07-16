@@ -5,10 +5,10 @@
 package com.apollocurrency.aplwallet.apl.core.entity.state.account;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
 import com.apollocurrency.aplwallet.apl.core.model.PhasingParams;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;

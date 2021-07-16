@@ -95,6 +95,10 @@
       <groupId>javax.ws.rs</groupId>
       <artifactId>javax.ws.rs-api</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.jboss.weld.servlet</groupId>
@@ -336,11 +340,6 @@
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-joda</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>p6spy</groupId>
-      <artifactId>p6spy</artifactId>
     </dependency>
   </dependencies>
 

@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.api.v2.AccountApi;
+import com.apollocurrency.aplwallet.api.v2.CurrenciesApi;
 import com.apollocurrency.aplwallet.api.v2.InfoApi;
 import com.apollocurrency.aplwallet.api.v2.OperationApi;
 import com.apollocurrency.aplwallet.api.v2.SmcApi;
@@ -81,6 +82,7 @@ public class RestEasyApplication extends Application {
         set.add(StateApi.class);
         set.add(TransactionApi.class);
         set.add(SmcApi.class);
+        set.add(CurrenciesApi.class);
         //API V2 Services
 
         //swagger openapi endpoint

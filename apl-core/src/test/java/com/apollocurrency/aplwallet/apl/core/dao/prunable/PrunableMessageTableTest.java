@@ -9,7 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
@@ -97,7 +97,9 @@ class PrunableMessageTableTest extends DbContainerBaseTest {
     @Test
     void testInsertWithoutMessages() {
         data.NEW_MESSAGE.setMessage(null);
-        assertThrows(IllegalStateException.class, () -> DbUtils.inTransaction(extension, (con) -> table.insert(data.NEW_MESSAGE)));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> DbUtils.inTransaction(extension, (con) -> table.insert(data.NEW_MESSAGE)));
+
+        assertTrue(ex.getCause() instanceof IllegalStateException);
     }
 
     @Test

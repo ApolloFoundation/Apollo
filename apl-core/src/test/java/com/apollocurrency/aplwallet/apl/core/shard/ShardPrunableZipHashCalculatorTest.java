@@ -11,7 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.prunable.PrunableMessageTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableInterface;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardState;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
 import com.apollocurrency.aplwallet.apl.core.shard.helper.csv.CsvEscaperImpl;

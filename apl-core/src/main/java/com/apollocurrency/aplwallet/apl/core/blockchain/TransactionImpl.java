@@ -153,7 +153,7 @@ public class TransactionImpl implements Transaction {
         this.signature = builder.signature;
     }
 
-    final void sign(Signature signature, Result unsignedRawTransaction) {
+    public final void sign(Signature signature, Result unsignedRawTransaction) {
         this.signature = signature;
         this.fullHash = calculateFullHash(unsignedRawTransaction.array(), signature.bytes());
         this.id = AplIdGenerator.TRANSACTION.getIdByHash(fullHash).longValue();

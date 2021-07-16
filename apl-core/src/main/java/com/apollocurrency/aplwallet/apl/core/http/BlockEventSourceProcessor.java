@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -24,6 +23,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountC
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
@@ -100,7 +100,7 @@ public class BlockEventSourceProcessor implements Runnable {
         accountAssets.forEach(accountAsset -> assetJson.add(JSONData.accountAsset(accountAsset, false, true)));
 
         JSONArray currencyJSON = new JSONArray();
-        List<AccountCurrency> accountCurrencies = accountCurrencyService.getCurrenciesByAccount(accountId, -1, 0, 2);
+        List<AccountCurrency> accountCurrencies = accountCurrencyService.getByAccount(accountId, -1, 0, 2);
         accountCurrencies.forEach(accountCurrency -> currencyJSON.add(JSONData.accountCurrency(accountCurrency, false, true)));
 
         int messageCount = blockchain.getTransactionCount(accountId, (byte) 1, (byte) 0);

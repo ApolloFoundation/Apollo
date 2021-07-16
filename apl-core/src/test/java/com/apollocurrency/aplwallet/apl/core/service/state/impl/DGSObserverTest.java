@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.impl;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplAppStatus;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
 import com.apollocurrency.aplwallet.apl.core.app.observer.DGSObserver;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
@@ -25,15 +26,17 @@ import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.TransactionDaoImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountGuaranteedBalanceTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
+import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSGoodsTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPublicFeedbackTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSPurchaseTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.dgs.DGSTagTable;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.impl.TimeServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessor;
@@ -67,7 +70,6 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -109,11 +111,9 @@ public class DGSObserverTest extends DbContainerBaseTest {
         TimeServiceImpl.class, BlockDaoImpl.class,
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         TransactionDaoImpl.class,
-        BlockChainInfoServiceImpl.class, AccountServiceImpl.class, AccountTable.class)
+        BlockChainInfoServiceImpl.class, AccountServiceImpl.class, GenesisAccounts.class, JdbiHandleFactory.class, JdbiConfiguration.class)
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
         .addBeans(MockBean.of(mock(TransactionProcessor.class), TransactionProcessor.class))
-        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(mock(FullTextSearchUpdater.class), FullTextSearchUpdater.class))
         .addBeans(MockBean.of(blockchain, Blockchain.class))
@@ -128,6 +128,7 @@ public class DGSObserverTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(mock(PrunableLoadingService.class), PrunableLoadingService.class))
         .addBeans(MockBean.of(td.getTransactionTypeFactory(), TransactionTypeFactory.class))
         .addBeans(MockBean.of(mock(BlockchainConfig.class), BlockchainConfig.class))
+        .addBeans(MockBean.of(new AccountTable(extension.getDatabaseManager(), mock(Event.class)), AccountTableInterface.class))
         .build();
     @Inject
     DGSService service;

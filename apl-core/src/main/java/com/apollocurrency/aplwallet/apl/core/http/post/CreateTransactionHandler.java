@@ -79,7 +79,7 @@ public abstract class CreateTransactionHandler extends AbstractAPIRequestHandler
         "phasingLinkedFullHash", "phasingLinkedFullHash", "phasingLinkedFullHash",
         "phasingHashedSecret", "phasingHashedSecretAlgorithm",
         "recipientPublicKey",
-        "ecBlockId", "ecBlockHeight"};
+        "ecBlockId", "ecBlockHeight", "validate"};
     protected TimeService timeService = CDI.current().select(TimeService.class).get();
     protected TransactionCreator transactionCreator = CDI.current().select(TransactionCreator.class).get();
     private TransactionValidator validator = CDI.current().select(TransactionValidator.class).get();
@@ -121,16 +121,16 @@ public abstract class CreateTransactionHandler extends AbstractAPIRequestHandler
 
     public JSONStreamAware createPrivateTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM)
         throws AplException {
-        return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.PRIVATE_PAYMENT, true).getJson();
+        return createTransaction(req, senderAccount, recipientId, amountATM, Attachment.PRIVATE_PAYMENT, true, true).getJson();
     }
 
     public JSONStreamAware createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM, Attachment attachment) throws AplException.ValidationException, ParameterException {
-        return createTransaction(req, senderAccount, recipientId, amountATM, attachment, true).getJson();
+        return createTransaction(req, senderAccount, recipientId, amountATM, attachment, true, true).getJson();
     }
 
-    public TransactionResponse createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM, Attachment attachment, boolean broadcast) throws AplException.ValidationException, ParameterException {
+    public TransactionResponse createTransaction(HttpServletRequest req, Account senderAccount, long recipientId, long amountATM, Attachment attachment, boolean broadcast, Boolean validate) throws AplException.ValidationException, ParameterException {
         CreateTransactionRequest createTransactionRequest = HttpRequestToCreateTransactionRequestConverter
-            .convert(req, senderAccount, recipientId, amountATM, attachment, broadcast, lookupAccountService());
+            .convert(req, senderAccount, recipientId, amountATM, attachment, broadcast, validate, lookupAccountService());
 
         JSONObject response = new JSONObject();
 //do not eat exception here, it is used for error message displaying on UI

@@ -29,7 +29,7 @@ public enum LedgerEvent {
     DEX_REFUND_FROZEN_MONEY(62, true), DEX_FREEZE_MONEY(63, true), DEX_TRANSFER_MONEY(64, true),
     UPDATE_V2(65, true),
     //PARENT_CHILD
-    CHILD_CREATE(66, true), CHILD_CONVERT_TO(67, true),/* reserved 68 69 */
+    CHILD_CREATE(66, true), CHILD_CONVERT_TO(67, true), CURRENCY_BURNING(68, true),/* reserved 69 */
     SMC_PUBLISH(70, true), SMC_CALL_METHOD(71, true), SMC_REFUNDED_FEE(72, true);
     /**
      * Event code mapping
