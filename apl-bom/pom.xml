@@ -5,7 +5,7 @@
 
   <groupId>com.apollocurrency</groupId>
   <artifactId>apl-bom</artifactId>
-  <version>1.48.10</version>
+  <version>1.48.11</version>
   <packaging>pom</packaging>
   <name>apl-bom</name>
 

@@ -84,9 +84,9 @@ class SmcContractStorageServiceImplTest {
             .serializedObject(json)
             .height(blockchain.getHeight()) // new height value
             .build();
-        when(smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(contractAddress.getLongId(), key.key()))).thenReturn(smcContractMappingEntity);
+        when(smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(contractAddress.getLongId(), name, key.key()))).thenReturn(smcContractMappingEntity);
         //WHEN
-        String actualJson = smcContractStorageService.loadEntry(contractAddress, key);
+        String actualJson = smcContractStorageService.loadEntry(contractAddress, key, name);
         //THEN
         assertEquals(json, actualJson);
     }
@@ -104,12 +104,12 @@ class SmcContractStorageServiceImplTest {
             .serializedObject(json)
             .height(blockchain.getHeight()) // new height value
             .build();
-        when(smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(contractAddress.getLongId(), key.key())))
+        when(smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(contractAddress.getLongId(), name, key.key())))
             .thenReturn(smcContractMappingEntity);
         when(smcContractMappingTable.deleteAtHeight(smcContractMappingEntity, blockchain.getHeight()))
             .thenReturn(true);
         //WHEN
-        boolean rc = smcContractStorageService.deleteEntry(contractAddress, key);
+        boolean rc = smcContractStorageService.deleteEntry(contractAddress, key, name);
         //THEN
         assertTrue(rc);
     }
@@ -118,10 +118,11 @@ class SmcContractStorageServiceImplTest {
     void deleteEntry_False() {
         //GIVEN
         Key key = new AplAddress("0x0102030405");
-        when(smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(contractAddress.getLongId(), key.key())))
+        String name = "mapping";
+        when(smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(contractAddress.getLongId(), name, key.key())))
             .thenReturn(null);
         //WHEN
-        boolean rc = smcContractStorageService.deleteEntry(contractAddress, key);
+        boolean rc = smcContractStorageService.deleteEntry(contractAddress, key, name);
         //THEN
         assertFalse(rc);
     }

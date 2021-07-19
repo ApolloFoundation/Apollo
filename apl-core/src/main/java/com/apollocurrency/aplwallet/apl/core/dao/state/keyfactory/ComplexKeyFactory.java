@@ -13,19 +13,29 @@ public abstract class ComplexKeyFactory<T> extends KeyFactory<T> {
 
     private final String idColumnA;
     private final String idColumnB;
+    private final String idColumnC;
 
-    protected ComplexKeyFactory(String idColumnA, String idColumnB) {
-        super(" WHERE " + idColumnA + " = ? AND " + idColumnB + " = ? ", idColumnA + ", " + idColumnB, " a." + idColumnA + " = b." + idColumnA + " AND a." + idColumnB + " = b." + idColumnB + " ");
+    protected ComplexKeyFactory(String idColumnA, String idColumnB, String idColumnC) {
+        super(" WHERE" +
+                " " + idColumnA + " = ? " +
+                "AND " + idColumnB + " = ? " +
+                "AND " + idColumnC + " = ? ",
+            idColumnA + ", " + idColumnB + ", " + idColumnC,
+            " a." + idColumnA + " = b." + idColumnA + " " +
+                "AND a." + idColumnB + " = b." + idColumnB + " " +
+                "AND a." + idColumnC + " = b." + idColumnC + " "
+        );
         this.idColumnA = idColumnA;
         this.idColumnB = idColumnB;
+        this.idColumnC = idColumnC;
     }
 
     @Override
     public DbKey newKey(ResultSet rs) throws SQLException {
-        return new ComplexKey(rs.getLong(idColumnA), rs.getBytes(idColumnB));
+        return new ComplexKey(rs.getLong(idColumnA), rs.getString(idColumnB), rs.getBytes(idColumnC));
     }
 
-    public DbKey newKey(long idA, byte[] idB) {
-        return new ComplexKey(idA, idB);
+    public DbKey newKey(long idA, String idB, byte[] idC) {
+        return new ComplexKey(idA, idB, idC);
     }
 }

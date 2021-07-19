@@ -9,12 +9,14 @@ import com.apollocurrency.smc.blockchain.storage.ContractMappingRepository;
 import com.apollocurrency.smc.blockchain.storage.JsonConverter;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.data.type.Key;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Objects;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
+@Slf4j
 public class PersistentMappingRepository<V> extends ContractMappingRepository<V> {
 
     private final SmcContractStorageService smcContractStorageService;
@@ -29,7 +31,7 @@ public class PersistentMappingRepository<V> extends ContractMappingRepository<V>
 
     @Override
     public String getOneObject(Key key) {
-        return smcContractStorageService.loadEntry(getContract(), key);
+        return smcContractStorageService.loadEntry(getContract(), key, getName());
     }
 
     @Override
@@ -39,6 +41,6 @@ public class PersistentMappingRepository<V> extends ContractMappingRepository<V>
 
     @Override
     public void deleteOneObject(Key key) {
-        smcContractStorageService.deleteEntry(getContract(), key);
+        smcContractStorageService.deleteEntry(getContract(), key, getName());
     }
 }

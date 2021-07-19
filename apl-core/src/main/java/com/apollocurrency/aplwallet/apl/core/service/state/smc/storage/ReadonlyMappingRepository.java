@@ -30,7 +30,7 @@ public class ReadonlyMappingRepository<V> extends ContractMappingRepository<V> {
 
     @Override
     public String getOneObject(Key key) {
-        return smcContractStorageService.loadEntry(getContract(), key);
+        return smcContractStorageService.loadEntry(getContract(), key, getName());
     }
 
     @Override

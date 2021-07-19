@@ -37,7 +37,7 @@ public class SmcContractStorageServiceImpl implements SmcContractStorageService 
     @Override
     @Transactional
     public void saveOrUpdateEntry(Address address, Key key, String name, String jsonObject) {
-        SmcContractMappingEntity smcContractMappingEntity = getContractMappingEntity(address, key);
+        SmcContractMappingEntity smcContractMappingEntity = getContractMappingEntity(address, key, name);
         if (smcContractMappingEntity != null) {
             //update entity
             smcContractMappingEntity.setSerializedObject(jsonObject);
@@ -59,8 +59,8 @@ public class SmcContractStorageServiceImpl implements SmcContractStorageService 
 
     @Override
     @Transactional(readOnly = true)
-    public String loadEntry(Address address, Key key) {
-        SmcContractMappingEntity smcContractMappingEntity = getContractMappingEntity(address, key);
+    public String loadEntry(Address address, Key key, String name) {
+        SmcContractMappingEntity smcContractMappingEntity = getContractMappingEntity(address, key, name);
         if (smcContractMappingEntity != null) {
             log.trace("Load mapping={}", smcContractMappingEntity);
             return smcContractMappingEntity.getSerializedObject();
@@ -70,9 +70,9 @@ public class SmcContractStorageServiceImpl implements SmcContractStorageService 
     }
 
     @Override
-    public boolean deleteEntry(Address address, Key key) {
+    public boolean deleteEntry(Address address, Key key, String name) {
         boolean rc = false;
-        SmcContractMappingEntity smcContractMappingEntity = getContractMappingEntity(address, key);
+        SmcContractMappingEntity smcContractMappingEntity = getContractMappingEntity(address, key, name);
         if (smcContractMappingEntity != null) {
             int height = blockchain.getHeight();
             rc = smcContractMappingTable.deleteAtHeight(smcContractMappingEntity, height);
@@ -94,9 +94,9 @@ public class SmcContractStorageServiceImpl implements SmcContractStorageService 
         return count > 0;
     }
 
-    private SmcContractMappingEntity getContractMappingEntity(Address address, Key key) {
+    private SmcContractMappingEntity getContractMappingEntity(Address address, Key key, String name) {
         long id = new AplAddress(address).getLongId();
-        return smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(id, key.key()));
+        return smcContractMappingTable.get(SmcContractMappingTable.KEY_FACTORY.newKey(id, name, key.key()));
     }
 
 }
