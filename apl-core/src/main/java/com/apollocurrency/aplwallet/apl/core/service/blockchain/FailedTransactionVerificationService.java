@@ -354,7 +354,7 @@ public class FailedTransactionVerificationService {
                     }
                     if (!verifiedTx.verify(tx.getErrorMessage())) {
                         log.warn("Blockchain inconsistency may occur. Transaction's {} validation & execution results into an error message '{}', " +
-                            "which does not match to {} peer's result '{}'", tx.getTransaction(), verifiedTx.getError(), tx.getErrorMessage(), peer.getHost());
+                            "which does not match to {} peer's result '{}'", tx.getTransaction(), verifiedTx.getError(), tx.getErrorMessage(), peer.getHostWithPort());
                     }
                 }
             }

@@ -136,7 +136,7 @@
               <generateSupportingFiles>false</generateSupportingFiles>
               <supportingFilesToGenerate>ApiException.java,NotFoundException.java</supportingFilesToGenerate>
               <modelsToGenerate>
-                AccountInfo,AccountInfoResp,AccountReq,AccountReqTest,AccountReqSendMoney,BlockchainInfo,BlockInfo,BlockchainState,CountResponse,CreateChildAccountResp,EmptyResponse,HealthResponse,ListResponse,QueryCountResult,QueryObject,QueryResult,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,TxReceipt,TxRequest
+                AccountInfo,AccountInfoResp,AccountReq,AccountReqTest,AccountReqSendMoney,BlockchainInfo,BlockInfo,BlockchainState,CountResponse,CreateChildAccountResp,EmptyResponse,HealthResponse,ListResponse,QueryCountResult,QueryObject,QueryResult,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,TxReceipt,TxRequest,TransactionVerificationResponse,LastTransactionVerificationResponse,TransactionVerification
               </modelsToGenerate>
               <configHelp>false</configHelp>
               <configOptions>
