@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
 
 /**
  * Default rest API handler for all apl core exceptions, which are not handled by other more specific handlers
@@ -18,6 +19,7 @@ import javax.ws.rs.ext.ExceptionMapper;
  * @see TransactionValidationExceptionMapper
  * @since 1.48.4
  */
+@Provider
 public class AplCoreLogicExceptionMapper implements ExceptionMapper<AplCoreLogicException> {
 
 @Override

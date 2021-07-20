@@ -10,6 +10,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
 
 /**
  * Designed to catch all the transaction validation exceptions derived from the {@link com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationException}
@@ -20,6 +21,7 @@ import javax.ws.rs.ext.ExceptionMapper;
  * @see com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionException
  * @since 1.48.4
  */
+@Provider
 public class TransactionValidationExceptionMapper implements ExceptionMapper<AplTransactionException> {
 
     @Override

@@ -558,7 +558,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
       security:
-        - adminAuth: []
+        - admin_api_key: []
   /@@failed-txs:
     get:
       tags:
@@ -576,7 +576,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
       security:
-        - adminAuth: []
+        - admin_api_key: []
   /@@failed-txs/:
     post:
       tags:
@@ -594,7 +594,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
       security:
-        - adminAuth: []
+        - admin_api_key: []
 
 components:
   schemas:
@@ -1399,7 +1399,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-    adminAuth:
+    admin_api_key:
       type: apiKey
       in: header
       name: adminPassword

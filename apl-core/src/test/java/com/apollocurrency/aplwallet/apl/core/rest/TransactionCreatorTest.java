@@ -298,7 +298,7 @@ class TransactionCreatorTest {
     }
 
     @Test
-    void testCreateTransaction_featureNotEnabled() throws AplException.ValidationException {
+    void testCreateTransaction_featureNotEnabled() {
         EcBlockData ecBlockData = new EcBlockData(121, 100_000);
         doReturn(ecBlockData).when(blockchain).getECBlock(0);
         CreateTransactionRequest request = CreateTransactionRequest.builder()
@@ -309,7 +309,11 @@ class TransactionCreatorTest {
             .feeATM(1000000)
             .broadcast(true)
             .build();
-        doThrow(new AplTransactionFeatureNotEnabledException("Test. Not enabled", mock(Transaction.class))).when(processor).broadcast(any(Transaction.class));
+        Transaction tx = mock(Transaction.class);
+        TransactionType type = mock(TransactionType.class);
+        doReturn(type).when(tx).getType();
+        doReturn(TransactionTypes.TransactionTypeSpec.ORDINARY_PAYMENT).when(type).getSpec();
+        doThrow(new AplTransactionFeatureNotEnabledException("Test. Not enabled", tx)).when(processor).broadcast(any(Transaction.class));
         assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
 
         TransactionCreator.TransactionCreationData data = txCreator.createTransaction(request);

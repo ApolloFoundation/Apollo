@@ -21,7 +21,7 @@ public class RestSecurityConfig {
     @Produces
     @Named("includeProtection")
     public RequestUriMatcher createIncludePathMatcher() {
-        return new UriPatternMatcher("/failed-txs/*", "/failed-txs");
+        return new UriPatternMatcher("/v2/failed-txs/*", "/v2/failed-txs");
     }
 
 }
