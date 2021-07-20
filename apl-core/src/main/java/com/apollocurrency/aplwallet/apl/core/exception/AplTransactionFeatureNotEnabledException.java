@@ -23,14 +23,14 @@ import lombok.NonNull;
 public class AplTransactionFeatureNotEnabledException extends AplUnacceptableTransactionValidationException {
 
     public AplTransactionFeatureNotEnabledException(@NonNull String feature, @NonNull Transaction tx) {
-        super(formExMessage(feature), tx);
+        super(formExMessage(feature, tx), tx);
     }
 
     public AplTransactionFeatureNotEnabledException(@NonNull String feature, @NonNull Throwable cause, @NonNull Transaction tx) {
-        super(formExMessage(feature), cause, tx);
+        super(formExMessage(feature, tx), cause, tx);
     }
 
-    private static String formExMessage(String feature) {
-        return "Feature '" + feature + "' is not enabled yet";
+    private static String formExMessage(String feature, Transaction transaction) {
+        return "Feature '" + feature + "' is not enabled yet for transaction " + transaction.getStringId() + " of type " + transaction.getType().getSpec();
     }
 }

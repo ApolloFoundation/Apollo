@@ -70,7 +70,8 @@ public class TransactionEntityToModelConverter implements Converter<TransactionE
                 .ecBlockHeight(entity.getEcBlockHeight())
                 .ecBlockId(entity.getEcBlockId())
                 .index(entity.getIndex())
-                .recipientId(entity.getRecipientId());
+                .recipientId(entity.getRecipientId())
+                .errorMessage(entity.getErrorMessage());
 
             if (entity.isHasMessage()) {
                 builder.appendix(new MessageAppendix(buffer));

@@ -250,8 +250,8 @@ public class TransactionDaoImpl implements TransactionDao {
                          + "block_id, signature, `timestamp`, type, subtype, sender_id, sender_public_key, attachment_bytes, "
                          + "block_timestamp, full_hash, version, has_message, has_encrypted_message, has_public_key_announcement, "
                          + "has_encrypttoself_message, phased, has_prunable_message, has_prunable_encrypted_message, "
-                         + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index) "
-                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                         + "has_prunable_attachment, ec_block_height, ec_block_id, transaction_index, error_message) "
+                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                     int i = 0;
                     pstmt.setLong(++i, transaction.getId());
                     pstmt.setShort(++i, transaction.getDeadline());
@@ -282,6 +282,7 @@ public class TransactionDaoImpl implements TransactionDao {
                     pstmt.setInt(++i, transaction.getEcBlockHeight());
                     DbUtils.setLongZeroToNull(pstmt, ++i, transaction.getEcBlockId());
                     pstmt.setShort(++i, index++);
+                    pstmt.setString(++i, transaction.getErrorMessage());
                     pstmt.executeUpdate();
                 }
             }
@@ -761,7 +762,7 @@ public class TransactionDaoImpl implements TransactionDao {
             buf.append("AND error_message IS NOT NULL ");
         }
         if (nonFailedOnly) {
-            buf.append("AND error_message IS NULL");
+            buf.append("AND error_message IS NULL ");
         }
         if (!includePrivate) {
             buf.append("AND (`type` <> ? ");
@@ -804,7 +805,7 @@ public class TransactionDaoImpl implements TransactionDao {
             buf.append("AND error_message IS NOT NULL ");
         }
         if (nonFailedOnly) {
-            buf.append("AND error_message IS NULL");
+            buf.append("AND error_message IS NULL ");
         }
         if (height < Integer.MAX_VALUE) {
             buf.append("AND transaction.height <= ? ");
@@ -841,19 +842,4 @@ public class TransactionDaoImpl implements TransactionDao {
         }
     }
 
-    private List<TransactionEntity> findBlockTransactions(Connection con, long blockId) {
-        try (PreparedStatement pstmt = con.prepareStatement("SELECT * FROM transaction WHERE block_id = ? ORDER BY transaction_index")) {
-            pstmt.setLong(1, blockId);
-            pstmt.setFetchSize(50);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                List<TransactionEntity> list = new ArrayList<>();
-                while (rs.next()) {
-                    list.add(entityRowMapper.mapWithException(rs, null));
-                }
-                return list;
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
-        }
-    }
 }

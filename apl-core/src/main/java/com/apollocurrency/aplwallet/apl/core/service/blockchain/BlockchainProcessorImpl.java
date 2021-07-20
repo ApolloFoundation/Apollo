@@ -727,6 +727,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                             log.debug("Skip not valid transaction {} during selection: {}", tx.getStringId(), e.getMessage());
                             continue;
                         } catch (AplAcceptableTransactionValidationException e) {
+                            if (!blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(blockchain.getHeight() + 1)) {
+                                log.debug("Failed transaction {} cannot be accepted at height {}, skip it", tx.getStringId(), blockchain.getHeight() + 1);
+                                continue;
+                            }
                             log.info("Selected acceptable failed transaction {}: {}", tx.getStringId(), e.getMessage());
                             tx.fail(e.getMessage());
                         }
@@ -1377,6 +1381,10 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                         throw new TransactionNotAcceptedException(e, transaction, blockSerializer.getJSONObject(block));
                     }
                 }
+                if (!transactionApplier.applyUnconfirmed(transaction)) {
+                    throw new TransactionNotAcceptedException(
+                        "Double spending", transaction, blockSerializer.getJSONObject(block));
+                }
             }
             if (!transaction.isFailed()) {
                 // prefetch data for duplicate validation
@@ -1429,12 +1437,6 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         try {
             log.debug(":accept: Accepting block: {} height: {}", block.getId(), block.getHeight());
             blockchainProcessorState.setProcessingBlock(true);
-            for (Transaction transaction : block.getTransactions()) {
-                if (!transactionApplier.applyUnconfirmed(transaction)) {
-                    throw new TransactionNotAcceptedException(
-                        "Double spending", transaction, blockSerializer.getJSONObject(block));
-                }
-            }
             log.trace(":accept: apply(block) block: {} height: {}", block.getId(), block.getHeight());
             blockEvent.select(literal(BlockEventType.BEFORE_BLOCK_APPLY)).fire(block);
             blockApplier.apply(block);

@@ -6,7 +6,10 @@ import com.apollocurrency.aplwallet.apl.core.entity.appdata.ReferencedTransactio
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionFailureNotSupportedException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
@@ -30,16 +33,18 @@ public class TransactionApplier {
     private final AccountPublicKeyService accountPublicKeyService;
     private final PrunableLoadingService prunableService;
     private final AppendixApplierRegistry applierRegistry;
+    private final Blockchain blockchain;
 
 
     @Inject
-    public TransactionApplier(BlockchainConfig blockchainConfig, ReferencedTransactionDao referencedTransactionDao, AccountService accountService, AccountPublicKeyService accountPublicKeyService, PrunableLoadingService prunableService, AppendixApplierRegistry applierRegistry) {
+    public TransactionApplier(BlockchainConfig blockchainConfig, ReferencedTransactionDao referencedTransactionDao, AccountService accountService, AccountPublicKeyService accountPublicKeyService, PrunableLoadingService prunableService, AppendixApplierRegistry applierRegistry, Blockchain blockchain) {
         this.blockchainConfig = blockchainConfig;
         this.referencedTransactionDao = referencedTransactionDao;
         this.accountService = accountService;
         this.accountPublicKeyService = accountPublicKeyService;
         this.prunableService = prunableService;
         this.applierRegistry = applierRegistry;
+        this.blockchain = blockchain;
     }
 
     // returns false if double spending
@@ -48,7 +53,18 @@ public class TransactionApplier {
             return applyUnconfirmedFailed(transaction);
         }
         Account senderAccount = accountService.getAccount(transaction.getSenderId());
-        return senderAccount != null && transaction.getType().applyUnconfirmed(transaction, senderAccount);
+        boolean applied = senderAccount != null && transaction.getType().applyUnconfirmed(transaction, senderAccount);
+        if (!applied) { // try to keep transaction as failed
+            if (!blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(blockchain.getHeight())) {
+                return false;
+            }
+            applied = applyUnconfirmedFailed(transaction);
+            if (!applied) {
+                return false;
+            }
+            transaction.fail("Double spending");
+        }
+        return true;
     }
 
     public void apply(Transaction transaction) {
@@ -106,18 +122,22 @@ public class TransactionApplier {
             try {
                 applyAppendage(transaction, senderAccount, recipientAccount, appendage);
             } catch (AplTransactionExecutionException e) {
-                if (!blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(transaction.getHeight())) {
-                    throw new AplTransactionExecutionException("Acceptance of the failed transactions is not active at height: " + transaction.getHeight() + " but transaction " + transaction.getStringId() + " failed during execution with message: " + e.getMessage(), e, transaction);
-                }
+                checkFailedTxsAcceptance(transaction, e);
                 if (transaction.canFailDuringExecution()) {
                     log.info("Transaction {} failed during execution: {}", transaction.getStringId(), e.getMessage());
                     transaction.fail(e.getMessage());
                 } else {
-                    throw new AplTransactionExecutionException("Transaction Type: " + transaction.getType().getSpec() + " does not support failures during execution", e, transaction);
+                    throw new AplTransactionExecutionFailureNotSupportedException(e, transaction);
                 }
             }
         } else {
             applyAppendage(transaction, senderAccount, recipientAccount, appendage);
+        }
+    }
+
+    private void checkFailedTxsAcceptance(Transaction transaction, AplTransactionExecutionException e) {
+        if (!blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(transaction.getHeight())) {
+            throw new AplTransactionFeatureNotEnabledException("Acceptance of the failed transactions", e, transaction);
         }
     }
 
@@ -132,7 +152,7 @@ public class TransactionApplier {
 
     private void applyFailed(Transaction transaction) {
         long feeATM = transaction.getFeeATM();
-        Account sender = accountService.getAccount(transaction.getId());
+        Account sender = accountService.getAccount(transaction.getSenderId());
         accountService.addToBalanceATM(sender, LedgerEvent.TRANSACTION_FEE, transaction.getId(), 0, -feeATM);
     }
 

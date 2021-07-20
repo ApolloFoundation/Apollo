@@ -220,6 +220,17 @@ class BlockchainTest extends DBContainerRootTest {
     }
 
     @Test
+    void getFailedTransaction() {
+        Transaction transaction = blockchain.getTransaction(txd.TRANSACTION_10.getId());
+
+        assertNotNull(transaction, "Transaction with id " + txd.TRANSACTION_10.getId() + " should be present in db");
+        assertEquals(txd.TRANSACTION_10.getId(), transaction.getId());
+        assertEquals(txd.TRANSACTION_10.getErrorMessage().orElseThrow(() ->
+                new IllegalStateException("Test data inconsistency, transaction #10 should have error message")),
+            transaction.getErrorMessage().orElseThrow(() -> new IllegalStateException("Saved failed transaction #10, retrieved without error message, tx:" + transaction)));
+    }
+
+    @Test
     void testGetHeight() {
         blockchain.setLastBlock(btd.BLOCK_13);
 

@@ -91,6 +91,7 @@ public class TransactionImpl implements Transaction {
         this.ecBlockHeight = builder.ecBlockHeight;
         this.ecBlockId = builder.ecBlockId;
         this.feeATM = builder.feeATM;
+        this.errorMessage = builder.errorMessage;
         List<AbstractAppendix> list = new ArrayList<>();
         if ((this.attachment = builder.attachment) != null) {
             list.add(this.attachment);

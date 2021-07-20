@@ -105,7 +105,7 @@ public class ChildAccountTransactionTypeTest {
     CreateChildTransactionType type = new CreateChildTransactionType(blockchainConfig, accountService, accountPublicKeyService, blockchain);
     TransactionBuilderFactory builder = new TransactionBuilderFactory(new CachedTransactionTypeFactory(List.of(type)), blockchainConfig);
     TransactionVersionValidator txVersionValidator = new TransactionVersionValidator(blockchainConfig, blockchain);
-    TransactionApplier txApplier = new TransactionApplier(blockchainConfig, referencedTransactionDao, accountService, accountPublicKeyService, prunableLoadingService, applierRegistry);
+    TransactionApplier txApplier = new TransactionApplier(blockchainConfig, referencedTransactionDao, accountService, accountPublicKeyService, prunableLoadingService, applierRegistry, blockchain);
     TransactionValidator txValidator = new TransactionValidator(blockchainConfig, phasingPollService, blockchain, calculator, accountService, accountPublicKeyService, accountControlPhasingService, txVersionValidator, prunableLoadingService, validatorRegistry);
     TransactionSigner txSigner = new TransactionSignerImpl(blockchainConfig);
     TransactionCreator txCreator = new TransactionCreator(txValidator, propertiesHolder, timeService, calculator, blockchain, processor, new CachedTransactionTypeFactory(List.of(type)), builder, txSigner);

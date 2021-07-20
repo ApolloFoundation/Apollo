@@ -13,6 +13,8 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplFeatureNotEnabledExcep
 import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionNotFoundException;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.TxsVerificationResult;
+import com.apollocurrency.aplwallet.apl.core.model.VerifiedTransaction;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerNotConnectedException;
 import com.apollocurrency.aplwallet.apl.core.peer.PeerState;
@@ -54,7 +56,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
-class FailedTransactionVerificationServiceTest {
+class FailedTransactionVerificationServiceImplTest {
     @Mock
     Peer peer1;
     @Mock
@@ -78,7 +80,7 @@ class FailedTransactionVerificationServiceTest {
     @Mock
     OptionDAO optionDAO;
 
-    FailedTransactionVerificationService service;
+    FailedTransactionVerificationServiceImpl service;
 
     AtomicInteger txIdCounter = new AtomicInteger(0);
     AtomicInteger peerSendingRequestCounter = new AtomicInteger(0);
@@ -86,8 +88,8 @@ class FailedTransactionVerificationServiceTest {
 
 
     @Test
-    void verifyFailedTransactions_withScheduler_notEnoughPeersCorrectData() throws PeerNotConnectedException {
-        setUpMocksFoSchedulerLaunch();
+    void verifyFailedTransactions_notEnoughPeersCorrectData() throws PeerNotConnectedException {
+        setUpMocksForSchedulerLaunch();
         doAnswer(invocation -> null).when(peer1).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
         doAnswer(this::returnAcceptableNotFullTxsResponse).when(peer2).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
         doAnswer(this::returnAcceptableNotFullTxsResponse).when(peer3).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
@@ -95,36 +97,36 @@ class FailedTransactionVerificationServiceTest {
         doAnswer(invocation -> throwNotConnectedException()).when(peer5).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
         doAnswer(invocation -> throwNotConnectedException()).when(peer6).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
 
-        // will launch processing iteration
-        service = new FailedTransactionVerificationService(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), 0));
+        // launch processing iteration
+        service = new FailedTransactionVerificationServiceImpl(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), 0));
 
         verifyNoBlacklist(List.of(peer1, peer2, peer3, peer4, peer5, peer6));
         verifyNoVerifiedTransactions();
     }
 
     @Test
-    void verifyFailedTransactions_withScheduler_OK() throws PeerNotConnectedException {
-        setUpMocksFoSchedulerLaunch();
+    void verifyFailedTransactions_OK() throws PeerNotConnectedException {
+        setUpMocksWithDispatcher();
         doAnswer(this::returnAllRequestedCorrectTxs).when(peer1).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
         doAnswer(this::returnTooManyTxs).when(peer2).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
         doAnswer(this::returnIncorrectTxByIdsResponse).when(peer3).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
         doAnswer(invocation ->  null).when(peer4).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
         doAnswer(invocation -> throwNotConnectedException()).when(peer5).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
         doAnswer(this::returnAllRequestedCorrectTxs).when(peer6).send(any(GetTransactionsRequest.class), any(GetTransactionsResponseParser.class));
+        service = new FailedTransactionVerificationServiceImpl(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), 0));
 
-        // will launch processing iteration
-        service = new FailedTransactionVerificationService(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), 0));
+        service.verifyTransactions();
 
         verifyNoBlacklist(List.of(peer1, peer4, peer5, peer6));
         verifyBlacklist(List.of(peer2, peer3));
-        FailedTransactionVerificationService.Result result = verifySuccessfulEnding();
-        assertEquals(Set.of(), result.allNotVerified());
-        assertEquals(failedTxs.stream().map(Transaction::getId).collect(Collectors.toSet()), result.allVerified());
+        TxsVerificationResult result = verifySuccessfulEnding();
+        assertEquals(Set.of(), result.allNotVerifiedIds());
+        assertEquals(failedTxs.stream().map(Transaction::getId).collect(Collectors.toSet()), result.allVerifiedIds());
     }
 
     @Test
     void createVerificationService_backgroundVerificationIsDisabled_failedTxFeatureIsDisabled() {
-        service = new FailedTransactionVerificationService(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), null));
+        service = new FailedTransactionVerificationServiceImpl(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), null));
 
         assertFalse(service.isEnabled(), "Background processing should be disabled when failed tx feature is disabled");
         verifyNoInteractions(peer1, peer2, peer3, peer4, peer5, peer6, dispatcher, dispatchManager, blockchain, peersService);
@@ -132,20 +134,22 @@ class FailedTransactionVerificationServiceTest {
 
     @Test
     void createVerificationService_backgroundVerificationIsDisabled_lessThanOneConfirmationForTxSet() {
-        service = new FailedTransactionVerificationService(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(0, 5, UUID.randomUUID(), 0));
+        service = new FailedTransactionVerificationServiceImpl(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(0, 5, UUID.randomUUID(), 0));
 
         assertFalse(service.isEnabled(), "Background processing should be disabled when number of confirmations set < 1");
         verifyNoInteractions(peer1, peer2, peer3, peer4, peer5, peer6, dispatcher, dispatchManager, blockchain, peersService);
     }
 
     @Test
-    void verifyFailedTransactions_withScheduler_notEnoughBlocks() {
-        launchTaskOnScheduling();
+    void verifyFailedTransactions_manually_notEnoughBlocks() {
+        mockDispatchManager();
         doReturn("1").when(optionDAO).get("lastFailedTransactionsVerificationBlock");
         doReturn(1440).when(blockchain).getHeight();
+        service = new FailedTransactionVerificationServiceImpl(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), 0));
 
-        service = new FailedTransactionVerificationService(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), 0));
+        Optional<TxsVerificationResult> result = service.verifyTransactions();
 
+        assertTrue(result.isEmpty(), "Result should not be present when not enough blocks");
         assertTrue(service.isEnabled(), "Background verification should be enabled when not enough blocks");
         assertTrue(service.getLastVerificationResult().isEmpty(), "No verification should be done when not enough blocks");
         assertEquals(1, service.getLastVerifiedBlockHeight());
@@ -154,15 +158,17 @@ class FailedTransactionVerificationServiceTest {
     }
 
     @Test
-    void verifyFailedTransactions_withScheduler_noTransactions() {
-        launchTaskOnScheduling();
+    void verifyFailedTransactions_noTransactions() {
+        mockDispatchManager();
         doReturn("10").when(optionDAO).get("lastFailedTransactionsVerificationBlock");
         doReturn(1460).when(blockchain).getHeight();
         List<Block> blocks = createEmptyMockBlocks();
         doReturn(blocks).when(blockchain).getBlocksAfter(20, 1440);
+        service = new FailedTransactionVerificationServiceImpl(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), 20));
 
-        service = new FailedTransactionVerificationService(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), 20));
+        Optional<TxsVerificationResult> result = service.verifyTransactions();
 
+        assertTrue(result.isEmpty(), "Result should not be present when failed transactions do not exist");
         assertTrue(service.isEnabled(), "Background verification should be enabled when not enough blocks");
         assertTrue(service.getLastVerificationResult().isEmpty(), "No verification should be done when not enough blocks");
         assertEquals(10, service.getLastVerifiedBlockHeight());
@@ -173,7 +179,7 @@ class FailedTransactionVerificationServiceTest {
 
     @Test
     void verifyFailedTransactionManually_disabledProcessing() {
-        service = new FailedTransactionVerificationService(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), null));
+        service = new FailedTransactionVerificationServiceImpl(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), null));
 
         AplFeatureNotEnabledException ex = assertThrows(AplFeatureNotEnabledException.class, () -> service.verifyTransaction(1L));
 
@@ -183,7 +189,7 @@ class FailedTransactionVerificationServiceTest {
     @Test
     void verifyFailedTransactionManually_transactionNotFound() {
         mockDispatchManager();
-        service = new FailedTransactionVerificationService(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), 0));
+        service = new FailedTransactionVerificationServiceImpl(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), 0));
 
         AplTransactionNotFoundException ex = assertThrows(AplTransactionNotFoundException.class, () -> service.verifyTransaction(1L));
 
@@ -196,9 +202,9 @@ class FailedTransactionVerificationServiceTest {
         Transaction tx = mock(Transaction.class);
         doReturn(false).when(tx).isFailed();
         doReturn(tx).when(blockchain).getTransaction(1);
-        service = new FailedTransactionVerificationService(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), 0));
+        service = new FailedTransactionVerificationServiceImpl(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), 0));
 
-        FailedTransactionVerificationService.Result result = service.verifyTransaction(1L);
+        TxsVerificationResult result = service.verifyTransaction(1L);
 
         assertTrue(result.isEmpty(), "For not failed tx, there should be no verification results");
     }
@@ -210,7 +216,7 @@ class FailedTransactionVerificationServiceTest {
         doReturn(true).when(tx).isFailed();
         doReturn(tx).when(blockchain).getTransaction(1);
         doReturn("1").when(tx).getStringId();
-        service = new FailedTransactionVerificationService(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), 0));
+        service = new FailedTransactionVerificationServiceImpl(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, UUID.randomUUID(), 0));
 
         AplCoreContractViolationException ex = assertThrows(AplCoreContractViolationException.class, () -> service.verifyTransaction(1L));
 
@@ -227,14 +233,14 @@ class FailedTransactionVerificationServiceTest {
         doReturn(List.of(peer1, peer3)).when(peersService).getPublicPeers(PeerState.CONNECTED, true);
         doAnswer(this::returnAllRequestedCorrectTxs).when(peer1).send(new GetTransactionsRequest(Set.of(txId), chainId), new GetTransactionsResponseParser());
         doAnswer(this::returnAllRequestedCorrectTxs).when(peer3).send(new GetTransactionsRequest(Set.of(txId), chainId), new GetTransactionsResponseParser());
-        service = new FailedTransactionVerificationService(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, chainId, 0));
+        service = new FailedTransactionVerificationServiceImpl(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(2, 5, chainId, 0));
 
-        FailedTransactionVerificationService.Result result = service.verifyTransaction(txId);
+        TxsVerificationResult result = service.verifyTransaction(txId);
 
         assertTrue(result.isVerified(txId), "Transaction with id = " + txId +" should be successfully verified");
-        Optional<FailedTransactionVerificationService.VerifiedTransaction> transactionOpt = result.get(txId);
+        Optional<VerifiedTransaction> transactionOpt = result.get(txId);
         assertTrue(transactionOpt.isPresent(), "Transaction with id " + txId + " should be present inside the verification result");
-        FailedTransactionVerificationService.VerifiedTransaction verifiedTx = transactionOpt.get();
+        VerifiedTransaction verifiedTx = transactionOpt.get();
         assertEquals(2, verifiedTx.getCount());
         assertEquals("Transaction Error 1-0", verifiedTx.getError());
         assertEquals(txId, verifiedTx.getId());
@@ -244,7 +250,7 @@ class FailedTransactionVerificationServiceTest {
     @Test
     void onBlockPopped_toHeightOfLastProcessed() {
         mockDispatchManager();
-        service = new FailedTransactionVerificationService(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(1, 5, UUID.randomUUID(), 900));
+        service = new FailedTransactionVerificationServiceImpl(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(1, 5, UUID.randomUUID(), 900));
         doReturn("1000").when(optionDAO).get("lastFailedTransactionsVerificationBlock");
         Block block = mock(Block.class);
         doReturn(1000).when(block).getHeight();
@@ -257,7 +263,7 @@ class FailedTransactionVerificationServiceTest {
     @Test
     void onBlockPopped_toHeightGreaterThanLastProcessed() {
         mockDispatchManager();
-        service = new FailedTransactionVerificationService(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(1, 5, UUID.randomUUID(), 900));
+        service = new FailedTransactionVerificationServiceImpl(blockchain, peersService, optionDAO, dispatchManager, new FailedTransactionVerificationConfig(1, 5, UUID.randomUUID(), 900));
         doReturn("1000").when(optionDAO).get("lastFailedTransactionsVerificationBlock");
         Block block = mock(Block.class);
         doReturn(1001).when(block).getHeight();
@@ -267,7 +273,7 @@ class FailedTransactionVerificationServiceTest {
         verify(optionDAO, never()).set(anyString(), anyString());
     }
 
-    private void setUpMocksFoSchedulerLaunch() {
+    private void setUpMocksForSchedulerLaunch() {
         setUpMocks();
         launchTaskOnScheduling();
     }
@@ -286,18 +292,18 @@ class FailedTransactionVerificationServiceTest {
     }
 
     private void mockDispatchManager() {
-        doReturn(dispatcher).when(dispatchManager).newScheduledDispatcher(FailedTransactionVerificationService.class.getSimpleName());
+        doReturn(dispatcher).when(dispatchManager).newScheduledDispatcher(FailedTransactionVerificationServiceImpl.class.getSimpleName());
     }
 
     private void verifyNoVerifiedTransactions() {
-        FailedTransactionVerificationService.Result result = verifySuccessfulEnding();
-        assertEquals(0, result.allVerified().size());
-        assertEquals(failedTxs.stream().map(Transaction::getId).collect(Collectors.toSet()), result.allNotVerified());
+        TxsVerificationResult result = verifySuccessfulEnding();
+        assertEquals(0, result.allVerifiedIds().size());
+        assertEquals(failedTxs.stream().map(Transaction::getId).collect(Collectors.toSet()), result.allNotVerifiedIds());
     }
 
-    private FailedTransactionVerificationService.Result verifySuccessfulEnding() {
+    private TxsVerificationResult verifySuccessfulEnding() {
         verify(optionDAO).set("lastFailedTransactionsVerificationBlock", String.valueOf(720));
-        Optional<FailedTransactionVerificationService.Result> resultOp = service.getLastVerificationResult();
+        Optional<TxsVerificationResult> resultOp = service.getLastVerificationResult();
         assertTrue(resultOp.isPresent());
         return resultOp.get();
     }
@@ -307,6 +313,11 @@ class FailedTransactionVerificationServiceTest {
         doReturn(1440).when(blockchain).getHeight();
         doReturn(List.of(peer1, peer2, peer3, peer4, peer5, peer6)).when(peersService).getPublicPeers(PeerState.CONNECTED, true);
         doReturn(mockBlocks).when(blockchain).getBlocksAfter(0, 1440);
+    }
+
+    private void setUpMocksWithDispatcher() {
+        setUpMocks();
+        mockDispatchManager();
     }
 
     private void verifyNoBlacklist(List<Peer> peers) {

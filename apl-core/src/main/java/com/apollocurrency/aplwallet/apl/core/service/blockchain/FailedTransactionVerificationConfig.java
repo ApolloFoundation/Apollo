@@ -15,11 +15,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Configuration for the {@link FailedTransactionVerificationService} consisting of user-defined properties typically
+ * Configuration for the {@link FailedTransactionVerificationServiceImpl} consisting of user-defined properties typically
  * loaded from the apl-blockchain.properties files using {@link com.apollocurrency.aplwallet.apl.util.env.config.PropertiesConfigLoader}
  * and chain configuration from {@link BlockchainConfig}
  * @author Andrii Boiarskyi
- * @see FailedTransactionVerificationService
+ * @see FailedTransactionVerificationServiceImpl
  * @since 1.48.4
  */
 @Singleton

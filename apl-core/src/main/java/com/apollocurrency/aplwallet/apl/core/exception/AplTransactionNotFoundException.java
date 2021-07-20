@@ -4,14 +4,14 @@
 
 package com.apollocurrency.aplwallet.apl.core.exception;
 
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.FailedTransactionVerificationService;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.FailedTransactionVerificationServiceImpl;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
 import lombok.Getter;
 
 /**
  * Exception, which indicates that transaction with specified id was not found
  * @author Andrii Boiarskyi
- * @see FailedTransactionVerificationService
+ * @see FailedTransactionVerificationServiceImpl
  * @since 1.48.4
  */
 public class AplTransactionNotFoundException extends AplCoreLogicException {

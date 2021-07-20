@@ -26,8 +26,8 @@ tags:
     description: List operations by account (the bank reconcilation)
   - name: info
     description: An information
-  - name: debug
-    description: Operations, related to node state verification and debugging designated for node's admin use
+  - name: failed-txs
+    description: Operations, related to node's failed transactions state verification and debugging designated for node's admin use
 
 paths:
   /@@account:
@@ -527,10 +527,10 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /@@debug/tx-verifications/{id}:
+  /@@failed-txs/{id}:
     post:
       tags:
-        - debug
+        - failed-txs
       summary: Verify failed transaction by id
       description: Verify, that given transaction failed in a same way with same error on connected peers, and return validation result
       operationId: verifyFailedTransaction
@@ -559,16 +559,34 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
         - adminAuth: []
-  /@@debug/tx-verifications:
+  /@@failed-txs:
     get:
       tags:
-        - debug
+        - failed-txs
       summary: Get last verified failed transactions
       description: Retrieve results of the last background verification of failed transactions
       operationId: getVerifiedFailedTransactions
       responses:
         200:
           description: Background verification job is working OK, and results may be present
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastTransactionVerificationResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - adminAuth: []
+  /@@failed-txs/:
+    post:
+      tags:
+        - failed-txs
+      summary: Launch failed transactions verification
+      description: "Will manually execute failed transaction's verification starting from the last verified height. If there is no more than 1440 blocks from the last verified height, new transaction's verification will not be started"
+      operationId: verifyFailedTransactions
+      responses:
+        200:
+          description: Verification result, in case of successful verification's launch or empty result when no failed transactions or request is sent too early
           content:
             application/json:
               schema:
@@ -589,6 +607,16 @@ components:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object
           properties:
+            fromHeight:
+              description: Verification's beginning height
+              type: integer
+              format: uint64
+              example: 1000
+            toHeight:
+              description: Verification's end height
+              type: integer
+              format: uint64
+              example: 1720
             verificationResults:
               description: The array of last verified transactions both successful or not
               type: array
