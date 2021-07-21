@@ -1,59 +1,61 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
-import com.beust.jcommander.Parameter;
+import picocli.CommandLine.Option;
 
-/**
+/*
+ *  Copyright © 2018-2021 Apollo Foundation
  * Command line parameters
  *
  * @author alukin@gmail.com
+ * @author tx_hv@ukr.net
  */
 public class CmdLineArgs {
 
     public static int DEFAULT_DEBUG_LEVEL = 2;
 
-    @Parameter(names = {"--debug", "-d"}, description = "Debug level [0-4] from ERROR to TRACE")
+    @Option(names = {"--debug", "-d"}, description = "Debug level [0-4] from ERROR to TRACE")
     public int debug = DEFAULT_DEBUG_LEVEL;
-    @Parameter(names = {"--debug-updater", "-du"}, description = "Force updater to use debug certificates for verifying update transactions")
+    @Option(names = {"--debug-updater", "-du"}, description = "Force updater to use debug certificates for verifying update transactions")
     public boolean debugUpdater;
-    @Parameter(names = {"--help", "-h"}, help = true, description = "Print help message")
+    @Option(names = {"--help", "-h"}, help = true, description = "Print help message")
     public boolean help;
-    @Parameter(names = {"--service-mode", "-s"}, help = true, description = "Run in service mode with current system user")
+    @Option(names = {"--service-mode", "-s"}, help = true, description = "Run in service mode with current system user")
     public boolean serviceMode;
-    @Parameter(names = {"--ignore-resources"}, description = "Ignore resources bundled with application jar. Default is false")
+    @Option(names = {"--ignore-resources"}, description = "Ignore resources bundled with application jar. Default is false")
     public boolean ingnoreResources = false;
-    @Parameter(names = {"--config-dir", "-c"}, description = "Load all configuration and resources from specified path. System resources not ignored, standard config search is ignored.")
+    @Option(names = {"--config-dir", "-c"}, description = "Load all configuration and resources from specified path. System resources not ignored, standard config search is ignored.")
     public String configDir = "";
-    @Parameter(names = {"--log-dir", "-l"}, description = "Save log files to from specified directory.")
+    @Option(names = {"--log-dir", "-l"}, description = "Save log files to from specified directory.")
     public String logDir = "";
-    @Parameter(names = {"--db-dir"}, description = "Load/Save DB files to from specified directory. Ignored if DB URL is remote.")
+    @Option(names = {"--db-dir"}, description = "Load/Save DB files to from specified directory. Ignored if DB URL is remote.")
     public String dbDir = "";
-    @Parameter(names = {"--vault-key-dir"}, description = "Load/Save vault wallets keys to/form specified keystore directory.")
+    @Option(names = {"--vault-key-dir"}, description = "Load/Save vault wallets keys to/form specified keystore directory.")
     public String vaultKeystoreDir = "";
-    @Parameter(names = {"--dex-key-dir"}, description = "Load/Save dex keys to/form specified keystore directory.")
+    @Option(names = {"--dex-key-dir"}, description = "Load/Save dex keys to/form specified keystore directory.")
     public String dexKeystoreDir = "";
-    @Parameter(names = {"--no-shard-import"}, description = "Start from Genesis block, do not try to import last shard")
+    @Option(names = {"--no-shard-import"}, description = "Start from Genesis block, do not try to import last shard")
     public boolean noShardImport = false;
-    @Parameter(names = {"--no-shard-create"}, description = "Do not create shards even if it configured to do so. Shards require much more resources")
+    @Option(names = {"--no-shard-create"}, description = "Do not create shards even if it configured to do so. Shards require much more resources")
     public boolean noShardCreate = false;
 
-    @Parameter(names = {"--update-attachment-file", "-u"}, description = "Full path to file which represent json of UpdateAttachment for local updates debug")
+    @Option(names = {"--update-attachment-file", "-u"}, description = "Full path to file which represent json of UpdateAttachment for local updates debug")
     public String updateAttachmentFile = "";
 
     //    TODO cleanup apl-default.properties
-    @Parameter(names = {"--2fa-dir"}, description = "Load/Save 2FA keys to/form specified directory. Note that this parameter will not work when you do not set apl.store2FAInFileSystem=true in apl-default.properties")
+    @Option(names = {"--2fa-dir"}, description = "Load/Save 2FA keys to/form specified directory. Note that this Option will not work when you do not set apl.store2FAInFileSystem=true in apl-default.properties")
     public String twoFactorAuthDir = "";
-    @Parameter(names = {"--dexp-dir"}, description = "Export/Import CSV data to/form specified directory.")
+    @Option(names = {"--dexp-dir"}, description = "Export/Import CSV data to/form specified directory.")
     public String dataExportDir = "";
-    @Parameter(names = {"--pid-file"}, description = "Save PID to specified file.")
+    @Option(names = {"--pid-file"}, description = "Save PID to specified file.")
     public String pidFile = "";
-    @Parameter(names = {"--net", "-n"}, help = true, description = "Connect to net [0-4]. 0 means mainnet, 1 - 1st testnet and so on")
+    @Option(names = {"--net", "-n"}, help = true, description = "Connect to net [0-4]. 0 means mainnet, 1 - 1st testnet and so on")
     public int netIdx = -1;
-    @Parameter(names = {"--chain", "-C"}, help = true, description = "Connect to net with given chainID. UUID of chain id may be specified partially, 6 symbos min. Configs must be present.")
+    @Option(names = {"--chain", "-C"}, help = true, description = "Connect to net with given chainID. UUID of chain id may be specified partially, 6 symbos min. Configs must be present.")
     public String chainId = "";
-    @Parameter(names = {"--testnet"}, help = true, description = "Connect to testent 1. Has higher priority then --net")
+    @Option(names = {"--testnet"}, help = true, description = "Connect to testent 1. Has higher priority then --net")
     public boolean isTestnet = false;
     //---
-    @Parameter(names = {"--disable-weld-concurrent-deployment"},
+    @Option(names = {"--disable-weld-concurrent-deployment"},
         description = "If use it, Weld doesn't use ConcurrentDeployer and ConcurrentValidator to build the container. Default value is true.")
     public boolean disableWeldConcurrentDeployment = false;
 
