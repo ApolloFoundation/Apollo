@@ -874,6 +874,33 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /@@smc/r/debug/{address}:
+    get:
+      tags:
+        - smc
+      summary: Get the address value as a hex string.
+      description: Returns the given address as a hex string. Valid input formats are Reed-Solomone code, long and unsigned long
+      operationId: parseAddress
+      parameters:
+        - name: address
+          in: path
+          description: The contract address
+          required: true
+          schema:
+            type: string
+            example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressSpecResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
 
 components:
   parameters:
@@ -1880,6 +1907,31 @@ components:
           description: real method arguments
           type: string
           example: "balanceOf('0x7d2825cf3a120411');"
+
+    AddressSpec:
+      type: object
+      properties:
+        rs:
+          description: Reed-Solomone code
+          type: string
+          example: "APL-MZBG-ZYV8-Y5V3-HZZZZ"
+        long:
+          description: signed long value
+          type: string
+          example: -1234567890
+        ulong:
+          description: unsigned long value
+          type: string
+          example: 18446744072474983726
+        hex:
+          description: hex value
+          type: string
+          example: 0xffffffffb669fd2e
+
+    AddressSpecResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/AddressSpec'
 
     ResultValueResponse:
       allOf:

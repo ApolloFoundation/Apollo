@@ -6,6 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.rest.v2.impl;
 
 import com.apollocurrency.aplwallet.api.v2.NotFoundException;
 import com.apollocurrency.aplwallet.api.v2.SmcApiService;
+import com.apollocurrency.aplwallet.api.v2.model.AddressSpecResponse;
 import com.apollocurrency.aplwallet.api.v2.model.CallContractMethodReq;
 import com.apollocurrency.aplwallet.api.v2.model.CallViewMethodReq;
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
@@ -42,6 +43,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodA
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.api.parameter.FirstLastIndexBeanParam;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
@@ -70,6 +72,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.apollocurrency.smc.util.HexUtils.toHex;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -245,7 +249,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         var result = processAllMethods(contractAddress, body.getMembers(), executionLog);
 
         if (executionLog.hasError()) {
-            return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), contractAddress.getHex()).build();
+            return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), executionLog.getLatestCause()).build();
         }
         var response = new ResultValueResponse();
         response.setResults(methodResultMapper.convert(result));
@@ -288,7 +292,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         var result = processAllMethods(address, methodsToCall, executionLog);
 
         if (executionLog.hasError()) {
-            return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), address.getHex()).build();
+            return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), executionLog.getLatestCause()).build();
         }
 
         var resultMap = toMap(result);
@@ -593,6 +597,22 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         String contractState = contractService.loadSerializedContract(address);
         response.setState(contractState);
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response parseAddress(String address, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+
+        long addr = Convert.parseAccountId(address);
+        var bi = new BigInteger(Long.toUnsignedString(addr));
+
+        AddressSpecResponse response = new AddressSpecResponse();
+        response.setRs(Convert2.rsAccount(addr));
+        response.setHex(toHex(bi));
+        response.setLong(Long.toString(addr));
+        response.setUlong(Long.toUnsignedString(addr));
 
         return builder.bind(response).build();
     }
