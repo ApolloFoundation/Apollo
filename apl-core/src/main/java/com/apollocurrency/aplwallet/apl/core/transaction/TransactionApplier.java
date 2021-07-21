@@ -58,6 +58,7 @@ public class TransactionApplier {
             if (!blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(blockchain.getHeight())) {
                 return false;
             }
+            log.warn("Transaction {} didn't pass applyUnconfirmed validation, will treat transaction as failed at height {}", transaction.getStringId(), blockchain.getHeight());
             applied = applyUnconfirmedFailed(transaction);
             if (!applied) {
                 return false;

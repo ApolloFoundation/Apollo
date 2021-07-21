@@ -134,6 +134,8 @@ public class TransactionTestData {
 
     @Getter
     private BlockchainConfig blockchainConfig;
+    @Getter
+    private AccountService accountService;
 
     public TransactionTypeFactory getTransactionTypeFactory() {
         return transactionTypeFactory;
@@ -141,7 +143,7 @@ public class TransactionTestData {
 
     public TransactionTestData() {
         blockchainConfig = mock(BlockchainConfig.class);
-        AccountService accountService = mock(AccountService.class);
+        accountService = mock(AccountService.class);
         CurrencyService currencyService = mock(CurrencyService.class);
         AccountCurrencyService accountCurrencyService = mock(AccountCurrencyService.class);
         AccountAssetService accountAssetService = mock(AccountAssetService.class);

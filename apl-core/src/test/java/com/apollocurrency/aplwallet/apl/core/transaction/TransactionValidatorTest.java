@@ -165,26 +165,6 @@ class TransactionValidatorTest {
         return transaction;
     }
 
-    @Test
-    void isValidVersion() {
-    }
-
-    @Test
-    void validateSignatureWithTxFee() {
-    }
-
-    @Test
-    void checkSignature() {
-    }
-
-    @Test
-    void testCheckSignature() {
-    }
-
-    @Test
-    void verifySignature() {
-    }
-
     private Transaction createTransaction() {
         OrdinaryPaymentTransactionType type = new OrdinaryPaymentTransactionType(blockchainConfig, accountService);
         TransactionBuilderFactory builder = new TransactionBuilderFactory(new CachedTransactionTypeFactory(List.of(type)), blockchainConfig);
