@@ -33,7 +33,6 @@ import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProvider;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.DirProviderFactory;
 import com.apollocurrency.aplwallet.apl.util.env.dirprovider.PredefinedDirLocations;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
-import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +47,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+
+import picocli.CommandLine;
 
 /**
  * Main Apollo startup class
@@ -178,24 +179,25 @@ public class Apollo {
 //parse command line first
 
         CmdLineArgs args = new CmdLineArgs();
-        JCommander jc = JCommander.newBuilder()
-            .addObject(args)
-            .build();
-        jc.setProgramName(Constants.APPLICATION);
+        CommandLine pc = new CommandLine(args);
+//        jc = JCommander.newBuilder()
+//            .addObject(args)
+//            .build();
+//        jc.setProgramName(Constants.APPLICATION);
         try {
-            jc.parse(argv);
+            pc.parseArgs(argv);
         } catch (RuntimeException ex) {
             System.err.println("Error parsing command line arguments.");
             System.err.println(ex.getMessage());
-            jc.usage();
+            pc.usage();
             System.exit(PosixExitCodes.EX_USAGE.exitCode());
         }
         if (args.getNetIdx() >= 0 && !args.chainId.isEmpty()) {
             System.err.println("--chainId, --testnet and --net parameters are incompatible, please specify only one");
             System.exit(PosixExitCodes.EX_USAGE.exitCode());
-        }
+        }*/
         if (args.help) {
-            jc.usage();
+            pc.usage();
             System.exit(PosixExitCodes.OK.exitCode());
         }
 
