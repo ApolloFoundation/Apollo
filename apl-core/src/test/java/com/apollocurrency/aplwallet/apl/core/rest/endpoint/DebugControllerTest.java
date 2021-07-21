@@ -42,5 +42,7 @@ class DebugControllerTest {
         doReturn("APL").when(blockchainConfig).getAccountPrefix();
     }
 
-    @Test
+
+    private static final String getUri = "/dowloadstart/";
+    private static final String getByIdUri = "/donloadstart/id";
 }
