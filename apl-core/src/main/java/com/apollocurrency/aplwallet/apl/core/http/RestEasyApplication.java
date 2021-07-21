@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.api.v2.AccountApi;
+import com.apollocurrency.aplwallet.api.v2.CurrenciesApi;
 import com.apollocurrency.aplwallet.api.v2.FailedTxsApi;
 import com.apollocurrency.aplwallet.api.v2.InfoApi;
 import com.apollocurrency.aplwallet.api.v2.OperationApi;
@@ -80,6 +81,7 @@ public class RestEasyApplication extends Application {
         set.add(OperationApi.class);
         set.add(StateApi.class);
         set.add(TransactionApi.class);
+        set.add(CurrenciesApi.class);
         set.add(FailedTxsApi.class);
         //API V2 Services
 

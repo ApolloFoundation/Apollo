@@ -47,7 +47,7 @@ public final class GetPrivateUnconfirmedTransactions extends AbstractAPIRequestH
             .getAllStream()
             .filter(transaction -> data.getAccountId() == transaction.getSenderId() || data.getAccountId() == transaction.getRecipientId())
             .skip(firstIndex)
-            .limit(limit) ,e-> {
+            .limit(limit), e-> {
             if (data.isEncrypt() && ((Transaction) e).getType().getSpec() == TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT) {
                     transactions.add(JSONData.encryptedUnconfirmedTransaction(e, data.getSharedKey()));
                 } else {

@@ -325,7 +325,7 @@ public class TransactionProcessorImpl implements TransactionProcessor {
                 transactionValidator.validateSufficiently(tx);
                 isValid = true;
             } catch (AplUnacceptableTransactionValidationException e) {
-                log.debug("Tx {} is not valid", tx.getId());
+                log.debug("Tx {} is not valid, reason {}", tx.getId(), e.getMassage());
             }
         return isValid;
     }

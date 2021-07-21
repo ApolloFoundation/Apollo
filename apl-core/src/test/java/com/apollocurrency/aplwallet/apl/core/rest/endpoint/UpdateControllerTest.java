@@ -1,6 +1,11 @@
 package com.apollocurrency.aplwallet.apl.core.rest.endpoint;
 
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionSignerImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
+import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSignerImpl;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
@@ -13,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.utils.AccountParametersParser;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
@@ -27,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.util.api.converter.PlatformSpecConverter
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.service.ElGamalEncryptor;
 import com.apollocurrency.aplwallet.vault.model.ApolloFbWallet;
 import com.apollocurrency.aplwallet.vault.service.KMSService;
@@ -49,6 +56,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -56,6 +64,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UpdateControllerTest extends AbstractEndpointTest {
+    private final TransactionSignerImpl transactionSigner = mock(TransactionSignerImpl.class);
     BlockchainConfig blockchainConfig = mock(BlockchainConfig.class);
     Chain chain = mock(Chain.class);
 
@@ -88,7 +97,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
         v2Transaction = new UpdateV2TransactionType(blockchainConfig, accountService);
         UnconfirmedTransactionConverter converter = new UnconfirmedTransactionConverter(mock(PrunableLoadingService.class));
         CachedTransactionTypeFactory txTypeFactory = new CachedTransactionTypeFactory(List.of(v2Transaction));
-        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(mock(PrunableLoadingService.class), blockchainConfig), blockchain, processor, txTypeFactory, new TransactionBuilderFactory(txTypeFactory, blockchainConfig), mock(TransactionSignerImpl.class));
+        transactionCreator = new TransactionCreator(validator, new PropertiesHolder(), timeService, new FeeCalculator(mock(PrunableLoadingService.class), blockchainConfig), blockchain, processor, txTypeFactory, new TransactionBuilderFactory(txTypeFactory, blockchainConfig), transactionSigner, blockchainConfig);
         dispatcher.getProviderFactory()
             .register(ByteArrayConverterProvider.class)
             .register(LegacyParameterExceptionMapper.class)
@@ -121,13 +130,14 @@ class UpdateControllerTest extends AbstractEndpointTest {
             }
             return "";
         }).when(req).getParameter(anyString());
+        mockSigning();
 
         MockHttpResponse response = sendPostRequest("/updates", "secretPhrase=" + SECRET + "&manifestUrl=https://test11.com&level=CRITICAL&platformSpec=WINDOWS-X86_32,NoOS-ARM" +
             "&version=1.23.4&cn=https://cn345.com&serialNumber=1&signature=111100ff");
         String json = response.getContentAsString();
 //        System.out.println("json = \n" + json);
 
-        JSONAssert.assertEquals("{\"timestamp\": 0, \"attachment\" : {\"level\": 0, \"manifestUrl\":\"https://test11.com\", \"platforms\": [{\"platform\": 1, \"architecture\": 0},{\"platform\": -1, \"architecture\": 3}]}, \"type\" : 8, \"subtype\": 3}", json, JSONCompareMode.LENIENT);
+        JSONAssert.assertEquals(json, "{\"timestamp\": 0, \"signature\": \"6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443\", \"attachment\" : {\"level\": 0, \"manifestUrl\":\"https://test11.com\", \"platforms\": [{\"platform\": 1, \"architecture\": 0},{\"platform\": -1, \"architecture\": 3}]}, \"type\" : 8, \"subtype\": 3}", json, JSONCompareMode.LENIENT);
         verify(processor).broadcast(any(Transaction.class));
     }
 
@@ -153,6 +163,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
             }
             return "";
         }).when(req).getParameter(anyString());
+       mockSigning();
 
         MockHttpResponse response = sendPostRequest("/updates", "passphrase=" + SECRET + "&account=" + ACCOUNT_ID_WITH_SECRET + "&manifestUrl=https://test11.com&level=CRITICAL&platformSpec=WINDOWS-X86_64,NoOS-ARM64" +
             "&version=1.23.4&cn=https://cn345.com&serialNumber=1&signature=111100ff");
@@ -173,7 +184,7 @@ class UpdateControllerTest extends AbstractEndpointTest {
         String json = response.getContentAsString();
 //        System.out.println("json = \n" + json);
 
-        JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified.\"}", json, JSONCompareMode.LENIENT);
+        JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified\"}", json, JSONCompareMode.LENIENT);
         verify(processor, never()).broadcast(any(Transaction.class));
     }
 
@@ -192,7 +203,20 @@ class UpdateControllerTest extends AbstractEndpointTest {
             "&version=1.23.4&cn=https://cn.com&serialNumber=1&signature=111100ff");
         String json = response.getContentAsString();
 
-        JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified.\"}", json, JSONCompareMode.LENIENT);
+        JSONAssert.assertEquals("{\"newErrorCode\": 2002, \"errorDescription\" : \"At least one of [secretPhrase,publicKey,passphrase] must be specified\"}", json, JSONCompareMode.LENIENT);
         verify(processor, never()).broadcast(any(Transaction.class));
+    }
+
+    private void mockSigning() throws AplException.NotValidException {
+        String transactionUnsignedBytes = "6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f4436f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f4436f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443";
+        PayloadResult signedTxBytes = PayloadResult.createLittleEndianByteArrayResult();
+        signedTxBytes.getBuffer().write(Convert.parseHexString(transactionUnsignedBytes));
+        doAnswer(invocation-> {
+            Signature sig = mock(Signature.class);
+            doReturn(Convert.parseHexString("6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443")).when(sig).bytes();
+            lenient().doReturn("6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443").when(sig).getHexString();
+            ((TransactionImpl) invocation.getArgument(0)).sign(sig, signedTxBytes);
+            return null;
+        }).when(transactionSigner).sign(any(Transaction.class), any(byte[].class));
     }
 }

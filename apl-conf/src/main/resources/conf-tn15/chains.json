@@ -1,0 +1,58 @@
+[
+  {
+    "chainId": "00150000-cb84-4c31-9f7c-7af4c3c0080a",
+    "active": true,
+    "wellKnownPeers": [
+      "51.15.37.165",
+      "51.15.228.126",
+      "51.15.228.171",
+      "51.15.209.252",
+      "51.15.228.90",
+      "51.15.46.25",
+      "51.15.72.23"
+    ],
+    "name": "Apollo stage testnet",
+    "description": "Apollo pre-release test chain (staging), running on latest build being prepared to release",
+    "symbol": "Apollo",
+    "prefix": "APL",
+    "project": "Apollo",
+    "initialSupply": 30000000000,
+    "decimals": 8,
+    "featuresHeightRequirement": {
+      "dexReopenPendingOrdersHeight": 0,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 0
+    },
+    "blockchainProperties": [
+      {
+        "height": 0,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "blockTime": 60,
+        "maxBlockTimeLimit": 67,
+        "minBlockTimeLimit": 53,
+        "maxBalance": 30000000000
+      },
+      {
+        "height": 1,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "maxNumberOfChildAccounts": 10,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 3,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 2000
+        }
+      }
+    ]
+  }
+]
+

@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.data;
 
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.currency.CurrencySupply;
+
+import java.util.List;
 
 public class CurrencyTestData {
 
@@ -30,7 +30,7 @@ public class CurrencyTestData {
         "SMB", "Currency used in the Mushroom Kingdom, . 1UP",         1,
         25000L,            0,            25000,            104087,
         0,              0,                         0,               0,
-        (byte)0,      (byte)0,          (byte)0, supplyTestData.CURRENCY_SUPPLY_2,     104087, true,   false);
+        (byte)0,      (byte)0,          (byte)0, null,     104087, true,   false);
     public final Currency CURRENCY_3 = createCurrency(
         4,     834406670971597912L,  6869755601928778675L, "BitcoinX",  "bitcoinx",
         "BTCX", "Bitcoins distant relative Bitcoin X",                 1,
