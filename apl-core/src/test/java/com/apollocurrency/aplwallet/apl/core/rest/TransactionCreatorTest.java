@@ -1,30 +1,25 @@
 package com.apollocurrency.aplwallet.apl.core.rest;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
-import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException;
-import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
-import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionCreationResponse;
-import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionImpl;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionFeatureNotEnabledException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.TransactionImpl;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.FeeCalculator;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
-import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionSigner;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -381,7 +376,7 @@ class TransactionCreatorTest {
     }
 
     @Test
-    void testCreateTransaction_not_valid_on_unconfirmed() {
+    void testCreateTransaction_not_valid_on_unconfirmed() throws AplException.NotValidException {
         EcBlockData ecBlockData = new EcBlockData(121, 100_000);
         doReturn(ecBlockData).when(blockchain).getECBlock(0);
         CreateTransactionRequest request = CreateTransactionRequest.builder()
@@ -393,15 +388,15 @@ class TransactionCreatorTest {
             .broadcast(true)
             .build();
         doThrow(new AplAcceptableTransactionValidationException("Test. Not enough funds", mock(Transaction.class))).when(processor).broadcast(any(Transaction.class));
-        assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
         mockSigning();
+        assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
 
         TransactionCreator.TransactionCreationData data = txCreator.createTransaction(request);
         assertEquals(TransactionCreator.TransactionCreationData.ErrorType.VALIDATION_FAILED, data.getErrorType());
     }
 
     @Test
-    void testCreateTransaction_featureNotEnabled() {
+    void testCreateTransaction_featureNotEnabled() throws AplException.NotValidException {
         EcBlockData ecBlockData = new EcBlockData(121, 100_000);
         doReturn(ecBlockData).when(blockchain).getECBlock(0);
         CreateTransactionRequest request = CreateTransactionRequest.builder()
@@ -417,8 +412,9 @@ class TransactionCreatorTest {
         doReturn(type).when(tx).getType();
         doReturn(TransactionTypes.TransactionTypeSpec.ORDINARY_PAYMENT).when(type).getSpec();
         doThrow(new AplTransactionFeatureNotEnabledException("Test. Not enabled", tx)).when(processor).broadcast(any(Transaction.class));
-        assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
         mockSigning();
+
+        assertThrows(RestParameterException.class, () -> txCreator.createTransactionThrowingException(request));
 
         TransactionCreator.TransactionCreationData data = txCreator.createTransaction(request);
         assertEquals(TransactionCreator.TransactionCreationData.ErrorType.FEATURE_NOT_AVAILABLE, data.getErrorType());

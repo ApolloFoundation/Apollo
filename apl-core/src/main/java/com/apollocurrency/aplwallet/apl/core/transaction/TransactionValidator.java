@@ -173,7 +173,7 @@ public class TransactionValidator {
     public void validateSignatureWithTxFee(Transaction transaction) {
         Account sender = accountService.getAccount(transaction.getSenderId());
         if (sender == null) {
-            throw new AplException.NotCurrentlyValidException("Account " + Long.toUnsignedString(transaction.getSenderId()) + " does not exist yet");
+            throw new AplUnacceptableTransactionValidationException("Account " + Long.toUnsignedString(transaction.getSenderId()) + " does not exist yet", transaction);
         }
         int height = blockchain.getHeight();
         validateFee(sender, transaction, height);

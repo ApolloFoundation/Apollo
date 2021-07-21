@@ -172,7 +172,7 @@ class TransactionValidatorTest {
         TimeService timeService = mock(TimeService.class);
         int epochTime = (int) (System.currentTimeMillis() / 1000);
         doReturn(epochTime).when(timeService).getEpochTime();
-        TransactionCreator txCreator = new TransactionCreator(validator, mock(PropertiesHolder.class), timeService, feeCalculator, blockchain, mock(TransactionProcessor.class), new CachedTransactionTypeFactory(List.of(type)), builder, txSigner);
+        TransactionCreator txCreator = new TransactionCreator(validator, mock(PropertiesHolder.class), timeService, feeCalculator, blockchain, mock(TransactionProcessor.class), new CachedTransactionTypeFactory(List.of(type)), builder, txSigner, blockchainConfig);
         doReturn(new EcBlockData(1L, 100)).when(blockchain).getECBlock(epochTime);
         TransactionCreator.TransactionCreationData tx = txCreator.createTransaction(CreateTransactionRequest.builder()
             .secretPhrase("1")
