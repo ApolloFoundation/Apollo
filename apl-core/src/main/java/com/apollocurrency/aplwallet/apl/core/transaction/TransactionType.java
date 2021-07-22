@@ -162,7 +162,9 @@ public abstract class TransactionType {
         undoApplyAttachment(transaction, senderAccount, recipientAccount);
     }
 
-    protected void undoApplyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {};
+    protected void undoApplyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        throw new UnsupportedOperationException("undoApplyAttachment is not supported for transaction type: " + getSpec() + ", transaction: " + transaction.getStringId() + ", sender: " + Long.toUnsignedString(senderAccount.getId()));
+    };
 
     public abstract void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount);
 
