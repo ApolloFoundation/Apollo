@@ -90,7 +90,7 @@ class PhasingVoteTableTest extends DbContainerBaseTest {
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         TransactionDaoImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TransactionBuilderFactory.class,
         NullCacheProducerForTests.class, JdbiHandleFactory.class, JdbiConfiguration.class)

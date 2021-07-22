@@ -88,7 +88,7 @@ public class DGSPurchaseTableTest extends EntityDbTableTest<DGSPurchase> {
         FullTextConfigImpl.class,
         DGSPurchaseTable.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TransactionBuilderFactory.class,
         DerivedDbTablesRegistryImpl.class,

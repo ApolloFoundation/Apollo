@@ -111,7 +111,7 @@ public class PhasingPollTableTest extends EntityDbTableTest<PhasingPoll> {
         TransactionBuilderFactory.class,
         FullTextConfigImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         DerivedDbTablesRegistryImpl.class,
         BlockDaoImpl.class,

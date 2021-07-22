@@ -83,7 +83,7 @@ public class DGSPublicFeedbackTableTest extends ValuesDbTableTest<DGSPublicFeedb
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class,
         TransactionDaoImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionBuilderFactory.class,
         GenesisPublicKeyTable.class, JdbiHandleFactory.class, JdbiConfiguration.class)
         .addBeans(MockBean.of(getDatabaseManager(), DatabaseManager.class))

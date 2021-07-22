@@ -87,7 +87,7 @@ public class DGSGoodsTableTest extends EntityDbTableTest<DGSGoods> {
         GlobalSyncImpl.class,
         FullTextConfigImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TransactionBuilderFactory.class,
         DGSGoodsTable.class,

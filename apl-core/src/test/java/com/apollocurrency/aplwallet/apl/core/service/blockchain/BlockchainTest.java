@@ -126,7 +126,7 @@ class BlockchainTest extends DBContainerRootTest {
         BlockEntityRowMapper.class, BlockEntityToModelConverter.class, BlockModelToEntityConverter.class, JdbiHandleFactory.class, JdbiConfiguration.class,
         TransactionIndexDao.class, DaoConfig.class, JdbiTransactionalInterceptor.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TransactionBuilderFactory.class,
         BlockIndexServiceImpl.class, NullCacheProducerForTests.class)

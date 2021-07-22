@@ -80,7 +80,7 @@ class FullTextSearchServiceTest extends DbContainerBaseTest {
         TaggedDataServiceImpl.class, FullTextSearchUpdater.class,
         GlobalSyncImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TransactionBuilderFactory.class,
         TaggedDataTable.class,

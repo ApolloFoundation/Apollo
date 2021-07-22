@@ -96,7 +96,7 @@ public class DGSObserverTest extends DbContainerBaseTest {
         GlobalSyncImpl.class,
         FullTextConfigImpl.class,
         DGSPublicFeedbackTable.class,
-        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionBuilderFactory.class,
         DGSFeedbackTable.class,
         DGSGoodsTable.class,

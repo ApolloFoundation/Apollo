@@ -92,7 +92,7 @@ public class PhasingResultTableTest extends EntityDbTableTest<PhasingPollResult>
         FullTextConfigImpl.class,
         DerivedDbTablesRegistryImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TransactionBuilderFactory.class,
         JdbiHandleFactory.class, JdbiConfiguration.class,
