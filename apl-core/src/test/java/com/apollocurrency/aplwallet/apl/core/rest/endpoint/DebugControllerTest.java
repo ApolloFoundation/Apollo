@@ -43,6 +43,12 @@ class DebugControllerTest {
     }
 
 
-    private static final String getUri = "/dowloadstart/";
-    private static final String getByIdUri = "/donloadstart/id";
+    private static final String getUri = "/debug/dowloadstart/";
+    private static final String getByIdUri = "/debug/donloadstart/id";
+    
+    @Test
+    void testGetDonloadstartInfo() throws URISyntaxException, UnsupportedEncodingException {
+    
+    }
+    
 }
