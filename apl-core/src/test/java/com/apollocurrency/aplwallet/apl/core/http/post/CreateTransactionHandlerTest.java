@@ -55,7 +55,7 @@ class CreateTransactionHandlerTest {
     public WeldInitiator weld = WeldInitiator.from(DbProperties.class, NtpTime.class,
         PropertiesHolder.class,
         TransactionDaoImpl.class, TransactionProcessor.class,
-        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionBuilderFactory.class,
         TransactionalDataSource.class)
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))

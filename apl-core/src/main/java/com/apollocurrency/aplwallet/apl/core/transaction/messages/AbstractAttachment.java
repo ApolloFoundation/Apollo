@@ -91,6 +91,12 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
         return "Attachment[" + getClass().getSimpleName() + ", type = " + getTransactionTypeSpec()  + "]";
     }
 
+    @Override
+    public void undo(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        transactionType().undoApply(transaction, senderAccount, recipientAccount);
+        transactionType().undoUnconfirmed(transaction, senderAccount);
+    }
+
     private TransactionType transactionType() {
         if (this.transactionType == null) {
             throw new IllegalStateException("Transaction type was not set");

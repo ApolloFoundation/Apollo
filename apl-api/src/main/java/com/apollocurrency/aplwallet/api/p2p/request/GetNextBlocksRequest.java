@@ -12,7 +12,7 @@ import java.util.StringJoiner;
 import java.util.UUID;
 
 @Getter
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 public class GetNextBlocksRequest extends BaseP2PRequest {
     private static final String REQUEST_TYPE = "getNextBlocks";
 

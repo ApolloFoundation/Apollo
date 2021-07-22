@@ -87,7 +87,7 @@ public class PhasingPollVoterTableTest extends ValuesDbTableTest<PhasingPollVote
         FullTextConfigImpl.class,
         DerivedDbTablesRegistryImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TransactionBuilderFactory.class,
         BlockDaoImpl.class,

@@ -93,7 +93,7 @@ public class DGSTagTableTest extends EntityDbTableTest<DGSTag> {
         DGSTagTable.class,
         DerivedDbTablesRegistryImpl.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TransactionBuilderFactory.class,
         BlockDaoImpl.class,

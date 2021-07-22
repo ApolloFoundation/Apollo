@@ -75,7 +75,7 @@ public class DGSFeedbackTableTest extends ValuesDbTableTest<DGSFeedback> {
         FullTextConfigImpl.class,
         DGSFeedbackTable.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TransactionBuilderFactory.class,
         DerivedDbTablesRegistryImpl.class,

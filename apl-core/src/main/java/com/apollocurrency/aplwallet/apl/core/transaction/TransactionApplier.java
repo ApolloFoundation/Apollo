@@ -129,6 +129,7 @@ public class TransactionApplier {
             } catch (AplTransactionExecutionException e) {
                 checkFailedTxsAcceptance(transaction, e);
                 if (transaction.canFailDuringExecution()) {
+                    appendage.undo(transaction, senderAccount, recipientAccount);
                     log.info("Transaction {} failed during execution: {}", transaction.getStringId(), e.getMessage());
                     transaction.fail(e.getMessage());
                 } else {

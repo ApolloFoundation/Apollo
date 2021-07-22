@@ -150,6 +150,29 @@ public abstract class TransactionType {
         applyAttachment(transaction, senderAccount, recipientAccount);
     }
 
+    public void undoApply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        long amount = transaction.getAmountATM();
+        long transactionId = transaction.getId();
+        if (!transaction.attachmentIsPhased()) {
+            accountService.addToBalanceATM(senderAccount, getLedgerEvent(), transactionId, amount, transaction.getFeeATM());
+        } else {
+            accountService.addToBalanceATM(senderAccount, getLedgerEvent(), transactionId, amount);
+        }
+        if (recipientAccount != null) {
+            //refresh balance in case a debit account is equal to a credit one
+            if (Objects.equals(senderAccount.getId(), recipientAccount.getId())) {
+                recipientAccount.setBalanceATM(senderAccount.getBalanceATM());
+            }
+            accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, getLedgerEvent(), transactionId, -amount);
+            log.info("{} was refunded by {} ATM from the recipient {}", senderAccount.balanceString(), transaction.getAmountATM(), recipientAccount.balanceString());
+        }
+        undoApplyAttachment(transaction, senderAccount, recipientAccount);
+    }
+
+    protected void undoApplyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        throw new UnsupportedOperationException("undoApplyAttachment is not supported for transaction type: " + getSpec() + ", transaction: " + transaction.getStringId() + ", sender: " + Long.toUnsignedString(senderAccount.getId()));
+    };
+
     public abstract void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount);
 
     @TransactionFee(FeeMarker.UNDO_UNCONFIRMED_BALANCE)
