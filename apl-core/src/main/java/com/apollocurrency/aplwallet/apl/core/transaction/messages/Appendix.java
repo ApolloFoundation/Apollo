@@ -67,4 +67,5 @@ public interface Appendix {
         return null;
     }
 
+    void undo(Transaction transaction, Account senderAccount, Account recipientAccount);
 }

@@ -123,4 +123,8 @@ public abstract class AbstractAppendix implements Appendix {
         return isPhasable() && transaction.getPhasing() != null;
     }
 
+    @Override
+    public void undo(Transaction transaction, Account senderAccount, Account recipientAccount) {
+
+    }
 }
