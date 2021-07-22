@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;

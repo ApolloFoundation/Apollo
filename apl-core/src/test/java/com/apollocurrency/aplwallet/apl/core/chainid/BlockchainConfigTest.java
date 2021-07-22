@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.chainid;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.FeaturesHeightRequirement;
@@ -107,7 +107,7 @@ public class BlockchainConfigTest {
     @Test
     void testInitBlockchainConfigForFeatureHeightRequirementTransactionVersions() {
         blockchainConfig.updateChain(chain);
-        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, 200));
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, 1, 200));
         assertEquals(150, blockchainConfig.getTransactionV2Height().get());
         assertTrue(blockchainConfig.isTransactionV2ActiveAtHeight(200));
         assertFalse(blockchainConfig.isTransactionV2ActiveAtHeight(50));
@@ -116,17 +116,17 @@ public class BlockchainConfigTest {
         assertTrue(blockchainConfig.isTransactionV3ActiveAtHeight(250));
         assertFalse(blockchainConfig.isTransactionV3ActiveAtHeight(150));
 
-        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, null));
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, null, null));
         assertEquals(150, blockchainConfig.getTransactionV2Height().get());
         assertFalse(blockchainConfig.getTransactionV3Height().isPresent());
 
-        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, null, null));
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, null, null, null));
         assertFalse(blockchainConfig.getTransactionV2Height().isPresent());
         assertFalse(blockchainConfig.getTransactionV3Height().isPresent());
 
-        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, null, 200));
+        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, null, 1, 200));
 
-        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, 200, 100));
+        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, 200, 1, 100));
     }
 
     @Test
