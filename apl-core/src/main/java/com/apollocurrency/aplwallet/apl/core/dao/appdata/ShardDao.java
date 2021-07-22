@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2021 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.ShardRowMapper;
@@ -8,13 +12,13 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 
-/*import org.jdbi.v3.sqlobject.config.RegisterArgumentFactory;
+import org.jdbi.v3.sqlobject.config.RegisterArgumentFactory;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-*/
+
 
 import java.util.List;
 
@@ -51,8 +55,8 @@ public interface ShardDao {
     @SqlUpdate("INSERT INTO shard(shard_id, shard_hash, shard_state, shard_height, zip_hash_crc, prunable_zip_hash, generator_ids, block_timeouts, block_timestamps) " +
         "VALUES (:shardId, :shardHash, :shardState, :shardHeight, :coreZipHash, :prunableZipHash, :generatorIds, " +
         ":blockTimeouts, :blockTimestamps)")
-//    @RegisterArgumentFactory(LongArrayArgumentFactory.class)
-//    @RegisterArgumentFactory(IntArrayArgumentFactory.class)
+    @RegisterArgumentFactory(LongArrayArgumentFactory.class)
+    @RegisterArgumentFactory(IntArrayArgumentFactory.class)
     void saveShard(@BindBean Shard shard);
 
     @Transactional
@@ -61,8 +65,8 @@ public interface ShardDao {
         "where shard_id =:shardId")
 
 
-//    @RegisterArgumentFactory(LongArrayArgumentFactory.class)
-//    @RegisterArgumentFactory(IntArrayArgumentFactory.class)
+    @RegisterArgumentFactory(LongArrayArgumentFactory.class
+    @RegisterArgumentFactory(IntArrayArgumentFactory.class)
     int updateShard(@BindBean Shard shard);
 
     @Transactional
