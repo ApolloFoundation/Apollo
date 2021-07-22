@@ -6,7 +6,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.GeneratorService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
@@ -29,7 +29,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
     protected BlockchainConfig blockchainConfig;
     protected Blockchain blockchain;
     protected AccountService accountService;
-    private static GeneratorService generatorService;
+    private final GeneratorService generatorService;
     protected final BlockSerializer blockSerializer;
     protected final AccountPublicKeyService accountPublicKeyService;
 

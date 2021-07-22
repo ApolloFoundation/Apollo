@@ -43,17 +43,18 @@ public interface TransactionDao {
 
     Long getTransactionCount(TransactionalDataSource dataSource, int from, int to);
 
-    List<TransactionEntity> getTransactions(TransactionalDataSource dataSource,
-                                            long accountId, int numberOfConfirmations, byte type, byte subtype,
-                                            int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                            int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
-                                            int height, int prunableExpiration);
+    List<TransactionEntity> getTransactions(
+        TransactionalDataSource dataSource,
+        long accountId, byte type, byte subtype,
+        int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
+        int from, int to, boolean executedOnly, boolean includePrivate,
+        int height, int prunableExpiration, boolean failedOnly, boolean nonFailedOnly);
 
-    int getTransactionCountByFilter(TransactionalDataSource dataSource,
-                                    long accountId, int numberOfConfirmations, byte type, byte subtype,
-                                    int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                    boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate,
-                                    int height, int prunableExpiration);
+    int getTransactionCountByFilter(
+        TransactionalDataSource dataSource, long accountId,
+        byte type, byte subtype, int blockTimestamp, boolean withMessage, boolean phasedOnly,
+        boolean nonPhasedOnly, boolean executedOnly,
+        boolean includePrivate, int height, int prunableExpiration, boolean failedOnly, boolean nonFailedOnly);
 
     List<TransactionEntity> getTransactions(byte type, byte subtype, int from, int to);
 

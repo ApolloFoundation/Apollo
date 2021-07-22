@@ -50,9 +50,20 @@ public class SecurityInterceptor implements ContainerRequestFilter {
     @Named("excludeProtection")
     private RequestUriMatcher excludeProtectionUriMatcher;
 
+    @Inject
+    @Named("includeProtection")
+    private RequestUriMatcher includeProtectionUriMatcher;
+
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
         if (excludeProtectionUriMatcher.matches(uriInfo)) { //resource is not protected
+            return;
+        }
+        if (includeProtectionUriMatcher.matches(uriInfo)) { // protect resources by url
+            Response response = apw.verifyPasswordWithoutException(request);
+            if (response != null) {
+                requestContext.abortWith(response);
+            }
             return;
         }
 

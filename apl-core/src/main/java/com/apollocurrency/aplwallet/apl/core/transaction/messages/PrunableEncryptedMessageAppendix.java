@@ -1,10 +1,10 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
@@ -129,12 +129,12 @@ public class PrunableEncryptedMessageAppendix extends AbstractAppendix implement
     }
 
     @Override
-    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+    public void performStateDependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
         throw new UnsupportedOperationException("Validation is not supported, use separate class");
     }
 
     @Override
-    public void performLightweightValidation(Transaction transaction, int blockcHeight) throws AplException.ValidationException {
+    public void performStateIndependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
         throw new UnsupportedOperationException("Validation is not supported, use separate class");
     }
 

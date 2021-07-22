@@ -6,15 +6,14 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.MandatoryTransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.MandatoryTransactionModelToEntityConverter;
-import com.apollocurrency.aplwallet.apl.core.blockchain.MandatoryTransaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.MandatoryTransactionEntity;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.MandatoryTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.exchange.dao.MandatoryTransactionDao;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.service.TaskDispatchManager;
 import com.apollocurrency.aplwallet.apl.util.task.Task;
 import lombok.extern.slf4j.Slf4j;
@@ -114,7 +113,7 @@ public class MandatoryTransactionServiceImpl implements MandatoryTransactionServ
         log.debug("Finish processing of mandatory txs in {} ms", System.currentTimeMillis() - startTime);
     }
 
-    private void validateAndBroadcast(Transaction tx) throws AplException.ValidationException {
+    private void validateAndBroadcast(Transaction tx) {
         txValidator.validateFully(tx);
         txProcessor.broadcast(tx);
     }

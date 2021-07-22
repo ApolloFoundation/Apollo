@@ -20,12 +20,14 @@
 package com.apollocurrency.aplwallet.apl.core.http;
 
 import com.apollocurrency.aplwallet.apl.core.peer.PeersService;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.AplCoreLogicExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ClientErrorExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ConstraintViolationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.DefaultGlobalExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.IllegalArgumentExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.LegacyParameterExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.exception.ParameterExceptionMapper;
+import com.apollocurrency.aplwallet.apl.core.rest.exception.TransactionValidationExceptionMapper;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiProtectionFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.ApiSplitFilter;
 import com.apollocurrency.aplwallet.apl.core.rest.filters.CharsetRequestFilter;
@@ -363,6 +365,8 @@ public final class API {
                     .add(IllegalArgumentExceptionMapper.class.getName())
                     .add(PlatformSpecConverterProvider.class.getName())
                     .add(ByteArrayConverterProvider.class.getName())
+                    .add(AplCoreLogicExceptionMapper.class.getName())
+                    .add(TransactionValidationExceptionMapper.class.getName())
                     .toString()
             );
 

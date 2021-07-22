@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.types.payment;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -50,13 +50,6 @@ public class PrivatePaymentTransactionType extends PaymentTransactionType {
     }
 
     @Override
-    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-    }
-
-    @Override
-    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        if (transaction.getAmountATM() <= 0 || transaction.getAmountATM() >= getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
-            throw new AplException.NotValidException("Invalid private payment");
-        }
+    protected void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
     }
 }

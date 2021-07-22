@@ -18,4 +18,10 @@ public class RestSecurityConfig {
         return new UriPatternMatcher("*/openapi.json");
     }
 
+    @Produces
+    @Named("includeProtection")
+    public RequestUriMatcher createIncludePathMatcher() {
+        return new UriPatternMatcher("/v2/failed-txs/*", "/v2/failed-txs");
+    }
+
 }

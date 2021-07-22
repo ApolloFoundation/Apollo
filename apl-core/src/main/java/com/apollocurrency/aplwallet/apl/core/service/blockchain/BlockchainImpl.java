@@ -20,9 +20,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.EcBlockData;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.BlockModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
@@ -55,6 +55,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -476,18 +477,9 @@ public class BlockchainImpl implements Blockchain {
         }
         List<Block> result;
         if (entityList.isEmpty()) {
-            result = Collections.EMPTY_LIST;
+            result = Collections.emptyList();
         } else {
             result = loadBlockDataFromEntities(entityList);//load the generator public key
-            for (Block block : result) {
-                List<Transaction> blockTransactions = block.getTransactions();
-                if (log.isTraceEnabled()) {
-                    log.trace("Block id={} height={} Loaded {} transaction.",
-                        block.getId(),
-                        block.getHeight(),
-                        blockTransactions != null ? blockTransactions.size() : 0);
-                }
-            }
         }
         if (log.isTraceEnabled()) {
             log.trace("getBlocksAfter time {}", System.currentTimeMillis() - time);
@@ -700,11 +692,12 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public List<Transaction> getTransactions(long accountId, int numberOfConfirmations, byte type, byte subtype,
                                              int blockTimestamp, boolean withMessage, boolean phasedOnly, boolean nonPhasedOnly,
-                                             int from, int to, boolean includeExpiredPrunable, boolean executedOnly, boolean includePrivate) {
+                                             int from, int to, boolean includeExpiredPrunable, boolean executedOnly,
+                                             boolean includePrivate,  boolean failedOnly, boolean nonFailedOnly) {
 
         return transactionService.getTransactionsCrossShardingByAccount(accountId, getHeight(), numberOfConfirmations, type, subtype,
             blockTimestamp, withMessage, phasedOnly, nonPhasedOnly,
-            from, to, includeExpiredPrunable, executedOnly, includePrivate);
+            from, to, includeExpiredPrunable, executedOnly, includePrivate, failedOnly, nonFailedOnly);
     }
 
     @Transactional(readOnly = true)
@@ -795,6 +788,15 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public List<Block> getBlocksAfter(int height, int limit) {
         return loadBlockDataFromEntities(blockDao.getBlocksAfter(height, limit));
+    }
+
+    @Override
+    public List<Transaction> getTransactionsByIds(Set<Long> ids) {
+        return ids.stream()
+            .map(e-> transactionService.findTransactionCrossSharding(e, Integer.MAX_VALUE))
+            .map(this::loadPrunable)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
     }
 
 }

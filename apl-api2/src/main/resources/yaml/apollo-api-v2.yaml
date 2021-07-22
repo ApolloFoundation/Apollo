@@ -26,6 +26,8 @@ tags:
     description: List operations by account (the bank reconcilation)
   - name: info
     description: An information
+  - name: failed-txs
+    description: Operations, related to node's failed transactions state verification and debugging designated for node's admin use
   - name: smc
     description: Smart contract transactions management
 
@@ -554,6 +556,75 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /@@failed-txs/{id}:
+    post:
+      tags:
+        - failed-txs
+      summary: Verify failed transaction by id
+      description: Verify, that given transaction failed in a same way with same error on connected peers, and return validation result
+      operationId: verifyFailedTransaction
+      parameters:
+        - name: id
+          in: path
+          description: Failed transaction id in an unsigned integer form
+          required: true
+          schema:
+            type: string
+            format: int64
+            example: '12911439768940768505'
+      responses:
+        200:
+          description: Transaction was successfully verified or is not failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionVerificationResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        404:
+          description: Transaction by given id was not found
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - admin_api_key: []
+  /@@failed-txs:
+    get:
+      tags:
+        - failed-txs
+      summary: Get last verified failed transactions
+      description: Retrieve results of the last background verification of failed transactions
+      operationId: getVerifiedFailedTransactions
+      responses:
+        200:
+          description: Background verification job is working OK, and results may be present
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastTransactionVerificationResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - admin_api_key: []
+  /@@failed-txs/:
+    post:
+      tags:
+        - failed-txs
+      summary: Launch failed transactions verification
+      description: "Will manually execute failed transaction's verification starting from the last verified height. If there is no more than 1440 blocks from the last verified height, new transaction's verification will not be started"
+      operationId: verifyFailedTransactions
+      responses:
+        200:
+          description: Verification result, in case of successful verification's launch or empty result when no failed transactions or request is sent too early
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastTransactionVerificationResponse'
+        500:
+          $ref: '#/components/responses/ServerError'
+      security:
+        - admin_api_key: []
+
   /@@smc/publish:
     post:
       tags:
@@ -901,7 +972,6 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-
 components:
   parameters:
     FirstIndexParameter:
@@ -924,6 +994,52 @@ components:
         example: 25
 
   schemas:
+    TransactionVerificationResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: '#/components/schemas/TransactionVerification'
+    LastTransactionVerificationResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            fromHeight:
+              description: Verification's beginning height
+              type: integer
+              format: uint64
+              example: 1000
+            toHeight:
+              description: Verification's end height
+              type: integer
+              format: uint64
+              example: 1720
+            verificationResults:
+              description: The array of last verified transactions both successful or not
+              type: array
+              items:
+                $ref: '#/components/schemas/TransactionVerification'
+    TransactionVerification:
+      type: object
+      properties:
+        id:
+          description: Id of the verified transaction
+          type: string
+          format: int64
+          example: '12911439768940768505'
+        verified:
+          description: Whether verified transaction successfully or not
+          type: boolean
+          example: true
+        message:
+          description: Transaction error message, if transaction is failed, which was verified among the peers
+          type: string
+          example: Transaction error, unsufficient funds for account
+        verificationCount:
+          description: Number of transaction's successful verifications
+          type: integer
+          format: uint32
+          example: 3
+
     TransactionInfoArrayResp:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
@@ -2337,6 +2453,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Requested resource is not found or operation cannot be executed since required resource is missing
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     ConflictResource:
       description: |
         The request could not be completed due to a conflict with the current state of the resource.
@@ -2353,3 +2475,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    admin_api_key:
+      type: apiKey
+      in: header
+      name: adminPassword

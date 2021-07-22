@@ -19,8 +19,9 @@
     "initialSupply": 30000000000,
     "decimals": 8,
     "featuresHeightRequirement": {
-      "dexReopenPendingOrdersHeight": 300000,
-      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 750000
+      "dexReopenPendingOrdersHeight": 0,
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 0,
+      "failedTransactionsAcceptanceHeight": 0
     },
     "blockchainProperties": [
       {

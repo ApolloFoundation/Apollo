@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingDat
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipantState;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingStage;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 
 import java.util.ArrayList;

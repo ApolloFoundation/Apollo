@@ -3,7 +3,7 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -55,27 +55,19 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
         this.transactionType = transactionType;
     }
 
-    private TransactionType transactionType() {
-        if (this.transactionType == null) {
-            throw new IllegalStateException("Transaction type was not set");
-        }
-        return this.transactionType;
-    }
-
     @Override
     public String getAppendixName() {
         return getTransactionTypeSpec().getCompatibleName();
     }
 
     @Override
-    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
-        transactionType().doStateIndependentValidation(transaction);
-        transactionType().doStateDependentValidation(transaction);
+    public void performStateDependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        transactionType().validateStateDependent(transaction);
     }
 
     @Override
-    public void performLightweightValidation(Transaction transaction, int blockcHeight) throws AplException.ValidationException {
-        transactionType().doStateIndependentValidation(transaction);
+    public void performStateIndependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        transactionType().validateStateIndependent(transaction);
     }
 
     @Override
@@ -99,4 +91,10 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
         return "Attachment[" + getClass().getSimpleName() + ", type = " + getTransactionTypeSpec()  + "]";
     }
 
+    private TransactionType transactionType() {
+        if (this.transactionType == null) {
+            throw new IllegalStateException("Transaction type was not set");
+        }
+        return this.transactionType;
+    }
 }

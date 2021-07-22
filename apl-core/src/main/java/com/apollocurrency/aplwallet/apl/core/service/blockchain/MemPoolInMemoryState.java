@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.WrappedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.WrappedTransaction;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.SizeBoundedPriorityQueue;
 
@@ -133,7 +133,7 @@ public class MemPoolInMemoryState {
     }
 
     public List<Long> getAllCachedIds(){
-        return new ArrayList(transactionCache.keySet());
+        return new ArrayList<>(transactionCache.keySet());
     }
 
     public void clear() {
@@ -163,10 +163,6 @@ public class MemPoolInMemoryState {
 
     public int getReferencedCount() {
         return referencedCounter.get();
-    }
-
-    public void broadcastLater(Transaction tx) {
-        broadcastedTransactions.add(tx);
     }
 
     public void removeCached(Transaction transaction) {

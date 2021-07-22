@@ -7,7 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.shard.hash;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDao;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.Shard;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

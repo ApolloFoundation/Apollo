@@ -20,7 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -43,7 +43,7 @@ public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
     public GetBlockchainTransactions() {
         super(new APITag[]{APITag.ACCOUNTS, APITag.TRANSACTIONS}, "account", "timestamp", "type", "subtype",
             "firstIndex", "lastIndex", "numberOfConfirmations", "withMessage", "phasedOnly", "nonPhasedOnly",
-            "includeExpiredPrunable", "includePhasingResult", "executedOnly");
+            "includeExpiredPrunable", "includePhasingResult", "executedOnly", "failedOnly", "nonFailedOnly");
     }
 
     @Override
@@ -58,6 +58,8 @@ public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
         boolean includeExpiredPrunable = "true".equalsIgnoreCase(req.getParameter("includeExpiredPrunable"));
         boolean includePhasingResult = "true".equalsIgnoreCase(req.getParameter("includePhasingResult"));
         boolean executedOnly = "true".equalsIgnoreCase(req.getParameter("executedOnly"));
+        boolean failedOnly = "true".equalsIgnoreCase(req.getParameter("failedOnly"));
+        boolean nonFailedOnly = "true".equalsIgnoreCase(req.getParameter("nonFailedOnly"));
 
         byte type;
         byte subtype;
@@ -80,7 +82,7 @@ public final class GetBlockchainTransactions extends AbstractAPIRequestHandler {
         JSONArray transactions = new JSONArray();
         List<Transaction> transactionList = lookupBlockchain().getTransactions(accountId, numberOfConfirmations,
             type, subtype, timestamp, withMessage, phasedOnly, nonPhasedOnly, firstIndex, lastIndex,
-            includeExpiredPrunable, executedOnly, false);
+            includeExpiredPrunable, executedOnly, false, failedOnly, nonFailedOnly);
         transactionList.forEach(tx -> transactions.add(JSONData.transaction(tx, includePhasingResult, false)));
 
         JSONObject response = new JSONObject();
