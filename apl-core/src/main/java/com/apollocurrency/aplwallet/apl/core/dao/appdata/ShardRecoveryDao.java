@@ -7,13 +7,13 @@ package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 import com.apollocurrency.aplwallet.apl.core.converter.db.ShardRecoveryRowMapper;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ShardRecovery;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
-/*import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-*/
+
 import java.util.List;
 
 /**
