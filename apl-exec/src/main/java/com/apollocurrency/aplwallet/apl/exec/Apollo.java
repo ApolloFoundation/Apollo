@@ -189,7 +189,7 @@ public class Apollo {
         } catch (RuntimeException ex) {
             System.err.println("Error parsing command line arguments.");
             System.err.println(ex.getMessage());
-            pc.usage();
+//            Sуstem.err.print(pc.Help.ColorScheme.toString());
             System.exit(PosixExitCodes.EX_USAGE.exitCode());
         }
         if (args.getNetIdx() >= 0 && !args.chainId.isEmpty()) {
@@ -197,7 +197,7 @@ public class Apollo {
             System.exit(PosixExitCodes.EX_USAGE.exitCode());
         }
         if (args.help) {
-            pc.usage();
+//            pc.execute(args);
             System.exit(PosixExitCodes.OK.exitCode());
         }
 
