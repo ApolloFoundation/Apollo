@@ -31,8 +31,8 @@ import com.apollocurrency.smc.contract.SmartSource;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
-import com.apollocurrency.smc.persistence.record.log.ArrayTxLog;
-import com.apollocurrency.smc.persistence.record.log.TxLog;
+import com.apollocurrency.smc.persistence.txlog.ArrayTxLog;
+import com.apollocurrency.smc.persistence.txlog.TxLog;
 import com.apollocurrency.smc.polyglot.Languages;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
 import com.apollocurrency.smc.polyglot.lib.ContractSpec;
@@ -104,7 +104,6 @@ public class SmcContractServiceImpl implements SmcContractService {
         SmcContractStateEntity smcStateEntity = loadContractStateEntity(address);
 
         SmartContract contract = convert(smcEntity, smcStateEntity, contractFuel);
-        contract.setTxLog(createLog(address.getHex()));
         log.debug("Loaded contract={}", contract);
 
         return contract;
@@ -178,12 +177,14 @@ public class SmcContractServiceImpl implements SmcContractService {
         }
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) smcTransaction.getAttachment();
 
-        Address contractAddress = new AplAddress(smcTransaction.getRecipientId());
+        final Address contractAddress = new AplAddress(smcTransaction.getRecipientId());
+        final Address sender = new AplAddress(smcTransaction.getSenderId());
+        final Address txId = new AplAddress(smcTransaction.getId());
         SmartContract contract = SmartContract.builder()
             .address(contractAddress)
-            .owner(new AplAddress(smcTransaction.getSenderId()))
-            .sender(new AplAddress(smcTransaction.getSenderId()))
-            .txId(new AplAddress(smcTransaction.getId()))
+            .owner(sender)
+            .sender(sender)
+            .txId(txId)
             //TODO determine the contract type by source code
             .type(ContractType.PAYABLE)
             .code(SmartSource.builder()
@@ -196,7 +197,6 @@ public class SmcContractServiceImpl implements SmcContractService {
             )
             .status(ContractStatus.CREATED)
             .fuel(new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice()))
-            .txLog(createLog(contractAddress.getHex()))
             .build();
 
         log.debug("Created contract={}", contract);
@@ -309,8 +309,8 @@ public class SmcContractServiceImpl implements SmcContractService {
         return smcContractEntity;
     }
 
-    private TxLog createLog(String address) {
-        return new ArrayTxLog(address, hashSumProvider);
+    private TxLog createLog(Address address, Address tx, Address originator) {
+        return new ArrayTxLog(address.getHex(), tx, originator);
     }
 
 }

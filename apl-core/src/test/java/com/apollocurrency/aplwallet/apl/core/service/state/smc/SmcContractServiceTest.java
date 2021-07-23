@@ -28,7 +28,6 @@ import com.apollocurrency.smc.contract.SmartSource;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
-import com.apollocurrency.smc.persistence.record.log.DevNullLog;
 import com.apollocurrency.smc.polyglot.LanguageContext;
 import com.apollocurrency.smc.polyglot.Languages;
 import org.junit.jupiter.api.BeforeEach;
@@ -141,7 +140,6 @@ class SmcContractServiceTest {
             )
             .status(ContractStatus.CREATED)
             .fuel(new ContractFuel(smcPublishContractAttachment.getFuelLimit(), smcPublishContractAttachment.getFuelPrice()))
-            .txLog(new DevNullLog())
             .build();
 
         smcContractEntity = contractModelToEntityConverter.convert(smartContract);
