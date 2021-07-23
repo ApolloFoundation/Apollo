@@ -160,9 +160,10 @@ public class TransactionValidator {
             AppendixValidator<AbstractAppendix> validator = validatorRegistry.getValidatorFor(appendage);
             if (validatingAtFinish) {
                 validateAtFinishRethrowing(transaction, appendage, validator);
+            } else {
+                doAppendixLightValidationRethrowing(transaction, appendage, validator);
+                doAppendixStateDependentValidationRethrowing(transaction, appendage, validator);
             }
-            doAppendixLightValidationRethrowing(transaction, appendage, validator);
-            doAppendixStateDependentValidationRethrowing(transaction, appendage, validator);
         }
     }
 

@@ -12,12 +12,14 @@ import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.util.Map;
 
+@EqualsAndHashCode(callSuper = true)
 public class PrunableEncryptedMessageAppendix extends AbstractAppendix implements Prunable {
 
     static final String APPENDIX_NAME = "PrunableEncryptedMessage";

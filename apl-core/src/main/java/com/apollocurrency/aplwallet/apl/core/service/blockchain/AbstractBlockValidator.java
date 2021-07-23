@@ -77,7 +77,7 @@ public abstract class AbstractBlockValidator implements BlockValidator {
             Account generatorAccount = accountService.getAccount(block.getGeneratorId());
             long generatorBalance = generatorAccount == null ? 0 : accountService.getEffectiveBalanceAPL(generatorAccount, blockchain.getHeight(), true);
             throw new BlockchainProcessor.BlockNotAcceptedException(
-                "Generation signature verification failed, effective balance " + generatorBalance, blockSerializer.getJSONObject(block));
+                "Generation signature verification failed, effective balance " + generatorBalance  + ", generator: " + Long.toUnsignedString(block.getGeneratorId()), blockSerializer.getJSONObject(block));
         }
 
         int txCount = block.getTransactions().size();

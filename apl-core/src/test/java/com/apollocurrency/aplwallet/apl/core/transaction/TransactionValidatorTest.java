@@ -23,11 +23,13 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountContro
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedToSelfMessageAppendixValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendixValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.OrdinaryPaymentAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PhasingAppendixValidator;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendixValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryPaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
@@ -58,7 +60,9 @@ class TransactionValidatorTest {
     @Mock AccountPublicKeyService accountPublicKeyService;
     @Mock AccountControlPhasingService accountControlPhasingService;
     @Mock PrunableLoadingService prunableService;
-    @Mock AccountService accountService;
+    @Mock
+    TimeService timeService;
+    AccountService accountService;
     @Mock TransactionVersionValidator transactionVersionValidator;
     @Mock AppendixValidatorRegistry validatorRegistry;
 
@@ -73,6 +77,7 @@ class TransactionValidatorTest {
     @BeforeEach
     void setUp() {
         td = new TransactionTestData();
+        accountService = td.getAccountService();
         blockchainConfig = td.getBlockchainConfig();
         doReturn(chain).when(blockchainConfig).getChain();
         validator = new TransactionValidator(blockchainConfig, phasingPollService, blockchain, feeCalculator, accountService, accountPublicKeyService, accountControlPhasingService, transactionVersionValidator, prunableService, validatorRegistry);
@@ -133,11 +138,47 @@ class TransactionValidatorTest {
     }
 
     @Test
-    void validateFully() {
+    void validateFully_OK() {
         Transaction transaction = createTransactionMocks();
         doReturn(UUID.randomUUID()).when(chain).getChainId();
         doReturn(10_000).when(heightConfig).getMaxPayloadLength();
         doReturn(1L).when(blockchain).getBlockIdAtHeight(100);
+
+        validator.verifySignature(transaction);
+        validator.validateFully(transaction);
+    }
+
+    @Test
+    void validateFullyPhasingAtFinish() {
+        Transaction transaction = td.TRANSACTION_13;
+        doReturn(transaction.getHeight() + 1000).when(blockchain).getHeight();
+        doReturn(true).when(transactionVersionValidator).isValidVersion(transaction);
+        doReturn(300_000_000_000_000_000L).when(heightConfig).getMaxBalanceATM();
+        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        Account senderAcc = new Account(transaction.getSenderId(), transaction.getAmountATM() + transaction.getFeeATM(), transaction.getAmountATM() + transaction.getFeeATM(), 0, 0, 0);
+        doReturn(senderAcc).when(accountService).getAccount(transaction.getSenderId());
+        doReturn(UUID.randomUUID()).when(chain).getChainId();
+        doReturn(10_000).when(heightConfig).getMaxPayloadLength();
+        doReturn(1000).when(heightConfig).getMaxEncryptedMessageLength();
+        doReturn(5629144656878115682L).when(blockchain).getBlockIdAtHeight(516746);
+        doAnswer(invocation -> {
+            if (invocation.getArgument(0).equals(transaction.getMessage())) {
+                return new MessageAppendixValidator(blockchainConfig);
+            } else if (invocation.getArgument(0).equals(transaction.getPhasing())) {
+                return new PhasingAppendixValidator(blockchain, phasingPollService, blockchainConfig);
+            } else if (invocation.getArgument(0).equals(transaction.getEncryptToSelfMessage())) {
+                return new EncryptedToSelfMessageAppendixValidator(blockchainConfig);
+            } else if (invocation.getArgument(0).equals(transaction.getPrunableEncryptedMessage())) {
+                doReturn(transaction.getTimestamp() + 5000).when(timeService).getEpochTime();
+                doReturn(1000).when(blockchainConfig).getMinPrunableLifetime();
+                return new PrunableEncryptedMessageAppendixValidator(timeService, blockchainConfig);
+            }
+            else {
+                return null;
+            }
+        }).when(validatorRegistry).getValidatorFor(any());
+        doReturn(100).when(heightConfig).getMaxArbitraryMessageLength();
+
 
         validator.verifySignature(transaction);
         validator.validateFully(transaction);

@@ -47,7 +47,7 @@ public abstract class AbstractAppendix implements Appendix {
 
     public abstract int getMySize();
 
-    public abstract boolean isPhasable();
+    public abstract boolean  isPhasable();
 
     public abstract String getAppendixName();
 

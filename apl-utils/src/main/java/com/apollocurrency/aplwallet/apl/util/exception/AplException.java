@@ -24,7 +24,11 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONStreamAware;
 
 import java.io.IOException;
-
+/**
+ * TODO
+ * Should be replaced by the {@code AplCoreLogicException} runtime exception's hierarchy
+ */
+@Deprecated(forRemoval = true)
 public abstract class AplException extends Exception {
 
     private JSONStreamAware jsonResponse;
@@ -54,6 +58,11 @@ public abstract class AplException extends Exception {
         return jsonResponse;
     }
 
+
+    /**
+     * Should be replaced by the {@code AplTransactionValidationException}
+     */
+    @Deprecated(forRemoval = true)
     public static abstract class ValidationException extends AplException {
 
         private ValidationException(String message) {
@@ -70,6 +79,10 @@ public abstract class AplException extends Exception {
 
     }
 
+    /**
+     * Should be replaced by the {@code AplAcceptableTransactionValidationException} in most cases
+     */
+    @Deprecated(forRemoval = true)
     public static class NotCurrentlyValidException extends ValidationException {
 
         public NotCurrentlyValidException(String message) {
@@ -82,14 +95,10 @@ public abstract class AplException extends Exception {
 
     }
 
-    public static class ExistingTransactionException extends NotCurrentlyValidException {
-
-        public ExistingTransactionException(String message) {
-            super(message);
-        }
-
-    }
-
+    /**
+     * Should be replaced by the {@code AplUnacceptableTransactionValidationException} in most cases
+     */
+    @Deprecated(forRemoval = true)
     public static final class NotValidException extends ValidationException {
 
         public NotValidException(String message) {
@@ -106,6 +115,10 @@ public abstract class AplException extends Exception {
 
     }
 
+    /**
+     * Should be replaced by the {@code AplAcceptableTransactionValidationException} subclass
+     */
+    @Deprecated(forRemoval = true)
     public static class AccountControlException extends NotCurrentlyValidException {
 
         public AccountControlException(String message) {
@@ -118,6 +131,10 @@ public abstract class AplException extends Exception {
 
     }
 
+    /**
+     * Should be replaced by the {@code AplCoreLogicException} or separate P2P exception's hierarchy
+     */
+    @Deprecated(forRemoval = true)
     public static final class AplIOException extends IOException {
 
         public AplIOException(String message) {
@@ -130,6 +147,11 @@ public abstract class AplException extends Exception {
 
     }
 
+    /**
+     * TODO
+     * Better to replaced by the subclass of the AplCoreLogicException
+     */
+    @Deprecated
     public static final class ExecutiveProcessException extends Exception {
         public ExecutiveProcessException() {
             super();
@@ -144,6 +166,10 @@ public abstract class AplException extends Exception {
         }
     }
 
+    /**
+     * TODO
+     * Will be extracted out of this class
+     */
     public static final class ThirdServiceIsNotAvailable extends RuntimeException {
 
         public ThirdServiceIsNotAvailable(String message) {
@@ -155,6 +181,10 @@ public abstract class AplException extends Exception {
         }
     }
 
+    /**
+     * TODO
+     * Will be extracted out of this class
+     */
     public static final class DEXProcessingException extends RuntimeException {
 
         public DEXProcessingException(String message) {
