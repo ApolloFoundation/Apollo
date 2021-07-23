@@ -20,11 +20,11 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
@@ -171,7 +171,7 @@ public abstract class TransactionType {
 
     protected void undoApplyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         throw new UnsupportedOperationException("undoApplyAttachment is not supported for transaction type: " + getSpec() + ", transaction: " + transaction.getStringId() + ", sender: " + Long.toUnsignedString(senderAccount.getId()));
-    };
+    }
 
     public abstract void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount);
 

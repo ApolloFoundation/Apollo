@@ -14,7 +14,6 @@ import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.storage.PersistentMappingRepository;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.storage.ReadonlyMappingRepository;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
@@ -26,6 +25,7 @@ import com.apollocurrency.smc.blockchain.storage.BigIntegerJsonConverter;
 import com.apollocurrency.smc.blockchain.storage.BigNumJsonConverter;
 import com.apollocurrency.smc.blockchain.storage.ContractMappingRepository;
 import com.apollocurrency.smc.blockchain.storage.ContractMappingRepositoryFactory;
+import com.apollocurrency.smc.blockchain.storage.ReadonlyMappingRepository;
 import com.apollocurrency.smc.blockchain.storage.StringJsonConverter;
 import com.apollocurrency.smc.blockchain.tx.SMCOperationReceipt;
 import com.apollocurrency.smc.contract.SmartMethod;
@@ -39,6 +39,7 @@ import com.apollocurrency.smc.contract.vm.global.SMCTransaction;
 import com.apollocurrency.smc.contract.vm.operation.SMCOperationProcessor;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.data.type.BigNum;
+import com.apollocurrency.smc.persistence.txlog.ArrayTxLog;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -54,7 +55,6 @@ public class SmcBlockchainIntegratorFactory {
     private final Blockchain blockchain;
     private final ServerInfoService serverInfoService;
     private final BlockConverter blockConverter;
-    private final SmcContractStorageService smcContractStorageService;
     private final SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory;
 
     @Inject
@@ -63,12 +63,13 @@ public class SmcBlockchainIntegratorFactory {
         this.blockchain = Objects.requireNonNull(blockchain);
         this.serverInfoService = Objects.requireNonNull(serverInfoService);
         this.blockConverter = new BlockConverter();
-        this.smcContractStorageService = Objects.requireNonNull(smcContractStorageService);
-        this.smcMappingRepositoryClassFactory = new SmcMappingRepositoryClassFactory(smcContractStorageService);
+        this.smcMappingRepositoryClassFactory = new SmcMappingRepositoryClassFactory(Objects.requireNonNull(smcContractStorageService));
     }
 
     public BlockchainIntegrator createProcessor(final Transaction originator, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
         BlockchainIntegrator integrator = createIntegrator(originator, attachment, txSenderAccount, txRecipientAccount, ledgerEvent);
+        var txLog = new ArrayTxLog(, originator.getId(), originator.getSenderId())
+
         return SMCOperationProcessor.createProcessor(integrator, new ExecutionLog());
     }
 
@@ -218,12 +219,13 @@ public class SmcBlockchainIntegratorFactory {
                 }
                 accountService.addToBalanceAndUnconfirmedBalanceATM(sender, ledgerEvent, originatorTransactionId, -amount);
                 accountService.addToBalanceAndUnconfirmedBalanceATM(recipient, ledgerEvent, originatorTransactionId, amount);
-                log.debug("--send money ---5: before blockchain tx, receipt={}", txReceiptBuilder.build());
             } catch (Exception e) {
                 //TODO adjust error code
                 txReceiptBuilder.errorCode(1L).errorDescription(e.getMessage()).errorDetails(ThreadUtils.last5Stacktrace());
             }
-            return txReceiptBuilder.build();
+            var rc = txReceiptBuilder.build();
+            log.debug("--send money ---5: receipt={}", rc);
+            return rc;
         }
 
         @Override
@@ -289,22 +291,26 @@ public class SmcBlockchainIntegratorFactory {
 
                 @Override
                 public ContractMappingRepository<Address> addressRepository(String mappingName) {
-                    return new ReadonlyMappingRepository<>(smcContractStorageService, contract, mappingName, new AddressJsonConverter());
+                    return new ReadonlyMappingRepository<>(
+                        new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new AddressJsonConverter()));
                 }
 
                 @Override
                 public ContractMappingRepository<BigNum> bigNumRepository(String mappingName) {
-                    return new ReadonlyMappingRepository<>(smcContractStorageService, contract, mappingName, new BigNumJsonConverter());
+                    return new ReadonlyMappingRepository<>(
+                        new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new BigNumJsonConverter()));
                 }
 
                 @Override
                 public ContractMappingRepository<BigInteger> bigIntegerRepository(String mappingName) {
-                    return new ReadonlyMappingRepository<>(smcContractStorageService, contract, mappingName, new BigIntegerJsonConverter());
+                    return new ReadonlyMappingRepository<>(
+                        new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new BigIntegerJsonConverter()));
                 }
 
                 @Override
                 public ContractMappingRepository<String> stringRepository(String mappingName) {
-                    return new ReadonlyMappingRepository<>(smcContractStorageService, contract, mappingName, new StringJsonConverter());
+                    return new ReadonlyMappingRepository<>(
+                        new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new StringJsonConverter()));
                 }
             };
         }

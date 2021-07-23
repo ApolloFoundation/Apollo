@@ -7,10 +7,8 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.contract.vm.ResultValue;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -26,15 +24,6 @@ public interface SmcContractTxProcessor {
      * @return result of the contract execution
      */
     Optional<Object> process(ExecutionLog executionLog);
-
-    /**
-     * Batch processing. Validate, perform the smart contract and manipulate balances
-     * Call the function/method of the smart contract.
-     *
-     * @param executionLog execution log
-     * @return list of the contract executions
-     */
-    List<ResultValue> batchProcess(ExecutionLog executionLog);
 
     /**
      * Returns the smart contract that is processing

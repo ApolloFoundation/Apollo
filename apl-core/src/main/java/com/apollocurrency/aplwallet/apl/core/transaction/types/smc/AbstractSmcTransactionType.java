@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.exception.AplCoreContractViolationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
@@ -61,6 +62,11 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     }
 
     @Override
+    public boolean canFailDuringExecution() {
+        return true;
+    }
+
+    @Override
     public String getName() {
         return getSpec().getCompatibleName();
     }
@@ -109,7 +115,7 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
         smcTransaction.getAttachment().getTransactionTypeSpec();
         if (smcTransaction.getAttachment().getTransactionTypeSpec() != getSpec()) {
             log.error("Invalid transaction attachment, txType={} txId={}", smcTransaction.getType(), smcTransaction.getId());
-            throw new IllegalStateException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec());
+            throw new AplCoreContractViolationException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec());
         }
     }
 

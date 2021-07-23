@@ -191,6 +191,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             log.error(executionLog.toJsonString());
             throw new AplException.SMCProcessingException(executionLog.toJsonString());
         }
+
         @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
         Fuel fuel = smartContract.getFuel();
         log.debug("After processing Address={} Fuel={}", smartContract.getAddress(), fuel);

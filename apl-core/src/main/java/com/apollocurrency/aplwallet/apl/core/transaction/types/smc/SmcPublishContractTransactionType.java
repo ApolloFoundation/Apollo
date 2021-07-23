@@ -95,7 +95,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         Address address = new AplAddress(transaction.getRecipientId());
         if (contractService.isContractExist(address)) {
             log.debug("SMC: doStateDependentValidation = INVALID");
-            throw new AplException.NotCurrentlyValidException("Contract already exists at address " + address);
+            throw new AplException.NotCurrentlyValidException("Account already exists, address=" + address);
         }
         log.debug("SMC: doStateDependentValidation = VALID");
     }

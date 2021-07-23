@@ -11,11 +11,9 @@ import com.apollocurrency.smc.contract.ContractException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.ContractVirtualMachine;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.contract.vm.ResultValue;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
 import java.util.Optional;
 
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT_PROCESSING_ERROR;
@@ -70,23 +68,7 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
         }
     }
 
-    protected Optional<Object> executeContract(ExecutionLog executionLog) {
-        return Optional.empty();
-    }
-
-    @Override
-    public List<ResultValue> batchProcess(ExecutionLog executionLog) {
-        try {
-
-            return batchExecuteContract(executionLog);
-
-        } catch (Exception e) {
-
-            putExceptionToLog(executionLog, e);
-
-            return List.of();
-        }
-    }
+    protected abstract Optional<Object> executeContract(ExecutionLog executionLog);
 
     protected void putExceptionToLog(ExecutionLog executionLog, Exception e) {
         log.error("Call method error {}:{}", e.getClass().getName(), e.getMessage());
@@ -98,10 +80,6 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
         }
         executionLog.add("Abstract processor", smcException);
         executionLog.setErrorCode(CONTRACT_PROCESSING_ERROR.getErrorCode());
-    }
-
-    protected List<ResultValue> batchExecuteContract(ExecutionLog executionLog) {
-        return List.of();
     }
 
 }

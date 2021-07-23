@@ -156,12 +156,14 @@ public class TransactionApplier {
         }
     }
 
+    @TransactionFee({FeeMarker.BALANCE, FeeMarker.FEE})
     private void applyFailed(Transaction transaction) {
         long feeATM = transaction.getFeeATM();
         Account sender = accountService.getAccount(transaction.getSenderId());
         accountService.addToBalanceATM(sender, LedgerEvent.TRANSACTION_FEE, transaction.getId(), 0, -feeATM);
     }
 
+    @TransactionFee({FeeMarker.UNCONFIRMED_BALANCE, FeeMarker.FEE})
     private boolean applyUnconfirmedFailed(Transaction tx) {
         Account sender = accountService.getAccount(tx.getSenderId());
         if (sender.getUnconfirmedBalanceATM() >= tx.getFeeATM()) {

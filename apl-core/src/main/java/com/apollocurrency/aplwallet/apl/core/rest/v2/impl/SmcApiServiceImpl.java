@@ -33,6 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.SmartMethodMapper
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxBatchProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodTxValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallViewMethodTxProcessor;
@@ -354,7 +355,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         //smartContract.setSender(new AplAddress(transaction.getSenderId()));
 
         var methods = methodMapper.convert(members);
-        SmcContractTxProcessor processor = new CallViewMethodTxProcessor(
+        SmcContractTxBatchProcessor processor = new CallViewMethodTxProcessor(
             smartContract,
             methods,
             integratorFactory.createReadonlyProcessor(),
