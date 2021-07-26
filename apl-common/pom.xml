@@ -104,29 +104,6 @@
           </types>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>ca.szc.maven</groupId>
-        <artifactId>jsonpath-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>update-version</id>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>modify</goal>
-            </goals>
-            <configuration>
-              <file>${basedir}/packaging/pkg-apollo-blockchain.json</file>
-              <formatter>conventional</formatter>
-              <modifications>
-                <modification>
-                  <expression>$.version</expression>
-                  <value>${project.version}</value>
-                </modification>
-              </modifications>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
 </project>
