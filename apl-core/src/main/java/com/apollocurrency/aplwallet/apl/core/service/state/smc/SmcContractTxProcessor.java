@@ -7,6 +7,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
+import com.apollocurrency.smc.persistence.txlog.TxLog;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 
 import java.util.Optional;
@@ -24,6 +25,14 @@ public interface SmcContractTxProcessor {
      * @return result of the contract execution
      */
     Optional<Object> process(ExecutionLog executionLog);
+
+    /**
+     * Commit all changes.
+     *
+     * @param txLog the log of operations that should be committed.
+     * @return result of commit operation, true if no error occurred during committing.
+     */
+    boolean commit(TxLog txLog);
 
     /**
      * Returns the smart contract that is processing

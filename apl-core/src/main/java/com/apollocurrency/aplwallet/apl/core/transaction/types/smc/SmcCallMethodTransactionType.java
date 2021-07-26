@@ -15,8 +15,8 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodTxValidator;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallPayableMethodTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SyntaxValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -36,6 +36,7 @@ import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
+import com.apollocurrency.smc.persistence.txlog.ArrayTxLog;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -182,16 +183,17 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
 
-        BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
+        var txLog = new ArrayTxLog(new AplAddress(transaction.getId()), new AplAddress(transaction.getSenderId()));
+        BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent(), txLog);
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
-        SmcContractTxProcessor processor = new CallPayableMethodTxProcessor(smartContract, smartMethod, integrator, smcConfig);
+        SmcContractTxProcessor processor = new CallMethodTxProcessor(smartContract, smartMethod, integrator, smcConfig);
         var executionLog = new ExecutionLog();
         processor.process(executionLog);
         if (executionLog.hasError()) {
             log.error(executionLog.toJsonString());
             throw new AplException.SMCProcessingException(executionLog.toJsonString());
         }
-
+        processor.commit(txLog);
         @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
         Fuel fuel = smartContract.getFuel();
         log.debug("After processing Address={} Fuel={}", smartContract.getAddress(), fuel);

@@ -11,6 +11,7 @@ import com.apollocurrency.smc.contract.ContractException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.ContractVirtualMachine;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
+import com.apollocurrency.smc.persistence.txlog.TxLog;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 import lombok.extern.slf4j.Slf4j;
 
@@ -66,6 +67,11 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
 
             return Optional.empty();
         }
+    }
+
+    @Override
+    public boolean commit(TxLog txLog) {
+        throw new UnsupportedOperationException();
     }
 
     protected abstract Optional<Object> executeContract(ExecutionLog executionLog);
