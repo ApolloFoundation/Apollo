@@ -23,7 +23,7 @@ import static org.mockito.Mockito.mock;
 @Tag("slow")
 public class ShufflingDbRepositoryTest extends ShufflingRepositoryTest {
     @RegisterExtension
-    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbConfig(), "db/shuffling.sql", null);
+    static DbExtension extension = new DbExtension(mariaDBContainer, DbTestData.getInMemDbConfig(), null, "db/shuffling.sql");
 
     @Override
     public ShufflingTable createRepository() {
