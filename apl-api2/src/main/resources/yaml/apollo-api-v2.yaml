@@ -753,13 +753,20 @@ paths:
           schema:
             type: string
             example: 'APL-X5JH-TJKJ-DVGC-5T2V8'
+        - name: includeAsrCode
+          in: query
+          description: include ASR contracts code into response, default value is false
+          required: false
+          schema:
+            type: boolean
+            example: false
       responses:
         200:
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContractDetailsResponse'
+                $ref: '#/components/schemas/ContractListResponse'
         400:
           $ref: '#/components/responses/BadRequest'
         500:
@@ -1841,6 +1848,9 @@ components:
         params:
           type: string
           description: list of parameters
+        src:
+          type: string
+          description: the contract source code
         fuelLimit:
           type: string
           format: int64

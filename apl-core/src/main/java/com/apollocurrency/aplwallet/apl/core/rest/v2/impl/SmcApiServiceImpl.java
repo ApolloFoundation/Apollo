@@ -505,7 +505,7 @@ public class SmcApiServiceImpl implements SmcApiService {
     }
 
     @Override
-    public Response getSmcByAddress(String addressStr, SecurityContext securityContext) throws NotFoundException {
+    public Response getSmcByAddress(String addressStr, Boolean includeAsrCode, SecurityContext securityContext) throws NotFoundException {
         ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
 
         AplAddress address = new AplAddress(Convert.parseAccountId(addressStr));
