@@ -31,8 +31,6 @@ import com.apollocurrency.smc.contract.SmartSource;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
-import com.apollocurrency.smc.persistence.txlog.ArrayTxLog;
-import com.apollocurrency.smc.persistence.txlog.TxLog;
 import com.apollocurrency.smc.polyglot.Languages;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
 import com.apollocurrency.smc.polyglot.lib.ContractSpec;
@@ -307,10 +305,6 @@ public class SmcContractServiceImpl implements SmcContractService {
             throw new ContractNotFoundException("Contract not found at addr=" + address.getHex());
         }
         return smcContractEntity;
-    }
-
-    private TxLog createLog(Address address, Address tx, Address originator) {
-        return new ArrayTxLog(address.getHex(), tx, originator);
     }
 
 }

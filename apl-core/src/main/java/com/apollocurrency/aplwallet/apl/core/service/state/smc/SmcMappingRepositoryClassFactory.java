@@ -20,6 +20,7 @@ import lombok.NonNull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.math.BigInteger;
+import java.util.Set;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -42,9 +43,9 @@ public class SmcMappingRepositoryClassFactory {
         return new ReadOnlyMappingRepositoryFactory(persistentRepositoryFactory);
     }
 
-    public ContractMappingRepositoryFactory createCachedMappingFactory(final Address contract) {
+    public ContractMappingRepositoryFactory createCachedMappingFactory(final Address contract, final Set<CachedMappingRepository<?>> mappingRepositories) {
         final var persistentRepositoryFactory = createMappingFactory(contract);
-        return new CachedMappingRepositoryFactory(persistentRepositoryFactory);
+        return new CachedMappingRepositoryFactory(persistentRepositoryFactory, mappingRepositories);
     }
 
     private static class PersistentMappingRepositoryFactory implements ContractMappingRepositoryFactory {
@@ -117,9 +118,11 @@ public class SmcMappingRepositoryClassFactory {
 
     private static class CachedMappingRepositoryFactory implements ContractMappingRepositoryFactory {
         private final ContractMappingRepositoryFactory persistentRepositoryFactory;
+        private final Set<CachedMappingRepository<?>> mappingRepositories;
 
-        public CachedMappingRepositoryFactory(ContractMappingRepositoryFactory persistentRepositoryFactory) {
+        public CachedMappingRepositoryFactory(ContractMappingRepositoryFactory persistentRepositoryFactory, Set<CachedMappingRepository<?>> mappingRepositories) {
             this.persistentRepositoryFactory = persistentRepositoryFactory;
+            this.mappingRepositories = mappingRepositories;
         }
 
         @Override
@@ -129,22 +132,30 @@ public class SmcMappingRepositoryClassFactory {
 
         @Override
         public ContractMappingRepository<Address> addressRepository(String mappingName) {
-            return new CachedMappingRepository<>(persistentRepositoryFactory.addressRepository(mappingName));
+            var repo = new CachedMappingRepository<>(persistentRepositoryFactory.addressRepository(mappingName));
+            mappingRepositories.add(repo);
+            return repo;
         }
 
         @Override
         public ContractMappingRepository<BigNum> bigNumRepository(String mappingName) {
-            return new CachedMappingRepository<>(persistentRepositoryFactory.bigNumRepository(mappingName));
+            var repo = new CachedMappingRepository<>(persistentRepositoryFactory.bigNumRepository(mappingName));
+            mappingRepositories.add(repo);
+            return repo;
         }
 
         @Override
         public ContractMappingRepository<BigInteger> bigIntegerRepository(String mappingName) {
-            return new CachedMappingRepository<>(persistentRepositoryFactory.bigIntegerRepository(mappingName));
+            var repo = new CachedMappingRepository<>(persistentRepositoryFactory.bigIntegerRepository(mappingName));
+            mappingRepositories.add(repo);
+            return repo;
         }
 
         @Override
         public ContractMappingRepository<String> stringRepository(String mappingName) {
-            return new CachedMappingRepository<>(persistentRepositoryFactory.stringRepository(mappingName));
+            var repo = new CachedMappingRepository<>(persistentRepositoryFactory.stringRepository(mappingName));
+            mappingRepositories.add(repo);
+            return repo;
         }
     }
 }

@@ -15,7 +15,6 @@ import com.apollocurrency.smc.contract.vm.ResultValue;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Call @view method of the given smart contract
@@ -49,14 +48,14 @@ public class CallViewMethodTxProcessor extends AbstractSmcContractTxProcessor im
         log.debug("Smart method={}", smartMethods);
         validateStatus(ContractStatus.ACTIVE);
         //call the method and charge the fuel
-        var result = smcMachine.callMethod(getSmartContract(), smartMethods);
+        var result = smcMachine.callViewMethod(getSmartContract(), smartMethods);
         executionLog.join(smcMachine.getExecutionLog());
         smcMachine.resetExecutionLog();
         return result;
     }
 
     @Override
-    protected Optional<Object> executeContract(ExecutionLog executionLog) {
-        return Optional.empty();
+    protected ResultValue executeContract(ExecutionLog executionLog) {
+        return ResultValue.UNDEFINED_RESULT;
     }
 }

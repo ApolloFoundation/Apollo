@@ -30,7 +30,6 @@ import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
-import com.apollocurrency.smc.persistence.txlog.ArrayTxLog;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -138,8 +137,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         checkPrecondition(transaction);
         SmartContract smartContract = contractService.createNewContract(transaction);
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
-        var txLog = new ArrayTxLog(new AplAddress(transaction.getId()), new AplAddress(transaction.getSenderId()));
-        BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent(), txLog);
+        BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
         SmcContractTxProcessor processor = new PublishContractTxProcessor(smartContract, integrator, smcConfig);
         var executionLog = new ExecutionLog();
@@ -148,7 +146,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
             log.error(executionLog.toJsonString());
             throw new AplException.SMCProcessingException(executionLog.toJsonString());
         }
-        processor.commit(txLog);
+        processor.commit();
         @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
         Fuel fuel = smartContract.getFuel();
         log.debug("After processing Address={} Fuel={}", smartContract.getAddress(), fuel);

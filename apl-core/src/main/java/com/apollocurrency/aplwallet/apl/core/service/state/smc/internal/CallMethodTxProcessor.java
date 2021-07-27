@@ -9,12 +9,10 @@ import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
+import com.apollocurrency.smc.contract.fuel.OutOfFuelException;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.persistence.txlog.TxLog;
-import lombok.NonNull;
+import com.apollocurrency.smc.contract.vm.ResultValue;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Optional;
 
 /**
  * Validate transaction, perform smart contract and manipulate balances
@@ -31,7 +29,7 @@ public class CallMethodTxProcessor extends AbstractSmcContractTxProcessor {
     }
 
     @Override
-    public Optional<Object> executeContract(ExecutionLog executionLog) {
+    public ResultValue executeContract(ExecutionLog executionLog) throws OutOfFuelException {
         log.debug("Smart method={}", smartMethod);
         validateStatus(ContractStatus.ACTIVE);
         //call the method and charge the fuel
@@ -41,29 +39,4 @@ public class CallMethodTxProcessor extends AbstractSmcContractTxProcessor {
         return result;
     }
 
-    @Override
-    public boolean commit(@NonNull TxLog txLog) {
-        boolean rc = false;
-        var iterator = txLog.read(0);
-        long id = 0;
-        while (iterator.next()) {
-            var h = iterator.getHeader();
-            if (h.getId() <= id) {
-                log.error("Not incremental sequence of the record id; id={} next_id={}", id, h.getId());
-                throw new IllegalStateException("Not incremental sequence of the record id.");
-            }
-            var r = iterator.getRecord();
-            switch (r.type()) {
-                case TRANSFER:
-                case REMOTE_CALL:
-                case WRITE_MAPPING:
-                    break;
-                case FIRE_EVENT:
-                case DELEGATE_METHOD:
-                    throw new IllegalStateException("Not implemented yet.");
-            }
-
-        }
-        return rc;
-    }
 }

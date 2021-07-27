@@ -9,9 +9,10 @@ import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
+import com.apollocurrency.smc.contract.vm.ResultValue;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Optional;
+import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT_VALIDATION_ERROR;
 
@@ -30,15 +31,18 @@ public class PublishContractTxValidator extends AbstractSmcContractTxProcessor {
     }
 
     @Override
-    public Optional<Object> executeContract(ExecutionLog executionLog) {
-        boolean isValid;
+    public ResultValue executeContract(ExecutionLog executionLog) {
         validateStatus(ContractStatus.CREATED);
-        isValid = smcMachine.validateContract(getSmartContract());
-        executionLog.join(smcMachine.getExecutionLog());
-        smcMachine.resetExecutionLog();
+        var result = ResultValue.from(getSmartContract());
+        var isValid = smcMachine.validateContract(getSmartContract());
         if (!isValid) {
             executionLog.setErrorCode(CONTRACT_VALIDATION_ERROR.getErrorCode());
+            result.setErrorCode(CONTRACT_VALIDATION_ERROR.getErrorCode());
+            result.setOutput(List.of(false));
+            result.setErrorDescription(smcMachine.getExecutionLog().toJsonString());
         }
-        return Optional.empty();
+        executionLog.join(smcMachine.getExecutionLog());
+        smcMachine.resetExecutionLog();
+        return result;
     }
 }

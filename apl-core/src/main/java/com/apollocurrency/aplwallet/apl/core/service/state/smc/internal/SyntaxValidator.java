@@ -7,10 +7,11 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
+import com.apollocurrency.smc.contract.vm.ResultValue;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT_METHOD_VALIDATION_ERROR;
 
@@ -31,13 +32,17 @@ public class SyntaxValidator extends AbstractSmcContractTxProcessor {
     }
 
     @Override
-    protected Optional<Object> executeContract(ExecutionLog executionLog) {
-        boolean isValid = smcMachine.parse(script);
-        executionLog.join(smcMachine.getExecutionLog());
-        smcMachine.resetExecutionLog();
+    protected ResultValue executeContract(ExecutionLog executionLog) {
+        var result = ResultValue.UNDEFINED_RESULT;
+        var isValid = smcMachine.parse(script);
         if (!isValid) {
             executionLog.setErrorCode(CONTRACT_METHOD_VALIDATION_ERROR.getErrorCode());
+            result.setErrorCode(CONTRACT_METHOD_VALIDATION_ERROR.getErrorCode());
+            result.setOutput(List.of(false));
+            result.setErrorDescription(smcMachine.getExecutionLog().toJsonString());
         }
-        return Optional.empty();
+        executionLog.join(smcMachine.getExecutionLog());
+        smcMachine.resetExecutionLog();
+        return result;
     }
 }

@@ -9,13 +9,14 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProc
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.ContractException;
 import com.apollocurrency.smc.contract.SmartContract;
+import com.apollocurrency.smc.contract.fuel.OutOfFuelException;
 import com.apollocurrency.smc.contract.vm.ContractVirtualMachine;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
-import com.apollocurrency.smc.persistence.txlog.TxLog;
+import com.apollocurrency.smc.contract.vm.ResultValue;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Optional;
+import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT_PROCESSING_ERROR;
 
@@ -30,6 +31,7 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
     protected final ContractVirtualMachine smcMachine;
     private final SmartContract smartContract;
     private final ExecutionEnv executionEnv;
+    private final BlockchainIntegrator integrator;
 
     protected AbstractSmcContractTxProcessor(SmcConfig smcConfig, BlockchainIntegrator integrator) {
         this(smcConfig, integrator, null);
@@ -39,6 +41,7 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
         this.smartContract = smartContract;
         this.smcConfig = smcConfig;
         this.executionEnv = smcConfig.createExecutionEnv();
+        this.integrator = integrator;
         this.smcMachine = new AplMachine(smcConfig.createLanguageContext(), executionEnv, integrator);
     }
 
@@ -56,28 +59,34 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
     }
 
     @Override
-    public Optional<Object> process(ExecutionLog executionLog) {
+    public ResultValue process(ExecutionLog executionLog) throws OutOfFuelException {
         try {
 
             return executeContract(executionLog);
 
-        } catch (Exception e) {
-
+        } catch (OutOfFuelException e) {
             putExceptionToLog(executionLog, e);
-
-            return Optional.empty();
+            throw e;
+        } catch (Exception e) {
+            var msg = putExceptionToLog(executionLog, e);
+            var resultValue = ResultValue.UNDEFINED_RESULT;
+            resultValue.setOutput(List.of(msg));
+            resultValue.setErrorCode(CONTRACT_PROCESSING_ERROR.getErrorCode());
+            resultValue.setErrorDescription(executionLog.toJsonString());
+            return resultValue;
         }
     }
 
     @Override
-    public boolean commit(TxLog txLog) {
-        throw new UnsupportedOperationException();
+    public void commit() {
+        integrator.commit();
     }
 
-    protected abstract Optional<Object> executeContract(ExecutionLog executionLog);
+    protected abstract ResultValue executeContract(ExecutionLog executionLog) throws OutOfFuelException;
 
-    protected void putExceptionToLog(ExecutionLog executionLog, Exception e) {
-        log.error("Call method error {}:{}", e.getClass().getName(), e.getMessage());
+    protected String putExceptionToLog(ExecutionLog executionLog, Exception e) {
+        var msg = String.format("Call method error %s:%s", e.getClass().getName(), e.getMessage());
+        log.error(msg);
         ContractException smcException;
         if (e instanceof ContractException) {
             smcException = (ContractException) e;
@@ -86,6 +95,7 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
         }
         executionLog.add("Abstract processor", smcException);
         executionLog.setErrorCode(CONTRACT_PROCESSING_ERROR.getErrorCode());
+        return msg;
     }
 
 }
