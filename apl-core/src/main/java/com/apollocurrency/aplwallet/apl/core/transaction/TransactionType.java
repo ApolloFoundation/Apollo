@@ -56,8 +56,8 @@ import java.util.function.BiFunction;
  *     <li>{@link TransactionType#validateStateDependentAtFinish(Transaction)}</li>
  *     <li>{@link TransactionType#validateStateIndependent(Transaction)} </li>
  * </ul>
- * New tx type developer must never override the methods above, instead of that
- * implementation of the following methods should be done, respectively to the public template in a list above:
+ * New tx type developer must never override the methods above, instead of that,
+ * implementation of the following methods should be done, respectively to the public template methods in a list above:
  * <ul>
  * <li>{@link TransactionType#applyAttachmentUnconfirmed(Transaction, Account)}</li>
  * <li>{@link TransactionType#applyAttachment(Transaction, Account, Account)}</li>
@@ -540,14 +540,34 @@ public abstract class TransactionType {
     }
 
     /**
-     * Perform transaction type's
-     * @param transaction
-     * @throws AplException.ValidationException
+     * Perform transaction type's specific form and structure validation of the given transaction
+     * <p>Transaction, that doesn't pass this validation will be considered as totally invalid and should not be included into a blockchain</p>
+     * <p>This method must not be used directly, use {@link TransactionType#validateStateIndependent(Transaction)} instead</p>
+     * @param transaction transaction to validate
+     * @throws AplException.ValidationException when transaction doesn't pass validation (throwing it should be avoided)
+     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException when transaction doesn't pass validation for some meaningful reason (preferred way)
      */
     protected abstract void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException;
 
+
+    /**
+     * Perform transaction type's specific validation against the current blockchain state, typically fetching all the stored/cached blockchain data
+     * <p>Transaction that doesn't pass this validation will be considered as acceptable to be added into a blockchain, but should be marked as failed and not executed </p>
+     * @param transaction transaction to validate
+     * @throws AplException.ValidationException when transaction doesn't pass validation (throwing it should be avoided)
+     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException when transaction doesn't pass validation against current state (preferred way)
+     */
     protected abstract void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException;
 
+    /**
+     * Compensate all the changes done by the {@link TransactionType#applyAttachment(Transaction, Account, Account)}
+     * <p>By default such type of compensation is not allowed, to enable it, a new transaction type should override this
+     * method along with specifying {@link TransactionType#canFailDuringExecution()} = true</p>
+     * <p>This method must not be used directly, use {@link TransactionType#undoApply(Transaction, Account, Account)} instead</p>
+     * @param transaction transaction to revert
+     * @param senderAccount transaction's sender
+     * @param recipientAccount transaction' recipient (may be null)
+     */
     protected void undoApplyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         throw new UnsupportedOperationException("undoApplyAttachment is not supported for transaction type: " + getSpec() + ", transaction: " + transaction.getStringId() + ", sender: " + Long.toUnsignedString(senderAccount.getId()));
     }
