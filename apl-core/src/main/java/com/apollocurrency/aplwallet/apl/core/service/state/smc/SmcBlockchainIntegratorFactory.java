@@ -70,8 +70,8 @@ public class SmcBlockchainIntegratorFactory {
         this.txLogProcessor = new SmcTxLogProcessor(accountService);
     }
 
-    public BlockchainIntegrator createProcessor(final Transaction originator, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
-        final var integrator = createIntegrator(originator, attachment, txSenderAccount, txRecipientAccount, ledgerEvent);
+    public BlockchainIntegrator createProcessor(final Transaction originator, Address contract, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
+        final var integrator = createIntegrator(originator, contract, attachment, txSenderAccount, txRecipientAccount, ledgerEvent);
         return new SMCOperationProcessor(integrator, new ExecutionLog());
     }
 
@@ -85,13 +85,13 @@ public class SmcBlockchainIntegratorFactory {
         return new SMCOperationProcessor(integrator, new ExecutionLog());
     }
 
-    private BlockchainIntegrator createIntegrator(final Transaction transaction, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
+    private BlockchainIntegrator createIntegrator(final Transaction transaction, Address contract, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
         final long originatorTransactionId = transaction.getId();
         final ContractBlock currentBlock = blockConverter.apply(transaction.getBlock());
         Address trAddr = new AplAddress(transaction.getId());
         final ContractBlockchainTransaction currentTransaction = new SMCTransaction(trAddr.get(), trAddr, attachment.getFuelPrice());
 
-        return new FullIntegrator(originatorTransactionId,
+        return new FullIntegrator(originatorTransactionId, contract,
             txSenderAccount, txRecipientAccount, ledgerEvent,
             currentBlock,
             currentTransaction,
@@ -187,7 +187,7 @@ public class SmcBlockchainIntegratorFactory {
         final Set<CachedMappingRepository<?>> cachedMappingRepositories;
         final TxLogProcessor txLogProcessor;
 
-        public FullIntegrator(long originatorTransactionId,
+        public FullIntegrator(long originatorTransactionId, Address contract,
                               Account txSenderAccount, Account txRecipientAccount, LedgerEvent ledgerEvent,
                               ContractBlock currentBlock,
                               ContractBlockchainTransaction currentTransaction,
@@ -202,7 +202,7 @@ public class SmcBlockchainIntegratorFactory {
             this.currentTransaction = currentTransaction;
             this.currentBlock = currentBlock;
             this.txLogProcessor = txLogProcessor;
-            this.txLog = new ArrayTxLog(new AplAddress(originatorTransactionId));
+            this.txLog = new ArrayTxLog(new AplAddress(originatorTransactionId), contract);
             this.cachedMappingRepositories = new HashSet<>();
         }
 
@@ -263,7 +263,7 @@ public class SmcBlockchainIntegratorFactory {
                     .sender(from.getLongId())
                     .recipient(to.getLongId())
                     .event(ledgerEvent)
-                    .value(value.byteValueExact())
+                    .value(value.longValueExact())
                     .transaction(originatorTransactionId)
                     .build();
                 txLog.append(rec);

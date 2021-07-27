@@ -182,7 +182,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
 
-        BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
+        BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, smartContract.getAddress(), attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
         SmcContractTxProcessor processor = new CallMethodTxProcessor(smartContract, smartMethod, integrator, smcConfig);
         var executionLog = new ExecutionLog();

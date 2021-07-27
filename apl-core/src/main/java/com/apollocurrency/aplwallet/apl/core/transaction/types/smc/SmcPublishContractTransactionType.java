@@ -137,7 +137,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         checkPrecondition(transaction);
         SmartContract smartContract = contractService.createNewContract(transaction);
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
-        BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, attachment, senderAccount, recipientAccount, getLedgerEvent());
+        BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, smartContract.getAddress(), attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
         SmcContractTxProcessor processor = new PublishContractTxProcessor(smartContract, integrator, smcConfig);
         var executionLog = new ExecutionLog();
