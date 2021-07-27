@@ -1,0 +1,52 @@
+<assembly xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+          xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+  <id>zipdist</id>
+  <includeBaseDirectory>false</includeBaseDirectory>
+  <formats>
+    <format>zip</format>
+  </formats>
+  <fileSets>
+    <fileSet>
+      <directory>${project.basedir}/bin</directory>
+      <outputDirectory>${base-dist-dir}/bin</outputDirectory>
+      <fileMode>0755</fileMode>
+    </fileSet>
+    <fileSet>
+      <directory>${project.basedir}</directory>
+      <outputDirectory>${base-dist-dir}/..</outputDirectory>
+      <includes>
+        <include>packaging/pkg-apollo-common.json</include>
+      </includes>
+      <fileMode>0644</fileMode>
+    </fileSet>
+    <fileSet>
+      <directory>${project.basedir}</directory>
+      <outputDirectory>${base-dist-dir}/</outputDirectory>
+      <includes>
+        <include>README*</include>
+        <include>LICENSE*</include>
+        <include>CHANGELOG*</include>
+        <include>VERSION</include>
+        <include>3RD-PARTY-LICENSES.txt</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>${project.basedir}/conf/</directory>
+      <outputDirectory>${base-dist-dir}/conf</outputDirectory>
+    </fileSet>
+
+  </fileSets>
+  <files> <!-- we need main jar to stay in top dir because we have classpath in it pointing to lib dir -->
+    <file>
+      <source>${project.build.directory}/apl-common-${project.version}.jar</source>
+      <outputDirectory>${base-dist-dir}/</outputDirectory>
+    </file>
+  </files>
+  <dependencySets>
+    <dependencySet>
+      <useProjectArtifact>false</useProjectArtifact>
+      <outputDirectory>${base-dist-dir}/lib</outputDirectory>
+    </dependencySet>
+  </dependencySets>
+</assembly>
