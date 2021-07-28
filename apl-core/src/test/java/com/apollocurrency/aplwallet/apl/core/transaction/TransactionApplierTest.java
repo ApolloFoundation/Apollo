@@ -78,7 +78,7 @@ class TransactionApplierTest {
         boolean applied = applier.applyUnconfirmed(td.TRANSACTION_10);
 
         assertTrue(applied, "Failed transaction #10 with id " + td.TRANSACTION_10.getId() + " should be appliedUnconfirmed successfully");
-        verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.TRANSACTION_FEE, td.TRANSACTION_10.getId(), 0, -100_000_000L);
+        verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_TRANSACTION_FEE, td.TRANSACTION_10.getId(), 0, -100_000_000L);
     }
 
     @Test
@@ -138,7 +138,7 @@ class TransactionApplierTest {
         assertEquals("Double spending", td.TRANSACTION_2.getErrorMessage()
             .orElseThrow(()-> new IllegalStateException("Previously not failed transaction should be failed after fallback to applyUncofirmedFailed")));
         verify(accountService, times(2)).getAccount(td.TRANSACTION_2.getSenderId());
-        verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.TRANSACTION_FEE, td.TRANSACTION_2.getId(), 0, -100_000_000L);
+        verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_TRANSACTION_FEE, td.TRANSACTION_2.getId(), 0, -100_000_000L);
     }
 
     @Test

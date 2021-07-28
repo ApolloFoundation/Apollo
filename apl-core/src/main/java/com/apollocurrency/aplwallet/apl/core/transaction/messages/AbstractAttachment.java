@@ -82,6 +82,15 @@ public abstract class AbstractAttachment extends AbstractAppendix implements Att
     }
 
     @Override
+    public void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+        if (!isPhased(transaction)) {
+            return;
+        }
+        transactionType().validateStateIndependent(transaction);
+        transactionType().validateStateDependentAtFinish(transaction);
+    }
+
+    @Override
     public boolean isPhasable() {
         return !(this instanceof Prunable) && transactionType().isPhasable();
     }
