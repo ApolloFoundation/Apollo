@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.db.DbConfig;
 import com.apollocurrency.aplwallet.apl.core.kms.config.GrpcHostConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.kms.config.JwtConfigDataPropertiesImpl;
 import com.apollocurrency.aplwallet.apl.core.kms.config.RemoteKmsConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.SecureStorageService;
 import com.apollocurrency.aplwallet.apl.core.utils.LegacyDbUtil;
@@ -385,6 +386,9 @@ public class Apollo {
             // KMS embedded mode
             dbConfig.setKmsSchemaName(KMS_SCHEMA_NAME);
             log.debug("KMS is in 'embedded mode' in db schema = {}...", KMS_SCHEMA_NAME);
+            // replace key file names with LOCAL files
+            ((JwtConfigDataPropertiesImpl)kmsMainConfig.getJwtConfigData()).setPrivateKeyFileName("key/local-kms-ecdsa-p521-private.pem");
+            ((JwtConfigDataPropertiesImpl)kmsMainConfig.getJwtConfigData()).setPublicKeyFileName("key/local-kms-ecdsa-p521-public.pem");
         } else {
             // KMS remote server mode via gRPC client
             String hostString = kmsUrl.get().toString();
