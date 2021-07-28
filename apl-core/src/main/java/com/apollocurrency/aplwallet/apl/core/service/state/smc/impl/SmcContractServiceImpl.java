@@ -253,6 +253,7 @@ public class SmcContractServiceImpl implements SmcContractService {
         contract.setTimestamp(Convert2.fromEpochTime(smcTransaction.getBlockTimestamp()));
         contract.setName(smcContractEntity.getContractName());
         contract.setParams(smcContractEntity.getArgs());
+        contract.setSrc(smcContractEntity.getData());
         contract.setFuelLimit(attachment.getFuelLimit().toString());
         contract.setFuelPrice(attachment.getFuelPrice().toString());
         SmcContractStateEntity smcContractStateEntity = loadContractStateEntity(contractAddress, true);
