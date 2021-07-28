@@ -12,6 +12,7 @@ import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.OutOfFuelException;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.ResultValue;
+import com.apollocurrency.smc.polyglot.PolyglotException;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -29,7 +30,7 @@ public class CallMethodTxProcessor extends AbstractSmcContractTxProcessor {
     }
 
     @Override
-    public ResultValue executeContract(ExecutionLog executionLog) throws OutOfFuelException {
+    public ResultValue executeContract(ExecutionLog executionLog) throws OutOfFuelException, PolyglotException {
         log.debug("Smart method={}", smartMethod);
         validateStatus(ContractStatus.ACTIVE);
         //call the method and charge the fuel

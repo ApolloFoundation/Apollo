@@ -48,6 +48,7 @@ public class SmcTxLogProcessor implements TxLogProcessor {
             var recipient = accountService.getAccount(data.getRecipient());
             accountService.addToBalanceAndUnconfirmedBalanceATM(sender, data.getEvent(), data.getTransaction(), -data.getValue());
             accountService.addToBalanceAndUnconfirmedBalanceATM(recipient, data.getEvent(), data.getTransaction(), data.getValue());
+            log.debug("Apply the transfer command contract={} sender={} recipient={} amount={}", header.getContract(), data.getSender(), data.getRecipient(), data.getValue());
         };
     }
 

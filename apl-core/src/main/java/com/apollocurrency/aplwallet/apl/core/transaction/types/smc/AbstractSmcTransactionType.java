@@ -8,18 +8,28 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
+import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
+import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
+import com.apollocurrency.smc.contract.fuel.OutOfFuelException;
+import com.apollocurrency.smc.contract.vm.ExecutionLog;
+import com.apollocurrency.smc.polyglot.JSRequirementException;
+import com.apollocurrency.smc.polyglot.JSRevertException;
+import com.apollocurrency.smc.polyglot.PolyglotException;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 import lombok.extern.slf4j.Slf4j;
 
@@ -124,6 +134,28 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
             log.debug("fuel={}, refunded fee={}, account={}", fuel, fuel.refundedFee().longValueExact(), senderAccount.getId());
             getAccountService().addToBalanceAndUnconfirmedBalanceATM(senderAccount, LedgerEvent.SMC_REFUNDED_FEE, transaction.getId(), fuel.refundedFee().longValueExact());
         }
+    }
+
+    protected void executeContract(Transaction transaction, Account senderAccount, SmartContract smartContract, SmcContractTxProcessor processor) {
+        var executionLog = new ExecutionLog();
+        try {
+
+            processor.process(executionLog);
+
+        } catch (JSRevertException | JSRequirementException e) {
+            Fuel fuel = smartContract.getFuel();
+            log.info("RevertException: after processing contract={} Fuel={}", smartContract.getAddress(), fuel);
+            refundRemaining(transaction, senderAccount, fuel);
+            throw new AplTransactionExecutionException(executionLog.toJsonString(), e, transaction);
+        } catch (OutOfFuelException | PolyglotException e) {
+            log.error(executionLog.toJsonString());
+            throw new AplTransactionExecutionException(executionLog.toJsonString(), e, transaction);
+        }
+        log.debug("Commit the contract state changes...");
+        processor.commit();
+        @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
+        Fuel fuel = smartContract.getFuel();
+        refundRemaining(transaction, senderAccount, fuel);
     }
 
     static class SmcFuelBasedFee extends Fee.FuelBasedFee {

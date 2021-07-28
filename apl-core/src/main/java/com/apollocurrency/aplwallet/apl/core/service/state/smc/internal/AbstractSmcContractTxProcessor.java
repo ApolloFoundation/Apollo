@@ -13,10 +13,9 @@ import com.apollocurrency.smc.contract.fuel.OutOfFuelException;
 import com.apollocurrency.smc.contract.vm.ContractVirtualMachine;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.ResultValue;
+import com.apollocurrency.smc.polyglot.PolyglotException;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
 
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT_PROCESSING_ERROR;
 
@@ -59,21 +58,14 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
     }
 
     @Override
-    public ResultValue process(ExecutionLog executionLog) throws OutOfFuelException {
+    public ResultValue process(ExecutionLog executionLog) throws OutOfFuelException, PolyglotException {
         try {
 
             return executeContract(executionLog);
 
-        } catch (OutOfFuelException e) {
+        } catch (OutOfFuelException | PolyglotException e) {
             putExceptionToLog(executionLog, e);
             throw e;
-        } catch (Exception e) {
-            var msg = putExceptionToLog(executionLog, e);
-            var resultValue = ResultValue.UNDEFINED_RESULT;
-            resultValue.setOutput(List.of(msg));
-            resultValue.setErrorCode(CONTRACT_PROCESSING_ERROR.getErrorCode());
-            resultValue.setErrorDescription(executionLog.toJsonString());
-            return resultValue;
         }
     }
 
@@ -82,7 +74,7 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
         integrator.commit();
     }
 
-    protected abstract ResultValue executeContract(ExecutionLog executionLog);
+    protected abstract ResultValue executeContract(ExecutionLog executionLog) throws OutOfFuelException, PolyglotException;
 
     protected String putExceptionToLog(ExecutionLog executionLog, Exception e) {
         var msg = String.format("Call method error %s:%s", e.getClass().getName(), e.getMessage());

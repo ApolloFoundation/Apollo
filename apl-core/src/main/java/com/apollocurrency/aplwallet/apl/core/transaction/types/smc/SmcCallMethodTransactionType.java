@@ -10,7 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
-import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
@@ -26,8 +25,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
-import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
-import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.blockchain.ContractNotFoundException;
@@ -36,10 +33,8 @@ import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
-import com.apollocurrency.smc.contract.fuel.OutOfFuelException;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
-import com.apollocurrency.smc.polyglot.JSRevertException;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -129,7 +124,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         processor.process(executionLog);
         if (executionLog.hasError()) {
             log.debug("SMC: doStateDependentValidation = INVALID");
-            throw new AplUnacceptableTransactionValidationException(executionLog.toJsonString(), transaction);
+            throw new AplAcceptableTransactionValidationException(executionLog.toJsonString(), transaction);
         }
         log.debug("SMC: doStateDependentValidation = VALID");
     }
@@ -188,30 +183,15 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, smartContract.getAddress(), attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
         SmcContractTxProcessor processor = new CallMethodTxProcessor(smartContract, smartMethod, integrator, smcConfig);
-        var executionLog = new ExecutionLog();
-        try {
 
-            processor.process(executionLog);
+        executeContract(transaction, senderAccount, smartContract, processor);
 
-        } catch (OutOfFuelException | JSRevertException e) {
-            //TODO adjust flow
-            executionLog.setErrorCode(1);
-            //TODO throw more specific exception
-        } catch (Exception e) {
-            log.error(executionLog.toJsonString());
-            throw new AplTransactionExecutionException(executionLog.toJsonString(), e, transaction);
-        }
-        if (executionLog.hasError()) {
-            log.error(executionLog.toJsonString());
-            throw new AplTransactionExecutionException(executionLog.toJsonString(), transaction);
-        } else {
-            processor.commit();
-            @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
-            Fuel fuel = smartContract.getFuel();
-            log.debug("After processing Address={} Fuel={}", smartContract.getAddress(), fuel);
-            refundRemaining(transaction, senderAccount, fuel);
-            contractService.updateContractState(smartContract);
-        }
+        //update contract and contract state
+        contractService.updateContractState(smartContract);
+        log.info("Called method {} on contract={}, txId={}, fuel={}, amountATM={}, sender={}",
+            smartMethod.getMethodWithParams(),
+            smartContract.getAddress(), Long.toUnsignedString(transaction.getId()),
+            smartContract.getFuel(), transaction.getAmountATM(), smartContract.getSender());
     }
 
     private Fee.FuelBasedFee getFuelBasedFee(Transaction transaction) {
