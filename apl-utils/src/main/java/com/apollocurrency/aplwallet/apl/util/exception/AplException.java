@@ -196,18 +196,4 @@ public abstract class AplException extends Exception {
         }
     }
 
-    public static final class SMCProcessingException extends RuntimeException {
-        public SMCProcessingException() {
-            super();
-        }
-
-        public SMCProcessingException(String message) {
-            super(message);
-        }
-
-        public SMCProcessingException(String message, Throwable cause) {
-            super(message, cause);
-        }
-    }
-
 }

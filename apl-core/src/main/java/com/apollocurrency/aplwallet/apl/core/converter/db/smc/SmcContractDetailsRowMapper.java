@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.converter.db.smc;
 
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
+import com.apollocurrency.aplwallet.apl.core.exception.AplCoreContractViolationException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
@@ -59,7 +60,7 @@ public class SmcContractDetailsRowMapper implements RowMapper<ContractDetails> {
         try {
             attachment = (SmcPublishContractAttachment) transactionType.parseAttachment(buffer);
         } catch (AplException.NotValidException e) {
-            throw new AplException.SMCProcessingException();
+            throw new AplCoreContractViolationException("Can't parse attachment.", e);
         }
 
         ContractDetails contract = new ContractDetails();

@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
-import com.apollocurrency.aplwallet.apl.core.exception.AplCoreContractViolationException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
@@ -17,7 +17,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
@@ -96,26 +95,26 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
     }
 
     @Override
-    public final void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+    public final void doStateIndependentValidation(Transaction transaction) throws AplUnacceptableTransactionValidationException {
         checkPrecondition(transaction);
         AbstractSmcAttachment attachment = (AbstractSmcAttachment) transaction.getAttachment();
         if (!fuelMinMaxValidator.validateLimitValue(attachment.getFuelLimit())) {
-            throw new AplException.NotCurrentlyValidException("Fuel limit value doesn't correspond to the MIN or MAX values.");
+            throw new AplUnacceptableTransactionValidationException("Fuel limit value doesn't correspond to the MIN or MAX values.", transaction);
         }
         if (!fuelMinMaxValidator.validatePriceValue(attachment.getFuelPrice())) {
-            throw new AplException.NotCurrentlyValidException("Fuel price value doesn't correspond to the MIN or MAX values.");
+            throw new AplUnacceptableTransactionValidationException("Fuel price value doesn't correspond to the MIN or MAX values.", transaction);
         }
 
         executeStateIndependentValidation(transaction, attachment);
     }
 
-    public abstract void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) throws AplException.ValidationException;
+    public abstract void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) throws AplUnacceptableTransactionValidationException;
 
-    protected void checkPrecondition(Transaction smcTransaction) {
+    private void checkPrecondition(Transaction smcTransaction) {
         smcTransaction.getAttachment().getTransactionTypeSpec();
         if (smcTransaction.getAttachment().getTransactionTypeSpec() != getSpec()) {
             log.error("Invalid transaction attachment, txType={} txId={}", smcTransaction.getType(), smcTransaction.getId());
-            throw new AplCoreContractViolationException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec());
+            throw new AplUnacceptableTransactionValidationException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec(), smcTransaction);
         }
     }
 

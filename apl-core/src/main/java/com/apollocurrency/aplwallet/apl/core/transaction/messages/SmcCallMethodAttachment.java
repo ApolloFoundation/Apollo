@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
+import com.apollocurrency.aplwallet.apl.core.exception.AplCoreContractViolationException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.NotValidException;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpList;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import lombok.Builder;
@@ -37,13 +37,13 @@ public class SmcCallMethodAttachment extends AbstractSmcAttachment {
         this.methodParams = methodParams;
     }
 
-    public SmcCallMethodAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+    public SmcCallMethodAttachment(ByteBuffer buffer) throws AplCoreContractViolationException {
         super(buffer);
         try {
             this.methodName = Convert.readString(buffer);
             this.methodParams = Convert.readString(buffer);
         } catch (NotValidException ex) {
-            throw new AplException.NotValidException(ex.getMessage());
+            throw new AplCoreContractViolationException(ex.getMessage());
         }
     }
 

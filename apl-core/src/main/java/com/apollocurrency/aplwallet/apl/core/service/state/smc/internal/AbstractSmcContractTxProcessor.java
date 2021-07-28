@@ -82,7 +82,7 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
         integrator.commit();
     }
 
-    protected abstract ResultValue executeContract(ExecutionLog executionLog) throws OutOfFuelException;
+    protected abstract ResultValue executeContract(ExecutionLog executionLog);
 
     protected String putExceptionToLog(ExecutionLog executionLog, Exception e) {
         var msg = String.format("Call method error %s:%s", e.getClass().getName(), e.getMessage());

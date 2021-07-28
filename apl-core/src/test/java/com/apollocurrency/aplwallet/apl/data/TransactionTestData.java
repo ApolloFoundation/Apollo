@@ -16,6 +16,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.CachedTransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
@@ -36,7 +37,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSCurrencyIssu
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryPaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.PrivatePaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcCallMethodTransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcFuelValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.smc.SmcPublishContractTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.CriticalUpdateTransactiionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.update.ImportantUpdateTransactionType;

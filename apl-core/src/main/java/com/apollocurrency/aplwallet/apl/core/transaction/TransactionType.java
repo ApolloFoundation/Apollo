@@ -136,7 +136,7 @@ public abstract class TransactionType {
     public abstract TransactionTypes.TransactionTypeSpec getSpec();
 
     /**
-     * @return ledger event, perfomed by transction type, which should be defined under enum {@link LedgerEvent}
+     * @return ledger event, performed by transaction type, which should be defined under enum {@link LedgerEvent}
      */
     public abstract LedgerEvent getLedgerEvent();
 
@@ -151,8 +151,9 @@ public abstract class TransactionType {
 
     /**
      * Parse attachment for the transaction type from a serialized json object
+     *
      * @param attachmentData json object, containing attachment json serialized data
-     * @return deserialized attachmen for thi transaction type
+     * @return deserialized attachment for thi transaction type
      * @throws AplException.NotValidException when any validation error occurred during deserialization (avoid throwing it)
      */
     public abstract AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException;

@@ -8,6 +8,9 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionException;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -22,14 +25,15 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAtt
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
+import com.apollocurrency.smc.contract.fuel.OutOfFuelException;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.data.type.Address;
+import com.apollocurrency.smc.polyglot.JSRevertException;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -69,18 +73,18 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     }
 
     @Override
-    public AbstractAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+    public AbstractAttachment parseAttachment(ByteBuffer buffer) {
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         return new SmcPublishContractAttachment(buffer);
     }
 
     @Override
-    public AbstractAttachment parseAttachment(RlpReader reader) throws AplException.NotValidException {
+    public AbstractAttachment parseAttachment(RlpReader reader) {
         return new SmcPublishContractAttachment(reader);
     }
 
     @Override
-    public AbstractAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+    public AbstractAttachment parseAttachment(JSONObject attachmentData) {
         return new SmcPublishContractAttachment(attachmentData);
     }
 
@@ -90,34 +94,34 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     }
 
     @Override
-    public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
+    public void doStateDependentValidation(Transaction transaction) {
         log.debug("SMC: doStateDependentValidation = ...");
         Address address = new AplAddress(transaction.getRecipientId());
         if (contractService.isContractExist(address)) {
             log.debug("SMC: doStateDependentValidation = INVALID");
-            throw new AplException.NotCurrentlyValidException("Account already exists, address=" + address);
+            throw new AplAcceptableTransactionValidationException("Account already exists, address=" + address, transaction);
         }
         log.debug("SMC: doStateDependentValidation = VALID");
     }
 
     @Override
-    public void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) throws AplException.ValidationException {
+    public void executeStateIndependentValidation(Transaction transaction, AbstractSmcAttachment abstractSmcAttachment) {
         log.debug("SMC: doStateIndependentValidation = ...");
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) abstractSmcAttachment;
         if (Strings.isNullOrEmpty(attachment.getContractName())) {
-            throw new AplException.NotCurrentlyValidException("Empty contract name.");
+            throw new AplUnacceptableTransactionValidationException("Empty contract name.", transaction);
         }
         if (Strings.isNullOrEmpty(attachment.getContractSource())) {
-            throw new AplException.NotCurrentlyValidException("Empty contract source.");
+            throw new AplUnacceptableTransactionValidationException("Empty contract source.", transaction);
         }
         if (Strings.isNullOrEmpty(attachment.getLanguageName())) {
-            throw new AplException.NotCurrentlyValidException("Empty contract language name.");
+            throw new AplUnacceptableTransactionValidationException("Empty contract language name.", transaction);
         }
         SmartContract smartContract = contractService.createNewContract(transaction);
         BigInteger calculatedFuel = publishContractFee.calcFuel(smartContract);
         if (!smartContract.getFuel().tryToCharge(calculatedFuel)) {
             log.error("Needed fuel={} but actual={}", calculatedFuel, smartContract.getFuel());
-            throw new AplException.NotCurrentlyValidException("Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel());
+            throw new AplUnacceptableTransactionValidationException("Not enough fuel to execute this transaction, expected=" + calculatedFuel + " but actual=" + smartContract.getFuel(), transaction);
         }
         //syntactical and semantic validation
         BlockchainIntegrator integrator = integratorFactory.createMockProcessor(transaction.getId());
@@ -126,7 +130,7 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
         processor.process(executionLog);
         if (executionLog.hasError()) {
             log.debug("SMC: doStateIndependentValidation = INVALID");
-            throw new AplException.NotCurrentlyValidException(executionLog.toJsonString());
+            throw new AplUnacceptableTransactionValidationException(executionLog.toJsonString(), transaction);
         }
         log.debug("SMC: doStateIndependentValidation = VALID");
     }
@@ -134,25 +138,36 @@ public class SmcPublishContractTransactionType extends AbstractSmcTransactionTyp
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
         log.debug("SMC: applyAttachment: publish smart contract and call constructor.");
-        checkPrecondition(transaction);
         SmartContract smartContract = contractService.createNewContract(transaction);
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) transaction.getAttachment();
         BlockchainIntegrator integrator = integratorFactory.createProcessor(transaction, smartContract.getAddress(), attachment, senderAccount, recipientAccount, getLedgerEvent());
         log.debug("Before processing Address={} Fuel={}", smartContract.getAddress(), smartContract.getFuel());
         SmcContractTxProcessor processor = new PublishContractTxProcessor(smartContract, integrator, smcConfig);
         var executionLog = new ExecutionLog();
-        processor.process(executionLog);
+        try {
+
+            processor.process(executionLog);
+
+        } catch (OutOfFuelException | JSRevertException e) {
+            //TODO adjust flow
+            executionLog.setErrorCode(1);
+            //TODO throw more specific exception
+        } catch (Exception e) {
+            log.error(executionLog.toJsonString());
+            throw new AplTransactionExecutionException(executionLog.toJsonString(), e, transaction);
+        }
         if (executionLog.hasError()) {
             log.error(executionLog.toJsonString());
-            throw new AplException.SMCProcessingException(executionLog.toJsonString());
+            throw new AplTransactionExecutionException(executionLog.toJsonString(), transaction);
+        } else {
+            processor.commit();
+            @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
+            Fuel fuel = smartContract.getFuel();
+            log.debug("After processing Address={} Fuel={}", smartContract.getAddress(), fuel);
+            refundRemaining(transaction, senderAccount, fuel);
+            //save contract and contract state
+            contractService.saveContract(smartContract);
         }
-        processor.commit();
-        @TransactionFee({FeeMarker.BACK_FEE, FeeMarker.FUEL})
-        Fuel fuel = smartContract.getFuel();
-        log.debug("After processing Address={} Fuel={}", smartContract.getAddress(), fuel);
-        refundRemaining(transaction, senderAccount, fuel);
-        //save contract and contract state
-        contractService.saveContract(smartContract);
     }
 
     @Override

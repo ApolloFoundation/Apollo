@@ -2,7 +2,7 @@
  * Copyright (c) 2020-2021. Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
+package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
