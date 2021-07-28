@@ -181,6 +181,7 @@ public class TransactionTypes {
     }
 
     public static TransactionTypeSpec find(int type, int subtype) {
+        TransactionTypeSpec.values(); // load all values
         TransactionTypeSpec spec = ALL_TYPES.get(subtype | type << 8);
         if (spec == null) {
             throw new IllegalArgumentException("Unable to find spec for type '" + type + "' and subtype '" + subtype + "'");
