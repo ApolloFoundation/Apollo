@@ -1,0 +1,13 @@
+{
+  "name": "apollo-common",
+  "description": "Apollo common module",
+  "version": "1.48.4",
+  "dependencies": [
+    {
+      "name": "OpenJDK",
+      "optional": false,
+      "version_min": "11.0.6",
+      "version_max": "13.0.2"
+    }
+  ]
+}
