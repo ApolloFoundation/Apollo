@@ -42,6 +42,10 @@ class KeyStoreController {
         doReturn("APL").when(blockchainConfig).getAccountPrefix();
     }
 
+        private static final String getUri = "/debug/dowloadstart/";
+    private static final String getByIdUri = "/debug/donloadstart/0";
+    
+
     @Test
     void testGetDonloadstartInfo() throws URISyntaxException, UnsupportedEncodingException {
 
