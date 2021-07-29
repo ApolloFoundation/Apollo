@@ -78,7 +78,7 @@ class TransactionApplierTest {
         boolean applied = applier.applyUnconfirmed(td.TRANSACTION_10);
 
         assertTrue(applied, "Failed transaction #10 with id " + td.TRANSACTION_10.getId() + " should be appliedUnconfirmed successfully");
-        verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_TRANSACTION_FEE, td.TRANSACTION_10.getId(), 0, -100_000_000L);
+        verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_VALIDATION_TRANSACTION_FEE, td.TRANSACTION_10.getId(), 0, -100_000_000L);
     }
 
     @Test
@@ -138,7 +138,7 @@ class TransactionApplierTest {
         assertEquals("Double spending", td.TRANSACTION_2.getErrorMessage()
             .orElseThrow(()-> new IllegalStateException("Previously not failed transaction should be failed after fallback to applyUncofirmedFailed")));
         verify(accountService, times(2)).getAccount(td.TRANSACTION_2.getSenderId());
-        verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_TRANSACTION_FEE, td.TRANSACTION_2.getId(), 0, -100_000_000L);
+        verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_VALIDATION_TRANSACTION_FEE, td.TRANSACTION_2.getId(), 0, -100_000_000L);
     }
 
     @Test
@@ -176,6 +176,7 @@ class TransactionApplierTest {
     void apply_failedDuringExecution_OK() {
         Account sender = new Account(1L, 200000000000000000L,10_000_000L, 0, 0, 0);
         doReturn(1L).when(tx).getSenderId();
+        doReturn(10L).when(tx).getFeeATM();
         List<AbstractAppendix> appendages = new ArrayList<>();
         appendages.add(attachment);
         doReturn(List.of(attachment)).when(tx).getAppendages();
@@ -187,6 +188,8 @@ class TransactionApplierTest {
         applier.apply(tx);
 
         verify(tx).fail("Test tx execution error");
+        verify(blockchain).updateTransaction(tx);
+        verify(accountService).addToBalanceAndUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_EXECUTION_TRANSACTION_FEE, 0, 0, -10);
     }
 
     @Test
@@ -205,6 +208,27 @@ class TransactionApplierTest {
         verify(accountService).getAccount(td.TRANSACTION_13.getSenderId());
         verify(appendixApplier, times(4)).apply(any(Transaction.class), any(Appendix.class), any(Account.class), any(Account.class));
         verifyNoMoreInteractions(accountService);
+    }
+
+    @Test
+    void applyPhasingFailed() {
+        Account sender = new Account(1L, 200000000000000000L,10_000_000L, 0, 0, 0);
+        doReturn(10L).when(tx).getFeeATM();
+        List<AbstractAppendix> appendages = new ArrayList<>();
+        appendages.add(attachment);
+        doReturn(appendages).when(tx).getAppendages();
+        doReturn(sender).when(accountService).getAccount(1L);
+        doReturn(true).when(tx).canFailDuringExecution();
+        doReturn(1L).when(tx).getSenderId();
+        doThrow(new AplTransactionExecutionException("Test phasing tx execution error", tx)).when(attachment).apply(tx, sender, null);
+        doReturn(true).when(blockchainConfig).isFailedTransactionsAcceptanceActiveAtHeight(0);
+        doReturn(true).when(attachment).isPhasable();
+
+        applier.applyPhasing(tx);
+
+        verify(tx).fail("Test phasing tx execution error");
+        verify(blockchain).updateTransaction(tx);
+        verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_EXECUTION_TRANSACTION_FEE, 0, 0, -10);
     }
 
     @Test

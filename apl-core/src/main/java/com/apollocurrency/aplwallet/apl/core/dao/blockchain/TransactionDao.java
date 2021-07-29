@@ -39,6 +39,8 @@ public interface TransactionDao {
 
     void saveTransactions(List<TransactionEntity> transactions);
 
+    void updateTransaction(TransactionEntity transaction);
+
     int getTransactionCount();
 
     Long getTransactionCount(TransactionalDataSource dataSource, int from, int to);

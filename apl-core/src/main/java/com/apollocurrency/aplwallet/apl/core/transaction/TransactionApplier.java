@@ -125,9 +125,16 @@ public class TransactionApplier {
             } catch (AplTransactionExecutionException e) {
                 checkFailedTxsAcceptance(transaction, e);
                 if (transaction.canFailDuringExecution()) {
-                    appendage.undo(transaction, senderAccount, recipientAccount);
                     log.info("Transaction {} failed during execution: {}", transaction.getStringId(), e.getMessage());
+                    // undo fully and charge fee only
+                    appendage.undo(transaction, senderAccount, recipientAccount); // will not undo phasing confirmed balance fee
+                    if (!appendage.isPhasable()) {
+                        accountService.addToBalanceAndUnconfirmedBalanceATM(senderAccount, LedgerEvent.FAILED_EXECUTION_TRANSACTION_FEE, transaction.getId(), 0, -transaction.getFeeATM());
+                    } else {
+                        accountService.addToUnconfirmedBalanceATM(senderAccount, LedgerEvent.FAILED_EXECUTION_TRANSACTION_FEE, transaction.getId(), 0, -transaction.getFeeATM());
+                    }
                     transaction.fail(e.getMessage());
+                    blockchain.updateTransaction(transaction); // persist updated state
                 } else {
                     throw new AplTransactionExecutionFailureNotSupportedException(e, transaction);
                 }
@@ -155,13 +162,13 @@ public class TransactionApplier {
     private void applyFailed(Transaction transaction) {
         long feeATM = transaction.getFeeATM();
         Account sender = accountService.getAccount(transaction.getSenderId());
-        accountService.addToBalanceATM(sender, LedgerEvent.FAILED_TRANSACTION_FEE, transaction.getId(), 0, -feeATM);
+        accountService.addToBalanceATM(sender, LedgerEvent.FAILED_VALIDATION_TRANSACTION_FEE, transaction.getId(), 0, -feeATM);
     }
 
     private boolean applyUnconfirmedFailed(Transaction tx) {
         Account sender = accountService.getAccount(tx.getSenderId());
         if (sender.getUnconfirmedBalanceATM() >= tx.getFeeATM()) {
-            accountService.addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_TRANSACTION_FEE, tx.getId(), 0, -tx.getFeeATM());
+            accountService.addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_VALIDATION_TRANSACTION_FEE, tx.getId(), 0, -tx.getFeeATM());
             return true;
         } else {
             return false;
@@ -170,6 +177,6 @@ public class TransactionApplier {
 
     private void undoUnconfirmedFailed(Transaction tx) {
         Account sender = accountService.getAccount(tx.getSenderId());
-        accountService.addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_TRANSACTION_FEE, tx.getId(), 0, tx.getFeeATM());
+        accountService.addToUnconfirmedBalanceATM(sender, LedgerEvent.FAILED_VALIDATION_TRANSACTION_FEE, tx.getId(), 0, tx.getFeeATM());
     }
 }
