@@ -144,7 +144,7 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
 
         } catch (JSRevertException | JSRequirementException e) {
             Fuel fuel = smartContract.getFuel();
-            log.info("RevertException: after processing contract={} Fuel={}", smartContract.getAddress(), fuel);
+            log.info("RevertException: Contract={} Fuel={}", smartContract.getAddress(), fuel);
             refundRemaining(transaction, senderAccount, fuel);
             throw new AplTransactionExecutionException(executionLog.toJsonString(), e, transaction);
         } catch (OutOfFuelException | PolyglotException e) {

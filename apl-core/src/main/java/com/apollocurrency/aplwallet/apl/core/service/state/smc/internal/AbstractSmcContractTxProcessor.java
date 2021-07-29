@@ -64,7 +64,8 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
             return executeContract(executionLog);
 
         } catch (OutOfFuelException | PolyglotException e) {
-            putExceptionToLog(executionLog, e);
+            var msg = putExceptionToLog(executionLog, e);
+            log.error(msg);
             throw e;
         }
     }
@@ -78,7 +79,6 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
 
     protected String putExceptionToLog(ExecutionLog executionLog, Exception e) {
         var msg = String.format("Call method error %s:%s", e.getClass().getName(), e.getMessage());
-        log.error(msg);
         ContractException smcException;
         if (e instanceof ContractException) {
             smcException = (ContractException) e;

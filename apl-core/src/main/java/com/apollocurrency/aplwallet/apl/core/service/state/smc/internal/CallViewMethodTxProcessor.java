@@ -37,9 +37,8 @@ public class CallViewMethodTxProcessor extends AbstractSmcContractTxProcessor im
             return batchExecuteContract(executionLog);
 
         } catch (Exception e) {
-
-            putExceptionToLog(executionLog, e);
-
+            var msg = putExceptionToLog(executionLog, e);
+            log.error(msg, e);
             return List.of();
         }
     }
