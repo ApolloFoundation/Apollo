@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
@@ -170,16 +171,17 @@ public abstract class TransactionType {
      * @param transaction transaction of this type to validate using blockchain state
      * @throws AplException.ValidationException when transaction doesn't pass validation for any reason
      * @throws com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException same as above but preferred
+     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException in cases, when transaction is correct but sender's account is not exist or has not enough funds
      */
     public final void validateStateDependent(Transaction transaction) throws AplException.ValidationException {
         TransactionAmounts amounts = new TransactionAmounts(transaction);
         Account account = accountService.getAccount(transaction.getSenderId());
         if (account == null) {
-            throw new AplException.NotCurrentlyValidException("Transaction's sender not found, tx: " + transaction.getId() + ", sender: " + transaction.getSenderId());
+            throw new AplUnacceptableTransactionValidationException("Transaction's sender not found, tx: " + transaction.getId() + ", sender: " + transaction.getSenderId(), transaction);
         }
         if (account.getUnconfirmedBalanceATM() < amounts.getTotalAmountATM()) {
-            throw new AplException.NotCurrentlyValidException("Not enough apl balance on account: " + transaction.getSenderId() + ", required at least " + amounts.getTotalAmountATM()
-                + ", but only got " + account.getUnconfirmedBalanceATM());
+            throw new AplUnacceptableTransactionValidationException("Not enough apl balance on account: " + transaction.getSenderId() + ", required at least " + amounts.getTotalAmountATM()
+                + ", but only got " + account.getUnconfirmedBalanceATM(), transaction);
         }
         doStateDependentValidation(transaction);
     }
@@ -282,7 +284,8 @@ public abstract class TransactionType {
      * @param senderAccount transaction's sender
      * @param recipientAccount transaction's recipient
      */
-    public void undoApply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+    public final void undoApply(Transaction transaction, Account senderAccount, Account recipientAccount) {
+        undoApplyAttachment(transaction, senderAccount, recipientAccount);
         long amount = transaction.getAmountATM();
         long transactionId = transaction.getId();
         if (!transaction.attachmentIsPhased()) {
@@ -298,14 +301,13 @@ public abstract class TransactionType {
             accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, getLedgerEvent(), transactionId, -amount);
             log.info("{} was refunded by {} ATM from the recipient {}", senderAccount.balanceString(), transaction.getAmountATM(), recipientAccount.balanceString());
         }
-        undoApplyAttachment(transaction, senderAccount, recipientAccount);
     }
 
     /**
      * Execute transaction type specific actions depending on transaction attachment and other data
      * <p>Not intended to be called directly, since this method will be called from {@link TransactionType#apply(Transaction, Account, Account)}</p>
      *
-     * @param transaction transaction, which should be executed specifically for the transactio type
+     * @param transaction transaction, which should be executed specifically for the transaction type
      * @param senderAccount transaction's sender
      * @param recipientAccount transaction's recipient (may be null)
      * @throws com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionException when transaction type
