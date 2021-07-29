@@ -135,6 +135,11 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    public void updateTransaction(Transaction transaction) {
+        transactionDao.updateTransaction(toEntityConverter.convert(transaction));
+    }
+
+    @Override
     public int getTransactionCount() {
         return transactionDao.getTransactionCount();
     }

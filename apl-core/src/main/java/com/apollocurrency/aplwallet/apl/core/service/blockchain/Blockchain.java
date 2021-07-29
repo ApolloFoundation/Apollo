@@ -86,6 +86,8 @@ public interface Blockchain {
 
     void saveBlock(Block block);
 
+    void updateTransaction(Transaction transaction);
+
     void commit(Block block);
 
     Long getBlockCount(TransactionalDataSource dataSource, int from, int to);

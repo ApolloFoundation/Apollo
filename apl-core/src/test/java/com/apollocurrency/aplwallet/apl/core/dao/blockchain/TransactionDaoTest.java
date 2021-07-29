@@ -269,6 +269,19 @@ class TransactionDaoTest extends DbContainerBaseTest {
     }
 
     @Test
+    void testUpdateTransactions() {
+        td.TRANSACTION_0.setFeeATM(1L);
+        td.TRANSACTION_0.fail("Test error for update");
+        DbUtils.inTransaction(extension, (con) -> dao.updateTransaction(toEntityConverter.convert(td.TRANSACTION_0)));
+
+        TransactionEntity transactionEntity = dao.findTransaction(td.TRANSACTION_0.getId(), extension.getDatabaseManager().getDataSource());
+
+        assertEquals(transactionEntity.getId(), td.TRANSACTION_0.getId());
+        assertEquals(1L, transactionEntity.getFeeATM());
+        assertEquals("Test error for update", transactionEntity.getErrorMessage());
+    }
+
+    @Test
     void testGetTransactionsByAccountId() {
         List<TransactionEntity> transactions = dao.getTransactions(extension.getDatabaseManager().getDataSource(), td.TRANSACTION_1.getSenderId(), (byte) 8, (byte) -1, 0, false, false, false, 0, Integer.MAX_VALUE, false, true, Integer.MAX_VALUE, 0, false, false);
         assertEquals(List.of(td.TRANSACTION_12, td.TRANSACTION_11), toModelConverter.convert(transactions));

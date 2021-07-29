@@ -25,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.JdbcQueryExecutionHelper;
+import com.apollocurrency.aplwallet.apl.core.dao.exception.AplCoreDaoException;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.ChatInfo;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
@@ -288,6 +289,55 @@ public class TransactionDaoImpl implements TransactionDao {
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
+        }
+    }
+
+    @Override
+    public void updateTransaction(TransactionEntity transaction) {
+        JdbcQueryExecutionHelper<TransactionEntity> helper = new JdbcQueryExecutionHelper<>(databaseManager.getDataSource(), (rs) -> entityRowMapper.map(rs, null));
+        int updated = helper.executeUpdate((con) -> {
+            PreparedStatement pstmt = con.prepareStatement("UPDATE transaction SET deadline = ?, "
+                + "recipient_id = ?, amount = ?, fee = ?, referenced_transaction_full_hash = ?, height = ?, "
+                + "block_id = ?, signature = ?, `timestamp` = ?, type = ?, subtype = ?, sender_id = ?, sender_public_key = ?, attachment_bytes = ?, "
+                + "block_timestamp = ?, full_hash = ?, version = ?, has_message = ?, has_encrypted_message = ?, has_public_key_announcement = ?, "
+                + "has_encrypttoself_message = ?, phased = ?, has_prunable_message = ?, has_prunable_encrypted_message = ?, "
+                + "has_prunable_attachment = ?, ec_block_height = ?, ec_block_id = ?, transaction_index = ?, error_message = ? WHERE id = ? "
+                + "");
+            int i = 0;
+            pstmt.setShort(++i, transaction.getDeadline());
+            DbUtils.setLongZeroToNull(pstmt, ++i, transaction.getRecipientId());
+            pstmt.setLong(++i, transaction.getAmountATM());
+            pstmt.setLong(++i, transaction.getFeeATM());
+            DbUtils.setBytes(pstmt, ++i, transaction.getReferencedTransactionFullHash());
+            pstmt.setInt(++i, transaction.getHeight());
+            pstmt.setLong(++i, transaction.getBlockId());
+            pstmt.setBytes(++i, transaction.getSignatureBytes());
+            pstmt.setInt(++i, transaction.getTimestamp());
+            pstmt.setByte(++i, transaction.getType());
+            pstmt.setByte(++i, transaction.getSubtype());
+            pstmt.setLong(++i, transaction.getSenderId());
+            pstmt.setBytes(++i, transaction.getSenderPublicKey());
+            pstmt.setBytes(++i, transaction.getAttachmentBytes());
+            pstmt.setInt(++i, transaction.getBlockTimestamp());
+            pstmt.setBytes(++i, transaction.getFullHash());
+            pstmt.setByte(++i, transaction.getVersion());
+            pstmt.setBoolean(++i, transaction.isHasMessage());
+            pstmt.setBoolean(++i, transaction.isHasEncryptedMessage());
+            pstmt.setBoolean(++i, transaction.isHasPublicKeyAnnouncement());
+            pstmt.setBoolean(++i, transaction.isHasEncryptToSelfMessage());
+            pstmt.setBoolean(++i, transaction.isPhased());
+            pstmt.setBoolean(++i, transaction.isHasPrunableMessage());
+            pstmt.setBoolean(++i, transaction.isHasPrunableEencryptedMessage());
+            pstmt.setBoolean(++i, transaction.isHasPrunableAttachment());
+            pstmt.setInt(++i, transaction.getEcBlockHeight());
+            DbUtils.setLongZeroToNull(pstmt, ++i, transaction.getEcBlockId());
+            pstmt.setShort(++i, transaction.getIndex());
+            pstmt.setString(++i, transaction.getErrorMessage());
+            pstmt.setLong(++i, transaction.getId());
+            return pstmt;
+        });
+        if (updated == 0) {
+            throw new AplCoreDaoException("Transaction with id " + transaction.getId() + " was not found");
         }
     }
 

@@ -578,7 +578,9 @@ public abstract class TransactionType {
      * @param recipientAccount transaction' recipient (may be null)
      */
     protected void undoApplyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        throw new UnsupportedOperationException("undoApplyAttachment is not supported for transaction type: " + getSpec() + ", transaction: " + transaction.getStringId() + ", sender: " + Long.toUnsignedString(senderAccount.getId()));
+        if (!canFailDuringExecution()) {
+            throw new UnsupportedOperationException("undoApplyAttachment is not supported for transaction type: " + getSpec() + ", transaction: " + transaction.getStringId() + ", sender: " + Long.toUnsignedString(senderAccount.getId()));
+        }
     }
 
     public boolean isSmartContractAddressed(Transaction transaction){

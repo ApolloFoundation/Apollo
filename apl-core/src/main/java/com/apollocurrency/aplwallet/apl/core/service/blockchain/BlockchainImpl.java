@@ -20,6 +20,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.blockchain;
 
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
@@ -344,7 +345,11 @@ public class BlockchainImpl implements Blockchain {
         }
     }
 
-//    @Override
+    @Override
+    public void updateTransaction(Transaction transaction) {
+        transactionService.updateTransaction(transaction);
+    }
+    //    @Override
 //    public List<Transaction> getOrLoadTransactions(Block parentBlock) {
 //        if (parentBlock.getTransactions() == null || parentBlock.getTransactions().size() == 0) {
 //            List<Transaction> blockTransactions = this.getBlockTransactions(parentBlock.getId());
