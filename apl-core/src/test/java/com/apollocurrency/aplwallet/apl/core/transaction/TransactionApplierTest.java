@@ -232,10 +232,18 @@ class TransactionApplierTest {
     }
 
     @Test
-    void applyPhasing() {
-    }
+    void applyPhasingOK() {
+        Account sender = new Account(1L, 200000000000000000L,10_000_000L, 0, 0, 0);
+        List<AbstractAppendix> appendages = new ArrayList<>();
+        appendages.add(attachment);
+        doReturn(appendages).when(tx).getAppendages();
+        doReturn(sender).when(accountService).getAccount(1L);
+        doReturn(1L).when(tx).getSenderId();
+        doReturn(true).when(attachment).isPhasable();
 
-    @Test
-    void undoUnconfirmed() {
+        applier.applyPhasing(tx);
+
+        verify(tx, never()).fail(any(String.class));
+        verify(attachment).apply(tx, sender, null);
     }
 }
