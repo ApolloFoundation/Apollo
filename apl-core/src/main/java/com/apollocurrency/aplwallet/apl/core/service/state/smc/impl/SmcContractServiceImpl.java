@@ -22,8 +22,8 @@ import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
-import com.apollocurrency.smc.blockchain.ContractNotFoundException;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
+import com.apollocurrency.smc.contract.ContractNotFoundException;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.ContractType;
 import com.apollocurrency.smc.contract.SmartContract;
@@ -93,7 +93,7 @@ public class SmcContractServiceImpl implements SmcContractService {
      * The loaded smart contract instance hase an undefined fuel value.
      *
      * @param address given contract address
-     * @return loaded smart contract or throw {@link com.apollocurrency.smc.blockchain.ContractNotFoundException}
+     * @return loaded smart contract or throw {@link com.apollocurrency.smc.contract.ContractNotFoundException}
      */
     @Override
     @Transactional(readOnly = true)
@@ -111,7 +111,7 @@ public class SmcContractServiceImpl implements SmcContractService {
      * Load the contract specification by the given address or null if the given address doesn't correspond the smart contract
      *
      * @param address given contract address
-     * @return loaded smart contract specification or throw {@link com.apollocurrency.smc.blockchain.ContractNotFoundException}
+     * @return loaded smart contract specification or throw {@link com.apollocurrency.smc.contract.ContractNotFoundException}
      */
     @Override
     @Transactional(readOnly = true)
@@ -120,7 +120,7 @@ public class SmcContractServiceImpl implements SmcContractService {
         //TODO: move contract type determining routine to Save procedure and persist it to smc_contract table
         var item = libraryProvider.parseContractType(smcEntity.getData());
         if (item == null) {
-            throw new ContractNotFoundException("Can't determine the contract type, address=" + address.getHex());
+            throw new ContractNotFoundException(address);
         }
         var contractSpec = libraryProvider.loadSpecification(item.getType());
         log.trace("Loaded specification for contract name={} type={}, spec={}", item.getName(), item.getType(), contractSpec);
@@ -194,7 +194,7 @@ public class SmcContractServiceImpl implements SmcContractService {
                 .build()
             )
             .status(ContractStatus.CREATED)
-            .fuel(new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice()))
+            .fuel(new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice()))
             .build();
 
         log.debug("Created contract={}", contract);
@@ -293,7 +293,7 @@ public class SmcContractServiceImpl implements SmcContractService {
         SmcContractStateEntity smcStateEntity = smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(aplAddress.getLongId()));
         if (smcStateEntity == null && !quiet) {
             log.error("Contract state not found at addr={}", address.getHex());
-            throw new ContractNotFoundException("Contract state not found at addr=" + address.getHex());
+            throw new ContractNotFoundException(address);
         }
         return smcStateEntity;
     }
@@ -303,7 +303,7 @@ public class SmcContractServiceImpl implements SmcContractService {
         SmcContractEntity smcContractEntity = smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(aplAddress.getLongId()));
         if (smcContractEntity == null) {
             log.error("Contract not found at addr={}", address.getHex());
-            throw new ContractNotFoundException("Contract not found at addr=" + address.getHex());
+            throw new ContractNotFoundException(address);
         }
         return smcContractEntity;
     }

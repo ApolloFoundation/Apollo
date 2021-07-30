@@ -7,7 +7,6 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
-import com.apollocurrency.smc.contract.ContractException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.OutOfFuelException;
 import com.apollocurrency.smc.contract.vm.ContractVirtualMachine;
@@ -15,6 +14,7 @@ import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.ResultValue;
 import com.apollocurrency.smc.polyglot.PolyglotException;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
+import com.apollocurrency.smc.polyglot.engine.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT_PROCESSING_ERROR;
@@ -63,7 +63,7 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
 
             return executeContract(executionLog);
 
-        } catch (OutOfFuelException | PolyglotException e) {
+        } catch (PolyglotException e) {
             var msg = putExceptionToLog(executionLog, e);
             log.error(msg);
             throw e;
@@ -79,11 +79,11 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
 
     protected String putExceptionToLog(ExecutionLog executionLog, Exception e) {
         var msg = String.format("Call method error %s:%s", e.getClass().getName(), e.getMessage());
-        ContractException smcException;
-        if (e instanceof ContractException) {
-            smcException = (ContractException) e;
+        ExecutionException smcException;
+        if (e instanceof ExecutionException) {
+            smcException = (ExecutionException) e;
         } else {
-            smcException = new ContractException(e);
+            smcException = new ExecutionException(msg, e);
         }
         executionLog.add("Abstract processor", smcException);
         executionLog.setErrorCode(CONTRACT_PROCESSING_ERROR.getErrorCode());

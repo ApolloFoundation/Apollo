@@ -25,7 +25,6 @@ import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
-import com.apollocurrency.smc.contract.fuel.OutOfFuelException;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.polyglot.JSRequirementException;
 import com.apollocurrency.smc.polyglot.JSRevertException;
@@ -146,10 +145,10 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
             Fuel fuel = smartContract.getFuel();
             log.info("RevertException: Contract={} Fuel={}", smartContract.getAddress(), fuel);
             refundRemaining(transaction, senderAccount, fuel);
-            throw new AplTransactionExecutionException(executionLog.toJsonString(), e, transaction);
-        } catch (OutOfFuelException | PolyglotException e) {
+            throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
+        } catch (PolyglotException e) {
             log.error(executionLog.toJsonString());
-            throw new AplTransactionExecutionException(executionLog.toJsonString(), e, transaction);
+            throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
         }
         log.debug("Commit the contract state changes...");
         processor.commit();

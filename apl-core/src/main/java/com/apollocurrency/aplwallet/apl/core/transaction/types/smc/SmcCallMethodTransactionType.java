@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAtt
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
-import com.apollocurrency.smc.blockchain.ContractNotFoundException;
+import com.apollocurrency.smc.contract.ContractNotFoundException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
@@ -101,8 +101,8 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
         SmartContract smartContract;
         try {
             smartContract = contractService.loadContract(
-                new AplAddress(transaction.getRecipientId()),
-                new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
+                address,
+                new ContractFuel(address, attachment.getFuelLimit(), attachment.getFuelPrice())
             );
             smartContract.setSender(new AplAddress(transaction.getSenderId()));
         } catch (ContractNotFoundException e) {
@@ -142,7 +142,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
             .value(BigInteger.valueOf(transaction.getAmountATM()))
             .build();
         BigInteger calculatedFuel = getFuelBasedFee(transaction).calcFuel(smartMethod);
-        Fuel actualFuel = new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice());
+        Fuel actualFuel = new ContractFuel(new AplAddress(transaction.getRecipientId()), attachment.getFuelLimit(), attachment.getFuelPrice());
         if (!actualFuel.tryToCharge(calculatedFuel)) {
             log.error("Needed fuel={} but actual={}", calculatedFuel, actualFuel);
             throw new AplUnacceptableTransactionValidationException("Not enough fuel to execute this transaction, expected="
@@ -171,7 +171,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
 
         SmartContract smartContract = contractService.loadContract(
             address,
-            new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
+            new ContractFuel(address, attachment.getFuelLimit(), attachment.getFuelPrice())
         );
         smartContract.setSender(new AplAddress(transaction.getSenderId()));
         SmartMethod smartMethod = SmartMethod.builder()

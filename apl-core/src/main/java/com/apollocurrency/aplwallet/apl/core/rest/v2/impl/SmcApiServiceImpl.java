@@ -51,7 +51,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
-import com.apollocurrency.smc.blockchain.ContractNotFoundException;
+import com.apollocurrency.smc.contract.ContractNotFoundException;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
@@ -350,7 +350,7 @@ public class SmcApiServiceImpl implements SmcApiService {
     private List<ResultValue> processAllMethods(Address contractAddress, List<ContractMethod> members, ExecutionLog executionLog) {
         SmartContract smartContract = contractService.loadContract(
             contractAddress,
-            new ContractFuel(BigInteger.ZERO, BigInteger.ONE)
+            new ContractFuel(contractAddress, BigInteger.ZERO, BigInteger.ONE)
         );
         //smartContract.setSender(new AplAddress(transaction.getSenderId()));
 
@@ -358,7 +358,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         SmcContractTxBatchProcessor processor = new CallViewMethodTxProcessor(
             smartContract,
             methods,
-            integratorFactory.createReadonlyProcessor(),
+            integratorFactory.createReadonlyProcessor(contractAddress),
             smcConfig
         );
 
@@ -390,7 +390,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         try {
             smartContract = contractService.loadContract(
                 contractAddress,
-                new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
+                new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice())
             );
             smartContract.setSender(new AplAddress(transaction.getSenderId()));
         } catch (ContractNotFoundException e) {

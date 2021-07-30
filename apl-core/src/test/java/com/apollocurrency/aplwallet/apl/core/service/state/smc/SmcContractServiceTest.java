@@ -139,7 +139,7 @@ class SmcContractServiceTest {
                 .build()
             )
             .status(ContractStatus.CREATED)
-            .fuel(new ContractFuel(smcPublishContractAttachment.getFuelLimit(), smcPublishContractAttachment.getFuelPrice()))
+            .fuel(new ContractFuel(contractAddress, smcPublishContractAttachment.getFuelLimit(), smcPublishContractAttachment.getFuelPrice()))
             .build();
 
         smcContractEntity = contractModelToEntityConverter.convert(smartContract);
@@ -163,7 +163,7 @@ class SmcContractServiceTest {
     @Test
     void loadContract() {
         //GIVEN
-        Fuel fuel = new ContractFuel(smcTxData.getFuelLimit(), smcTxData.getFuelPrice());
+        Fuel fuel = new ContractFuel(contractAddress, smcTxData.getFuelLimit(), smcTxData.getFuelPrice());
         when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(recipientAddress.getLongId()))).thenReturn(smcContractEntity);
         when(smcContractStateTable.get(SmcContractStateTable.KEY_FACTORY.newKey(recipientAddress.getLongId()))).thenReturn(smcContractStateEntity);
 

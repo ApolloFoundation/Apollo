@@ -21,11 +21,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAtt
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
-import com.apollocurrency.smc.blockchain.ContractNotFoundException;
 import com.apollocurrency.smc.blockchain.MockIntegrator;
 import com.apollocurrency.smc.blockchain.storage.CachedMappingRepository;
 import com.apollocurrency.smc.blockchain.storage.ContractMappingRepositoryFactory;
 import com.apollocurrency.smc.blockchain.tx.SMCOperationReceipt;
+import com.apollocurrency.smc.contract.ContractNotFoundException;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.vm.ContractBlock;
 import com.apollocurrency.smc.contract.vm.ContractBlockchainTransaction;
@@ -80,8 +80,8 @@ public class SmcBlockchainIntegratorFactory {
         return new SMCOperationProcessor(new MockIntegrator(transaction), ExecutionLog.EMPTY_LOG);
     }
 
-    public BlockchainIntegrator createReadonlyProcessor() {
-        final var integrator = new ReadonlyIntegrator(new SmcCachedAccountService(accountService2));
+    public BlockchainIntegrator createReadonlyProcessor(Address contract) {
+        final var integrator = new ReadonlyIntegrator(contract, new SmcCachedAccountService(accountService2));
         return new SMCOperationProcessor(integrator, new ExecutionLog());
     }
 
@@ -101,9 +101,11 @@ public class SmcBlockchainIntegratorFactory {
 
     private class ReadonlyIntegrator implements BlockchainIntegrator {
 
+        final Address contract;
         final CachedAccountService cachedAccountService;
 
-        public ReadonlyIntegrator(CachedAccountService cachedAccountService) {
+        public ReadonlyIntegrator(Address contract, CachedAccountService cachedAccountService) {
+            this.contract = contract;
             this.cachedAccountService = cachedAccountService;
         }
 
@@ -130,6 +132,11 @@ public class SmcBlockchainIntegratorFactory {
         }
 
         @Override
+        public Address contract() {
+            return null;
+        }
+
+        @Override
         public BlockchainInfo getBlockchainInfo() {
             BlockchainStatusDto blockchainStatus = serverInfoService.getBlockchainStatus();
             return BlockchainInfo.builder()
@@ -144,7 +151,7 @@ public class SmcBlockchainIntegratorFactory {
         public BigInteger getBalance(Address address) {
             Account account = cachedAccountService.getAccount(address);
             if (account == null) {
-                throw new ContractNotFoundException("Address not found, address=" + address.getHex());
+                throw new ContractNotFoundException(address);
             }
             return BigInteger.valueOf(account.getBalanceATM());
         }
@@ -193,7 +200,7 @@ public class SmcBlockchainIntegratorFactory {
                               ContractBlockchainTransaction currentTransaction,
                               TxLogProcessor txLogProcessor,
                               CachedAccountService cachedAccountService) {
-            super(cachedAccountService);
+            super(contract, cachedAccountService);
 
             this.originatorTransactionId = originatorTransactionId;
             this.txSenderAccount = txSenderAccount;
@@ -241,14 +248,14 @@ public class SmcBlockchainIntegratorFactory {
                 if (from.getLongId() == txSenderAccount.getId()) {//case 1
                     log.debug("--send money ---2.1: ");
                     if (to.getLongId() != txRecipientAccount.getId()) {
-                        throw new SendMsgException("Wrong recipient address");
+                        throw new SendMsgException(contract, "Wrong recipient address");
                     }
                 } else if (from.getLongId() == txRecipientAccount.getId()) {//case 2
                     log.debug("--send money ---2.2: ");
                     //fromAddr - is a contract address
                     //toAddr - is an arbitrary address
                 } else {
-                    throw new SendMsgException("Wrong sender address");
+                    throw new SendMsgException(contract, "Wrong sender address");
                 }
                 log.debug("--send money ---3: sender={} recipient={}", from, to);
                 txReceiptBuilder
