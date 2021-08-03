@@ -42,5 +42,20 @@ class UnconfirmedTransactionController {
         doReturn("APL").when(blockchainConfig).getAccountPrefix();
     }
 
+
+    private static final String getUri = "/debug/dowloadstart/";
+    private static final String getByIdUri = "/debug/donloadstart/0";
+    
     @Test
+    void testGetDonloadstartInfo() throws URISyntaxException, UnsupportedEncodingException {
+
+        MockHttpRequest request = MockHttpRequest.get(getById).contentType(MediaType.APPLICATION_JSON_TYPE);
+        MockHttpResponse response = new MockHttpResponse();
+        dispatcher.invoke(request, response);
+
+        assertEquals(200, response.getStatus());
+
+    }
+
+
 }
