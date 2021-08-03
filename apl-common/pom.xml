@@ -56,14 +56,6 @@
       </plugin>
       <!-- calculate SHA-256 sums -->
       <plugin>
-        <executions>
-          <execution>
-            <phase>${zipExecutionPhase}</phase>
-            <goals>
-              <goal>files</goal>
-            </goals>
-          </execution>
-        </executions>
         <configuration>
           <fileSets>
             <fileSet>
