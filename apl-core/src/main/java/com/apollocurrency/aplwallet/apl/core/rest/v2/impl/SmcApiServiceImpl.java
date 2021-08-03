@@ -51,7 +51,7 @@ import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
-import com.apollocurrency.smc.contract.ContractNotFoundException;
+import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
@@ -393,7 +393,7 @@ public class SmcApiServiceImpl implements SmcApiService {
                 new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice())
             );
             smartContract.setSender(new AplAddress(transaction.getSenderId()));
-        } catch (ContractNotFoundException e) {
+        } catch (AddressNotFoundException e) {
             return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, contractAddress.getHex(), body.getSender()).build();
         }
 

@@ -25,7 +25,7 @@ import com.apollocurrency.smc.blockchain.MockIntegrator;
 import com.apollocurrency.smc.blockchain.storage.CachedMappingRepository;
 import com.apollocurrency.smc.blockchain.storage.ContractMappingRepositoryFactory;
 import com.apollocurrency.smc.blockchain.tx.SMCOperationReceipt;
-import com.apollocurrency.smc.contract.ContractNotFoundException;
+import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.vm.ContractBlock;
 import com.apollocurrency.smc.contract.vm.ContractBlockchainTransaction;
@@ -151,7 +151,7 @@ public class SmcBlockchainIntegratorFactory {
         public BigInteger getBalance(Address address) {
             Account account = cachedAccountService.getAccount(address);
             if (account == null) {
-                throw new ContractNotFoundException(address);
+                throw new AddressNotFoundException(address);
             }
             return BigInteger.valueOf(account.getBalanceATM());
         }

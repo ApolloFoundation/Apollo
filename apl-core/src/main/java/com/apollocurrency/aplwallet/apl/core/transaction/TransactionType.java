@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -180,7 +181,7 @@ public abstract class TransactionType {
             throw new AplUnacceptableTransactionValidationException("Transaction's sender not found, tx: " + transaction.getId() + ", sender: " + transaction.getSenderId(), transaction);
         }
         if (account.getUnconfirmedBalanceATM() < amounts.getTotalAmountATM()) {
-            throw new AplUnacceptableTransactionValidationException("Not enough apl balance on account: " + transaction.getSenderId() + ", required at least " + amounts.getTotalAmountATM()
+            throw new AplAcceptableTransactionValidationException("Not enough apl balance on account: " + transaction.getSenderId() + ", required at least " + amounts.getTotalAmountATM()
                 + ", but only got " + account.getUnconfirmedBalanceATM(), transaction);
         }
         doStateDependentValidation(transaction);

@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAtt
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodAttachment;
 import com.apollocurrency.aplwallet.apl.util.rlp.RlpReader;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
-import com.apollocurrency.smc.contract.ContractNotFoundException;
+import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
@@ -105,7 +105,7 @@ public class SmcCallMethodTransactionType extends AbstractSmcTransactionType {
                 new ContractFuel(address, attachment.getFuelLimit(), attachment.getFuelPrice())
             );
             smartContract.setSender(new AplAddress(transaction.getSenderId()));
-        } catch (ContractNotFoundException e) {
+        } catch (AddressNotFoundException e) {
             throw new AplAcceptableTransactionValidationException("Contract doesn't exist at address " + address, transaction);
         }
         SmartMethod smartMethod = SmartMethod.builder()

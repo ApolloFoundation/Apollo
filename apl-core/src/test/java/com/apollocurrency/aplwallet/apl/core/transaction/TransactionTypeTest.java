@@ -3,6 +3,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -148,7 +149,7 @@ class TransactionTypesTest {
         doReturn(109L).when(sender).getUnconfirmedBalanceATM();
         FallibleTransactionType type = prepareTransactionType();
 
-        assertThrows(AplUnacceptableTransactionValidationException.class, ()-> type.validateStateDependent(transaction));
+        assertThrows(AplAcceptableTransactionValidationException.class, () -> type.validateStateDependent(transaction));
 
         assertEquals(0, type.getDependentValidationCounter());
     }
