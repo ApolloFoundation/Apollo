@@ -54,26 +54,6 @@
           </execution>
         </executions>
       </plugin>
-      <!-- calculate SHA-256 sums -->
-      <plugin>
-        <configuration>
-          <fileSets>
-            <fileSet>
-              <directory>${project.build.directory}</directory>
-              <includes>
-                <include>${zip-file-name}-${project.version}-NoOS-NoArch.${zip-format}</include>
-              </includes>
-            </fileSet>
-          </fileSets>
-          <algorithms>
-            <algorithm>SHA-256</algorithm>
-          </algorithms>
-          <individualFiles>true</individualFiles>
-          <types>
-            <type>zip</type>
-          </types>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 </project>
