@@ -180,25 +180,21 @@ public class Apollo {
 
         CmdLineArgs args = new CmdLineArgs();
         CommandLine pc = new CommandLine(args);
-//        jc = JCommander.newBuilder()
-//            .addObject(args)
-//            .build();
-//        jc.setProgramName(Constants.APPLICATION);
         try {
-            pc.parseArgs(argv);
+            CommandLine.ParseResult parseResult = pc.parseArgs(argv);
+            if (args.help) {
+	    	pc.usage(System.err);
+    		System.exit(PosixExitCodes.OK.exitCode());
+    	    }
         } catch (RuntimeException ex) {
             System.err.println("Error parsing command line arguments.");
             System.err.println(ex.getMessage());
-            System.err.println(pc.getHelp().commandList());
+            pc.usage(System.err);
             System.exit(PosixExitCodes.EX_USAGE.exitCode());
         }
         if (args.getNetIdx() >= 0 && !args.chainId.isEmpty()) {
             System.err.println("--chainId, --testnet and --net parameters are incompatible, please specify only one");
             System.exit(PosixExitCodes.EX_USAGE.exitCode());
-        }
-        if (args.help) {
-//            pc.execute(args);
-            System.exit(PosixExitCodes.OK.exitCode());
         }
 
 

@@ -1,5 +1,7 @@
 package com.apollocurrency.aplwallet.apl.exec;
 
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 /*
@@ -9,6 +11,7 @@ import picocli.CommandLine.Option;
  * @author alukin@gmail.com
  * @author tx_hv@ukr.net
  */
+@Command(name = "apollo")
 public class CmdLineArgs {
 
     public static int DEFAULT_DEBUG_LEVEL = 2;
