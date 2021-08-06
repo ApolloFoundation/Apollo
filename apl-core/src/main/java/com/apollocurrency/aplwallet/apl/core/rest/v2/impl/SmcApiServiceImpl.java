@@ -70,6 +70,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -529,7 +530,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         var constructors = contractSpec.getMembers().stream()
             .filter(member -> member.getType() == ContractSpec.MemberType.CONSTRUCTOR)
             .collect(Collectors.toList());
-
+        Collections.reverse(constructors);
         response.getMembers().addAll(methodSpecMapper.convert(constructors));
 
         return builder.bind(response).build();

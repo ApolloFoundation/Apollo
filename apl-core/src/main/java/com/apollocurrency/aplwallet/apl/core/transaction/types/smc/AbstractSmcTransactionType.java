@@ -26,6 +26,7 @@ import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.contract.fuel.FuelCalculator;
 import com.apollocurrency.smc.contract.fuel.FuelValidator;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
+import com.apollocurrency.smc.polyglot.JSAssertionException;
 import com.apollocurrency.smc.polyglot.JSRequirementException;
 import com.apollocurrency.smc.polyglot.JSRevertException;
 import com.apollocurrency.smc.polyglot.PolyglotException;
@@ -143,8 +144,11 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
 
         } catch (JSRevertException | JSRequirementException e) {
             Fuel fuel = smartContract.getFuel();
-            log.info("RevertException: Contract={} Fuel={}", smartContract.getAddress(), fuel);
+            log.info("Refundable exception {} Contract={} Fuel={}", e.getClass().getSimpleName(), smartContract.getAddress(), fuel);
             refundRemaining(transaction, senderAccount, fuel);
+            throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
+        } catch (JSAssertionException e) {
+            log.info("Assertion exception Contract={}, charged all fee={}", smartContract.getAddress(), smartContract.getFuel().fee());
             throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
         } catch (PolyglotException e) {
             log.error(executionLog.toJsonString());

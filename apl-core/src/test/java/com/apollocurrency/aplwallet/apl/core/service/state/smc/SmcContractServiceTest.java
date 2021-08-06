@@ -21,6 +21,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishCont
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
+import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartSource;
@@ -42,6 +43,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -290,6 +292,30 @@ class SmcContractServiceTest {
         var rc = contractService.loadContractSpec(moduleName);
         //THEN
         assertNotNull(rc);
+    }
+
+    @Test
+    void loadSpecByAddress() {
+        //GIVEN
+        var address = new AplAddress(123L);
+        var moduleName = "APL20";
+        var module = mock(ContractSpec.class);
+        when(libraryProvider.loadSpecification(moduleName)).thenReturn(module);
+        smcContractEntity.setBaseContract(moduleName);
+        when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(address.getLongId()))).thenReturn(smcContractEntity);
+        //WHEN
+        var rc = contractService.loadContractSpec(address);
+        //THEN
+        assertNotNull(rc);
+    }
+
+    @Test
+    void loadSpecByAddressThrowException() {
+        //GIVEN
+        var address = new AplAddress(123L);
+        //WHEN
+        //THEN
+        assertThrows(AddressNotFoundException.class, () -> contractService.loadContractSpec(address));
     }
 
     static String convertToString(Address address) {
