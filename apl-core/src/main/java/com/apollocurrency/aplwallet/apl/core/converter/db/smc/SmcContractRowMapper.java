@@ -25,6 +25,7 @@ public class SmcContractRowMapper extends VersionedDerivedEntityMapper<SmcContra
         String languageVersion = rs.getString("version");
         String args = rs.getString("args");
         String status = rs.getString("status");
-        return new SmcContractEntity(null, null, address, owner, transactionId, data, contractName, args, languageName, languageVersion, status);
+        String baseContract = rs.getString("base_contract");
+        return new SmcContractEntity(null, null, address, owner, transactionId, data, contractName, baseContract, args, languageName, languageVersion, status);
     }
 }

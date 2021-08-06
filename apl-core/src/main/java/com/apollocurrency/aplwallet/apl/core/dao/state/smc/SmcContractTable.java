@@ -79,8 +79,8 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
     @Override
     public void save(Connection con, SmcContractEntity entity) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + TABLE_NAME +
-                "(address, owner, transaction_id, data, name, args, language, version, status, height) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                "(address, owner, transaction_id, data, name, base_contract, args, language, version, status, height) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             , Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             pstmt.setLong(++i, entity.getAddress());
@@ -88,6 +88,7 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
             pstmt.setLong(++i, entity.getTransactionId());
             pstmt.setString(++i, entity.getData());
             pstmt.setString(++i, entity.getContractName());
+            pstmt.setString(++i, entity.getBaseContract());
             pstmt.setString(++i, entity.getArgs());
             pstmt.setString(++i, entity.getLanguageName());
             pstmt.setString(++i, entity.getLanguageVersion());

@@ -22,7 +22,6 @@ import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.smc.contract.ContractStatus;
-import com.apollocurrency.smc.contract.ContractType;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartSource;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
@@ -30,6 +29,8 @@ import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.LanguageContext;
 import com.apollocurrency.smc.polyglot.Languages;
+import com.apollocurrency.smc.polyglot.lib.ContractSpec;
+import com.apollocurrency.smc.polyglot.lib.LibraryProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +41,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -75,6 +77,8 @@ class SmcContractServiceTest {
     SmcConfig smcConfig;
     @Mock
     LanguageContext languageContext;
+    @Mock
+    LibraryProvider libraryProvider;
 
     SmcPublishContractAttachment smcPublishContractAttachment;
     SmcTxData smcTxData;
@@ -91,6 +95,7 @@ class SmcContractServiceTest {
     void setUp() {
         initMocks(this);
         when(smcConfig.createLanguageContext()).thenReturn(languageContext);
+        when(languageContext.getLibraryProvider()).thenReturn(libraryProvider);
         contractService = new SmcContractServiceImpl(blockchain,
             smcContractTable,
             smcContractStateTable,
@@ -103,7 +108,7 @@ class SmcContractServiceTest {
             .recipient("APL-632K-TWX3-2ALQ-973CU")
             .sender("APL-X5JH-TJKJ-DVGC-5T2V8")
             .name("Deal")
-            .source("class Deal {}")
+            .source("class Deal extends Contract {}")
             .params(List.of("123"))
             .amountATM(10_00000000L)
             .fuelLimit(20_000_000L)
@@ -129,10 +134,10 @@ class SmcContractServiceTest {
             .owner(senderAddress)
             .sender(senderAddress)
             .txId(new AplAddress(TX_ID))
-            .type(ContractType.PAYABLE)
             .code(SmartSource.builder()
                 .sourceCode(smcPublishContractAttachment.getContractSource())
                 .name(smcPublishContractAttachment.getContractName())
+                .baseContract("Contract")
                 .args(smcPublishContractAttachment.getConstructorParams())
                 .languageName(smcPublishContractAttachment.getLanguageName())
                 .languageVersion(Languages.languageVersion(smcPublishContractAttachment.getContractSource()))
@@ -224,6 +229,7 @@ class SmcContractServiceTest {
         when(smcTransaction.getRecipientId()).thenReturn(recipientAddress.getLongId());
         when(smcTransaction.getSenderId()).thenReturn(senderAddress.getLongId());
         when(smcTransaction.getId()).thenReturn(TX_ID);
+        when(libraryProvider.parseContractType(smcPublishContractAttachment.getContractSource())).thenReturn(new ContractSpec.Item("newName", "Contract"));
         //WHEN
         SmartContract newContract = contractService.createNewContract(smcTransaction);
 
@@ -271,6 +277,19 @@ class SmcContractServiceTest {
         assertEquals(1, loadedContracts.size());
         assertEquals(convertToRS(smartContract.getAddress()), loadedContracts.get(0).getAddress());
         assertEquals(convertToString(smartContract.getTxId()), loadedContracts.get(0).getTransaction());
+    }
+
+    @Test
+    void loadSpecByModuleName() {
+        //GIVEN
+        var moduleName = "APL20";
+        var module = mock(ContractSpec.class);
+        when(libraryProvider.loadSpecification(moduleName)).thenReturn(module);
+
+        //WHEN
+        var rc = contractService.loadContractSpec(moduleName);
+        //THEN
+        assertNotNull(rc);
     }
 
     static String convertToString(Address address) {

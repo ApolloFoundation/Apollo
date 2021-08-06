@@ -58,7 +58,8 @@ public enum ApiErrors implements ApiErrorInfo {
     CONTRACT_METHOD_VALIDATION_ERROR(-1, 3103, "Contract method validation error: {0}."),
     CONTRACT_NOT_FOUND(-1, 3104, "Contract {0} not found."),
     CONTRACT_READ_METHOD_ERROR(-1, 3105, "Call @view method error: {0}."),
-    CONTRACT_SYNTAX_VALIDATION_ERROR(-1, 3106, "Contract syntax validation error: {0}.");
+    CONTRACT_SYNTAX_VALIDATION_ERROR(-1, 3106, "Contract syntax validation error: {0}."),
+    CONTRACT_SPEC_NOT_FOUND(-1, 3107, "Contract specification for ASR module {0} not found.");
 
     private int oldErrorCode;
     private int errorCode;

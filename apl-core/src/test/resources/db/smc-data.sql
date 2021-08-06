@@ -3,9 +3,10 @@ TRUNCATE TABLE smc_state;
 TRUNCATE TABLE transaction;
 
 INSERT INTO smc_contract
-(`db_id`, `address`, `owner`, `transaction_id`, `data`, `name`, `args`, `language`, `version`, `status`, `height`)
+(`db_id`, `address`, `owner`, `transaction_id`, `data`, `name`, `base_contract`, `args`, `language`, `version`,
+ `status`, `height`)
 values (1, 7307657537262705518, 3705364957971254799, 258840658314896535, 'class Deal extends Contract{}', 'Deal',
-        '1400000000,"APL-X5JH-TJKJ-DVGC-5T2V8"', 'javascript', '0.1.1', 'ACTIVE', 10)
+        'Contract', '1400000000,"APL-X5JH-TJKJ-DVGC-5T2V8"', 'javascript', '0.1.1', 'ACTIVE', 10)
 ;
 
 INSERT INTO smc_state

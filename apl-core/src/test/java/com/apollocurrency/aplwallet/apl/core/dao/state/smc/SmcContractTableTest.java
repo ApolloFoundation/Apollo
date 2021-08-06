@@ -124,6 +124,7 @@ class SmcContractTableTest extends DbContainerBaseTest {
             .transactionId(-123L)
             .contractName("NewDeal2")
             .data("class NewDeal2 extends Contract {}")
+            .baseContract("Contract")
             .args("123, \"aaa\"")
             .languageName("javascript")
             .languageVersion("0.1.1")

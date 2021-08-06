@@ -952,6 +952,52 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
+  /@@smc/asr:
+    get:
+      tags:
+        - smc
+      summary: Get the ASR templates list.
+      description: Returns the ASR templates list.
+      operationId: getSmcAsrModules
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StringListResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /@@smc/asr/init/{module}:
+    get:
+      tags:
+        - smc
+      summary: Get the contract constructor of the given ASR module.
+      description: Returns the contract constructur
+      operationId: getSmcInitSpecByContractType
+      parameters:
+        - name: module
+          in: path
+          description: The ASR module name
+          required: true
+          schema:
+            type: string
+            example: 'APL20BUY'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractSpecResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/ServerError'
+
   /@@smc/r/debug/{address}:
     get:
       tags:
@@ -961,6 +1007,7 @@ paths:
       operationId: parseAddress
       parameters:
         - name: address
+
           in: path
           description: The contract address
           required: true
@@ -2135,6 +2182,10 @@ components:
           type: string
           description: the contract name
           example: 'Deal'
+        baseContract:
+          type: string
+          description: the base contract type
+          example: 'APL20BUY'
         params:
           type: string
           description: list of parameters
@@ -2184,6 +2235,16 @@ components:
           description: Textual error description, e.g. exception message, etc that could be displayed to user
           type: string
           example: 'The mandatory parameter ''id'' is not specified.'
+
+    StringListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                type: string
 
     ListResponse:
       allOf:

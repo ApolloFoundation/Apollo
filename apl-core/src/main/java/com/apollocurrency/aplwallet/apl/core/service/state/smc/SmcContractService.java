@@ -35,7 +35,21 @@ public interface SmcContractService {
      */
     SmartContract loadContract(Address address, Fuel contractFuel);
 
+    /**
+     * Load the contract specification by given contract address
+     *
+     * @param address the contract address
+     * @return the contract specification by given contract address
+     */
     ContractSpec loadContractSpec(Address address);
+
+    /**
+     * Load the contract specification of the specified ASR module
+     *
+     * @param asrModuleName the ASR module name
+     * @return the contract specification of the specified ASR module
+     */
+    ContractSpec loadContractSpec(String asrModuleName);
 
     /**
      * Checks if contract already exists
@@ -95,4 +109,12 @@ public interface SmcContractService {
      * @return the details information about contract
      */
     ContractDetails getContractDetailsByAddress(Address address);
+
+    /**
+     * Returns the list of ASR module names.
+     *
+     * @return the list of ASR module names.
+     */
+    List<String> getAsrModules();
+
 }

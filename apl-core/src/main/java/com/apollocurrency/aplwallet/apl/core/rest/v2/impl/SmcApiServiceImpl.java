@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.api.v2.model.MethodSpec;
 import com.apollocurrency.aplwallet.api.v2.model.PropertySpec;
 import com.apollocurrency.aplwallet.api.v2.model.PublishContractReq;
 import com.apollocurrency.aplwallet.api.v2.model.ResultValueResponse;
+import com.apollocurrency.aplwallet.api.v2.model.StringListResponse;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionArrayResp;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
@@ -131,6 +132,14 @@ public class SmcApiServiceImpl implements SmcApiService {
         txBContext.createSerializer(transaction.getVersion()).serialize(transaction, signedTxBytes);
         response.setTx(Convert.toHexString(signedTxBytes.array()));
 
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response getSmcAsrModules(SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+        var response = new StringListResponse();
+        response.setResult(contractService.getAsrModules());
         return builder.bind(response).build();
     }
 
@@ -505,6 +514,23 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         List<ContractDetails> contracts = contractService.loadContractsByOwner(address, 0, Integer.MAX_VALUE);
         response.setContracts(contracts);
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response getSmcInitSpecByContractType(String module, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+        var response = new ContractSpecResponse();
+        var contractSpec = contractService.loadContractSpec(module);
+        if (contractSpec == null) {
+            return builder.error(ApiErrors.CONTRACT_SPEC_NOT_FOUND, module).build();
+        }
+        var constructors = contractSpec.getMembers().stream()
+            .filter(member -> member.getType() == ContractSpec.MemberType.CONSTRUCTOR)
+            .collect(Collectors.toList());
+
+        response.getMembers().addAll(methodSpecMapper.convert(constructors));
 
         return builder.bind(response).build();
     }

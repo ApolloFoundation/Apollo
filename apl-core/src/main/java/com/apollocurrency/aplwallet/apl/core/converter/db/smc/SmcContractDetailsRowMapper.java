@@ -37,6 +37,7 @@ public class SmcContractDetailsRowMapper implements RowMapper<ContractDetails> {
         long transactionId = rs.getLong("transaction_id");
         String data = rs.getString("data");
         String contractName = rs.getString("name");
+        String baseContract = rs.getString("base_contract");
         String languageName = rs.getString("language");
         String languageVersion = rs.getString("version");
         String args = rs.getString("args");
@@ -72,6 +73,7 @@ public class SmcContractDetailsRowMapper implements RowMapper<ContractDetails> {
         contract.setSignature(Convert.toHexString(signature));
         contract.setTimestamp(Convert2.fromEpochTime(blockTimestamp));
         contract.setName(contractName);
+        contract.setBaseContract(baseContract);
         contract.setParams(args);
         contract.setFuelLimit(attachment.getFuelLimit().toString());
         contract.setFuelPrice(attachment.getFuelPrice().toString());

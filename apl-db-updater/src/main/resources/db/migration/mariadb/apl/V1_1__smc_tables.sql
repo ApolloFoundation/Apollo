@@ -7,9 +7,10 @@ CREATE TABLE IF NOT EXISTS `smc_contract`
     `db_id`          bigint(20) unsigned                     NOT NULL AUTO_INCREMENT,
     `address`        bigint(20)                              NOT NULL,# contract address
     `owner`          bigint(20)                              NOT NULL,# owner
-    `transaction_id` bigint(20)                              NOT NULL, # originator, transaction sender (i.e. payer ???)
+    `transaction_id` bigint(20)                              NOT NULL,# originator, transaction sender (i.e. payer ???)
     `data`           LONGTEXT COLLATE utf8mb4_unicode_ci     NOT NULL,
     `name`           varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `base_contract`  varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,# base contract type, i.e. APL20 ...
     `args`           TEXT COLLATE utf8mb4_unicode_ci                  DEFAULT NULL,
     `language`       varchar(20) COLLATE utf8mb4_unicode_ci  NOT NULL,
     `version`        varchar(20) COLLATE utf8mb4_unicode_ci  NOT NULL,

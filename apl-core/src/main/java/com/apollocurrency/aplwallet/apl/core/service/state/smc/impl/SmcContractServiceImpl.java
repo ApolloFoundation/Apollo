@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
+import com.apollocurrency.aplwallet.apl.core.exception.AplCoreContractViolationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
@@ -25,7 +26,6 @@ import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractStatus;
-import com.apollocurrency.smc.contract.ContractType;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartSource;
 import com.apollocurrency.smc.contract.fuel.ContractFuel;
@@ -117,14 +117,14 @@ public class SmcContractServiceImpl implements SmcContractService {
     @Transactional(readOnly = true)
     public ContractSpec loadContractSpec(Address address) {
         SmcContractEntity smcEntity = loadContractEntity(address);
-        //TODO: move contract type determining routine to Save procedure and persist it to smc_contract table
-        var item = libraryProvider.parseContractType(smcEntity.getData());
-        if (item == null) {
-            throw new AddressNotFoundException(address);
-        }
-        var contractSpec = libraryProvider.loadSpecification(item.getType());
-        log.trace("Loaded specification for contract name={} type={}, spec={}", item.getName(), item.getType(), contractSpec);
+        log.trace("Loaded specification for contract name={} type={}", smcEntity.getContractName(), smcEntity.getBaseContract());
+        return loadContractSpec(smcEntity.getBaseContract());
+    }
 
+    @Override
+    public ContractSpec loadContractSpec(String asrModuleName) {
+        var contractSpec = libraryProvider.loadSpecification(asrModuleName);
+        log.trace("Loaded specification for module={}, spec={}", asrModuleName, contractSpec);
         return contractSpec;
     }
 
@@ -170,24 +170,29 @@ public class SmcContractServiceImpl implements SmcContractService {
     @Override
     public SmartContract createNewContract(Transaction smcTransaction) {
         if (smcTransaction.getAttachment().getTransactionTypeSpec() != TransactionTypes.TransactionTypeSpec.SMC_PUBLISH) {
-            throw new IllegalStateException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec()
-                + ", expected " + TransactionTypes.TransactionTypeSpec.SMC_PUBLISH);
+            throw new AplCoreContractViolationException("Invalid transaction attachment: " + smcTransaction.getAttachment().getTransactionTypeSpec()
+                + ", expected " + TransactionTypes.TransactionTypeSpec.SMC_PUBLISH + ", transaction_id=" + smcTransaction.getStringId());
         }
         SmcPublishContractAttachment attachment = (SmcPublishContractAttachment) smcTransaction.getAttachment();
 
         final Address contractAddress = new AplAddress(smcTransaction.getRecipientId());
         final Address sender = new AplAddress(smcTransaction.getSenderId());
         final Address txId = new AplAddress(smcTransaction.getId());
+
+        var baseContractType = libraryProvider.parseContractType(attachment.getContractSource());
+        if (baseContractType == null) {
+            throw new AplCoreContractViolationException("Can't determine the contract base type, transaction_id=" + smcTransaction.getStringId() + ", src=" + attachment.getContractSource());
+        }
+
         SmartContract contract = SmartContract.builder()
             .address(contractAddress)
             .owner(sender)
             .sender(sender)
             .txId(txId)
-            //TODO determine the contract type by source code
-            .type(ContractType.PAYABLE)
             .code(SmartSource.builder()
                 .sourceCode(attachment.getContractSource())
                 .name(attachment.getContractName())
+                .baseContract(baseContractType.getType())
                 .args(attachment.getConstructorParams())
                 .languageName(attachment.getLanguageName())
                 .languageVersion(Languages.languageVersion(attachment.getContractSource()))
@@ -252,6 +257,7 @@ public class SmcContractServiceImpl implements SmcContractService {
         contract.setSignature(smcTransaction.getSignature().getHexString());
         contract.setTimestamp(Convert2.fromEpochTime(smcTransaction.getBlockTimestamp()));
         contract.setName(smcContractEntity.getContractName());
+        contract.setBaseContract(smcContractEntity.getBaseContract());
         contract.setParams(smcContractEntity.getArgs());
         contract.setSrc(smcContractEntity.getData());
         contract.setFuelLimit(attachment.getFuelLimit().toString());
@@ -262,24 +268,28 @@ public class SmcContractServiceImpl implements SmcContractService {
         return contract;
     }
 
-    public static SmartContract convert(SmcContractEntity smcContractEntity, SmcContractStateEntity smcContractStateEntity, Fuel contractFuel) {
+    @Override
+    public List<String> getAsrModules() {
+        return libraryProvider.getAsrModules();
+    }
+
+    public static SmartContract convert(SmcContractEntity entity, SmcContractStateEntity stateEntity, Fuel contractFuel) {
         return SmartContract.builder()
-            .address(new AplAddress(smcContractEntity.getAddress()))
-            .owner(new AplAddress(smcContractEntity.getOwner()))
-            .sender(new AplAddress(smcContractEntity.getOwner()))
-            .txId(new AplAddress(smcContractEntity.getTransactionId()))
-            //TODO determine the contract type by source code
-            .type(ContractType.PAYABLE)
+            .address(new AplAddress(entity.getAddress()))
+            .owner(new AplAddress(entity.getOwner()))
+            .sender(new AplAddress(entity.getOwner()))
+            .txId(new AplAddress(entity.getTransactionId()))
             .code(SmartSource.builder()
-                .sourceCode(smcContractEntity.getData())
-                .name(smcContractEntity.getContractName())
-                .args(smcContractEntity.getArgs())
-                .languageName(smcContractEntity.getLanguageName())
-                .languageVersion(SimpleVersion.fromString(smcContractEntity.getLanguageVersion()))
+                .sourceCode(entity.getData())
+                .name(entity.getContractName())
+                .baseContract(entity.getBaseContract())
+                .args(entity.getArgs())
+                .languageName(entity.getLanguageName())
+                .languageVersion(SimpleVersion.fromString(entity.getLanguageVersion()))
                 .build()
             )
-            .serializedObject(smcContractStateEntity.getSerializedObject())
-            .status(ContractStatus.valueOf(smcContractStateEntity.getStatus()))
+            .serializedObject(stateEntity.getSerializedObject())
+            .status(ContractStatus.valueOf(stateEntity.getStatus()))
             .fuel(contractFuel)
             .build();
     }
