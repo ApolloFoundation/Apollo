@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEn
 import com.apollocurrency.aplwallet.apl.core.exception.AplCoreContractViolationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
+import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractSpec;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
@@ -33,8 +34,9 @@ import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.Languages;
 import com.apollocurrency.smc.polyglot.SimpleVersion;
-import com.apollocurrency.smc.polyglot.lib.ContractSpec;
+import com.apollocurrency.smc.polyglot.Version;
 import com.apollocurrency.smc.polyglot.lib.LibraryProvider;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -115,17 +117,31 @@ public class SmcContractServiceImpl implements SmcContractService {
      */
     @Override
     @Transactional(readOnly = true)
-    public ContractSpec loadContractSpec(Address address) {
+    public AplContractSpec loadAsrModuleSpec(Address address) {
         SmcContractEntity smcEntity = loadContractEntity(address);
         log.trace("Loaded specification for contract name={} type={}", smcEntity.getContractName(), smcEntity.getBaseContract());
-        return loadContractSpec(smcEntity.getBaseContract());
+        return loadAsrModuleSpec(smcEntity.getBaseContract(), smcEntity.getLanguageName(), SimpleVersion.fromString(smcEntity.getLanguageVersion()));
+    }
+
+    @SneakyThrows
+    @Override
+    public AplContractSpec loadAsrModuleSpec(String asrModuleName, String language, Version version) {
+        checkLibraryCompatibility(language, version);
+        var contractSpec = libraryProvider.loadSpecification(asrModuleName);
+        log.trace("Loaded specification for module={}, spec={}", asrModuleName, contractSpec);
+        var src = libraryProvider.importModule(asrModuleName);
+        return AplContractSpec.builder()
+            .language(language)
+            .version(version)
+            .contractSpec(contractSpec)
+            .content(src.getContent())
+            .build();
     }
 
     @Override
-    public ContractSpec loadContractSpec(String asrModuleName) {
-        var contractSpec = libraryProvider.loadSpecification(asrModuleName);
-        log.trace("Loaded specification for module={}, spec={}", asrModuleName, contractSpec);
-        return contractSpec;
+    public List<String> getInheritedAsrModules(String asrModuleName, String language, Version version) {
+        checkLibraryCompatibility(language, version);
+        return libraryProvider.getInheritedModules(asrModuleName);
     }
 
     @Override
@@ -269,8 +285,12 @@ public class SmcContractServiceImpl implements SmcContractService {
     }
 
     @Override
-    public List<String> getAsrModules() {
-        return libraryProvider.getAsrModules();
+    public List<String> getAsrModules(String language, Version version) {
+        if (libraryProvider.isCompatible(language, version)) {
+            return libraryProvider.getAsrModules();
+        } else {
+            return List.of();
+        }
     }
 
     public static SmartContract convert(SmcContractEntity entity, SmcContractStateEntity stateEntity, Fuel contractFuel) {
@@ -316,6 +336,14 @@ public class SmcContractServiceImpl implements SmcContractService {
             throw new AddressNotFoundException(address);
         }
         return smcContractEntity;
+    }
+
+    private void checkLibraryCompatibility(String language, Version version) {
+        if (!libraryProvider.isCompatible(language, version)) {
+            throw new AplCoreContractViolationException("The library provider is not compatible for the given version of language ["
+                + language + ":" + version + "], expected language="
+                + libraryProvider.getLanguageName() + ", version=" + libraryProvider.version());
+        }
     }
 
 }

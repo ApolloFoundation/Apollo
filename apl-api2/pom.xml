@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.50.4</version>
+    <version>1.50.5</version>
   </parent>
 
   <artifactId>apl-api2</artifactId>
@@ -135,7 +135,7 @@
               <supportingFilesToGenerate>ApiException.java,NotFoundException.java</supportingFilesToGenerate>
 <!--              IMPORTANT! NO SPACES ALLOWED BETWEEN modelsToGenerate values-->
               <modelsToGenerate>
-                AccountInfo,AccountInfoResp,AccountReq,AccountReqTest,AccountReqSendMoney,BlockchainInfo,BlockInfo,BlockchainState,CountResponse,CreateChildAccountResp,EmptyResponse,HealthResponse,ListResponse,QueryCountResult,QueryObject,QueryResult,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,TxReceipt,TxRequest,PublishContractReq,CallContractMethodReq,ContractListResponse,ContractDetails,ContractDetailsResponse,ContractStateResponse,ContractMethod,CallMethodResult,TransactionArrayResp,CallViewMethodReq,ResultValueResponse,MethodSpec,PropertySpec,ArgSpec,ContractSpecResponse,CurrencyBurningTxCreationRequest,TransactionCreationRequest,TransactionCreationResponse,UnconfirmedTransactionInfo,CurrencyBurningTxParams,AddressSpec,AddressSpecResponse,TransactionVerificationResponse,LastTransactionVerificationResponse,TransactionVerification,StringListResponse
+                AccountInfo,AccountInfoResp,AccountReq,AccountReqTest,AccountReqSendMoney,BlockchainInfo,BlockInfo,BlockchainState,CountResponse,CreateChildAccountResp,EmptyResponse,HealthResponse,ListResponse,QueryCountResult,QueryObject,QueryResult,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,TxReceipt,TxRequest,PublishContractReq,CallContractMethodReq,ContractListResponse,ContractDetails,ContractDetailsResponse,ContractStateResponse,ContractMethod,CallMethodResult,TransactionArrayResp,CallViewMethodReq,ResultValueResponse,MethodSpec,PropertySpec,ArgSpec,ContractSpecResponse,CurrencyBurningTxCreationRequest,TransactionCreationRequest,TransactionCreationResponse,UnconfirmedTransactionInfo,CurrencyBurningTxParams,AddressSpec,AddressSpecResponse,TransactionVerificationResponse,LastTransactionVerificationResponse,TransactionVerification,StringListResponse,ModuleSourceResponse,ModuleListResponse,AsrSpec,AsrSpecResponse,AsrMethodSpec
               </modelsToGenerate>
               <configHelp>false</configHelp>
               <configOptions>

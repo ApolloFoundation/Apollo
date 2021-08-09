@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractStateTable
 import com.apollocurrency.aplwallet.apl.core.dao.state.smc.SmcContractTable;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
+import com.apollocurrency.aplwallet.apl.core.exception.AplCoreContractViolationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.model.smc.SmcTxData;
@@ -30,8 +31,11 @@ import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.polyglot.LanguageContext;
 import com.apollocurrency.smc.polyglot.Languages;
+import com.apollocurrency.smc.polyglot.SimpleVersion;
 import com.apollocurrency.smc.polyglot.lib.ContractSpec;
 import com.apollocurrency.smc.polyglot.lib.LibraryProvider;
+import com.apollocurrency.smc.polyglot.lib.ModuleSource;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -126,7 +130,7 @@ class SmcContractServiceTest {
             .contractName(smcTxData.getName())
             .contractSource(smcTxData.getSource())
             .constructorParams(String.join(",", smcTxData.getParams()))
-            .languageName("javascript")
+            .languageName("js")
             .fuelLimit(BigInteger.valueOf(smcTxData.getFuelLimit()))
             .fuelPrice(BigInteger.valueOf(smcTxData.getFuelPrice()))
             .build();
@@ -281,30 +285,55 @@ class SmcContractServiceTest {
         assertEquals(convertToString(smartContract.getTxId()), loadedContracts.get(0).getTransaction());
     }
 
+    @SneakyThrows
     @Test
     void loadSpecByModuleName() {
         //GIVEN
+        var language = "js";
+        var version = SimpleVersion.fromString("0.1.1");
         var moduleName = "APL20";
         var module = mock(ContractSpec.class);
+        when(libraryProvider.isCompatible(language, version)).thenReturn(true);
         when(libraryProvider.loadSpecification(moduleName)).thenReturn(module);
+        when(libraryProvider.importModule(moduleName)).thenReturn(mock(ModuleSource.class));
 
         //WHEN
-        var rc = contractService.loadContractSpec(moduleName);
+        var rc = contractService.loadAsrModuleSpec(moduleName, language, version);
         //THEN
         assertNotNull(rc);
     }
 
     @Test
+    void loadSpecByModuleNameWithException() {
+        //GIVEN
+        var language = "js";
+        var version = SimpleVersion.fromString("0.1.1");
+        var moduleName = "APL20";
+        when(libraryProvider.getLanguageName()).thenReturn(language);
+        when(libraryProvider.version()).thenReturn(version);
+
+        //WHEN
+        //THEN
+        assertThrows(AplCoreContractViolationException.class, () -> contractService.loadAsrModuleSpec(moduleName, "java", version));
+
+    }
+
+    @SneakyThrows
+    @Test
     void loadSpecByAddress() {
         //GIVEN
+        var language = "js";
+        var version = SimpleVersion.fromString("0.1.1");
         var address = new AplAddress(123L);
         var moduleName = "APL20";
         var module = mock(ContractSpec.class);
+        when(libraryProvider.isCompatible(language, version)).thenReturn(true);
         when(libraryProvider.loadSpecification(moduleName)).thenReturn(module);
+        when(libraryProvider.importModule(moduleName)).thenReturn(mock(ModuleSource.class));
         smcContractEntity.setBaseContract(moduleName);
         when(smcContractTable.get(SmcContractTable.KEY_FACTORY.newKey(address.getLongId()))).thenReturn(smcContractEntity);
         //WHEN
-        var rc = contractService.loadContractSpec(address);
+        var rc = contractService.loadAsrModuleSpec(address);
         //THEN
         assertNotNull(rc);
     }
@@ -315,7 +344,7 @@ class SmcContractServiceTest {
         var address = new AplAddress(123L);
         //WHEN
         //THEN
-        assertThrows(AddressNotFoundException.class, () -> contractService.loadContractSpec(address));
+        assertThrows(AddressNotFoundException.class, () -> contractService.loadAsrModuleSpec(address));
     }
 
     static String convertToString(Address address) {
