@@ -1,3 +1,7 @@
+/*
+ * Copyright © 2018-2019 Apollo Foundation
+ */
+
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.ShardRowMapper;
@@ -13,9 +17,9 @@ import java.util.List;
 import java.sql.Connection;
 
 /**
- * Shard management + retrieving interface
+ * Shard management + retrieving class
  */
-public interface ShardDaoJdbc {
+public class ShardDaoJdbc {
 
     Shard getShardById(Connection con,  long shardId);
 
