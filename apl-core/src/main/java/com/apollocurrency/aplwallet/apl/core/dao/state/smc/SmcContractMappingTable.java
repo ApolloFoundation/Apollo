@@ -8,8 +8,8 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractMapping
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.VersionedDeletableEntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.ComplexKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractMappingEntity;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -26,11 +26,11 @@ import java.sql.Statement;
  * @author andrew.zinchenko@gmail.com
  */
 public class SmcContractMappingTable extends VersionedDeletableEntityDbTable<SmcContractMappingEntity> {
-    public static final ComplexKeyFactory<SmcContractMappingEntity> KEY_FACTORY = new ComplexKeyFactory<>("address", "entry_key") {
+    public static final ComplexKeyFactory<SmcContractMappingEntity> KEY_FACTORY = new ComplexKeyFactory<>("address", "name", "entry_key") {
         @Override
         public DbKey newKey(SmcContractMappingEntity mapping) {
             if (mapping.getDbKey() == null) {
-                mapping.setDbKey(super.newKey(mapping.getAddress(), mapping.getKey()));
+                mapping.setDbKey(super.newKey(mapping.getAddress(), mapping.getName(), mapping.getKey()));
             }
             return mapping.getDbKey();
         }

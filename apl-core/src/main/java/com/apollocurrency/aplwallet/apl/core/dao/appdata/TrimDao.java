@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.appdata;
 
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.TrimEntry;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

@@ -25,6 +25,7 @@ public class SmcContractEntity extends VersionedDerivedEntity {
 
     private String data;
     private String contractName;
+    private String baseContract;//contract type - APL20
     private String args;//constructor parameters
 
     private String languageName;//"javascript"
@@ -33,13 +34,14 @@ public class SmcContractEntity extends VersionedDerivedEntity {
     private String status;//ref to ContractState enum
 
     @Builder
-    public SmcContractEntity(Long dbId, Integer height, long address, long owner, long transactionId, String data, String contractName, String args, String languageName, String languageVersion, String status) {
+    public SmcContractEntity(Long dbId, Integer height, long address, long owner, long transactionId, String data, String contractName, String baseContract, String args, String languageName, String languageVersion, String status) {
         super(dbId, height);
         this.address = address;
         this.owner = owner;
         this.transactionId = transactionId;
         this.data = data;
         this.contractName = contractName;
+        this.baseContract = baseContract;
         this.args = args;
         this.languageName = languageName;
         this.languageVersion = languageVersion;
@@ -52,11 +54,11 @@ public class SmcContractEntity extends VersionedDerivedEntity {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         SmcContractEntity entity = (SmcContractEntity) o;
-        return address == entity.address && owner == entity.owner && transactionId == entity.transactionId && data.equals(entity.data) && contractName.equals(entity.contractName) && Objects.equals(args, entity.args) && languageName.equals(entity.languageName) && languageVersion.equals(entity.languageVersion) && status.equals(entity.status);
+        return address == entity.address && owner == entity.owner && transactionId == entity.transactionId && data.equals(entity.data) && contractName.equals(entity.contractName) && baseContract.equals(entity.baseContract) && Objects.equals(args, entity.args) && languageName.equals(entity.languageName) && languageVersion.equals(entity.languageVersion) && status.equals(entity.status);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), address, owner, transactionId, data, contractName, args, languageName, languageVersion, status);
+        return Objects.hash(super.hashCode(), address, owner, transactionId, data, contractName, baseContract, args, languageName, languageVersion, status);
     }
 }

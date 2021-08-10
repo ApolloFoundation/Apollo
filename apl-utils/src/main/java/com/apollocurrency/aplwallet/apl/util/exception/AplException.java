@@ -24,10 +24,14 @@ import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONStreamAware;
 
 import java.io.IOException;
-
+/**
+ * TODO
+ * Should be replaced by the {@code AplCoreLogicException} runtime exception's hierarchy
+ */
+@Deprecated(forRemoval = true)
 public abstract class AplException extends Exception {
 
-    private JSONStreamAware jsonResponce;
+    private JSONStreamAware jsonResponse;
 
     protected AplException() {
         super();
@@ -39,7 +43,7 @@ public abstract class AplException extends Exception {
 
     protected AplException(JSONStreamAware json) {
         super(JSON.toString(json));
-        this.jsonResponce = json;
+        this.jsonResponse = json;
     }
 
     protected AplException(String message, Throwable cause) {
@@ -50,10 +54,15 @@ public abstract class AplException extends Exception {
         super(cause);
     }
 
-    public JSONStreamAware getJsonResponce() {
-        return jsonResponce;
+    public JSONStreamAware getJsonResponse() {
+        return jsonResponse;
     }
 
+
+    /**
+     * Should be replaced by the {@code AplTransactionValidationException}
+     */
+    @Deprecated(forRemoval = true)
     public static abstract class ValidationException extends AplException {
 
         private ValidationException(String message) {
@@ -70,18 +79,10 @@ public abstract class AplException extends Exception {
 
     }
 
-    public static class SignatureVerificationException extends ValidationException {
-
-        public SignatureVerificationException(String message) {
-            super(message);
-        }
-
-        public SignatureVerificationException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-    }
-
+    /**
+     * Should be replaced by the {@code AplAcceptableTransactionValidationException} in most cases
+     */
+    @Deprecated(forRemoval = true)
     public static class NotCurrentlyValidException extends ValidationException {
 
         public NotCurrentlyValidException(String message) {
@@ -94,26 +95,10 @@ public abstract class AplException extends Exception {
 
     }
 
-    public static class ExistingTransactionException extends NotCurrentlyValidException {
-
-        public ExistingTransactionException(String message) {
-            super(message);
-        }
-
-    }
-
-    public static final class NotYetEnabledException extends NotCurrentlyValidException {
-
-        public NotYetEnabledException(String message) {
-            super(message);
-        }
-
-        public NotYetEnabledException(String message, Throwable throwable) {
-            super(message, throwable);
-        }
-
-    }
-
+    /**
+     * Should be replaced by the {@code AplUnacceptableTransactionValidationException} in most cases
+     */
+    @Deprecated(forRemoval = true)
     public static final class NotValidException extends ValidationException {
 
         public NotValidException(String message) {
@@ -130,6 +115,10 @@ public abstract class AplException extends Exception {
 
     }
 
+    /**
+     * Should be replaced by the {@code AplAcceptableTransactionValidationException} subclass
+     */
+    @Deprecated(forRemoval = true)
     public static class AccountControlException extends NotCurrentlyValidException {
 
         public AccountControlException(String message) {
@@ -142,42 +131,10 @@ public abstract class AplException extends Exception {
 
     }
 
-    public static class InsufficientBalanceException extends NotCurrentlyValidException {
-
-        public InsufficientBalanceException(String message) {
-            super(message);
-        }
-
-        public InsufficientBalanceException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-    }
-
-    public static final class NotYetEncryptedException extends IllegalStateException {
-
-        public NotYetEncryptedException(String message) {
-            super(message);
-        }
-
-        public NotYetEncryptedException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-    }
-
-    public static final class StopException extends RuntimeException {
-
-        public StopException(String message) {
-            super(message);
-        }
-
-        public StopException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-    }
-
+    /**
+     * Should be replaced by the {@code AplCoreLogicException} or separate P2P exception's hierarchy
+     */
+    @Deprecated(forRemoval = true)
     public static final class AplIOException extends IOException {
 
         public AplIOException(String message) {
@@ -190,34 +147,11 @@ public abstract class AplException extends Exception {
 
     }
 
-    public static final class PrivateTransactionAccessDenied extends RuntimeException {
-        public PrivateTransactionAccessDenied() {
-            super();
-        }
-
-        public PrivateTransactionAccessDenied(String message) {
-            super(message);
-        }
-
-        public PrivateTransactionAccessDenied(String message, Throwable cause) {
-            super(message, cause);
-        }
-    }
-
-    public static final class PrivateLedgerEntryAccessDenied extends RuntimeException {
-        public PrivateLedgerEntryAccessDenied() {
-            super();
-        }
-
-        public PrivateLedgerEntryAccessDenied(String message) {
-            super(message);
-        }
-
-        public PrivateLedgerEntryAccessDenied(String message, Throwable cause) {
-            super(message, cause);
-        }
-    }
-
+    /**
+     * TODO
+     * Better to replaced by the subclass of the AplCoreLogicException
+     */
+    @Deprecated
     public static final class ExecutiveProcessException extends Exception {
         public ExecutiveProcessException() {
             super();
@@ -232,10 +166,11 @@ public abstract class AplException extends Exception {
         }
     }
 
+    /**
+     * TODO
+     * Will be extracted out of this class
+     */
     public static final class ThirdServiceIsNotAvailable extends RuntimeException {
-        public ThirdServiceIsNotAvailable() {
-            super();
-        }
 
         public ThirdServiceIsNotAvailable(String message) {
             super(message);
@@ -246,30 +181,17 @@ public abstract class AplException extends Exception {
         }
     }
 
+    /**
+     * TODO
+     * Will be extracted out of this class
+     */
     public static final class DEXProcessingException extends RuntimeException {
-        public DEXProcessingException() {
-            super();
-        }
 
         public DEXProcessingException(String message) {
             super(message);
         }
 
         public DEXProcessingException(String message, Throwable cause) {
-            super(message, cause);
-        }
-    }
-
-    public static final class SMCProcessingException extends RuntimeException {
-        public SMCProcessingException() {
-            super();
-        }
-
-        public SMCProcessingException(String message) {
-            super(message);
-        }
-
-        public SMCProcessingException(String message, Throwable cause) {
             super(message, cause);
         }
     }

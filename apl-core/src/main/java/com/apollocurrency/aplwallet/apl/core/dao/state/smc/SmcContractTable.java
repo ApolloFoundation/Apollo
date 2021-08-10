@@ -7,14 +7,14 @@ package com.apollocurrency.aplwallet.apl.core.dao.state.smc;
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractDetailsRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.SmcContractRowMapper;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -79,8 +79,8 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
     @Override
     public void save(Connection con, SmcContractEntity entity) throws SQLException {
         try (PreparedStatement pstmt = con.prepareStatement("INSERT INTO " + TABLE_NAME +
-                "(address, owner, transaction_id, data, name, args, language, version, status, height) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                "(address, owner, transaction_id, data, name, base_contract, args, language, version, status, height) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             , Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             pstmt.setLong(++i, entity.getAddress());
@@ -88,6 +88,7 @@ public class SmcContractTable extends EntityDbTable<SmcContractEntity> {
             pstmt.setLong(++i, entity.getTransactionId());
             pstmt.setString(++i, entity.getData());
             pstmt.setString(++i, entity.getContractName());
+            pstmt.setString(++i, entity.getBaseContract());
             pstmt.setString(++i, entity.getArgs());
             pstmt.setString(++i, entity.getLanguageName());
             pstmt.setString(++i, entity.getLanguageVersion());

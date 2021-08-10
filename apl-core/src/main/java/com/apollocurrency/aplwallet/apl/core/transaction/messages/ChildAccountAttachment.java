@@ -65,7 +65,6 @@ public class ChildAccountAttachment extends AbstractAttachment {
     }
 
     private void putDataBytes(ByteBuffer buffer) {
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
         buffer.put(addressScope.getCode());
         buffer.putShort(childCount);
         childPublicKey.forEach(buffer::put);

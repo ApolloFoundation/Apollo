@@ -4,6 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.account.impl;
 
+import com.apollocurrency.aplwallet.apl.core.app.GenesisAccounts;
+import com.apollocurrency.aplwallet.apl.core.app.GenesisImportException;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountLedgerEventType;
@@ -13,7 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEntry;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
@@ -23,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSyncImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.impl.BlockChainInfoServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +63,7 @@ class AccountServiceTest {
     private AccountPublicKeyService accountPublicKeyService = mock(AccountPublicKeyService.class);
     private Blockchain blockchain = mock(Blockchain.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
+    private GenesisAccounts genesisAccounts = mock(GenesisAccounts.class);
     private BlockChainInfoService blockChainInfoService = spy(new BlockChainInfoServiceImpl(
         blockchain, blockchainProcessor
     ));
@@ -79,7 +82,8 @@ class AccountServiceTest {
             accountEvent,
             ledgerEvent,
             accountGuaranteedBalanceTable,
-            blockChainInfoService
+            blockChainInfoService,
+            genesisAccounts
         ));
     }
 
@@ -153,7 +157,7 @@ class AccountServiceTest {
     }
 
     @Test
-    void getEffectiveBalanceAPLByGenesisAccount() {
+    void getEffectiveBalanceAPLByGenesisAccount() throws GenesisImportException {
         boolean lock = false;
         int height = EFFECTIVE_BALANCE_CONFIRMATIONS - 1;
         when(blockchainConfig.getOneAPL()).thenReturn(100000000L);

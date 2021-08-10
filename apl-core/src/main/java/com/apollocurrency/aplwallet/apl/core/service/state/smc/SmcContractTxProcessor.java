@@ -6,12 +6,10 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
+import com.apollocurrency.smc.contract.fuel.OutOfFuelException;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.ResultValue;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
-
-import java.util.List;
-import java.util.Optional;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -24,17 +22,14 @@ public interface SmcContractTxProcessor {
      *
      * @param executionLog execution log
      * @return result of the contract execution
+     * @throws OutOfFuelException not enough fuel to execute contract
      */
-    Optional<Object> process(ExecutionLog executionLog);
+    ResultValue process(ExecutionLog executionLog) throws OutOfFuelException;
 
     /**
-     * Batch processing. Validate, perform the smart contract and manipulate balances
-     * Call the function/method of the smart contract.
-     *
-     * @param executionLog execution log
-     * @return list of the contract executions
+     * Commit all changes.
      */
-    List<ResultValue> batchProcess(ExecutionLog executionLog);
+    void commit();
 
     /**
      * Returns the smart contract that is processing

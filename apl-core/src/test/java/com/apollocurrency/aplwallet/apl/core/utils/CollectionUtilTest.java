@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.utils;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

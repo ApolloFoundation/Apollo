@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.converter.db.smc;
 
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
+import com.apollocurrency.aplwallet.apl.core.exception.AplCoreContractViolationException;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
@@ -36,6 +37,7 @@ public class SmcContractDetailsRowMapper implements RowMapper<ContractDetails> {
         long transactionId = rs.getLong("transaction_id");
         String data = rs.getString("data");
         String contractName = rs.getString("name");
+        String baseContract = rs.getString("base_contract");
         String languageName = rs.getString("language");
         String languageVersion = rs.getString("version");
         String args = rs.getString("args");
@@ -59,7 +61,7 @@ public class SmcContractDetailsRowMapper implements RowMapper<ContractDetails> {
         try {
             attachment = (SmcPublishContractAttachment) transactionType.parseAttachment(buffer);
         } catch (AplException.NotValidException e) {
-            throw new AplException.SMCProcessingException();
+            throw new AplCoreContractViolationException("Can't parse attachment.", e);
         }
 
         ContractDetails contract = new ContractDetails();
@@ -71,6 +73,7 @@ public class SmcContractDetailsRowMapper implements RowMapper<ContractDetails> {
         contract.setSignature(Convert.toHexString(signature));
         contract.setTimestamp(Convert2.fromEpochTime(blockTimestamp));
         contract.setName(contractName);
+        contract.setBaseContract(baseContract);
         contract.setParams(args);
         contract.setFuelLimit(attachment.getFuelLimit().toString());
         contract.setFuelPrice(attachment.getFuelPrice().toString());

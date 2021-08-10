@@ -172,14 +172,7 @@ public class CsvReaderImpl extends CsvAbstractBase implements CsvReader, SimpleR
                 } else if (!caseSensitiveColumnNames && isSimpleColumnName(v)) {
                     v = ConversionUtils.toUpperEnglish(v);
                 }
-                // process HEADER with meta data = COLUMN_NAME(TYPE|PRECISION|SCALE)
-                if (v.contains(fieldTypeSeparatorStart + "")) {
-                    ColumnMetaData metaData = parseMetaDataFromHeaderString(v);
-                    listMeta.add(metaData);
-                    list.add(metaData.getName()); // only name
-                } else {
-                    list.add(v); // no meta data is present
-                }
+                list.add(v); // no meta data is present
                 if (endOfLine) {
                     break;
                 }

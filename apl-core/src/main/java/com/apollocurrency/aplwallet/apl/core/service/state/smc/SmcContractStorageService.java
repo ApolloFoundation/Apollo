@@ -28,18 +28,20 @@ public interface SmcContractStorageService {
      *
      * @param address the contract address
      * @param key     the mapping key
+     * @param name    the mapping name
      * @return the serialized object
      */
-    String loadEntry(Address address, Key key);
+    String loadEntry(Address address, Key key, String name);
 
     /**
      * Delete the serialized object by the given address from storage
      *
      * @param address the contract address
      * @param key     the mapping key
+     * @param name       the mapping name
      * @return true if entry was deleted
      */
-    boolean deleteEntry(Address address, Key key);
+    boolean deleteEntry(Address address, Key key, String name);
 
     /**
      * Checks if mapping exists

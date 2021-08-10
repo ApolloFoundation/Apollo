@@ -8,10 +8,11 @@ import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
+import com.apollocurrency.smc.contract.fuel.OutOfFuelException;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
+import com.apollocurrency.smc.contract.vm.ResultValue;
+import com.apollocurrency.smc.polyglot.PolyglotException;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Optional;
 
 /**
  * Validate transaction, perform smart contract and manipulate balances
@@ -26,7 +27,7 @@ public class PublishContractTxProcessor extends AbstractSmcContractTxProcessor {
     }
 
     @Override
-    protected Optional<Object> executeContract(ExecutionLog executionLog) {
+    protected ResultValue executeContract(ExecutionLog executionLog) throws OutOfFuelException, PolyglotException {
         validateStatus(ContractStatus.CREATED);
         getSmartContract().setStatus(ContractStatus.PUBLISHED);
         //call smart contract constructor, charge the fuel
@@ -34,7 +35,7 @@ public class PublishContractTxProcessor extends AbstractSmcContractTxProcessor {
         executionLog.join(smcMachine.getExecutionLog());
         validateStatus(ContractStatus.ACTIVE);
         smcMachine.resetExecutionLog();
-        return Optional.empty();
+        return ResultValue.from(getSmartContract());
     }
 
 }

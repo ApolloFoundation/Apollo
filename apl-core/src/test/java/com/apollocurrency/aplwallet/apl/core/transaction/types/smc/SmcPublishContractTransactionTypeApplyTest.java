@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.smc;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.smc.ContractModelToStateEntityConverter;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
@@ -12,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractStateEntity;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.model.smc.SmcTxData;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -95,9 +95,10 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
 
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx));
+        AplAddress contractAddress = new AplAddress(newTx.getRecipientId());
         SmartContract smartContract = contractService.loadContract(
-            new AplAddress(newTx.getRecipientId()),
-            new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
+            contractAddress,
+            new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice())
         );
 
         //THEN
@@ -150,9 +151,10 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
 
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx));
+        AplAddress contractAddress = new AplAddress(newTx.getRecipientId());
         SmartContract smartContract = contractService.loadContract(
-            new AplAddress(newTx.getRecipientId()),
-            new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
+            contractAddress,
+            new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice())
         );
 
         SmcContractEntity contractEntity = contractModelToEntityConverter.convert(smartContract);
@@ -196,9 +198,10 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
 
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx2));
+        AplAddress contractAddress2 = new AplAddress(newTx2.getRecipientId());
         SmartContract smartContract2 = contractService.loadContract(
-            new AplAddress(newTx2.getRecipientId()),
-            new ContractFuel(attachment2.getFuelLimit(), attachment2.getFuelPrice())
+            contractAddress,
+            new ContractFuel(contractAddress2, attachment2.getFuelLimit(), attachment2.getFuelPrice())
         );
 
         //THEN
@@ -238,9 +241,10 @@ class SmcPublishContractTransactionTypeApplyTest extends AbstractSmcTransactionT
 
         //WHEN
         DbUtils.inTransaction(extension, connection -> txApplier.apply(newTx3));
+        AplAddress contractAddress3 = new AplAddress(newTx3.getRecipientId());
         SmartContract smartContract3 = contractService.loadContract(
-            new AplAddress(newTx3.getRecipientId()),
-            new ContractFuel(attachment3.getFuelLimit(), attachment3.getFuelPrice())
+            contractAddress3,
+            new ContractFuel(contractAddress3, attachment3.getFuelLimit(), attachment3.getFuelPrice())
         );
 
         //THEN

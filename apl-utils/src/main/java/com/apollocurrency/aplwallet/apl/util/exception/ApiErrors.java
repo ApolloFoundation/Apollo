@@ -10,22 +10,22 @@ package com.apollocurrency.aplwallet.apl.util.exception;
 public enum ApiErrors implements ApiErrorInfo {
 
     INTERNAL_SERVER_EXCEPTION(-1, 100, "Internal error, root cause: %s"),
-    BLOCKCHAIN_NOT_INITIALIZED(-1, 101, "Blockchain is not initialized."),
-    UNCONFIRMED_TRANSACTION_CACHE_IS_FULL(-1, 102, "Blockchain is busy, the unconfirmed transaction cache is full."),
+    BLOCKCHAIN_NOT_INITIALIZED(-1, 101, "Blockchain is not initialized"),
+    UNCONFIRMED_TRANSACTION_CACHE_IS_FULL(-1, 102, "Blockchain is busy, the unconfirmed transaction cache is full"),
 
     JSON_SERIALIZATION_EXCEPTION(1, 1001, "Exception encountered during generating JSON content, root cause: %s"),
 
     CONSTRAINT_VIOLATION(4, 2001, "Constraint violation: %s"),
-    MISSING_PARAM_LIST(3, 2002, "At least one of [%s] must be specified."),
-    MISSING_PARAM(3, 2003, "The mandatory parameter ''{0}'' is not specified."),
+    MISSING_PARAM_LIST(3, 2002, "At least one of [%s] must be specified"),
+    MISSING_PARAM(3, 2003, "The mandatory parameter ''{0}'' is not specified"),
     INCORRECT_VALUE(4, 2004, "Incorrect ''{0}'' value, [{1}] is not defined or wrong"),
     UNKNOWN_VALUE(5, 2005, "Unknown ''{0}'' : {1}"),
     OUT_OF_RANGE(4, 2006, "{0} is not in range [{1}..{2}]"),
     PEER_NOT_CONNECTED(5, 2007, "Peer not connected."),
     PEER_NOT_OPEN_API(5, 2008, "Peer is not providing open API."),
     FAILED_TO_ADD_PEER(8, 2009, "Failed to add peer %s"),
-    ACCOUNT_GENERATION_ERROR(6, 2010, "Error occurred during account generation."),
-    ONLY_ONE_OF_PARAM_LIST(6, 2011, "Not more than one of [%s] can be specified."),
+    ACCOUNT_GENERATION_ERROR(6, 2010, "Error occurred during account generation"),
+    ONLY_ONE_OF_PARAM_LIST(6, 2011, "Not more than one of [%s] can be specified"),
     INCORRECT_PARAM_VALUE(4, 2012, "Incorrect ''{0}''"),
     INCORRECT_PARAM(4, 2013, "Incorrect {0}, {1}"),
     ACCOUNT_2FA_ERROR(22, 2014, "%s"),
@@ -45,6 +45,7 @@ public enum ApiErrors implements ApiErrorInfo {
     NOT_ENOUGH_FUNDS(6, 2028, "Not enough %s funds"),
     TX_VALIDATION_FAILED(-1, 2029, "Failed to validate tx: %s"),
     CUSTOM_ERROR_MESSAGE(8, 2030, "{0}"),
+    EXCEPTION_MESSAGE(4, 2050, "{0}"),
 
     //KMS
     EXPORT_KEY_READ_WALLET(-1, 2201, "Can't read wallet."),
@@ -57,7 +58,8 @@ public enum ApiErrors implements ApiErrorInfo {
     CONTRACT_METHOD_VALIDATION_ERROR(-1, 3103, "Contract method validation error: {0}."),
     CONTRACT_NOT_FOUND(-1, 3104, "Contract {0} not found."),
     CONTRACT_READ_METHOD_ERROR(-1, 3105, "Call @view method error: {0}."),
-    CONTRACT_SYNTAX_VALIDATION_ERROR(-1, 3106, "Contract syntax validation error: {0}.");
+    CONTRACT_SYNTAX_VALIDATION_ERROR(-1, 3106, "Contract syntax validation error: {0}."),
+    CONTRACT_SPEC_NOT_FOUND(-1, 3107, "Contract specification for ASR module {0} not found.");
 
     private int oldErrorCode;
     private int errorCode;

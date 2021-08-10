@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.converter.db.dgs;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.dao.state.mapper.VersionedDerivedEntityMapper;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;

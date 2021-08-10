@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http.get;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
@@ -77,7 +77,7 @@ public final class GetPrivateBlockchainTransactions extends AbstractAPIRequestHa
         } else {
             List<Transaction> transactionList = blockchain.getTransactions(
                 data.getAccountId(), 0, type, subtype, 0, false, false,
-                false, firstIndex, lastIndex, false, false, true);
+                false, firstIndex, lastIndex, false, false, true, false, false);
             transactionList.forEach(tx -> {
 
                 if (TransactionTypes.TransactionTypeSpec.PRIVATE_PAYMENT == tx.getType().getSpec() && data.isEncrypt()) {

@@ -3,6 +3,9 @@
     "chainId": "b5d7b697-f359-4ce5-a619-fa34b6fb01a5",
     "active": true,
     "defaultPeers": [
+      "3.141.234.52",
+      "3.19.83.112",
+      "18.188.151.122",
       "18.217.154.227",
       "52.14.216.254",
       "18.217.179.108",
@@ -53,8 +56,14 @@
     "decimals": 8,
     "featuresHeightRequirement": {
       "dexReopenPendingOrdersHeight": 3500000,
-      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 4000000
+      "dexExpiredContractWithFinishedPhasingHeightAndStep3": 4000000,
+      "failedTransactionsAcceptanceHeight": 9200000
     },
+    "currencyIssuanceHeights": [7961831, 7961830, 7945553, 7945552, 7905883, 7905882,
+      7882498, 7882497, 7882492, 7882491, 7882486, 7882485, 7882454, 7882453, 7882435, 7882434,
+      7882427, 7882426, 7468092, 7468091, 7460076, 7460075, 7452190, 7452189, 7417594, 7417593,
+      7400635, 7400634, 7344893, 7344892, 7313652, 7313651, 7312320, 7312319, 7308462, 7308461,
+      7308278, 7308277, 7304669, 7304670, 6518814, 6518815],
     "blockchainProperties": [
       {
         "height": 0,

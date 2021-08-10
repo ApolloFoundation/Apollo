@@ -4,12 +4,12 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ public class ProcessTxsToBroadcastWhenConfirmed implements Runnable {
                 } else if (!hasTransaction(uncTx)) {
                     try {
                         processor.broadcast(uncTx);
-                    } catch (AplException.ValidationException e) {
+                    } catch (AplTransactionValidationException e) {
                         log.debug("Unable to broadcast invalid unctx {}, reason {}", tx.getId(), e.getMessage());
                         txsToDelete.add(tx);
                     }
@@ -55,7 +55,7 @@ public class ProcessTxsToBroadcastWhenConfirmed implements Runnable {
                     if (!hasTransaction(tx)) {
                         try {
                             processor.broadcast(tx);
-                        } catch (AplException.ValidationException e) {
+                        } catch (AplTransactionValidationException e) {
                             log.debug("Unable to broadcast invalid tx {}, reason {}", tx.getId(), e.getMessage());
                         }
                     }

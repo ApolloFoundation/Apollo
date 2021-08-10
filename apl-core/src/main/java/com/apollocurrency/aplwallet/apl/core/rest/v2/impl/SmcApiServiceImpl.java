@@ -6,6 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.rest.v2.impl;
 
 import com.apollocurrency.aplwallet.api.v2.NotFoundException;
 import com.apollocurrency.aplwallet.api.v2.SmcApiService;
+import com.apollocurrency.aplwallet.api.v2.model.AddressSpecResponse;
+import com.apollocurrency.aplwallet.api.v2.model.AsrSpecResponse;
 import com.apollocurrency.aplwallet.api.v2.model.CallContractMethodReq;
 import com.apollocurrency.aplwallet.api.v2.model.CallViewMethodReq;
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
@@ -14,15 +16,17 @@ import com.apollocurrency.aplwallet.api.v2.model.ContractMethod;
 import com.apollocurrency.aplwallet.api.v2.model.ContractSpecResponse;
 import com.apollocurrency.aplwallet.api.v2.model.ContractStateResponse;
 import com.apollocurrency.aplwallet.api.v2.model.MethodSpec;
+import com.apollocurrency.aplwallet.api.v2.model.ModuleListResponse;
+import com.apollocurrency.aplwallet.api.v2.model.ModuleSourceResponse;
 import com.apollocurrency.aplwallet.api.v2.model.PropertySpec;
 import com.apollocurrency.aplwallet.api.v2.model.PublishContractReq;
 import com.apollocurrency.aplwallet.api.v2.model.ResultValueResponse;
 import com.apollocurrency.aplwallet.api.v2.model.TransactionArrayResp;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.TransactionCreator;
 import com.apollocurrency.aplwallet.apl.core.rest.v2.ResponseBuilderV2;
@@ -32,6 +36,7 @@ import com.apollocurrency.aplwallet.apl.core.rest.v2.converter.SmartMethodMapper
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxBatchProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallMethodTxValidator;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CallViewMethodTxProcessor;
@@ -42,13 +47,14 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcCallMethodA
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.SmcPublishContractAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.api.parameter.FirstLastIndexBeanParam;
 import com.apollocurrency.aplwallet.apl.util.cdi.config.Property;
 import com.apollocurrency.aplwallet.apl.util.exception.ApiErrors;
 import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
 import com.apollocurrency.aplwallet.apl.util.io.Result;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
-import com.apollocurrency.smc.blockchain.ContractNotFoundException;
+import com.apollocurrency.smc.contract.AddressNotFoundException;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.SmartMethod;
@@ -56,6 +62,8 @@ import com.apollocurrency.smc.contract.fuel.ContractFuel;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.ResultValue;
 import com.apollocurrency.smc.data.type.Address;
+import com.apollocurrency.smc.polyglot.SimpleVersion;
+import com.apollocurrency.smc.polyglot.Version;
 import com.apollocurrency.smc.polyglot.lib.ContractSpec;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
@@ -70,6 +78,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.apollocurrency.smc.util.HexUtils.toHex;
 
 /**
  * @author andrew.zinchenko@gmail.com
@@ -127,6 +137,90 @@ public class SmcApiServiceImpl implements SmcApiService {
         response.setTx(Convert.toHexString(signedTxBytes.array()));
 
         return builder.bind(response).build();
+    }
+
+    @Override
+    public Response getAsrModuleFullSpec(String module, String languageStr, String versionStr, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+        String language = defaultLanguage(languageStr);
+        Version version = defaultVersion(versionStr);
+        var aplContractSpec = contractService.loadAsrModuleSpec(module, language, version);
+        if (aplContractSpec == null) {
+            return builder.error(ApiErrors.CONTRACT_SPEC_NOT_FOUND, module).build();
+        }
+        var response = new AsrSpecResponse();
+        response.setMembers(methodSpecMapper.convert(aplContractSpec.getContractSpec().getMembers()));
+        response.setName(module);
+        response.setType(module);
+        response.setLanguage(aplContractSpec.getLanguage());
+        response.setVersion(aplContractSpec.getVersion().toString());
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response getAsrModuleInitSpec(String module, String languageStr, String versionStr, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+        String language = defaultLanguage(languageStr);
+        Version version = defaultVersion(versionStr);
+        var contractSpec = contractService.loadAsrModuleSpec(module, language, version);
+        if (contractSpec == null) {
+            return builder.error(ApiErrors.CONTRACT_SPEC_NOT_FOUND, module).build();
+        }
+        var response = new ContractSpecResponse();
+        var constructors = contractSpec.getContractSpec().getMembers().stream()
+            .filter(member -> member.getType() == ContractSpec.MemberType.CONSTRUCTOR)
+            .collect(Collectors.toList());
+        //Collections.reverse(constructors);
+        response.getMembers().addAll(methodSpecMapper.convert(constructors));
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response getAsrModuleSource(String module, String languageStr, String versionStr, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+        String language = defaultLanguage(languageStr);
+        Version version = defaultVersion(versionStr);
+
+        var contractSpec = contractService.loadAsrModuleSpec(module, language, version);
+        if (contractSpec == null) {
+            return builder.error(ApiErrors.CONTRACT_SPEC_NOT_FOUND, module).build();
+        }
+        var response = new ModuleSourceResponse();
+
+        response.setLanguage(contractSpec.getLanguage());
+        response.setVersion(contractSpec.getVersion().toString());
+        response.setName(contractSpec.getContractSpec().getName());
+        response.setContent(contractSpec.getContent());
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response getSmcAsrModules(String languageStr, String versionStr, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+        String language = defaultLanguage(languageStr);
+        Version version = defaultVersion(versionStr);
+        var response = new ModuleListResponse();
+        response.setModules(contractService.getAsrModules(language, version));
+        response.setLanguage(language);
+        response.setVersion(version.toString());
+        return builder.bind(response).build();
+    }
+
+    private Version defaultVersion(String versionStr) {
+        if (versionStr == null || versionStr.isBlank()) {
+            versionStr = "0.1.1";
+        }
+        return SimpleVersion.fromString(versionStr);
+    }
+
+    private String defaultLanguage(String languageStr) {
+        if (languageStr == null || languageStr.isBlank()) {
+            languageStr = "js";
+        }
+        return languageStr;
     }
 
     @Override
@@ -190,7 +284,7 @@ public class SmcApiServiceImpl implements SmcApiService {
             .contractName(body.getName())
             .contractSource(body.getSource())
             .constructorParams(String.join(",", body.getParams()))
-            .languageName("javascript")
+            .languageName("js")
             .fuelLimit(fuelLimit)
             .fuelPrice(fuelPrice)
             .build();
@@ -245,7 +339,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         var result = processAllMethods(contractAddress, body.getMembers(), executionLog);
 
         if (executionLog.hasError()) {
-            return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), contractAddress.getHex()).build();
+            return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), executionLog.getLatestCause()).build();
         }
         var response = new ResultValueResponse();
         response.setResults(methodResultMapper.convert(result));
@@ -266,12 +360,17 @@ public class SmcApiServiceImpl implements SmcApiService {
             return builder.error(ApiErrors.CONTRACT_NOT_FOUND, addressStr).build();
         }
         var response = new ContractSpecResponse();
-        var contractSpec = contractService.loadContractSpec(address);
+        var aplContractSpec = contractService.loadAsrModuleSpec(address);
+        var contractSpec = aplContractSpec.getContractSpec();
         var notViewMethods = contractSpec.getMembers().stream()
-            .filter(member -> member.getStateMutability() != ContractSpec.StateMutability.VIEW && (member.getVisibility() == ContractSpec.Visibility.PUBLIC || member.getVisibility() == ContractSpec.Visibility.EXTERNAL))
+            .filter(member -> member.getStateMutability() != ContractSpec.StateMutability.VIEW
+                && (member.getVisibility() == ContractSpec.Visibility.PUBLIC
+                || member.getVisibility() == ContractSpec.Visibility.EXTERNAL))
             .collect(Collectors.toList());
         var viewMethods = contractSpec.getMembers().stream()
-            .filter(member -> member.getStateMutability() == ContractSpec.StateMutability.VIEW && (member.getVisibility() == ContractSpec.Visibility.PUBLIC || member.getVisibility() == ContractSpec.Visibility.EXTERNAL))
+            .filter(member -> member.getStateMutability() == ContractSpec.StateMutability.VIEW
+                && (member.getVisibility() == ContractSpec.Visibility.PUBLIC
+                || member.getVisibility() == ContractSpec.Visibility.EXTERNAL))
             .collect(Collectors.toList());
 
         List<ContractMethod> methodsToCall = new ArrayList<>();
@@ -288,7 +387,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         var result = processAllMethods(address, methodsToCall, executionLog);
 
         if (executionLog.hasError()) {
-            return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), address.getHex()).build();
+            return builder.detailedError(ApiErrors.CONTRACT_READ_METHOD_ERROR, executionLog.toJsonString(), executionLog.getLatestCause()).build();
         }
 
         var resultMap = toMap(result);
@@ -304,6 +403,10 @@ public class SmcApiServiceImpl implements SmcApiService {
         response.getMembers().addAll(methodSpecMapper.convert(viewMethods));
         matchResults(response.getMembers(), resultMap);
         response.getMembers().addAll(methodSpecMapper.convert(notViewMethods));
+
+        response.setInheritedContracts(contractService.getInheritedAsrModules(contractSpec.getName()
+            , aplContractSpec.getLanguage()
+            , aplContractSpec.getVersion()));
 
         return builder.bind(response).build();
     }
@@ -345,15 +448,15 @@ public class SmcApiServiceImpl implements SmcApiService {
     private List<ResultValue> processAllMethods(Address contractAddress, List<ContractMethod> members, ExecutionLog executionLog) {
         SmartContract smartContract = contractService.loadContract(
             contractAddress,
-            new ContractFuel(BigInteger.ZERO, BigInteger.ONE)
+            new ContractFuel(contractAddress, BigInteger.ZERO, BigInteger.ONE)
         );
         //smartContract.setSender(new AplAddress(transaction.getSenderId()));
 
         var methods = methodMapper.convert(members);
-        SmcContractTxProcessor processor = new CallViewMethodTxProcessor(
+        SmcContractTxBatchProcessor processor = new CallViewMethodTxProcessor(
             smartContract,
             methods,
-            integratorFactory.createReadonlyProcessor(),
+            integratorFactory.createReadonlyProcessor(contractAddress),
             smcConfig
         );
 
@@ -385,10 +488,10 @@ public class SmcApiServiceImpl implements SmcApiService {
         try {
             smartContract = contractService.loadContract(
                 contractAddress,
-                new ContractFuel(attachment.getFuelLimit(), attachment.getFuelPrice())
+                new ContractFuel(contractAddress, attachment.getFuelLimit(), attachment.getFuelPrice())
             );
             smartContract.setSender(new AplAddress(transaction.getSenderId()));
-        } catch (ContractNotFoundException e) {
+        } catch (AddressNotFoundException e) {
             return ResponseBuilderV2.apiError(ApiErrors.CONTRACT_NOT_FOUND, contractAddress.getHex(), body.getSender()).build();
         }
 
@@ -593,6 +696,22 @@ public class SmcApiServiceImpl implements SmcApiService {
 
         String contractState = contractService.loadSerializedContract(address);
         response.setState(contractState);
+
+        return builder.bind(response).build();
+    }
+
+    @Override
+    public Response parseAddress(String address, SecurityContext securityContext) throws NotFoundException {
+        ResponseBuilderV2 builder = ResponseBuilderV2.startTiming();
+
+        long addr = Convert.parseAccountId(address);
+        var bi = new BigInteger(Long.toUnsignedString(addr));
+
+        AddressSpecResponse response = new AddressSpecResponse();
+        response.setRs(Convert2.rsAccount(addr));
+        response.setHex(toHex(bi));
+        response.setLong(Long.toString(addr));
+        response.setUlong(Long.toUnsignedString(addr));
 
         return builder.bind(response).build();
     }

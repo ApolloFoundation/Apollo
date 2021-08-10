@@ -16,10 +16,11 @@ public class ContractModelToEntityConverter implements Converter<SmartContract, 
             .owner(new BigInteger(model.getOwner().get()).longValueExact())
             .transactionId(new BigInteger(model.getTxId().get()).longValueExact())
             .contractName(model.getName())
+            .baseContract(model.getBaseContract())
             .data(model.getSourceCode())
             .args(model.getArgs())
             .languageName(model.getLanguageName())
-            .languageVersion(model.getLanguageVersion().asString())
+            .languageVersion(model.getLanguageVersion().toString())
             .status(model.getStatus().name())
             .build();
     }

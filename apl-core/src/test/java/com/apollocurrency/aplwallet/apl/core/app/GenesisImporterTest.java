@@ -1,8 +1,8 @@
 package com.apollocurrency.aplwallet.apl.core.app;
 
 import com.apollocurrency.aplwallet.api.dto.DurableTaskInfo;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfigUpdater;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
@@ -14,10 +14,8 @@ import com.apollocurrency.aplwallet.apl.core.converter.db.PrunableTxRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityToModelConverter;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionModelToEntityConverter;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.TxReceiptRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.TransactionIndexDao;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.impl.ShardRecoveryDaoJdbcImpl;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDaoImpl;
@@ -27,9 +25,11 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.account.AccountTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedTableData;
 import com.apollocurrency.aplwallet.apl.core.dao.state.publickey.PublicKeyTableProducer;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.db.JdbiConfiguration;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountGuaranteedBalance;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.GlobalSync;
@@ -41,10 +41,10 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchServ
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.TwoTablesPublicKeyDao;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.TwoTablesPublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.impl.BlockChainInfoServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexService;
 import com.apollocurrency.aplwallet.apl.core.shard.BlockIndexServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardDbExplorerImpl;
@@ -73,7 +73,6 @@ import org.jboss.weld.junit.MockBean;
 import org.jboss.weld.junit5.EnableWeld;
 import org.jboss.weld.junit5.WeldInitiator;
 import org.jboss.weld.junit5.WeldSetup;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -162,11 +161,11 @@ class GenesisImporterTest extends DbContainerBaseTest {
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(AccountGuaranteedBalanceTable.class, PublicKeyTableProducer.class,
-        AccountServiceImpl.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
+        AccountServiceImpl.class, GenesisAccounts.class, BlockChainInfoServiceImpl.class, AccountPublicKeyServiceImpl.class,
         FullTextConfigImpl.class, DerivedDbTablesRegistryImpl.class, PropertiesHolder.class,
         ShardRecoveryDaoJdbcImpl.class, GenesisImporter.class,
         TransactionServiceImpl.class, ShardDbExplorerImpl.class,
-        TransactionRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
+        TransactionEntityRowMapper.class, TransactionEntityRowMapper.class, TxReceiptRowMapper.class, PrunableTxRowMapper.class,
         TransactionModelToEntityConverter.class, TransactionEntityToModelConverter.class,
         TwoTablesPublicKeyDao.class,
         TransactionBuilderFactory.class,
@@ -176,7 +175,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
         TransactionIndexDao.class,
         DaoConfig.class,
         ApplicationJsonFactory.class,
-        UserResourceLocator.class
+        UserResourceLocator.class,JdbiHandleFactory.class, JdbiConfiguration.class
     )
         .addBeans(MockBean.of(mock(TimeService.class), TimeService.class))
         .addBeans(MockBean.of(mock(InMemoryCacheManager.class), InMemoryCacheManager.class))
@@ -184,8 +183,6 @@ class GenesisImporterTest extends DbContainerBaseTest {
         .addBeans(MockBean.of(blockchainConfig, BlockchainConfig.class))
         .addBeans(MockBean.of(blockchainConfigUpdater, BlockchainConfigUpdater.class))
         .addBeans(MockBean.of(extension.getDatabaseManager(), DatabaseManager.class))
-        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbi(), Jdbi.class))
-        .addBeans(MockBean.of(extension.getDatabaseManager().getJdbiHandleFactory(), JdbiHandleFactory.class))
         .addBeans(MockBean.of(extension.getLuceneFullTextSearchEngine(), FullTextSearchEngine.class))
         .addBeans(MockBean.of(extension.getFullTextSearchService(), FullTextSearchService.class))
         .addBeans(MockBean.of(aplAppStatus, AplAppStatus.class))
@@ -317,9 +314,9 @@ class GenesisImporterTest extends DbContainerBaseTest {
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
 
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
-        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME, 230730))
             .thenReturn(10);
-        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME, 84832))
             .thenReturn(10);
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
@@ -379,9 +376,9 @@ class GenesisImporterTest extends DbContainerBaseTest {
 
         TransactionalDataSource dataSource = extension.getDatabaseManager().getDataSource();
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
-        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME, 230730))
             .thenReturn(10);
-        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME, 84832))
             .thenReturn(10);
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
@@ -449,9 +446,9 @@ class GenesisImporterTest extends DbContainerBaseTest {
     void loadGenesisAccounts() {
 
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
-        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME, 230730))
             .thenReturn(10);
-        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME, 84832))
             .thenReturn(10);
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,
@@ -468,7 +465,7 @@ class GenesisImporterTest extends DbContainerBaseTest {
         genesisImporter.GENESIS_ACCOUNTS_JSON = "data/genesisAccounts-testnet.json";
         List<Map.Entry<String, Long>> result = genesisImporter.loadGenesisAccounts();
         assertNotNull(result);
-        assertEquals(9, result.size()); // genesis is skipped
+        assertEquals(10, result.size()); // genesis is not skipped
     }
 
     @Test
@@ -576,9 +573,9 @@ class GenesisImporterTest extends DbContainerBaseTest {
         when(jsonFactory.createParser(any(InputStream.class))).thenReturn(jsonParser);
         when(jsonParser.nextToken()).thenReturn(JsonToken.END_OBJECT);
         final PropertiesHolder mockedPropertiesHolder = mock(PropertiesHolder.class);
-        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(GenesisImporter.PUBLIC_KEY_NUMBER_TOTAL_PROPERTY_NAME, 230730))
             .thenReturn(10);
-        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME))
+        when(mockedPropertiesHolder.getIntProperty(BALANCE_NUMBER_TOTAL_PROPERTY_NAME, 84832))
             .thenReturn(10);
         GenesisImporter genesisImporter = new GenesisImporter(
             blockchainConfig,

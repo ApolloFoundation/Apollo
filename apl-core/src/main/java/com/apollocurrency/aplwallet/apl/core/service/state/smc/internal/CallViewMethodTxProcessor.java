@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxBatchProcessor;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
@@ -21,7 +22,7 @@ import java.util.List;
  * @author andrew.zinchenko@gmail.com
  */
 @Slf4j
-public class CallViewMethodTxProcessor extends AbstractSmcContractTxProcessor {
+public class CallViewMethodTxProcessor extends AbstractSmcContractTxProcessor implements SmcContractTxBatchProcessor {
     private final List<SmartMethod> smartMethods;
 
     public CallViewMethodTxProcessor(SmartContract smartContract, List<SmartMethod> smartMethods, BlockchainIntegrator processor, SmcConfig smcConfig) {
@@ -30,14 +31,30 @@ public class CallViewMethodTxProcessor extends AbstractSmcContractTxProcessor {
     }
 
     @Override
-    public List<ResultValue> batchExecuteContract(ExecutionLog executionLog) {
+    public List<ResultValue> batchProcess(ExecutionLog executionLog) {
+        try {
+
+            return batchExecuteContract(executionLog);
+
+        } catch (Exception e) {
+            var msg = putExceptionToLog(executionLog, e);
+            log.error(msg, e);
+            return List.of();
+        }
+    }
+
+    private List<ResultValue> batchExecuteContract(ExecutionLog executionLog) {
         log.debug("Smart method={}", smartMethods);
         validateStatus(ContractStatus.ACTIVE);
         //call the method and charge the fuel
-        var result = smcMachine.callMethod(getSmartContract(), smartMethods);
+        var result = smcMachine.callViewMethod(getSmartContract(), smartMethods);
         executionLog.join(smcMachine.getExecutionLog());
         smcMachine.resetExecutionLog();
         return result;
     }
 
+    @Override
+    protected ResultValue executeContract(ExecutionLog executionLog) {
+        return ResultValue.UNDEFINED_RESULT;
+    }
 }

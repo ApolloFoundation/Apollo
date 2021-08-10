@@ -195,4 +195,8 @@ public class Account extends VersionedDeletableEntity {
         }
         return copy;
     }
+
+    public String balanceString() {
+        return "Account " + Long.toUnsignedString(id) + "[unconfirmed balance " + unconfirmedBalanceATM + ", confirmed balance " + balanceATM + "]";
+    }
 }

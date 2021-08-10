@@ -6,8 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.chainid;
 
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventBinding;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.BlockEventType;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.dao.blockchain.BlockDao;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.env.config.FeaturesHeightRequirement;
@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -61,8 +62,7 @@ public class BlockchainConfigTest {
         "Test",
         10000L, 2,
             //"data.json",
-        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, 200));
-
+        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100, 1, 200), Set.of(20, 21, 25, 26));
     BlockchainConfig blockchainConfig  = new BlockchainConfig(chain, new PropertiesHolder());
     private BlockDao blockDao = mock(BlockDao.class);
     @Inject
@@ -92,18 +92,22 @@ public class BlockchainConfigTest {
     void testInitBlockchainConfigForFeatureHeightRequirement() {
         blockchainConfig.updateChain(chain);
         assertEquals(100, blockchainConfig.getDexPendingOrdersReopeningHeight());
+        assertTrue(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1), "Acceptance of the failed transactions should be enabled on '1' height");
+        assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(0), "Acceptance of the failed transactions should be not enabled until '1' height");
 
         chain.setFeaturesHeightRequirement(null);
         assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
+        assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1), "Feature config is not present, failed transaction acceptance cannot be active");
 
         chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement());
         assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
+        assertFalse(blockchainConfig.isFailedTransactionsAcceptanceActiveAtHeight(1), "Feature config is empty, failed transaction acceptance cannot be active");
     }
 
     @Test
     void testInitBlockchainConfigForFeatureHeightRequirementTransactionVersions() {
         blockchainConfig.updateChain(chain);
-        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, 200));
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, 1, 200));
         assertEquals(150, blockchainConfig.getTransactionV2Height().get());
         assertTrue(blockchainConfig.isTransactionV2ActiveAtHeight(200));
         assertFalse(blockchainConfig.isTransactionV2ActiveAtHeight(50));
@@ -112,23 +116,27 @@ public class BlockchainConfigTest {
         assertTrue(blockchainConfig.isTransactionV3ActiveAtHeight(250));
         assertFalse(blockchainConfig.isTransactionV3ActiveAtHeight(150));
 
-        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, null));
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, 150, null, null));
         assertEquals(150, blockchainConfig.getTransactionV2Height().get());
         assertFalse(blockchainConfig.getTransactionV3Height().isPresent());
 
-        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, null, null));
+        chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement(100, 100, null, null, null));
         assertFalse(blockchainConfig.getTransactionV2Height().isPresent());
         assertFalse(blockchainConfig.getTransactionV3Height().isPresent());
 
-        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, null, 200));
+        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, null, 1, 200));
 
-        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, 200, 100));
+        assertThrows(IllegalArgumentException.class, () -> new FeaturesHeightRequirement(100, 100, 200, 1, 100));
     }
 
     @Test
     void testCreateBlockchainConfig() {
         BlockchainConfig blockchainConfig = new BlockchainConfig(chain, new PropertiesHolder());
+
         assertEquals(new HeightConfig(bp0, blockchainConfig.getOneAPL(), blockchainConfig.getInitialSupply()), blockchainConfig.getCurrentConfig());
+        assertTrue(blockchainConfig.isCurrencyIssuanceHeight(25), "'25' height should belong to the currencyIssuanceHeights");
+        assertFalse(blockchainConfig.isCurrencyIssuanceHeight(24), "'24' height should not belong to the currencyIssuanceHeights");
+
     }
 
     @Test

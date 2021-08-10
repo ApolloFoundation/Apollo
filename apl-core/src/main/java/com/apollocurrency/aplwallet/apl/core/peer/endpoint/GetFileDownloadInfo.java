@@ -4,7 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.peer.endpoint;
 
 import com.apollocurrency.aplwallet.api.p2p.request.FileDownloadInfoRequest;
-import com.apollocurrency.aplwallet.api.p2p.respons.FileDownloadInfoResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.FileDownloadInfoResponse;
 import com.apollocurrency.aplwallet.apl.core.files.DownloadableFilesManager;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import lombok.extern.slf4j.Slf4j;

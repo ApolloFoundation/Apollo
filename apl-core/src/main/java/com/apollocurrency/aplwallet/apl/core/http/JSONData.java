@@ -30,8 +30,8 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.GeneratorMemoryEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.FundingMonitorInstance;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.DataTag;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.PrunableMessage;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
@@ -75,7 +75,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffler;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.ShufflingParticipant;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.peer.Hallmark;
 import com.apollocurrency.aplwallet.apl.core.peer.Peer;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
@@ -148,6 +148,7 @@ public final class JSONData {
     private static FundingMonitorService fundingMonitorService = CDI.current().select(FundingMonitorService.class).get();
     private static PrunableLoadingService prunableLoadingService = CDI.current().select(PrunableLoadingService.class).get();
     private static TransactionJsonSerializer transactionJsonSerializer = CDI.current().select(TransactionJsonSerializer.class).get();
+    private static GenesisAccounts genesisAccounts = CDI.current().select(GenesisAccounts.class).get();
 
     private JSONData() {
     } // never
@@ -442,7 +443,7 @@ public final class JSONData {
 
     public static JSONObject genesisBalancesJson(int firstIndex, int lastIndex) {
         JSONObject result = new JSONObject();
-        List<Map.Entry<String, Long>> genesisBalances = GenesisAccounts.getGenesisBalances(firstIndex, lastIndex);
+        List<Map.Entry<String, Long>> genesisBalances = genesisAccounts.getGenesisBalances(firstIndex, lastIndex);
         JSONArray accountArray = new JSONArray();
         for (int i = 0; i < genesisBalances.size(); i++) {
             Map.Entry<String, Long> accountBalanceEntry = genesisBalances.get(i);
@@ -452,7 +453,7 @@ public final class JSONData {
             accountArray.add(accountBalanceJson);
         }
         result.put("accounts", accountArray);
-        result.put("total", GenesisAccounts.getGenesisBalancesNumber());
+        result.put("total", genesisAccounts.getGenesisBalancesNumber());
         return result;
     }
 
@@ -1223,6 +1224,7 @@ public final class JSONData {
         json.put("confirmations", blockchain.getHeight() - transaction.getHeight());
         json.put("blockTimestamp", transaction.getBlockTimestamp());
         json.put("transactionIndex", transaction.getIndex());
+        json.put("errorMessage", transaction.getErrorMessage().orElse(null));
         return json;
     }
 

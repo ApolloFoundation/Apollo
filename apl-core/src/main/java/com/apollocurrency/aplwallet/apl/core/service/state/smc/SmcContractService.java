@@ -5,12 +5,13 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
 import com.apollocurrency.aplwallet.api.v2.model.ContractDetails;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractSpec;
 import com.apollocurrency.smc.contract.ContractStatus;
 import com.apollocurrency.smc.contract.SmartContract;
 import com.apollocurrency.smc.contract.fuel.Fuel;
 import com.apollocurrency.smc.data.type.Address;
-import com.apollocurrency.smc.polyglot.lib.ContractSpec;
+import com.apollocurrency.smc.polyglot.Version;
 
 import java.util.List;
 
@@ -35,7 +36,13 @@ public interface SmcContractService {
      */
     SmartContract loadContract(Address address, Fuel contractFuel);
 
-    ContractSpec loadContractSpec(Address address);
+    /**
+     * Load the contract specification by given contract address
+     *
+     * @param address the contract address
+     * @return the contract specification by given contract address
+     */
+    AplContractSpec loadAsrModuleSpec(Address address);
 
     /**
      * Checks if contract already exists
@@ -95,4 +102,34 @@ public interface SmcContractService {
      * @return the details information about contract
      */
     ContractDetails getContractDetailsByAddress(Address address);
+
+    /**
+     * Returns the list of ASR module names.
+     *
+     * @param language the language name
+     * @param version  the language version
+     * @return the list of ASR module names.
+     */
+    List<String> getAsrModules(String language, Version version);
+
+    /**
+     * Returns the list of inherited ASR modules.
+     *
+     * @param asrModuleName the ASR module name
+     * @param language      the language name
+     * @param version       the language version
+     * @return the list of ASR module names.
+     */
+    List<String> getInheritedAsrModules(String asrModuleName, String language, Version version);
+
+    /**
+     * Load the contract specification of the specified ASR module
+     *
+     * @param asrModuleName the ASR module name
+     * @param language      the language name
+     * @param version       the language version
+     * @return the contract specification of the specified ASR module
+     */
+    AplContractSpec loadAsrModuleSpec(String asrModuleName, String language, Version version);
+
 }

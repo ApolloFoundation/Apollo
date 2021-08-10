@@ -4,7 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.utils;
 
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
+
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 
 import java.util.ArrayList;
 import java.util.Collection;

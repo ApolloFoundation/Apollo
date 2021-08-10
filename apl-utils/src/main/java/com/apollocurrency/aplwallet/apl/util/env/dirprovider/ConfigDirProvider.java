@@ -69,7 +69,7 @@ public interface ConfigDirProvider {
      * later to resolve full UUID using configurations already present on local
      * system in standard config locations
      *
-     * @return few chain ID UUID firest bytes in hex
+     * @return few chain ID UUID first bytes in hex
      */
     String getChainIdPart();
 

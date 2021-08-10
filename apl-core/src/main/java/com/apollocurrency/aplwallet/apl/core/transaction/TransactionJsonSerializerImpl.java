@@ -5,10 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.util.io.JsonBuffer;
-import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
-import com.apollocurrency.aplwallet.apl.util.io.Result;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAppendix;
@@ -16,6 +13,9 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.Prunable;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.StringUtils;
+import com.apollocurrency.aplwallet.apl.util.io.JsonBuffer;
+import com.apollocurrency.aplwallet.apl.util.io.PayloadResult;
+import com.apollocurrency.aplwallet.apl.util.io.Result;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
@@ -23,14 +23,12 @@ import javax.inject.Singleton;
 
 @Singleton
 public class TransactionJsonSerializerImpl implements TransactionJsonSerializer {
-    private final BlockchainConfig blockchainConfig;
     private final PrunableLoadingService prunableService;
     private final TxBContext txBContext;
 
     @Inject
     public TransactionJsonSerializerImpl(PrunableLoadingService prunableService, BlockchainConfig blockchainConfig) {
         this.prunableService = prunableService;
-        this.blockchainConfig = blockchainConfig;
         this.txBContext = TxBContext.newInstance(blockchainConfig.getChain());
     }
 

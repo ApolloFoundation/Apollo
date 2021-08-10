@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.dgs;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
 import com.apollocurrency.aplwallet.apl.util.Search;
@@ -137,5 +137,26 @@ public class DGSGoods extends VersionedDerivedEntity {
         int result = Objects.hash(super.hashCode(), id, sellerId, name, description, tags, timestamp, hasImage, quantity, priceATM, delisted);
         result = 31 * result + Arrays.hashCode(parsedTags);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "DGSGoods{" +
+            "id=" + id +
+            ", sellerId=" + sellerId +
+            ", name='" + name + '\'' +
+            ", description='" + description + '\'' +
+            ", tags='" + tags + '\'' +
+            ", parsedTags=" + Arrays.toString(parsedTags) +
+            ", timestamp=" + timestamp +
+            ", hasImage=" + hasImage +
+            ", quantity=" + quantity +
+            ", priceATM=" + priceATM +
+            ", delisted=" + delisted +
+            ", latest=" + isLatest() +
+            ", dbKey=" + getDbKey() +
+            ", dbId=" + getDbId() +
+            ", height=" + getHeight() +
+            '}';
     }
 }

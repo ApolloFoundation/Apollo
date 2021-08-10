@@ -30,7 +30,7 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
         synchronized (lock) {
             super.insert(entity);
             memTableCache.insert(entity);
-            log.info("Put into cache {} entity {} height={}", getName(), entity, entity.getHeight());
+            log.debug("Put into cache {} entity {} height={}", getName(), entity, entity.getHeight());
         }
     }
 
@@ -39,7 +39,7 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
         synchronized (lock) {
             new RowsConsistentOperationExecutor(height, "trim").doOp(() -> {
                 super.trim(height);
-                log.info("Trim in memory table {} at height {}", getName(), height);
+                log.debug("Trim in memory table {} at height {}", getName(), height);
                 memTableCache.trim(height);
             });
         }
@@ -75,7 +75,7 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
                             , getName(), t, height));
                 }
                 if (res) {
-                    log.info("Entity type {}, deleted {} from mem table cache and from db, at height {}", table.toString(), t, height);
+                    log.debug("Entity type {}, deleted {} from mem table cache and from db, at height {}", table.toString(), t, height);
                 }
                 return res;
             });
@@ -89,7 +89,7 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
             new RowsConsistentOperationExecutor(0, "truncate").doOp(() -> {
                 super.truncate();
                 memTableCache.clear();
-                log.info("Mem table {} and db table truncated", getName());
+                log.debug("Mem table {} and db table truncated", getName());
             });
         }
     }
@@ -116,7 +116,7 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
 
 
     @AllArgsConstructor
-    protected class RowsConsistentOperationExecutor {
+    class RowsConsistentOperationExecutor {
         private final int height;
         private final String opName;
 
@@ -136,7 +136,7 @@ public class FullyCachedTable<T extends VersionedDeletableEntity> extends DbTabl
         }
     }
 
-    protected class RowsCount {
+    class RowsCount {
         private final int db;
         private final int mem;
         private final int height;

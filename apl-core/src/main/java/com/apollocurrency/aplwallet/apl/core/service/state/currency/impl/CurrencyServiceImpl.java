@@ -1,20 +1,16 @@
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.service.state.currency.impl;
 
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConverter;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyMintTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.db.DbClause;
-import com.apollocurrency.aplwallet.apl.core.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.core.db.DbUtils;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
@@ -46,12 +42,15 @@ import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.db.DbClause;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -139,7 +138,7 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     @Override
     public Currency getCurrency(long id) {
-        return currencyTable.get(CurrencyTable.currencyDbKeyFactory.newKey(id));
+        return currencyTable.get(id);
     }
 
     @Override
@@ -216,11 +215,9 @@ public class CurrencyServiceImpl implements CurrencyService {
         currencyTable.insert(currency);
         if (currency.is(MINTABLE) || currency.is(RESERVABLE)) {
             CurrencySupply currencySupply = this.loadCurrencySupplyByCurrency(currency);
-            if (currencySupply != null) {
-                currencySupply.setCurrentSupply( attachment.getInitialSupply() );
-                currencySupply.setHeight(height);
-                currencySupplyTable.insert(currencySupply);
-            }
+            currencySupply.setCurrentSupply(attachment.getInitialSupply());
+            currencySupply.setHeight(height);
+            currencySupplyTable.insert(currencySupply);
         }
         createAndFireFullTextSearchDataEvent(currency, FullTextOperationData.OperationType.INSERT_UPDATE);
     }
@@ -230,12 +227,10 @@ public class CurrencyServiceImpl implements CurrencyService {
         Currency currency = this.getCurrency(currencyId);
         accountService.addToBalanceATM(account, event, eventId, -Math.multiplyExact(currency.getReserveSupply(), amountPerUnitATM));
         CurrencySupply currencySupply = this.loadCurrencySupplyByCurrency(currency);
-        if (currencySupply != null) {
-            long tempAmountPerUnitATM = currencySupply.getCurrentReservePerUnitATM() + amountPerUnitATM;
-            currencySupply.setCurrentReservePerUnitATM(tempAmountPerUnitATM);
-            currencySupply.setHeight(blockChainInfoService.getHeight());
-            currencySupplyTable.insert(currencySupply);
-        }
+        long tempAmountPerUnitATM = currencySupply.getCurrentReservePerUnitATM() + amountPerUnitATM;
+        currencySupply.setCurrentReservePerUnitATM(tempAmountPerUnitATM);
+        currencySupply.setHeight(blockChainInfoService.getHeight());
+        currencySupplyTable.insert(currencySupply);
         currencyFounderService.addOrUpdateFounder(currencyId, account.getId(), amountPerUnitATM);
     }
 
@@ -256,21 +251,19 @@ public class CurrencyServiceImpl implements CurrencyService {
     }
 
     public long getCurrentSupply(Currency currency) {
-        if (!currency.is(RESERVABLE) && !currency.is(MINTABLE)) {
-            return currency.getInitialSupply();
-        }
+//        if (!currency.is(RESERVABLE) && !currency.is(MINTABLE)) {
+//            return currency.getInitialSupply();
+//        }
         CurrencySupply currencySupply = this.loadCurrencySupplyByCurrency(currency);
-        if (currencySupply == null) {
-            return 0;
-        }
         return currencySupply.getCurrentSupply();
     }
 
     @Override
     public long getCurrentReservePerUnitATM(Currency currency) {
-        if (!currency.is(RESERVABLE) || this.loadCurrencySupplyByCurrency(currency) == null) {
+        if (!currency.is(RESERVABLE)) {
             return 0;
         }
+        loadCurrencySupplyByCurrency(currency);
         return currency.getCurrencySupply().getCurrentReservePerUnitATM();
     }
 
@@ -281,14 +274,15 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     @Override
     public CurrencySupply loadCurrencySupplyByCurrency(Currency currency) {
-        if (!currency.is(RESERVABLE) && !currency.is(MINTABLE)) {
-            return null;
-        }
+//        if (!currency.is(RESERVABLE) && !currency.is(MINTABLE)) {
+//            return null;
+//        }
         CurrencySupply currencySupply = currency.getCurrencySupply();
         if (currencySupply == null) {
-            currencySupply = currencySupplyTable.get(currencyTable.getDbKeyFactory().newKey(currency));
+            currencySupply = currencySupplyTable.get(currency.getId());
             if (currencySupply == null) {
                 currencySupply = new CurrencySupply(currency, blockChainInfoService.getHeight());
+                currencySupply.setCurrentSupply(currency.getInitialSupply());
             }
             currency.setCurrencySupply(currencySupply);
         }
@@ -335,9 +329,7 @@ public class CurrencyServiceImpl implements CurrencyService {
             && senderAccountId != currency.getAccountId()) {
             return false;
         }
-
-        List<AccountCurrency> accountCurrencies = accountCurrencyService
-            .getCurrenciesByAccount(currency.getId(), 0, -1);
+        List<AccountCurrency> accountCurrencies = getAccountCurrencies(currency.getId());
         return accountCurrencies.isEmpty() || accountCurrencies.size() == 1 && accountCurrencies.get(0).getAccountId() == senderAccountId;
     }
 
@@ -348,6 +340,10 @@ public class CurrencyServiceImpl implements CurrencyService {
             throw new IllegalStateException("Currency " + currency.getId() + " not entirely owned by "
                 + senderAccount.getId());
         }
+        doCurrencyDeletion(currency, event, eventId, senderAccount);
+    }
+
+    private void doCurrencyDeletion(Currency currency, LedgerEvent event, long eventId, Account senderAccount) {
         if (currency.is(RESERVABLE)) {
             if (currency.is(CLAIMABLE) && this.isActive(currency)) {
                 accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, event, eventId, currency.getId(),
@@ -387,6 +383,14 @@ public class CurrencyServiceImpl implements CurrencyService {
         currency.setHeight(height);
         currencyTable.deleteAtHeight(currency, height);
         createAndFireFullTextSearchDataEvent(currency, FullTextOperationData.OperationType.DELETE);
+    }
+
+    @Override
+    public void burn(long currencyId, Account senderAccount, long units, long eventId) {
+        Currency currency = getCurrency(currencyId);
+        increaseSupply(currency, -units);
+        accountCurrencyService.addToCurrencyUnits(senderAccount, LedgerEvent.CURRENCY_BURNING, eventId, currencyId, -units);
+        log.info("Currency burning of {} units was performed for {} by event {}, sender {}", units, currency, eventId, Long.toUnsignedString(senderAccount.getId()));
     }
 
     @Override
@@ -491,10 +495,7 @@ public class CurrencyServiceImpl implements CurrencyService {
             return;
         }
         Currency currency = getCurrency(attachment.getCurrencyId());
-        CurrencySupply currencySupply = loadCurrencySupplyByCurrency(currency); // load dependency
-        if (currencySupply != null) {
-            currency.setCurrencySupply(currencySupply);
-        }
+        loadCurrencySupplyByCurrency(currency); // load dependency
         if (monetaryCurrencyMintingService.meetsTarget(account.getId(), currency, attachment)) {
             if (currencyMint == null) {
                 currencyMint = new CurrencyMint(attachment.getCurrencyId(),
@@ -540,6 +541,20 @@ public class CurrencyServiceImpl implements CurrencyService {
         });
     }
 
+
+
+    private List<AccountCurrency> getAccountCurrencies(long currencyId) {
+        int currentHeight = blockChainInfoService.getHeight();
+        List<AccountCurrency> accountCurrencies;
+        if (!blockchainConfig.isCurrencyIssuanceHeight(currentHeight)) {
+            accountCurrencies = accountCurrencyService
+                .getByCurrency(currencyId, 0, -1);
+        } else {
+            accountCurrencies = accountCurrencyService
+                .getByAccount(currencyId, 0, -1);
+        }
+        return accountCurrencies;
+    }
     /**
      * compose db_id list for in (id,..id) SQL luceneQuery
      *
@@ -611,11 +626,10 @@ public class CurrencyServiceImpl implements CurrencyService {
         FullTextOperationData operationData = new FullTextOperationData(
             DEFAULT_SCHEMA, currencyTable.getTableName(), Thread.currentThread().getName());
         operationData.setOperationType(operationType);
-        operationData.setDbIdValue(BigInteger.valueOf(currency.getDbId()));
+        operationData.setDbIdValue(currency.getDbId());
         operationData.addColumnData(currency.getName()).addColumnData(currency.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
         fullTextSearchUpdater.putFullTextOperationData(operationData);
     }
-
 }

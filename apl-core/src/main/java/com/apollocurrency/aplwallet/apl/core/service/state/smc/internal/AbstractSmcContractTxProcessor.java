@@ -7,16 +7,15 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.internal;
 import com.apollocurrency.aplwallet.apl.core.config.SmcConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
-import com.apollocurrency.smc.contract.ContractException;
 import com.apollocurrency.smc.contract.SmartContract;
+import com.apollocurrency.smc.contract.fuel.OutOfFuelException;
 import com.apollocurrency.smc.contract.vm.ContractVirtualMachine;
 import com.apollocurrency.smc.contract.vm.ExecutionLog;
 import com.apollocurrency.smc.contract.vm.ResultValue;
+import com.apollocurrency.smc.polyglot.PolyglotException;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
+import com.apollocurrency.smc.polyglot.engine.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
-import java.util.Optional;
 
 import static com.apollocurrency.aplwallet.apl.util.exception.ApiErrors.CONTRACT_PROCESSING_ERROR;
 
@@ -31,6 +30,7 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
     protected final ContractVirtualMachine smcMachine;
     private final SmartContract smartContract;
     private final ExecutionEnv executionEnv;
+    private final BlockchainIntegrator integrator;
 
     protected AbstractSmcContractTxProcessor(SmcConfig smcConfig, BlockchainIntegrator integrator) {
         this(smcConfig, integrator, null);
@@ -40,6 +40,7 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
         this.smartContract = smartContract;
         this.smcConfig = smcConfig;
         this.executionEnv = smcConfig.createExecutionEnv();
+        this.integrator = integrator;
         this.smcMachine = new AplMachine(smcConfig.createLanguageContext(), executionEnv, integrator);
     }
 
@@ -57,51 +58,36 @@ public abstract class AbstractSmcContractTxProcessor implements SmcContractTxPro
     }
 
     @Override
-    public Optional<Object> process(ExecutionLog executionLog) {
+    public ResultValue process(ExecutionLog executionLog) throws OutOfFuelException, PolyglotException {
         try {
 
             return executeContract(executionLog);
 
-        } catch (Exception e) {
-
-            putExceptionToLog(executionLog, e);
-
-            return Optional.empty();
+        } catch (PolyglotException e) {
+            var msg = putExceptionToLog(executionLog, e);
+            log.error(msg);
+            throw e;
         }
-    }
-
-    protected Optional<Object> executeContract(ExecutionLog executionLog) {
-        return Optional.empty();
     }
 
     @Override
-    public List<ResultValue> batchProcess(ExecutionLog executionLog) {
-        try {
-
-            return batchExecuteContract(executionLog);
-
-        } catch (Exception e) {
-
-            putExceptionToLog(executionLog, e);
-
-            return List.of();
-        }
+    public void commit() {
+        integrator.commit();
     }
 
-    protected void putExceptionToLog(ExecutionLog executionLog, Exception e) {
-        log.error("Call method error {}:{}", e.getClass().getName(), e.getMessage());
-        ContractException smcException;
-        if (e instanceof ContractException) {
-            smcException = (ContractException) e;
+    protected abstract ResultValue executeContract(ExecutionLog executionLog) throws OutOfFuelException, PolyglotException;
+
+    protected String putExceptionToLog(ExecutionLog executionLog, Exception e) {
+        var msg = String.format("Call method error %s:%s", e.getClass().getName(), e.getMessage());
+        ExecutionException smcException;
+        if (e instanceof ExecutionException) {
+            smcException = (ExecutionException) e;
         } else {
-            smcException = new ContractException(e);
+            smcException = new ExecutionException(msg, e);
         }
         executionLog.add("Abstract processor", smcException);
         executionLog.setErrorCode(CONTRACT_PROCESSING_ERROR.getErrorCode());
-    }
-
-    protected List<ResultValue> batchExecuteContract(ExecutionLog executionLog) {
-        return List.of();
+        return msg;
     }
 
 }

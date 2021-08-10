@@ -4,10 +4,10 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.dao.TransactionalDataSource;
-import com.apollocurrency.aplwallet.apl.core.db.DbTransactionHelper;
-import com.apollocurrency.aplwallet.apl.core.service.appdata.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.util.db.DbTransactionHelper;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.TimeService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionProcessor;
@@ -64,7 +64,7 @@ public class RemoveUnconfirmedTransactionsThread implements Runnable {
         List<Transaction> notValidTxs = new ArrayList<>();
         DbTransactionHelper.executeInTransaction(databaseManager.getDataSource(),
             () -> CollectionUtil.forEach(memPool.getAllStream(0, number - 1), e -> {
-            if (!transactionProcessor.isFullyValidTransaction(e)) {
+            if (!transactionProcessor.isSufficientlyValidTransaction(e)) {
                 transactionProcessor.removeUnconfirmedTransaction(e);
                 notValidTxs.add(e);
             }

@@ -4,19 +4,18 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.observer;
 
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import java.util.List;
-
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
+import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.List;
 
 @Slf4j
 @Singleton
