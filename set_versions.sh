@@ -24,3 +24,7 @@ sed -i -e "s/\ VERSION.*/ VERSION = new Version\(\"$NEW_VERSION\"\);/g" ${CONST_
 PKG_PATH=apl-exec/packaging/pkg-apollo-blockchain.json
 echo "Changing pkg-apollo-blockchain.json"
 sed -i -e "s/\ \"version\".*/ \"version\": \"$NEW_VERSION\",/g" ${PKG_PATH}
+
+PKG_PATH=apl-common/packaging/pkg-apollo-common.json
+echo "Changing pkg-apollo-common.json"
+sed -i -e "s/\ \"version\".*/ \"version\": \"$NEW_VERSION\",/g" ${PKG_PATH}
