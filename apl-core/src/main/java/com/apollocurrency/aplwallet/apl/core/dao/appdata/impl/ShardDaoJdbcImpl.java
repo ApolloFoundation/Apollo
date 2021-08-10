@@ -19,27 +19,57 @@ import java.sql.Connection;
 /**
  * Shard management + retrieving class
  */
-public class ShardDaoJdbc {
+public class ShardDaoJdbcImpl extends ShardDaoJdbc {
 
-    Shard getShardById(Connection con,  long shardId);
+    Shard getShardById(Connection con,  long shardId)
+    {
+	return new Shard();
+    };
 
-    List<Shard> getAllShard(Connection con);
+    List<Shard> getAllShard(Connection con)
+    {
+	return new List(Shard);
+    };
 
-    long countShard(Connection con);
+    long countShard(Connection con)
+    {
+	return 0;
+    };
 
-    long getNextShardId(Connection con);
+    long getNextShardId(Connection con)
+    {
+	return 0;
+    };
 
-    long getMaxShardId(Connection com);
+    long getMaxShardId(Connection com)
+    {
+	return 0;
+    };
 
-    void saveShard(@BindBean Shard shard);
+    void saveShard(@BindBean Shard shard)
+    {
+	return 0;
+    };
 
-    int updateShard(@BindBean Shard shard);
+    int updateShard(@BindBean Shard shard)
+    {
+	return 0;
+    };
 
-    int hardDeleteShard(@Bind("shardId") long shardId);
+    int hardDeleteShard(@Bind("shardId") long shardId)
+    {
+	return 0;
+    };
 
-    int hardDeleteAllShards();
+    int hardDeleteAllShards()
+    {
+	return 0;
+    };
 
-    Shard getShardAtHeight(@Bind("height") long height);
+    Shard getShardAtHeight(@Bind("height") long height)
+    {
+	return new Shard();
+    };
 
     Shard getLastShard();
 
