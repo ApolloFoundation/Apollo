@@ -71,11 +71,20 @@ public class ShardDaoJdbcImpl extends ShardDaoJdbc {
 	return new Shard();
     };
 
-    Shard getLastShard();
+    Shard getLastShard()
+    {
+	return new Shard();
+    };
 
-    int getLatestShardHeight();
+    int getLatestShardHeight()
+    {
+	return 0;
+    };
 
-    Shard getLastCompletedShard();
+    Shard getLastCompletedShard()
+    {
+	return new Shard();
+    };
 
     Shard getLastCompletedOrArchivedShard();
 
