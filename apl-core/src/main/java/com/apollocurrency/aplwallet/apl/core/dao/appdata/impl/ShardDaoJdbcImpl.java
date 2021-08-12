@@ -86,12 +86,20 @@ public class ShardDaoJdbcImpl extends ShardDaoJdbc {
 	return new Shard();
     };
 
-    Shard getLastCompletedOrArchivedShard();
+    Shard getLastCompletedOrArchivedShard()
+    {
+	return new Shard();
+    };
 
-    List<Shard> getAllCompletedShards();
+    List<Shard> getAllCompletedShards()
+    {
+	return new List(Shard)
+    };
 
-    List<Shard> getAllCompletedOrArchivedShards();
-
+    List<Shard> getAllCompletedOrArchivedShards()
+    {
+	return new List(Shard);
+    };
     /**
      * Should select NONE, ONE or SEVERAL shard records by specified lower and upper height limits.
      * Records should go one after another with increasing height and SHARD_STATE = 50 (shard from archive) / 100 (full shard).
@@ -103,5 +111,8 @@ public class ShardDaoJdbcImpl extends ShardDaoJdbc {
      * @param heightTo upper block's limit to search for correct shard it stored in
      * @return NONE, ONE or TWO consecutive shard records.
      */
-    List<Shard> getCompletedBetweenBlockHeight(@Bind("heightFrom") long heightFrom, @Bind("heightTo") long heightTo);
+    List<Shard> getCompletedBetweenBlockHeight(@Bind("heightFrom") long heightFrom, @Bind("heightTo") long heightTo)
+    {
+	return new List(Shard);
+    }
 }
