@@ -404,7 +404,7 @@ public class SmcApiServiceImpl implements SmcApiService {
         matchResults(response.getMembers(), resultMap);
         response.getMembers().addAll(methodSpecMapper.convert(notViewMethods));
 
-        response.setInheritedContracts(contractService.getInheritedAsrModules(contractSpec.getName()
+        response.setInheritedContracts(contractService.getInheritedAsrModules(contractSpec.getType()
             , aplContractSpec.getLanguage()
             , aplContractSpec.getVersion()));
 
