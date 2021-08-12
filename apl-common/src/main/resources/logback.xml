@@ -1,0 +1,29 @@
+<configuration scan="true" scanPeriod="30 seconds">
+  <appender name="std" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss} - %msg%n</pattern>
+    </encoder>
+  </appender>
+  <define name="LOGDIR" class="com.apollocurrency.aplwallet.apl.tools.ToolsLogDirDefiner">
+  </define>
+  <appender name="file-height-monitor" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOGDIR}/height-monitor.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <!-- rollover monthly -->
+      <fileNamePattern>${LOGDIR}/height-monitor-%d{yyyy-MM}_%i.gz</fileNamePattern>
+      <maxHistory>30</maxHistory>
+      <maxFileSize>100MB</maxFileSize>
+      <totalSizeCap>3GB</totalSizeCap>
+    </rollingPolicy>
+
+    <encoder>
+      <pattern>%d{HH:mm:ss} - %msg%n</pattern>
+    </encoder>
+  </appender>
+  <logger name="com.apollocurrency.aplwallet.apl.tools.impl" level="debug" additivity="true"/>
+  <logger name="org.eclipse.jetty" level="off"/>
+  <root level="info">
+    <appender-ref ref="std"/>
+    <appender-ref ref="file-height-monitor"/>
+  </root>
+</configuration>
