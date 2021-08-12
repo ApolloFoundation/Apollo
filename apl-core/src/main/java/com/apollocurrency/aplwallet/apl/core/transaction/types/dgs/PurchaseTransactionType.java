@@ -79,11 +79,17 @@ public class PurchaseTransactionType extends DigitalGoodsTransactionType {
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         DigitalGoodsPurchase attachment = (DigitalGoodsPurchase) transaction.getAttachment();
-        if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM())) {
-            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
-            return true;
-        }
+        try{
+            if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM())) {
+                getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
+                return true;
+            }
         return false;
+        }
+        catch (java.lang.ArithmeticException e)
+        {
+            return false;
+        }
     }
 
     @Override
