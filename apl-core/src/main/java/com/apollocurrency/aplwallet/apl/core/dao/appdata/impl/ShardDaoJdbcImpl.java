@@ -28,7 +28,7 @@ public class ShardDaoJdbcImpl extends ShardDaoJdbc {
 
     List<Shard> getAllShard(Connection con)
     {
-	return new List(Shard);
+	return new ArrayList<Shard>();
     };
 
     long countShard(Connection con)
@@ -93,12 +93,12 @@ public class ShardDaoJdbcImpl extends ShardDaoJdbc {
 
     List<Shard> getAllCompletedShards()
     {
-	return new List(Shard)
+	return new ArrayList<Shard>();
     };
 
     List<Shard> getAllCompletedOrArchivedShards()
     {
-	return new List(Shard);
+	return new ArrayList<Shard>();
     };
     /**
      * Should select NONE, ONE or SEVERAL shard records by specified lower and upper height limits.
@@ -113,6 +113,6 @@ public class ShardDaoJdbcImpl extends ShardDaoJdbc {
      */
     List<Shard> getCompletedBetweenBlockHeight(@Bind("heightFrom") long heightFrom, @Bind("heightTo") long heightTo)
     {
-	return new List(Shard);
+	return new ArrayList<Shard>();
     }
 }
