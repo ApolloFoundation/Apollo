@@ -1,1 +1,0 @@
-package com.apollocurrency.aplwallet.apl.common;
