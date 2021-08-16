@@ -20,7 +20,9 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Singleton
 public class MSExchangeBuyTransactionType extends MonetarySystemExchangeTransactionType {
     private final ExchangeRequestService exchangeRequestService;
@@ -75,6 +77,8 @@ public class MSExchangeBuyTransactionType extends MonetarySystemExchangeTransact
         }
         catch (java.lang.ArithmeticException e)
         {
+            log.error(e.getMessage());
+            log.error("Error: attachment = {}", attachment);
             return false;
         }
         
