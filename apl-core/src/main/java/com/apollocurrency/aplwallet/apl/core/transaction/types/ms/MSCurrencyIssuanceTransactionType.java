@@ -63,7 +63,7 @@ public class MSCurrencyIssuanceTransactionType extends MonetarySystemTransaction
         Currency oldCurrency;
         int oldMinLength = Integer.MAX_VALUE;
         if ((oldCurrency = currencyService.getCurrencyByCode(attachment.getCode())) != null) {
-            oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));
+            oldMinLength = Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length());
         }
         if ((oldCurrency = currencyService.getCurrencyByCode(attachment.getName())) != null) {
             oldMinLength = Math.min(oldMinLength, Math.min(oldCurrency.getCode().length(), oldCurrency.getName().length()));

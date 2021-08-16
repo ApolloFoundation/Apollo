@@ -14,6 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
@@ -64,21 +65,20 @@ public class MSExchangeBuyTransactionType extends MonetarySystemExchangeTransact
     }
 
     @Override
+    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
+        super.doStateIndependentValidation(transaction);
+        MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
+        Convert2.safeMultiply(attachment.getRateATM(), attachment.getUnits(), transaction);
+    }
+
+    @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
-	try {
-            if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getUnits(), attachment.getRateATM())) {
-                getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getUnits(), attachment.getRateATM()));
-                return true;
-            }
-            return false;
+        if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getUnits(), attachment.getRateATM())) {
+            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getUnits(), attachment.getRateATM()));
+            return true;
         }
-        catch (java.lang.ArithmeticException e)
-        {
-            return false;
-        }
-        
-
+        return false;
     }
 
     @Override

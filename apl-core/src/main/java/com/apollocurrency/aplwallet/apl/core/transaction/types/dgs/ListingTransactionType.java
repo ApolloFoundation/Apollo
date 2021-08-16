@@ -15,7 +15,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.Search;
@@ -37,12 +36,10 @@ public class ListingTransactionType extends DigitalGoodsTransactionType {
             return attachment.getName().length() + attachment.getDescription().length();
         }
     };
-    private final PrunableLoadingService prunableLoadingService;
 
     @Inject
-    public ListingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service, PrunableLoadingService prunableLoadingService) {
+    public ListingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
         super(blockchainConfig, accountService, service);
-        this.prunableLoadingService = prunableLoadingService;
     }
 
 
@@ -79,12 +76,17 @@ public class ListingTransactionType extends DigitalGoodsTransactionType {
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
-        if (attachment.getName().length() == 0 || attachment.getName().length() > Constants.MAX_DGS_LISTING_NAME_LENGTH || attachment.getDescription().length() > Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH || attachment.getTags().length() > Constants.MAX_DGS_LISTING_TAGS_LENGTH || attachment.getQuantity() < 0 || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY || attachment.getPriceATM() <= 0 || attachment.getPriceATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
+        if (attachment.getName().length() == 0 || attachment.getName().length() > Constants.MAX_DGS_LISTING_NAME_LENGTH
+            || attachment.getDescription().length() > Constants.MAX_DGS_LISTING_DESCRIPTION_LENGTH
+            || attachment.getTags().length() > Constants.MAX_DGS_LISTING_TAGS_LENGTH
+            || attachment.getQuantity() < 0
+            || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
+            || attachment.getPriceATM() <= 0
+            || attachment.getPriceATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
             throw new AplException.NotValidException("Invalid digital goods listing: " + attachment.getJSONObject());
         }
         PrunablePlainMessageAppendix prunablePlainMessage = transaction.getPrunablePlainMessage();
         if (prunablePlainMessage != null) {
-//            prunableLoadingService.loadPrunable(transaction, prunablePlainMessage, false);
             byte[] image = prunablePlainMessage.getMessage();
             if (image != null) {
                 String mediaTypeName = Search.detectMimeType(image);
@@ -103,7 +105,7 @@ public class ListingTransactionType extends DigitalGoodsTransactionType {
     }
 
     @Override
-    public void doValidateAttachment(Transaction transaction) throws AplException.ValidationException {
+    public void doValidateAttachment(Transaction transaction) {
 
     }
 

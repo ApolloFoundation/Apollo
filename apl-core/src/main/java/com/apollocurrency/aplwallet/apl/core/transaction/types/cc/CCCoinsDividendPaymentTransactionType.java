@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
@@ -27,7 +28,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Singleton
-public class CCCoinsDividentPaymentTransactionType extends ColoredCoinsTransactionType {
+public class CCCoinsDividendPaymentTransactionType extends ColoredCoinsTransactionType {
 
 
     private final AssetService assetService;
@@ -37,7 +38,7 @@ public class CCCoinsDividentPaymentTransactionType extends ColoredCoinsTransacti
     private final TransactionValidator transactionValidator;
 
     @Inject
-    public CCCoinsDividentPaymentTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, AccountAssetService accountAssetService, AssetDividendService assetDividendService, Blockchain blockchain, TransactionValidator transactionValidator) {
+    public CCCoinsDividendPaymentTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, AccountAssetService accountAssetService, AssetDividendService assetDividendService, Blockchain blockchain, TransactionValidator transactionValidator) {
         super(blockchainConfig, accountService);
         this.assetService = assetService;
         this.assetDividendService = assetDividendService;
@@ -121,6 +122,8 @@ public class CCCoinsDividentPaymentTransactionType extends ColoredCoinsTransacti
         if (lastDividend != null && lastDividend.getHeight() > blockchain.getHeight() - 60) {
             throw new AplException.NotCurrentlyValidException("Last dividend payment for asset " + Long.toUnsignedString(attachment.getAssetId()) + " was less than 60 blocks ago at " + lastDividend.getHeight() + ", current height is " + blockchain.getHeight() + ", limit is one dividend per 60 blocks");
         }
+        long dividendEligibleQuantityATU = asset.getQuantityATU() - accountAssetService.getAssetBalanceATU(transaction.getSenderId(), asset.getId(), attachment.getHeight());
+        Convert2.safeMultiply(attachment.getAmountATMPerATU(), dividendEligibleQuantityATU, transaction);
     }
 
     @Override

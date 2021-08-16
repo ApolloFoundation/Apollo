@@ -27,6 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemExchangeTransactionType;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import lombok.extern.slf4j.Slf4j;
 
@@ -95,17 +96,16 @@ public enum CurrencyType implements CurrencyTypeValidatable {
             if (transaction.getType().getSpec() == MS_CURRENCY_ISSUANCE) {
                 MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
                 int issuanceHeight = attachment.getIssuanceHeight();
-                int finishHeight = finishValidationHeight;
-                if (issuanceHeight <= finishHeight) {
+                if (issuanceHeight <= finishValidationHeight) {
                     throw new AplException.NotCurrentlyValidException(
                         String.format("Reservable currency activation height %d not higher than transaction apply height %d",
-                            issuanceHeight, finishHeight));
+                            issuanceHeight, finishValidationHeight));
                 }
                 if (attachment.getMinReservePerUnitATM() <= 0) {
                     throw new AplException.NotValidException("Minimum reserve per unit must be > 0");
                 }
 
-                if (Math.multiplyExact(attachment.getMinReservePerUnitATM(), attachment.getReserveSupply()) >
+                if (Convert2.safeMultiply(attachment.getMinReservePerUnitATM(), attachment.getReserveSupply(), transaction) >
                     maxBalanceAtm) {
                     throw new AplException.NotValidException("Minimum reserve per unit is too large");
                 }
@@ -121,6 +121,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                 if (currency != null && currency.getIssuanceHeight() <= finishValidationHeight) {
                     throw new AplException.NotCurrentlyValidException("Cannot increase reserve for active currency");
                 }
+                Convert2.safeMultiply(currency.getReserveSupply(), attachment.getAmountPerUnitATM(), transaction);
             }
         }
 

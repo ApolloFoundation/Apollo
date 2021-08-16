@@ -15,6 +15,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
@@ -68,6 +69,7 @@ public class PurchaseTransactionType extends DigitalGoodsTransactionType {
             || attachment.getPriceATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
             throw new AplException.NotValidException("Invalid digital goods purchase: " + attachment.getJSONObject());
         }
+        Convert2.safeMultiply(attachment.getQuantity(), attachment.getPriceATM(), transaction);
         if (transaction.getEncryptedMessage() != null && !transaction.getEncryptedMessage().isText()) {
             throw new AplException.NotValidException("Only text encrypted messages allowed");
         }
@@ -79,23 +81,17 @@ public class PurchaseTransactionType extends DigitalGoodsTransactionType {
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         DigitalGoodsPurchase attachment = (DigitalGoodsPurchase) transaction.getAttachment();
-        try{
-            if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM())) {
-                getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
-                return true;
-            }
+        if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getQuantity(), attachment.getPriceATM())) {
+            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getQuantity(), attachment.getPriceATM()));
+            return true;
+        }
         return false;
-        }
-        catch (java.lang.ArithmeticException e)
-        {
-            return false;
-        }
     }
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         DigitalGoodsPurchase attachment = (DigitalGoodsPurchase) transaction.getAttachment();
-        getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
+        getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact(attachment.getQuantity(), attachment.getPriceATM()));
     }
 
     @Override
