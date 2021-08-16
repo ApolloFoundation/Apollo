@@ -2,7 +2,7 @@
  * Copyright © 2018-2019 Apollo Foundation
  */
 
-package com.apollocurrency.aplwallet.apl.core.dao.appdata;
+package com.apollocurrency.aplwallet.apl.core.dao.appdata.impl;
 
 import com.apollocurrency.aplwallet.apl.core.converter.db.ShardRowMapper;
 import com.apollocurrency.aplwallet.apl.core.dao.appdata.factory.IntArrayArgumentFactory;
@@ -12,6 +12,7 @@ import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.cdi.Transactional;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dao.appdata.ShardDaoJdbc;
 
 import java.util.List;
 import java.sql.Connection;
@@ -19,7 +20,8 @@ import java.sql.Connection;
 /**
  * Shard management + retrieving class
  */
-public class ShardDaoJdbcImpl extends ShardDaoJdbc {
+
+public class ShardDaoJdbcImpl implements ShardDaoJdbc {
 
     Shard getShardById(Connection con,  long shardId)
     {
