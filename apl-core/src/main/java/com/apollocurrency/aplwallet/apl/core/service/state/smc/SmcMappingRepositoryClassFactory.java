@@ -13,8 +13,10 @@ import com.apollocurrency.smc.blockchain.storage.ContractMappingRepository;
 import com.apollocurrency.smc.blockchain.storage.ContractMappingRepositoryFactory;
 import com.apollocurrency.smc.blockchain.storage.ReadonlyMappingRepository;
 import com.apollocurrency.smc.blockchain.storage.StringJsonConverter;
+import com.apollocurrency.smc.blockchain.storage.UnsignedBigNumJsonConverter;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.data.type.BigNum;
+import com.apollocurrency.smc.data.type.UnsignedBigNum;
 import lombok.NonNull;
 
 import javax.inject.Inject;
@@ -73,6 +75,11 @@ public class SmcMappingRepositoryClassFactory {
         }
 
         @Override
+        public ContractMappingRepository<UnsignedBigNum> unsignedBigNumRepository(String mappingName) {
+            return new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new UnsignedBigNumJsonConverter());
+        }
+
+        @Override
         public ContractMappingRepository<BigInteger> bigIntegerRepository(String mappingName) {
             return new PersistentMappingRepository<>(smcContractStorageService, contract, mappingName, new BigIntegerJsonConverter());
         }
@@ -103,6 +110,11 @@ public class SmcMappingRepositoryClassFactory {
         @Override
         public ContractMappingRepository<BigNum> bigNumRepository(String mappingName) {
             return new ReadonlyMappingRepository<>(persistentRepositoryFactory.bigNumRepository(mappingName));
+        }
+
+        @Override
+        public ContractMappingRepository<UnsignedBigNum> unsignedBigNumRepository(String mappingName) {
+            return new ReadonlyMappingRepository<>(persistentRepositoryFactory.unsignedBigNumRepository(mappingName));
         }
 
         @Override
@@ -140,6 +152,13 @@ public class SmcMappingRepositoryClassFactory {
         @Override
         public ContractMappingRepository<BigNum> bigNumRepository(String mappingName) {
             var repo = new CachedMappingRepository<>(persistentRepositoryFactory.bigNumRepository(mappingName));
+            mappingRepositories.add(repo);
+            return repo;
+        }
+
+        @Override
+        public ContractMappingRepository<UnsignedBigNum> unsignedBigNumRepository(String mappingName) {
+            var repo = new CachedMappingRepository<>(persistentRepositoryFactory.unsignedBigNumRepository(mappingName));
             mappingRepositories.add(repo);
             return repo;
         }

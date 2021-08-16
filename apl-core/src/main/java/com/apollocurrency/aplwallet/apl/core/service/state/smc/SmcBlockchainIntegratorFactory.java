@@ -18,6 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SmcCache
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.SmcTxLogProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.TransferRecord;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
+import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
@@ -87,7 +88,7 @@ public class SmcBlockchainIntegratorFactory {
 
     private BlockchainIntegrator createIntegrator(final Transaction transaction, Address contract, AbstractSmcAttachment attachment, Account txSenderAccount, Account txRecipientAccount, final LedgerEvent ledgerEvent) {
         final long originatorTransactionId = transaction.getId();
-        final ContractBlock currentBlock = blockConverter.apply(transaction.getBlock());
+        final ContractBlock currentBlock = blockConverter.convert(transaction.getBlock());
         Address trAddr = new AplAddress(transaction.getId());
         final ContractBlockchainTransaction currentTransaction = new SMCTransaction(trAddr.get(), trAddr, attachment.getFuelPrice());
 
@@ -310,9 +311,9 @@ public class SmcBlockchainIntegratorFactory {
                 new AplAddress(block.getId()).get(),
                 new AplAddress(block.getGeneratorId()),
                 block.getCumulativeDifficulty(),
-                BigInteger.ZERO,//TODO not implemented yet
+                BigInteger.ZERO,//TODO: block fuel limit - is not implemented yet
                 block.getHeight(),
-                block.getTimestamp()
+                (int) (Convert2.fromEpochTime(block.getTimestamp()) / 1000)
             );
         }
     }

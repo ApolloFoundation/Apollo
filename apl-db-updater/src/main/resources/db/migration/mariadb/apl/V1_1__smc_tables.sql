@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `smc_state`
     `latest`  tinyint(1)                             NOT NULL DEFAULT 1,
     `deleted` tinyint(1)                             NOT NULL DEFAULT 0,
     UNIQUE KEY `db_id` (`db_id`),
-    UNIQUE KEY `smc_contract_address_txid_height_idx` (`address`, `height`),
+    UNIQUE KEY `smc_contract_address_height_idx` (`address`, `height`),
     KEY `smc_contract_height_address_idx` (`height`, `address`)
 ) ENGINE = ROCKSDB
   DEFAULT CHARSET = utf8mb4
