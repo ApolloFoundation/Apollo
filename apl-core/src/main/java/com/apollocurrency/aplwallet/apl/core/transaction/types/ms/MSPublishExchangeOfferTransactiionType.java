@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
@@ -21,7 +21,9 @@ import org.json.simple.JSONObject;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Singleton
 public class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransactionType {
     private final AccountCurrencyService accountCurrencyService;
@@ -97,12 +99,20 @@ public class MSPublishExchangeOfferTransactiionType extends MonetarySystemTransa
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemPublishExchangeOffer attachment = (MonetarySystemPublishExchangeOffer) transaction.getAttachment();
-        if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()) && accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId()) >= attachment.getInitialSellSupply()) {
-            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()));
-            accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), -attachment.getInitialSellSupply());
-            return true;
-        }
+        try {
+            if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()) && accountCurrencyService.getUnconfirmedCurrencyUnits(senderAccount, attachment.getCurrencyId()) >= attachment.getInitialSellSupply()) {
+                getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getInitialBuySupply(), attachment.getBuyRateATM()));
+                accountCurrencyService.addToUnconfirmedCurrencyUnits(senderAccount, getLedgerEvent(), transaction.getId(), attachment.getCurrencyId(), -attachment.getInitialSellSupply());
+                return true;
+            }
         return false;
+        }
+        catch (java.lang.ArithmeticException e)
+        {
+            log.error(e.getMessage());
+            log.error("Error: attachment = {}", attachment);
+            return false;
+        }
     }
 
     @Override
