@@ -116,7 +116,7 @@ public final class Convert2 {
      * @throws AplException.NotValidException when {@link Convert2#safeMultiply(long, long, String)} throws
      */
     public static long safeMultiply(long x, long y, Transaction tx) throws AplException.NotValidException {
-        return safeMultiply(x, y, "transaction=" + tx.getStringId() + ", type=" + tx.getType().getSpec() + ", sender=" + Long.toUnsignedString(tx.getSenderId()));
+        return safeMultiply(x, y, "transaction='" + tx.getStringId() + "', type='" + tx.getType().getSpec() + "', sender='" + Long.toUnsignedString(tx.getSenderId()) + "'");
     }
 
 }
