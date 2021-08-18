@@ -30,10 +30,10 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 
 @Slf4j
 @Singleton
-public class DexTransferMoneyTransaction extends DexTransactionType {
+public class DexTransferMoneyTransactionType extends DexTransactionType {
 
     @Inject
-    public DexTransferMoneyTransaction(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService) {
+    public DexTransferMoneyTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService) {
         super(blockchainConfig, accountService, dexService);
     }
 

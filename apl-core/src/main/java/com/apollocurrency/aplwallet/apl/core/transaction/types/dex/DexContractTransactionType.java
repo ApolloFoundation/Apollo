@@ -29,12 +29,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class DexContractTransaction extends DexTransactionType {
+public class DexContractTransactionType extends DexTransactionType {
 
     private final DexConfig dexConfig;
 
     @Inject
-    public DexContractTransaction(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService, DexConfig dexConfig) {
+    public DexContractTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService, DexConfig dexConfig) {
         super(blockchainConfig, accountService, dexService);
         this.dexConfig = dexConfig;
     }

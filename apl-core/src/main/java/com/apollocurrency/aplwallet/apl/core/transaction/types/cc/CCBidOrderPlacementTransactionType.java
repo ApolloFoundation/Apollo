@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
  * @author al
  */
 @Singleton
-public class CCBidOrderPlacementTransactionType extends ColoredCoinsOrderPlacementTransactionType {
+public class CCBidOrderPlacementTransactionType extends CCOrderPlacementTransactionType {
     private final OrderMatchService orderMatchService;
 
     @Inject
@@ -62,7 +62,8 @@ public class CCBidOrderPlacementTransactionType extends ColoredCoinsOrderPlaceme
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         ColoredCoinsBidOrderPlacement attachment = (ColoredCoinsBidOrderPlacement) transaction.getAttachment();
         if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM())) {
-            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM()));
+            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(),
+                -Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM()));
             return true;
         }
         return false;

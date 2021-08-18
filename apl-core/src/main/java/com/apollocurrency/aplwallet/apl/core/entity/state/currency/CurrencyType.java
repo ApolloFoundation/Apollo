@@ -24,9 +24,9 @@ import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MonetarySystemExchangeTransactionType;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncreaseAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSExchangeTransactionType;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +59,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                     throw new AplException.NotValidException("Currency is not exchangeable and not claimable");
                 }
             }
-            if (transaction.getType() instanceof MonetarySystemExchangeTransactionType || transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.MS_PUBLISH_EXCHANGE_OFFER) {
+            if (transaction.getType() instanceof MSExchangeTransactionType || transaction.getType().getSpec() == TransactionTypes.TransactionTypeSpec.MS_PUBLISH_EXCHANGE_OFFER) {
                 throw new AplException.NotValidException("Currency is not exchangeable");
             }
         }
@@ -94,7 +94,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                              Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency, int finishValidationHeight) throws AplException.ValidationException {
             log.trace("RESERVABLE 1 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType().getSpec() == MS_CURRENCY_ISSUANCE) {
-                MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+                MonetarySystemCurrencyIssuanceAttachment attachment = (MonetarySystemCurrencyIssuanceAttachment) transaction.getAttachment();
                 int issuanceHeight = attachment.getIssuanceHeight();
                 if (issuanceHeight <= finishValidationHeight) {
                     throw new AplException.NotCurrentlyValidException(
@@ -107,7 +107,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
 
                 if (Convert2.safeMultiply(attachment.getMinReservePerUnitATM(), attachment.getReserveSupply(), transaction) >
                     maxBalanceAtm) {
-                    throw new AplException.NotValidException("Minimum reserve per unit is too large");
+                    throw new AplException.NotValidException("Total minimum reserve is too large");
                 }
                 if (attachment.getReserveSupply() <= attachment.getInitialSupply()) {
                     throw new AplException.NotValidException("Reserve supply must exceed initial supply");
@@ -117,11 +117,13 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                 }
             }
             if (transaction.getType().getSpec() == MS_RESERVE_INCREASE) {
-                MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
-                if (currency != null && currency.getIssuanceHeight() <= finishValidationHeight) {
-                    throw new AplException.NotCurrentlyValidException("Cannot increase reserve for active currency");
+                MonetarySystemReserveIncreaseAttachment attachment = (MonetarySystemReserveIncreaseAttachment) transaction.getAttachment();
+                if (currency != null) {
+                    if (currency.getIssuanceHeight() <= finishValidationHeight) {
+                        throw new AplException.NotCurrentlyValidException("Cannot increase reserve for active currency");
+                    }
+                    Convert2.safeMultiply(currency.getReserveSupply(), attachment.getAmountPerUnitATM(), transaction);
                 }
-                Convert2.safeMultiply(currency.getReserveSupply(), attachment.getAmountPerUnitATM(), transaction);
             }
         }
 
@@ -133,7 +135,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                 throw new AplException.NotValidException("Cannot increase reserve since currency is not reservable");
             }
             if (transaction.getType().getSpec() == MS_CURRENCY_ISSUANCE) {
-                MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+                MonetarySystemCurrencyIssuanceAttachment attachment = (MonetarySystemCurrencyIssuanceAttachment) transaction.getAttachment();
                 if (attachment.getIssuanceHeight() != 0) {
                     throw new AplException.NotValidException("Issuance height for non-reservable currency must be 0");
                 }
@@ -159,7 +161,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                              Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency, int finishValidationHeight) throws AplException.ValidationException {
             log.trace("CLAIMABLE 1 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType().getSpec() == MS_CURRENCY_ISSUANCE) {
-                MonetarySystemCurrencyIssuance attachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+                MonetarySystemCurrencyIssuanceAttachment attachment = (MonetarySystemCurrencyIssuanceAttachment) transaction.getAttachment();
                 if (!validators.contains(RESERVABLE)) {
                     throw new AplException.NotValidException("Claimable currency must be reservable");
                 }
@@ -199,7 +201,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                              Set<CurrencyType> validators, long maxBalanceAtm, boolean isActiveCurrency, int finishValidationHeight) throws AplException.NotValidException, AplException.NotCurrentlyValidException {
             log.trace("MINTABLE 1 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType().getSpec() == MS_CURRENCY_ISSUANCE) {
-                MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+                MonetarySystemCurrencyIssuanceAttachment issuanceAttachment = (MonetarySystemCurrencyIssuanceAttachment) transaction.getAttachment();
                 try {
                     HashFunction hashFunction = HashFunction.getHashFunction(issuanceAttachment.getAlgorithm());
                     if (!MonetaryCurrencyMintingService.acceptedHashFunctions.contains(hashFunction)) {
@@ -228,7 +230,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                                     Set<CurrencyType> validators) throws AplException.NotValidException {
             log.trace("MINTABLE 2 [{}]: \ncurrency={}, \n{}, \n{}", transaction.getECBlockHeight(), currency, transaction, validators);
             if (transaction.getType().getSpec() == MS_CURRENCY_ISSUANCE) {
-                MonetarySystemCurrencyIssuance issuanceAttachment = (MonetarySystemCurrencyIssuance) transaction.getAttachment();
+                MonetarySystemCurrencyIssuanceAttachment issuanceAttachment = (MonetarySystemCurrencyIssuanceAttachment) transaction.getAttachment();
                 if (issuanceAttachment.getMinDifficulty() != 0 ||
                     issuanceAttachment.getMaxDifficulty() != 0 ||
                     issuanceAttachment.getAlgorithm() != 0) {

@@ -34,12 +34,12 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 
 
 @Singleton
-public class DexCloseOrderTransaction extends DexTransactionType {
+public class DexCloseOrderTransactionType extends DexTransactionType {
     private final Blockchain blockchain;
     private final PhasingPollService phasingPollService;
 
     @Inject
-    public DexCloseOrderTransaction(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService, Blockchain blockchain, PhasingPollService phasingPollService) {
+    public DexCloseOrderTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService, Blockchain blockchain, PhasingPollService phasingPollService) {
         super(blockchainConfig, accountService, dexService);
         this.blockchain = blockchain;
         this.phasingPollService = phasingPollService;

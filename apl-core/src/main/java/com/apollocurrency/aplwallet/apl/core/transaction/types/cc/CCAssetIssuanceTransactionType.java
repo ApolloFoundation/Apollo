@@ -28,7 +28,7 @@ import java.util.Map;
  * @author al
  */
 @Singleton
-public class CCAssetIssuanceTransactionType extends ColoredCoinsTransactionType {
+public class CCAssetIssuanceTransactionType extends CCTransactionType {
 
     private final Fee SINGLETON_ASSET_FEE = new Fee.SizeBasedFee(getBlockchainConfig().getOneAPL(), getBlockchainConfig().getOneAPL(), 32) {
         public int getSize(Transaction transaction, Appendix appendage) {

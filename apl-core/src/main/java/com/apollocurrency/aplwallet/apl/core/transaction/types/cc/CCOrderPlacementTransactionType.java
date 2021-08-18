@@ -12,10 +12,10 @@ import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 
-abstract class ColoredCoinsOrderPlacementTransactionType extends ColoredCoinsTransactionType {
+abstract class CCOrderPlacementTransactionType extends CCTransactionType {
     private final AssetService assetService;
 
-    public ColoredCoinsOrderPlacementTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService) {
+    public CCOrderPlacementTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService) {
         super(blockchainConfig, accountService);
         this.assetService = assetService;
     }
@@ -35,13 +35,20 @@ abstract class ColoredCoinsOrderPlacementTransactionType extends ColoredCoinsTra
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         ColoredCoinsOrderPlacementAttachment attachment = (ColoredCoinsOrderPlacementAttachment) transaction.getAttachment();
+        long maxBalanceATM = getBlockchainConfig().getCurrentConfig().getMaxBalanceATM();
         if (attachment.getPriceATM() <= 0
             || attachment.getQuantityATU() <= 0
-            || attachment.getPriceATM() > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()
+            || attachment.getPriceATM() > maxBalanceATM
             || attachment.getAssetId() == 0) {
             throw new AplException.NotValidException("Invalid asset order placement: " + attachment.getJSONObject());
         }
-        Convert2.safeMultiply(attachment.getQuantityATU(), attachment.getPriceATM(), transaction);
+        long orderTotalATM = Convert2.safeMultiply(attachment.getQuantityATU(), attachment.getPriceATM(), transaction);
+        if (orderTotalATM > maxBalanceATM) {
+            throw new AplException.NotValidException("Order total in ATMs " + orderTotalATM
+                + " is greater than max allowed: " + maxBalanceATM
+                + ", asset=" + Long.toUnsignedString(attachment.getAssetId())  + ", quantity="
+                + attachment.getQuantityATU() + ", price=" + attachment.getPriceATM());
+        }
     }
 
     @Override

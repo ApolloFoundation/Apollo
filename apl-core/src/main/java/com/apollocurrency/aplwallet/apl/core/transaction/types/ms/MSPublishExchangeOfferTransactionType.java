@@ -24,7 +24,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class MSPublishExchangeOfferTransactionType extends MonetarySystemTransactionType {
+public class MSPublishExchangeOfferTransactionType extends MSTransactionType {
     private final AccountCurrencyService accountCurrencyService;
     private final CurrencyExchangeOfferFacade exchangeOfferFacade;
     private final TransactionValidator transactionValidator;

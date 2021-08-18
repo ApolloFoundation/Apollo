@@ -24,7 +24,7 @@ import java.nio.ByteBuffer;
  * @author al
  */
 @Singleton
-public class CCAskOrderPlacementTransactionType extends ColoredCoinsOrderPlacementTransactionType {
+public class CCAskOrderPlacementTransactionType extends CCOrderPlacementTransactionType {
     private final OrderMatchService orderMatchService;
     private final AccountAssetService accountAssetService;
 

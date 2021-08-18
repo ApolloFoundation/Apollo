@@ -17,7 +17,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendSe
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCDividendPaymentAttachment;
 import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
@@ -28,7 +28,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Singleton
-public class CCCoinsDividendPaymentTransactionType extends ColoredCoinsTransactionType {
+public class CCDividendPaymentTransactionType extends CCTransactionType {
 
 
     private final AssetService assetService;
@@ -38,7 +38,7 @@ public class CCCoinsDividendPaymentTransactionType extends ColoredCoinsTransacti
     private final TransactionValidator transactionValidator;
 
     @Inject
-    public CCCoinsDividendPaymentTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, AccountAssetService accountAssetService, AssetDividendService assetDividendService, Blockchain blockchain, TransactionValidator transactionValidator) {
+    public CCDividendPaymentTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, AssetService assetService, AccountAssetService accountAssetService, AssetDividendService assetDividendService, Blockchain blockchain, TransactionValidator transactionValidator) {
         super(blockchainConfig, accountService);
         this.assetService = assetService;
         this.assetDividendService = assetDividendService;
@@ -63,18 +63,18 @@ public class CCCoinsDividendPaymentTransactionType extends ColoredCoinsTransacti
     }
 
     @Override
-    public ColoredCoinsDividendPayment parseAttachment(ByteBuffer buffer) {
-        return new ColoredCoinsDividendPayment(buffer);
+    public CCDividendPaymentAttachment parseAttachment(ByteBuffer buffer) {
+        return new CCDividendPaymentAttachment(buffer);
     }
 
     @Override
-    public ColoredCoinsDividendPayment parseAttachment(JSONObject attachmentData) {
-        return new ColoredCoinsDividendPayment(attachmentData);
+    public CCDividendPaymentAttachment parseAttachment(JSONObject attachmentData) {
+        return new CCDividendPaymentAttachment(attachmentData);
     }
 
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
+        CCDividendPaymentAttachment attachment = (CCDividendPaymentAttachment) transaction.getAttachment();
         long assetId = attachment.getAssetId();
         Asset asset = assetService.getAsset(assetId, attachment.getHeight());
         if (asset == null) {
@@ -91,13 +91,13 @@ public class CCCoinsDividendPaymentTransactionType extends ColoredCoinsTransacti
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
+        CCDividendPaymentAttachment attachment = (CCDividendPaymentAttachment) transaction.getAttachment();
         accountAssetService.payDividends(senderAccount, transaction.getId(), attachment);
     }
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
+        CCDividendPaymentAttachment attachment = (CCDividendPaymentAttachment) transaction.getAttachment();
         long assetId = attachment.getAssetId();
         Asset asset = assetService.getAsset(assetId, attachment.getHeight());
         if (asset == null) {
@@ -110,7 +110,7 @@ public class CCCoinsDividendPaymentTransactionType extends ColoredCoinsTransacti
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-        ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
+        CCDividendPaymentAttachment attachment = (CCDividendPaymentAttachment) transaction.getAttachment();
         Asset asset = assetService.getAsset(attachment.getAssetId(), attachment.getHeight());
         if (asset == null) {
             throw new AplException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId()) + " for dividend payment doesn't exist yet");
@@ -128,7 +128,7 @@ public class CCCoinsDividendPaymentTransactionType extends ColoredCoinsTransacti
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
+        CCDividendPaymentAttachment attachment = (CCDividendPaymentAttachment) transaction.getAttachment();
         if (attachment.getHeight() > blockchain.getHeight()) {
             throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight() + ", must not exceed current blockchain height " + blockchain.getHeight());
         }
@@ -140,7 +140,7 @@ public class CCCoinsDividendPaymentTransactionType extends ColoredCoinsTransacti
 
     @Override
     public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        ColoredCoinsDividendPayment attachment = (ColoredCoinsDividendPayment) transaction.getAttachment();
+        CCDividendPaymentAttachment attachment = (CCDividendPaymentAttachment) transaction.getAttachment();
         return isDuplicate(TransactionTypes.TransactionTypeSpec.CC_DIVIDEND_PAYMENT, Long.toUnsignedString(attachment.getAssetId()), duplicates, true);
     }
 

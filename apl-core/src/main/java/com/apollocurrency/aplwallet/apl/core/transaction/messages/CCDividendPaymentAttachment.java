@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -12,27 +13,28 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class ColoredCoinsDividendPayment extends AbstractAttachment {
+@EqualsAndHashCode(callSuper = true)
+public final class CCDividendPaymentAttachment extends AbstractAttachment {
 
     final long assetId;
     final int height;
     final long amountATMPerATU;
 
-    public ColoredCoinsDividendPayment(ByteBuffer buffer) {
+    public CCDividendPaymentAttachment(ByteBuffer buffer) {
         super(buffer);
         this.assetId = buffer.getLong();
         this.height = buffer.getInt();
         this.amountATMPerATU = buffer.getLong();
     }
 
-    public ColoredCoinsDividendPayment(JSONObject attachmentData) {
+    public CCDividendPaymentAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.assetId = Convert.parseUnsignedLong((String) attachmentData.get("asset"));
         this.height = ((Long) attachmentData.get("height")).intValue();
         this.amountATMPerATU = Convert.parseLong(attachmentData.get("amountATMPerATU"));
     }
 
-    public ColoredCoinsDividendPayment(long assetId, int height, long amountATMPerATU) {
+    public CCDividendPaymentAttachment(long assetId, int height, long amountATMPerATU) {
         this.assetId = assetId;
         this.height = height;
         this.amountATMPerATU = amountATMPerATU;

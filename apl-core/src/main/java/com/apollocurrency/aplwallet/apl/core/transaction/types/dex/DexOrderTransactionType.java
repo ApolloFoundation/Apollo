@@ -32,12 +32,12 @@ import java.util.Map;
 import static com.apollocurrency.aplwallet.apl.util.Constants.MAX_ORDER_DURATION_SEC;
 
 @Singleton
-public class DexOrderTransaction extends DexTransactionType {
+public class DexOrderTransactionType extends DexTransactionType {
 
     private final TimeService timeService;
 
     @Inject
-    public DexOrderTransaction(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService, TimeService timeService) {
+    public DexOrderTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService, TimeService timeService) {
         super(blockchainConfig, accountService, dexService);
         this.timeService = timeService;
     }

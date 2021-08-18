@@ -14,16 +14,14 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeRequestService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeBuyAttachment;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
-import java.util.Map;
 
 @Singleton
-public class MSExchangeBuyTransactionType extends MonetarySystemExchangeTransactionType {
+public class MSExchangeBuyTransactionType extends MSExchangeTransactionType {
     private final ExchangeRequestService exchangeRequestService;
     private final CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
 
@@ -60,22 +58,11 @@ public class MSExchangeBuyTransactionType extends MonetarySystemExchangeTransact
     }
 
     @Override
-    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        return super.isDuplicate(transaction, duplicates);
-    }
-
-    @Override
-    public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        super.doStateIndependentValidation(transaction);
-        MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
-        Convert2.safeMultiply(attachment.getRateATM(), attachment.getUnits(), transaction);
-    }
-
-    @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
-        if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getUnits(), attachment.getRateATM())) {
-            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getUnits(), attachment.getRateATM()));
+        long orderTotalATM = Math.multiplyExact(attachment.getUnits(), attachment.getRateATM());
+        if (senderAccount.getUnconfirmedBalanceATM() >= orderTotalATM) {
+            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -orderTotalATM);
             return true;
         }
         return false;

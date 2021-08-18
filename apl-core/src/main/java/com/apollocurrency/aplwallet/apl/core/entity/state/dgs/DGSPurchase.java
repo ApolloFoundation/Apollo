@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.dgs;
 
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchaseAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.EncryptedData;
 
 import java.util.Collections;
@@ -58,7 +58,7 @@ public class DGSPurchase extends VersionedDerivedEntity {
         this.refundATM = refundATM;
     }
 
-    public DGSPurchase(Transaction transaction, DigitalGoodsPurchase attachment,
+    public DGSPurchase(Transaction transaction, DigitalGoodsPurchaseAttachment attachment,
                        long sellerId, int lastBlockchainTimestamp, List<DGSFeedback> dgsFeedbackList) {
         super(null, transaction.getHeight());
         this.id = transaction.getId();
