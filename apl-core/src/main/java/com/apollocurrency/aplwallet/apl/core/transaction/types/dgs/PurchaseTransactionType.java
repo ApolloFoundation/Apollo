@@ -22,7 +22,9 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Singleton
 public class PurchaseTransactionType extends DigitalGoodsTransactionType {
 
@@ -79,11 +81,19 @@ public class PurchaseTransactionType extends DigitalGoodsTransactionType {
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         DigitalGoodsPurchase attachment = (DigitalGoodsPurchase) transaction.getAttachment();
-        if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM())) {
-            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
-            return true;
-        }
+        try{
+            if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM())) {
+                getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact((long) attachment.getQuantity(), attachment.getPriceATM()));
+                return true;
+            }
         return false;
+        }
+        catch (java.lang.ArithmeticException e)
+        {
+            log.error(e.getMessage());
+            log.error("Error: attachment = {}", attachment);
+            return false;
+        }
     }
 
     @Override

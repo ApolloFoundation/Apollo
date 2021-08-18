@@ -20,7 +20,9 @@ import org.json.simple.JSONObject;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Singleton
 public class MSReserveIncreaseTransactionType extends MonetarySystemTransactionType {
     private final Blockchain blockchain;
@@ -70,16 +72,25 @@ public class MSReserveIncreaseTransactionType extends MonetarySystemTransactionT
             throw new AplException.NotValidException("Reserve increase amount must be positive: " + attachment.getAmountPerUnitATM());
         }
     }
-
+// TODO: Check if exception will not be more suitable
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
-        if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM())) {
-            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM()));
-            return true;
-        }
+        try{
+            if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM())) {
+                getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM()));
+                return true;
+            }
         return false;
+        }
+        catch (java.lang.ArithmeticException e)
+        {
+            log.error(e.getMessage());
+            log.error("Error: attachment = {}", attachment);
+            return false;
+        }
+
     }
 
     @Override

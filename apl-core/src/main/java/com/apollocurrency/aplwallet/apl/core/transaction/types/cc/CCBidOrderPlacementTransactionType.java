@@ -18,10 +18,12 @@ import org.json.simple.JSONObject;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author al
  */
+@Slf4j
 @Singleton
 public class CCBidOrderPlacementTransactionType extends ColoredCoinsOrderPlacementTransactionType {
     private final OrderMatchService orderMatchService;
@@ -61,11 +63,20 @@ public class CCBidOrderPlacementTransactionType extends ColoredCoinsOrderPlaceme
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         ColoredCoinsBidOrderPlacement attachment = (ColoredCoinsBidOrderPlacement) transaction.getAttachment();
-        if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM())) {
-            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM()));
-            return true;
+        try
+        {
+            if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM())) {
+                getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getQuantityATU(), attachment.getPriceATM()));
+                return true;
+            }
+            return false;
         }
-        return false;
+        catch (java.lang.ArithmeticException e)
+        {
+            log.error(e.getMessage());
+            log.error("Error: attachment = {}", attachment);
+            return false;
+        }
     }
 
     @Override
