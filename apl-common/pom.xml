@@ -16,6 +16,9 @@
   <dependencies>
   </dependencies>
 
+  <properties>
+    <zip-file-name>apollo-common</zip-file-name>
+  </properties>
   <build>
     <plugins>
       <plugin>
