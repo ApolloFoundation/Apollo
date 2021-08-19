@@ -22,6 +22,7 @@ import org.json.simple.JSONObject;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
+import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 public class MSPublishExchangeOfferTransactionType extends MSTransactionType {
