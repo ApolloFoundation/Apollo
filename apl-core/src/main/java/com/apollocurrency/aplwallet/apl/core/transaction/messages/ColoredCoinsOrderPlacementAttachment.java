@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -11,6 +12,7 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
+@EqualsAndHashCode(callSuper = true)
 public abstract class ColoredCoinsOrderPlacementAttachment extends AbstractAttachment {
 
     final long assetId;

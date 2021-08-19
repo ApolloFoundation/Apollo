@@ -29,7 +29,7 @@ import java.util.Map;
  * @author al
  */
 @Singleton
-public class CCAssetIssuanceTransactionType extends ColoredCoinsTransactionType {
+public class CCAssetIssuanceTransactionType extends CCTransactionType {
 
     private final AssetService assetService;
     private final AccountAssetService accountAssetService;

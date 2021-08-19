@@ -18,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCDividendPaymentAttachment;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 
@@ -281,7 +281,7 @@ public class AccountAssetServiceImpl implements AccountAssetService {
     }
 
     @Override
-    public void payDividends(Account account, final long transactionId, ColoredCoinsDividendPayment attachment) {
+    public void payDividends(Account account, final long transactionId, CCDividendPaymentAttachment attachment) {
         log.trace(">> payDividends(..), account={}, transactionId={}, attachment={}",
             account, transactionId, attachment);
         long totalDividend = 0;

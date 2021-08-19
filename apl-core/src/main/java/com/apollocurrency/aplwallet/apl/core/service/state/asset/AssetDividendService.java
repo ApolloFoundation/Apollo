@@ -5,7 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.asset;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCDividendPaymentAttachment;
 
 import java.util.List;
 
@@ -15,6 +15,6 @@ public interface AssetDividendService {
 
     AssetDividend getLastDividend(long assetId);
 
-    AssetDividend addAssetDividend(long transactionId, ColoredCoinsDividendPayment attachment, long totalDividend, long numAccounts);
+    AssetDividend addAssetDividend(long transactionId, CCDividendPaymentAttachment attachment, long totalDividend, long numAccounts);
 
 }

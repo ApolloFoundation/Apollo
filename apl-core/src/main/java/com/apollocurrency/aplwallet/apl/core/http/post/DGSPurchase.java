@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchaseAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
@@ -87,7 +87,7 @@ public final class DGSPurchase extends CreateTransactionHandler {
         Account buyerAccount = HttpParameterParserUtil.getSenderAccount(req);
         Account sellerAccount = lookupAccountService().getAccount(goods.getSellerId());
 
-        Attachment attachment = new DigitalGoodsPurchase(goods.getId(), quantity, priceATM,
+        Attachment attachment = new DigitalGoodsPurchaseAttachment(goods.getId(), quantity, priceATM,
             deliveryDeadline);
         try {
             return createTransaction(req, buyerAccount, sellerAccount.getId(), 0, attachment);

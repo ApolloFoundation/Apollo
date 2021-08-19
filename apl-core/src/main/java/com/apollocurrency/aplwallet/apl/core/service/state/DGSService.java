@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSPurchase;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSTag;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchaseAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
@@ -87,7 +87,7 @@ public interface DGSService {
 
     void changeQuantity(long goodsId, int deltaQuantity);
 
-    void purchase(Transaction transaction, DigitalGoodsPurchase attachment);
+    void purchase(Transaction transaction, DigitalGoodsPurchaseAttachment attachment);
 
     void deliver(Transaction transaction, DigitalGoodsDelivery attachment);
 
