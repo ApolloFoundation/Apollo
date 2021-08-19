@@ -62,7 +62,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderSer
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
@@ -102,7 +102,7 @@ public class ServerInfoService {
     private final UPnP upnp;
     private final AliasService aliasService;
     private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
-    private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService;
+    private final OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService;
     private final TradeService tradeService;
     private final AccountControlPhasingService accountControlPhasingService;
     private final AssetService assetService;
@@ -132,7 +132,7 @@ public class ServerInfoService {
                              UPnP upnp,
                              AliasService aliasService,
                              @AskOrderService OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService,
-                             @BidOrderService OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService,
+                             @BidOrderService OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService,
                              TradeService tradeService,
                              AccountControlPhasingService accountControlPhasingService,
                              AssetService assetService,

@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountAssetS
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +36,7 @@ class OrderMatchServiceImplTest {
     private OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderAskService;
 
     @Mock
-    private OrderService<BidOrder, ColoredCoinsBidOrderPlacement> orderBidService;
+    private OrderService<BidOrder, CCBidOrderPlacementAttachment> orderBidService;
 
     @Mock
     private TradeService tradeService;
@@ -76,7 +76,7 @@ class OrderMatchServiceImplTest {
     void shouldAddBidOrder() {
         //GIVEN
         final Transaction transaction = mock(Transaction.class);
-        final ColoredCoinsBidOrderPlacement attachment = mock(ColoredCoinsBidOrderPlacement.class);
+        final CCBidOrderPlacementAttachment attachment = mock(CCBidOrderPlacementAttachment.class);
         final long assetId = 10L;
         when(attachment.getAssetId()).thenReturn(assetId);
 
