@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.dgs;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchaseAttachment;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.core.utils.MathUtils;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONObject;
@@ -66,7 +66,7 @@ public class PurchaseTransactionType extends DigitalGoodsTransactionType {
         if (attachment.getQuantity() <= 0
             || attachment.getQuantity() > Constants.MAX_DGS_LISTING_QUANTITY
             || attachment.getPriceATM() <= 0
-            ||  Convert2.safeMultiply(attachment.getQuantity(), attachment.getPriceATM(), transaction)
+            ||  MathUtils.safeMultiply(attachment.getQuantity(), attachment.getPriceATM(), transaction)
             > getBlockchainConfig().getCurrentConfig().getMaxBalanceATM()) {
             throw new AplException.NotValidException("Invalid digital goods purchase: " + attachment.getJSONObject());
         }

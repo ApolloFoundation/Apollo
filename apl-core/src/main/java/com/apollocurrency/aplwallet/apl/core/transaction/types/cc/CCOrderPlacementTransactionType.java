@@ -3,13 +3,13 @@
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.cc;
 
-import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsOrderPlacementAttachment;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.core.utils.MathUtils;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 
 abstract class CCOrderPlacementTransactionType extends CCTransactionType {
@@ -42,7 +42,7 @@ abstract class CCOrderPlacementTransactionType extends CCTransactionType {
             || attachment.getAssetId() == 0) {
             throw new AplException.NotValidException("Invalid asset order placement: " + attachment.getJSONObject());
         }
-        long orderTotalATM = Convert2.safeMultiply(attachment.getQuantityATU(), attachment.getPriceATM(), transaction);
+        long orderTotalATM = MathUtils.safeMultiply(attachment.getQuantityATU(), attachment.getPriceATM(), transaction);
         if (orderTotalATM > maxBalanceATM) {
             throw new AplException.NotValidException("Order total in ATMs " + orderTotalATM
                 + " is greater than max allowed: " + maxBalanceATM

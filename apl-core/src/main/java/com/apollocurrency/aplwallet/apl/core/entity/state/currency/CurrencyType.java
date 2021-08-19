@@ -26,7 +26,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncreaseAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSExchangeTransactionType;
-import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
+import com.apollocurrency.aplwallet.apl.core.utils.MathUtils;
 import com.apollocurrency.aplwallet.apl.crypto.HashFunction;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
@@ -105,7 +105,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                     throw new AplException.NotValidException("Minimum reserve per unit must be > 0");
                 }
 
-                if (Convert2.safeMultiply(attachment.getMinReservePerUnitATM(), attachment.getReserveSupply(), transaction) >
+                if (MathUtils.safeMultiply(attachment.getMinReservePerUnitATM(), attachment.getReserveSupply(), transaction) >
                     maxBalanceAtm) {
                     throw new AplException.NotValidException("Total minimum reserve is too large");
                 }
@@ -122,7 +122,7 @@ public enum CurrencyType implements CurrencyTypeValidatable {
                     if (currency.getIssuanceHeight() <= finishValidationHeight) {
                         throw new AplException.NotCurrentlyValidException("Cannot increase reserve for active currency");
                     }
-                    Convert2.safeMultiply(currency.getReserveSupply(), attachment.getAmountPerUnitATM(), transaction);
+                    MathUtils.safeMultiply(currency.getReserveSupply(), attachment.getAmountPerUnitATM(), transaction);
                 }
             }
         }
