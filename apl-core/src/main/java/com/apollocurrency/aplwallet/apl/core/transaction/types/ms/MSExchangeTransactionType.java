@@ -10,10 +10,11 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.currency.Currency;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemExchangeAttachment;
+import com.apollocurrency.aplwallet.apl.core.utils.Convert2;
 
-public abstract class MonetarySystemExchangeTransactionType extends MonetarySystemTransactionType {
+public abstract class MSExchangeTransactionType extends MSTransactionType {
 
-    public MonetarySystemExchangeTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService) {
+    public MSExchangeTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService) {
         super(blockchainConfig, accountService, currencyService);
     }
 
@@ -32,6 +33,13 @@ public abstract class MonetarySystemExchangeTransactionType extends MonetarySyst
         MonetarySystemExchangeAttachment attachment = (MonetarySystemExchangeAttachment) transaction.getAttachment();
         if (attachment.getRateATM() <= 0 || attachment.getUnits() == 0) {
             throw new AplException.NotValidException("Invalid exchange: " + attachment.getJSONObject());
+        }
+        long orderTotalATM = Convert2.safeMultiply(attachment.getRateATM(), attachment.getUnits(), transaction);
+        long maxBalanceATM = getBlockchainConfig().getCurrentConfig().getMaxBalanceATM();
+        if (orderTotalATM > maxBalanceATM) {
+            throw new AplException.NotValidException("Currency order total in ATMs: " + orderTotalATM + " is higher than max allowed: "
+                + maxBalanceATM +  ", currency=" + Long.toUnsignedString(attachment.getCurrencyId())  + ", quantity="
+                + attachment.getUnits() + ", price=" + attachment.getRateATM());
         }
     }
 

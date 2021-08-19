@@ -26,11 +26,11 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.DEX_CONTRACT;
 
 @Singleton
-public class DexCancelOrderTransaction extends DexTransactionType {
+public class DexCancelOrderTransactionType extends DexTransactionType {
 
 
     @Inject
-    public DexCancelOrderTransaction(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService) {
+    public DexCancelOrderTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DexService dexService) {
         super(blockchainConfig, accountService, dexService);
     }
 

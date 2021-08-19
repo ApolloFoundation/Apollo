@@ -15,9 +15,9 @@ import java.util.Map;
 
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.CC_ASK_ORDER_CANCELLATION;
 
-public abstract class ColoredCoinsOrderCancellationTransactionType extends ColoredCoinsTransactionType {
+public abstract class CCOrderCancellationTransactionType extends CCTransactionType {
 
-    public ColoredCoinsOrderCancellationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
+    public CCOrderCancellationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
         super(blockchainConfig, accountService);
     }
 

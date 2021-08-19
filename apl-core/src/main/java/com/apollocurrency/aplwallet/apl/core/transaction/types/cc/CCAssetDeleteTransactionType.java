@@ -21,7 +21,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class CCAssetDeleteTransactionType extends ColoredCoinsTransactionType {
+public class CCAssetDeleteTransactionType extends CCTransactionType {
     private final AssetService assetService;
     private final AccountAssetService accountAssetService;
 

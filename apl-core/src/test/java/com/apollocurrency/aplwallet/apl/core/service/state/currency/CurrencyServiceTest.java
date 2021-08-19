@@ -39,7 +39,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyBuyOfferServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.impl.CurrencyServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TransactionValidationHelper;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.ms.MSCurrencyIssuanceTransactionType;
@@ -147,7 +147,7 @@ class CurrencyServiceTest {
         //GIVEN
         Transaction tr = mock(Transaction.class);
         Account account = mock(Account.class);
-        MonetarySystemCurrencyIssuance attach = mock(MonetarySystemCurrencyIssuance.class);
+        MonetarySystemCurrencyIssuanceAttachment attach = mock(MonetarySystemCurrencyIssuanceAttachment.class);
         doReturn("ANY_CODE").when(attach).getCode();
         doReturn("ANY_NAME").when(attach).getName();
         doReturn(null).doReturn(null).when(currencyTable).getBy(any(DbClause.StringClause.class));
@@ -341,7 +341,7 @@ class CurrencyServiceTest {
         //GIVEN
         Transaction tx = mock(Transaction.class);
         doReturn(new MSCurrencyIssuanceTransactionType(blockchainConfig, accountService, mock(CurrencyService.class), accountCurrencyService)).when(tx).getType();
-        MonetarySystemCurrencyIssuance attachment = new MonetarySystemCurrencyIssuance("ff", "CC", "Test currency", (byte) 1, 1000, 0, 1000, 0, 0, 0, 0, (byte) 0, (byte) 0, (byte) 2);
+        MonetarySystemCurrencyIssuanceAttachment attachment = new MonetarySystemCurrencyIssuanceAttachment("ff", "CC", "Test currency", (byte) 1, 1000, 0, 1000, 0, 0, 0, 0, (byte) 0, (byte) 0, (byte) 2);
         doReturn(attachment).when(tx).getAttachment();
         doReturn(config).when(blockchainConfig).getCurrentConfig();
         doReturn(10L).when(config).getMaxBalanceATM();
@@ -352,7 +352,7 @@ class CurrencyServiceTest {
 
     @Test
     void validateCurrencyNaming() throws Exception {
-        MonetarySystemCurrencyIssuance issuance = mock(MonetarySystemCurrencyIssuance.class);
+        MonetarySystemCurrencyIssuanceAttachment issuance = mock(MonetarySystemCurrencyIssuanceAttachment.class);
         doReturn("Name").when(issuance).getName();
         doReturn("CODE").when(issuance).getCode();
         doReturn("Description").when(issuance).getDescription();

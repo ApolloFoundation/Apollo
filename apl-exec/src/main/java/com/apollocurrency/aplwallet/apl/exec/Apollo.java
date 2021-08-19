@@ -197,7 +197,7 @@ public class Apollo {
 
         ConfigDirProvider configDirProvider = ConfigDirProviderFactory.getConfigDirProvider();
 
-// Well, we can not resolve chainID for given parameters and therefor can not read configs. We have to exit program
+// Well, we can not resolve chainID for given parameters and therefore can not read configs. We have to exit program
         if (configDirProvider.getChainId() == null) {
             System.exit(PosixExitCodes.EX_CONFIG.exitCode());
         }
@@ -228,7 +228,7 @@ public class Apollo {
         }
 
         CustomDirLocations customDirLocations = new CustomDirLocations(getCustomDbPath(chainId, props), props.getProperty(CustomDirLocations.KEYSTORE_DIR_PROPERTY_NAME));
-   
+
         DirProviderFactory.setup(args.serviceMode, chainId, Constants.APPLICATION_DIR_NAME, merge(args, envVars, customDirLocations));
         dirProvider = DirProviderFactory.getProvider();
         RuntimeEnvironment.getInstance().setDirProvider(dirProvider);

@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountServic
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexTransferMoneyTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexTransferMoneyTransactionType;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexCurrency;
 import com.apollocurrency.aplwallet.apl.exchange.model.DexOrder;
 import com.apollocurrency.aplwallet.apl.exchange.model.ExchangeContract;
@@ -42,13 +42,13 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
-class DexTransferMoneyTransactionTest {
+class DexTransferMoneyTransactionTypeTest {
     DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(64, 100);
     ExchangeContract contract = new ExchangeContract(
         1L, 64L, 200L, 300L, 1000L, 2000L,
         ExchangeContractStatus.STEP_3, new byte[32], null, null,
         new byte[32], 7200, 1, false);
-    DexTransferMoneyTransaction transactionType;
+    DexTransferMoneyTransactionType transactionType;
 
     @Mock
     BlockchainConfig blockchainConfig;
@@ -59,7 +59,7 @@ class DexTransferMoneyTransactionTest {
 
     @BeforeEach
     void setUp() {
-        transactionType = new DexTransferMoneyTransaction(blockchainConfig, accountService, dexService);
+        transactionType = new DexTransferMoneyTransactionType(blockchainConfig, accountService, dexService);
     }
 
     @Test

@@ -5,6 +5,7 @@ package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
+import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -12,14 +13,15 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class DigitalGoodsPurchase extends AbstractAttachment {
+@EqualsAndHashCode(callSuper = true)
+public final class DigitalGoodsPurchaseAttachment extends AbstractAttachment {
 
     final long goodsId;
     final int quantity;
     final long priceATM;
     final int deliveryDeadlineTimestamp;
 
-    public DigitalGoodsPurchase(ByteBuffer buffer) {
+    public DigitalGoodsPurchaseAttachment(ByteBuffer buffer) {
         super(buffer);
         this.goodsId = buffer.getLong();
         this.quantity = buffer.getInt();
@@ -27,7 +29,7 @@ public final class DigitalGoodsPurchase extends AbstractAttachment {
         this.deliveryDeadlineTimestamp = buffer.getInt();
     }
 
-    public DigitalGoodsPurchase(JSONObject attachmentData) {
+    public DigitalGoodsPurchaseAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.goodsId = Convert.parseUnsignedLong((String) attachmentData.get("goods"));
         this.quantity = ((Long) attachmentData.get("quantity")).intValue();
@@ -35,7 +37,7 @@ public final class DigitalGoodsPurchase extends AbstractAttachment {
         this.deliveryDeadlineTimestamp = ((Long) attachmentData.get("deliveryDeadlineTimestamp")).intValue();
     }
 
-    public DigitalGoodsPurchase(long goodsId, int quantity, long priceATM, int deliveryDeadlineTimestamp) {
+    public DigitalGoodsPurchaseAttachment(long goodsId, int quantity, long priceATM, int deliveryDeadlineTimestamp) {
         this.goodsId = goodsId;
         this.quantity = quantity;
         this.priceATM = priceATM;

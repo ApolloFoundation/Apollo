@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderCancellation;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
@@ -22,11 +22,11 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class CCBidOrderCancellationTransactionType extends ColoredCoinsOrderCancellationTransactionType {
-    private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService;
+public class CCBidOrderCancellationTransactionType extends CCOrderCancellationTransactionType {
+    private final OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService;
 
     @Inject
-    public CCBidOrderCancellationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, @BidOrderService OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService) {
+    public CCBidOrderCancellationTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, @BidOrderService OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService) {
         super(blockchainConfig, accountService);
         this.bidOrderService = bidOrderService;
     }

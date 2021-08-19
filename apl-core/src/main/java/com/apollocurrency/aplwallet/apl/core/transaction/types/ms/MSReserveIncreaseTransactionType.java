@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
@@ -13,18 +13,16 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncreaseAttachment;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Singleton
-public class MSReserveIncreaseTransactionType extends MonetarySystemTransactionType {
+public class MSReserveIncreaseTransactionType extends MSTransactionType {
     private final Blockchain blockchain;
 
     @Inject
@@ -49,63 +47,54 @@ public class MSReserveIncreaseTransactionType extends MonetarySystemTransactionT
     }
 
     @Override
-    public MonetarySystemReserveIncrease parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
-        return new MonetarySystemReserveIncrease(buffer);
+    public MonetarySystemReserveIncreaseAttachment parseAttachment(ByteBuffer buffer) throws AplException.NotValidException {
+        return new MonetarySystemReserveIncreaseAttachment(buffer);
     }
 
     @Override
-    public MonetarySystemReserveIncrease parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
-        return new MonetarySystemReserveIncrease(attachmentData);
+    public MonetarySystemReserveIncreaseAttachment parseAttachment(JSONObject attachmentData) throws AplException.NotValidException {
+        return new MonetarySystemReserveIncreaseAttachment(attachmentData);
     }
 
     @Override
     public void doStateDependentValidation(Transaction transaction) throws AplException.ValidationException {
-        MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
+        MonetarySystemReserveIncreaseAttachment attachment = (MonetarySystemReserveIncreaseAttachment) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         currencyService.validate(currency, transaction);
     }
 
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
-        MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
+        MonetarySystemReserveIncreaseAttachment attachment = (MonetarySystemReserveIncreaseAttachment) transaction.getAttachment();
         if (attachment.getAmountPerUnitATM() <= 0) {
             throw new AplException.NotValidException("Reserve increase amount must be positive: " + attachment.getAmountPerUnitATM());
         }
     }
-// TODO: Check if exception will not be more suitable
+
     @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
+        MonetarySystemReserveIncreaseAttachment attachment = (MonetarySystemReserveIncreaseAttachment) transaction.getAttachment();
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
-        try{
-            if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM())) {
-                getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM()));
-                return true;
-            }
+        long reservedATMs = Math.multiplyExact(currency.getReserveSupply(), attachment.getAmountPerUnitATM());
+        if (senderAccount.getUnconfirmedBalanceATM() >= reservedATMs) {
+            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -reservedATMs);
+            return true;
+        }
         return false;
-        }
-        catch (java.lang.ArithmeticException e)
-        {
-            log.error(e.getMessage());
-            log.error("Error: attachment = {}", attachment);
-            return false;
-        }
-
     }
 
     @Override
     public void undoAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
-        MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
+        MonetarySystemReserveIncreaseAttachment attachment = (MonetarySystemReserveIncreaseAttachment) transaction.getAttachment();
         long reserveSupply;
         Currency currency = currencyService.getCurrency(attachment.getCurrencyId());
         if (currency != null) {
             reserveSupply = currency.getReserveSupply();
         } else {
-            // TODO: find better solution, maybe extend this attachment and add currency reserve supply
-            // can occur, when new block applied transaction which deleted currency, but this transaction was not confirmed and we should restore unconfirmed balance
-            // So that we get reserve supply from the original issuance transaction
+            // May occur when currency was deleted, but reserveIncrease transaction was phased earlier and didn't pass
+            // validation, so that should be reverted
             Transaction currencyIssuance = blockchain.getTransaction(attachment.getCurrencyId());
-            MonetarySystemCurrencyIssuance currencyIssuanceAttachment = (MonetarySystemCurrencyIssuance) currencyIssuance.getAttachment();
+            MonetarySystemCurrencyIssuanceAttachment currencyIssuanceAttachment = (MonetarySystemCurrencyIssuanceAttachment) currencyIssuance.getAttachment();
             reserveSupply = currencyIssuanceAttachment.getReserveSupply();
         }
         getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), Math.multiplyExact(reserveSupply, attachment.getAmountPerUnitATM()));
@@ -113,7 +102,7 @@ public class MSReserveIncreaseTransactionType extends MonetarySystemTransactionT
 
     @Override
     public void applyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
-        MonetarySystemReserveIncrease attachment = (MonetarySystemReserveIncrease) transaction.getAttachment();
+        MonetarySystemReserveIncreaseAttachment attachment = (MonetarySystemReserveIncreaseAttachment) transaction.getAttachment();
         currencyService.increaseReserve(getLedgerEvent(), transaction.getId(), senderAccount, attachment.getCurrencyId(), attachment.getAmountPerUnitATM());
     }
 

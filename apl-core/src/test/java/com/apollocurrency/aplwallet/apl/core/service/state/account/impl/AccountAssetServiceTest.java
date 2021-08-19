@@ -18,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCDividendPaymentAttachment;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -255,7 +255,7 @@ class AccountAssetServiceTest {
             .thenComparing(AccountAsset::getAccountId)
             .thenComparing(AccountAsset::getAssetId);
 
-        ColoredCoinsDividendPayment attachment = new ColoredCoinsDividendPayment(testData.ACC_ASSET_6.getAssetId(), height, amountATMPerATU);
+        CCDividendPaymentAttachment attachment = new CCDividendPaymentAttachment(testData.ACC_ASSET_6.getAssetId(), height, amountATMPerATU);
 
         List<AccountAsset> expected = testData.ALL_ASSETS.stream()
             .filter(ass -> ass.getAssetId() == testData.ACC_ASSET_6.getAssetId())
@@ -273,7 +273,7 @@ class AccountAssetServiceTest {
         accountAssetService.payDividends(testData.ACC_6, transactionId, attachment);
         verify(accountService, times(4)).addToBalanceAndUnconfirmedBalanceATM(any(Account.class), eq(LedgerEvent.ASSET_DIVIDEND_PAYMENT), eq(transactionId), any(long.class));
         verify(accountService).addToBalanceATM(testData.ACC_6, LedgerEvent.ASSET_DIVIDEND_PAYMENT, transactionId, -totalDivident);
-        verify(assetDividendService).addAssetDividend(eq(transactionId), any(ColoredCoinsDividendPayment.class), eq(totalDivident), eq(numCount));
+        verify(assetDividendService).addAssetDividend(eq(transactionId), any(CCDividendPaymentAttachment.class), eq(totalDivident), eq(numCount));
     }
 
     @Test
