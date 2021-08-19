@@ -115,8 +115,8 @@ public class CCDividendPaymentTransactionType extends CCTransactionType {
         if (asset == null) {
             throw new AplException.NotCurrentlyValidException("Asset " + Long.toUnsignedString(attachment.getAssetId()) + " for dividend payment doesn't exist yet");
         }
-        if (asset.getAccountId() != transaction.getSenderId() || attachment.getAmountATMPerATU() <= 0) {
-            throw new AplException.NotValidException("Invalid dividend payment sender or amount " + attachment.getJSONObject());
+        if (asset.getAccountId() != transaction.getSenderId()) {
+            throw new AplException.NotValidException("Invalid dividend payment sender " + attachment.getJSONObject());
         }
         AssetDividend lastDividend = assetDividendService.getLastDividend(attachment.getAssetId());
         if (lastDividend != null && lastDividend.getHeight() > blockchain.getHeight() - 60) {
@@ -129,6 +129,9 @@ public class CCDividendPaymentTransactionType extends CCTransactionType {
     @Override
     public void doStateIndependentValidation(Transaction transaction) throws AplException.ValidationException {
         CCDividendPaymentAttachment attachment = (CCDividendPaymentAttachment) transaction.getAttachment();
+        if (attachment.getAmountATMPerATU() <= 0) {
+            throw new AplException.NotValidException("Invalid dividend payment amount " + attachment.getJSONObject());
+        }
         if (attachment.getHeight() > blockchain.getHeight()) {
             throw new AplException.NotCurrentlyValidException("Invalid dividend payment height: " + attachment.getHeight() + ", must not exceed current blockchain height " + blockchain.getHeight());
         }

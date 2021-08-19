@@ -181,7 +181,7 @@ class CCOrderPlacementTransactionTypeTest {
 
     @Test
     void isPhasingSafe() {
-        assertTrue(type.isPhasingSafe(), "CC_ORDER_PLACEMENT tx types should support phasing");
+        assertTrue(type.isPhasingSafe(), "CC_ORDER_PLACEMENT tx types should support phasing safe");
     }
 
     private ColoredCoinsOrderPlacementAttachment mockAttachment(long assetId, long quantity, long price) {
