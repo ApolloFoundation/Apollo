@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.dgs;
@@ -13,7 +13,6 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -24,18 +23,12 @@ import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Map;
 @Slf4j
 @Singleton
 public class ListingTransactionType extends DigitalGoodsTransactionType {
-    private final Fee DGS_LISTING_FEE = new Fee.SizeBasedFee(2 * getBlockchainConfig().getOneAPL(), Math.multiplyExact(2, getBlockchainConfig().getOneAPL()), 32) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendage) {
-            DigitalGoodsListing attachment = (DigitalGoodsListing) transaction.getAttachment();
-            return attachment.getName().length() + attachment.getDescription().length();
-        }
-    };
 
     @Inject
     public ListingTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
@@ -60,7 +53,10 @@ public class ListingTransactionType extends DigitalGoodsTransactionType {
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        return DGS_LISTING_FEE;
+        return getFeeFactory().createSizeBased(BigDecimal.valueOf(2), BigDecimal.valueOf(2), (tx, app) -> {
+            DigitalGoodsListing attachment = (DigitalGoodsListing) tx.getAttachment();
+            return attachment.getName().length() + attachment.getDescription().length();
+        });
     }
 
     @Override

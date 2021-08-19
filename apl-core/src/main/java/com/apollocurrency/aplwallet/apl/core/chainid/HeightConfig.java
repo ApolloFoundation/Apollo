@@ -4,12 +4,17 @@
 
 package com.apollocurrency.aplwallet.apl.core.chainid;
 
+import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import com.apollocurrency.aplwallet.apl.util.env.config.BlockchainProperties;
 import com.apollocurrency.aplwallet.apl.util.env.config.ConsensusSettings;
+import com.apollocurrency.aplwallet.apl.util.env.config.FeeRate;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 public class HeightConfig {
     private final BlockchainProperties bp;
@@ -130,8 +135,35 @@ public class HeightConfig {
         return bp.getShardingSettings().getFrequency();
     }
 
-    public short getFeeRate(byte type, byte subType) {
-        return bp.getTransactionFeeSettings().getRate(type, subType);
+    public int getFeeRate(TransactionTypes.TransactionTypeSpec spec) {
+        Optional<FeeRate> rate = bp.getTransactionFeeSettings().getFeeRate(spec.getType(), spec.getSubtype());
+        return rate.map(FeeRate::getRate).orElse(FeeRate.DEFAULT_RATE);
+    }
+    public BigDecimal getBaseFee(TransactionTypes.TransactionTypeSpec spec, BigDecimal defaultRate) {
+        Objects.requireNonNull(spec);
+        Objects.requireNonNull(defaultRate);
+        Optional<FeeRate> rate = bp.getTransactionFeeSettings().getFeeRate(spec.getType(), spec.getSubtype());
+        return rate.flatMap(FeeRate::getBaseFee).orElse(defaultRate);
+    }
+
+    public BigDecimal getSizeBasedFee(TransactionTypes.TransactionTypeSpec spec, BigDecimal defaultRate) {
+        Objects.requireNonNull(spec);
+        Objects.requireNonNull(defaultRate);
+        Optional<FeeRate> rate = bp.getTransactionFeeSettings().getFeeRate(spec.getType(), spec.getSubtype());
+        return rate.flatMap(FeeRate::getSizeFee).orElse(defaultRate);
+    }
+
+    public BigDecimal[] getAdditionalFees(TransactionTypes.TransactionTypeSpec spec, BigDecimal[] defaultRate) {
+        Objects.requireNonNull(spec);
+        Objects.requireNonNull(defaultRate);
+        Optional<FeeRate> rate = bp.getTransactionFeeSettings().getFeeRate(spec.getType(), spec.getSubtype());
+        if (rate.isEmpty()) {
+            return defaultRate;
+        }
+        BigDecimal[] rates = Arrays.copyOf(defaultRate, defaultRate.length);
+        BigDecimal[] additionalFees = rate.get().getAdditionalFees();
+        System.arraycopy(additionalFees, 0, rates, 0, Math.min(rates.length, additionalFees.length));
+        return rates;
     }
 
     @Override

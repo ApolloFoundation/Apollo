@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.messaging;
@@ -14,13 +14,13 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountProper
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingAccountProperty;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 
 @Singleton
@@ -32,14 +32,6 @@ public class AccountPropertyTransactionType extends MessagingTransactionType {
         super(blockchainConfig, accountService);
         this.accountPropertyService = accountPropertyService;
     }
-
-    private final Fee ACCOUNT_PROPERTY_FEE = new Fee.SizeBasedFee(getBlockchainConfig().getOneAPL(), getBlockchainConfig().getOneAPL(), 32) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendage) {
-            MessagingAccountProperty attachment = (MessagingAccountProperty) transaction.getAttachment();
-            return attachment.getValue().length();
-        }
-    };
 
     @Override
     public TransactionTypes.TransactionTypeSpec getSpec() {
@@ -58,7 +50,10 @@ public class AccountPropertyTransactionType extends MessagingTransactionType {
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        return ACCOUNT_PROPERTY_FEE;
+        return getFeeFactory().createSizeBased(BigDecimal.ONE, BigDecimal.ONE, (tx, appendage) -> {
+            MessagingAccountProperty attachment = (MessagingAccountProperty) tx.getAttachment();
+            return attachment.getValue().length();
+        });
     }
 
     @Override

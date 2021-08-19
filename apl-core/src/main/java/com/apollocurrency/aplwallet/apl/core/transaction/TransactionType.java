@@ -15,37 +15,43 @@
  */
 
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
 import lombok.Getter;
 import org.json.simple.JSONObject;
 
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiFunction;
 
 @Getter
 public abstract class TransactionType {
     private final BlockchainConfig blockchainConfig;
     private final AccountService accountService;
+    private final FeeFactory feeFactory;
 
     public TransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
         this.blockchainConfig = blockchainConfig;
         this.accountService = accountService;
+        this.feeFactory = new FeeFactory();
     }
 
     public static boolean isDuplicate(TransactionTypes.TransactionTypeSpec uniqueType, String key, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates, boolean exclusive) {
@@ -176,7 +182,7 @@ public abstract class TransactionType {
 
     @TransactionFee(FeeMarker.BASE_FEE)
     public Fee getBaselineFee(Transaction transaction) {
-        return new Fee.ConstantFee(blockchainConfig.getOneAPL());
+        return getFeeFactory().createFixed(BigDecimal.ONE);
     }
 
     @TransactionFee(FeeMarker.FEE)
@@ -204,4 +210,34 @@ public abstract class TransactionType {
         return getName() + " " + getSpec();
     }
 
+    public class FeeFactory {
+        public Fee createSizeBased(BigDecimal defaultConstantAPL, BigDecimal defaultSizedBasedFeeAPL, BiFunction<Transaction, Appendix, Integer> sizeFunction, int unitSize) {
+            BlockchainConfig blockchainConfig = getBlockchainConfig();
+            HeightConfig heightConfig = blockchainConfig.getCurrentConfig();
+            long oneAPL = blockchainConfig.getOneAPL();
+            long constantFeeATM = heightConfig.getBaseFee(getSpec(), defaultConstantAPL).multiply(BigDecimal.valueOf(oneAPL)).longValueExact();
+            long feePerSizeATM = heightConfig.getSizeBasedFee(getSpec(), defaultSizedBasedFeeAPL).multiply(BigDecimal.valueOf(oneAPL)).longValueExact();
+            return new Fee.SizeBasedFee(constantFeeATM, feePerSizeATM, unitSize) {
+                @Override
+                public int getSize(Transaction transaction, Appendix appendage) {
+                    return sizeFunction.apply(transaction, appendage);
+                }
+            };
+        }
+
+        public Fee createSizeBased(BigDecimal defaultConstantAPL, BigDecimal defaultSizedBasedFeeAPL, BiFunction<Transaction, Appendix, Integer> sizeFunction) {
+            return createSizeBased(defaultConstantAPL, defaultSizedBasedFeeAPL, sizeFunction, 32);
+        }
+
+        public Fee createFixed(BigDecimal defaultConstantAPL) {
+            long oneAPL = blockchainConfig.getOneAPL();
+            long constantFeeATM = blockchainConfig.getCurrentConfig().getBaseFee(getSpec(), defaultConstantAPL).multiply(BigDecimal.valueOf(oneAPL)).longValueExact();
+            return new Fee.ConstantFee(constantFeeATM);
+        }
+
+        public Fee createCustom(BiFunction<Transaction, Appendix, Long> feeCalc) {
+            return (feeCalc::apply);
+        }
+
+    }
 }

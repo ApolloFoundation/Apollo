@@ -15,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
@@ -42,6 +44,9 @@ class FeeCalculatorTest {
     void getMinimumFeeATM_throwIllegalArgumentException() {
         //GIVEN
         doReturn(null).when(blockchainConfig).getConfigAtHeight(CURRENT_HEIGHT);
+        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        doReturn(BigDecimal.valueOf(1000)).when(heightConfig).getBaseFee(TransactionTypes.TransactionTypeSpec.CC_ASSET_ISSUANCE, BigDecimal.valueOf(1000));
+
         //THEN
         assertThrows(IllegalArgumentException.class,
             //WHEN
@@ -54,18 +59,21 @@ class FeeCalculatorTest {
         //GIVEN
         when(blockchainConfig.getOneAPL()).thenReturn(100000000L);
         doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(CURRENT_HEIGHT);
-        doReturn(FeeRate.DEFAULT_RATE).when(heightConfig).getFeeRate(td.TRANSACTION_1.getType().getSpec().getType(), td.TRANSACTION_1.getType().getSpec().getSubtype());
+        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        doReturn(FeeRate.DEFAULT_RATE).when(heightConfig).getFeeRate(td.TRANSACTION_1.getType().getSpec());
+        doReturn(BigDecimal.valueOf(1000)).when(heightConfig).getBaseFee(TransactionTypes.TransactionTypeSpec.CC_ASSET_ISSUANCE, BigDecimal.valueOf(1000));
         //WHEN
         fee = feeCalculator.getMinimumFeeATM(td.TRANSACTION_1, CURRENT_HEIGHT);
         //THEN
         assertEquals(100100000000L, fee);
 
         //GIVEN
-        doReturn(FeeRate.DEFAULT_RATE).when(heightConfig).getFeeRate(td.TRANSACTION_2.getType().getSpec().getType(), td.TRANSACTION_2.getType().getSpec().getSubtype());
+        doReturn(FeeRate.DEFAULT_RATE).when(heightConfig).getFeeRate(td.TRANSACTION_2.getType().getSpec());
+        doReturn(BigDecimal.valueOf(1)).when(heightConfig).getBaseFee(TransactionTypes.TransactionTypeSpec.CRITICAL_UPDATE, BigDecimal.valueOf(1));
         //WHEN
         fee = feeCalculator.getMinimumFeeATM(td.TRANSACTION_2, CURRENT_HEIGHT);
         //THEN
-        assertEquals(td.TRANSACTION_2.getFeeATM(), fee);
+        assertEquals(200_000_000, fee);
     }
 
     @Test
@@ -73,14 +81,19 @@ class FeeCalculatorTest {
         long fee;
         //GIVEN
         doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(CURRENT_HEIGHT);
-        doReturn((short)0).when(heightConfig).getFeeRate(td.TRANSACTION_1.getType().getSpec().getType(), td.TRANSACTION_1.getType().getSpec().getSubtype());
+        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        doReturn(FeeRate.DEFAULT_RATE).when(heightConfig).getFeeRate(td.TRANSACTION_1.getType().getSpec());
+        doReturn(BigDecimal.valueOf(1000)).when(heightConfig).getBaseFee(TransactionTypes.TransactionTypeSpec.CC_ASSET_ISSUANCE, BigDecimal.valueOf(1000));
+
         //WHEN
         fee = feeCalculator.getMinimumFeeATM(td.TRANSACTION_1, CURRENT_HEIGHT);
         //THEN
         assertEquals(0L, fee);
 
         //GIVEN
-        doReturn((short)0).when(heightConfig).getFeeRate(td.TRANSACTION_2.getType().getSpec().getType(), td.TRANSACTION_2.getType().getSpec().getSubtype());
+        doReturn(0).when(heightConfig).getFeeRate(td.TRANSACTION_2.getType().getSpec());
+        doReturn(BigDecimal.valueOf(1)).when(heightConfig).getBaseFee(TransactionTypes.TransactionTypeSpec.CRITICAL_UPDATE, BigDecimal.valueOf(1));
+
         //WHEN
         fee = feeCalculator.getMinimumFeeATM(td.TRANSACTION_2, CURRENT_HEIGHT);
         //THEN
@@ -93,18 +106,23 @@ class FeeCalculatorTest {
         //GIVEN
         when(blockchainConfig.getOneAPL()).thenReturn(100000000L);
         doReturn(heightConfig).when(blockchainConfig).getConfigAtHeight(CURRENT_HEIGHT);
-        doReturn((short)(FeeRate.DEFAULT_RATE/2)).when(heightConfig).getFeeRate(td.TRANSACTION_1.getType().getSpec().getType(), td.TRANSACTION_1.getType().getSpec().getSubtype());
+        doReturn((FeeRate.DEFAULT_RATE/2)).when(heightConfig).getFeeRate(td.TRANSACTION_1.getType().getSpec());
+        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        doReturn(BigDecimal.valueOf(1000)).when(heightConfig).getBaseFee(TransactionTypes.TransactionTypeSpec.CC_ASSET_ISSUANCE, BigDecimal.valueOf(1000));
+
         //WHEN
         fee = feeCalculator.getMinimumFeeATM(td.TRANSACTION_1, CURRENT_HEIGHT);
         //THEN
         assertEquals(100100000000L/2, fee);
 
         //GIVEN
-        doReturn((short)(FeeRate.DEFAULT_RATE/2)).when(heightConfig).getFeeRate(td.TRANSACTION_2.getType().getSpec().getType(), td.TRANSACTION_2.getType().getSpec().getSubtype());
+        doReturn((FeeRate.DEFAULT_RATE/2)).when(heightConfig).getFeeRate(td.TRANSACTION_2.getType().getSpec());
+        doReturn(BigDecimal.valueOf(1)).when(heightConfig).getBaseFee(TransactionTypes.TransactionTypeSpec.CRITICAL_UPDATE, BigDecimal.valueOf(1));
+
         //WHEN
         fee = feeCalculator.getMinimumFeeATM(td.TRANSACTION_2, CURRENT_HEIGHT);
         //THEN
-        assertEquals(td.TRANSACTION_2.getFeeATM() / 2, fee);
+        assertEquals(100_000_000, fee);
     }
 
 }

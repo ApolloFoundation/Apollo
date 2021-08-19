@@ -209,6 +209,49 @@
           "enabled": true,
           "frequency": 750000
         }
+      },
+      {
+        "height": 9000000,
+        "maxNumberOfTransactions": 255,
+        "maxArbitraryMessageLength": 160,
+        "blockTime": 2,
+        "maxBlockTimeLimit": 5,
+        "minBlockTimeLimit": 1,
+        "maxBalance": 30000000000,
+        "consensusSettings": {
+          "adaptiveForgingSettings": {
+            "enabled": "true",
+            "adaptiveBlockTime": 10
+          }
+        },
+        "shardingSettings": {
+          "enabled": true,
+          "frequency": 750000
+        },
+        "transactionFeeSettings": {
+          "feeRates": [
+            {
+              "type": 1,
+              "subType": 1,
+              "baseFee": "1000"
+            },
+            {
+              "type": 1,
+              "subType": 6,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 7,
+              "baseFee": "5"
+            },
+            {
+              "type": 1,
+              "subType": 8,
+              "baseFee": "5"
+            }
+          ]
+        }
       }
     ]
   },

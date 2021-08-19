@@ -14,25 +14,18 @@ import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Singleton
 public class DeliveryTransactionType extends DigitalGoodsTransactionType {
-    private final Fee DGS_DELIVERY_FEE = new Fee.SizeBasedFee(getBlockchainConfig().getOneAPL(), Math.multiplyExact(2, getBlockchainConfig().getOneAPL()), 32) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendage) {
-            DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) transaction.getAttachment();
-            return attachment.getGoodsDataLength() - 16;
-        }
-    };
 
     @Inject
     public DeliveryTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, DGSService service) {
@@ -56,7 +49,10 @@ public class DeliveryTransactionType extends DigitalGoodsTransactionType {
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        return DGS_DELIVERY_FEE;
+        return getFeeFactory().createSizeBased(BigDecimal.ONE, BigDecimal.valueOf(2), (tx, app) -> {
+            DigitalGoodsDelivery attachment = (DigitalGoodsDelivery) tx.getAttachment();
+            return attachment.getGoodsDataLength() - 16;
+        });
     }
 
     @Override
