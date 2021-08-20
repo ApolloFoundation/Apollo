@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -164,18 +165,27 @@ public abstract class TransactionType {
      * Successful validation for the phased transactions on any height is not guaranteed, use {@link TransactionType#validateStateDependentAtFinish(Transaction)} instead</p>
      * @param transaction transaction of this type to validate using blockchain state
      * @throws AplException.ValidationException when transaction doesn't pass validation for any reason
-     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException same as above but preferred
-     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException in cases, when transaction is correct but sender's account is not exist or has not enough funds
+     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException same as above but preferred and when sender's account has enough money to cover transaction fee, but not a transferring amount
+     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException in cases, when transaction is correct but sender's account is not exist or has not enough funds to pay fee
      */
     public final void validateStateDependent(Transaction transaction) throws AplException.ValidationException {
         TransactionAmounts amounts = new TransactionAmounts(transaction);
         Account account = accountService.getAccount(transaction.getSenderId());
         if (account == null) {
-            throw new AplUnacceptableTransactionValidationException("Transaction's sender not found, tx: " + transaction.getId() + ", sender: " + transaction.getSenderId(), transaction);
+            throw new AplUnacceptableTransactionValidationException(
+                String.format("Transaction's sender not found, tx: %s, sender: %s", transaction.getStringId(),
+                    Long.toUnsignedString(transaction.getSenderId())), transaction);
         }
         if (account.getUnconfirmedBalanceATM() < amounts.getTotalAmountATM()) {
-            throw new AplUnacceptableTransactionValidationException("Not enough apl balance on account: " + transaction.getSenderId() + ", required at least " + amounts.getTotalAmountATM()
-                + ", but only got " + account.getUnconfirmedBalanceATM(), transaction);
+            if (account.getUnconfirmedBalanceATM() < amounts.getFeeATM()) {
+                throw new AplUnacceptableTransactionValidationException(
+                    String.format("Not enough apl balance on account: %s, required at least %d, but only got %d",
+                        Long.toUnsignedString(account.getId()), amounts.getTotalAmountATM(), account.getUnconfirmedBalanceATM()), transaction);
+            } else {
+                throw new AplAcceptableTransactionValidationException(String.format("Not enough apl balance on account: %s"
+                    + " to pay transaction both amount: %d and fee: %d, only fee may be paid, balance: %s",
+                    Long.toUnsignedString(transaction.getSenderId()),amounts.getAmountATM(), amounts.getFeeATM(), account.getUnconfirmedBalanceATM()), transaction);
+            }
         }
         doStateDependentValidation(transaction);
     }
