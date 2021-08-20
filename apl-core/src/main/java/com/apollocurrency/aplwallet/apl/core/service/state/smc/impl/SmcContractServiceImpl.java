@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -141,7 +142,10 @@ public class SmcContractServiceImpl implements SmcContractService {
     @Override
     public List<String> getInheritedAsrModules(String asrModuleName, String language, Version version) {
         checkLibraryCompatibility(language, version);
-        return libraryProvider.getInheritedModules(asrModuleName);
+        var resultList = new ArrayList<String>();
+        resultList.add(asrModuleName);
+        resultList.addAll(libraryProvider.getInheritedModules(asrModuleName));
+        return resultList;
     }
 
     @Override
