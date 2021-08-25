@@ -27,6 +27,6 @@ echo "Changing pkg-apollo-blockchain.json"
 sed -i -e "s/\ \"version\".*/ \"version\": \"$NEW_VERSION\",/g" ${PKG_PATH}
 
 README_PATH=README.md
-echo "Changing Readme.md..."
+echo "Changing README.md..."
 
-sed -i -E "s/___apollo-blockchain-\"[0-9]{1,}\.[0-9]{1,}\.[0-9]{1,}\"/___apollo-blockchain-\"$NEW_VERSION\"-/g" ${README_PATH}
+sed -i -E "s/___apollo-blockchain-[0-9]{1,}\.[0-9]{1,}\.[0-9]{1,}/___apollo-blockchain-$NEW_VERSION-/g" ${README_PATH}
