@@ -161,12 +161,15 @@ public abstract class TransactionType {
     /**
      * Performs transaction's validation (transaction itself and its attachment) using current blockchain state only, no state-independent validation will be done
      * <p>Should be used in conjuction with {@link TransactionType#validateStateIndependent(Transaction)}, which will guarantee full tx structure and attachment validation</p>
-     * <p>Validation should pass for valid transaction only on transaction's acceptance height, when it is included in a block, which will be pushed into blockchain.
-     * Successful validation for the phased transactions on any height is not guaranteed, use {@link TransactionType#validateStateDependentAtFinish(Transaction)} instead</p>
+     * <p>Validation should pass for valid transaction only on transaction's acceptance height, when it is included in a block, which will be pushed into a blockchain.
+     * Successful validation for the phased transactions on any height, except of acceptance height, is not guaranteed,
+     * use {@link TransactionType#validateStateDependentAtFinish(Transaction)} instead</p>
      * @param transaction transaction of this type to validate using blockchain state
      * @throws AplException.ValidationException when transaction doesn't pass validation for any reason
-     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException same as above but preferred and when sender's account has enough money to cover transaction fee, but not a transferring amount
-     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException in cases, when transaction is correct but sender's account is not exist or has not enough funds to pay fee
+     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException same as above
+     * but preferred and when sender's account has enough money to cover transaction fee, but not a transferring amount
+     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException in cases,
+     * when transaction is correct but sender's account is not exist or has not enough funds to pay fee
      */
     public final void validateStateDependent(Transaction transaction) throws AplException.ValidationException {
         TransactionAmounts amounts = new TransactionAmounts(transaction);
@@ -180,7 +183,7 @@ public abstract class TransactionType {
             if (account.getUnconfirmedBalanceATM() < amounts.getFeeATM()) {
                 throw new AplUnacceptableTransactionValidationException(
                     String.format("Not enough apl balance on account: %s, required at least %d, but only got %d",
-                        Long.toUnsignedString(account.getId()), amounts.getTotalAmountATM(), account.getUnconfirmedBalanceATM()), transaction);
+                        Long.toUnsignedString(transaction.getSenderId()), amounts.getTotalAmountATM(), account.getUnconfirmedBalanceATM()), transaction);
             } else {
                 throw new AplAcceptableTransactionValidationException(String.format("Not enough apl balance on account: %s"
                     + " to pay transaction both amount: %d and fee: %d, only fee may be paid, balance: %s",
