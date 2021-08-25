@@ -24,7 +24,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Singleton
-public class MSCurrencyMintingTransactionType extends MonetarySystemTransactionType {
+public class MSCurrencyMintingTransactionType extends MSTransactionType {
     private final MonetaryCurrencyMintingService monetaryCurrencyMintingService;
 
 

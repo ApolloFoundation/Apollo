@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.order.BidOrder;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -40,7 +40,7 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_O
 
 @Vetoed
 public final class GetBidOrder extends AbstractAPIRequestHandler {
-    private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService =
+    private final OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService =
         CDI.current().select(BidOrderServiceImpl.class, BidOrderService.Literal.INSTANCE).get();
 
     public GetBidOrder() {

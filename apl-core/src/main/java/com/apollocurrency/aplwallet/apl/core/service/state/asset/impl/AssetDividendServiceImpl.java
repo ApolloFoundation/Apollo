@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.entity.blockchain.Block;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.AssetDividend;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetDividendService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCDividendPaymentAttachment;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -43,7 +43,7 @@ public class AssetDividendServiceImpl implements AssetDividendService {
     }
 
     @Override
-    public AssetDividend addAssetDividend(long transactionId, ColoredCoinsDividendPayment attachment, long totalDividend, long numAccounts) {
+    public AssetDividend addAssetDividend(long transactionId, CCDividendPaymentAttachment attachment, long totalDividend, long numAccounts) {
         Block lastBlock = blockchain.getLastBlock();
         AssetDividend assetDividend = new AssetDividend(transactionId, attachment, totalDividend, numAccounts, lastBlock.getHeight(), lastBlock.getTimestamp());
         assetDividendTable.insert(assetDividend);

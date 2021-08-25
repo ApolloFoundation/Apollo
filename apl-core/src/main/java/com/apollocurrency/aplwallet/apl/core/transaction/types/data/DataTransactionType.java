@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.data;
 
@@ -9,8 +9,9 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import lombok.extern.slf4j.Slf4j;
+
+import java.math.BigDecimal;
 
 /**
  * @author al
@@ -18,20 +19,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class DataTransactionType extends TransactionType {
 
-    private final Fee TAGGED_DATA_FEE = new Fee.SizeBasedFee(getBlockchainConfig().getOneAPL(), getBlockchainConfig().getOneAPL() / 10) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendix) {
-            return appendix.getFullSize();
-        }
-    };
-
     public DataTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
         super(blockchainConfig, accountService);
     }
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        return TAGGED_DATA_FEE;
+        return getFeeFactory().createSizeBased(BigDecimal.ONE, new BigDecimal("0.1"), (tx, app)-> app.getFullSize(), 1024);
     }
 
     @Override

@@ -27,7 +27,7 @@ import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.service.state.asset.AssetService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsDividendPayment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCDividendPaymentAttachment;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -53,7 +53,7 @@ public class DividendPayment extends CreateTransaction {
         if (assetService.getAsset(asset.getId(), height) == null) {
             return JSONResponses.ASSET_NOT_ISSUED_YET;
         }
-        final Attachment attachment = new ColoredCoinsDividendPayment(asset.getId(), height, amountATMPerATU);
+        final Attachment attachment = new CCDividendPaymentAttachment(asset.getId(), height, amountATMPerATU);
         try {
             return this.createTransaction(request, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {

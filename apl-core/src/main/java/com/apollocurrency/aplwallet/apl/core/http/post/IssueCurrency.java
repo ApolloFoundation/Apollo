@@ -28,7 +28,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.Constants;
 import org.json.simple.JSONStreamAware;
@@ -151,7 +151,7 @@ public final class IssueCurrency extends CreateTransaction {
         byte algorithm = HttpParameterParserUtil.getByte(req, "algorithm", (byte) 0, Byte.MAX_VALUE, false);
         byte decimals = HttpParameterParserUtil.getByte(req, "decimals", (byte) 0, Byte.MAX_VALUE, false);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
-        Attachment attachment = new MonetarySystemCurrencyIssuance(name, code, description, (byte) type, initialSupply,
+        Attachment attachment = new MonetarySystemCurrencyIssuanceAttachment(name, code, description, (byte) type, initialSupply,
             reserveSupply, maxSupply, issuanceHeight, minReservePerUnit, minDifficulty, maxDifficulty, ruleset, algorithm, decimals);
 
         return createTransaction(req, account, attachment);

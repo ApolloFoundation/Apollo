@@ -42,7 +42,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountP
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsDelivery;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsListing;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchase;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchaseAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
@@ -1160,7 +1160,7 @@ public class DGSServiceTest {
         doReturn(txId).when(purchaseTransaction).getId();
         doReturn(senderId).when(purchaseTransaction).getSenderId();
 
-        DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_12.getId(), 3, dtd.GOODS_12.getPriceATM(), 1_000_000);
+        DigitalGoodsPurchaseAttachment digitalGoodsPurchase = new DigitalGoodsPurchaseAttachment(dtd.GOODS_12.getId(), 3, dtd.GOODS_12.getPriceATM(), 1_000_000);
         DbUtils.inTransaction(extension, (con) -> {
             service.purchase(purchaseTransaction, digitalGoodsPurchase);
         });
@@ -1194,7 +1194,7 @@ public class DGSServiceTest {
         doReturn(50L).when(purchaseTransaction).getSenderId();
         Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
-        DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_8.getId(), 4, dtd.GOODS_8.getPriceATM(), 1_000_000);
+        DigitalGoodsPurchaseAttachment digitalGoodsPurchase = new DigitalGoodsPurchaseAttachment(dtd.GOODS_8.getId(), 4, dtd.GOODS_8.getPriceATM(), 1_000_000);
         DbUtils.inTransaction(extension, (con) -> {
             service.purchase(purchaseTransaction, digitalGoodsPurchase);
         });
@@ -1212,7 +1212,7 @@ public class DGSServiceTest {
         doReturn(50L).when(purchaseTransaction).getSenderId();
         Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
-        DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_12.getId(), 2, dtd.GOODS_12.getPriceATM() + 1, 1_000_000);
+        DigitalGoodsPurchaseAttachment digitalGoodsPurchase = new DigitalGoodsPurchaseAttachment(dtd.GOODS_12.getId(), 2, dtd.GOODS_12.getPriceATM() + 1, 1_000_000);
         DbUtils.inTransaction(extension, (con) -> service.purchase(purchaseTransaction, digitalGoodsPurchase));
         verifyAccountBalance(50, initialUnconfirmedBalance + 2 * (dtd.GOODS_12.getPriceATM() + 1), null);
     }
@@ -1228,7 +1228,7 @@ public class DGSServiceTest {
         doReturn(50L).when(purchaseTransaction).getSenderId();
         Account account = accountService.getAccount(50);
         long initialUnconfirmedBalance = account.getUnconfirmedBalanceATM();
-        DigitalGoodsPurchase digitalGoodsPurchase = new DigitalGoodsPurchase(dtd.GOODS_9.getId(), 2, dtd.GOODS_9.getPriceATM(), 1_000_000);
+        DigitalGoodsPurchaseAttachment digitalGoodsPurchase = new DigitalGoodsPurchaseAttachment(dtd.GOODS_9.getId(), 2, dtd.GOODS_9.getPriceATM(), 1_000_000);
         DbUtils.inTransaction(extension, (con) -> service.purchase(purchaseTransaction, digitalGoodsPurchase));
         verifyAccountBalance(50, initialUnconfirmedBalance + 2 * (dtd.GOODS_9.getPriceATM()), null);
     }

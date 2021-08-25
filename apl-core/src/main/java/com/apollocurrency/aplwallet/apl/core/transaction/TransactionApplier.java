@@ -37,7 +37,7 @@ public class TransactionApplier {
         this.applierRegistry = applierRegistry;
     }
 
-    // returns false iff double spending
+    // returns false if double spending
     public boolean applyUnconfirmed(Transaction transaction) {
         Account senderAccount = accountService.getAccount(transaction.getSenderId());
         return senderAccount != null && transaction.getType().applyUnconfirmed(transaction, senderAccount);

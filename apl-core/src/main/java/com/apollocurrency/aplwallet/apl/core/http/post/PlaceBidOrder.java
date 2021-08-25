@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.entity.state.asset.Asset;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.core.app.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -49,7 +49,7 @@ public final class PlaceBidOrder extends CreateTransaction {
         long quantityATU = HttpParameterParserUtil.getQuantityATU(req);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new ColoredCoinsBidOrderPlacement(asset.getId(), quantityATU, priceATM);
+        Attachment attachment = new CCBidOrderPlacementAttachment(asset.getId(), quantityATU, priceATM);
         try {
             return createTransaction(req, account, attachment);
         } catch (AplException.InsufficientBalanceException e) {

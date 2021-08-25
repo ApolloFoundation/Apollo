@@ -29,7 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.get.GetCurrencyFounders;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncrease;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemReserveIncreaseAttachment;
 import org.json.simple.JSONStreamAware;
 
 import javax.enterprise.inject.Vetoed;
@@ -67,7 +67,7 @@ public final class CurrencyReserveIncrease extends CreateTransaction {
         long amountPerUnitATM = HttpParameterParserUtil.getLong(req, "amountPerUnitATM", 1L,
             CDI.current().select(BlockchainConfig.class).get().getCurrentConfig().getMaxBalanceATM(), true);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
-        Attachment attachment = new MonetarySystemReserveIncrease(currency.getId(), amountPerUnitATM);
+        Attachment attachment = new MonetarySystemReserveIncreaseAttachment(currency.getId(), amountPerUnitATM);
         return createTransaction(req, account, attachment);
 
     }

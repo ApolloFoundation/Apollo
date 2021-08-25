@@ -22,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -69,8 +70,10 @@ class MSCurrencyBurningTransactionTypeTest {
     @Test
     void verifyFee() {
         doReturn(100L).when(blockchainConfig).getOneAPL();
+        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        doReturn(BigDecimal.valueOf(150)).when(heightConfig).getBaseFee(TransactionTypes.TransactionTypeSpec.MS_CURRENCY_BURNING, BigDecimal.ONE);
 
-        assertEquals(100, type.getBaselineFee(transaction).getFee(transaction, new MonetarySystemCurrencyBurningAttachment(1, 20)));
+        assertEquals(15000, type.getBaselineFee(transaction).getFee(transaction, new MonetarySystemCurrencyBurningAttachment(1, 20)));
     }
 
     @Test

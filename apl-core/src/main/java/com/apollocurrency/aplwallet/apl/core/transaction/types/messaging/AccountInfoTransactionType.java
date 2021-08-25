@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.types.messaging;
@@ -20,6 +20,7 @@ import org.json.simple.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.Map;
 @Singleton
@@ -31,14 +32,6 @@ public class AccountInfoTransactionType extends MessagingTransactionType {
         super(blockchainConfig, accountService);
         this.accountInfoService = accountInfoService;
     }
-
-    private final Fee ACCOUNT_INFO_FEE = new Fee.SizeBasedFee(getBlockchainConfig().getOneAPL(), Math.multiplyExact(2, getBlockchainConfig().getOneAPL()), 32) {
-        @Override
-        public int getSize(Transaction transaction, Appendix appendage) {
-            MessagingAccountInfo attachment = (MessagingAccountInfo) transaction.getAttachment();
-            return attachment.getName().length() + attachment.getDescription().length();
-        }
-    };
 
     @Override
     public TransactionTypes.TransactionTypeSpec getSpec() {
@@ -57,7 +50,10 @@ public class AccountInfoTransactionType extends MessagingTransactionType {
 
     @Override
     public Fee getBaselineFee(Transaction transaction) {
-        return ACCOUNT_INFO_FEE;
+        return getFeeFactory().createSizeBased(BigDecimal.ONE, BigDecimal.valueOf(2), (tx, app) -> {
+            MessagingAccountInfo attachment = (MessagingAccountInfo) tx.getAttachment();
+            return attachment.getName().length() + attachment.getDescription().length();
+        });
     }
 
     @Override
