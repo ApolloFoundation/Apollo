@@ -83,7 +83,7 @@ OS name: "linux", version: "5.9.12-200.fc33.x86_64", arch: "amd64", family: "uni
     
 ### Installation artefacts
 
-Final artefact that is ready to install and run is loacated in the ___apl-exec/target___ directory and has name like  ___apollo-blockchain-1.47.6-NoOS-NoArch.zip___.
+Final artefact that is ready to install and run is loacated in the ___apl-exec/target___ directory and has name like  ___apollo-blockchain-1.47.25-NoOS-NoArch.zip___.
 Unzip it to some location and run by scripts in ___ApolloWallet/apollo-blockchain/bin___ directory.
 
 You'll probably need __Apollo-web-ui__ and __Apollo-desktop__ components to use Apollo wallet.
