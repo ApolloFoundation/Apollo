@@ -1,6 +1,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
 import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
@@ -8,6 +9,7 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactio
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EmptyAttachment;
 import com.apollocurrency.aplwallet.apl.util.annotation.FeeMarker;
 import com.apollocurrency.aplwallet.apl.util.annotation.TransactionFee;
@@ -20,16 +22,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -47,6 +52,8 @@ class TransactionTypeTest {
     Account sender;
     @Mock
     Account recipient;
+    @Mock
+    HeightConfig heightConfig;
 
     @Test
     void isDuplicate_withTwoMaxPossible() {
@@ -108,9 +115,76 @@ class TransactionTypeTest {
             "the other transaction with the same type and key was already passed the verification");
     }
 
+    @SneakyThrows
+    @Test
+    void validateAtFinishStateDependent() {
+        FallibleTransactionType type = prepareTransactionType();
+
+        type.validateStateDependentAtFinish(transaction);
+
+        assertEquals(1, type.getDependentValidationCounter());
+    }
+
+    @SneakyThrows
+    @Test
+    void validateStateIndependent() {
+        FallibleTransactionType type = prepareTransactionType();
+
+        type.validateStateIndependent(transaction);
+
+        assertEquals(1, type.getIndependentValidationCounter());
+    }
+
+    @SneakyThrows
+    @Test
+    void validateStateDependent_OK() {
+        mockTxAndSender();
+        doReturn(110L).when(sender).getUnconfirmedBalanceATM();
+        FallibleTransactionType type = prepareTransactionType();
+
+        type.validateStateDependent(transaction);
+
+        assertEquals(1, type.getDependentValidationCounter());
+    }
+
+    @Test
+    void validateStateDependent_NoAccount() {
+        doReturn(SENDER_ID).when(transaction).getSenderId();
+        FallibleTransactionType type = prepareTransactionType();
+
+        assertThrows(AplUnacceptableTransactionValidationException.class, ()-> type.validateStateDependent(transaction));
+
+        assertEquals(0, type.getDependentValidationCounter());
+    }
+
+    @Test
+    void validateStateDependent_notEnoughFunds_enoughToPayFee() {
+        mockTxAndSender();
+        doReturn(109L).when(sender).getUnconfirmedBalanceATM();
+        FallibleTransactionType type = prepareTransactionType();
+
+        AplAcceptableTransactionValidationException ex = assertThrows(AplAcceptableTransactionValidationException.class, () -> type.validateStateDependent(transaction));
+
+        assertEquals(0, type.getDependentValidationCounter());
+        assertEquals("Transaction 'transaction' failed with message: 'Not enough apl balance on account: 1 to " +
+            "pay transaction both amount: 100 and fee: 10, only fee may be paid, balance: 109'", ex.toString());
+    }
+
+    @Test
+    void validateStateDependent_notEnoughFunds_notEnoughToPayFee() {
+        mockTxAndSender();
+        doReturn(9L).when(sender).getUnconfirmedBalanceATM();
+        FallibleTransactionType type = prepareTransactionType();
+
+        AplUnacceptableTransactionValidationException ex = assertThrows(AplUnacceptableTransactionValidationException.class, () -> type.validateStateDependent(transaction));
+
+        assertEquals(0, type.getDependentValidationCounter());
+        assertEquals("Transaction 'transaction' failed with message: 'Not enough apl balance on account: 1, required at least 110, but only got 9'", ex.toString());
+    }
+
     @Test
     void apply_undoApply() {
-        createTxAmountsMocks();
+        mockTxAmounts();
         doReturn(1L).when(sender).getId();
         doReturn(2L).when(recipient).getId();
         FallibleTransactionType type = prepareTransactionType();
@@ -147,7 +221,7 @@ class TransactionTypeTest {
 
     @Test
     void apply_recipientAndSenderAreDifferent() {
-        createTxAmountsMocks();
+        mockTxAmounts();
         doReturn(SENDER_ID).when(sender).getId();
         FallibleTransactionType type = prepareTransactionType();
 
@@ -159,32 +233,23 @@ class TransactionTypeTest {
         assertEquals(1, type.getApplicationCounter());
     }
 
-    @SneakyThrows
     @Test
-    void validateAtFinishStateDependent() {
+    void apply_recipientAndSenderAreEquals() {
+        mockTxAmounts();
+        doReturn(200L).when(sender).getBalanceATM();
         FallibleTransactionType type = prepareTransactionType();
 
-        type.validateStateDependentAtFinish(transaction);
+        type.apply(transaction, sender, recipient);
 
-        assertEquals(1, type.getDependentValidationCounter());
-    }
-
-    @SneakyThrows
-    @Test
-    void validateStateIndependent() {
-        FallibleTransactionType type = prepareTransactionType();
-
-        type.validateStateIndependent(transaction);
-
-        assertEquals(1, type.getIndependentValidationCounter());
+        verify(type.getAccountService()).addToBalanceATM(sender, type.getLedgerEvent(), 0, -100, -10);
+        verify(type.getAccountService()).addToBalanceAndUnconfirmedBalanceATM(recipient, type.getLedgerEvent(), 0, 100);
+        verify(recipient).setBalanceATM(200);
+        assertEquals(1, type.getApplicationCounter());
     }
 
     @Test
     void applyUnconfirmedOK_withReferencedAdditionalUnconfirmedFee() {
-        createTxAmountsMocks();
-        doReturn(new byte[32])
-            .when(transaction).referencedTransactionFullHash();
-        doReturn(50L).when(blockchainConfig).getUnconfirmedPoolDepositAtm();
+        mockReferencedWithAmountTx();
         doReturn(170L).when(sender).getUnconfirmedBalanceATM();
         FallibleTransactionType type = prepareTransactionType();
 
@@ -198,7 +263,7 @@ class TransactionTypeTest {
 
     @Test
     void applyUnconfirmed_notEnoughFunds() {
-        createTxAmountsMocks();
+        mockTxAmounts();
         doReturn(100L).when(sender).getUnconfirmedBalanceATM();
         FallibleTransactionType type = prepareTransactionType();
 
@@ -212,7 +277,7 @@ class TransactionTypeTest {
 
     @Test
     void applyUnconfirmed_attachmentUnconfirmedFailed() {
-        createTxAmountsMocks();
+        mockTxAmounts();
         doReturn(150L).when(sender).getUnconfirmedBalanceATM();
         BasicTestTransactionType type = new BasicTestTransactionType(blockchainConfig, accountService);
 
@@ -225,69 +290,207 @@ class TransactionTypeTest {
     }
 
     @Test
-    void undoApply_default() {
+    void undoApply_sameSenderAndRecipientAccount() {
+        mockTxAmounts();
+        doReturn(210L).when(sender).getBalanceATM();
+        doReturn(false).when(transaction).attachmentIsPhased();
+        FallibleTransactionType type = prepareTransactionType();
+
+        type.undoApply(transaction, sender, recipient);
+
+        assertEquals(-1, type.getApplicationCounter());
+        verify(accountService).addToBalanceATM(sender, LedgerEvent.ORDINARY_PAYMENT, 0L, 100, 10);
+        verify(accountService).addToBalanceAndUnconfirmedBalanceATM(recipient, LedgerEvent.ORDINARY_PAYMENT, 0L, -100);
+        verify(recipient).setBalanceATM(210L); // update balance of the same account
+    }
+
+    @Test
+    void undoUnconfirmed() {
+        mockReferencedWithAmountTx();
+        FallibleTransactionType type = prepareTransactionType();
+
+        type.undoUnconfirmed(transaction, sender);
+
+        verify(accountService).addToUnconfirmedBalanceATM(sender, LedgerEvent.ORDINARY_PAYMENT, 0L, 100, 60L);
+    }
+
+    @Test
+    void isDuplicate_defaultImpl() {
+        FallibleTransactionType type = prepareTransactionType();
+
+        boolean duplicate = type.isDuplicate(transaction, Map.of());
+
+        assertFalse(duplicate, "Default isDuplicate impl should return false");
+    }
+
+    @Test
+    void isBlockDuplicate_defaultImpl() {
+        FallibleTransactionType type = prepareTransactionType();
+
+        boolean duplicate = type.isBlockDuplicate(transaction, Map.of());
+
+        assertFalse(duplicate, "Default isBlockDuplicate impl should return false");
+    }
+
+    @Test
+    void isUnconfirmedDuplicate_defaultImpl() {
+        FallibleTransactionType type = prepareTransactionType();
+
+        boolean duplicate = type.isUnconfirmedDuplicate(transaction, Map.of());
+
+        assertFalse(duplicate, "Default isUnconfirmedDuplicate impl should return false");
+    }
+
+    @Test
+    void isPruned_defaultImpl() {
+        FallibleTransactionType type = prepareTransactionType();
+
+        boolean pruned = type.isPruned(0L);
+
+        assertFalse(pruned, "Default isPruned impl should return false, since the implementation should treat " +
+            "about pruning status of the transaction");
+    }
+
+    @Test
+    void mustHaveRecipient_defaultImpl() {
+        FallibleTransactionType type = prepareTransactionType();
+
+        boolean mustHaveRecipient = type.mustHaveRecipient();
+
+        assertTrue(mustHaveRecipient, "Default mustHaveRecipient impl should return 'true', " +
+            "when 'canHaveRecipient' return 'true'");
+    }
+
+    @Test
+    void isPhasable_defaultImpl() {
+        FallibleTransactionType type = prepareTransactionType();
+
+        boolean phasable = type.isPhasable();
+
+        assertTrue(phasable, "By default each transaction should be phasable");
+    }
+
+    @Test
+    void getBaselineFee_defaultImpl() {
+        FallibleTransactionType type = prepareTransactionType();
+        mockFeeConfigs();
+
+        Fee fee = type.getBaselineFee(transaction);
+
+        // ten whole units multiplied by the 100 fractions in each
+        assertEquals(1000L, fee.getFee(transaction, mock(Appendix.class)));
+    }
+
+    @Test
+    // same impl as for getBaselineFee
+    void getNextFee_defaultImpl() {
+        mockFeeConfigs();
+        FallibleTransactionType type = prepareTransactionType();
+
+        Fee nextFee = type.getNextFee(transaction);
+
+        assertEquals(1000L, nextFee.getFee(transaction, mock(Appendix.class)));
+    }
+
+    @Test
+    void getBaselineFeeHeight() {
+        FallibleTransactionType type = prepareTransactionType();
+
+        assertEquals(1, type.getBaselineFeeHeight(), "Fee applied by the baseline height should be started from the blockchain beginning");
+    }
+
+    @Test
+    void getNextFeeHeight() {
+        FallibleTransactionType type = prepareTransactionType();
+
+        assertEquals(Integer.MAX_VALUE, type.getNextFeeHeight(), "Next fee height should never be reached");
+    }
+
+    @Test
+    void getBackFees() {
+        FallibleTransactionType type = prepareTransactionType();
+
+        assertArrayEquals(new long[0], type.getBackFees(transaction), "By default back fee should be of length 0, " +
+            "intended to not apply any back fees for the tx type");
+    }
+
+    @Test
+    void typeToString() {
+        assertEquals("TestPayment ORDINARY_PAYMENT", prepareTransactionType().toString());
+    }
+
+    @Test
+    void undoApplyAttachment_NotAllowed() {
         BasicTestTransactionType type = new BasicTestTransactionType(blockchainConfig, accountService);
 
-        assertThrows(UnsupportedOperationException.class, () -> type.undoApply(transaction, sender, recipient));
-    }
+        UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class,
+            () -> type.undoApply(transaction, sender, null));
 
-    @SneakyThrows
-    @Test
-    void validateStateDependent_OK() {
-        createTransctionAndSenderMocks();
-        doReturn(110L).when(sender).getUnconfirmedBalanceATM();
-        FallibleTransactionType type = prepareTransactionType();
-
-        type.validateStateDependent(transaction);
-
-        assertEquals(1, type.getDependentValidationCounter());
+        assertEquals("undoApplyAttachment is not supported for transaction type: null, transaction: null, sender: 0", ex.getMessage());
     }
 
     @Test
-    void validateStateDependent_NoAccount() {
-        doReturn(SENDER_ID).when(transaction).getSenderId();
+    void createSizeBasedFee_customUnitSize() {
         FallibleTransactionType type = prepareTransactionType();
+        Appendix attachment = mock(Appendix.class);
+        mockFeeConfigs();
+        doReturn(new BigDecimal("0.33")).when(heightConfig).getSizeBasedFee(TransactionTypes.TransactionTypeSpec.ORDINARY_PAYMENT, new BigDecimal("0.33"));
+        doReturn(100).when(attachment).getFullSize();
 
-        assertThrows(AplUnacceptableTransactionValidationException.class, ()-> type.validateStateDependent(transaction));
+        Fee sizeBasedFee = type.getFeeFactory().createSizeBased(BigDecimal.ONE, new BigDecimal("0.33"), (transaction, appendix) -> appendix.getFullSize(), 33);
 
-        assertEquals(0, type.getDependentValidationCounter());
+        assertEquals(sizeBasedFee.getFee(transaction, attachment), 1099); // TEN fixed units with 100 fractions in each + 3 size based units 0.99 of the whole unit
     }
 
     @Test
-    void validateStateDependent_notEnoughFunds_enoughToPayFee() {
-        createTransctionAndSenderMocks();
-        doReturn(109L).when(sender).getUnconfirmedBalanceATM();
+    void createSizeBasedFee_defaultUnitSize() {
         FallibleTransactionType type = prepareTransactionType();
+        mockFeeConfigs();
+        doReturn(new BigDecimal("0.2")).when(heightConfig).getSizeBasedFee(TransactionTypes.TransactionTypeSpec.ORDINARY_PAYMENT, new BigDecimal("0.33"));
 
-        AplAcceptableTransactionValidationException ex = assertThrows(AplAcceptableTransactionValidationException.class, () -> type.validateStateDependent(transaction));
+        Fee sizeBasedFee = type.getFeeFactory().createSizeBased(BigDecimal.ONE, new BigDecimal("0.33"), (transaction, appendix) -> 96);
 
-        assertEquals(0, type.getDependentValidationCounter());
-        assertEquals("Transaction 'transaction' failed with message: 'Not enough apl balance on account: 1 to " +
-            "pay transaction both amount: 100 and fee: 10, only fee may be paid, balance: 109'", ex.toString());
+        assertEquals(sizeBasedFee.getFee(transaction, mock(Appendix.class)), 1040); // TEN fixed units with 100 fractions in each + 2 size based units 0.4 of the whole unit
     }
 
     @Test
-    void validateStateDependent_notEnoughFunds_notEnoughToPayFee() {
-        createTransctionAndSenderMocks();
-        doReturn(9L).when(sender).getUnconfirmedBalanceATM();
+    void createCustomFee() {
         FallibleTransactionType type = prepareTransactionType();
 
-        AplUnacceptableTransactionValidationException ex = assertThrows(AplUnacceptableTransactionValidationException.class, () -> type.validateStateDependent(transaction));
+        Fee customFee = type.getFeeFactory().createCustom((transaction, appendix) -> 100L);
 
-        assertEquals(0, type.getDependentValidationCounter());
-        assertEquals("Transaction 'transaction' failed with message: 'Not enough apl balance on account: 1, required at least 110, but only got 9'", ex.toString());
+        long fee = customFee.getFee(transaction, mock(Appendix.class));
+
+        assertEquals(100, fee);
     }
 
 
-    private void createTransctionAndSenderMocks() {
-        createTxAmountsMocks();
+    private void mockReferencedWithAmountTx() {
+        mockTxAmounts();
+        mockReferencedTx();
+    }
+
+    private void mockTxAndSender() {
+        mockTxAmounts();
         doReturn(SENDER_ID).when(transaction).getSenderId();
         doReturn(sender).when(accountService).getAccount(SENDER_ID);
     }
 
-    private void createTxAmountsMocks() {
+    private void mockTxAmounts() {
         doReturn(100L).when(transaction).getAmountATM();
         doReturn(10L).when(transaction).getFeeATM();
+    }
+
+    private void mockReferencedTx() {
+        doReturn(new byte[32])
+            .when(transaction).referencedTransactionFullHash();
+        doReturn(50L).when(blockchainConfig).getUnconfirmedPoolDepositAtm();
+    }
+
+    private void mockFeeConfigs() {
+        doReturn(100L).when(blockchainConfig).getOneAPL();
+        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        doReturn(BigDecimal.TEN).when(heightConfig).getBaseFee(TransactionTypes.TransactionTypeSpec.ORDINARY_PAYMENT, BigDecimal.ONE);
     }
 
 
@@ -345,6 +548,7 @@ class TransactionTypeTest {
 
         @Override
         protected void undoApplyAttachment(Transaction transaction, Account senderAccount, Account recipientAccount) {
+            super.undoApplyAttachment(transaction, senderAccount, recipientAccount); // additional verification
             applicationCounter--;
         }
 

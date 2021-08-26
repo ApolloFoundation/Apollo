@@ -305,7 +305,7 @@ public abstract class TransactionType {
                 recipientAccount.setBalanceATM(senderAccount.getBalanceATM());
             }
             accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, getLedgerEvent(), transactionId, -amount);
-            log.info("{} was refunded by {} ATM from the recipient {}", senderAccount.balanceString(), transaction.getAmountATM(), recipientAccount.balanceString());
+            log.info("{} was refunded {} ATM by the recipient {}", senderAccount.balanceString(), transaction.getAmountATM(), recipientAccount.balanceString());
         }
     }
 
@@ -330,12 +330,9 @@ public abstract class TransactionType {
     @TransactionFee(FeeMarker.UNDO_UNCONFIRMED_BALANCE)
     public final void undoUnconfirmed(Transaction transaction, Account senderAccount) {
         undoAttachmentUnconfirmed(transaction, senderAccount);
+        TransactionAmounts amounts = new TransactionAmounts(transaction);
         accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(),
-            transaction.getAmountATM(), transaction.getFeeATM());
-        if (transaction.referencedTransactionFullHash() != null) {
-            accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), 0,
-                blockchainConfig.getUnconfirmedPoolDepositAtm());
-        }
+            amounts.getAmountATM(), amounts.getFeeATM());
     }
 
     /**
@@ -413,7 +410,7 @@ public abstract class TransactionType {
 
     /**
      * Specify, that transaction of the specific type may be phased (delayed until some event occurred)
-     * @return true, when phasig is allowed, otherwise false
+     * @return true, when phasing is allowed, otherwise false
      */
     public boolean isPhasable() {
         return true;
