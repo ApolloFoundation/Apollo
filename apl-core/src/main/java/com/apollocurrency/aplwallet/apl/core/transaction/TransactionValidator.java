@@ -29,7 +29,6 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValida
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
-import com.apollocurrency.aplwallet.apl.util.Convert2;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentChildSpecific;
 import com.apollocurrency.aplwallet.apl.util.annotation.ParentMarker;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -198,9 +197,7 @@ public class TransactionValidator {
         @ParentChildSpecific(ParentMarker.MULTI_SIGNATURE)
         Credential signatureCredential;
         SignatureVerifier signatureVerifier = SignatureToolFactory.selectValidator(transaction.getVersion()).orElseThrow(UnsupportedTransactionVersion::new);
-        if (log.isTraceEnabled()) {
-            log.trace("#MULTI_SIG# verify signature validator class={}", signatureVerifier.getClass().getName());
-        }
+        log.trace("#MULTI_SIG# verify signature validator class={}", signatureVerifier.getClass().getName());
         if (sender != null && sender.isChild()) {
             //multi-signature
             if (transaction.getVersion() < 2) {
@@ -265,7 +262,7 @@ public class TransactionValidator {
 
     private void checkSignatureThrowingEx(Transaction transaction, Account account) {
         if (!checkSignature(account, transaction)) {
-            throw new AplUnacceptableTransactionValidationException("Invalid signature for transaction " + transaction.getId(), transaction);
+            throw new AplUnacceptableTransactionValidationException("Invalid signature for transaction " + transaction.getStringId(), transaction);
         }
     }
 
@@ -310,7 +307,8 @@ public class TransactionValidator {
             throw new AplUnacceptableTransactionValidationException("Account with  id " + transaction.getSenderId() + " is not exist yet", transaction);
         }
         if (account.getUnconfirmedBalanceATM() < feeATM) {
-            throw new AplUnacceptableTransactionValidationException("Account balance " + account.getUnconfirmedBalanceATM() + " is not enough to pay tx fee " + feeATM, transaction);
+            throw new AplUnacceptableTransactionValidationException("Account '" + Long.toUnsignedString(transaction.getSenderId())
+                +"' balance " + account.getUnconfirmedBalanceATM() + " is not enough to pay tx fee " + feeATM, transaction);
         }
     }
 
@@ -337,7 +335,7 @@ public class TransactionValidator {
      */
     private void validateLightlyWithoutAppendages(Transaction transaction) {
         if (!transactionVersionValidator.isValidVersion(transaction)) {
-            throw new AplUnacceptableTransactionValidationException("Unsupported transaction version:" + transaction.getVersion() + " at height " + blockchain.getHeight(), transaction);
+            throw new AplUnacceptableTransactionValidationException("Unsupported transaction version " + transaction.getVersion() + " at height " + blockchain.getHeight(), transaction);
         }
         long maxBalanceAtm = blockchainConfig.getCurrentConfig().getMaxBalanceATM();
         short deadline = transaction.getDeadline();
@@ -345,12 +343,12 @@ public class TransactionValidator {
         long amountATM = transaction.getAmountATM();
         TransactionType type = transaction.getType();
         TransactionTypes.TransactionTypeSpec typeSpec = type.getSpec();
-        if (transaction.getTimestamp() == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM < 0)
+        if (typeSpec == null
+            || (transaction.getTimestamp() == 0 ? (deadline != 0 || feeATM != 0) : (deadline < 1 || feeATM < 0))
             || feeATM > maxBalanceAtm
             || amountATM < 0
-            || amountATM > maxBalanceAtm
-            || typeSpec == null) {
-            throw new AplUnacceptableTransactionValidationException("Invalid transaction parameters:\n type: " + type + ", timestamp: " + transaction.getTimestamp()
+            || amountATM > maxBalanceAtm) {
+            throw new AplUnacceptableTransactionValidationException("Invalid transaction parameters: type: " + type + ", timestamp: " + transaction.getTimestamp()
                 + ", deadline: " + deadline + ", fee: " + feeATM + ", amount: " + amountATM, transaction);
         }
         byte[] referencedTransactionFullHash = Convert.parseHexString(transaction.getReferencedTransactionFullHash());
@@ -421,7 +419,7 @@ public class TransactionValidator {
 
     private void verifyAppendageVersion(Transaction transaction, AbstractAppendix appendage) {
         if (!appendage.verifyVersion()) {
-            throw new AplUnacceptableTransactionValidationException(appendage.getAppendixName() + " appendage version '" + appendage.getVersion() + " is not supported", transaction);
+            throw new AplUnacceptableTransactionValidationException(appendage.getAppendixName() + " appendage version '" + appendage.getVersion() + "' is not supported", transaction);
         }
     }
 
@@ -434,10 +432,9 @@ public class TransactionValidator {
 
         @Override
         public boolean validate(byte[] publicKey) {
-            if (log.isTraceEnabled()) {
-                log.trace("#MULTI_SIG# public key validation account={}", Convert2.rsAccount(AccountService.getId(publicKey)));
-            }
-            if (!accountPublicKeyService.setOrVerifyPublicKey(AccountService.getId(publicKey), publicKey)) {
+            long accountId = AccountService.getId(publicKey);
+            log.trace("#MULTI_SIG# public key validation account={}", Long.toUnsignedString(accountId));
+            if (!accountPublicKeyService.setOrVerifyPublicKey(accountId, publicKey)) {
                 log.error("Public Key Verification failed: pk={}", Convert.toHexString(publicKey));
                 return false;
             }
