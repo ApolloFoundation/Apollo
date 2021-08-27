@@ -43,4 +43,9 @@ public class PersistentMappingRepository<V> extends ContractMappingRepository<V>
     public void deleteOneObject(Key key) {
         smcContractStorageService.deleteEntry(getContract(), key, getName());
     }
+
+    @Override
+    public String getJavaTypeName() {
+        return "Mapping<" + getJsonConverter().from().getSimpleName() + ">";
+    }
 }
