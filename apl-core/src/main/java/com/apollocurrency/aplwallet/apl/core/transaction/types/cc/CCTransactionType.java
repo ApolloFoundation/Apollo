@@ -7,9 +7,9 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 
-public abstract class ColoredCoinsTransactionType extends TransactionType {
+public abstract class CCTransactionType extends TransactionType {
 
-    public ColoredCoinsTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
+    public CCTransactionType(BlockchainConfig blockchainConfig, AccountService accountService) {
         super(blockchainConfig, accountService);
     }
 }

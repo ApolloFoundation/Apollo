@@ -4,6 +4,12 @@
       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
     </encoder>
   </appender>
+  <appender name="inMemory" class="com.apollocurrency.aplwallet.apl.util.MemoryAppender">
+    <size>10000</size>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
+    </encoder>
+  </appender>
 
   <define name="LOGDIR" class="com.apollocurrency.aplwallet.apl.exec.LogDirPropertyDefiner">
     <logDirectory>
@@ -94,5 +100,6 @@
   <root level="warn">
     <appender-ref ref="console"/>
     <appender-ref ref="file"/>
+    <appender-ref ref="inMemory"/>
   </root>
 </configuration>

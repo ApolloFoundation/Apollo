@@ -1,12 +1,12 @@
 /*
- * Copyright © 2018-2020 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.entity.state.order;
 
-import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import lombok.ToString;
 
 import java.sql.ResultSet;
@@ -18,7 +18,7 @@ import java.sql.SQLException;
 @ToString(callSuper = true)
 public class BidOrder extends Order {
 
-    public BidOrder(Transaction transaction, ColoredCoinsBidOrderPlacement attachment, int height) {
+    public BidOrder(Transaction transaction, CCBidOrderPlacementAttachment attachment, int height) {
         super(transaction, attachment, height);
     }
 

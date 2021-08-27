@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.service.state.order;
 
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 
 /**
  * @author silaev-firstbridge on 4/8/2020
@@ -14,5 +14,5 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBi
 public interface OrderMatchService {
     void addAskOrder(Transaction transaction, ColoredCoinsAskOrderPlacement attachment);
 
-    void addBidOrder(Transaction transaction, ColoredCoinsBidOrderPlacement attachment);
+    void addBidOrder(Transaction transaction, CCBidOrderPlacementAttachment attachment);
 }

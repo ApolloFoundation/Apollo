@@ -23,7 +23,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class CCAssetTransferTransactionType extends ColoredCoinsTransactionType {
+public class CCAssetTransferTransactionType extends CCTransactionType {
 
 
     private final AccountAssetService accountAssetService;

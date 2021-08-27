@@ -23,7 +23,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-class CCAskOrderCancellationTransactionType extends ColoredCoinsOrderCancellationTransactionType {
+class CCAskOrderCancellationTransactionType extends CCOrderCancellationTransactionType {
     private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService;
     private final AccountAssetService accountAssetService;
 

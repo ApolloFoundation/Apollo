@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -11,17 +12,18 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class ColoredCoinsBidOrderPlacement extends ColoredCoinsOrderPlacementAttachment {
+@EqualsAndHashCode(callSuper = true)
+public final class CCBidOrderPlacementAttachment extends ColoredCoinsOrderPlacementAttachment {
 
-    public ColoredCoinsBidOrderPlacement(ByteBuffer buffer) {
+    public CCBidOrderPlacementAttachment(ByteBuffer buffer) {
         super(buffer);
     }
 
-    public ColoredCoinsBidOrderPlacement(JSONObject attachmentData) {
+    public CCBidOrderPlacementAttachment(JSONObject attachmentData) {
         super(attachmentData);
     }
 
-    public ColoredCoinsBidOrderPlacement(long assetId, long quantityATU, long priceATM) {
+    public CCBidOrderPlacementAttachment(long assetId, long quantityATU, long priceATM) {
         super(assetId, quantityATU, priceATM);
     }
 

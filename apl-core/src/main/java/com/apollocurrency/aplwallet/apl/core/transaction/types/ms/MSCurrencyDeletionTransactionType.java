@@ -25,7 +25,7 @@ import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes
 import static com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes.TransactionTypeSpec.MS_CURRENCY_ISSUANCE;
 
 @Singleton
-public class MSCurrencyDeletionTransactionType extends MonetarySystemTransactionType {
+public class MSCurrencyDeletionTransactionType extends MSTransactionType {
 
     @Inject
     public MSCurrencyDeletionTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService) {

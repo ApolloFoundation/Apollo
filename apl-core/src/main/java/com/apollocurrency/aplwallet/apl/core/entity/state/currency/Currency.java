@@ -8,7 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDeletableEntity;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -39,7 +39,7 @@ public class Currency extends VersionedDeletableEntity {
     private byte decimals;
     private CurrencySupply currencySupply;
 
-    public Currency(Transaction transaction, MonetarySystemCurrencyIssuance attachment, int height) {
+    public Currency(Transaction transaction, MonetarySystemCurrencyIssuanceAttachment attachment, int height) {
         super(null, height);
         this.id = transaction.getId();
         super.setDbKey(CurrencyTable.currencyDbKeyFactory.newKey(this.id));
