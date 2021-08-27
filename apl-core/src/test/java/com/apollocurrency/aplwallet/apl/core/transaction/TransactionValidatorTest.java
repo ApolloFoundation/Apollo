@@ -7,6 +7,9 @@ package com.apollocurrency.aplwallet.apl.core.transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.entity.state.account.AddressScope;
+import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
+import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.CreateTransactionRequest;
 import com.apollocurrency.aplwallet.apl.core.model.EcBlockData;
@@ -24,7 +27,10 @@ import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountContro
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
+import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractAttachment;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.Appendix;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AppendixValidatorRegistry;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.EncryptedToSelfMessageAppendixValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessageAppendix;
@@ -40,28 +46,40 @@ import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.util.env.config.Chain;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
+import com.apollocurrency.aplwallet.apl.util.io.ByteArrayStream;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.Answer;
 
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionValidatorTest {
     public static final long SENDER_ID = 1L;
+    public static final long RECIPIENT_ID = 2L;
     BlockchainConfig blockchainConfig;
     @Mock
     PhasingPollService phasingPollService;
@@ -83,6 +101,8 @@ class TransactionValidatorTest {
     AppendixValidatorRegistry validatorRegistry;
     AccountService accountService;
 
+
+    // supporting mocks
     @Mock
     Chain chain;
     @Mock
@@ -95,6 +115,10 @@ class TransactionValidatorTest {
     AbstractAttachment attachment;
     @Mock
     Account sender;
+    @Mock
+    Signature signature;
+    @Mock
+    Account recipient;
 
     TransactionTestData td;
 
@@ -102,6 +126,7 @@ class TransactionValidatorTest {
 
     @BeforeEach
     void setUp() {
+
         td = new TransactionTestData();
         accountService = td.getAccountService();
         blockchainConfig = td.getBlockchainConfig();
@@ -325,6 +350,18 @@ class TransactionValidatorTest {
     }
 
     @Test
+    void validateSufficientlyOK_signatureAlreadyVerified() throws AplException.ValidationException {
+        prepareFeeLightValidationScenario(20);
+        when(tx.hasValidSignature()).thenReturn(true);
+
+        validator.validateSufficiently(tx);
+
+        verify(attachment).performStateIndependentValidation(tx, 0);
+        verifyNoInteractions(accountPublicKeyService);
+        verify(accountService, never()).getPublicKeyByteArray(anyLong());
+    }
+
+    @Test
     void validateSufficiently_signatureWasNotSet() throws AplException.ValidationException {
         prepareFeeLightValidationScenario(20);
         when(tx.getSignature()).thenReturn(null);
@@ -336,7 +373,19 @@ class TransactionValidatorTest {
     }
 
     @Test
-    void validateSufficiently_childTx_versionLessThan2() throws AplException.ValidationException {
+    void validateSufficiently_unsupportedTxVersion() throws AplException.ValidationException {
+        prepareFeeLightValidationScenario(20);
+        when(tx.getSignature()).thenReturn(mock(Signature.class));
+        when(tx.getStringId()).thenReturn("TestTX");
+        when(tx.getVersion()).thenReturn((byte) 10);
+
+        validateSufficientlyWithEx(tx, "Invalid signature for transaction TestTX");
+
+        verify(attachment).performStateIndependentValidation(tx, 0);
+    }
+
+    @Test
+    void validateSufficiently_childAccountTx_versionLessThan2() throws AplException.ValidationException {
         prepareFeeLightValidationScenario(20);
         when(tx.getStringId()).thenReturn("TestTX");
         when(tx.getVersion()).thenReturn((byte) 1);
@@ -348,24 +397,64 @@ class TransactionValidatorTest {
         verify(attachment).performStateIndependentValidation(tx, 0);
     }
 
+    @Test
+    void validateSufficiently_childAccountTx_invalidCredential() throws AplException.ValidationException {
+        prepareFeeLightValidationScenario(20);
+        when(tx.getStringId()).thenReturn("TestTX");
+        when(tx.getVersion()).thenReturn((byte) 2);
+        when(tx.getSignature()).thenReturn(mock(Signature.class));
+        when(sender.isChild()).thenReturn(true);
+        when(sender.getParentId()).thenReturn(RECIPIENT_ID);
+        when(accountService.getPublicKeyByteArray(RECIPIENT_ID)).thenReturn(new byte[32]);
+        when(tx.getSenderPublicKey()).thenReturn(new byte[32]);
+        when(accountPublicKeyService.setOrVerifyPublicKey(anyLong(), any(byte[].class))).thenReturn(false); // fail here
 
-    private void prepareFeeLightValidationScenario(long senderBalance) {
-        prepareLightValidationSuccessfulScenario();
-        doReturn(new byte[32]).when(tx).referencedTransactionFullHash();
-        doReturn(SENDER_ID).when(tx).getSenderId();
-        doReturn(sender).when(accountService).getAccount(SENDER_ID);
-        doReturn(10L).when(feeCalculator).getMinimumFeeATM(tx, 0);
-        doReturn(5L).when(blockchainConfig).getUnconfirmedPoolDepositAtm();
-        doReturn(senderBalance).when(sender).getUnconfirmedBalanceATM();
+        validateSufficientlyWithEx(tx, "Invalid signature for transaction TestTX");
+
+        verify(attachment).performStateIndependentValidation(tx, 0);
     }
 
-    private void prepareLightValidationSuccessfulScenario() {
-        prepareScenarioWithTxFields(1000, 10, 1440, 0);
-        mockAttachment();
-        doReturn(true).when(type).canHaveRecipient();
-        doReturn(false).when(type).mustHaveRecipient();
-        doReturn(true).when(attachment).verifyVersion();
-        doReturn(List.of(attachment)).when(tx).getAppendages();
+
+    @Test
+    void validateSufficiently_v1Tx_invalidCredential() throws AplException.ValidationException {
+        prepareFeeLightValidationScenario(20);
+        when(tx.getStringId()).thenReturn("TestTX");
+        when(tx.getVersion()).thenReturn((byte) 1);
+        when(tx.getSignature()).thenReturn(signature);
+        when(tx.getSenderPublicKey()).thenReturn(new byte[32]);
+        when(accountPublicKeyService.setOrVerifyPublicKey(anyLong(), any(byte[].class))).thenReturn(false); // fail here
+
+        validateSufficientlyWithEx(tx, "Invalid signature for transaction TestTX");
+
+        verify(attachment).performStateIndependentValidation(tx, 0);
+    }
+
+    @Test
+    void validateSufficiently_v2Tx_invalidCredential() throws AplException.ValidationException {
+        prepareFeeLightValidationScenario(20);
+        when(tx.getStringId()).thenReturn("TestTX");
+        when(tx.getVersion()).thenReturn((byte) 2);
+        when(tx.getSignature()).thenReturn(signature);
+        when(tx.getSenderPublicKey()).thenReturn(new byte[32]);
+        when(accountPublicKeyService.setOrVerifyPublicKey(anyLong(), any(byte[].class))).thenReturn(false); // fail here
+
+        validateSufficientlyWithEx(tx, "Invalid signature for transaction TestTX");
+
+        verify(attachment).performStateIndependentValidation(tx, 0);
+    }
+
+    @Test
+    void validateSufficiently_v1Tx_signatureIsNotValid() throws AplException.ValidationException {
+        prepareFeeLightValidationScenario(20);
+        when(tx.getStringId()).thenReturn("TestTX");
+        when(tx.getVersion()).thenReturn((byte) 1);
+        when(tx.getSignature()).thenReturn(SignatureToolFactory.createSignature(new byte[64]));
+        when(tx.getSenderPublicKey()).thenReturn(new byte[32]);
+        when(accountPublicKeyService.setOrVerifyPublicKey(anyLong(), any(byte[].class))).thenReturn(true);
+
+        validateSufficientlyWithEx(tx, "Invalid signature for transaction TestTX");
+
+        verify(attachment).performStateIndependentValidation(tx, 0);
     }
 
 
@@ -381,18 +470,255 @@ class TransactionValidatorTest {
     }
 
     @Test
+    void validateFully_fraudDetected() {
+        prepareLightValidationWithoutAppendagesSuccessfulScenario();
+        when(chain.getChainId()).thenReturn(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5"));
+        when(tx.getSenderId()).thenReturn(Convert.parseAccountId("APL-ENTK-64DM-AYFP-H6QHY"));
+        when(blockchain.getHeight()).thenReturn(2_177_201);
+
+        AplUnacceptableTransactionValidationException ex =
+            assertThrows(AplUnacceptableTransactionValidationException.class, () -> validator.validateFully(tx));
+
+        assertEquals("Incorrect Passphrase", ex.getMessage());
+    }
+
+
+    @Test
+    void validateFully_childAccountTx_noRecipient() {
+        prepareChildAccountValidationScenario(sender, null);
+
+        AplUnacceptableTransactionValidationException ex =
+            assertThrows(AplUnacceptableTransactionValidationException.class, () -> validator.validateFully(tx));
+
+        assertEquals("Recipient's account '2' does not exist yet", ex.getMessage());
+    }
+
+    @Test
+    void validateFully_childAccountTx_forbiddenAccountAddrScope() {
+        when(sender.getAddrScope()).thenReturn(AddressScope.CUSTOM);
+        prepareChildAccountValidationScenario(sender, recipient);
+
+        AplUnacceptableTransactionValidationException ex =
+            assertThrows(AplUnacceptableTransactionValidationException.class, () -> validator.validateFully(tx));
+
+        assertEquals("Unsupported value 'CUSTOM' for sender address scope;sender.Id=0", ex.getMessage());
+    }
+
+    @Test
+    void validateFully_childAccountTx_senderInFamilyWithWrongParentId() {
+        when(sender.getAddrScope()).thenReturn(AddressScope.IN_FAMILY);
+        when(sender.getParentId()).thenReturn(3L);
+        when(recipient.getId()).thenReturn(RECIPIENT_ID);
+        prepareChildAccountValidationScenario(sender, recipient);
+
+        AplUnacceptableTransactionValidationException ex =
+            assertThrows(AplUnacceptableTransactionValidationException.class, () -> validator.validateFully(tx));
+
+        assertEquals("The parent account for sender and recipient must be the same;sender.parentId=3, recipient.parentId=0", ex.getMessage());
+    }
+
+    @Test
+    void validateFully_childAccountTx_recipientInFamilyWithDifferentFromSenderParent_maxPayloadExceeded() {
+        validateFullyChildAccountTx_failOnMaxPayloadExceeded(2L, 4L, AddressScope.IN_FAMILY);
+    }
+
+    @Test
+    void validateFully_childAccountTx_recipientInFamilyWithSender_maxPayloadExceeded() {
+        validateFullyChildAccountTx_failOnMaxPayloadExceeded(3L, 3L, AddressScope.IN_FAMILY);
+    }
+
+    @Test
+    void validateFully_childAccountTx_senderIsExternal_maxPayloadExceeded() {
+        validateFullyChildAccountTx_failOnMaxPayloadExceeded(3L, 3L, AddressScope.EXTERNAL);
+    }
+
+    @Test
+    void validateFully_maxPayloadSizeExceeded() {
+        prepareLightValidationWithoutAppendagesSuccessfulScenario();
+        when(tx.getAppendages()).thenReturn(List.of(attachment));
+        when(tx.getVersion()).thenReturn((byte) 1);
+        when(tx.getSenderPublicKey()).thenReturn(new byte[32]);
+        doAnswer(a -> ((ByteArrayStream) a.getArgument(0)).write(Long.MAX_VALUE)).when(attachment).putBytes(any(ByteArrayStream.class));
+        when(heightConfig.getMaxPayloadLength()).thenReturn(176);
+        when(chain.getChainId()).thenReturn(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5"));
+
+        AplUnacceptableTransactionValidationException ex =
+            assertThrows(AplUnacceptableTransactionValidationException.class, () -> validator.validateFully(tx));
+
+        assertEquals("Transaction size 184 exceeds maximum payload size", ex.getMessage());
+    }
+
+    @Test
+    void validateFully_noSenderAccount_onFeeValidation() {
+        prepareNonPhasingFullValidationWithoutAppendages(null);
+
+        AplUnacceptableTransactionValidationException ex =
+            assertThrows(AplUnacceptableTransactionValidationException.class, () -> validator.validateFully(tx));
+
+        assertEquals("Sender's account '1' does not exist yet", ex.getMessage());
+    }
+
+    @Test
+    void validateFully_ecBlockHeightHigherThanCurrent() {
+        prepareNonPhasingFullValidationWithoutAppendages(sender);
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(110L);
+        when(blockchain.getHeight()).thenReturn(2000);
+        when(tx.getECBlockId()).thenReturn(1111L);
+        when(tx.getECBlockHeight()).thenReturn(3000);
+
+        AplUnacceptableTransactionValidationException ex =
+            assertThrows(AplUnacceptableTransactionValidationException.class, () -> validator.validateFully(tx));
+
+        assertEquals("ecBlockHeight 3000 exceeds blockchain height 2000", ex.getMessage());
+    }
+
+    @Test
+    void validateFully_ecBlockIdAtEcBlockHeightMismatch() {
+        prepareNonPhasingFullValidationWithEcCheckWithoutAppendages(1110L);
+
+        AplUnacceptableTransactionValidationException ex =
+            assertThrows(AplUnacceptableTransactionValidationException.class, () -> validator.validateFully(tx));
+
+        assertEquals("ecBlockHeight 1300 does not match ecBlockId 1111, transaction was generated on a fork", ex.getMessage());
+    }
+
+    @SneakyThrows
+    @Test
+    void validateFully_ecValidationPass_phasingControlValidationFailed() {
+        prepareNonPhasingFullValidationWithEcCheckWithoutAppendages(1111L);
+        doThrow(new AplException.NotCurrentlyValidException("Test check control ex")).when(accountControlPhasingService).checkTransaction(tx);
+
+        AplUnacceptableTransactionValidationException ex =
+            assertThrows(AplUnacceptableTransactionValidationException.class, () -> validator.validateFully(tx));
+
+        assertEquals("Test check control ex", ex.getMessage());
+    }
+
+    @SneakyThrows
+    @Test
+    void validateFully_appendageVersionValidationFailed() {
+        prepareNonPhasingFullValidationWithoutAppendages(sender);
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(110L);
+
+        AplUnacceptableTransactionValidationException ex =
+            assertThrows(AplUnacceptableTransactionValidationException.class, () -> validator.validateFully(tx));
+
+        assertEquals("null appendage version '0' is not supported", ex.getMessage());
+        verify(accountControlPhasingService).checkTransaction(tx);
+    }
+
+    @SneakyThrows
+    @Test
+    void validateFully_stateDependentValidationFailed() {
+        prepareNonPhasingFullValidationWithoutAppendages(sender);
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(110L);
+        when(attachment.verifyVersion()).thenReturn(true);
+        doThrow(new AplException.NotValidException("State dependent error")).when(attachment)
+            .performStateDependentValidation(tx, 0);
+
+        AplAcceptableTransactionValidationException ex =
+            assertThrows(AplAcceptableTransactionValidationException.class, () -> validator.validateFully(tx));
+
+        assertEquals("State dependent error", ex.getMessage());
+        verify(accountControlPhasingService).checkTransaction(tx);
+        verify(attachment).performStateIndependentValidation(tx, 0);
+    }
+
+    @Test
     void validateFullyPhasingAtFinish() {
         Transaction transaction = td.TRANSACTION_13;
-        doReturn(transaction.getHeight() + 1000).when(blockchain).getHeight();
-        doReturn(true).when(transactionVersionValidator).isValidVersion(transaction);
-        doReturn(300_000_000_000_000_000L).when(heightConfig).getMaxBalanceATM();
-        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
-        Account senderAcc = new Account(transaction.getSenderId(), transaction.getAmountATM() + transaction.getFeeATM(), transaction.getAmountATM() + transaction.getFeeATM(), 0, 0, 0);
-        doReturn(senderAcc).when(accountService).getAccount(transaction.getSenderId());
-        doReturn(UUID.randomUUID()).when(chain).getChainId();
-        doReturn(10_000).when(heightConfig).getMaxPayloadLength();
-        doReturn(1000).when(heightConfig).getMaxEncryptedMessageLength();
-        doReturn(5629144656878115682L).when(blockchain).getBlockIdAtHeight(516746);
+        mockRealPhasingTransactionAtFinishHeight(transaction);
+
+        boolean verified = validator.verifySignature(transaction);
+        validator.validateFully(transaction);
+
+        assertTrue(verified, "Phasing TX_13 should pass signature validation");
+    }
+
+    @SneakyThrows
+    @Test
+    void validateFullyPhasingAtAcceptanceHeight() {
+        Transaction transaction = td.TRANSACTION_13;
+        mockRealPhasingTransactionAtAcceptanceHeight(transaction);
+
+        boolean verified = validator.verifySignature(transaction);
+        validator.validateFully(transaction);
+
+        assertTrue(verified, "Phasing TX_13 should pass signature validation");
+    }
+
+    @SneakyThrows
+    @Test
+    void validateFullyPhasingAtAcceptanceHeight_noSignature() {
+        Transaction transaction = TransactionWrapperHelper.createUnsignedTransaction(td.TRANSACTION_13);
+        mockRealPhasingTransactionAtAcceptanceHeight(transaction);
+
+        boolean verified = validator.verifySignature(transaction);
+        validator.validateFully(transaction);
+
+        assertFalse(verified, "Phasing TX_13 should NOT pass signature validation, since it is unsigned");
+    }
+
+    @SneakyThrows
+    @Test
+    void validateFullyPhasingAtFinishHeight_finishValidationFailed() {
+        Transaction transaction = td.TRANSACTION_13;
+        mockRealPhasingTransactionBasicNoValidators(transaction);
+        AppendixValidator<Appendix> appendixValidator = mock(AppendixValidator.class);
+        when(validatorRegistry.getValidatorFor(any(Appendix.class))).thenReturn(appendixValidator);
+        doThrow(new AplException.NotValidException("Validate at finish error")).when(appendixValidator).validateAtFinish(any(Transaction.class), any(Appendix.class), anyInt());
+        when(phasingPollService.getPoll(transaction.getId())).thenReturn(mock(PhasingPoll.class));
+        when(heightConfig.getMaxPayloadLength()).thenReturn(350);
+
+
+        boolean verified = validator.verifySignature(transaction);
+        AplUnacceptableTransactionValidationException ex = assertThrows(AplUnacceptableTransactionValidationException.class, () -> validator.validateFully(transaction));
+
+        assertEquals("Validate at finish error", ex.getMessage());
+        assertTrue(verified, "Phasing TX_13 should pass signature validation");
+    }
+
+    @Test
+    void checkSignature_noAccount() {
+        Transaction tx = td.TRANSACTION_13;
+        when(accountPublicKeyService.setOrVerifyPublicKey(tx.getSenderId(), tx.getSenderPublicKey())).thenReturn(true);
+
+        boolean checked = validator.checkSignature(tx);
+
+        assertTrue(checked, "TX_13 should pass signature verification, even when there is no account saved");
+    }
+
+    @Test
+    void verifySignature_setOrVerifyKeyFailed() {
+        Transaction tx = td.TRANSACTION_13;
+        when(accountPublicKeyService.setOrVerifyPublicKey(tx.getSenderId(), tx.getSenderPublicKey())).thenAnswer(new Answer<>() {
+            int counter;
+
+            @Override
+            public Object answer(InvocationOnMock invocation) {
+                // first call inside the checkTransaction
+                // second call inside the verifySignature
+                return counter++ == 0;
+            }
+        });
+
+        boolean verified = validator.verifySignature(tx);
+
+        assertFalse(verified, "TX_13 should NOT pass signature verification, when sender's public key didn't pass setOrVerifyPublicKey verification ");
+    }
+
+    @Test
+    void isValidVersion() {
+        when(transactionVersionValidator.isValidVersion(2)).thenReturn(true);
+
+        boolean validVersion = validator.isValidVersion(2);
+
+        assertTrue(validVersion,"Version '2' should be valid when transactionVersionValidator allows it");
+    }
+
+
+    private void mockRealPhasingTransactionBasic(Transaction transaction) {
+        mockRealPhasingTransactionBasicNoValidators(transaction);
         doAnswer(invocation -> {
             if (invocation.getArgument(0).equals(transaction.getMessage())) {
                 return new MessageAppendixValidator(blockchainConfig);
@@ -401,19 +727,117 @@ class TransactionValidatorTest {
             } else if (invocation.getArgument(0).equals(transaction.getEncryptToSelfMessage())) {
                 return new EncryptedToSelfMessageAppendixValidator(blockchainConfig);
             } else if (invocation.getArgument(0).equals(transaction.getPrunableEncryptedMessage())) {
-                doReturn(transaction.getTimestamp() + 5000).when(timeService).getEpochTime();
-                doReturn(1000).when(blockchainConfig).getMinPrunableLifetime();
                 return new PrunableEncryptedMessageAppendixValidator(timeService, blockchainConfig);
             }
             else {
                 return null;
             }
         }).when(validatorRegistry).getValidatorFor(any());
+    }
+
+    private void mockRealPhasingTransactionBasicNoValidators(Transaction transaction) {
+        doReturn(10_000).when(heightConfig).getMaxPayloadLength();
+        lenient().when(accountPublicKeyService.setOrVerifyPublicKey(transaction.getSenderId(), transaction.getSenderPublicKey())).thenReturn(true);
+        doReturn(transaction.getHeight() + 1000).when(blockchain).getHeight();
+        doReturn(true).when(transactionVersionValidator).isValidVersion(transaction);
+        doReturn(300_000_000_000_000_000L).when(heightConfig).getMaxBalanceATM();
+        doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
+        Account senderAcc = new Account(transaction.getSenderId(), transaction.getAmountATM() + transaction.getFeeATM(), transaction.getAmountATM() + transaction.getFeeATM(), 0, 0, 0);
+        doReturn(senderAcc).when(accountService).getAccount(transaction.getSenderId());
+        doReturn(UUID.randomUUID()).when(chain).getChainId();
+    }
+
+    private void mockRealPhasingTransactionAtAcceptanceHeight(Transaction transaction) {
+        mockRealPhasingTransactionBasic(transaction);
         doReturn(100).when(heightConfig).getMaxArbitraryMessageLength();
+        doReturn(transaction.getTimestamp() + 5000).when(timeService).getEpochTime();
+        doReturn(1000).when(blockchainConfig).getMinPrunableLifetime();
+        when(blockchain.getBlockIdAtHeight(516746)).thenReturn(5629144656878115682L);
+        when(heightConfig.getMaxEncryptedMessageLength()).thenReturn(10_000);
+    }
+
+    private void mockRealPhasingTransactionAtFinishHeight(Transaction transaction) {
+        mockRealPhasingTransactionBasic(transaction);
+        when(phasingPollService.getPoll(transaction.getId())).thenReturn(mock(PhasingPoll.class));
+    }
+
+    private void prepareNonPhasingFullValidationWithEcCheckWithoutAppendages(long dbEcId) {
+        prepareNonPhasingFullValidationWithoutAppendages(sender);
+        when(sender.getUnconfirmedBalanceATM()).thenReturn(110L);
+        when(blockchain.getHeight()).thenReturn(2000);
+        when(tx.getECBlockId()).thenReturn(1111L);
+        when(tx.getECBlockHeight()).thenReturn(1300);
+        when(blockchain.getBlockIdAtHeight(1300)).thenReturn(dbEcId);
+    }
 
 
-        validator.verifySignature(transaction);
-        validator.validateFully(transaction);
+    private void prepareNonPhasingFullValidationWithoutAppendages(Account sender) {
+        prepareLightValidationWithoutAppendagesSuccessfulScenario();
+        when(tx.getAppendages()).thenReturn(List.of(attachment));
+        when(tx.getVersion()).thenReturn((byte) 1);
+        when(tx.getSenderPublicKey()).thenReturn(new byte[32]);
+        when(tx.getSenderId()).thenReturn(SENDER_ID);
+        doAnswer(a -> ((ByteArrayStream) a.getArgument(0)).write(Long.MAX_VALUE)).when(attachment).putBytes(any(ByteArrayStream.class));
+        when(heightConfig.getMaxPayloadLength()).thenReturn(184);
+        when(chain.getChainId()).thenReturn(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5"));
+        when(accountService.getAccount(SENDER_ID)).thenReturn(sender);
+    }
+
+
+    private void validateFullyChildAccountTx_failOnMaxPayloadExceeded(long senderParent, long recipientParent, AddressScope scope) {
+        when(sender.getAddrScope()).thenReturn(scope);
+        lenient().when(sender.getParentId()).thenReturn(senderParent);
+        lenient().when(recipient.getParentId()).thenReturn(recipientParent);
+        lenient().when(recipient.getId()).thenReturn(RECIPIENT_ID);
+        when(tx.getVersion()).thenReturn((byte) 2);
+        when(tx.getSenderPublicKey()).thenReturn(new byte[32]);
+        prepareChildAccountValidationScenario(sender, recipient);
+
+        AplUnacceptableTransactionValidationException ex =
+            assertThrows(AplUnacceptableTransactionValidationException.class, () -> validator.validateFully(tx));
+
+        assertEquals("Transaction size 112 exceeds maximum payload size", ex.getMessage());
+    }
+
+    private void prepareFeeLightValidationScenario(long senderBalance) {
+        prepareLightValidationSuccessfulScenario();
+        doReturn(new byte[32]).when(tx).referencedTransactionFullHash();
+        doReturn(SENDER_ID).when(tx).getSenderId();
+        doReturn(sender).when(accountService).getAccount(SENDER_ID);
+        doReturn(10L).when(feeCalculator).getMinimumFeeATM(tx, 0);
+        doReturn(5L).when(blockchainConfig).getUnconfirmedPoolDepositAtm();
+        doReturn(senderBalance).when(sender).getUnconfirmedBalanceATM();
+    }
+
+    private void prepareLightValidationSuccessfulScenario() {
+        prepareLightValidationWithoutAppendagesSuccessfulScenario();
+        doReturn(true).when(attachment).verifyVersion();
+        doReturn(List.of(attachment)).when(tx).getAppendages();
+    }
+
+    private void prepareLightValidationWithoutAppendagesSuccessfulScenario() {
+        prepareScenarioWithTxFields(1000, 10, 1440, 0);
+        mockAttachment();
+        doReturn(true).when(type).canHaveRecipient();
+        doReturn(false).when(type).mustHaveRecipient();
+    }
+
+    private void prepareChildAccountValidationScenario(Account sender, Account recipient) {
+        prepareLightValidationWithoutAppendagesSuccessfulScenario();
+        when(tx.getSenderId()).thenReturn(SENDER_ID);
+        when(chain.getChainId()).thenReturn(UUID.fromString("b5d7b697-f359-4ce5-a619-fa34b6fb01a5"));
+        when(sender.isChild()).thenReturn(true);
+        when(tx.getRecipientId()).thenReturn(RECIPIENT_ID);
+        when(accountService.getAccount(anyLong())).then(a -> {
+            long accountId = a.getArgument(0);
+            if (accountId == SENDER_ID) {
+                return sender;
+            } else if (accountId == RECIPIENT_ID) {
+                return recipient;
+            } else {
+                return null;
+            }
+        });
     }
 
     private void mockAttachment() {
@@ -445,7 +869,6 @@ class TransactionValidatorTest {
     }
 
     private HeightConfig mockMaxBalance() {
-        HeightConfig heightConfig = mock(HeightConfig.class);
         doReturn(300_000_000_000_000_000L).when(heightConfig).getMaxBalanceATM();
         doReturn(heightConfig).when(blockchainConfig).getCurrentConfig();
         return heightConfig;
