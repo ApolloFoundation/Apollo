@@ -35,7 +35,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyServ
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.CurrencyTransferService;
 import com.apollocurrency.aplwallet.apl.core.service.state.currency.MonetaryCurrencyMintingService;
 import com.apollocurrency.aplwallet.apl.core.service.state.exchange.ExchangeService;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuance;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyIssuanceAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystemCurrencyMinting;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.TransactionValidationHelper;
 import com.apollocurrency.aplwallet.apl.util.Constants;
@@ -196,7 +196,7 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     @Override
     public void addCurrency(LedgerEvent event, long eventId, Transaction transaction, Account senderAccount,
-                            MonetarySystemCurrencyIssuance attachment) {
+                            MonetarySystemCurrencyIssuanceAttachment attachment) {
         Currency oldCurrency;
         if ((oldCurrency = this.getCurrencyByCode(attachment.getCode())) != null) {
             this.delete(oldCurrency, event, eventId, senderAccount);
@@ -251,9 +251,6 @@ public class CurrencyServiceImpl implements CurrencyService {
     }
 
     public long getCurrentSupply(Currency currency) {
-//        if (!currency.is(RESERVABLE) && !currency.is(MINTABLE)) {
-//            return currency.getInitialSupply();
-//        }
         CurrencySupply currencySupply = this.loadCurrencySupplyByCurrency(currency);
         return currencySupply.getCurrentSupply();
     }
@@ -274,9 +271,6 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     @Override
     public CurrencySupply loadCurrencySupplyByCurrency(Currency currency) {
-//        if (!currency.is(RESERVABLE) && !currency.is(MINTABLE)) {
-//            return null;
-//        }
         CurrencySupply currencySupply = currency.getCurrencySupply();
         if (currencySupply == null) {
             currencySupply = currencySupplyTable.get(currency.getId());
@@ -354,20 +348,16 @@ public class CurrencyServiceImpl implements CurrencyService {
             if (!isActive(currency)) {
                 Stream<CurrencyFounder> founders = currencyFounderService
                     .getCurrencyFoundersStream(currency.getId(), 0, Integer.MAX_VALUE);
-                founders.forEach((founder) -> {
-                    accountService.addToBalanceAndUnconfirmedBalanceATM(
-                        accountService.getAccount(founder.getAccountId()),
-                        event, eventId, Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitATM()));
-                });
+                founders.forEach((founder) -> accountService.addToBalanceAndUnconfirmedBalanceATM(
+                    accountService.getAccount(founder.getAccountId()),
+                    event, eventId, Math.multiplyExact(currency.getReserveSupply(), founder.getAmountPerUnitATM())));
             }
             currencyFounderService.remove(currency.getId());
         }
         if (currency.is(CurrencyType.EXCHANGEABLE)) {
             Stream<CurrencyBuyOffer> buyOffers =
                 currencyExchangeOfferFacade.getCurrencyBuyOfferService().getOffersStream(currency, 0, -1);
-            buyOffers.forEach((offer) -> {
-                currencyExchangeOfferFacade.removeOffer(event, offer);
-            });
+            buyOffers.forEach((offer) -> currencyExchangeOfferFacade.removeOffer(event, offer));
         }
         if (currency.is(MINTABLE)) {
             // lazy init to break up circular dependency
@@ -397,7 +387,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     public void validate(Currency currency, Transaction transaction) throws AplException.ValidationException {
         Objects.requireNonNull(transaction);
         if (currency == null) {
-            log.trace("currency = {}, tr = {}, height = {}", currency, transaction, transaction.getHeight());
+            log.trace("currency is NULL, tr = {}, height = {}", transaction, transaction.getHeight());
             log.trace("s-trace = {}", ThreadUtils.last5Stacktrace());
             throw new AplException.NotCurrentlyValidException("Unknown currency: " + transaction.getAttachment().getJSONObject());
         }
@@ -436,7 +426,7 @@ public class CurrencyServiceImpl implements CurrencyService {
 
 
     @Override
-    public void validateCurrencyNamingStateIndependent(MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException {
+    public void validateCurrencyNamingStateIndependent(MonetarySystemCurrencyIssuanceAttachment attachment) throws AplException.ValidationException {
         String name = attachment.getName();
         String code = attachment.getCode();
         String description = attachment.getDescription();
@@ -462,7 +452,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         }
     }
     @Override
-    public void validateCurrencyNamingStateDependent(long issuerAccountId, MonetarySystemCurrencyIssuance attachment) throws AplException.ValidationException {
+    public void validateCurrencyNamingStateDependent(long issuerAccountId, MonetarySystemCurrencyIssuanceAttachment attachment) throws AplException.ValidationException {
         String name = attachment.getName();
         String code = attachment.getCode();
         String normalizedName = name.toLowerCase();
@@ -512,7 +502,7 @@ public class CurrencyServiceImpl implements CurrencyService {
                 account, event, eventId, currency.getId(), units);
             increaseSupply(currency, units);
         } else {
-            log.debug("Currency mint hash no longer meets target {}", attachment.getJSONObject().toJSONString());
+            log.info("Currency mint hash no longer meets target {}", attachment.getJSONObject().toJSONString());
         }
     }
 

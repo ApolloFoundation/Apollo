@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2018-2020 Apollo Foundation
+ *  Copyright © 2018-2021 Apollo Foundation
  */
 package com.apollocurrency.aplwallet.apl.core.transaction.types.ms;
 
@@ -19,10 +19,9 @@ import org.json.simple.JSONObject;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
-import java.util.Map;
 
 @Singleton
-public class MSExchangeBuyTransactionType extends MonetarySystemExchangeTransactionType {
+public class MSExchangeBuyTransactionType extends MSExchangeTransactionType {
     private final ExchangeRequestService exchangeRequestService;
     private final CurrencyExchangeOfferFacade currencyExchangeOfferFacade;
 
@@ -59,15 +58,11 @@ public class MSExchangeBuyTransactionType extends MonetarySystemExchangeTransact
     }
 
     @Override
-    public boolean isDuplicate(Transaction transaction, Map<TransactionTypes.TransactionTypeSpec, Map<String, Integer>> duplicates) {
-        return super.isDuplicate(transaction, duplicates);
-    }
-
-    @Override
     public boolean applyAttachmentUnconfirmed(Transaction transaction, Account senderAccount) {
         MonetarySystemExchangeBuyAttachment attachment = (MonetarySystemExchangeBuyAttachment) transaction.getAttachment();
-        if (senderAccount.getUnconfirmedBalanceATM() >= Math.multiplyExact(attachment.getUnits(), attachment.getRateATM())) {
-            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -Math.multiplyExact(attachment.getUnits(), attachment.getRateATM()));
+        long orderTotalATM = Math.multiplyExact(attachment.getUnits(), attachment.getRateATM());
+        if (senderAccount.getUnconfirmedBalanceATM() >= orderTotalATM) {
+            getAccountService().addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), -orderTotalATM);
             return true;
         }
         return false;

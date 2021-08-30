@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
@@ -29,7 +29,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.order.impl.BidOrderSe
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderCancellation;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.json.simple.JSONStreamAware;
 
@@ -41,13 +41,13 @@ import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.UNKNOWN_O
 
 @Vetoed
 public final class CancelBidOrder extends CreateTransactionHandler {
-    private OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService;
+    private OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService;
 
     public CancelBidOrder() {
         super(new APITag[]{APITag.AE, APITag.CREATE_TRANSACTION}, "order");
     }
 
-    private OrderService<BidOrder, ColoredCoinsBidOrderPlacement> lookupBidOrderService() {
+    private OrderService<BidOrder, CCBidOrderPlacementAttachment> lookupBidOrderService() {
         if (bidOrderService == null) {
             this.bidOrderService = CDI.current().select(
                     BidOrderServiceImpl.class,

@@ -22,7 +22,7 @@ import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-public class MSCurrencyBurningTransactionType extends MonetarySystemTransactionType {
+public class MSCurrencyBurningTransactionType extends MSTransactionType {
     private final AccountCurrencyService accountCurrencyService;
     @Inject
     public MSCurrencyBurningTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService, AccountCurrencyService accountCurrencyService) {

@@ -18,7 +18,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.order.OrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderService;
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,7 +34,7 @@ public class OrderMatchServiceImpl implements OrderMatchService {
     private final AccountService accountService;
     private final AccountAssetService accountAssetService;
     private final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderAskService;
-    private final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> orderBidService;
+    private final OrderService<BidOrder, CCBidOrderPlacementAttachment> orderBidService;
     private final TradeService tradeService;
 
     @Inject
@@ -42,7 +42,7 @@ public class OrderMatchServiceImpl implements OrderMatchService {
         final AccountService accountService,
         final AccountAssetService accountAssetService,
         @AskOrderService final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> orderAskService,
-        @BidOrderService final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> orderBidService,
+        @BidOrderService final OrderService<BidOrder, CCBidOrderPlacementAttachment> orderBidService,
         final TradeService tradeService
     ) {
         this.accountService = accountService;
@@ -97,7 +97,7 @@ public class OrderMatchServiceImpl implements OrderMatchService {
     }
 
     @Override
-    public void addBidOrder(Transaction transaction, ColoredCoinsBidOrderPlacement attachment) {
+    public void addBidOrder(Transaction transaction, CCBidOrderPlacementAttachment attachment) {
         orderBidService.addOrder(transaction, attachment);
         matchOrders(attachment.getAssetId());
     }
