@@ -6,7 +6,7 @@ package com.apollocurrency.aplwallet.apl.core.entity.state.order;
 
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import lombok.ToString;
 
 import java.sql.ResultSet;

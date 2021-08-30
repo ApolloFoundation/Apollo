@@ -47,7 +47,7 @@ public final class PlaceBidOrder extends CreateTransactionHandler {
         long quantityATU = HttpParameterParserUtil.getQuantityATU(req);
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
-        Attachment attachment = new CCBidOrderPlacement(asset.getId(), quantityATU, priceATM);
+        Attachment attachment = new CCBidOrderPlacementAttachment(asset.getId(), quantityATU, priceATM);
         return createTransaction(req, account, attachment);
     }
 }
