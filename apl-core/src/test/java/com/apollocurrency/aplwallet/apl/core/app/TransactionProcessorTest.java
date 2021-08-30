@@ -4,9 +4,9 @@
 
 package com.apollocurrency.aplwallet.apl.core.app;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
-import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
@@ -148,7 +148,7 @@ class TransactionProcessorTest {
         UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, expirationTimestamp, 10, 176);
         doReturn(unconfirmedTransaction).when(unconfirmedTransactionCreator).from(eq(transaction), anyLong());
         doReturn(true).when(transactionValidator).verifySignature(transaction);
-        doReturn(true).when(processingService).addNewUnconfirmedTransaction(any(UnconfirmedTransaction.class));
+//        doReturn(true).when(processingService).addNewUnconfirmedTransaction(any(UnconfirmedTransaction.class));
         doReturn(false).when(blockchain).hasTransaction(-9128485677221760321L);
         doReturn(BLOCK_5_HEIGHT).when(blockchain).getHeight();
         doReturn(Long.valueOf(BLOCK_5_HEIGHT - 1)).when(blockchainConfig).getLastKnownBlock();
@@ -164,8 +164,7 @@ class TransactionProcessorTest {
 
         //THEN
         verify(blockchain, times(1)).hasTransaction(anyLong());
-        verify(transactionValidator).validateLightly(any(Transaction.class));
-        verify(transactionValidator).validateSignatureWithTxFee(any(Transaction.class));
+        verify(transactionValidator).validateFully(any(Transaction.class));
     }
 
     @Test
@@ -178,7 +177,7 @@ class TransactionProcessorTest {
         doReturn(UnconfirmedTxValidationResult.OK_RESULT)
             .when(processingService)
             .validateBeforeProcessing(any(UnconfirmedTransaction.class));
-        doReturn(true).when(processingService).addNewUnconfirmedTransaction(any(UnconfirmedTransaction.class));
+//        doReturn(true).when(processingService).addNewUnconfirmedTransaction(any(UnconfirmedTransaction.class));
         UnconfirmedTransaction unconfirmedTransaction = new UnconfirmedTransaction(transaction, expirationTimestamp, 10, 176);
         doReturn(unconfirmedTransaction).when(unconfirmedTransactionCreator).from(eq(transaction), anyLong());
         doReturn(BLOCK_5_HEIGHT).when(blockchain).getHeight();
@@ -187,12 +186,12 @@ class TransactionProcessorTest {
         doReturn(dataSource).when(databaseManager).getDataSource();
         doReturn(mock(Event.class)).when(listEvent).select(any());
         doReturn(mock(TransactionalDataSource.StartedConnection.class)).when(dataSource).beginTransactionIfNotStarted();
+        doReturn(true).when(memPool).canAccept(1);
         //WHEN
         service.processPeerTransactions(List.of(transaction));
 
         //THEN
-        verify(transactionValidator).validateLightly(transaction);
-        verify(transactionValidator).validateSignatureWithTxFeeLessStrict(transaction);
+        verify(transactionValidator).validateSufficiently(transaction);
         verify(memPool).addPendingProcessing(unconfirmedTransaction);
     }
 

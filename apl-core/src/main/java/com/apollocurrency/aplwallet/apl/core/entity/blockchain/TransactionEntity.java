@@ -47,6 +47,7 @@ public class TransactionEntity {
     private boolean hasPrunableMessage;
     private boolean hasPrunableEencryptedMessage;
     private boolean hasPrunableAttachment;
+    private String errorMessage;
 
     /* Serialized attachment and all appendages */
     private byte[] attachmentBytes;

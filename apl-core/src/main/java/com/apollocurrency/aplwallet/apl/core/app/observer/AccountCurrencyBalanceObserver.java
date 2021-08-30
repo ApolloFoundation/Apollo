@@ -13,7 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEvent;
 import com.apollocurrency.aplwallet.apl.core.app.observer.events.AccountEventType;
 import com.apollocurrency.aplwallet.apl.core.entity.appdata.funding.MonitoredAccount;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
-import com.apollocurrency.aplwallet.apl.core.monetary.HoldingType;
+import com.apollocurrency.aplwallet.apl.core.model.HoldingType;
 import com.apollocurrency.aplwallet.apl.core.service.appdata.funding.FundingMonitorService;
 import lombok.extern.slf4j.Slf4j;
 

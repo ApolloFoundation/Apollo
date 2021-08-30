@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.transaction;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.WrappedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.WrappedTransaction;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

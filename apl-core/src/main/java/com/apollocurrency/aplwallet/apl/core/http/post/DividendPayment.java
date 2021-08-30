@@ -54,11 +54,6 @@ public class DividendPayment extends CreateTransactionHandler {
             return JSONResponses.ASSET_NOT_ISSUED_YET;
         }
         final Attachment attachment = new CCDividendPaymentAttachment(asset.getId(), height, amountATMPerATU);
-        try {
-            return this.createTransaction(request, account, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return JSONResponses.NOT_ENOUGH_APL;
-        }
+        return this.createTransaction(request, account, attachment);
     }
-
 }

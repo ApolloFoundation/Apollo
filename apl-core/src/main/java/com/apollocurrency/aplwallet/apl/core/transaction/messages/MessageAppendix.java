@@ -1,19 +1,21 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+@EqualsAndHashCode(callSuper = true)
 public class MessageAppendix extends AbstractAppendix {
 
     static final String appendixName = "Message";
@@ -101,12 +103,12 @@ public class MessageAppendix extends AbstractAppendix {
     }
 
     @Override
-    public void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
+    public void performStateDependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
         throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
     }
 
     @Override
-    public void performLightweightValidation(Transaction transaction, int blockcHeight) throws AplException.ValidationException {
+    public void performStateIndependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException {
         throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
     }
 

@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.peer.parser;
 
-import com.apollocurrency.aplwallet.api.p2p.respons.GetUnconfirmedTransactionsResponse;
+import com.apollocurrency.aplwallet.api.p2p.response.GetUnconfirmedTransactionsResponse;
 import com.apollocurrency.aplwallet.apl.util.JSON;
 import org.json.simple.JSONObject;
 

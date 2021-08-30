@@ -15,12 +15,12 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.util.io.WriteBuffer;
@@ -59,12 +59,13 @@ public interface Appendix {
 
     void validateAtFinish(Transaction transaction, int blockHeight) throws AplException.ValidationException;
 
-    void performFullValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException;
+    void performStateDependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException;
 
-    void performLightweightValidation(Transaction transaction, int blockcHeight) throws AplException.ValidationException;
+    void performStateIndependentValidation(Transaction transaction, int blockHeight) throws AplException.ValidationException;
 
     default String getAppendixName() {
         return null;
     }
 
+    void undo(Transaction transaction, Account senderAccount, Account recipientAccount);
 }

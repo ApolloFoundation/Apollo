@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.http.post;
@@ -24,7 +24,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSGoods;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
-import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
 import com.apollocurrency.aplwallet.apl.core.service.state.DGSService;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.Attachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DigitalGoodsPurchaseAttachment;
@@ -87,14 +86,8 @@ public final class DGSPurchase extends CreateTransactionHandler {
         Account buyerAccount = HttpParameterParserUtil.getSenderAccount(req);
         Account sellerAccount = lookupAccountService().getAccount(goods.getSellerId());
 
-        Attachment attachment = new DigitalGoodsPurchaseAttachment(goods.getId(), quantity, priceATM,
-            deliveryDeadline);
-        try {
-            return createTransaction(req, buyerAccount, sellerAccount.getId(), 0, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return JSONResponses.NOT_ENOUGH_APL;
-        }
-
+        Attachment attachment = new DigitalGoodsPurchaseAttachment(goods.getId(), quantity, priceATM, deliveryDeadline);
+        return createTransaction(req, buyerAccount, sellerAccount.getId(), 0, attachment);
     }
 
 }

@@ -29,7 +29,7 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
     public void insert(T entity) {
         synchronized (lock) {
             super.insert(entity);
-            log.info("{} PUT dbKey: {}, height: {}, entity: {}", tableLogHeader(), entity.getDbKey(), entity.getHeight(), entity);
+            log.debug("{} PUT dbKey: {}, height: {}, entity: {}", tableLogHeader(), entity.getDbKey(), entity.getHeight(), entity);
             cache.put(entity.getDbKey(), (T) entity.deepCopy());
         }
     }
@@ -61,7 +61,7 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
             });
         }
         if (!removedEntities.isEmpty()) {
-            log.info("{} ROLLBACK height: {}, from the cache: {}, from the db: {}, removed cache entities: {}", tableLogHeader(), height
+            log.debug("{} ROLLBACK height: {}, from the cache: {}, from the db: {}, removed cache entities: {}", tableLogHeader(), height
                 , removedEntities.size(), rc, removedEntities);
         }
         return rc;
@@ -72,7 +72,7 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
         synchronized (lock) {
             boolean rc = super.deleteAtHeight(t, height);
             if (rc) {
-                log.info("{} DELETE  dbKey={} height={} entity {}", tableLogHeader(), t.getDbKey(), t.getHeight(), t);
+                log.debug("{} DELETE  dbKey={} height={} entity {}", tableLogHeader(), t.getDbKey(), t.getHeight(), t);
                 cache.invalidate(t.getDbKey());
             }
             return rc;
@@ -83,7 +83,7 @@ public class CachedTable<T extends DerivedEntity> extends DbTableWrapper<T> {
     public void truncate() {
         synchronized (lock) {
             super.truncate();
-            log.info("{} CLEAR ALL", tableLogHeader());
+            log.debug("{} CLEAR ALL", tableLogHeader());
             cache.invalidateAll();
         }
     }

@@ -4,6 +4,7 @@
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
+import lombok.ToString;
 import org.json.simple.JSONObject;
 
 import java.nio.ByteBuffer;
@@ -11,6 +12,7 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
+@ToString(callSuper = true)
 public final class ShufflingVerificationAttachment extends AbstractShufflingAttachment {
 
     public ShufflingVerificationAttachment(ByteBuffer buffer) {
