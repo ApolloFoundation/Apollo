@@ -21,7 +21,6 @@
 package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffler;
-import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.exception.ShufflerException;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.AbstractAPIRequestHandler;
@@ -73,13 +72,6 @@ public final class StartShuffler extends AbstractAPIRequestHandler {
             response.put("errorDescription", e.getMessage());
             return JSON.prepare(response);
         } catch (ShufflerException e) {
-            if (e.getCause() instanceof AplException.InsufficientBalanceException) {
-                Shuffling shuffling = shufflingService.getShuffling(shufflingFullHash);
-                if (shuffling == null) {
-                    return JSONResponses.NOT_ENOUGH_APL;
-                }
-                return JSONResponses.notEnoughHolding(shuffling.getHoldingType());
-            }
             JSONObject response = new JSONObject();
             response.put("errorCode", 10);
             response.put("errorDescription", e.getMessage());

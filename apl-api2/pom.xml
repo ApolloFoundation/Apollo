@@ -137,7 +137,7 @@
               <supportingFilesToGenerate>ApiException.java,NotFoundException.java</supportingFilesToGenerate>
 <!--              IMPORTANT! NO SPACES ALLOWED BETWEEN modelsToGenerate values-->
               <modelsToGenerate>
-                AccountInfo,AccountInfoResp,AccountReq,AccountReqTest,AccountReqSendMoney,BlockchainInfo,BlockInfo,BlockchainState,CountResponse,CreateChildAccountResp,EmptyResponse,HealthResponse,ListResponse,QueryCountResult,QueryObject,QueryResult,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,TxReceipt,TxRequest,CurrencyBurningTxCreationRequest,TransactionCreationRequest,TransactionCreationResponse,UnconfirmedTransactionInfo,CurrencyBurningTxParams
+                AccountInfo,AccountInfoResp,AccountReq,AccountReqTest,AccountReqSendMoney,BlockchainInfo,BlockInfo,BlockchainState,CountResponse,CreateChildAccountResp,EmptyResponse,HealthResponse,ListResponse,QueryCountResult,QueryObject,QueryResult,TransactionInfo,TransactionInfoArrayResp,TransactionInfoResp,TxReceipt,TxRequest,CurrencyBurningTxCreationRequest,TransactionCreationRequest,TransactionCreationResponse,UnconfirmedTransactionInfo,CurrencyBurningTxParams,TransactionVerificationResponse,LastTransactionVerificationResponse,TransactionVerification
               </modelsToGenerate>
               <configHelp>false</configHelp>
               <configOptions>

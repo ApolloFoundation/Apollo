@@ -4,8 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.http;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Block;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Block;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountAsset;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountCurrency;
@@ -80,7 +80,7 @@ public class BlockEventSourceProcessor implements Runnable {
         List<Transaction> list = blockchain.getTransactions(accountId,
             0, (byte) -1, (byte) -1, 0, false,
             false, false, 0, 9, false,
-            false, false);
+            false, false, false, false);
         for (Transaction transaction : list) {
             transactionsArray.add(JSONData.transaction(false, transaction));
         }

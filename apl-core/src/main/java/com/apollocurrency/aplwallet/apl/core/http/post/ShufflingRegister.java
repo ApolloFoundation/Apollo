@@ -22,7 +22,6 @@ package com.apollocurrency.aplwallet.apl.core.http.post;
 
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.AccountControlType;
-import com.apollocurrency.aplwallet.apl.core.entity.state.shuffling.Shuffling;
 import com.apollocurrency.aplwallet.apl.core.http.APITag;
 import com.apollocurrency.aplwallet.apl.core.http.HttpParameterParserUtil;
 import com.apollocurrency.aplwallet.apl.core.http.JSONResponses;
@@ -51,15 +50,7 @@ public final class ShufflingRegister extends CreateTransactionHandler {
         if (account.getControls().contains(AccountControlType.PHASING_ONLY)) {
             return JSONResponses.error("Accounts under phasing only control cannot join a shuffling");
         }
-        try {
-            return createTransaction(req, account, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            Shuffling shuffling = shufflingService.getShuffling(shufflingFullHash);
-            if (shuffling == null) {
-                return JSONResponses.NOT_ENOUGH_APL;
-            }
-            return JSONResponses.notEnoughHolding(shuffling.getHoldingType());
-        }
+        return createTransaction(req, account, attachment);
     }
 
 }

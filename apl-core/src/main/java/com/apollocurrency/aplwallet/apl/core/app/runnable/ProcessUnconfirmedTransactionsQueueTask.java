@@ -4,16 +4,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.app.runnable;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.UnconfirmedTransaction;
-import com.apollocurrency.aplwallet.apl.core.blockchain.WrappedTransaction;
-import com.apollocurrency.aplwallet.apl.util.db.DbTransactionHelper;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionValidationException;
+import com.apollocurrency.aplwallet.apl.core.model.UnconfirmedTransaction;
+import com.apollocurrency.aplwallet.apl.core.model.WrappedTransaction;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.MemPool;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTransactionProcessingService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.UnconfirmedTxValidationResult;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionValidator;
 import com.apollocurrency.aplwallet.apl.util.BatchSizeCalculator;
-import com.apollocurrency.aplwallet.apl.util.exception.AplException;
+import com.apollocurrency.aplwallet.apl.util.db.DbTransactionHelper;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -78,16 +78,15 @@ public class ProcessUnconfirmedTransactionsQueueTask implements Runnable {
             UnconfirmedTxValidationResult validationResult = processingService.validateBeforeProcessing(transaction);
             if (validationResult.isOk()) {
                 try {
-                    validator.validateSignatureWithTxFeeLessStrict(transaction);
-                    validator.validateLightly(transaction);
+                    validator.validateSufficiently(transaction);
                     boolean added = memPool.addProcessed(transaction);
                     if (!added) {
                         log.warn("Unable to add new unconfirmed transaction {}, mempool is full", transaction.getId());
                     } else {
                         addedTxs.add(transaction);
                     }
-                } catch (AplException.ValidationException e) {
-                    log.trace("Invalid transaction {}, reason {}", transaction.getId(), e.getMessage());
+                } catch (AplTransactionValidationException e) {
+                    log.debug("Invalid transaction {}, during processing, reason {}", transaction.getId(), e.getMessage());
                 }
             }
         }

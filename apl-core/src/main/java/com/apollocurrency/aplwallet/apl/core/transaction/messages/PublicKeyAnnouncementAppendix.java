@@ -1,10 +1,10 @@
 /*
- * Copyright © 2018-2019 Apollo Foundation
+ * Copyright © 2018-2021 Apollo Foundation
  */
 
 package com.apollocurrency.aplwallet.apl.core.transaction.messages;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import org.json.simple.JSONObject;
@@ -59,12 +59,12 @@ public class PublicKeyAnnouncementAppendix extends AbstractAppendix {
     }
 
     @Override
-    public void performFullValidation(Transaction transaction, int blockHeight) {
+    public void performStateDependentValidation(Transaction transaction, int blockHeight) {
         throw new UnsupportedOperationException("Validation is not supported, use separate class");
     }
 
     @Override
-    public void performLightweightValidation(Transaction transaction, int blockcHeight) {
+    public void performStateIndependentValidation(Transaction transaction, int blockHeight) {
         throw new UnsupportedOperationException("Validation for message appendix is not supported, use separate class");
     }
 

@@ -4,7 +4,6 @@
 
 package com.apollocurrency.aplwallet.apl.core.model;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

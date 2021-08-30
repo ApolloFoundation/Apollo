@@ -8,7 +8,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.account.PublicKey;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.PublicKeyDao;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.TwoTablesPublicKeyDao;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

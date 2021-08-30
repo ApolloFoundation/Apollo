@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.prunable;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.config.NtpTimeConfig;
 import com.apollocurrency.aplwallet.apl.core.dao.DbContainerBaseTest;
@@ -19,9 +19,9 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl
 import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountPublicKeyService;
-import com.apollocurrency.aplwallet.apl.core.service.state.account.TwoTablesPublicKeyDao;
+import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.TwoTablesPublicKeyDao;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.impl.AccountPublicKeyServiceImpl;
-import com.apollocurrency.aplwallet.apl.core.service.state.impl.BlockChainInfoServiceImpl;
+import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableEncryptedMessageAppendix;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunablePlainMessageAppendix;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;

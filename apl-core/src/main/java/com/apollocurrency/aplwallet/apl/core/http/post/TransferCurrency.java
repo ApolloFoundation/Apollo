@@ -32,8 +32,6 @@ import org.json.simple.JSONStreamAware;
 import javax.enterprise.inject.Vetoed;
 import javax.servlet.http.HttpServletRequest;
 
-import static com.apollocurrency.aplwallet.apl.core.http.JSONResponses.NOT_ENOUGH_CURRENCY;
-
 @Vetoed
 public final class TransferCurrency extends CreateTransactionHandler {
 
@@ -51,11 +49,6 @@ public final class TransferCurrency extends CreateTransactionHandler {
         Account account = HttpParameterParserUtil.getSenderAccount(req);
 
         Attachment attachment = new MonetarySystemCurrencyTransfer(currency.getId(), units);
-        try {
-            return createTransaction(req, account, recipient, 0, attachment);
-        } catch (AplException.InsufficientBalanceException e) {
-            return NOT_ENOUGH_CURRENCY;
-        }
+        return createTransaction(req, account, recipient, 0, attachment);
     }
-
 }

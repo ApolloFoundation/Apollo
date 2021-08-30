@@ -4,13 +4,13 @@
 
 package com.apollocurrency.aplwallet.apl.core.converter.db;
 
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
+import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.rest.service.PhasingAppendixFactory;
 import com.apollocurrency.aplwallet.apl.core.signature.Signature;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureParser;
 import com.apollocurrency.aplwallet.apl.core.signature.SignatureToolFactory;
-import com.apollocurrency.aplwallet.apl.core.blockchain.TransactionBuilderFactory;
+import com.apollocurrency.aplwallet.apl.core.service.blockchain.TransactionBuilderFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.UnsupportedTransactionVersion;
@@ -70,7 +70,8 @@ public class TransactionEntityToModelConverter implements Converter<TransactionE
                 .ecBlockHeight(entity.getEcBlockHeight())
                 .ecBlockId(entity.getEcBlockId())
                 .index(entity.getIndex())
-                .recipientId(entity.getRecipientId());
+                .recipientId(entity.getRecipientId())
+                .errorMessage(entity.getErrorMessage());
 
             if (entity.isHasMessage()) {
                 builder.appendix(new MessageAppendix(buffer));

@@ -16,18 +16,21 @@ public class FeaturesHeightRequirement {
     private Integer dexReopenPendingOrdersHeight;
     private Integer dexExpiredContractWithFinishedPhasingHeightAndStep3;
     private Integer transactionV2Height;
+    private Integer failedTransactionsAcceptanceHeight;
 
     @JsonCreator
     public FeaturesHeightRequirement(@JsonProperty("dexReopenPendingOrdersHeight") Integer dexReopenPendingOrdersHeight,
                                      @JsonProperty("dexExpiredContractWithFinishedPhasingHeightAndStep3") Integer dexExpiredContractWithFinishedPhasingHeightAndStep3,
-                                     @JsonProperty("transactionV2Height") Integer transactionV2Height
+                                     @JsonProperty("transactionV2Height") Integer transactionV2Height,
+                                     @JsonProperty("failedTransactionsAcceptanceHeight") Integer failedTransactionsAcceptanceHeight
     ) {
         this.dexReopenPendingOrdersHeight = dexReopenPendingOrdersHeight;
         this.dexExpiredContractWithFinishedPhasingHeightAndStep3 = dexExpiredContractWithFinishedPhasingHeightAndStep3;
         this.transactionV2Height = transactionV2Height;
+        this.failedTransactionsAcceptanceHeight = failedTransactionsAcceptanceHeight;
     }
 
     public FeaturesHeightRequirement copy() {
-        return new FeaturesHeightRequirement(dexReopenPendingOrdersHeight, dexExpiredContractWithFinishedPhasingHeightAndStep3, transactionV2Height);
+        return new FeaturesHeightRequirement(dexReopenPendingOrdersHeight, dexExpiredContractWithFinishedPhasingHeightAndStep3, transactionV2Height, failedTransactionsAcceptanceHeight);
     }
 }

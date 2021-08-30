@@ -5,21 +5,22 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.phasing;
 
 import com.apollocurrency.aplwallet.apl.core.app.VoteWeighting;
-import com.apollocurrency.aplwallet.apl.core.blockchain.Transaction;
-import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionRowMapper;
+import com.apollocurrency.aplwallet.apl.core.converter.db.TransactionEntityRowMapper;
 import com.apollocurrency.aplwallet.apl.core.converter.db.phasing.PhasingPollMapper;
-import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import com.apollocurrency.aplwallet.apl.core.dao.JdbcQueryExecutionHelper;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
-import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
-import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPoll;
 import com.apollocurrency.aplwallet.apl.core.model.TransactionDbInfo;
-import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
+import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
+import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
+import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
@@ -46,15 +47,15 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
     };
 
     private final PhasingPollMapper MAPPER = new PhasingPollMapper(KEY_FACTORY);
-    private final TransactionRowMapper transactionRowMapper;
+    private final JdbcQueryExecutionHelper<TransactionEntity> txQueryExecutionHelper;
 
     @Inject
     public PhasingPollTable(DatabaseManager databaseManager,
-                            TransactionRowMapper transactionRowMapper,
+                            TransactionEntityRowMapper transactionRowMapper,
                             Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super("phasing_poll", KEY_FACTORY, false, null,
                 databaseManager, deleteOnTrimDataEvent);
-        this.transactionRowMapper = transactionRowMapper;
+        this.txQueryExecutionHelper = new JdbcQueryExecutionHelper<>(databaseManager.getDataSource(), (rs) -> transactionRowMapper.map(rs, null));
     }
 
 
@@ -92,42 +93,25 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
-    public List<Transaction> getFinishingTransactions(int height) {
-        List<Transaction> transactions = new ArrayList<>();
-        try (Connection con = getDatabaseManager().getDataSource().getConnection();
+    public List<TransactionEntity> getFinishingTransactions(int height) {
+        return txQueryExecutionHelper.executeListQuery((con) -> {
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
                 "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = ? " +
-                "ORDER BY transaction.height, transaction.transaction_index"); ) {// ASC, not DESC
+                "ORDER BY transaction.height, transaction.transaction_index");
             pstmt.setInt(1, height);
-            transactions.addAll(fetchTransactions(pstmt));
-            return transactions;
-        } catch (SQLException e) {
-            log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
+            return pstmt;
+        });
     }
 
-    List<Transaction> fetchTransactions(PreparedStatement pstm) throws SQLException {
-        List<Transaction> transactions = new ArrayList<>();
-        try (ResultSet rs = pstm.executeQuery()) {
-            while (rs.next()) {
-                transactions.add(transactionRowMapper.map(rs, null));
-            }
-        }
-        return transactions;
-    }
-
-    public List<Transaction> getFinishingTransactionsByTime(int startTime, int finishTime) {
-        try (Connection con = getDatabaseManager().getDataSource().getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
-                 "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = -1 AND phasing_poll.finish_time > ? AND phasing_poll.finish_time <= ? " +
-                 "ORDER BY transaction.height, transaction.transaction_index")) { // ASC, not DESC
+    public List<TransactionEntity> getFinishingTransactionsByTime(int startTime, int finishTime) {
+        return txQueryExecutionHelper.executeListQuery((con) -> {
+            PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
+                "WHERE phasing_poll.id = transaction.id AND phasing_poll.finish_height = -1 AND phasing_poll.finish_time > ? AND phasing_poll.finish_time <= ? " +
+                "ORDER BY transaction.height, transaction.transaction_index");
             pstmt.setInt(1, startTime);
             pstmt.setInt(2, finishTime);
-            return fetchTransactions(pstmt);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+            return pstmt;
+        });
     }
 
 
@@ -149,10 +133,9 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
         }
     }
 
-    public List<Transaction> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
-                                                                long accountId, boolean withoutWhitelist, int from, int to, int height) throws SQLException {
-
-        try (Connection con = getDatabaseManager().getDataSource().getConnection();
+    public List<TransactionEntity> getHoldingPhasedTransactions(long holdingId, VoteWeighting.VotingModel votingModel,
+                                                                long accountId, boolean withoutWhitelist, int from, int to, int height) {
+        return txQueryExecutionHelper.executeListQuery((con) -> {
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* " +
                 "FROM transaction, phasing_poll " +
                 "WHERE phasing_poll.holding_id = ? " +
@@ -162,7 +145,7 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
                 (accountId != 0 ? "AND phasing_poll.account_id = ? " : "") +
                 (withoutWhitelist ? "AND phasing_poll.whitelist_size = 0 " : "") +
                 "ORDER BY transaction.height DESC, transaction.transaction_index DESC " +
-                DbUtils.limitsClause(from, to))) {
+                DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setLong(++i, holdingId);
             pstmt.setByte(++i, votingModel.getCode());
@@ -171,27 +154,25 @@ public class PhasingPollTable extends EntityDbTable<PhasingPoll> {
                 pstmt.setLong(++i, accountId);
             }
             DbUtils.setLimits(++i, pstmt, from, to);
-
-            return fetchTransactions(pstmt);
-        }
+            return pstmt;
+        });
     }
 
-    public List<Transaction> getAccountPhasedTransactions(long accountId, int from, int to, int height) throws SQLException {
-        try (Connection con = getDatabaseManager().getDataSource().getConnection();
+    public List<TransactionEntity> getAccountPhasedTransactions(long accountId, int from, int to, int height) {
+        return txQueryExecutionHelper.executeListQuery((con) -> {
             PreparedStatement pstmt = con.prepareStatement("SELECT transaction.* FROM transaction, phasing_poll " +
                 " LEFT JOIN phasing_poll_result ON phasing_poll.id = phasing_poll_result.id " +
                 " WHERE phasing_poll.id = transaction.id AND (transaction.sender_id = ? OR transaction.recipient_id = ?) " +
                 " AND phasing_poll_result.id IS NULL " +
                 " AND phasing_poll.finish_height > ? ORDER BY transaction.height DESC, transaction.transaction_index DESC " +
-                DbUtils.limitsClause(from, to))) {
+                DbUtils.limitsClause(from, to));
             int i = 0;
             pstmt.setLong(++i, accountId);
             pstmt.setLong(++i, accountId);
             pstmt.setInt(++i, height);
             DbUtils.setLimits(++i, pstmt, from, to);
-
-            return fetchTransactions(pstmt);
-        }
+            return pstmt;
+        });
     }
 
     public int getAccountPhasedTransactionCount(long accountId, int height) throws SQLException {
