@@ -159,4 +159,9 @@ public class DGSGoods extends VersionedDerivedEntity {
             ", height=" + getHeight() +
             '}';
     }
+
+    @Override
+    public boolean isSearchable() {
+        return true;
+    }
 }

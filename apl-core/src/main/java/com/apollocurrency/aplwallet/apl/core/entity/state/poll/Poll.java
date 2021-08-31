@@ -76,4 +76,9 @@ public final class Poll extends AbstractPoll {
         this.maxRangeValue = rs.getByte("max_range_value");
         this.timestamp = rs.getInt("timestamp");
     }
+
+    @Override
+    public boolean isSearchable() {
+        return true;
+    }
 }

@@ -5,6 +5,7 @@
 package com.apollocurrency.aplwallet.apl.core.entity.state.derived;
 
 
+import com.apollocurrency.aplwallet.apl.core.dao.state.derived.Searchable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import lombok.ToString;
 
@@ -13,7 +14,7 @@ import java.sql.SQLException;
 import java.util.Objects;
 
 @ToString
-public abstract class DerivedEntity implements Comparable<DerivedEntity>, Cloneable {
+public abstract class DerivedEntity implements Comparable<DerivedEntity>, Cloneable, Searchable {
     protected static final int DEFAULT_HEIGHT = -1;
     private static final long DEFAULT_DB_ID = 0L;
     private volatile DbKey dbKey;

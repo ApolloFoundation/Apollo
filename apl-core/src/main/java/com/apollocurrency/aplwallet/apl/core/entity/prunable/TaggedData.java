@@ -196,4 +196,9 @@ public class TaggedData extends VersionedDerivedEntity {
         sb.append('}');
         return sb.toString();
     }
+
+    @Override
+    public boolean isSearchable() {
+        return true;
+    }
 }

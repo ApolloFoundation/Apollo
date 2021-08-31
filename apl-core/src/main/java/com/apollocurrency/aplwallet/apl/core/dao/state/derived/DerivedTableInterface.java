@@ -16,7 +16,7 @@ import java.sql.SQLException;
  *
  * @author yuriy.larin
  */
-public interface DerivedTableInterface<T extends DerivedEntity> {
+public interface DerivedTableInterface<T extends DerivedEntity> extends Searchable {
 
     /**
      * Remove all records from the derived table above the height.

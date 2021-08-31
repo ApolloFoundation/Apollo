@@ -147,4 +147,9 @@ public class Currency extends VersionedDeletableEntity {
             ", height=" + getHeight() +
             '}';
     }
+
+    @Override
+    public boolean isSearchable() {
+        return true;
+    }
 }

@@ -38,4 +38,9 @@ public final class AccountInfo extends VersionedDeletableEntity {
         this.description = rs.getString("description");
         setDbKey(dbKey);
     }
+
+    @Override
+    public boolean isSearchable() {
+        return true;
+    }
 }
