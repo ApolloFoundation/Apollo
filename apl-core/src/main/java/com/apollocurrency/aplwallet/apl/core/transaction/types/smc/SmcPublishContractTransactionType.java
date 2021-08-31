@@ -13,9 +13,9 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactio
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxProcessor;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.PublishContractTxValidator;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;

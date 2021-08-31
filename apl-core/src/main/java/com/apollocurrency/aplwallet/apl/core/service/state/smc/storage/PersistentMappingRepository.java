@@ -46,6 +46,6 @@ public class PersistentMappingRepository<V> extends ContractMappingRepository<V>
 
     @Override
     public String getJavaTypeName() {
-        return "Mapping<" + getJsonConverter().from().getSimpleName() + ">";
+        return "Mapping<" + getJsonConverter().type().getSimpleName() + ">";
     }
 }
