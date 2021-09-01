@@ -34,12 +34,14 @@ public abstract class MSExchangeTransactionType extends MSTransactionType {
         if (attachment.getRateATM() <= 0 || attachment.getUnits() == 0) {
             throw new AplException.NotValidException("Invalid exchange: " + attachment.getJSONObject());
         }
-        long orderTotalATM = Convert2.safeMultiply(attachment.getRateATM(), attachment.getUnits(), transaction);
-        long maxBalanceATM = getBlockchainConfig().getCurrentConfig().getMaxBalanceATM();
-        if (orderTotalATM > maxBalanceATM) {
-            throw new AplException.NotValidException("Currency order total in ATMs: " + orderTotalATM + " is higher than max allowed: "
-                + maxBalanceATM +  ", currency=" + Long.toUnsignedString(attachment.getCurrencyId())  + ", quantity="
-                + attachment.getUnits() + ", price=" + attachment.getRateATM());
+        if (!getBlockchainConfig().isCurrencySellTx(transaction.getId())) {
+            long orderTotalATM = Convert2.safeMultiply(attachment.getRateATM(), attachment.getUnits(), transaction);
+            long maxBalanceATM = getBlockchainConfig().getCurrentConfig().getMaxBalanceATM();
+            if (orderTotalATM > maxBalanceATM) {
+                throw new AplException.NotValidException("Currency order total in ATMs: " + orderTotalATM + " is higher than max allowed: "
+                    + maxBalanceATM + ", currency=" + Long.toUnsignedString(attachment.getCurrencyId()) + ", quantity="
+                    + attachment.getUnits() + ", price=" + attachment.getRateATM());
+            }
         }
     }
 

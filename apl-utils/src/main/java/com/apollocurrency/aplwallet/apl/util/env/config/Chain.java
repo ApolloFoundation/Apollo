@@ -5,6 +5,8 @@
 package com.apollocurrency.aplwallet.apl.util.env.config;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -18,11 +20,12 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@EqualsAndHashCode
+@ToString
 @JsonPropertyOrder({"chainId", "active", "defaultPeers", "wellKnownPeers", "blacklistedPeers", "name", "description", "symbol",
     "prefix", "project", "initialSupply", "decimals", "featuresHeightRequirement","currencyIssuanceHeights", "blockchainProperties"})
 public class Chain {
@@ -41,6 +44,7 @@ public class Chain {
     private long oneAPL;
     private FeaturesHeightRequirement featuresHeightRequirement;
     private Set<Integer> currencyIssuanceHeights;
+    private Set<String> currencySellTxs;
     private Map<Integer, BlockchainProperties> blockchainProperties;
 
     @JsonCreator
@@ -57,26 +61,30 @@ public class Chain {
     ) {
         this(chainId, false, Collections.emptyList(), wellKnownPeers, Collections.emptyList(),
             name, description, symbol, prefix, project, initialSupply, decimals,
-             blockchainProperties, null, null);
+             blockchainProperties, null, null, null);
     }
 
     /**
      * All fields Constructor.
      *
-     * @param chainId
-     * @param active
-     * @param defaultPeers
-     * @param wellKnownPeers
-     * @param blacklistedPeers
-     * @param name
-     * @param description
-     * @param symbol
-     * @param prefix
-     * @param project
+     * @param chainId id of the chain
+     * @param active whether active this chain or not (typically true)
+     * @param defaultPeers set of the peers to connect
+     * @param wellKnownPeers set of the privileged peers to connect
+     * @param blacklistedPeers set of the peers, which should be avoided
+     * @param name name of the chain
+     * @param description description of the chain
+     * @param symbol ticker name of the coin on the chain
+     * @param prefix account address prefix on the chain
+     * @param project name of project for this chain
      * @param initialSupply             the initial supply in APL
      * @param decimals                  the decimals value to convert APL to ATM, 1APL = 10^decimals ATM
-     * @param blockchainProperties
-     * @param featuresHeightRequirement
+     * @param blockchainProperties height-based config of the network-wide consensus parameters
+     * @param featuresHeightRequirement config to enable different features by height
+     * @param currencyIssuanceHeights heights of the currency issuance transactions,
+     *                                which were correct by the old broken currency re-issuance validation logic
+     * @param currencySellTxs unsigned ids of the currency sell transactions, which should not be validated early by total order
+     *                        amount overflow of {@link Long} java type limits until new validation rules accepted
      */
     public Chain(UUID chainId,
                  boolean active,
@@ -92,7 +100,8 @@ public class Chain {
                  int decimals,
                  List<BlockchainProperties> blockchainProperties,
                  FeaturesHeightRequirement featuresHeightRequirement,
-                 Set<Integer> currencyIssuanceHeights
+                 Set<Integer> currencyIssuanceHeights,
+                 Set<String> currencySellTxs
     ) {
         this.chainId = chainId;
         this.active = active;
@@ -115,9 +124,18 @@ public class Chain {
                         (oldValue, newValue) -> oldValue, LinkedHashMap::new));
         this.featuresHeightRequirement = featuresHeightRequirement;
         this.currencyIssuanceHeights = currencyIssuanceHeights;
+        this.currencySellTxs = currencySellTxs;
     }
 
     public Chain() {
+    }
+
+    public Set<String> getCurrencySellTxs() {
+        return currencySellTxs;
+    }
+
+    public void setCurrencySellTxs(Set<String> currencySellTxs) {
+        this.currencySellTxs = currencySellTxs;
     }
 
     public FeaturesHeightRequirement getFeaturesHeightRequirement() {
@@ -229,31 +247,6 @@ public class Chain {
         this.active = active;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Chain)) return false;
-        Chain chain = (Chain) o;
-        return active == chain.active &&
-            Objects.equals(chainId, chain.chainId) &&
-            Objects.equals(defaultPeers, chain.defaultPeers) &&
-            Objects.equals(wellKnownPeers, chain.wellKnownPeers) &&
-            Objects.equals(blacklistedPeers, chain.blacklistedPeers) &&
-            Objects.equals(name, chain.name) &&
-            Objects.equals(description, chain.description) &&
-            Objects.equals(symbol, chain.symbol) &&
-            Objects.equals(prefix, chain.prefix) &&
-            Objects.equals(project, chain.project) &&
-            Objects.equals(blockchainProperties, chain.blockchainProperties) &&
-            Objects.equals(featuresHeightRequirement, chain.featuresHeightRequirement) &&
-            Objects.equals(currencyIssuanceHeights, chain.currencyIssuanceHeights);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(chainId, active, defaultPeers, wellKnownPeers, blacklistedPeers, name, description, symbol, prefix, project,  blockchainProperties, featuresHeightRequirement);
-    }
-
     public Chain copy() {
         List<String> defaultPeersCopy = new ArrayList<>(defaultPeers);
         List<String> wellKnownPeersCopy = new ArrayList<>(wellKnownPeers);
@@ -261,29 +254,9 @@ public class Chain {
         List<BlockchainProperties> blockchainPropertiesCopy = blockchainProperties.values().stream().map(BlockchainProperties::copy).collect(Collectors.toList());
         return new Chain(chainId, active, defaultPeersCopy, wellKnownPeersCopy, blacklistedPeersCopy,
             name, description, symbol, prefix, project, initialSupply, decimals,
-             blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null, currencyIssuanceHeights == null ? null : new HashSet<>(currencyIssuanceHeights));
-    }
-
-    @Override
-    public String toString() {
-        return "Chain{" +
-            "chainId=" + chainId +
-            ", active=" + active +
-            ", defaultPeers=" + defaultPeers +
-            ", wellKnownPeers=" + wellKnownPeers +
-            ", blacklistedPeers=" + blacklistedPeers +
-            ", name='" + name + '\'' +
-            ", description='" + description + '\'' +
-            ", symbol='" + symbol + '\'' +
-            ", prefix='" + prefix + '\'' +
-            ", project='" + project + '\'' +
-            ", initialSupply=" + initialSupply +
-            ", decimals=" + decimals +
-            ", oneAPL=" + oneAPL +
-            ", featuresHeightRequirement='" + featuresHeightRequirement + '\'' +
-            ", blockchainProperties=" + blockchainProperties + '\'' +
-            ", currencyIssuanceHeights=" + currencyIssuanceHeights +
-            '}';
+            blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null,
+            currencyIssuanceHeights == null ? null : new HashSet<>(currencyIssuanceHeights),
+            currencySellTxs == null ? null : new HashSet<>(currencySellTxs));
     }
 
     @JsonGetter("blockchainProperties")

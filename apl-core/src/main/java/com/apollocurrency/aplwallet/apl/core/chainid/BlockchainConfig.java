@@ -201,6 +201,10 @@ public class BlockchainConfig {
         return chain.getCurrencyIssuanceHeights() != null && chain.getCurrencyIssuanceHeights().contains(height);
     }
 
+    public boolean isCurrencySellTx(long id) {
+        return chain.getCurrencySellTxs() != null && chain.getCurrencySellTxs().contains(Long.toUnsignedString(id));
+    }
+
     public Integer getDexPendingOrdersReopeningHeight() {
         if (chain.getFeaturesHeightRequirement() != null) {
             return chain.getFeaturesHeightRequirement().getDexReopenPendingOrdersHeight();
