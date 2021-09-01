@@ -4,7 +4,6 @@ import lombok.Getter;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.StringJoiner;
 
 public class TransactionTypes {
     public static final byte TYPE_PAYMENT = 0;
@@ -186,14 +185,6 @@ public class TransactionTypes {
             ALL_TYPES.put(subtype | type << 8, this);
         }
 
-        @Override
-        public String toString() {
-            return new StringJoiner(", ", TransactionTypeSpec.class.getSimpleName() + "[", "]")
-                .add("type=" + type)
-                .add("subtype=" + subtype)
-                .add("compatibleName='" + compatibleName + "'")
-                .toString();
-        }
     }
 
     public static TransactionTypeSpec find(int type, int subtype) {
