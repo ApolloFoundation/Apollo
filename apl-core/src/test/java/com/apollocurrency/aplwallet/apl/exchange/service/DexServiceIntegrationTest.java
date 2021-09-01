@@ -25,7 +25,7 @@ import com.apollocurrency.aplwallet.apl.core.transaction.TransactionJsonSerializ
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypeFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.DexControlOfFrozenMoneyAttachment;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.PrunableLoadingService;
-import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexTransferMoneyTransaction;
+import com.apollocurrency.aplwallet.apl.core.transaction.types.dex.DexTransferMoneyTransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.types.payment.OrdinaryPaymentTransactionType;
 import com.apollocurrency.aplwallet.apl.data.TransactionTestData;
 import com.apollocurrency.aplwallet.apl.dex.config.DexConfig;
@@ -115,7 +115,7 @@ class DexServiceIntegrationTest {
         doReturn(List.of(new PhasingVote(null, 500, 1, 100, 20), new PhasingVote(null, 499, 1, 200, 30))).when(phasingPollService).getVotes(1);
         Transaction phasedTx = mock(Transaction.class);
         doReturn(1L).when(phasedTx).getId();
-        doReturn(new DexTransferMoneyTransaction(mock(BlockchainConfig.class), mock(AccountService.class), dexService)).when(phasedTx).getType();
+        doReturn(new DexTransferMoneyTransactionType(mock(BlockchainConfig.class), mock(AccountService.class), dexService)).when(phasedTx).getType();
         DexControlOfFrozenMoneyAttachment attachment = new DexControlOfFrozenMoneyAttachment(100L, 200L);
         doReturn(attachment).when(phasedTx).getAttachment();
         txEvent.select(TxEventType.literal(TxEventType.RELEASE_PHASED_TRANSACTION)).fire(phasedTx);

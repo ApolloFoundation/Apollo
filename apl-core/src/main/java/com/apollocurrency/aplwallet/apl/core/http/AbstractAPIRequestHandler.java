@@ -62,7 +62,7 @@ import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.AskOrderSer
 import com.apollocurrency.aplwallet.apl.core.service.state.qualifier.BidOrderService;
 import com.apollocurrency.aplwallet.apl.core.transaction.common.TxBContext;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsAskOrderPlacement;
-import com.apollocurrency.aplwallet.apl.core.transaction.messages.ColoredCoinsBidOrderPlacement;
+import com.apollocurrency.aplwallet.apl.core.transaction.messages.CCBidOrderPlacementAttachment;
 import com.apollocurrency.aplwallet.apl.util.UPnP;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
@@ -85,7 +85,7 @@ public abstract class AbstractAPIRequestHandler {
     protected final AliasService aliasService = CDI.current().select(AliasService.class).get();
     protected final OrderService<AskOrder, ColoredCoinsAskOrderPlacement> askOrderService =
         CDI.current().select(AskOrderServiceImpl.class, AskOrderService.Literal.INSTANCE).get();
-    protected final OrderService<BidOrder, ColoredCoinsBidOrderPlacement> bidOrderService =
+    protected final OrderService<BidOrder, CCBidOrderPlacementAttachment> bidOrderService =
         CDI.current().select(BidOrderServiceImpl.class, BidOrderService.Literal.INSTANCE).get();
     protected final TradeService tradeService = CDI.current().select(TradeService.class).get();
     protected BlockchainProcessor blockchainProcessor;

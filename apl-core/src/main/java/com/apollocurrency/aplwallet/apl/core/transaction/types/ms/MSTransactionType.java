@@ -15,11 +15,11 @@ import com.apollocurrency.aplwallet.apl.core.transaction.messages.MonetarySystem
 
 import java.util.Map;
 
-public abstract class MonetarySystemTransactionType extends TransactionType {
+public abstract class MSTransactionType extends TransactionType {
 
     protected final CurrencyService currencyService;
 
-    MonetarySystemTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService) {
+    MSTransactionType(BlockchainConfig blockchainConfig, AccountService accountService, CurrencyService currencyService) {
         super(blockchainConfig, accountService);
         this.currencyService = currencyService;
     }

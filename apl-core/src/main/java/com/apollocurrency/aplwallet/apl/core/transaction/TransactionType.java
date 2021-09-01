@@ -24,6 +24,7 @@ import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
 import com.apollocurrency.aplwallet.apl.core.chainid.HeightConfig;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.Account;
 import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
@@ -166,22 +167,34 @@ public abstract class TransactionType {
     /**
      * Performs transaction's validation (transaction itself and its attachment) using current blockchain state only, no state-independent validation will be done
      * <p>Should be used in conjuction with {@link TransactionType#validateStateIndependent(Transaction)}, which will guarantee full tx structure and attachment validation</p>
-     * <p>Validation should pass for valid transaction only on transaction's acceptance height, when it is included in a block, which will be pushed into blockchain.
-     * Successful validation for the phased transactions on any height is not guaranteed, use {@link TransactionType#validateStateDependentAtFinish(Transaction)} instead</p>
+     * <p>Validation should pass for valid transaction only on transaction's acceptance height, when it is included in a block, which will be pushed into a blockchain.
+     * Successful validation for the phased transactions on any height, except of acceptance height, is not guaranteed,
+     * use {@link TransactionType#validateStateDependentAtFinish(Transaction)} instead</p>
      * @param transaction transaction of this type to validate using blockchain state
      * @throws AplException.ValidationException when transaction doesn't pass validation for any reason
-     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException same as above but preferred
-     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException in cases, when transaction is correct but sender's account is not exist or has not enough funds
+     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplAcceptableTransactionValidationException same as above
+     * but preferred and when sender's account has enough money to cover transaction fee, but not a transferring amount
+     * @throws com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException in cases,
+     * when transaction is correct but sender's account is not exist or has not enough funds to pay fee
      */
     public final void validateStateDependent(Transaction transaction) throws AplException.ValidationException {
         TransactionAmounts amounts = new TransactionAmounts(transaction);
         Account account = accountService.getAccount(transaction.getSenderId());
         if (account == null) {
-            throw new AplUnacceptableTransactionValidationException("Transaction's sender not found, tx: " + transaction.getId() + ", sender: " + transaction.getSenderId(), transaction);
+            throw new AplUnacceptableTransactionValidationException(
+                String.format("Transaction's sender not found, tx: %s, sender: %s", transaction.getStringId(),
+                    Long.toUnsignedString(transaction.getSenderId())), transaction);
         }
         if (account.getUnconfirmedBalanceATM() < amounts.getTotalAmountATM()) {
-            throw new AplUnacceptableTransactionValidationException("Not enough apl balance on account: " + transaction.getSenderId() + ", required at least " + amounts.getTotalAmountATM()
-                + ", but only got " + account.getUnconfirmedBalanceATM(), transaction);
+            if (account.getUnconfirmedBalanceATM() < amounts.getFeeATM()) {
+                throw new AplUnacceptableTransactionValidationException(
+                    String.format("Not enough apl balance on account: %s, required at least %d, but only got %d",
+                        Long.toUnsignedString(transaction.getSenderId()), amounts.getTotalAmountATM(), account.getUnconfirmedBalanceATM()), transaction);
+            } else {
+                throw new AplAcceptableTransactionValidationException(String.format("Not enough apl balance on account: %s"
+                    + " to pay transaction both amount: %d and fee: %d, only fee may be paid, balance: %s",
+                    Long.toUnsignedString(transaction.getSenderId()),amounts.getAmountATM(), amounts.getFeeATM(), account.getUnconfirmedBalanceATM()), transaction);
+            }
         }
         doStateDependentValidation(transaction);
     }
@@ -299,7 +312,7 @@ public abstract class TransactionType {
                 recipientAccount.setBalanceATM(senderAccount.getBalanceATM());
             }
             accountService.addToBalanceAndUnconfirmedBalanceATM(recipientAccount, getLedgerEvent(), transactionId, -amount);
-            log.info("{} was refunded by {} ATM from the recipient {}", senderAccount.balanceString(), transaction.getAmountATM(), recipientAccount.balanceString());
+            log.info("{} was refunded {} ATM by the recipient {}", senderAccount.balanceString(), transaction.getAmountATM(), recipientAccount.balanceString());
         }
     }
 
@@ -324,12 +337,9 @@ public abstract class TransactionType {
     @TransactionFee(FeeMarker.UNDO_UNCONFIRMED_BALANCE)
     public final void undoUnconfirmed(Transaction transaction, Account senderAccount) {
         undoAttachmentUnconfirmed(transaction, senderAccount);
+        TransactionAmounts amounts = new TransactionAmounts(transaction);
         accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(),
-            transaction.getAmountATM(), transaction.getFeeATM());
-        if (transaction.referencedTransactionFullHash() != null) {
-            accountService.addToUnconfirmedBalanceATM(senderAccount, getLedgerEvent(), transaction.getId(), 0,
-                blockchainConfig.getUnconfirmedPoolDepositAtm());
-        }
+            amounts.getAmountATM(), amounts.getFeeATM());
     }
 
     /**
@@ -407,7 +417,7 @@ public abstract class TransactionType {
 
     /**
      * Specify, that transaction of the specific type may be phased (delayed until some event occurred)
-     * @return true, when phasig is allowed, otherwise false
+     * @return true, when phasing is allowed, otherwise false
      */
     public boolean isPhasable() {
         return true;

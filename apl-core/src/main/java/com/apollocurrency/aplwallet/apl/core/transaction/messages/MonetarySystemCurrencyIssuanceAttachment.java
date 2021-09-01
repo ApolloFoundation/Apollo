@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
 /**
  * @author al
  */
-public final class MonetarySystemCurrencyIssuance extends AbstractAttachment {
+public final class MonetarySystemCurrencyIssuanceAttachment extends AbstractAttachment {
 
     final String name;
     final String code;
@@ -32,7 +32,7 @@ public final class MonetarySystemCurrencyIssuance extends AbstractAttachment {
     final byte algorithm;
     final byte decimals;
 
-    public MonetarySystemCurrencyIssuance(ByteBuffer buffer) throws AplException.NotValidException {
+    public MonetarySystemCurrencyIssuanceAttachment(ByteBuffer buffer) throws AplException.NotValidException {
         super(buffer);
         try {
             this.name = Convert.readString(buffer, buffer.get(), Constants.MAX_CURRENCY_NAME_LENGTH);
@@ -54,7 +54,7 @@ public final class MonetarySystemCurrencyIssuance extends AbstractAttachment {
         }
     }
 
-    public MonetarySystemCurrencyIssuance(JSONObject attachmentData) {
+    public MonetarySystemCurrencyIssuanceAttachment(JSONObject attachmentData) {
         super(attachmentData);
         this.name = (String) attachmentData.get("name");
         this.code = (String) attachmentData.get("code");
@@ -72,7 +72,7 @@ public final class MonetarySystemCurrencyIssuance extends AbstractAttachment {
         this.decimals = ((Number) attachmentData.get("decimals")).byteValue();
     }
 
-    public MonetarySystemCurrencyIssuance(String name, String code, String description, byte type, long initialSupply, long reserveSupply, long maxSupply, int issuanceHeight, long minReservePerUnitATM, int minDifficulty, int maxDifficulty, byte ruleset, byte algorithm, byte decimals) {
+    public MonetarySystemCurrencyIssuanceAttachment(String name, String code, String description, byte type, long initialSupply, long reserveSupply, long maxSupply, int issuanceHeight, long minReservePerUnitATM, int minDifficulty, int maxDifficulty, byte ruleset, byte algorithm, byte decimals) {
         this.name = name;
         this.code = code;
         this.description = description;
