@@ -182,7 +182,7 @@ public class AssetServiceImpl implements AssetService {
         int index = 0;
         try (ResultSet rs = fullTextSearchService.search("public", assetTable.getTableName(), luceneQuery, Integer.MAX_VALUE, 0)) {
             while (rs.next()) {
-                Long DB_ID = rs.getLong(5);
+                Long DB_ID = rs.getLong("keys");
                 if (index == 0) {
                     inRange.append(DB_ID);
                 } else {
