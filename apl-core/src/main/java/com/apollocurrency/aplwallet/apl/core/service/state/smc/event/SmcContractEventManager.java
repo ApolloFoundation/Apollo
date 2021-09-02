@@ -9,14 +9,15 @@ import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractEventS
 import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
 import com.apollocurrency.smc.contract.ContractException;
-import com.apollocurrency.smc.contract.vm.ContractEvent;
 import com.apollocurrency.smc.contract.vm.ContractEventManager;
 import com.apollocurrency.smc.data.json.JsonMapper;
 import com.apollocurrency.smc.data.json.SmcJsonMapper;
 import com.apollocurrency.smc.data.type.Address;
+import com.apollocurrency.smc.data.type.EventType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,11 +45,11 @@ public class SmcContractEventManager implements ContractEventManager {
     }
 
     @Override
-    public void emit(ContractEvent event) {
+    public void emit(EventType event, Object... parameters) {
         var signature = generateSignature(event);
         var txIdx = eventIdx.getAndIncrement();
         var eventId = generateId(txIdx, signature);
-        var state = serializeParameters(event.getParams());
+        var state = serializeParameters(parameters);
 
         var smcEvent = SmcContractEvent.builder()
             .contract(contract.getLongId())
@@ -63,13 +64,12 @@ public class SmcContractEventManager implements ContractEventManager {
             .build();
 
         contractEventService.saveEvent(smcEvent);
-
-
     }
 
     private long generateId(int eventIdx, byte[] eventSignature) {
         var md = Crypto.sha256();
         md.update(transaction.key());
+        md.update(BigInteger.valueOf(eventIdx).toByteArray());
         var hash = md.digest(eventSignature);
         return AplIdGenerator.ACCOUNT.getIdByHash(hash).longValue();
     }
@@ -81,7 +81,7 @@ public class SmcContractEventManager implements ContractEventManager {
      * @param event the given contract event
      * @return event signature hash
      */
-    private byte[] generateSignature(ContractEvent event) {
+    private byte[] generateSignature(EventType event) {
         return Crypto.sha256().digest(event.getFullName().getBytes(StandardCharsets.UTF_8));
     }
 

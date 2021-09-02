@@ -5,13 +5,17 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.event;
 
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+
+import static com.apollocurrency.smc.util.HexUtils.toHex;
 
 /**
  * @author andrew.zinchenko@gmail.com
  */
-@Data
+@Getter
 @Builder
+@EqualsAndHashCode
 public class SmcContractEvent {
     private long id;
     private long contract; //contract address/id
@@ -23,4 +27,19 @@ public class SmcContractEvent {
     private boolean anonymous;//is anonymous event
     private String entry;//serialized event parameters
     private int txIdx;//the sequential number within the transaction
+
+    @Override
+    public String toString() {
+        return "SmcContractEvent{" +
+            "id=" + id +
+            ", contract=" + contract +
+            ", transactionId=" + transactionId +
+            ", signature=" + toHex(signature) +
+            ", name='" + name + '\'' +
+            ", idxCount=" + idxCount +
+            ", anonymous=" + anonymous +
+            ", entry='" + entry + '\'' +
+            ", txIdx=" + txIdx +
+            '}';
+    }
 }
