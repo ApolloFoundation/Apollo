@@ -91,6 +91,7 @@ public class LuceneFullTextSearchEngine implements FullTextSearchEngine {
 
     @Override
     public boolean isIndexFolderEmpty() throws IOException {
+        log.debug("FullTextSearch index path/folder = '{}'", this.indexDirPath);
         boolean indexFolderExists = Files.exists(this.indexDirPath);
         if (indexFolderExists) {
             try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(this.indexDirPath)) {
