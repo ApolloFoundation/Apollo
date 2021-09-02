@@ -13,6 +13,7 @@ import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.rest.service.ServerInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.Blockchain;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEventManagerClassFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.CachedAccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.internal.SmcCachedAccountService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.storage.SmcMappingRepositoryClassFactory;
@@ -24,6 +25,7 @@ import com.apollocurrency.aplwallet.apl.util.api.converter.Converter;
 import com.apollocurrency.smc.blockchain.BlockchainIntegrator;
 import com.apollocurrency.smc.blockchain.MockIntegrator;
 import com.apollocurrency.smc.blockchain.OperationReceipt;
+import com.apollocurrency.smc.blockchain.event.ContractEventManagerFactory;
 import com.apollocurrency.smc.blockchain.storage.CachedMappingRepository;
 import com.apollocurrency.smc.blockchain.storage.ContractMappingRepositoryFactory;
 import com.apollocurrency.smc.contract.AddressNotFoundException;
@@ -60,15 +62,17 @@ public class SmcBlockchainIntegratorFactory {
     private final ServerInfoService serverInfoService;
     private final BlockConverter blockConverter;
     private final SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory;
+    private final SmcContractEventManagerClassFactory smcContractEventManagerClassFactory;
     private final TxLogProcessor txLogProcessor;
 
     @Inject
-    public SmcBlockchainIntegratorFactory(AccountService accountService, Blockchain blockchain, ServerInfoService serverInfoService, SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory, TxLogProcessor txLogProcessor) {
+    public SmcBlockchainIntegratorFactory(AccountService accountService, Blockchain blockchain, ServerInfoService serverInfoService, SmcMappingRepositoryClassFactory smcMappingRepositoryClassFactory, SmcContractEventManagerClassFactory smcContractEventManagerClassFactory, TxLogProcessor txLogProcessor) {
         this.accountService = Objects.requireNonNull(accountService);
         this.blockchain = Objects.requireNonNull(blockchain);
         this.serverInfoService = Objects.requireNonNull(serverInfoService);
         this.blockConverter = new BlockConverter();
         this.smcMappingRepositoryClassFactory = Objects.requireNonNull(smcMappingRepositoryClassFactory);
+        this.smcContractEventManagerClassFactory = Objects.requireNonNull(smcContractEventManagerClassFactory);
         this.txLogProcessor = txLogProcessor;
     }
 
@@ -185,7 +189,7 @@ public class SmcBlockchainIntegratorFactory {
 
         @Override
         public ContractEventManager createEventManager(Address contract) {
-            return null;
+            return smcContractEventManagerClassFactory.createMockEventManagerFactory().create(contract);
         }
     }
 
@@ -200,6 +204,7 @@ public class SmcBlockchainIntegratorFactory {
         final TxLog txLog;
         final Set<CachedMappingRepository<?>> cachedMappingRepositories;
         final TxLogProcessor txLogProcessor;
+        final ContractEventManagerFactory eventManagerFactory;
 
         public FullIntegrator(long originatorTransactionId, Address contract,
                               Account txSenderAccount, Account txRecipientAccount, LedgerEvent ledgerEvent,
@@ -218,6 +223,7 @@ public class SmcBlockchainIntegratorFactory {
             this.txLogProcessor = txLogProcessor;
             this.txLog = new ArrayTxLog(new AplAddress(originatorTransactionId), contract);
             this.cachedMappingRepositories = new HashSet<>();
+            this.eventManagerFactory = smcContractEventManagerClassFactory.createEventManagerFactory(currentTransaction);
         }
 
         @Override
@@ -306,6 +312,10 @@ public class SmcBlockchainIntegratorFactory {
             return smcMappingRepositoryClassFactory.createCachedMappingFactory(contract, cachedMappingRepositories);
         }
 
+        @Override
+        public ContractEventManager createEventManager(Address contract) {
+            return eventManagerFactory.create(contract);
+        }
     }
 
     private static class BlockConverter implements Converter<Block, ContractBlock> {

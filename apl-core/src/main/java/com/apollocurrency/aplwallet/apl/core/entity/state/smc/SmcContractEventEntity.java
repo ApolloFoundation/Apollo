@@ -21,7 +21,7 @@ import java.util.Objects;
 @ToString(callSuper = true)
 public class SmcContractEventEntity extends DerivedEntity {
     private long id;
-    private long address; //contract address/id
+    private long contract; //contract address/id
     private long transactionId;
 
     private byte[] signature;//SHA256 hash(name+idxCount); 32 bytes
@@ -30,14 +30,14 @@ public class SmcContractEventEntity extends DerivedEntity {
     private boolean anonymous;//is anonymous event
 
     @Builder
-    public SmcContractEventEntity(Long dbId, Integer height, long id, long address, long transactionId, byte[] signature, String name, byte idxCount, boolean anonymous) {
+    public SmcContractEventEntity(Long dbId, Integer height, long id, long contract, long transactionId, byte[] signature, String name, int idxCount, boolean anonymous) {
         super(dbId, height);
         this.id = id;
-        this.address = address;
+        this.contract = contract;
         this.transactionId = transactionId;
         this.signature = signature;
         this.name = name;
-        this.idxCount = idxCount;
+        this.idxCount = (byte) idxCount;
         this.anonymous = anonymous;
     }
 
@@ -47,12 +47,12 @@ public class SmcContractEventEntity extends DerivedEntity {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         SmcContractEventEntity that = (SmcContractEventEntity) o;
-        return id == that.id && address == that.address && transactionId == that.transactionId && idxCount == that.idxCount && anonymous == that.anonymous && Arrays.equals(signature, that.signature) && name.equals(that.name);
+        return id == that.id && contract == that.contract && transactionId == that.transactionId && idxCount == that.idxCount && anonymous == that.anonymous && Arrays.equals(signature, that.signature) && name.equals(that.name);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(super.hashCode(), id, address, transactionId, name, idxCount, anonymous);
+        int result = Objects.hash(super.hashCode(), id, contract, transactionId, name, idxCount, anonymous);
         result = 31 * result + Arrays.hashCode(signature);
         return result;
     }

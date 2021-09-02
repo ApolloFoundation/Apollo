@@ -25,7 +25,10 @@ public class SmcContractEventLogEntry extends DerivedEntity {
 
     private byte[] signature;//SHA256 hash(name+idxCount); 32 bytes
     private String entry;
-    private int txIdx;//sequence number in transaction
+    /**
+     * the sequential index of the event within the blockchain transaction
+     */
+    private int txIdx;
 
     @Builder
     public SmcContractEventLogEntry(Long dbId, Integer height, long logId, long eventId, long transactionId, byte[] signature, String entry, int txIdx) {

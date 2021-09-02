@@ -71,7 +71,7 @@ public class SmcContractEventTable extends EntityDbTable<SmcContractEventEntity>
             int i = 0;
             stmt.setLong(++i, eventEntity.getId());
             stmt.setLong(++i, eventEntity.getTransactionId());
-            stmt.setLong(++i, eventEntity.getAddress());
+            stmt.setLong(++i, eventEntity.getContract());
             stmt.setBytes(++i, eventEntity.getSignature());
             stmt.setString(++i, eventEntity.getName());
             stmt.setByte(++i, eventEntity.getIdxCount());
