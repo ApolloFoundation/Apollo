@@ -343,22 +343,23 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
             // peer block is the next block in our blockchain
             long baseTarget = blockchainConfig.getCurrentConfig().getInitialBaseTarget();
             if (peerBlockPreviousBlockId == lastBlock.getId()) {
-                log.debug("push peer last block");
-                Block block = blockParser.parseBlock(request, baseTarget);
-                block.getTransactions().forEach(Transaction::resetFail); // error messages should be obtained node independently
-                pushBlock(block);
+                Block peerBlock = blockParser.parseBlock(request, baseTarget);
+                log.info("Push peer last block {} at height {}, our previous block is {}", peerBlock.getStringId(),
+                    lastBlock.getHeight() + 1, lastBlock.getStringId());
+                peerBlock.getTransactions().forEach(Transaction::resetFail); // error messages should be obtained node independently
+                pushBlock(peerBlock);
             } else if (peerBlockPreviousBlockId == lastBlock.getPreviousBlockId()) { //peer block is a candidate to replace our last block
-                Block block = blockParser.parseBlock(request, baseTarget);
-                block.getTransactions().forEach(Transaction::resetFail); // error messages should be obtained node independently
+                Block peerBlock = blockParser.parseBlock(request, baseTarget);
+                peerBlock.getTransactions().forEach(Transaction::resetFail); // error messages should be obtained node independently
                 //try to replace our last block by peer block only when real block time of the peer block is less than a real timestamp of our block,
                 // or when block time is equal, but peer's block has better timeout
-                int peerBlockTime = block.getTimestamp() - block.getTimeout();
+                int peerBlockTime = peerBlock.getTimestamp() - peerBlock.getTimeout();
                 int ourBlockTime = lastBlock.getTimestamp() - lastBlock.getTimeout();
-                if (peerBlockTime < ourBlockTime || (peerBlockTime == ourBlockTime && block.getTimeout() < lastBlock.getTimeout())) {
-                    log.debug("Need to replace block");
+                if (peerBlockTime < ourBlockTime || (peerBlockTime == ourBlockTime && peerBlock.getTimeout() < lastBlock.getTimeout())) {
                     Block lb = blockchain.getLastBlock();
+                    log.info("Need to replace  our last block {} at height {} by the peer's block {}", lb.getStringId(), lb.getHeight(), peerBlock.getStringId());
                     if (lastBlock.getId() != lb.getId()) {
-                        log.debug("Block changed: expected: id {} height: {} generator: {}, got id {}, height {}, generator {} ", lastBlock.getId(),
+                        log.info("Block changed: expected: id {} height: {} generator: {}, got id {}, height {}, generator {} ", lastBlock.getId(),
                             lastBlock.getHeight(), Convert2.rsAccount(lastBlock.getGeneratorId()), lb.getId(), lb.getHeight(),
                             Convert2.rsAccount(lb.getGeneratorId()));
                         return; // blockchain changed, ignore the block
@@ -366,17 +367,13 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
                     Block previousBlock = blockchain.getBlock(lastBlock.getPreviousBlockId());
                     lastBlock = popOffToCommonBlock(previousBlock).get(0);
                     try {
-                        pushBlock(block);
-                        log.debug("Pushed better peer block: id {} height: {} generator: {}",
-                            block.getId(),
-                            block.getHeight(),
-                            Convert2.rsAccount(block.getGeneratorId()));
+                        pushBlock(peerBlock);
                         transactionProcessor.processLater(lastBlock.getTransactions());
-                        log.debug("Last block " + lastBlock.getStringId() + " was replaced by " + block.getStringId());
+                        log.info("Last block {} was replaced by {} at height {}", lastBlock.getStringId(), peerBlock.getStringId(), blockchain.getHeight());
                     } catch (BlockNotAcceptedException e) {
-                        log.debug("Replacement block failed to be accepted, pushing back our last block");
+                        log.info("Replacement block failed to be accepted, pushing back our last block");
                         pushBlock(lastBlock);
-                        transactionProcessor.processLater(block.getTransactions());
+                        transactionProcessor.processLater(peerBlock.getTransactions());
                     }
                 }
             }// else ignore the block
