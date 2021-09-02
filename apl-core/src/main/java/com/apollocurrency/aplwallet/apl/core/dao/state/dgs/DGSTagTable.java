@@ -10,7 +10,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.StringKeyFactory;
 import com.apollocurrency.aplwallet.apl.core.entity.state.dgs.DGSTag;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 
@@ -39,9 +39,9 @@ public class DGSTagTable extends EntityDbTable<DGSTag> {
 
     @Inject
     public DGSTagTable(DatabaseManager databaseManager,
-                       Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                       Event<FullTextOperationData> fullTextOperationDataEvent) {
         super(TABLE_NAME, KEY_FACTORY, true, null,
-                databaseManager, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     @Override

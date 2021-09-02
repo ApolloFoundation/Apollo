@@ -76,6 +76,9 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?")) {
             pstmtDelete.setInt(1, height);
             rc = pstmtDelete.executeUpdate();
+            if (this.isSearchable() /* instanceof SearchableTableInterface */ ) {
+                log.debug("SEARCHABLE 6. deleting {}, deletedRecordsCount = {} at height = {}", this.table, rc, height);
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -228,5 +231,9 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     @Override
     public String getName() {
         return table;
+    }
+
+    public boolean isSearchable() {
+        return fullTextSearchColumns != null && !fullTextSearchColumns.isEmpty();
     }
 }

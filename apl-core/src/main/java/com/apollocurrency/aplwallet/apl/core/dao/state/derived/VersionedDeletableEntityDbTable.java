@@ -9,10 +9,11 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.VersionedDerivedEntity;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
 import java.sql.Connection;
@@ -20,12 +21,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+@Slf4j
 public abstract class VersionedDeletableEntityDbTable<T extends VersionedDerivedEntity> extends EntityDbTable<T> {
 
     public VersionedDeletableEntityDbTable(String table, KeyFactory<T> dbKeyFactory, String fullTextSearchColumns,
                                            DatabaseManager databaseManager,
-                                           Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(table, dbKeyFactory, true, fullTextSearchColumns, databaseManager, deleteOnTrimDataEvent);
+                                           Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(table, dbKeyFactory, true, fullTextSearchColumns, databaseManager, fullTextOperationDataEvent);
     }
 
     @Override
@@ -46,7 +48,9 @@ public abstract class VersionedDeletableEntityDbTable<T extends VersionedDerived
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-
+        if (this.isSearchable() /* instanceof SearchableTableInterface */ ) {
+            log.debug("SEARCHABLE 1. deleting {} by dbId = {} at height/height = {}/{}", this.table, t.getDbId(), t.getHeight(), height);
+        }
         KeyFactory<T> keyFactory = getDbKeyFactory();
         DbKey dbKey = keyFactory.newKey(t);
         try (Connection con = dataSource.getConnection();
@@ -56,6 +60,9 @@ public abstract class VersionedDeletableEntityDbTable<T extends VersionedDerived
             int i = dbKey.setPK(pstmtCount);
             pstmtCount.setInt(i, height);
             try (ResultSet rs = pstmtCount.executeQuery()) {
+                if (this.isSearchable() /* instanceof Searchable */ ) {
+                    log.debug("SEARCHABLE 2. deleting {} by dbId = {} at height = {}", this.table, t.getDbId(), t.getHeight());
+                }
                 if (rs.next()) {
                     long dbId = rs.getLong(1);
                     try (

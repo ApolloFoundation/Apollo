@@ -45,7 +45,8 @@ class TaggedDataTableTest extends DbContainerBaseTest {
 
     @BeforeEach
     void setUp() {
-        table = new TaggedDataTable(dataTagDao, blockchainConfig, extension.getDatabaseManager(), propertiesHolder, mock(Event.class));
+        table = new TaggedDataTable(dataTagDao, blockchainConfig, extension.getDatabaseManager(), propertiesHolder,
+            mock(Event.class));
     }
 
     @Test

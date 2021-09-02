@@ -12,7 +12,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyMintTabl
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencySupplyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.currency.CurrencyTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
-import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
@@ -33,7 +33,7 @@ import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdaterImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedDbTablesRegistryImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.DerivedTablesRegistry;
@@ -90,6 +90,7 @@ class CurrencyServiceTest {
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
     private PropertiesHolder propertiesHolder = mock(PropertiesHolder.class);
     private HeightConfig config = Mockito.mock(HeightConfig.class);
+    private FullTextSearchUpdater fullTextSearchUpdater = mock(FullTextSearchUpdater.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -103,6 +104,7 @@ class CurrencyServiceTest {
         .addBeans(MockBean.of(mock(DerivedTablesRegistry.class), DerivedTablesRegistry.class, DerivedDbTablesRegistryImpl.class))
         .addBeans(MockBean.of(blockChainInfoService, BlockChainInfoService.class))
         .addBeans(MockBean.of(databaseManager, DatabaseManager.class))
+        .addBeans(MockBean.of(fullTextSearchUpdater, FullTextSearchUpdater.class))
         .build();
 
     CurrencyService service;
@@ -134,8 +136,6 @@ class CurrencyServiceTest {
     private MonetaryCurrencyMintingService monetaryCurrencyMintingService;
     @Mock
     CurrencyMintTable currencyMintTable;
-    @Mock
-    private FullTextSearchUpdater fullTextSearchUpdater;
     @Mock
     private FullTextSearchService fullTextSearchService;
 

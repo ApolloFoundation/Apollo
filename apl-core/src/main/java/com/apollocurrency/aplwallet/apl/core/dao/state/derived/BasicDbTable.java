@@ -4,21 +4,27 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
+
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.KeyFactory;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.shard.ShardConstants;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,16 +37,16 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
 
     protected KeyFactory<T> keyFactory;
     protected boolean multiversion;
-    private final Event<DeleteOnTrimData> deleteOnTrimDataEvent;
+    private final Event<FullTextOperationData> fullTextOperationDataEvent;
 
     protected BasicDbTable(String table, KeyFactory<T> keyFactory, boolean multiversion,
                            DatabaseManager databaseManager,
-                           Event<DeleteOnTrimData> deleteOnTrimDataEvent,
+                           Event<FullTextOperationData> fullTextOperationDataEvent,
                            String fullTextSearchColumns) {
         super(table, databaseManager, fullTextSearchColumns);
         this.keyFactory = keyFactory;
         this.multiversion = multiversion;
-        this.deleteOnTrimDataEvent = deleteOnTrimDataEvent;
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
     }
 
     public KeyFactory<T> getDbKeyFactory() {
@@ -62,7 +68,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
 
     private int doMultiversionRollback(int height) {
         log.trace("doMultiversionRollback(), height={}", height);
-        int deletedRecordsCount;
+        int deletedRecordsCount = 0;
         TransactionalDataSource dataSource = databaseManager.getDataSource();
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
@@ -76,7 +82,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
              PreparedStatement pstmtSelectToDelete = con.prepareStatement("SELECT DISTINCT " + keyFactory.getPKColumns()
                  + " FROM " + table + " WHERE height > ?");
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table
-                 + " WHERE height > ?");
+                 + " WHERE height > ? RETURNING db_id");
              PreparedStatement pstmtSetLatest = con.prepareStatement(sql)) {
             pstmtSelectToDelete.setInt(1, height);
             List<DbKey> dbKeys = new ArrayList<>();
@@ -85,18 +91,37 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                     dbKeys.add(keyFactory.newKey(rs));
                 }
             }
-
             if (dbKeys.size() > 0) {
                 log.trace("Rollback table {} found {} records to update to latest", table, dbKeys.size());
             }
 
             pstmtDelete.setInt(1, height);
-            deletedRecordsCount = pstmtDelete.executeUpdate();
+//            deletedRecordsCount = pstmtDelete.executeUpdate();
+            ResultSet deletedIds = pstmtDelete.executeQuery();
 
+            if (this.isSearchable() /* instanceof SearchableTableInterface */ ) {
+                FullTextOperationData operationData = new FullTextOperationData(
+                    DEFAULT_SCHEMA, this.table, Thread.currentThread().getName());
+                operationData.setOperationType(FullTextOperationData.OperationType.DELETE);
+                while (deletedIds.next()) {
+                    Long deleted_db_id = deletedIds.getLong("db_id");
+                    operationData.setDbIdValue(deleted_db_id);
+                    fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})
+                        .fireAsync(operationData);// TODO YL check
+//                    fullTextOperationDataEvent.fireAsync(operationData);
+                    ++deletedRecordsCount;
+                }
+                log.debug("SEARCHABLE 5.1 deleting {} at height = {}, deletedRecordsCount = {}", this.table,
+                    height, deletedRecordsCount);
+                // send data into Lucene index component
+                log.trace("Put lucene index update data = {}", operationData);
+            }
             if (deletedRecordsCount > 0) {
                 log.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
             }
-            if (supportDelete()) { // do not 'setLatest' for deleted entities ( if last entity below given height was deleted 'deleted=true')
+
+            boolean supportDelete = supportDelete();
+            if (supportDelete) { // do not 'setLatest' for deleted entities ( if last entity below given height was deleted 'deleted=true')
                 try (PreparedStatement pstmtSelectDeletedCount = con.prepareStatement("SELECT " + keyFactory.getPKColumns() + " FROM " + table + " WHERE height <= ? AND deleted = true GROUP BY " + keyFactory.getPKColumns() + " HAVING COUNT(DISTINCT HEIGHT) % 2 = 0");
                      PreparedStatement pstmtGetLatestDeleted = con.prepareStatement("SELECT deleted FROM " + table + keyFactory.getPKClause() + " AND height <=? ORDER BY db_id DESC LIMIT 1")) {
                     pstmtSelectDeletedCount.setInt(1, height);
@@ -116,6 +141,9 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                         }
                     }
                 }
+            }
+            if (this.isSearchable() /* instanceof SearchableTableInterface */ ) {
+                log.debug("SEARCHABLE 5.2 deleting {} at height = {}, keysToDelete = {}", this.table, height, dbKeys);
             }
             for (DbKey dbKey : dbKeys) {
                 int i = dbKey.setPK(pstmtSetLatest, 1);

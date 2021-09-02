@@ -21,6 +21,7 @@
 package com.apollocurrency.aplwallet.apl.core.dao.state.poll;
 
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
@@ -31,7 +32,6 @@ import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionTypes;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingVoteCasting;
@@ -68,9 +68,9 @@ public class PollTable extends EntityDbTable<Poll> implements SearchableTableInt
 
     @Inject
     public PollTable(DatabaseManager databaseManager,
-                     Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
+                     Event<FullTextOperationData> fullTextOperationDataEvent) {
         super("poll", POLL_LONG_KEY_FACTORY, false, "name,description",
-                databaseManager, deleteOnTrimDataEvent);
+                databaseManager, fullTextOperationDataEvent);
     }
 
     @Override

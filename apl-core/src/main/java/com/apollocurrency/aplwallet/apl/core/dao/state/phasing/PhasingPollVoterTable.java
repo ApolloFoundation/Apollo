@@ -14,7 +14,7 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.blockchain.TransactionEntity;
 import com.apollocurrency.aplwallet.apl.core.entity.state.phasing.PhasingPollVoter;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 
 import javax.enterprise.event.Event;
@@ -45,8 +45,8 @@ public class PhasingPollVoterTable extends ValuesDbTable<PhasingPollVoter> {
     @Inject
     public PhasingPollVoterTable(TransactionEntityRowMapper transactionRowMapper,
                                  DatabaseManager databaseManager,
-                                 Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, KEY_FACTORY, false, databaseManager, deleteOnTrimDataEvent);
+                                 Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE_NAME, KEY_FACTORY, false, databaseManager, fullTextOperationDataEvent);
         this.rowMapper = transactionRowMapper;
     }
 

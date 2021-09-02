@@ -22,6 +22,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProces
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainProcessorImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfigImpl;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.PrunableMessageService;
 import com.apollocurrency.aplwallet.apl.core.service.prunable.impl.PrunableMessageServiceImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.BlockChainInfoService;
@@ -70,6 +71,7 @@ class CurrencyExchangeOfferFacadeTest {
     private DatabaseManager databaseManager = mock(DatabaseManager.class);
     private BlockChainInfoService blockChainInfoService = mock(BlockChainInfoService.class);
     private BlockchainProcessor blockchainProcessor = mock(BlockchainProcessor.class);
+    private FullTextSearchUpdater fullTextSearchUpdater = mock(FullTextSearchUpdater.class);
 
     @WeldSetup
     public WeldInitiator weld = WeldInitiator.from(
@@ -85,6 +87,7 @@ class CurrencyExchangeOfferFacadeTest {
         .addBeans(MockBean.of(Mockito.mock(PropertiesHolder.class), PropertiesHolder.class))
         .addBeans(MockBean.of(Mockito.mock(PrunableMessageService.class), PrunableMessageService.class, PrunableMessageServiceImpl.class))
         .addBeans(MockBean.of(databaseManager, DatabaseManager.class))
+        .addBeans(MockBean.of(fullTextSearchUpdater, FullTextSearchUpdater.class))
         .build();
 
     @Mock

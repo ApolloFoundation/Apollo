@@ -18,7 +18,10 @@ import static org.mockito.Mockito.mock;
 public class VersionedBasicDbTableImpl extends BasicDbTable<VersionedDerivedIdEntity> {
 
     public VersionedBasicDbTableImpl(DatabaseManager databaseManager) {
-        super("versioned_derived_entity", new VersionedEntityKeyFactory(), true, databaseManager, mock(Event.class), null);
+        super("versioned_derived_entity",
+            new VersionedEntityKeyFactory(),
+            true,
+            databaseManager, mock(Event.class), null);
     }
 
     @Override

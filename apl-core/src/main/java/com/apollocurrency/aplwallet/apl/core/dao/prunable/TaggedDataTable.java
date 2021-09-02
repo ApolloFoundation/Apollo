@@ -10,12 +10,12 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.PrunableDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.derived.SearchableTableInterface;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.util.db.DbUtils;
 import com.apollocurrency.aplwallet.apl.core.entity.prunable.TaggedData;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
@@ -56,8 +56,10 @@ public class TaggedDataTable extends PrunableDbTable<TaggedData> implements Sear
                            BlockchainConfig blockchainConfig,
                            DatabaseManager databaseManager,
                            PropertiesHolder propertiesHolder,
-                           Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(DB_TABLE, taggedDataKeyFactory, true, FULL_TEXT_SEARCH_COLUMNS, databaseManager, blockchainConfig, propertiesHolder, deleteOnTrimDataEvent);
+                           Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(DB_TABLE, taggedDataKeyFactory, true,
+            FULL_TEXT_SEARCH_COLUMNS, databaseManager, blockchainConfig,
+            propertiesHolder, fullTextOperationDataEvent);
         this.dataTagDao = dataTagDao;
         this.blockchainConfig = blockchainConfig;
     }

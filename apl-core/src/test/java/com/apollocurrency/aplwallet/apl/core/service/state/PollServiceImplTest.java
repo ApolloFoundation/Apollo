@@ -8,6 +8,7 @@ import com.apollocurrency.aplwallet.apl.core.converter.rest.IteratorToStreamConv
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollResultTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.PollTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.poll.VoteTable;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.entity.state.poll.Poll;
@@ -15,7 +16,6 @@ import com.apollocurrency.aplwallet.apl.core.entity.state.poll.PollOptionResult;
 import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
-import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.MessagingPollCreation;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import org.junit.jupiter.api.BeforeEach;

@@ -9,11 +9,11 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.derived.EntityDbTable;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKey;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.db.DbClause;
 import com.apollocurrency.aplwallet.apl.util.db.DbIterator;
 import com.apollocurrency.aplwallet.apl.core.model.dex.ExchangeContract;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
-import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
 import com.apollocurrency.aplwallet.apl.core.utils.CollectionUtil;
 import com.apollocurrency.aplwallet.apl.util.exception.AplException;
 import lombok.extern.slf4j.Slf4j;
@@ -47,8 +47,9 @@ public class DexContractTable extends EntityDbTable<ExchangeContract> {
 
     @Inject
     public DexContractTable(DatabaseManager databaseManager,
-                            Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
-        super(TABLE_NAME, KEY_FACTORY, true, null, databaseManager, deleteOnTrimDataEvent);
+                            Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super(TABLE_NAME, KEY_FACTORY, true, null,
+            databaseManager, fullTextOperationDataEvent);
     }
 
     private static ExchangeContract getFirstOrNull(List<ExchangeContract> contracts) {

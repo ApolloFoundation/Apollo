@@ -11,6 +11,7 @@ import com.apollocurrency.aplwallet.apl.core.service.blockchain.BlockchainImpl;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdater;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchUpdaterImpl;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountInfoService;
 import com.apollocurrency.aplwallet.apl.data.AccountTestData;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +32,7 @@ class AccountInfoServiceTest {
     AccountTestData testData;
     private Blockchain blockchain = mock(BlockchainImpl.class);
     private AccountInfoTable accountInfoTable = mock(AccountInfoTable.class);
-    private FullTextSearchUpdater fullTextSearchUpdater = mock(FullTextSearchUpdater.class);
+    private FullTextSearchUpdater fullTextSearchUpdater = mock(FullTextSearchUpdaterImpl.class);
     private FullTextSearchService fullTextSearchService = mock(FullTextSearchService.class);
 
     @BeforeEach
