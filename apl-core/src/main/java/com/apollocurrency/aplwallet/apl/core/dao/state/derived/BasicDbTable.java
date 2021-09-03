@@ -37,16 +37,14 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
 
     protected KeyFactory<T> keyFactory;
     protected boolean multiversion;
-    private final Event<FullTextOperationData> fullTextOperationDataEvent;
 
     protected BasicDbTable(String table, KeyFactory<T> keyFactory, boolean multiversion,
                            DatabaseManager databaseManager,
                            Event<FullTextOperationData> fullTextOperationDataEvent,
                            String fullTextSearchColumns) {
-        super(table, databaseManager, fullTextSearchColumns);
+        super(table, databaseManager, fullTextOperationDataEvent, fullTextSearchColumns);
         this.keyFactory = keyFactory;
         this.multiversion = multiversion;
-        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
     }
 
     public KeyFactory<T> getDbKeyFactory() {
@@ -82,7 +80,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
              PreparedStatement pstmtSelectToDelete = con.prepareStatement("SELECT DISTINCT " + keyFactory.getPKColumns()
                  + " FROM " + table + " WHERE height > ?");
              PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table
-                 + " WHERE height > ? RETURNING db_id");
+                 + " WHERE height > ? RETURNING db_id"); // delete records and return their 'db_id' values
              PreparedStatement pstmtSetLatest = con.prepareStatement(sql)) {
             pstmtSelectToDelete.setInt(1, height);
             List<DbKey> dbKeys = new ArrayList<>();
@@ -96,8 +94,7 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
             }
 
             pstmtDelete.setInt(1, height);
-//            deletedRecordsCount = pstmtDelete.executeUpdate();
-            ResultSet deletedIds = pstmtDelete.executeQuery();
+            ResultSet deletedIds = pstmtDelete.executeQuery(); // returns deleted db_ids
 
             if (this.isSearchable() /* instanceof SearchableTableInterface */ ) {
                 FullTextOperationData operationData = new FullTextOperationData(
@@ -106,15 +103,13 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                 while (deletedIds.next()) {
                     Long deleted_db_id = deletedIds.getLong("db_id");
                     operationData.setDbIdValue(deleted_db_id);
-                    fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})
-                        .fireAsync(operationData);// TODO YL check
-//                    fullTextOperationDataEvent.fireAsync(operationData);
+                    // send data into Lucene index component
+                    super.getFullTextOperationDataEvent().select(new AnnotationLiteral<TrimEvent>() {})
+                        .fireAsync(operationData);// fire event to update FullTestSearch index for record deletion
                     ++deletedRecordsCount;
+                    log.trace("Update lucene index for '{}' at height = {}, deletedRecordsCount = {} by data :\n{}",
+                        this.table, height, deletedRecordsCount, operationData);
                 }
-                log.debug("SEARCHABLE 5.1 deleting {} at height = {}, deletedRecordsCount = {}", this.table,
-                    height, deletedRecordsCount);
-                // send data into Lucene index component
-                log.trace("Put lucene index update data = {}", operationData);
             }
             if (deletedRecordsCount > 0) {
                 log.trace("Rollback table {} deleting {} records", table, deletedRecordsCount);
@@ -141,9 +136,6 @@ public abstract class BasicDbTable<T extends DerivedEntity> extends DerivedDbTab
                         }
                     }
                 }
-            }
-            if (this.isSearchable() /* instanceof SearchableTableInterface */ ) {
-                log.debug("SEARCHABLE 5.2 deleting {} at height = {}, keysToDelete = {}", this.table, height, dbKeys);
             }
             for (DbKey dbKey : dbKeys) {
                 int i = dbKey.setPK(pstmtSetLatest, 1);

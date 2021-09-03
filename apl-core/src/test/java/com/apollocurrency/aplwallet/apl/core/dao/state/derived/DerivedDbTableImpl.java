@@ -4,18 +4,20 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
-import com.apollocurrency.aplwallet.apl.core.dao.state.derived.DerivedDbTable;
+import javax.enterprise.event.Event;
+
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.entity.model.DerivedIdEntity;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class DerivedDbTableImpl extends DerivedDbTable<DerivedIdEntity> {
-    public DerivedDbTableImpl(DatabaseManager databaseManager) {
-        super("derived_entity",databaseManager, null);
+    public DerivedDbTableImpl(DatabaseManager databaseManager, Event<FullTextOperationData> fullTextOperationDataEvent) {
+        super("derived_entity",databaseManager, fullTextOperationDataEvent, null);
     }
 
     @Override

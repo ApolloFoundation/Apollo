@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.sql.SQLException;
 import java.util.List;
@@ -62,7 +63,8 @@ class AccountGuaranteedBalanceTableTest extends DbContainerBaseTest {
     @Test
     void trim() throws SQLException {
         doReturn(10).when(propertiesHolder).BATCH_COMMIT_SIZE();
-        table = new AccountGuaranteedBalanceTable(blockchainConfig, propertiesHolder, dbExtension.getDatabaseManager());
+        table = new AccountGuaranteedBalanceTable(blockchainConfig,
+            propertiesHolder, dbExtension.getDatabaseManager(), mock(Event.class));
 
         long sizeAll = table.getAllByDbId(0, Integer.MAX_VALUE, Long.MAX_VALUE).getValues().size();
         assertEquals(testData.ALL_BALANCES.size(), sizeAll);

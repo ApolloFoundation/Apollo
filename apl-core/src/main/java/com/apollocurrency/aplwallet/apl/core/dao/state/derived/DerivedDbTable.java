@@ -20,9 +20,16 @@
 
 package com.apollocurrency.aplwallet.apl.core.dao.state.derived;
 
+import static com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextConfig.DEFAULT_SCHEMA;
+
+import javax.enterprise.event.Event;
+import javax.enterprise.util.AnnotationLiteral;
+
+import com.apollocurrency.aplwallet.apl.core.app.observer.events.TrimEvent;
 import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.DbKey;
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.derived.DerivedEntity;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextOperationData;
 import com.apollocurrency.aplwallet.apl.util.StringValidator;
 import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
 import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
@@ -47,13 +54,16 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
     protected final DatabaseManager databaseManager;
     @Getter
     private final String fullTextSearchColumns;
+    private final Event<FullTextOperationData> fullTextOperationDataEvent;
 
     protected DerivedDbTable(String table,
                              DatabaseManager databaseManager,
+                             Event<FullTextOperationData> fullTextOperationDataEvent,
                              String fullTextSearchColumns) {
         StringValidator.requireNonBlank(table, "Table name");
         this.table = table;
         this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager is NULL");
+        this.fullTextOperationDataEvent = fullTextOperationDataEvent;
         this.fullTextSearchColumns = fullTextSearchColumns;
     }
 
@@ -72,17 +82,40 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
             throw new IllegalStateException("Not in transaction");
         }
         int rc;
+        int deletedRecordsCount = 0;
         try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ?")) {
+             // delete records and return their 'db_id' values
+             PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + table + " WHERE height > ? RETURNING db_id")) {
             pstmtDelete.setInt(1, height);
-            rc = pstmtDelete.executeUpdate();
+            ResultSet deletedIds = pstmtDelete.executeQuery();
             if (this.isSearchable() /* instanceof SearchableTableInterface */ ) {
-                log.debug("SEARCHABLE 6. deleting {}, deletedRecordsCount = {} at height = {}", this.table, rc, height);
+                FullTextOperationData operationData = new FullTextOperationData(
+                    DEFAULT_SCHEMA, this.table, Thread.currentThread().getName());
+                operationData.setOperationType(FullTextOperationData.OperationType.DELETE);
+
+                while (deletedIds.next()) {
+                    Long deleted_db_id = deletedIds.getLong("db_id");
+                    operationData.setDbIdValue(deleted_db_id);
+
+                    fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})
+                        .fireAsync(operationData);// fire event to update FullTestSearch index for record deletion
+                    ++deletedRecordsCount;
+                    log.debug("Update lucene index for '{}' at height = {}, deletedRecordsCount = {} by data :\n{}",
+                        this.table, height, deletedRecordsCount, operationData);
+                }
+            } else {
+                while (deletedIds.next()) {
+                    Long deleted_db_id = deletedIds.getLong("db_id");
+                    log.trace("Deleted '{}' at height = {}, db_id = {}", this.table, height, deleted_db_id);
+                    ++deletedRecordsCount;
+                }
+                log.debug("Deleted '{}' at height = {}, deletedRecordsCount = {}",
+                    this.table, height, deletedRecordsCount);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e.toString(), e);
         }
-        return rc;
+        return deletedRecordsCount;
     }
 
     @Override
@@ -235,5 +268,9 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
 
     public boolean isSearchable() {
         return fullTextSearchColumns != null && !fullTextSearchColumns.isEmpty();
+    }
+
+    public Event<FullTextOperationData> getFullTextOperationDataEvent() {
+        return fullTextOperationDataEvent;
     }
 }
