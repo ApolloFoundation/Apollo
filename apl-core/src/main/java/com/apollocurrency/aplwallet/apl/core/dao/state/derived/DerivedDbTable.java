@@ -100,7 +100,7 @@ public abstract class DerivedDbTable<T extends DerivedEntity> implements Derived
                     fullTextOperationDataEvent.select(new AnnotationLiteral<TrimEvent>() {})
                         .fireAsync(operationData);// fire event to update FullTestSearch index for record deletion
                     ++deletedRecordsCount;
-                    log.debug("Update lucene index for '{}' at height = {}, deletedRecordsCount = {} by data :\n{}",
+                    log.trace("Update lucene index for '{}' at height = {}, deletedRecordsCount = {} by data :\n{}",
                         this.table, height, deletedRecordsCount, operationData);
                 }
             } else {
