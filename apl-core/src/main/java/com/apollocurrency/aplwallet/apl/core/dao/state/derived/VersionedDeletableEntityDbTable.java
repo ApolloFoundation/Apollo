@@ -48,21 +48,15 @@ public abstract class VersionedDeletableEntityDbTable<T extends VersionedDerived
         if (!dataSource.isInTransaction()) {
             throw new IllegalStateException("Not in transaction");
         }
-        if (this.isSearchable() /* instanceof SearchableTableInterface */ ) {
-            log.debug("SEARCHABLE 1. deleting {} by dbId = {} at height/height = {}/{}", this.table, t.getDbId(), t.getHeight(), height);
-        }
         KeyFactory<T> keyFactory = getDbKeyFactory();
         DbKey dbKey = keyFactory.newKey(t);
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmtCount = con.prepareStatement("SELECT db_id FROM " + table
-                 + keyFactory.getPKClause() + " AND height < ? ORDER BY db_id DESC LIMIT 1");
+                 + keyFactory.getPKClause() + " AND height < ? ORDER BY db_id DESC LIMIT 1")
         ) {
             int i = dbKey.setPK(pstmtCount);
             pstmtCount.setInt(i, height);
             try (ResultSet rs = pstmtCount.executeQuery()) {
-                if (this.isSearchable() /* instanceof Searchable */ ) {
-                    log.debug("SEARCHABLE 2. deleting {} by dbId = {} at height = {}", this.table, t.getDbId(), t.getHeight());
-                }
                 if (rs.next()) {
                     long dbId = rs.getLong(1);
                     try (
