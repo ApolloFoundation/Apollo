@@ -1220,7 +1220,7 @@ public class BlockchainProcessorImpl implements BlockchainProcessor {
         Block previousBlock = blockchain.deleteBlocksFrom(block.getId()); // load block data
         blockchain.setLastBlock(previousBlock);
         blockEvent.select(literal(BlockEventType.BLOCK_POPPED)).fire(block);
-        return previousBlock;
+        return block;
     }
 
     private void popOffWithRescan(int height) {
