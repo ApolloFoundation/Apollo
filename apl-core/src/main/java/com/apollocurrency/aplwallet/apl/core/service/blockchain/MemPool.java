@@ -188,7 +188,8 @@ public class MemPool {
         return streamConverter.apply(table.getAll(from, to)).map(toModelConverter);
     }
 
-    public void addProcessLater(UnconfirmedTransaction unconfirmedTransaction) {
+    public void processLater(UnconfirmedTransaction unconfirmedTransaction) {
+        removedTransactions.invalidate(unconfirmedTransaction.getId());
         memoryState.processLater(unconfirmedTransaction);
     }
 
