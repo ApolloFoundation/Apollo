@@ -98,12 +98,12 @@ public class BlockchainConfigTest {
     void testInitBlockchainConfigForCurrencySellTxs() {
         blockchainConfig.updateChain(chain);
 
-        assertTrue(blockchainConfig.isCurrencySellTx(1000), "Transaction with id 1000 should be a currency sell tx");
-        assertTrue(blockchainConfig.isCurrencySellTx(-1), "Transaction with id -1 should be a currency sell tx");
+        assertTrue(blockchainConfig.isTotalAmountOverflowTx(1000), "Transaction with id 1000 should be a currency sell tx");
+        assertTrue(blockchainConfig.isTotalAmountOverflowTx(-1), "Transaction with id -1 should be a currency sell tx");
 
-        chain.setCurrencySellTxs(null);
+        chain.setTotalAmountOverflowTxs(null);
 
-        assertFalse(blockchainConfig.isCurrencySellTx(1000), "Transaction with id 1000 should not be a currency " +
+        assertFalse(blockchainConfig.isTotalAmountOverflowTx(1000), "Transaction with id 1000 should not be a currency " +
             "sell tx after chain sell tx cleanup");
     }
 

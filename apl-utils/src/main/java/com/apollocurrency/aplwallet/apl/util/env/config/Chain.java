@@ -44,7 +44,7 @@ public class Chain {
     private long oneAPL;
     private FeaturesHeightRequirement featuresHeightRequirement;
     private Set<Integer> currencyIssuanceHeights;
-    private Set<String> currencySellTxs;
+    private Set<String> totalAmountOverflowTxs;
     private Map<Integer, BlockchainProperties> blockchainProperties;
 
     @JsonCreator
@@ -83,7 +83,7 @@ public class Chain {
      * @param featuresHeightRequirement config to enable different features by height
      * @param currencyIssuanceHeights heights of the currency issuance transactions,
      *                                which were correct by the old broken currency re-issuance validation logic
-     * @param currencySellTxs unsigned ids of the currency sell transactions, which should not be validated early by total order
+     * @param totalAmountOverflowTxs unsigned ids of the currency sell transactions, which should not be validated early by total order
      *                        amount overflow of {@link Long} java type limits until new validation rules accepted
      */
     public Chain(UUID chainId,
@@ -101,7 +101,7 @@ public class Chain {
                  List<BlockchainProperties> blockchainProperties,
                  FeaturesHeightRequirement featuresHeightRequirement,
                  Set<Integer> currencyIssuanceHeights,
-                 Set<String> currencySellTxs
+                 Set<String> totalAmountOverflowTxs
     ) {
         this.chainId = chainId;
         this.active = active;
@@ -124,18 +124,18 @@ public class Chain {
                         (oldValue, newValue) -> oldValue, LinkedHashMap::new));
         this.featuresHeightRequirement = featuresHeightRequirement;
         this.currencyIssuanceHeights = currencyIssuanceHeights;
-        this.currencySellTxs = currencySellTxs;
+        this.totalAmountOverflowTxs = totalAmountOverflowTxs;
     }
 
     public Chain() {
     }
 
-    public Set<String> getCurrencySellTxs() {
-        return currencySellTxs;
+    public Set<String> getTotalAmountOverflowTxs() {
+        return totalAmountOverflowTxs;
     }
 
-    public void setCurrencySellTxs(Set<String> currencySellTxs) {
-        this.currencySellTxs = currencySellTxs;
+    public void setTotalAmountOverflowTxs(Set<String> currencySellTxs) {
+        this.totalAmountOverflowTxs = currencySellTxs;
     }
 
     public FeaturesHeightRequirement getFeaturesHeightRequirement() {
@@ -256,7 +256,7 @@ public class Chain {
             name, description, symbol, prefix, project, initialSupply, decimals,
             blockchainPropertiesCopy, featuresHeightRequirement != null ? featuresHeightRequirement.copy() : null,
             currencyIssuanceHeights == null ? null : new HashSet<>(currencyIssuanceHeights),
-            currencySellTxs == null ? null : new HashSet<>(currencySellTxs));
+            totalAmountOverflowTxs == null ? null : new HashSet<>(totalAmountOverflowTxs));
     }
 
     @JsonGetter("blockchainProperties")

@@ -107,11 +107,11 @@ class MSExchangeTransactionTypeTest {
     void doStateIndepedentValidation_CurrencySellTxIsChosenByConfigToSkipStrictOverflowValidation_OK() throws AplException.ValidationException {
         doReturn(new TestMSExchangeAttachment(1L, 10L, Long.MAX_VALUE)).when(tx).getAttachment();
         when(tx.getId()).thenReturn(1000L);
-        when(blockchainConfig.isCurrencySellTx(1000L)).thenReturn(true);
+        when(blockchainConfig.isTotalAmountOverflowTx(1000L)).thenReturn(true);
 
         type.doStateIndependentValidation(tx);
 
-        verify(blockchainConfig).isCurrencySellTx(1000L);
+        verify(blockchainConfig).isTotalAmountOverflowTx(1000L);
         verifyNoMoreInteractions(blockchainConfig);
     }
 
@@ -125,7 +125,7 @@ class MSExchangeTransactionTypeTest {
 
         assertEquals("Result of multiplying x=10, y=9223372036854775807 exceeds the allowed range " +
             "[-9223372036854775808;9223372036854775807], transaction='null', type='null', sender='0'", ex.getMessage());
-        verify(blockchainConfig).isCurrencySellTx(0);
+        verify(blockchainConfig).isTotalAmountOverflowTx(0);
         verifyNoMoreInteractions(blockchainConfig);
     }
 

@@ -34,7 +34,7 @@ public abstract class MSExchangeTransactionType extends MSTransactionType {
         if (attachment.getRateATM() <= 0 || attachment.getUnits() == 0) {
             throw new AplException.NotValidException("Invalid exchange: " + attachment.getJSONObject());
         }
-        if (!getBlockchainConfig().isCurrencySellTx(transaction.getId())) {
+        if (!getBlockchainConfig().isTotalAmountOverflowTx(transaction.getId())) {
             long orderTotalATM = Convert2.safeMultiply(attachment.getRateATM(), attachment.getUnits(), transaction);
             long maxBalanceATM = getBlockchainConfig().getCurrentConfig().getMaxBalanceATM();
             if (orderTotalATM > maxBalanceATM) {
