@@ -62,7 +62,7 @@ public class BlockchainConfigTest {
         "Test",
         10000L, 2,
             //"data.json",
-        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100), Set.of(20, 21, 25, 26));
+        BLOCKCHAIN_PROPERTIES, new FeaturesHeightRequirement(100, 100, 100), Set.of(20, 21, 25, 26), Set.of("1000", "18446744073709551615"));
     @Inject
     BlockchainConfig blockchainConfig;
     @Inject
@@ -92,6 +92,19 @@ public class BlockchainConfigTest {
 
         chain.setFeaturesHeightRequirement(new FeaturesHeightRequirement());
         assertNull(blockchainConfig.getDexPendingOrdersReopeningHeight());
+    }
+
+    @Test
+    void testInitBlockchainConfigForCurrencySellTxs() {
+        blockchainConfig.updateChain(chain);
+
+        assertTrue(blockchainConfig.isTotalAmountOverflowTx(1000), "Transaction with id 1000 should be a currency sell tx");
+        assertTrue(blockchainConfig.isTotalAmountOverflowTx(-1), "Transaction with id -1 should be a currency sell tx");
+
+        chain.setTotalAmountOverflowTxs(null);
+
+        assertFalse(blockchainConfig.isTotalAmountOverflowTx(1000), "Transaction with id 1000 should not be a currency " +
+            "sell tx after chain sell tx cleanup");
     }
 
     @Test
