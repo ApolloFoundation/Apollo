@@ -5,9 +5,10 @@
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.event;
 
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractEventService;
+import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.blockchain.event.ContractEventManagerFactory;
-import com.apollocurrency.smc.blockchain.event.LogInfoContractEventManager;
 import com.apollocurrency.smc.contract.vm.ContractEventManager;
+import com.apollocurrency.smc.contract.vm.event.LogInfoContractEventManager;
 import com.apollocurrency.smc.data.type.Address;
 
 import javax.inject.Inject;
@@ -20,14 +21,16 @@ import javax.inject.Singleton;
 public class SmcContractEventManagerClassFactory {
     private static final ContractEventManagerFactory MOCK_EVENT_MANAGER_FACTORY = new MockContractEventManagerFactory();
     private final SmcContractEventService contractEventService;
+    private final HashSumProvider hashSumProvider;
 
     @Inject
-    public SmcContractEventManagerClassFactory(SmcContractEventService contractEventService) {
+    public SmcContractEventManagerClassFactory(HashSumProvider hashSumProvider, SmcContractEventService contractEventService) {
         this.contractEventService = contractEventService;
+        this.hashSumProvider = hashSumProvider;
     }
 
     public ContractEventManagerFactory createEventManagerFactory(Address transaction) {
-        return new PersistentContractEventManagerFactory(transaction, contractEventService);
+        return new PersistentContractEventManagerFactory(transaction, hashSumProvider, contractEventService);
     }
 
     public ContractEventManagerFactory createMockEventManagerFactory() {
@@ -37,15 +40,17 @@ public class SmcContractEventManagerClassFactory {
     private static class PersistentContractEventManagerFactory implements ContractEventManagerFactory {
         private final Address transaction;
         private final SmcContractEventService contractEventService;
+        private final HashSumProvider hashSumProvider;
 
-        public PersistentContractEventManagerFactory(Address transaction, SmcContractEventService contractEventService) {
+        public PersistentContractEventManagerFactory(Address transaction, HashSumProvider hashSumProvider, SmcContractEventService contractEventService) {
             this.transaction = transaction;
             this.contractEventService = contractEventService;
+            this.hashSumProvider = hashSumProvider;
         }
 
         @Override
         public ContractEventManager create(Address contract) {
-            return new SmcContractEventManager(contract, transaction, contractEventService);
+            return new AplContractEventManager(contract, transaction, hashSumProvider, contractEventService);
         }
     }
 

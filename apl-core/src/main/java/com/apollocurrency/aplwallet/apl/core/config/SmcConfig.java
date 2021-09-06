@@ -6,7 +6,8 @@ package com.apollocurrency.aplwallet.apl.core.config;
 
 import com.apollocurrency.aplwallet.apl.crypto.Convert;
 import com.apollocurrency.aplwallet.apl.crypto.Crypto;
-import com.apollocurrency.smc.blockchain.crypt.CryptoLibProvider;
+import com.apollocurrency.smc.blockchain.crypt.Digest;
+import com.apollocurrency.smc.blockchain.crypt.DigestWrapper;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.polyglot.LanguageContext;
 import com.apollocurrency.smc.polyglot.LanguageContextFactory;
@@ -50,6 +51,11 @@ public class SmcConfig {
     public HashSumProvider createHashSumProvider() {
         return new HashSumProvider() {
             @Override
+            public Digest sha256() {
+                return new DigestWrapper(Crypto.sha256());
+            }
+
+            @Override
             public byte[] sha256(byte[] input) {
                 return Crypto.sha256().digest(input);
             }
@@ -60,6 +66,11 @@ public class SmcConfig {
             }
 
             @Override
+            public Digest sha3() {
+                return new DigestWrapper(Crypto.sha3());
+            }
+
+            @Override
             public byte[] sha3(byte[] input) {
                 return Crypto.sha3().digest(input);
             }
@@ -67,47 +78,6 @@ public class SmcConfig {
             @Override
             public String sha3(String input) {
                 return Convert.toHexString(Crypto.sha3().digest(Convert.toBytes(input)));
-            }
-        };
-    }
-
-    @Produces
-    @ApplicationScoped
-    public CryptoLibProvider createCryptoLibProvider() {
-        return new CryptoLibProvider() {
-            @Override
-            public byte[] getPublicKey(byte[] secretPhrase, byte[] nonce, byte[] salt) {
-                return Crypto.getPublicKey(Crypto.getKeySeed(secretPhrase, nonce, salt));
-            }
-
-            @Override
-            public byte[] getKeySeed(byte[] secretPhrase, byte[] nonce, byte[] salt) {
-                return Crypto.getKeySeed(secretPhrase, nonce, salt);
-            }
-
-            @Override
-            public byte[] getPublicKey(byte[] secretPhrase) {
-                return Crypto.getPublicKey(Crypto.sha256().digest(secretPhrase));
-            }
-
-            @Override
-            public boolean verify(byte[] signature, byte[] message, byte[] publicKey) {
-                return Crypto.verify(signature, message, publicKey);
-            }
-
-            @Override
-            public byte[] sign(String message, byte[] secretPhrase) {
-                return Crypto.sign(Convert.toBytes(message), Crypto.sha256().digest(secretPhrase));
-            }
-
-            @Override
-            public byte[] sign(byte[] message, byte[] secretPhrase) {
-                return Crypto.sign(message, Crypto.sha256().digest(secretPhrase));
-            }
-
-            @Override
-            public String generateAccount(String secretPhrase) {
-                return Convert.defaultRsAccount(Convert.getId(Crypto.getPublicKey(secretPhrase)));
             }
         };
     }

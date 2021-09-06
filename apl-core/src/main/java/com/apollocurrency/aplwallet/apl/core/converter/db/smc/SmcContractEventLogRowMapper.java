@@ -15,7 +15,7 @@ public class SmcContractEventLogRowMapper implements RowMapper<SmcContractEventL
         long eventId = rs.getLong("event_id");
         long transactionId = rs.getLong("transaction_id");
         byte[] signature = rs.getBytes("signature");
-        String entry = rs.getString("entry");
+        String entry = rs.getString("state");
         int txIdx = rs.getByte("tx_idx");
 
         int height = rs.getInt("height");

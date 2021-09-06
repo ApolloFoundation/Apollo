@@ -106,13 +106,13 @@ public class SmcContractEventLogTable extends DerivedDbTable<SmcContractEventLog
      */
     private void save(Connection con, SmcContractEventLogEntry logEntry) throws SQLException {
         try (final PreparedStatement stmt = con.prepareStatement("INSERT INTO " + TABLE_NAME +
-            " (event_id, transaction_id, signature, entry, tx_idx, height) " +
-            "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+            " (event_id, transaction_id, signature, state, tx_idx, height) " +
+            "VALUES(?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
-            stmt.setLong(++i, logEntry.getLogId());
+            stmt.setLong(++i, logEntry.getEventId());
             stmt.setLong(++i, logEntry.getTransactionId());
             stmt.setBytes(++i, logEntry.getSignature());
-            stmt.setString(++i, logEntry.getEntry());
+            stmt.setString(++i, logEntry.getState());
             stmt.setInt(++i, logEntry.getTxIdx());
             stmt.setInt(++i, logEntry.getHeight());
             stmt.executeUpdate();

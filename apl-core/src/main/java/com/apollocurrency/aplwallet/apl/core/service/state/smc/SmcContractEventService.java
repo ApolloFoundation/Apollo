@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc;
 
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.event.SmcContractEvent;
+import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractEvent;
 
 
 /**
@@ -17,5 +17,5 @@ public interface SmcContractEventService {
      *
      * @param event the emitted event
      */
-    void saveEvent(SmcContractEvent event);
+    void saveEvent(AplContractEvent event);
 }

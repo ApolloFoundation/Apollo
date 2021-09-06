@@ -38,7 +38,7 @@ public class SmcContractEventTable extends EntityDbTable<SmcContractEventEntity>
             return entity.getDbKey();
         }
     };
-    private static final String TABLE_NAME = "smc_event_type";
+    private static final String TABLE_NAME = "smc_event";
 
     private static final SmcContractEventRowMapper MAPPER = new SmcContractEventRowMapper(KEY_FACTORY);
 
@@ -66,7 +66,7 @@ public class SmcContractEventTable extends EntityDbTable<SmcContractEventEntity>
     @Override
     public void save(Connection con, SmcContractEventEntity eventEntity) throws SQLException {
         try (final PreparedStatement stmt = con.prepareStatement("INSERT INTO " + TABLE_NAME +
-            " (id, transaction_id, address, signature, name, idx_count, is_anonymous, height) " +
+            " (id, transaction_id, contract, signature, name, idx_count, is_anonymous, height) " +
             "VALUES(?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             stmt.setLong(++i, eventEntity.getId());

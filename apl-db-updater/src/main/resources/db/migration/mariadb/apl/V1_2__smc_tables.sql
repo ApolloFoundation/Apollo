@@ -2,7 +2,7 @@
  * Copyright (c) 2021. Apollo Foundation.
  */
 
-CREATE TABLE IF NOT EXISTS `smc_event_type`
+CREATE TABLE IF NOT EXISTS `smc_event`
 (
     `db_id`          bigint(20) unsigned                     NOT NULL AUTO_INCREMENT,
     `id`             bigint(20)                              NOT NULL, # event id
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `smc_event_log`
     `event_id`       bigint(20)                          NOT NULL, # event id
     `transaction_id` bigint(20)                          NOT NULL, # transaction id
     `signature`      binary(32)                          NOT NULL, # hash(name+idxCount)
-    `entry`          LONGTEXT COLLATE utf8mb4_unicode_ci NOT NULL, # serialized object
+    `state`          LONGTEXT COLLATE utf8mb4_unicode_ci NOT NULL, # serialized object
     `tx_idx`         int(11)                             NOT NULL, # sequence number in transaction, the first is 0
     `height`         int(11)                             NOT NULL,
     UNIQUE KEY `db_id` (`db_id`),
