@@ -230,10 +230,12 @@ public class TransactionProcessorImpl implements TransactionProcessor {
 
     @Override
     public void processLater(Collection<Transaction> transactions) {
+        log.debug("Process later transactions: {}", transactions.stream().map(Transaction::getStringId).collect(Collectors.joining(",")));
         long currentTime = timeService.systemTimeMillis();
         List<Transaction> toProcessLater = new ArrayList<>();
         for (Transaction transaction : transactions) {
             if (blockchain.hasTransaction(transaction.getId())) {
+                log.warn("Transaction {} is already in the blockchain, will not process later", transaction.getStringId());
                 continue;
             }
             log.trace("Process later tx {}", transaction.getId());
