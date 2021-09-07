@@ -11,6 +11,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import static com.apollocurrency.smc.util.HexUtils.toHex;
+
 /**
  * @author andrew.zinchenko@gmail.com
  */
@@ -39,5 +41,17 @@ public class SmcContractEventLogEntry extends DerivedEntity {
         this.signature = signature;
         this.state = state;
         this.txIdx = txIdx;
+    }
+
+    public String getLogInfo() {
+        return "SmcContractEventLogEntry{" +
+            "logId=" + logId +
+            ", eventId=" + eventId +
+            ", transactionId=" + transactionId +
+            ", signature=" + toHex(signature) +
+            ", state='" + state + '\'' +
+            ", txIdx=" + txIdx +
+            ", height=" + getHeight() +
+            "} " + super.toString();
     }
 }

@@ -31,6 +31,7 @@ import com.apollocurrency.smc.polyglot.JSRequirementException;
 import com.apollocurrency.smc.polyglot.JSRevertException;
 import com.apollocurrency.smc.polyglot.PolyglotException;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
+import com.apollocurrency.smc.polyglot.engine.InternalNotRecoverableException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
@@ -150,6 +151,11 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
         } catch (JSAssertionException e) {
             log.info("Assertion exception Contract={}, charged all fee={}", smartContract.getAddress(), smartContract.getFuel().fee());
             throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
+        } catch (InternalNotRecoverableException e) {
+            log.error(executionLog.toJsonString());
+            log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n", e);
+            e.printStackTrace();
+            System.exit(1);
         } catch (PolyglotException e) {
             log.error(executionLog.toJsonString());
             throw new AplTransactionExecutionException(e.getMessage(), e, transaction);

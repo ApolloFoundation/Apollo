@@ -223,7 +223,7 @@ public class SmcBlockchainIntegratorFactory {
             this.txLogProcessor = txLogProcessor;
             this.txLog = new ArrayTxLog(new AplAddress(originatorTransactionId), contract);
             this.cachedMappingRepositories = new HashSet<>();
-            this.eventManagerFactory = smcContractEventManagerClassFactory.createEventManagerFactory(currentTransaction);
+            this.eventManagerFactory = smcContractEventManagerClassFactory.createEventManagerFactory(currentTransaction, txLog);
         }
 
         @Override

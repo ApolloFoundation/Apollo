@@ -10,9 +10,6 @@ import com.apollocurrency.aplwallet.apl.core.dao.state.keyfactory.LongKeyFactory
 import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
 import com.apollocurrency.aplwallet.apl.core.entity.state.smc.SmcContractEventEntity;
 import com.apollocurrency.aplwallet.apl.core.shard.observer.DeleteOnTrimData;
-import com.apollocurrency.aplwallet.apl.util.annotation.DatabaseSpecificDml;
-import com.apollocurrency.aplwallet.apl.util.annotation.DmlMarker;
-import com.apollocurrency.aplwallet.apl.util.db.TransactionalDataSource;
 import com.apollocurrency.aplwallet.apl.util.injectable.PropertiesHolder;
 
 import javax.enterprise.event.Event;
@@ -43,7 +40,6 @@ public class SmcContractEventTable extends EntityDbTable<SmcContractEventEntity>
     private static final SmcContractEventRowMapper MAPPER = new SmcContractEventRowMapper(KEY_FACTORY);
 
     private final PropertiesHolder propertiesHolder;
-    private final int batchCommitSize;
 
     /**
      * Create the Smc Contract Event Type table
@@ -53,7 +49,6 @@ public class SmcContractEventTable extends EntityDbTable<SmcContractEventEntity>
                                  Event<DeleteOnTrimData> deleteOnTrimDataEvent) {
         super(TABLE_NAME, KEY_FACTORY, false, null, databaseManager, deleteOnTrimDataEvent);
         this.propertiesHolder = propertiesHolder;
-        this.batchCommitSize = propertiesHolder.BATCH_COMMIT_SIZE();
     }
 
     @Override
@@ -83,24 +78,6 @@ public class SmcContractEventTable extends EntityDbTable<SmcContractEventEntity>
                     eventEntity.setDbId(rs.getLong(1));
                 }
             }
-        }
-    }
-
-    @Override
-    public void trim(int height) {
-        TransactionalDataSource dataSource = getDatabaseManager().getDataSource();
-        try (Connection con = dataSource.getConnection();
-             @DatabaseSpecificDml(DmlMarker.DELETE_WITH_LIMIT)
-             PreparedStatement pstmtDelete = con.prepareStatement("DELETE FROM " + TABLE_NAME
-                 + " WHERE height < ? AND height >= 0 LIMIT " + batchCommitSize)) {
-            pstmtDelete.setInt(1, height);
-            int count;
-            do {
-                count = pstmtDelete.executeUpdate();
-                dataSource.commit(false);
-            } while (count >= batchCommitSize);
-        } catch (SQLException e) {
-            throw new RuntimeException(e.toString(), e);
         }
     }
 

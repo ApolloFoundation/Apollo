@@ -17,7 +17,7 @@ public class SmcContractEventRowMapper extends DerivedEntityMapper<SmcContractEv
     @Override
     public SmcContractEventEntity doMap(ResultSet rs, StatementContext ctx) throws SQLException {
         long id = rs.getLong("id");
-        long address = rs.getLong("address");
+        long address = rs.getLong("contract");
         long transactionId = rs.getLong("transaction_id");
         byte[] signature = rs.getBytes("signature");
         String name = rs.getString("name");

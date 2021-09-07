@@ -68,15 +68,15 @@ public class SmcTxLogProcessor implements TxLogProcessor {
             var recipient = accountService.getAccount(data.getRecipient());
             accountService.addToBalanceAndUnconfirmedBalanceATM(sender, data.getEvent(), data.getTransaction(), -data.getValue());
             accountService.addToBalanceAndUnconfirmedBalanceATM(recipient, data.getEvent(), data.getTransaction(), data.getValue());
-            log.debug("Apply the transfer command contract={} sender={} recipient={} amount={}", header.getContract(), data.getSender(), data.getRecipient(), data.getValue());
+            log.debug("Apply the transferring command, contract={} sender={} recipient={} amount={}", header.getContract(), data.getSender(), data.getRecipient(), data.getValue());
         };
     }
 
     private RecordProcessor<EventLogRecord> createEventLogRecordProcessor() {
         return (header, data) -> {
-            log.debug("Apply the fire event command contract={} event={}", header.getContract(), data.getName());
+            contractEventService.saveEvent(data.getEvent());
+            log.debug("Apply the firing event command, contract={} event={}", header.getContract(), data.getEvent());
         };
     }
-
 
 }

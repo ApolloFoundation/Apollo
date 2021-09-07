@@ -13,6 +13,8 @@ import lombok.ToString;
 import java.util.Arrays;
 import java.util.Objects;
 
+import static com.apollocurrency.smc.util.HexUtils.toHex;
+
 /**
  * @author andrew.zinchenko@gmail.com
  */
@@ -55,5 +57,16 @@ public class SmcContractEventEntity extends DerivedEntity {
         int result = Objects.hash(super.hashCode(), id, contract, transactionId, name, idxCount, anonymous);
         result = 31 * result + Arrays.hashCode(signature);
         return result;
+    }
+
+    public String getLogInfo() {
+        return "SmcContractEventEntity{" +
+            "id=" + id +
+            ", contract=" + contract +
+            ", transactionId=" + transactionId +
+            ", signature=" + toHex(signature) +
+            ", event=" + name + ':' + idxCount + ':' + anonymous +
+            ", height" + getHeight() +
+            "} ";
     }
 }

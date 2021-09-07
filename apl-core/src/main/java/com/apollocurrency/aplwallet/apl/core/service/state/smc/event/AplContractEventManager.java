@@ -6,12 +6,13 @@ package com.apollocurrency.aplwallet.apl.core.service.state.smc.event;
 
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplAddress;
 import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractEvent;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractEventService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.EventLogRecord;
 import com.apollocurrency.aplwallet.apl.crypto.AplIdGenerator;
 import com.apollocurrency.smc.blockchain.crypt.HashSumProvider;
 import com.apollocurrency.smc.contract.vm.event.SmcContractEventManager;
 import com.apollocurrency.smc.data.type.Address;
 import com.apollocurrency.smc.data.type.ContractEvent;
+import com.apollocurrency.smc.txlog.TxLog;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
@@ -23,11 +24,8 @@ import java.math.BigInteger;
 @Slf4j
 public class AplContractEventManager extends SmcContractEventManager {
 
-    private final SmcContractEventService contractEventService;
-
-    public AplContractEventManager(Address contract, Address transaction, HashSumProvider hashSumProvider, SmcContractEventService contractEventService) {
-        super(contract, transaction, hashSumProvider);
-        this.contractEventService = contractEventService;
+    public AplContractEventManager(Address contract, Address transaction, HashSumProvider hashSumProvider, TxLog txLog) {
+        super(contract, transaction, hashSumProvider, txLog);
     }
 
     @Override
@@ -42,14 +40,19 @@ public class AplContractEventManager extends SmcContractEventManager {
             .transactionId(new AplAddress(getTransaction()).getLongId())
             .build();
 
-        contractEventService.saveEvent(smcEvent);
+        var rec = EventLogRecord.builder()
+            .event(smcEvent)
+            .build();
+
+        txLogger().append(rec);
     }
 
     protected long generateId(int eventIdx, byte[] eventSignature) {
-        var md = getHashSumProvider().sha256();
-        md.update(getTransaction().key());
-        md.update(BigInteger.valueOf(eventIdx).toByteArray());
-        var hash = md.digest(eventSignature);
+        var hash = getHashSumProvider().sha256()
+            .update(getContract().key())
+            .update(BigInteger.valueOf(eventIdx).toByteArray())
+            .digest(eventSignature);
+
         return AplIdGenerator.ACCOUNT.getIdByHash(hash).longValue();
     }
 

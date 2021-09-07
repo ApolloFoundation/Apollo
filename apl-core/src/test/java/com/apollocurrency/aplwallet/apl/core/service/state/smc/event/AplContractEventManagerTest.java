@@ -4,7 +4,8 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.event;
 
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractEventService;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog.EventLogRecord;
+import com.apollocurrency.smc.txlog.TxLog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,12 +22,12 @@ import static org.mockito.Mockito.verify;
 class AplContractEventManagerTest extends AbstractContractEventTest {
 
     @Mock
-    SmcContractEventService contractEventService;
+    TxLog txLog;
 
     @BeforeEach
     void setUp() {
         manager = spy(
-            new AplContractEventManager(contractAddress, transactionAddress, hashSumProvider, contractEventService)
+            new AplContractEventManager(contractAddress, transactionAddress, hashSumProvider, txLog)
         );
     }
 
@@ -34,9 +35,10 @@ class AplContractEventManagerTest extends AbstractContractEventTest {
     void emit() {
         //GIVEN
         var aplEvent = mockAplEvent();
+        var record = EventLogRecord.builder().event(aplEvent).build();
         //WHEN
         manager.emit(eventType, 1, 2, 3);
         //THEN
-        verify(contractEventService).saveEvent(aplEvent);
+        verify(txLog).append(record);
     }
 }

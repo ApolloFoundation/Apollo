@@ -14,9 +14,9 @@ CREATE TABLE IF NOT EXISTS `smc_event`
     `is_anonymous`   tinyint(1)                              NOT NULL DEFAULT FALSE,
     `height`         int(11)                                 NOT NULL,
     UNIQUE KEY `db_id` (`db_id`),
-    UNIQUE KEY `smc_event_log_contract_signature_height_idx` (`contract`, `signature`, `height`),
-    KEY `smc_event_log_id_height_idx` (`id`, `height`),
-    KEY `smc_event_log_height_idx` (`height`)
+    KEY `smc_event_contract_signature_height_idx` (`contract`, `signature`, `height`),
+    KEY `smc_event_id_height_idx` (`id`, `height`),
+    KEY `smc_event_height_idx` (`height`)
 ) ENGINE = ROCKSDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS `smc_event_log`
     `tx_idx`         int(11)                             NOT NULL, # sequence number in transaction, the first is 0
     `height`         int(11)                             NOT NULL,
     UNIQUE KEY `db_id` (`db_id`),
-    KEY `smc_event_log_id_idx` (`event_id`, `db_id`),
+    KEY `smc_event_log_id_height_idx` (`event_id`, `db_id`, `height`),
     KEY `smc_event_log_height_idx` (`height`)
 ) ENGINE = ROCKSDB
   DEFAULT CHARSET = utf8mb4

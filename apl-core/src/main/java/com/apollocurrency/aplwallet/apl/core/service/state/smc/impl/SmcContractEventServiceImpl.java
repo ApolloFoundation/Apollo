@@ -18,6 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import static com.apollocurrency.smc.util.HexUtils.toHex;
+
 /**
  * @author andrew.zinchenko@gmail.com
  */
@@ -51,13 +53,15 @@ public class SmcContractEventServiceImpl implements SmcContractEventService {
         var logEntry = logEntryConverter.convert(event);
         logEntry.setHeight(blockchain.getHeight());
 
-        log.debug("Save the contract event at height {}, event={}, log={}", eventEntity.getHeight(), eventEntity, logEntry);
-
+        log.debug("Save contract event at height {}, event={}", eventEntity.getHeight(), eventEntity.getLogInfo());
+        log.debug("Check if exists, contract={} name={} signature={}", eventEntity.getContract(), eventEntity.getName(), toHex(eventEntity.getSignature()));
         var oldEvent = contractEventTable.get(contractEventTable.getDbKeyFactory().newKey(eventEntity));
         if (oldEvent == null || oldEvent.isNew()) {
+            log.debug("Insert new event contract={} name={} signature={}", eventEntity.getContract(), eventEntity.getName(), toHex(eventEntity.getSignature()));
             //save the new contract event type
             contractEventTable.insert(eventEntity);
         }
+        log.debug("Insert contract event log at height {}, log={}", eventEntity.getHeight(), logEntry.getLogInfo());
         contractEventLogTable.insert(logEntry);
     }
 }
