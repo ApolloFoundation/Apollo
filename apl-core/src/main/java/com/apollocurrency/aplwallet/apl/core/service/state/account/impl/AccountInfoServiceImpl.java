@@ -138,7 +138,7 @@ public class AccountInfoServiceImpl implements AccountInfoService {
                 index++;
             }
             inRange.append(")");
-            log.debug("{}", inRange.toString());
+            log.trace("Found [{}] DB_IDs in Lucene, {}", index, inRange);
         } catch (SQLException e) {
             log.error("FTS failed", e);
             throw new RuntimeException(e);
