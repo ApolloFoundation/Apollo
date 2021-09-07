@@ -11,6 +11,8 @@ import com.apollocurrency.aplwallet.api.dto.utils.QrDecodeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.QrEncodeDto;
 import com.apollocurrency.aplwallet.api.dto.utils.RsConvertDto;
 import com.apollocurrency.aplwallet.apl.core.chainid.BlockchainConfig;
+import com.apollocurrency.aplwallet.apl.core.db.DatabaseManager;
+import com.apollocurrency.aplwallet.apl.core.service.fulltext.FullTextSearchService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jboss.resteasy.mock.MockDispatcherFactory;
@@ -31,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 class UtilsControllerTest {
     private static ObjectMapper mapper = new ObjectMapper();
@@ -48,7 +51,8 @@ class UtilsControllerTest {
     @BeforeEach
     void setup() {
         dispatcher = MockDispatcherFactory.createDispatcher();
-        UtilsController controller = new UtilsController(blockchainConfig);
+        UtilsController controller = new UtilsController(blockchainConfig,
+            mock(DatabaseManager.class), mock(FullTextSearchService.class));
         dispatcher.getRegistry().addSingletonResource(controller);
         doReturn("APL").when(blockchainConfig).getAccountPrefix();
     }

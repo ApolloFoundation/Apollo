@@ -813,7 +813,7 @@ public final class HttpParameterParserUtil {
             throw new ParameterException(missing("query", "tag"));
         }
         if (!tags.isEmpty()) {
-            StringJoiner stringJoiner = new StringJoiner(" AND TAGS:", "TAGS:", "");
+            StringJoiner stringJoiner = new StringJoiner(" AND tags:", "tags:", "");
             for (String tag : Search.parseTags(tags, 0, Integer.MAX_VALUE, Integer.MAX_VALUE)) {
                 stringJoiner.add(tag);
             }

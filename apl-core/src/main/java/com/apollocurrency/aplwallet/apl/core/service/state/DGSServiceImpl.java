@@ -558,7 +558,7 @@ public class DGSServiceImpl implements DGSService {
             DEFAULT_SCHEMA, goodsTable.getTableName(), Thread.currentThread().getName());
         operationData.setOperationType(operationType);
         operationData.setDbIdValue(goods.getDbId());
-        operationData.addColumnData(goods.getName()).addColumnData(goods.getDescription());
+        operationData.addColumnData(goods.getName()).addColumnData(goods.getDescription()).addColumnData(goods.getTags());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
         fullTextSearchUpdater.putFullTextOperationData(operationData);

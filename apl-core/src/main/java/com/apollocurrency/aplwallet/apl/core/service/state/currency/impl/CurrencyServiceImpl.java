@@ -617,7 +617,7 @@ public class CurrencyServiceImpl implements CurrencyService {
             DEFAULT_SCHEMA, currencyTable.getTableName(), Thread.currentThread().getName());
         operationData.setOperationType(operationType);
         operationData.setDbIdValue(currency.getDbId());
-        operationData.addColumnData(currency.getName()).addColumnData(currency.getDescription());
+        operationData.addColumnData(currency.getCode()).addColumnData(currency.getName()).addColumnData(currency.getDescription());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
         fullTextSearchUpdater.putFullTextOperationData(operationData);

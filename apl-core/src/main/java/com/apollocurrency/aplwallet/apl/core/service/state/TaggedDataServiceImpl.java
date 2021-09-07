@@ -322,7 +322,7 @@ public class TaggedDataServiceImpl implements TaggedDataService {
             DEFAULT_SCHEMA, taggedDataTable.getTableName(), Thread.currentThread().getName());
         operationData.setOperationType(operationType);
         operationData.setDbIdValue(taggedData.getDbId());
-        operationData.addColumnData(taggedData.getName()).addColumnData(taggedData.getDescription());
+        operationData.addColumnData(taggedData.getName()).addColumnData(taggedData.getDescription()).addColumnData(taggedData.getTags());
         // send data into Lucene index component
         log.trace("Put lucene index update data = {}", operationData);
         fullTextSearchUpdater.putFullTextOperationData(operationData);

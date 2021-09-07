@@ -34,6 +34,7 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
     private final String schemaName;
     private final DatabaseManager databaseManager;
     private volatile boolean indexDeleted;
+    private volatile boolean isIndexFolderEmpty;
 
     @Inject
     public FullTextSearchServiceImpl(DatabaseManager databaseManager, FullTextSearchEngine fullTextSearchEngine,
@@ -89,9 +90,8 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
      * that enables fulltext search support
      */
     public void init() {
-        boolean isIndexFolderEmpty;
         try {
-            isIndexFolderEmpty = fullTextSearchEngine.isIndexFolderEmpty(); // first check if index is deleted manually
+            this.isIndexFolderEmpty = fullTextSearchEngine.isIndexFolderEmpty(); // first check if index is deleted manually
             log.debug("init = (isIndexFolderEmpty = {})", isIndexFolderEmpty);
             fullTextSearchEngine.init(); // some files are created by initialization
         } catch (IOException e) {
@@ -125,7 +125,9 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             //
             // We need to delete an existing Lucene index since the V3 file format is not compatible with V5
             //
-            fullTextSearchEngine.clearIndex();
+            if (!isIndexFolderEmpty) {
+                this.fullTextSearchEngine.clearIndex();
+            }
 
             //
             // Create our schema and table
@@ -146,7 +148,9 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                 }
             }
 
-            if (recordCount == 0 && this.fullTextSearchIndexedTables != null) { // skip if table if filled with initial data
+            if (recordCount == 0
+                && this.fullTextSearchIndexedTables != null
+                && this.fullTextSearchIndexedTables.size() > 0) { // skip if table if filled with initial data
                 for (String tableName : this.fullTextSearchIndexedTables.keySet()) {
                     initTableLazyIfNotPresent(conn, stmt, tableName); // try to create something if it's present
                 }
@@ -180,8 +184,10 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             if (rs.next() && rs.getLong("count") == 0) {
                 log.debug("found 0 count from " + FTL_INDEXES_TABLE + "...");
                 // insert if empty
-                stmt.execute(String.format("INSERT INTO " + FTL_INDEXES_TABLE + " VALUES('%s', '%s', '%s')",
-                    this.schemaName.toLowerCase(), tableName.toLowerCase(), indexedColumns.trim().toLowerCase()));
+                String sqlInsertIntoFts = String.format("INSERT INTO " + FTL_INDEXES_TABLE + " VALUES('%s', '%s', '%s')",
+                    this.schemaName.toLowerCase(), tableName.toLowerCase(), indexedColumns.trim().toLowerCase());
+                log.trace("sqlInsertIntoFts: {}", sqlInsertIntoFts);
+                stmt.execute(sqlInsertIntoFts);
                 reindex(conn, tableName, schemaName);
             }
             log.info("Lucene search index created for table '{}'", tableName);
@@ -240,14 +246,19 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
             sb.append(", ").append(tableData.getColumnNames().get(index));
         }
         sb.append(" FROM ").append(tableName);
+        if (!tableName.equalsIgnoreCase("poll")) { // TODO: hardcoded value, better solution is needed
+            sb.append(" WHERE latest = TRUE");
+        }
 
         boolean isIndexAppended = false;
         int insertedDocsCount = 0;
         //
         // Index each row in the table
         //
+        String sql = sb.toString();
+        log.trace("Data select for {} = {}", tableName, sql);
         try (Statement qstmt = conn.createStatement();
-             ResultSet rs = qstmt.executeQuery(sb.toString())) {
+             ResultSet rs = qstmt.executeQuery(sql)) {
             while (rs.next()) {
                 // create full text search data set for every row fetched from DB
                 FullTextOperationData operationData = new FullTextOperationData(
@@ -361,11 +372,17 @@ public class FullTextSearchServiceImpl implements FullTextSearchService {
                     throw new SQLException(UNABLE_TO_CREATE_LUCENE_SEARCH_INDEX_FOR_TABLE_MSG + table1, exc);
                 }
             }
+        } else {
+            log.warn("No columns for FTS index recreation !");
         }
     }
 
     @Override
     public boolean enabled() {
         return !indexDeleted;
+    }
+
+    public boolean isIndexFolderEmpty() {
+        return isIndexFolderEmpty;
     }
 }
