@@ -44,8 +44,6 @@ public class TxsVerificationResult {
             .stream()
             .filter(e -> !e.getValue().isVerified())
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        this.fromHeight = fromHeight;
-        this.toHeight = toHeight;
     }
 
     public boolean isVerified(long id) {

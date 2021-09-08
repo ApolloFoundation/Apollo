@@ -125,11 +125,13 @@
           <configuration>
             <useSystemClassLoader>false</useSystemClassLoader>
             <excludedGroups>${excludeTestTags}</excludedGroups>
-<!--
-            <properties>
-              <includeTags>${includeTestTags}</includeTags>
-            </properties>
--->
+            <argLine>-Xmx1024m</argLine>
+
+            <!--
+                        <properties>
+                          <includeTags>${includeTestTags}</includeTags>
+                        </properties>
+            -->
           </configuration>
           <dependencies>
             <dependency>
