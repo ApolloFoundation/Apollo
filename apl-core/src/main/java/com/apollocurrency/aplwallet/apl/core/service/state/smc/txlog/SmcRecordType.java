@@ -7,5 +7,6 @@ import com.apollocurrency.smc.txlog.RecordType;
  */
 public enum SmcRecordType implements RecordType {
     TRANSFER,
+    CREATE_EVENT_TYPE,
     FIRE_EVENT;
 }

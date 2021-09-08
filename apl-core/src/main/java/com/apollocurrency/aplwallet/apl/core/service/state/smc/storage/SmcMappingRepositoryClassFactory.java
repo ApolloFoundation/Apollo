@@ -2,9 +2,9 @@
  * Copyright (c) 2020-2021. Apollo Foundation.
  */
 
-package com.apollocurrency.aplwallet.apl.core.service.state.smc;
+package com.apollocurrency.aplwallet.apl.core.service.state.smc.storage;
 
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.storage.PersistentMappingRepository;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractStorageService;
 import com.apollocurrency.smc.blockchain.storage.AddressJsonConverter;
 import com.apollocurrency.smc.blockchain.storage.BigIntegerJsonConverter;
 import com.apollocurrency.smc.blockchain.storage.BigNumJsonConverter;

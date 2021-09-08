@@ -4,13 +4,13 @@
   <modelVersion>4.0.0</modelVersion>
   <properties>
     <!--    move to BOM -->
-    <smc-lib.version>0.1.26</smc-lib.version>
+    <smc-lib.version>0.1.28</smc-lib.version>
   </properties>
 
   <parent>
     <groupId>com.apollocurrency</groupId>
     <artifactId>apollo-blockchain</artifactId>
-    <version>1.50.8</version>
+    <version>1.50.9</version>
   </parent>
   <artifactId>apl-core</artifactId>
   <name>apl-core</name>

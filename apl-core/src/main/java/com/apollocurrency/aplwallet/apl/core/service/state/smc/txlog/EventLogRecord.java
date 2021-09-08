@@ -4,7 +4,7 @@
 
 package com.apollocurrency.aplwallet.apl.core.service.state.smc.txlog;
 
-import com.apollocurrency.aplwallet.apl.core.entity.state.account.LedgerEvent;
+import com.apollocurrency.aplwallet.apl.core.model.smc.AplContractEvent;
 import com.apollocurrency.smc.txlog.Record;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -18,15 +18,11 @@ import lombok.ToString;
 @Getter
 @ToString
 @EqualsAndHashCode
-public class TransferRecord implements Record {
-    private final long sender;
-    private final long recipient;
-    private final long value;
-    private final LedgerEvent event;
-    private final long transaction;
+public class EventLogRecord implements Record {
+    AplContractEvent event;
 
     @Override
     public SmcRecordType type() {
-        return SmcRecordType.TRANSFER;
+        return SmcRecordType.FIRE_EVENT;
     }
 }

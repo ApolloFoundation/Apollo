@@ -12,9 +12,9 @@ import com.apollocurrency.aplwallet.apl.core.exception.AplTransactionExecutionEx
 import com.apollocurrency.aplwallet.apl.core.exception.AplUnacceptableTransactionValidationException;
 import com.apollocurrency.aplwallet.apl.core.model.Transaction;
 import com.apollocurrency.aplwallet.apl.core.service.state.account.AccountService;
-import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractService;
 import com.apollocurrency.aplwallet.apl.core.service.state.smc.SmcContractTxProcessor;
+import com.apollocurrency.aplwallet.apl.core.service.state.smc.impl.SmcBlockchainIntegratorFactory;
 import com.apollocurrency.aplwallet.apl.core.transaction.Fee;
 import com.apollocurrency.aplwallet.apl.core.transaction.TransactionType;
 import com.apollocurrency.aplwallet.apl.core.transaction.messages.AbstractSmcAttachment;
@@ -31,6 +31,7 @@ import com.apollocurrency.smc.polyglot.JSRequirementException;
 import com.apollocurrency.smc.polyglot.JSRevertException;
 import com.apollocurrency.smc.polyglot.PolyglotException;
 import com.apollocurrency.smc.polyglot.engine.ExecutionEnv;
+import com.apollocurrency.smc.polyglot.engine.InternalNotRecoverableException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
@@ -150,6 +151,11 @@ public abstract class AbstractSmcTransactionType extends TransactionType {
         } catch (JSAssertionException e) {
             log.info("Assertion exception Contract={}, charged all fee={}", smartContract.getAddress(), smartContract.getFuel().fee());
             throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
+        } catch (InternalNotRecoverableException e) {
+            log.error(executionLog.toJsonString());
+            log.error("CRITICAL ERROR. PLEASE REPORT TO THE DEVELOPERS.\n", e);
+            e.printStackTrace();
+            System.exit(1);
         } catch (PolyglotException e) {
             log.error(executionLog.toJsonString());
             throw new AplTransactionExecutionException(e.getMessage(), e, transaction);
